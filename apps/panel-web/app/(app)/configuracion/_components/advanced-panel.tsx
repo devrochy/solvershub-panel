@@ -27,7 +27,13 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
   const router = useRouter();
   const [llm, setLlm] = useState({ ...advanced.llm, llm_api_key: "" });
   const [guardrails, setGuardrails] = useState(advanced.guardrails_text);
-  const [status, setStatus] = useState<{ loading?: string; error?: string; success?: string }>({});
+  const [status, setStatus] = useState<{
+    loading?: string;
+    error?: string;
+    success?: string;
+    /** Líneas del DSL de guardrails que el backend ignoró (DEF-01). */
+    ignored?: string[];
+  }>({});
 
   async function post(payload: Record<string, unknown>, ok: string) {
     setStatus({ loading: String(payload.action) });
@@ -36,12 +42,12 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; ignored?: string[] };
     if (!res.ok) {
       setStatus({ error: json.error ?? "No se pudo guardar." });
       return;
     }
-    setStatus({ success: ok });
+    setStatus({ success: ok, ignored: json.ignored?.length ? json.ignored : undefined });
     router.refresh();
   }
 
@@ -58,6 +64,19 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
   return (
     <div className="flex flex-col gap-5">
       <FormFeedback error={status.error} success={status.success} />
+
+      {status.ignored && (
+        <div role="alert" className="rounded-lg border border-warning/40 bg-warning/10 p-4">
+          <p className="text-sm font-medium text-headline">
+            Se ignoraron {status.ignored.length} línea(s) de guardrails (el resto sí se guardó):
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-sm text-body">
+            {status.ignored.map((linea) => (
+              <li key={linea}>{linea}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="text-sm text-body">
         El editor crudo del AgentSpec y las herramientas declarativas (JSON) siguen en el panel
