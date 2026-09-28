@@ -114,6 +114,8 @@ export const PACKS_NAV: NavItem[] = [
   { section: "pack_cobranza:alertas", label: "Alertas de acceso", href: "/cobranza/alertas", icon: HandCoins, ready: true },
   { section: "pack_cobranza:auditoria", label: "Auditoría", href: "/cobranza/auditoria", icon: HandCoins, ready: true },
   { section: "pack_cobranza:dispositivos", label: "Dispositivos", href: "/cobranza/dispositivos", icon: HandCoins, ready: true },
+  { section: "pack_cobranza:reportes", label: "Reportes", href: "/cobranza/reportes", icon: HandCoins, ready: true },
+  { section: "pack_cobranza:propietario", label: "Propietario", href: "/cobranza/propietario", icon: HandCoins, ready: true },
   { section: "pack_cobranza:resumen", label: "Cobranza (clásica)", href: "/legacy/cobranza/", icon: HandCoins, ready: true, legacy: true },
   { section: "pack_commerce", label: "Comercio", href: "/comercio", icon: ShoppingCart, ready: true },
   { section: "pack_commerce", label: "Productos", href: "/comercio/productos", icon: ShoppingCart, ready: true },
