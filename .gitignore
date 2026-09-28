@@ -1,0 +1,18 @@
+# Node / Next
+node_modules/
+.next/
+out/
+build/
+
+# Env
+.env
+.env.local
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS / editor
+.DS_Store
+.~lock.*

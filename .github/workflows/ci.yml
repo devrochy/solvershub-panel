@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Detecta qué cambió para no correr todo en cada PR (path filters).
+  changes:
+    runs-on: [self-hosted, linux, x64]
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    outputs:
+      panel: ${{ steps.filter.outputs.panel }}
+      tokens: ${{ steps.filter.outputs.tokens }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            panel:
+              - 'apps/panel-web/**'
+            tokens:
+              - 'brand/tokens/**'
+
+  tokens:
+    needs: changes
+    if: ${{ needs.changes.outputs.tokens == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Generar tokens
+        run: node brand/tokens/build.mjs
+      - name: Verificar que los generados están al día
+        run: git diff --exit-code -- brand/tokens
+
+  panel:
+    needs: changes
+    if: ${{ needs.changes.outputs.panel == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Instalar
+        working-directory: apps/panel-web
+        run: npm ci
+      - name: Typecheck
+        working-directory: apps/panel-web
+        run: npm run typecheck
+      - name: Lint
+        working-directory: apps/panel-web
+        run: npm run lint
+      - name: Build
+        working-directory: apps/panel-web
+        run: npm run build
