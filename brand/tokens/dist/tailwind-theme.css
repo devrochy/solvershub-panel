@@ -1,0 +1,39 @@
+/* SolversHub — mapeo @theme para Tailwind v4 (GENERADO).
+ * Los utilitarios (bg-surface, text-body, font-display…) referencian var(--sh-*),
+ * así que cambiar de tema en un ancestro (.sh-dark/.sh-light) los actualiza. */
+@theme inline {
+  --color-bg: var(--sh-bg);
+  --color-bg-deep: var(--sh-bg-deep);
+  --color-surface: var(--sh-surface);
+  --color-surface-2: var(--sh-surface-2);
+  --color-surface-raised: var(--sh-surface-raised);
+  --color-border: var(--sh-border);
+  --color-border-soft: var(--sh-border-soft);
+  --color-border-strong: var(--sh-border-strong);
+  --color-control-border: var(--sh-control-border);
+  --color-headline: var(--sh-text);
+  --color-text-strong: var(--sh-text-strong);
+  --color-body: var(--sh-text-muted);
+  --color-text-soft: var(--sh-text-soft);
+  --color-hover: var(--sh-hover);
+  --color-overlay: var(--sh-overlay);
+  --color-link: var(--sh-link);
+
+  --color-primary: var(--sh-navy-700);
+  --color-primary-hover: var(--sh-navy-600);
+  --color-blue: var(--sh-blue-500);
+  --color-accent: var(--sh-cyan-400);
+  --color-gold: var(--sh-gold-500);
+  --color-success: var(--sh-success);
+  --color-warning: var(--sh-warning);
+  --color-danger: var(--sh-danger);
+
+  --font-display: var(--sh-font-display);
+  --font-sans: var(--sh-font-body);
+  --font-mono: var(--sh-font-mono);
+
+  --radius-sm: var(--sh-radius-sm);
+  --radius-md: var(--sh-radius-md);
+  --radius-lg: var(--sh-radius-lg);
+  --radius-pill: var(--sh-radius-pill);
+}
