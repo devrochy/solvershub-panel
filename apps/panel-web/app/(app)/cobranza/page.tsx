@@ -48,7 +48,13 @@ export default async function CobranzaPage() {
               <Link href="/cobranza/carteras">Carteras</Link>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <Link href="/cobranza/cobros">Cobros</Link>
+              <Link href="/cobranza/cobros">Cobros al propietario</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/cobranza/pagos">Pagos</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/cobranza/dispositivos">Dispositivos</Link>
             </Button>
             <Button asChild variant="outline" size="sm">
               <Link href="/cobranza/promesas">Promesas</Link>

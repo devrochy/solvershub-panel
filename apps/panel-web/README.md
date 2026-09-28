@@ -101,11 +101,13 @@ formatters únicos en `lib/format.ts` y tema claro/oscuro con toggle.
   **próximas citas** con cancelación y **tipos de cita** (alta/eliminar). API en
   `/api/v1/pack/calendar` (ADR-0079).
 - **Cobranza** (pack, `/cobranza`) — **resumen** (7 KPIs), **gestores**, **carteras**,
-  **cobros** (últimos pagos), **promesas** (con cambio de estado) y **reglas de
+  **cobros al propietario** (períodos + links de pago), **pagos de clientes**,
+  **promesas** (con cambio de estado) y **reglas de
   negociación** (editable), **monitoreo IA** (actividad + últimas promesas),
-  **alertas de acceso** (intentos de los dispositivos) y **auditoría** (con
-  filtros por entidad/operación/fecha). API en `/api/v1/pack/cobranza`. El resto
-  (dispositivos, reportes, propietario, caja/liquidaciones) sigue enlazado al clásico.
+  **alertas de acceso**, **auditoría** (con filtros por entidad/operación/fecha) y
+  **dispositivos** (equipos, intentos y eventos de sync). API en `/api/v1/pack/cobranza`.
+  El resto (reportes, propietario/mensajes, caja/liquidaciones, inyecciones y gastos
+  por cartera) sigue enlazado al clásico.
 - **Configuración** (`/configuracion`) — pestañas **Identidad** (nombre, tono, persona,
   debounce, guardrails, escalamiento, **horario de atención**, kill-switch), **Cerebro**
   (modelos, temperatura, límites y presupuesto), **Memoria** (turnos de contexto y RAG)

@@ -1,22 +1,34 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import { formatCop, formatDateTime } from "@/lib/format";
+import { formatCop, formatDate } from "@/lib/format";
 
-export const metadata = { title: "Cobros" };
+export const metadata = { title: "Cobros al propietario" };
 
-type Payment = {
+type OwnerCharge = {
   id: string;
-  cliente: string;
-  valor: number;
-  metodo_pago: string;
-  registrado_por: string | null;
-  fecha_hora: string;
+  periodo: string;
+  monto: number;
+  pagado: number | null;
+  vence: string;
+  estado: string;
+};
+
+type PaymentLink = { referencia: string; url: string; monto: number; estado: string };
+type OwnerCharges = { cobros: OwnerCharge[]; links: PaymentLink[] };
+
+const CHARGE_TONE: Record<string, "success" | "warning" | "danger"> = {
+  pagado: "success",
+  pendiente: "warning",
+  vencido: "danger",
 };
 
 export default async function CobrosPage() {
-  const res = await apiFetch<Payment[]>("/pack/cobranza/payments");
+  const res = await apiFetch<OwnerCharges>("/pack/cobranza/owner-charges");
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -24,33 +36,81 @@ export default async function CobrosPage() {
       </p>
     );
   }
+  const { cobros, links } = res.data;
 
-  const columns: Column<Payment>[] = [
-    { key: "cliente", header: "Cliente", cell: (p) => <span className="text-headline">{p.cliente}</span> },
-    { key: "valor", header: "Valor", align: "right", cell: (p) => formatCop(p.valor) },
-    { key: "metodo", header: "Método", cell: (p) => <Badge variant="neutral">{p.metodo_pago}</Badge> },
+  const chargeColumns: Column<OwnerCharge>[] = [
+    { key: "periodo", header: "Periodo", cell: (c) => <span className="text-headline">{c.periodo}</span> },
+    { key: "monto", header: "Monto", align: "right", cell: (c) => formatCop(c.monto) },
     {
-      key: "registrado",
-      header: "Registrado por",
-      cell: (p) => <span className="text-body">{p.registrado_por ?? "—"}</span>,
+      key: "pagado",
+      header: "Pagado",
+      align: "right",
+      cell: (c) => (c.pagado === null ? "—" : formatCop(c.pagado)),
+    },
+    { key: "vence", header: "Vence", cell: (c) => formatDate(c.vence) },
+    {
+      key: "estado",
+      header: "Estado",
+      cell: (c) => <Badge variant={CHARGE_TONE[c.estado] ?? "neutral"}>{c.estado}</Badge>,
+    },
+  ];
+
+  const linkColumns: Column<PaymentLink>[] = [
+    {
+      key: "referencia",
+      header: "Referencia",
+      cell: (l) => <span className="text-body font-mono text-xs">{l.referencia}</span>,
+    },
+    { key: "monto", header: "Monto", align: "right", cell: (l) => formatCop(l.monto) },
+    {
+      key: "estado",
+      header: "Estado",
+      cell: (l) => <Badge variant={l.estado === "pagado" ? "success" : "neutral"}>{l.estado}</Badge>,
     },
     {
-      key: "fecha",
-      header: "Fecha",
-      cell: (p) => <span className="text-body">{formatDateTime(p.fecha_hora)}</span>,
+      key: "url",
+      header: "URL",
+      cell: (l) => (
+        <a href={l.url} className="text-link hover:underline" rel="noreferrer" target="_blank">
+          Abrir ↗
+        </a>
+      ),
     },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Cobros" description="Últimos pagos registrados (hasta 100)." />
-      <DataTable
-        columns={columns}
-        rows={res.data}
-        getRowKey={(p) => p.id}
-        emptyTitle="Sin cobros registrados"
-        emptyDescription="Los pagos de la app de campo y del agente aparecerán aquí."
+      <PageHeader
+        title="Cobros al propietario"
+        description="Períodos facturados al propietario (el tenant) y links de pago recientes."
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/legacy/cobranza/cobros">Generar cobro en el clásico ↗</Link>
+          </Button>
+        }
       />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">Períodos</h2>
+        <DataTable
+          columns={chargeColumns}
+          rows={cobros}
+          getRowKey={(c) => c.id}
+          emptyTitle="Sin períodos facturados"
+          emptyDescription="Genera el cobro del período desde el panel clásico (pronto aquí mismo)."
+        />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">Links de pago</h2>
+        <DataTable
+          columns={linkColumns}
+          rows={links}
+          getRowKey={(l, i) => `${l.referencia}-${i}`}
+          emptyTitle="Sin links de pago"
+          emptyDescription="Los links que genere el cobro digital aparecerán aquí."
+        />
+      </section>
     </div>
   );
 }
