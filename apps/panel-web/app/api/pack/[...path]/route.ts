@@ -26,7 +26,11 @@ async function proxy(request: Request, ctx: { params: Promise<{ path: string[] }
   if (!res.ok) {
     return NextResponse.json({ error: res.error }, { status: res.status });
   }
-  return NextResponse.json(res.data ?? { ok: true });
+  // Se propaga el status de la API (201 al crear, 204 sin cuerpo).
+  if (res.status === 204) {
+    return new NextResponse(null, { status: 204 });
+  }
+  return NextResponse.json(res.data ?? { ok: true }, { status: res.status });
 }
 
 export const GET = proxy;

@@ -1,11 +1,9 @@
-import Link from "next/link";
-
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import { MessageForm } from "./_components/message-form";
 
 export const metadata = { title: "Propietario" };
 
@@ -44,12 +42,9 @@ export default async function PropietarioPage() {
         description={
           whatsapp ? `Hilo con el propietario · WhatsApp ${whatsapp}` : "Hilo con el propietario."
         }
-        actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/legacy/cobranza/propietario">Escribir en el clásico ↗</Link>
-          </Button>
-        }
       />
+
+      <MessageForm />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-3">

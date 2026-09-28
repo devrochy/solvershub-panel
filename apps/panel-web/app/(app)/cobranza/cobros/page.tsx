@@ -1,9 +1,8 @@
-import Link from "next/link";
-
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { ChargeForm } from "./_components/charge-form";
+import { ChargePayment } from "./_components/charge-payment";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate } from "@/lib/format";
 
@@ -53,6 +52,12 @@ export default async function CobrosPage() {
       header: "Estado",
       cell: (c) => <Badge variant={CHARGE_TONE[c.estado] ?? "neutral"}>{c.estado}</Badge>,
     },
+    {
+      key: "acciones",
+      header: "Registrar pago",
+      align: "right",
+      cell: (c) => <ChargePayment chargeId={c.id} />,
+    },
   ];
 
   const linkColumns: Column<PaymentLink>[] = [
@@ -83,12 +88,9 @@ export default async function CobrosPage() {
       <PageHeader
         title="Cobros al propietario"
         description="Períodos facturados al propietario (el tenant) y links de pago recientes."
-        actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/legacy/cobranza/cobros">Generar cobro en el clásico ↗</Link>
-          </Button>
-        }
       />
+
+      <ChargeForm />
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Períodos</h2>
@@ -97,7 +99,7 @@ export default async function CobrosPage() {
           rows={cobros}
           getRowKey={(c) => c.id}
           emptyTitle="Sin períodos facturados"
-          emptyDescription="Genera el cobro del período desde el panel clásico (pronto aquí mismo)."
+          emptyDescription="Genera el cobro del período con el formulario de arriba."
         />
       </section>
 

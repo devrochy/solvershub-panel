@@ -3,6 +3,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
+import { DeviceStatus } from "./_components/device-status";
 
 export const metadata = { title: "Dispositivos" };
 
@@ -70,6 +71,12 @@ export default async function DispositivosPage() {
       header: "Vinculado",
       cell: (d) => <span className="text-body">{d.vinculado || "—"}</span>,
     },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (d) => <DeviceStatus deviceId={d.id} estado={d.estado} />,
+    },
   ];
 
   const attemptColumns: Column<AttemptRow>[] = [
@@ -119,7 +126,7 @@ export default async function DispositivosPage() {
           rows={dispositivos}
           getRowKey={(d) => d.id}
           emptyTitle="Sin dispositivos"
-          emptyDescription="Aprueba dispositivos desde el panel clásico mientras migramos las acciones."
+          emptyDescription="Genera un dispositivo desde el panel clásico o la app de campo; aquí se aprueba o bloquea."
         />
       </section>
 

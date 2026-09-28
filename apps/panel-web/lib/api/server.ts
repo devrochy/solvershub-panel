@@ -16,7 +16,7 @@ export const SESSION_COOKIE = "panel_session";
 export const TENANT_COOKIE = "panel_tenant";
 
 export type ApiResult<T> =
-  | { ok: true; data: T }
+  | { ok: true; status: number; data: T }
   | { ok: false; status: number; error: string };
 
 type FetchOptions = {
@@ -48,7 +48,7 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
     return { ok: false, status: 502, error: "No se pudo contactar el backend." };
   }
 
-  if (res.status === 204) return { ok: true, data: undefined as T };
+  if (res.status === 204) return { ok: true, status: 204, data: undefined as T };
 
   const json = (await res.json().catch(() => null)) as
     | { error?: { message?: string } }
@@ -60,7 +60,7 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
       (json as { error?: { message?: string } } | null)?.error?.message ?? `Error ${res.status}`;
     return { ok: false, status: res.status, error: message };
   }
-  return { ok: true, data: json as T };
+  return { ok: true, status: res.status, data: json as T };
 }
 
 export async function getSessionToken(): Promise<string | null> {
