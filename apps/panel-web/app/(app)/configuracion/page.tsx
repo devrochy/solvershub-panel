@@ -1,0 +1,30 @@
+import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
+import { PageHeader } from "@/components/ui/page-header";
+import { apiFetch } from "@/lib/api/server";
+import type { SettingsResponse } from "@/lib/api/types";
+
+export const metadata = { title: "Configuración" };
+
+export default async function SettingsPage() {
+  const [res, advancedRes] = await Promise.all([
+    apiFetch<SettingsResponse>("/admin/settings"),
+    apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
+  ]);
+  if (!res.ok || !advancedRes.ok) {
+    return (
+      <p role="alert" className="text-danger">
+        No se pudo cargar la configuración: {res.ok ? (advancedRes as { error: string }).error : res.error}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Configuración"
+        description="Identidad y comportamiento del agente de este negocio."
+      />
+      <SettingsTabs settings={res.data} advanced={advancedRes.data} />
+    </div>
+  );
+}

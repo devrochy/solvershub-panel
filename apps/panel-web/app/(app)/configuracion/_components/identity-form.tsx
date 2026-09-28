@@ -1,0 +1,332 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import type { IdentitySettings } from "@/lib/api/types";
+import { formatList, parseList } from "@/lib/format";
+
+const TONOS = ["calido", "formal", "divertido"];
+const PERSONA_TONES = ["formal", "neutral", "cercano", "informal"];
+const EMOJIS = ["none", "sparse", "free"];
+const DEBOUNCE = ["inmediato", "rapido", "natural", "pausado"];
+
+const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+function rangesToText(ranges: Record<string, unknown>[]): string {
+  return ranges
+    .map((r) => `${r.day} ${r.from}-${r.to}`)
+    .join("\n");
+}
+
+function textToRanges(text: string): { day: number; from: string; to: string }[] {
+  const out: { day: number; from: string; to: string }[] = [];
+  for (const line of text.split("\n")) {
+    const m = /^([0-6])\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(line.trim());
+    if (m) out.push({ day: Number(m[1]), from: m[2], to: m[3] });
+  }
+  return out;
+}
+
+/** Formulario de Identidad del agente. Responsabilidad: editar y guardar. */
+export function IdentityForm({ identity }: { identity: IdentitySettings }) {
+  const router = useRouter();
+  const [values, setValues] = useState(identity);
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+
+  const set = <K extends keyof IdentitySettings>(key: K, value: IdentitySettings[K]) =>
+    setValues((prev) => ({ ...prev, [key]: value }));
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    setStatus({ loading: true });
+    const res = await fetch("/api/settings/identity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setStatus({ error: json.error ?? "No se pudo guardar." });
+      return;
+    }
+    setStatus({ success: "Identidad guardada." });
+    router.refresh();
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-5">
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Nombre del asistente" htmlFor="assistant_name" required>
+              <Input
+                id="assistant_name"
+                required
+                value={values.assistant_name}
+                onChange={(e) => set("assistant_name", e.target.value)}
+              />
+            </Field>
+            <Field label="Tono del asistente" htmlFor="tono">
+              <Select id="tono" value={values.tono} onChange={(e) => set("tono", e.target.value)}>
+                {TONOS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <Field label="Descripción del negocio" htmlFor="business_description">
+            <Textarea
+              id="business_description"
+              rows={3}
+              value={values.business_description}
+              onChange={(e) => set("business_description", e.target.value)}
+            />
+          </Field>
+
+          <Field label="Voz de marca" htmlFor="brand_voice" help="Opcional. Guía el estilo de las respuestas.">
+            <Textarea
+              id="brand_voice"
+              rows={3}
+              value={values.brand_voice}
+              onChange={(e) => set("brand_voice", e.target.value)}
+            />
+          </Field>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Tono de personalidad" htmlFor="persona_tone">
+              <Select
+                id="persona_tone"
+                value={values.persona_tone}
+                onChange={(e) => set("persona_tone", e.target.value)}
+              >
+                {PERSONA_TONES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Calidez (0-5)" htmlFor="persona_warmth">
+              <Input
+                id="persona_warmth"
+                type="number"
+                min={0}
+                max={5}
+                value={values.persona_warmth}
+                onChange={(e) => set("persona_warmth", Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Emojis" htmlFor="persona_emojis">
+              <Select
+                id="persona_emojis"
+                value={values.persona_emojis}
+                onChange={(e) => set("persona_emojis", e.target.value)}
+              >
+                {EMOJIS.map((e) => (
+                  <option key={e} value={e}>
+                    {e}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field
+              label="Longitud máx. de respuesta"
+              htmlFor="persona_max_length"
+              help="0 = sin límite."
+            >
+              <Input
+                id="persona_max_length"
+                type="number"
+                min={0}
+                value={values.persona_max_length}
+                onChange={(e) => set("persona_max_length", Number(e.target.value))}
+              />
+            </Field>
+            <Field
+              label="Frases prohibidas"
+              htmlFor="persona_forbidden"
+              help="Separadas por coma."
+            >
+              <Input
+                id="persona_forbidden"
+                value={formatList(values.persona_forbidden)}
+                onChange={(e) => set("persona_forbidden", parseList(e.target.value))}
+              />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Velocidad de respuesta" htmlFor="debounce_mode">
+              <Select
+                id="debounce_mode"
+                value={values.debounce_mode}
+                onChange={(e) => set("debounce_mode", e.target.value)}
+              >
+                {DEBOUNCE.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Reintentos de guardrail antes de escalar" htmlFor="guardrail_max_retries">
+              <Input
+                id="guardrail_max_retries"
+                type="number"
+                min={0}
+                max={5}
+                value={values.guardrail_max_retries}
+                onChange={(e) => set("guardrail_max_retries", Number(e.target.value))}
+              />
+            </Field>
+          </div>
+
+          <Field
+            label="Palabras que disparan escalamiento"
+            htmlFor="escalation_keywords"
+            help="Separadas por coma."
+          >
+            <Input
+              id="escalation_keywords"
+              value={formatList(values.escalation_keywords)}
+              onChange={(e) => set("escalation_keywords", parseList(e.target.value))}
+            />
+          </Field>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Zona horaria" htmlFor="business_tz" help="Ej.: America/Bogota">
+              <Input
+                id="business_tz"
+                value={values.business_tz}
+                onChange={(e) => set("business_tz", e.target.value)}
+              />
+            </Field>
+            <Field
+              label="Horario de atención"
+              htmlFor="business_ranges"
+              help="Una franja por línea: día (0=Dom…6=Sáb) HH:MM-HH:MM. Ej.: 1 08:00-18:00"
+            >
+              <Textarea
+                id="business_ranges"
+                rows={3}
+                defaultValue={rangesToText(values.business_ranges)}
+                onChange={(e) => set("business_ranges", textToRanges(e.target.value))}
+              />
+            </Field>
+          </div>
+
+          <p className="text-xs text-text-soft">
+            Días: {DAYS.join(" · ")}
+          </p>
+
+          <Field label="Mensaje fuera de horario" htmlFor="out_of_hours_message">
+            <Textarea
+              id="out_of_hours_message"
+              rows={2}
+              value={values.out_of_hours_message}
+              onChange={(e) => set("out_of_hours_message", e.target.value)}
+            />
+          </Field>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Mensaje largo (caracteres)" htmlFor="difficulty_long_message_threshold">
+              <Input
+                id="difficulty_long_message_threshold"
+                type="number"
+                min={50}
+                max={5000}
+                value={values.difficulty_long_message_threshold}
+                onChange={(e) => set("difficulty_long_message_threshold", Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Turnos sin resolver" htmlFor="difficulty_turnos_sin_resolver_threshold">
+              <Input
+                id="difficulty_turnos_sin_resolver_threshold"
+                type="number"
+                min={1}
+                max={20}
+                value={values.difficulty_turnos_sin_resolver_threshold}
+                onChange={(e) =>
+                  set("difficulty_turnos_sin_resolver_threshold", Number(e.target.value))
+                }
+              />
+            </Field>
+            <Field label="Puntaje para razonamiento" htmlFor="difficulty_score_threshold">
+              <Input
+                id="difficulty_score_threshold"
+                type="number"
+                min={1}
+                max={10}
+                value={values.difficulty_score_threshold}
+                onChange={(e) => set("difficulty_score_threshold", Number(e.target.value))}
+              />
+            </Field>
+          </div>
+
+          {values.available_guardrails.length > 0 && (
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-[13px] font-medium text-body">Guardrails activos</legend>
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                {values.available_guardrails.map((guardrail) => {
+                  const enabled = !values.disabled_guardrails.includes(guardrail);
+                  return (
+                    <label
+                      key={guardrail}
+                      className="flex items-center gap-2.5 text-sm text-headline"
+                    >
+                      <Switch
+                        checked={enabled}
+                        onCheckedChange={(checked) =>
+                          set(
+                            "disabled_guardrails",
+                            checked
+                              ? values.disabled_guardrails.filter((g) => g !== guardrail)
+                              : [...values.disabled_guardrails, guardrail],
+                          )
+                        }
+                        aria-label={`Guardrail ${guardrail}`}
+                      />
+                      {guardrail}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+
+          <label className="flex items-center gap-3 text-sm text-headline">
+            <Switch
+              checked={values.bot_paused}
+              onCheckedChange={(checked) => set("bot_paused", checked)}
+              aria-label="Pausar el asistente"
+            />
+            Pausar el asistente (kill-switch del negocio)
+          </label>
+
+          <FormFeedback error={status.error} success={status.success} />
+
+          <div>
+            <Button type="submit" variant="accent" disabled={status.loading}>
+              {status.loading ? "Guardando…" : "Guardar identidad"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

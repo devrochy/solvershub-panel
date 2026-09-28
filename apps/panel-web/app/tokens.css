@@ -1,0 +1,95 @@
+/* SolversHub — Design Tokens (GENERADO por build.mjs — NO EDITAR A MANO)
+ * Fuente: tokens.json · v1.3 · SolversHub (Roshi)
+ * Tema oscuro por defecto: usar .sh-dark / [data-theme="sh-dark"] en un ancestro. */
+:root {
+  /* color */
+  --sh-navy-600: #21408A;
+  --sh-navy-700: #172F6C;
+  --sh-navy-750: #16294F;
+  --sh-navy-800: #11224D;
+  --sh-navy-900: #0B1733;
+  --sh-navy-950: #080F22;
+  --sh-blue-500: #2F6BFF;
+  --sh-blue-600: #2560E6;
+  --sh-cyan-400: #22C7E0;
+  --sh-gold-500: #C9A227;
+  --sh-slate-300: #C9D2E3;
+  --sh-slate-400: #7C8AA3;
+  --sh-slate-500: #616F88;
+  --sh-slate-600: #5A6B85;
+  --sh-ice: #E8EDF7;
+  --sh-fog: #A9B6CC;
+  --sh-haze: #8695B0;
+  --sh-steel: #6B7A94;
+  --sh-cloud: #EEF2F8;
+  --sh-frost: #F1F5FA;
+  --sh-veil: #EDF1F7;
+  --sh-white: #FFFFFF;
+  --sh-paper: #F7F9FC;
+  --sh-mist: #E2E8F2;
+  --sh-success: #22A06B;
+  --sh-warning: #E0A106;
+  --sh-danger: #D64545;
+  /* gradient */
+  --sh-gradient-brand: linear-gradient(135deg, #2F6BFF 0%, #22C7E0 100%);
+  /* font */
+  --sh-font-display: Montserrat, 'Century Gothic', 'Didact Gothic', system-ui, sans-serif;
+  --sh-font-body: Inter, 'Segoe UI', system-ui, sans-serif;
+  --sh-font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  /* radius */
+  --sh-radius-sm: 6px;
+  --sh-radius-md: 12px;
+  --sh-radius-lg: 20px;
+  --sh-radius-pill: 9999px;
+  /* space */
+  --sh-space-1: 4px;
+  --sh-space-2: 8px;
+  --sh-space-3: 12px;
+  --sh-space-4: 16px;
+  --sh-space-6: 24px;
+  --sh-space-8: 32px;
+  --sh-space-12: 48px;
+  --sh-space-16: 64px;
+  /* alias */
+  --sh-gradient: var(--sh-gradient-brand);
+}
+
+[data-theme="sh-dark"], .sh-dark {
+  --sh-bg: #0B1733;
+  --sh-bg-deep: #080F22;
+  --sh-surface: #11224D;
+  --sh-surface-2: #16294F;
+  --sh-surface-raised: #172F6C;
+  --sh-border: rgba(201, 210, 227, 0.10);
+  --sh-border-soft: rgba(201, 210, 227, 0.06);
+  --sh-border-strong: #21408A;
+  --sh-control-border: #6B7A94;
+  --sh-text: #E8EDF7;
+  --sh-text-strong: #FFFFFF;
+  --sh-text-muted: #A9B6CC;
+  --sh-text-soft: #8695B0;
+  --sh-link: #22C7E0;
+  --sh-focus: #22C7E0;
+  --sh-hover: rgba(201, 210, 227, 0.06);
+  --sh-overlay: rgba(8, 15, 34, 0.72);
+}
+
+[data-theme="sh-light"], .sh-light {
+  --sh-bg: #F7F9FC;
+  --sh-bg-deep: #EEF2F8;
+  --sh-surface: #FFFFFF;
+  --sh-surface-2: #F1F5FA;
+  --sh-surface-raised: #F1F5FA;
+  --sh-border: #E2E8F2;
+  --sh-border-soft: #EDF1F7;
+  --sh-border-strong: #C9D2E3;
+  --sh-control-border: #7C8AA3;
+  --sh-text: #0B1733;
+  --sh-text-strong: #080F22;
+  --sh-text-muted: #5A6B85;
+  --sh-text-soft: #616F88;
+  --sh-link: #2560E6;
+  --sh-focus: #2560E6;
+  --sh-hover: #F1F5FA;
+  --sh-overlay: rgba(11, 23, 51, 0.48);
+}
