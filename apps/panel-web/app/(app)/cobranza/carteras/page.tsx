@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
@@ -42,6 +45,16 @@ export default async function CarterasPage() {
       cell: (c) => <span className="text-body">{c.num_cuotas}</span>,
     },
     { key: "moneda", header: "Moneda", cell: (c) => <Badge variant="neutral">{c.moneda}</Badge> },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (c) => (
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/cobranza/carteras/${c.id}`}>Ver</Link>
+        </Button>
+      ),
+    },
     {
       key: "estatus",
       header: "Estado",
