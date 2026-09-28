@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type State = { status: string; risk_ok: boolean; jid: string | null; qr_image: string | null };
 
-const POLL_MS = 8000;
+// El conector rota el QR cada ~20 s; 3 s da feedback inmediato al reiniciar.
+const POLL_MS = 3000;
 
 /** Vínculo por QR del canal WhatsApp Web: acepta el aviso y muestra el QR vigente. */
 export function WawebPanel({ initial }: { initial: State }) {
@@ -96,12 +97,20 @@ export function WawebPanel({ initial }: { initial: State }) {
             ) : (
               <div className="flex flex-col gap-2">
                 <Skeleton className="h-56 w-56" />
-                <p className="text-xs text-text-soft">Esperando el QR del conector…</p>
+                <p className="text-xs text-text-soft">
+                  Esperando el QR del conector… Si no aparece en unos segundos, reinicia el vínculo
+                  (el código puede haber expirado).
+                </p>
               </div>
             )}
 
-            <Button variant="outline" size="sm" onClick={() => void run("reset")} disabled={status.loading}>
-              Reiniciar vínculo
+            <Button
+              variant={state.qr_image || state.jid ? "outline" : "accent"}
+              size="sm"
+              onClick={() => void run("reset")}
+              disabled={status.loading}
+            >
+              {state.qr_image || state.jid ? "Reiniciar vínculo" : "Generar un QR nuevo"}
             </Button>
           </div>
         )}
