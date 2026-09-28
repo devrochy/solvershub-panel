@@ -6,11 +6,22 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
+import {
+  CollectorFormDialog,
+  CollectorRowActions,
+} from "./_components/collector-dialog";
 
 export const metadata = { title: "Cobranza" };
 
 type Summary = { kpis: { label: string; value: string }[] };
-type Collector = { id: string; nombre: string; correo: string | null; telefono: string | null; estatus: string };
+type Collector = {
+  id: string;
+  nombre: string;
+  correo: string | null;
+  telefono: string | null;
+  codigo: string | null;
+  estatus: string;
+};
 
 export default async function CobranzaPage() {
   const [summaryRes, collectorsRes] = await Promise.all([
@@ -34,6 +45,12 @@ export default async function CobranzaPage() {
       key: "estatus",
       header: "Estado",
       cell: (g) => <Badge variant={g.estatus === "activo" ? "success" : "neutral"}>{g.estatus}</Badge>,
+    },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (g) => <CollectorRowActions collector={g} />,
     },
   ];
 
@@ -91,13 +108,16 @@ export default async function CobranzaPage() {
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Gestores</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">Gestores</h2>
+          <CollectorFormDialog trigger={<Button variant="accent">Nuevo gestor</Button>} />
+        </div>
         <DataTable
           columns={columns}
           rows={collectors}
           getRowKey={(g) => g.id}
           emptyTitle="Sin gestores"
-          emptyDescription="Los gestores de campo se crean en el panel clásico."
+          emptyDescription="Crea el primer gestor con el botón «Nuevo gestor»."
         />
       </section>
     </div>
