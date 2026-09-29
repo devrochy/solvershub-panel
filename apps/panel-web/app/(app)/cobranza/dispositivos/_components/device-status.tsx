@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Ban, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -31,13 +32,27 @@ export function DeviceStatus({ deviceId, estado }: { deviceId: string; estado: s
   return (
     <div className="flex items-center justify-end gap-2">
       {estado !== "activo" && (
-        <Button disabled={loading === "activo"} onClick={() => cambiar("activo")} size="sm" variant="outline">
-          {loading === "activo" ? "…" : "Activar"}
+        <Button
+          aria-label="Activar dispositivo"
+          disabled={loading === "activo"}
+          onClick={() => cambiar("activo")}
+          size="icon"
+          title="Activar dispositivo"
+          variant="outline"
+        >
+          <Check className="h-4 w-4" aria-hidden />
         </Button>
       )}
       {estado !== "bloqueado" && (
-        <Button disabled={loading === "bloqueado"} onClick={() => cambiar("bloqueado")} size="sm" variant="ghost">
-          {loading === "bloqueado" ? "…" : "Bloquear"}
+        <Button
+          aria-label="Bloquear dispositivo"
+          disabled={loading === "bloqueado"}
+          onClick={() => cambiar("bloqueado")}
+          size="icon"
+          title="Bloquear dispositivo"
+          variant="ghost"
+        >
+          <Ban className="h-4 w-4 text-danger" aria-hidden />
         </Button>
       )}
       {error && (

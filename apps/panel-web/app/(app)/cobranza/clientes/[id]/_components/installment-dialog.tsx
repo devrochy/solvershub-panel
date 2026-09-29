@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -123,8 +124,15 @@ export function InstallmentEditor({
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setConfirmando(true)} type="button" variant="ghost">
-                Eliminar cuota
+              <Button
+                aria-label="Eliminar cuota"
+                onClick={() => setConfirmando(true)}
+                size="icon"
+                title="Eliminar cuota"
+                type="button"
+                variant="ghost"
+              >
+                <Trash2 className="h-4 w-4 text-danger" aria-hidden />
               </Button>
             )}
           </div>

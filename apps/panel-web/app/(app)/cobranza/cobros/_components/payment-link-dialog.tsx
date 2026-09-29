@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Link2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -40,8 +41,8 @@ export function PaymentLinkDialog({ chargeId }: { chargeId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost">
-          Crear link
+        <Button aria-label="Crear link de pago" size="icon" title="Crear link de pago" variant="ghost">
+          <Link2 className="h-4 w-4" aria-hidden />
         </Button>
       </DialogTrigger>
       <DialogContent

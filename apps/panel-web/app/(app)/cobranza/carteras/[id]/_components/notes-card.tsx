@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Check, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -84,21 +85,35 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                 {confirmando === n.id ? (
                   <div className="flex items-center gap-1">
                     <Button
+                      aria-label="Confirmar eliminación"
                       className="text-danger"
                       disabled={status.loading}
                       onClick={() => eliminar(n.id)}
-                      size="sm"
+                      size="icon"
+                      title="Confirmar eliminación"
                       variant="outline"
                     >
-                      {status.loading ? "…" : "Confirmar"}
+                      <Check className="h-4 w-4" aria-hidden />
                     </Button>
-                    <Button onClick={() => setConfirmando(undefined)} size="sm" variant="ghost">
-                      Cancelar
+                    <Button
+                      aria-label="Cancelar"
+                      onClick={() => setConfirmando(undefined)}
+                      size="icon"
+                      title="Cancelar"
+                      variant="ghost"
+                    >
+                      <X className="h-4 w-4" aria-hidden />
                     </Button>
                   </div>
                 ) : (
-                  <Button onClick={() => setConfirmando(n.id)} size="sm" variant="ghost">
-                    Eliminar
+                  <Button
+                    aria-label="Eliminar nota"
+                    onClick={() => setConfirmando(n.id)}
+                    size="icon"
+                    title="Eliminar nota"
+                    variant="ghost"
+                  >
+                    <Trash2 className="h-4 w-4 text-danger" aria-hidden />
                   </Button>
                 )}
               </li>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -44,8 +45,15 @@ export function ChargePayment({ chargeId }: { chargeId: string }) {
         type="number"
         value={valor}
       />
-      <Button disabled={loading} size="sm" type="submit" variant="outline">
-        {loading ? "…" : "Pagar"}
+      <Button
+        aria-label="Registrar pago"
+        disabled={loading}
+        size="icon"
+        title="Registrar pago"
+        type="submit"
+        variant="outline"
+      >
+        <Check className="h-4 w-4" aria-hidden />
       </Button>
       {error && (
         <span className="text-xs text-danger" role="alert">
