@@ -8,7 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type State = { status: string; risk_ok: boolean; jid: string | null; qr_image: string | null };
+type State = {
+  status: string;
+  risk_ok: boolean;
+  jid: string | null;
+  qr_image: string | null;
+  last_error: string | null;
+};
 
 // El conector rota el QR cada ~20 s; 3 s da feedback inmediato al reiniciar.
 const POLL_MS = 3000;
@@ -55,6 +61,7 @@ export function WawebPanel({ initial }: { initial: State }) {
           <CardTitle>Vínculo por QR</CardTitle>
           <Badge variant={connected ? "success" : "warning"}>
             {state.status || "sin sesión"}
+            {state.last_error ? ` · ${state.last_error}` : ""}
           </Badge>
         </div>
       </CardHeader>

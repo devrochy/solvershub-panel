@@ -7,7 +7,13 @@ import { apiFetch } from "@/lib/api/server";
 
 export const metadata = { title: "WhatsApp Web" };
 
-type State = { status: string; risk_ok: boolean; jid: string | null; qr_image: string | null };
+type State = {
+  status: string;
+  risk_ok: boolean;
+  jid: string | null;
+  qr_image: string | null;
+  last_error: string | null;
+};
 
 export default async function WawebPage() {
   const res = await apiFetch<State>("/admin/meta/waweb");
