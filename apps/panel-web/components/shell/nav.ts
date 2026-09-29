@@ -155,10 +155,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
       {
         section: "connections",
         label: "Probar asistente",
-        href: "/legacy/admin/asistente/probar",
+        href: "/asistente",
         icon: PlayCircle,
         ready: true,
-        legacy: true,
       },
       {
         section: "connections",
