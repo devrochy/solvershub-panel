@@ -37,10 +37,12 @@ export const RIESGO_LABEL: Record<string, string> = {
 export function ClientFormDialog({
   carteras,
   cliente,
+  defaultCarteraId,
   trigger,
 }: {
   carteras: CarteraOpcion[];
   cliente?: Cliente;
+  defaultCarteraId?: string;
   trigger: ReactNode;
 }) {
   const router = useRouter();
@@ -105,7 +107,12 @@ export function ClientFormDialog({
             </Field>
           </div>
           <Field label="Cartera" htmlFor="cartera_id">
-            <Select id="cartera_id" name="cartera_id" defaultValue={cliente?.cartera_id ?? ""} required>
+            <Select
+              id="cartera_id"
+              name="cartera_id"
+              defaultValue={cliente?.cartera_id ?? defaultCarteraId ?? ""}
+              required
+            >
               <option value="">Elige una cartera</option>
               {carteras.map((c) => (
                 <option key={c.id} value={c.id}>

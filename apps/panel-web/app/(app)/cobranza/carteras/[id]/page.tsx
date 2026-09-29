@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Eye, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,13 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
+import {
+  ClientFormDialog,
+  ClientRowActions,
+  RIESGO_LABEL,
+  type CarteraOpcion,
+  type Cliente,
+} from "../../clientes/_components/client-dialog";
 import { ExpenseFormDialog, ExpenseRowActions } from "./_components/expense-approve";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
 import {
@@ -21,6 +29,12 @@ import { RouteOptimizeButton } from "./_components/route-actions";
 import { PortfolioConfigDialog } from "./_components/portfolio-config-dialog";
 
 export const metadata = { title: "Detalle de cartera" };
+
+const RIESGO_TONE: Record<string, "neutral" | "accent" | "danger"> = {
+  blanco: "neutral",
+  azul: "accent",
+  rojo: "danger",
+};
 
 type Nota = { id: string; nota: string; fecha: string; autor: string };
 
@@ -65,11 +79,13 @@ type PortfolioDetail = {
 
 export default async function CarteraDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [res, configRes, notasRes, rutaRes] = await Promise.all([
+  const [res, configRes, notasRes, rutaRes, clientesRes, carterasRes] = await Promise.all([
     apiFetch<PortfolioDetail>(`/pack/cobranza/portfolios/${id}`),
     apiFetch<{ values: Record<string, unknown> }>(`/pack/cobranza/portfolios/${id}/config`),
     apiFetch<Nota[]>(`/pack/cobranza/portfolios/${id}/notes`),
     apiFetch<RutaOut>(`/pack/cobranza/portfolios/${id}/route`),
+    apiFetch<Cliente[]>(`/pack/cobranza/clients?cartera_id=${id}`),
+    apiFetch<CarteraOpcion[]>("/pack/cobranza/portfolios"),
   ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
@@ -83,6 +99,58 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
   const configValues = configRes.ok ? configRes.data.values : {};
   const notas = notasRes.ok ? notasRes.data : [];
   const ruta = rutaRes.ok ? rutaRes.data : { clientes: [], plan: null };
+  const clientes = clientesRes.ok ? clientesRes.data : [];
+  const carteras = carterasRes.ok ? carterasRes.data : [];
+
+  const clientColumns: Column<Cliente>[] = [
+    {
+      key: "cliente",
+      header: "Cliente",
+      cell: (cl) => (
+        <span className="text-headline">{`${cl.nombre} ${cl.apellido}`.trim()}</span>
+      ),
+    },
+    {
+      key: "telefono",
+      header: "Teléfono",
+      cell: (cl) => <span className="text-body">{cl.telefono || "—"}</span>,
+    },
+    {
+      key: "negocio",
+      header: "Negocio",
+      cell: (cl) => <span className="text-body">{cl.negocio || "—"}</span>,
+    },
+    {
+      key: "tope",
+      header: "Tope de deuda",
+      align: "right",
+      cell: (cl) => (cl.tope_maximo_deuda > 0 ? formatCop(cl.tope_maximo_deuda) : "—"),
+    },
+    {
+      key: "riesgo",
+      header: "Riesgo",
+      cell: (cl) => (
+        <Badge variant={RIESGO_TONE[cl.color_riesgo] ?? "neutral"}>
+          {RIESGO_LABEL[cl.color_riesgo] ?? cl.color_riesgo}
+        </Badge>
+      ),
+    },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (cl) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button asChild aria-label="Ver ficha" size="icon" title="Ver ficha" variant="outline">
+            <Link href={`/cobranza/clientes/${cl.id}`}>
+              <Eye className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+          <ClientRowActions cliente={cl} carteras={carteras} />
+        </div>
+      ),
+    },
+  ];
 
   const rutaColumns = (orden: string[]): Column<RutaCliente>[] => [
     {
@@ -194,6 +262,37 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           hint={c.caja.actualizado ? `Actualizada ${c.caja.actualizado}` : undefined}
         />
       </div>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">
+            Clientes ({formatNumber(c.clientes)})
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {carteras.length > 0 && (
+              <ClientFormDialog
+                carteras={carteras}
+                defaultCarteraId={c.id}
+                trigger={
+                  <Button variant="accent">
+                    <Plus className="h-4 w-4" aria-hidden /> Nuevo cliente
+                  </Button>
+                }
+              />
+            )}
+            <Button asChild variant="outline">
+              <Link href={`/cobranza/clientes?cartera=${c.id}`}>Ver todos</Link>
+            </Button>
+          </div>
+        </div>
+        <DataTable
+          columns={clientColumns}
+          rows={clientes}
+          getRowKey={(cl) => cl.id}
+          emptyTitle="Sin clientes en esta cartera"
+          emptyDescription="Agrega el primer cliente con «Nuevo cliente»: queda asignado a esta cartera."
+        />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Caja</h2>
