@@ -6,10 +6,33 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
+import { formatDateTime } from "@/lib/format";
 
 const BILLING_STATES = ["", "ok", "pending", "failed"];
 
-/** Reparaciones de una conexión Meta: diagnosticar, re-suscribir, facturación. */
+type TokenInspect = {
+  is_valid: boolean;
+  never_expires: boolean;
+  token_expires_at: string | null;
+  has_whatsapp_scopes: boolean;
+};
+
+type TokenExtend = {
+  token_expires_at: string | null;
+};
+
+function describeToken(info: TokenInspect): string {
+  const estado = info.is_valid ? "válido" : "inválido";
+  const vence = info.never_expires
+    ? "no expira"
+    : info.token_expires_at
+      ? `vence el ${formatDateTime(info.token_expires_at)}`
+      : "sin fecha de vencimiento";
+  const permisos = info.has_whatsapp_scopes ? "con permisos de WhatsApp" : "sin permisos de WhatsApp";
+  return `Token ${estado} · ${vence} · ${permisos}.`;
+}
+
+/** Reparaciones de una conexión Meta y acciones sobre su token BYOK. */
 export function MetaHealthActions({
   connectionId,
   billingStatus,
@@ -37,6 +60,27 @@ export function MetaHealthActions({
     router.refresh();
   }
 
+  async function runToken(action: "inspect_token" | "extend_token") {
+    setStatus({ loading: true });
+    const res = await fetch(`/api/meta/health/${connectionId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const json = (await res.json().catch(() => ({}))) as TokenInspect & TokenExtend & { error?: string };
+    if (!res.ok) {
+      setStatus({ error: json.error ?? "No se pudo completar la acción sobre el token." });
+      return;
+    }
+    if (action === "inspect_token") {
+      setStatus({ success: describeToken(json) });
+      return;
+    }
+    const vence = json.token_expires_at ? formatDateTime(json.token_expires_at) : "sin fecha";
+    setStatus({ success: `Token extendido ✅ · nueva caducidad: ${vence}` });
+    router.refresh();
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -55,6 +99,25 @@ export function MetaHealthActions({
           disabled={status.loading}
         >
           Re-suscribir WABA
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => void runToken("extend_token")}
+          disabled={status.loading}
+        >
+          Extender a 60 días
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void runToken("inspect_token")}
+          disabled={status.loading}
+        >
+          Ver estado del token
         </Button>
       </div>
 
