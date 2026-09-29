@@ -1,7 +1,7 @@
 import {
   Calendar,
   Globe,
-  Instagram,
+  Camera,
   Mail,
   MessageCircle,
   MessageSquare,
@@ -17,7 +17,7 @@ const CHANNELS: Record<string, { icon: LucideIcon; classes: string; label: strin
   whatsapp: { icon: MessageCircle, classes: "bg-emerald-100 text-emerald-700", label: "WhatsApp" },
   whatsapp_cloud: { icon: MessageCircle, classes: "bg-emerald-100 text-emerald-700", label: "WhatsApp Cloud" },
   whatsapp_waweb: { icon: QrCode, classes: "bg-teal-100 text-teal-700", label: "WhatsApp Web (QR)" },
-  instagram: { icon: Instagram, classes: "bg-fuchsia-100 text-fuchsia-700", label: "Instagram" },
+  instagram: { icon: Camera, classes: "bg-fuchsia-100 text-fuchsia-700", label: "Instagram" },
   messenger: { icon: Send, classes: "bg-sky-100 text-sky-700", label: "Messenger" },
   facebook: { icon: Send, classes: "bg-indigo-100 text-indigo-700", label: "Facebook" },
   email: { icon: Mail, classes: "bg-amber-100 text-amber-700", label: "Correo" },
