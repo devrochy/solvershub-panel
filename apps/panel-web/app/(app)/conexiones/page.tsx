@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ConnectionActions } from "@/app/(app)/conexiones/_components/connection-actions";
 import { NewConnectionDialog } from "@/app/(app)/conexiones/_components/new-connection-dialog";
+import { ChannelBadge } from "@/components/domain/channel-icon";
 import { BinaryBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export default async function ConnectionsPage() {
     {
       key: "canal",
       header: "Canal",
-      cell: (c) => <Badge variant="neutral">{c.channel}</Badge>,
+      cell: (c) => <ChannelBadge id={c.channel} />,
     },
     { key: "etiqueta", header: "Etiqueta", cell: (c) => c.label },
     {

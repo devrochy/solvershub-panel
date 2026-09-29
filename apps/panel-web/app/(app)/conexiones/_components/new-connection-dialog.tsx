@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { ChannelIcon } from "@/components/domain/channel-icon";
 import { JsonSchemaForm } from "@/components/domain/json-schema-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
 
 type TypeItem = {
   id: string;
@@ -38,6 +40,7 @@ export function NewConnectionDialog() {
   const [categories, setCategories] = useState<Category[] | null>(null);
   const [form, setForm] = useState<ManualForm | null>(null);
   const [label, setLabel] = useState("");
+  const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function loadCatalog() {
@@ -71,8 +74,24 @@ export function NewConnectionDialog() {
     setOpen(next);
     setForm(null);
     setError(null);
+    setBusqueda("");
     if (next && categories === null) void loadCatalog();
   }
+
+  const filtro = busqueda.trim().toLowerCase();
+  const categoriasVisibles = (categories ?? [])
+    .map((grupo) => ({
+      ...grupo,
+      items: filtro
+        ? grupo.items.filter(
+            (t) =>
+              t.label.toLowerCase().includes(filtro) ||
+              (t.description ?? "").toLowerCase().includes(filtro) ||
+              t.id.toLowerCase().includes(filtro),
+          )
+        : grupo.items,
+    }))
+    .filter((grupo) => grupo.items.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={toggle}>
@@ -89,7 +108,17 @@ export function NewConnectionDialog() {
         <div className="max-h-[70vh] overflow-y-auto pr-1">
           {error && <FormFeedback error={error} className="mb-4" />}
 
-          {!form && categories?.map((group) => (
+          {!form && categories && (
+            <Input
+              aria-label="Buscar tipo de conexión"
+              className="mb-4"
+              placeholder="Buscar canal… (ej.: WhatsApp, correo, QR)"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          )}
+
+          {!form && categoriasVisibles.map((group) => (
             <div key={group.category} className="mb-5">
               <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.06em] text-text-soft">
                 {group.label}
@@ -100,11 +129,14 @@ export function NewConnectionDialog() {
                     key={type.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft px-3 py-2"
                   >
-                    <div className="flex flex-col">
-                      <span className="text-sm text-headline">{type.label}</span>
-                      {type.description && (
-                        <span className="text-xs text-text-soft">{type.description}</span>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <ChannelIcon id={type.id} />
+                      <div className="flex flex-col">
+                        <span className="text-sm text-headline">{type.label}</span>
+                        {type.description && (
+                          <span className="text-xs text-text-soft">{type.description}</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {!type.available && <Badge variant="neutral">Próximamente</Badge>}
@@ -129,6 +161,10 @@ export function NewConnectionDialog() {
               </ul>
             </div>
           ))}
+
+          {!form && filtro && categoriasVisibles.length === 0 && (
+            <p className="text-sm text-text-soft">Sin canales que coincidan con «{busqueda}».</p>
+          )}
 
           {!form && categories && (
             <p className="mt-2 text-xs text-text-soft">
