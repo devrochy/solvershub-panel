@@ -122,3 +122,7 @@ Calendario) y del **wizard de WhatsApp** (Embedded Signup/BYOK), que hoy se cons
 enlazados al panel clásico con sesión compartida (decisión: `agent-core/docs/adr/0078`).
 
 El plan de pruebas completo está en [`../../PLAN-DE-PRUEBAS.md`](../../PLAN-DE-PRUEBAS.md).
+
+> **Rutas del ecosistema**: los tipos de la API se generan desde
+> `../solvershub-backend/docs/openapi.json` (`npm run api:types`) y el tema viene de
+> `brand/tokens` (mismo repo). Ver la tabla de proyectos en el README raíz.
