@@ -138,6 +138,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
     items: [
       { section: "pack_calendar:conexion", label: "Conexión", href: "/calendario", icon: CalendarDays, ready: true },
       { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: CalendarDays, ready: true },
+      { section: "pack_calendar:citas", label: "Citas", href: "/calendario/citas", icon: CalendarDays, ready: true },
       {
         section: "pack_calendar:conexion",
         label: "Calendario (clásico)",
