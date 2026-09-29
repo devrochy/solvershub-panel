@@ -8,7 +8,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
-import { ExpenseApprove } from "./_components/expense-approve";
+import { ExpenseFormDialog, ExpenseRowActions } from "./_components/expense-approve";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
 import {
   CashAdjustDialog,
@@ -89,7 +89,7 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (g) => <ExpenseApprove expenseId={g.id} aprobado={g.aprobado} />,
+      cell: (g) => <ExpenseRowActions expense={g} portfolioId={c.id} />,
     },
   ];
 
@@ -176,7 +176,13 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Gastos</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">Gastos</h2>
+          <ExpenseFormDialog
+            portfolioId={c.id}
+            trigger={<Button variant="outline">Registrar gasto</Button>}
+          />
+        </div>
         <DataTable
           columns={expenseColumns}
           rows={c.gastos}
