@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useSyncExternalStore } from "react";
-import { ArrowUpRight, ChevronRight, Lock } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Lock, X } from "lucide-react";
 
 import { EnablePackButton } from "@/components/shell/enable-pack-button";
 import {
@@ -143,8 +143,7 @@ export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState
           const pack = group.pack ? packs[group.pack] : undefined;
           const locked = Boolean(group.pack) && pack ? !pack.enabled : false;
           const conActiva = visible.some((item) => item.href === activeHref);
-          // Un pack bloqueado se muestra abierto: ahí vive el CTA para habilitarlo.
-          const open = conActiva || locked || !collapsedIds.includes(group.id);
+          const open = conActiva || !collapsedIds.includes(group.id);
           const GroupIcon = group.icon;
           return (
             <div key={group.id} className="flex flex-col gap-0.5">
@@ -163,20 +162,31 @@ export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState
                 {locked && <Lock className="h-3.5 w-3.5" aria-label="Pack no habilitado" />}
               </button>
 
-              {open && (
+              {open && locked && group.pack ? (
+                // Pack deshabilitado: solo el mensaje para habilitarlo (sin la lista
+                // de ítems bloqueados) y con cierre para no volver a verlo.
+                <div className="mx-3 mb-1 rounded-md border border-border-soft bg-surface p-3">
+                  <div className="flex items-start justify-between gap-2 pb-2">
+                    <p className="text-xs text-body">
+                      Este pack no está habilitado para el negocio.
+                    </p>
+                    <button
+                      aria-label="Cerrar el aviso del pack"
+                      className="-mt-1 -mr-1 rounded p-1 text-text-soft hover:text-headline"
+                      onClick={() => toggle(group.id)}
+                      type="button"
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </div>
+                  <EnablePackButton
+                    pluginId={group.pack}
+                    label={group.label}
+                    hasConfig={Boolean(pack?.hasConfig)}
+                  />
+                </div>
+              ) : open ? (
                 <div className="flex flex-col gap-0.5">
-                  {locked && group.pack && (
-                    <div className="mx-3 mb-1 rounded-md border border-border-soft bg-surface p-3">
-                      <p className="pb-2 text-xs text-body">
-                        Este pack no está habilitado para el negocio.
-                      </p>
-                      <EnablePackButton
-                        pluginId={group.pack}
-                        label={group.label}
-                        hasConfig={Boolean(pack?.hasConfig)}
-                      />
-                    </div>
-                  )}
                   {visible.map((item, index) => (
                     <Fragment key={`${item.href}-${index}`}>
                       {item.sub && item.sub !== visible[index - 1]?.sub && (
@@ -188,7 +198,7 @@ export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState
                     </Fragment>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           );
         })}
