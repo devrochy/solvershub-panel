@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { ColumnInfo } from "@/components/ui/column-info";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TableEnhancer } from "@/components/ui/table-enhancer";
@@ -11,6 +12,8 @@ export type Column<T> = {
   cell: (row: T) => ReactNode;
   align?: "left" | "right";
   className?: string;
+  /** Ayuda breve de la columna: se muestra con un icono ⓘ en la cabecera. */
+  info?: string;
 };
 
 /**
@@ -52,6 +55,7 @@ export function DataTable<T>({
                 className={cn(column.align === "right" && "text-right", column.className)}
               >
                 {column.header}
+                {column.info && <ColumnInfo text={column.info} />}
               </TableHead>
             ))}
           </TableRow>

@@ -70,6 +70,7 @@ export default async function CobrosPage() {
     {
       key: "referencia",
       header: "Referencia",
+      info: "Referencia del link de cobro; la usan gestor y cliente para conciliar el pago.",
       cell: (l) => <span className="text-body font-mono text-xs">{l.referencia}</span>,
     },
     { key: "monto", header: "Monto", align: "right", cell: (l) => formatCop(l.monto) },
@@ -81,6 +82,7 @@ export default async function CobrosPage() {
     {
       key: "url",
       header: "URL",
+      info: "Enlace de pago que se comparte al cliente para pagar en línea.",
       cell: (l) => (
         <a href={l.url} className="text-link hover:underline" rel="noreferrer" target="_blank">
           Abrir ↗

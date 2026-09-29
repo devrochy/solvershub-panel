@@ -29,7 +29,7 @@ export default async function ConnectionsPage() {
   const { items, webhook_url } = res.data;
 
   const columns: Column<ConnectionRow>[] = [
-    { key: "origen", header: "Origen", cell: (c) => <span className="text-body">{c.origin}</span> },
+    { key: "origen", header: "Origen", info: "Cómo se creó: formulario manual, OAuth del framework o app propia del negocio (BYOK).", cell: (c) => <span className="text-body">{c.origin}</span> },
     {
       key: "canal",
       header: "Canal",
@@ -39,6 +39,7 @@ export default async function ConnectionsPage() {
     {
       key: "identificador",
       header: "Identificador",
+      info: "ID externo del canal (número, WABA, página…): con él se enrutan los mensajes entrantes.",
       cell: (c) => <span className="font-mono text-xs text-body">{c.external_id}</span>,
     },
     {
@@ -83,7 +84,7 @@ export default async function ConnectionsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Conexiones"
-        description="Canales por los que tu agente atiende. Cada negocio tiene su propio webhook."
+        description="Canales por los que tu agente atiende. Las credenciales se guardan cifradas (Fernet) y no dependen del .env; cada negocio tiene su propio webhook y verify token."
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="default">
@@ -101,6 +102,10 @@ export default async function ConnectionsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Webhook del negocio</CardTitle>
+            <p className="text-xs text-text-soft">
+              Registralo en Meta con la URL y el verify token que se muestran abajo; sin esto los
+              mensajes no llegan al asistente.
+            </p>
           </CardHeader>
           <CardContent>
             <code className="block break-all rounded-md bg-bg-deep px-3 py-2 font-mono text-xs text-accent">

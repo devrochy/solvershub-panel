@@ -72,6 +72,7 @@ export default async function CollaboratorsPage() {
     {
       key: "permisos",
       header: "Permisos",
+      info: "Permisos por sección que tiene el colaborador en este negocio.",
       cell: (c) =>
         c.permissions.length === 0 ? (
           <span className="text-text-soft">—</span>

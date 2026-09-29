@@ -65,6 +65,7 @@ export default async function DispositivosPage() {
     {
       key: "codigo",
       header: "Código",
+      info: "Código que identifica al dispositivo del gestor (se muestra truncado).",
       cell: (d) => <span className="text-body font-mono text-xs">{d.codigo.slice(0, 8)}</span>,
     },
     { key: "gestor", header: "Gestor", cell: (d) => <span className="text-headline">{d.gestor}</span> },
@@ -111,6 +112,7 @@ export default async function DispositivosPage() {
     {
       key: "evento",
       header: "Evento",
+      info: "Tipo de evento reportado por la app: login, sincronización, intento de acceso, error…",
       cell: (s) => <span className="text-body font-mono text-xs">{s.evento}</span>,
     },
   ];

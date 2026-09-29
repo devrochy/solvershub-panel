@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { IconAction } from "@/components/ui/icon-action";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Separator } from "@/components/ui/separator";
@@ -73,10 +74,9 @@ export function ConnectionActions({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={`Acciones de ${label}`}>
+        <IconAction label={`Acciones de ${label}`} tone="neutro">
           <MoreHorizontal className="h-4 w-4" aria-hidden />
-          Acciones
-        </Button>
+        </IconAction>
       </DialogTrigger>
       <DialogContent title="Acciones de la conexión" description={label} className="max-w-md">
         <div className="flex flex-col gap-4">

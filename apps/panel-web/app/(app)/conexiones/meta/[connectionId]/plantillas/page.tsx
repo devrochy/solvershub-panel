@@ -66,6 +66,7 @@ export default async function TemplatesPage({
     {
       key: "estado",
       header: "Estado",
+      info: "Estado de la plantilla en Meta: APPROVED, PENDING, REJECTED…",
       cell: (t) => (
         <div className="flex flex-col gap-1">
           <Badge variant={STATUS_VARIANT[t.status] ?? "neutral"}>{t.status}</Badge>
@@ -78,6 +79,7 @@ export default async function TemplatesPage({
     {
       key: "calidad",
       header: "Calidad",
+      info: "Calificación de Meta según el rendimiento de la plantilla.",
       cell: (t) => <span className="text-body">{t.quality_score ?? "—"}</span>,
     },
     {

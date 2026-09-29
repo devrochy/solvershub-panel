@@ -5,6 +5,7 @@ import { Pencil, Trash2, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { IconAction } from "@/components/ui/icon-action";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -194,44 +195,24 @@ export function ClientRowActions({
         carteras={carteras}
         cliente={cliente}
         trigger={
-          <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
+          <IconAction label="Editar" tone="editar">
             <Pencil className="h-4 w-4" aria-hidden />
-          </Button>
+          </IconAction>
         }
       />
       {confirmando ? (
         <>
-          <Button
-            aria-label="Confirmar eliminación"
-            className="text-danger"
-            disabled={loading}
-            onClick={eliminar}
-            size="icon"
-            title="Confirmar eliminación"
-            variant="outline"
-          >
+          <IconAction disabled={loading} label="Confirmar eliminación" onClick={eliminar} tone="aprobar">
             <Check className="h-4 w-4" aria-hidden />
-          </Button>
-          <Button
-            aria-label="Cancelar"
-            onClick={() => setConfirmando(false)}
-            size="icon"
-            title="Cancelar"
-            variant="ghost"
-          >
+          </IconAction>
+          <IconAction label="Cancelar" onClick={() => setConfirmando(false)} tone="neutro">
             <X className="h-4 w-4" aria-hidden />
-          </Button>
+          </IconAction>
         </>
       ) : (
-        <Button
-          aria-label="Eliminar"
-          onClick={() => setConfirmando(true)}
-          size="icon"
-          title="Eliminar"
-          variant="ghost"
-        >
-          <Trash2 className="h-4 w-4 text-danger" aria-hidden />
-        </Button>
+        <IconAction label="Eliminar" onClick={() => setConfirmando(true)} tone="eliminar">
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </IconAction>
       )}
       {error && (
         <span className="text-xs text-danger" role="alert">

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Eye, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { IconAction } from "@/components/ui/icon-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -178,11 +179,9 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       align: "right",
       cell: (cl) => (
         <div className="flex items-center justify-end gap-1">
-          <Button asChild aria-label="Ver ficha" size="icon" title="Ver ficha" variant="outline">
-            <Link href={`/cobranza/clientes/${cl.id}`}>
-              <Eye className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
+          <IconAction href={`/cobranza/clientes/${cl.id}`} label="Ver ficha" tone="ver">
+            <Eye className="h-4 w-4" aria-hidden />
+          </IconAction>
           <ClientRowActions cliente={cl} carteras={carteras} />
         </div>
       ),
