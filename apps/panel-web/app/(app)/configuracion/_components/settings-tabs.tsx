@@ -19,6 +19,15 @@ type Advanced = {
   spec: Record<string, unknown>;
 };
 
+// Alias de las pestañas del panel clásico → ids de esta pantalla (para ?tab=).
+const ALIAS_TABS: Record<string, string> = {
+  identidad: "identity",
+  cerebro: "brain",
+  memoria: "memory",
+  habilidades: "skills",
+  avanzado: "advanced",
+};
+
 const TABS = [
   { id: "identity", label: "Identidad" },
   { id: "brain", label: "Cerebro" },
@@ -29,13 +38,17 @@ const TABS = [
 
 /** Shell de Configuración: elige la pestaña activa y monta su formulario. */
 export function SettingsTabs({
+  defaultTab,
   settings,
   advanced,
 }: {
+  defaultTab?: string;
   settings: SettingsResponse;
   advanced: Advanced;
 }) {
-  const [tab, setTab] = useState("identity");
+  const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
+  const [tab, setTab] = useState(
+    TABS.some((t) => t.id === pedido) ? pedido : "identity");
 
   return (
     <div className="flex flex-col gap-6">

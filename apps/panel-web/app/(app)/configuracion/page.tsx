@@ -5,7 +5,12 @@ import type { SettingsResponse } from "@/lib/api/types";
 
 export const metadata = { title: "Configuración" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const tab = (await searchParams).tab;
   const [res, advancedRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
@@ -24,7 +29,7 @@ export default async function SettingsPage() {
         title="Configuración"
         description="Identidad y comportamiento del agente de este negocio."
       />
-      <SettingsTabs settings={res.data} advanced={advancedRes.data} />
+      <SettingsTabs advanced={advancedRes.data} defaultTab={tab} settings={res.data} />
     </div>
   );
 }

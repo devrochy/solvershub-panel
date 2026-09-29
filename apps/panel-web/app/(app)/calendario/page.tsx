@@ -129,7 +129,6 @@ export default async function CalendarPage({
               <Link href="/calendario/tipos">Tipos de cita</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href="/legacy/calendar">Calendario clásico ↗</Link>
             </Button>
           </div>
         }

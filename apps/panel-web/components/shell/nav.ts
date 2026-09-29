@@ -98,15 +98,6 @@ export const NAV_GROUPS: NavGroupDef[] = [
       { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: HandCoins, sub: "Seguridad", ready: true },
       { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: HandCoins, sub: "Seguridad", ready: true },
       { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: HandCoins, sub: "Seguridad", ready: true },
-      {
-        section: "pack_cobranza:resumen",
-        label: "Cobranza (clásica)",
-        href: "/legacy/cobranza/",
-        icon: HandCoins,
-        ready: true,
-        legacy: true,
-        sub: "Clásico",
-      },
     ],
   },
   {
@@ -120,14 +111,6 @@ export const NAV_GROUPS: NavGroupDef[] = [
       { section: "pack_commerce", label: "Categorías", href: "/comercio/categorias", icon: FileText, ready: true },
       { section: "pack_commerce", label: "Promociones", href: "/comercio/promociones", icon: FileText, ready: true },
       { section: "pack_commerce", label: "Pedidos", href: "/comercio/pedidos", icon: FileText, ready: true },
-      {
-        section: "pack_commerce",
-        label: "Comercio (clásico)",
-        href: "/legacy/crm/",
-        icon: ShoppingCart,
-        ready: true,
-        legacy: true,
-      },
     ],
   },
   {
@@ -139,14 +122,6 @@ export const NAV_GROUPS: NavGroupDef[] = [
       { section: "pack_calendar:conexion", label: "Conexión", href: "/calendario", icon: CalendarDays, ready: true },
       { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: CalendarDays, ready: true },
       { section: "pack_calendar:citas", label: "Citas", href: "/calendario/citas", icon: CalendarDays, ready: true },
-      {
-        section: "pack_calendar:conexion",
-        label: "Calendario (clásico)",
-        href: "/legacy/calendar/",
-        icon: CalendarDays,
-        ready: true,
-        legacy: true,
-      },
     ],
   },
   {

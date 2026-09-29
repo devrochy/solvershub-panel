@@ -95,9 +95,6 @@ export default async function CobranzaPage() {
             <Button asChild variant="outline" size="sm">
               <Link href="/cobranza/auditoria">Auditoría</Link>
             </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/legacy/cobranza">Cobranza clásica ↗</Link>
-            </Button>
           </div>
         }
       />
