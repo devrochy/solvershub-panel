@@ -174,3 +174,19 @@ Comandos (desde la raíz `solvershub/`):
 
 > Cada tarea se marca aquí y su detalle vive en el documento enlazado. No se marca
 > `[x]` sin evidencia.
+
+## Estructura del ecosistema
+
+Este repo vive dentro del contenedor del ecosistema (`solvershub/`), junto a los
+demás proyectos:
+
+| Proyecto | Ruta hermana | Qué es |
+|---|---|---|
+| `solvershub-panel` | este repo | Panel Next (`apps/panel-web`) + sistema de diseño (`brand/`) |
+| `solvershub-backend` | `../solvershub-backend` | Runtime y API (`agent-core`: FastAPI, packs, ADRs) |
+| `solvershub-apk` | `../solvershub-apk` | App de campo (Expo/React Native) |
+| `solvershub-landing` | `../solvershub-landing` | Sitio público |
+| `solvershub-comercial` | `../solvershub-comercial` | Planes, pruebas, comercial, legal y runbooks |
+
+Las rutas relativas (`AGENT_CORE`, `api:types`, enlaces de documentos) asumen esa
+disposición; si mueves un repo, ajusta `Makefile` y `apps/panel-web/package.json`.
