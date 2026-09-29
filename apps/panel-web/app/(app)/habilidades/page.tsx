@@ -20,7 +20,7 @@ export default async function PluginsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Habilidades"
-        description="Módulos que se suman al agente. Activa y configura los que tu negocio necesite."
+        description="Módulos que se suman al agente. El alcance es por negocio: al activar uno se carga su código y su salud se controla aislada por negocio (si falla, se puede reintentar sin afectar al resto)."
       />
 
       {res.data.length === 0 ? (

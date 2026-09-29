@@ -61,7 +61,7 @@ export function RulesForm({ rules }: { rules: Rules }) {
             <Field
               label="Umbral de saldo autónomo"
               htmlFor="umbral_saldo_autonomo"
-              help="Por debajo de este saldo el agente negocia solo."
+              help="Por debajo de este saldo el agente negocia solo. 0 = sin límite (negocia sin tope). Regla determinista: una fila por negocio."
             >
               <Input id="umbral_saldo_autonomo" name="umbral_saldo_autonomo" type="number" step="1" min={0} defaultValue={rules.umbral_saldo_autonomo} />
             </Field>

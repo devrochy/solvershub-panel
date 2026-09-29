@@ -99,6 +99,11 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSpec} className="flex flex-col gap-4">
+            <p className="text-xs text-text-soft">
+              Si completás este JSON y guardás, <strong>reemplaza todo el formulario</strong> de
+              Configuración y crea una versión nueva del AgentSpec. Las versiones anteriores quedan
+              como históricas.
+            </p>
             <Textarea
               aria-label="AgentSpec (JSON)"
               className="min-h-96 font-mono text-xs"
@@ -152,14 +157,27 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                     <TableCell className="text-right">
                       {!v.is_active && (
                         <Button
-                          onClick={() =>
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                `¿Activar la versión ${v.version}? Reemplaza a la versión activa.`,
+                              )
+                            ) {
+                              return;
+                            }
                             void post(
                               { action: "activate-version", record_id: v.id },
                               `Versión ${v.version} activada.`,
-                            )
-                          }
+                            );
+                          }}
                           disabled={Boolean(status.loading)}
-                         aria-label="Activar" size="icon" title="Activar" variant="outline"><Check className="h-4 w-4" aria-hidden /></Button>
+                          aria-label="Activar"
+                          size="icon"
+                          title="Activar"
+                          variant="outline"
+                        >
+                          <Check className="h-4 w-4" aria-hidden />
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

@@ -171,7 +171,11 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Velocidad de respuesta" htmlFor="debounce_mode">
+            <Field
+              label="Velocidad de respuesta"
+              htmlFor="debounce_mode"
+              help="Cuánto espera el asistente a que el cliente termine de escribir antes de responder."
+            >
               <Select
                 id="debounce_mode"
                 value={values.debounce_mode}
@@ -184,7 +188,11 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Reintentos de guardrail antes de escalar" htmlFor="guardrail_max_retries">
+            <Field
+              label="Reintentos de guardrail antes de escalar"
+              htmlFor="guardrail_max_retries"
+              help="Intentos ante validación fallida o posible alucinación antes de escalar a una persona. Predeterminado: 1."
+            >
               <Input
                 id="guardrail_max_retries"
                 type="number"
@@ -199,7 +207,7 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
           <Field
             label="Palabras que disparan escalamiento"
             htmlFor="escalation_keywords"
-            help="Separadas por coma."
+            help="Separadas por coma. Vacío = usa las palabras por defecto (asesor, humano, reclamo…)."
           >
             <Input
               id="escalation_keywords"
@@ -281,6 +289,10 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
           {values.available_guardrails.length > 0 && (
             <fieldset className="flex flex-col gap-3">
               <legend className="text-[13px] font-medium text-body">Guardrails activos</legend>
+              <p className="text-xs text-text-soft">
+                Cada interruptor controla si ese guardrail corre para este negocio (apagado = no se
+                evalúa).
+              </p>
               <div className="flex flex-wrap gap-x-6 gap-y-3">
                 {values.available_guardrails.map((guardrail) => {
                   const enabled = !values.disabled_guardrails.includes(guardrail);
@@ -309,13 +321,18 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
             </fieldset>
           )}
 
-          <label className="flex items-center gap-3 text-sm text-headline">
-            <Switch
-              checked={values.bot_paused}
-              onCheckedChange={(checked) => set("bot_paused", checked)}
-              aria-label="Pausar el asistente"
-            />
-            Pausar el asistente (kill-switch del negocio)
+          <label className="flex flex-col gap-1 text-sm text-headline">
+            <span className="flex items-center gap-3">
+              <Switch
+                checked={values.bot_paused}
+                onCheckedChange={(checked) => set("bot_paused", checked)}
+                aria-label="Pausar el asistente"
+              />
+              Pausar el asistente (kill-switch del negocio)
+            </span>
+            <span className="pl-11 text-xs text-text-soft">
+              Con el asistente pausado los mensajes se siguen guardando, pero nadie responde.
+            </span>
           </label>
 
           <FormFeedback error={status.error} success={status.success} />

@@ -77,6 +77,15 @@ const CAMPOS: Campo[] = [
   { name: "ruta_habilitada", label: "Ruta habilitada (función)", tipo: "bool", seccion: "Operación y avisos" },
 ];
 
+const DESCRIPCION_SECCION: Record<string, string> = {
+  Crédito: "Parámetros con los que el agente ofrece préstamos y cupos.",
+  Liquidación: "Comisión del gestor y cada cuánto se liquida la caja.",
+  "Operación y avisos": "Días no laborables, avisos de cobro y mora, y si la ruta está habilitada.",
+  "Visibilidad APK": "Qué información ve el gestor en la app de campo.",
+  "Permisos APK": "Acciones destructivas habilitadas desde la app de campo.",
+  Control: "Controles automáticos y de identidad de los clientes.",
+};
+
 const SECCIONES = [
   "Crédito",
   "Liquidación",
@@ -151,6 +160,9 @@ export function PortfolioConfigDialog({
               <legend className="pb-1 text-[11px] font-medium tracking-[0.06em] text-text-soft uppercase">
                 {seccion}
               </legend>
+              {DESCRIPCION_SECCION[seccion] && (
+                <p className="text-xs text-text-soft">{DESCRIPCION_SECCION[seccion]}</p>
+              )}
               {CAMPOS.filter((campo) => campo.seccion === seccion).map((campo) =>
                 campo.tipo === "bool" ? (
                   <label key={campo.name} className="flex items-center justify-between gap-3 text-sm">
