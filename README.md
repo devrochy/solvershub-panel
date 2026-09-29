@@ -22,9 +22,9 @@ y se enlaza al detalle.
 | `security.md` | Documento de seguridad (para ventas enterprise) |
 
 > Todos los documentos de lanzamiento viven **físicamente aquí**, en `solvershub/`.
-> Solo quedan en el repo del producto (`agent-core/docs/`) los documentos propios
-> del código que su código y ADRs referencian: `agent-core/docs/BILLING.md` (facturación),
-> `agent-core/docs/despliegue-coolify.md` (despliegue) y `agent-core/docs/ROADMAP.md` (desarrollo).
+> Solo quedan en el repo del producto (`solvershub-backend/docs/`) los documentos propios
+> del código que su código y ADRs referencian: `solvershub-backend/docs/BILLING.md` (facturación),
+> `solvershub-backend/docs/despliegue-coolify.md` (despliegue) y `solvershub-backend/docs/ROADMAP.md` (desarrollo).
 
 ---
 
@@ -49,7 +49,7 @@ Leyenda: 🟢 avanzado · 🟡 a medias · 🔴 por hacer
 - [x] Marca: **SolversHub** (producto) · **Roshi** (empresa).
 - [x] Paleta base `#172F6C` validada (contraste WCAG AA/AAA).
 - [x] Logotipo (check + cerebro en red 3D) y **manual de marca**.
-- [x] Precios y planes definidos (`../agent-core/docs/BILLING.md`).
+- [x] Precios y planes definidos (`../solvershub-backend/docs/BILLING.md`).
 - [x] Congelar Forja y MobiMetrIA durante el lanzamiento.
 - [ ] **Fee de implementación** definido (recomendado: 1–3 meses de plan).
 - [ ] **Dominio final** de SolversHub (hoy la landing apunta a `solversolutions.com`).
@@ -133,11 +133,11 @@ Estructura objetivo y estado actual:
 |---|---|---|---|
 | Panel web | `apps/panel-web/` | Next.js 16 · Tailwind v4 · shadcn/ui | En este repo |
 | Marca / tokens | `brand/` | DTCG → CSS/Tailwind/RN/Android | En este repo |
-| Runtime | `../agent-core/` | Python · FastAPI · PostgreSQL/Redis | Repo propio (fase 2) |
+| Runtime | `../solvershub-backend/` | Python · FastAPI · PostgreSQL/Redis | Repo propio (fase 2) |
 | APK del gestor | `../cobranza/solvershub-apk/` | Expo / React Native | Repo propio (fase 2) |
 
 `agent-core` y la APK conservan su repo y su CI (runner self-hosted) por ahora;
-migrarlos a este monorepo es fase 2 (ver `agent-core/docs/adr/0076`). La CI de este
+migrarlos a este monorepo es fase 2 (ver `../solvershub-backend/docs/adr/0076`). La CI de este
 repo (`.github/workflows/ci.yml`) usa *path filters*: corre tokens si cambia
 `brand/tokens/**` y el panel si cambia `apps/panel-web/**`.
 
@@ -154,12 +154,12 @@ Comandos (desde la raíz `solvershub/`):
 | `make core-rebuild` | Reconstruye y reinicia `core-api` del stack docker |
 | `make lint` / `make test` | Lint / tests de todo el monorepo |
 
-**Validación:** el plan de pruebas vive en [`PLAN-DE-PRUEBAS.md`](PLAN-DE-PRUEBAS.md) y su
+**Validación:** el plan de pruebas vive en [`PLAN-DE-PRUEBAS.md`](../solvershub-comercial/PLAN-DE-PRUEBAS.md) y su
 última ejecución (campaña completa, 122 casos) en
-[`REPORTE-DE-PRUEBAS-2026-09-28.md`](REPORTE-DE-PRUEBAS-2026-09-28.md): **116 PASA ·
+[`REPORTE-DE-PRUEBAS-2026-09-28.md`](../solvershub-comercial/REPORTE-DE-PRUEBAS-2026-09-28.md): **116 PASA ·
 5 con limitación de entorno · 1 hallazgo menor (DEF-01) · 0 defectos Altos/Críticos**.
 
-> Rutas relativas: `AGENT_CORE` (default `../agent-core`) es configurable:
+> Rutas relativas: `AGENT_CORE` (default `../solvershub-backend`) es configurable:
 > `make api-types AGENT_CORE=/ruta/a/agent-core`.
 
 ---

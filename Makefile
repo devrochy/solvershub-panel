@@ -6,7 +6,7 @@
 #
 # Ver README.md § Software para el mapa completo.
 
-AGENT_CORE ?= ../agent-core
+AGENT_CORE ?= ../solvershub-backend
 AGENT_PY := $(AGENT_CORE)/.venv/bin/python
 PANEL ?= apps/panel-web
 PANEL_PORT ?= 3200

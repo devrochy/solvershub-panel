@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tokens:sync": "node scripts/sync-tokens.mjs",
-    "api:types": "openapi-typescript ../../../agent-core/docs/openapi.json -o lib/api/schema.d.ts"
+    "api:types": "openapi-typescript ../../../solvershub-backend/docs/openapi.json -o lib/api/schema.d.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
