@@ -16,6 +16,7 @@ type Advanced = {
   guardrails_text: string;
   flow: { source: string; sections: { label: string; purpose: string | null; tools: string[] }[]; unknown_tools: string[] };
   eval_runs: { id: string; status: string; score: number | null; created_at: string | null }[];
+  spec: Record<string, unknown>;
 };
 
 const TABS = [

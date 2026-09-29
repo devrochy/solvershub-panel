@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api/server";
 /** BFF: acciones de Configuración avanzada (LLM, guardrails, versiones). */
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
-    | { action?: string; record_id?: string; llm_provider?: string; llm_model?: string; llm_api_key?: string; guardrails_text?: string }
+    | { action?: string; record_id?: string; llm_provider?: string; llm_model?: string; llm_api_key?: string; guardrails_text?: string; spec?: Record<string, unknown> }
     | null;
   const action = body?.action ?? "";
 
@@ -18,6 +18,16 @@ export async function POST(request: Request) {
         llm_api_key: body?.llm_api_key ?? "",
       },
     });
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json(res.data);
+  }
+
+  if (action === "spec") {
+    const spec = (body?.spec ?? null) as Record<string, unknown> | null;
+    if (!spec) {
+      return NextResponse.json({ error: "Falta el spec." }, { status: 400 });
+    }
+    const res = await apiFetch("/admin/settings/advanced/spec", { method: "PUT", body: { spec } });
     if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
     return NextResponse.json(res.data);
   }

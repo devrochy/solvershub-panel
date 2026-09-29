@@ -21,6 +21,7 @@ type Advanced = {
   guardrails_text: string;
   flow: { source: string; sections: { label: string; purpose: string | null; tools: string[] }[]; unknown_tools: string[] };
   eval_runs: { id: string; status: string; score: number | null; created_at: string | null }[];
+  spec: Record<string, unknown>;
 };
 
 /** Configuración avanzada: versiones, LLM, guardrails, flow y evals. */
@@ -28,6 +29,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
   const router = useRouter();
   const [llm, setLlm] = useState({ ...advanced.llm, llm_api_key: "" });
   const [guardrails, setGuardrails] = useState(advanced.guardrails_text);
+  const [spec, setSpec] = useState(() => JSON.stringify(advanced.spec ?? {}, null, 2));
   const [status, setStatus] = useState<{
     loading?: string;
     error?: string;
@@ -62,6 +64,18 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
     void post({ action: "guardrails", guardrails_text: guardrails }, "Guardrails guardados.");
   }
 
+  function onSpec(event: FormEvent) {
+    event.preventDefault();
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(spec) as Record<string, unknown>;
+    } catch {
+      setStatus({ error: "El spec no es JSON válido." });
+      return;
+    }
+    void post({ action: "spec", spec: parsed }, "AgentSpec guardado (se crea versión solo si cambió).");
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <FormFeedback error={status.error} success={status.success} />
@@ -79,9 +93,29 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
         </div>
       )}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Editor crudo del AgentSpec</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSpec} className="flex flex-col gap-4">
+            <Textarea
+              aria-label="AgentSpec (JSON)"
+              className="min-h-96 font-mono text-xs"
+              onChange={(e) => setSpec(e.target.value)}
+              value={spec}
+            />
+            <div className="flex items-center gap-3">
+              <Button type="submit" disabled={status.loading === "spec"}>
+                {status.loading === "spec" ? "Guardando…" : "Guardar AgentSpec"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       <p className="text-sm text-body">
-        El editor crudo del AgentSpec y las herramientas declarativas (JSON) siguen en el panel
-        clásico:{" "}
+        Las herramientas declarativas (JSON) siguen en el panel clásico:{" "}
         <Link href="/legacy/admin/configuracion?tab=avanzado" className="text-link hover:underline">
           abrir Avanzado clásico ↗
         </Link>
