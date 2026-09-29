@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableEnhancer } from "@/components/ui/table-enhancer";
 import { cn } from "@/lib/utils";
 
 export type Column<T> = {
@@ -41,6 +42,7 @@ export function DataTable<T>({
 
   return (
     <div className={cn("overflow-hidden rounded-lg border border-border-soft bg-surface", className)}>
+      {rows.length > 7 && <TableEnhancer />}
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
