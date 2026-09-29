@@ -60,6 +60,7 @@ type PortfolioDetail = {
   }[];
   inyecciones: { fecha: string; valor: number; comentario: string; estado: string }[];
   gastos: { id: string; fecha: string; descripcion: string; valor: number; aprobado: boolean }[];
+  estadisticas: { fecha: string; datos: Record<string, unknown> }[];
 };
 
 export default async function CarteraDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -108,6 +109,22 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
     { key: "cobrado", header: "Cobrado", align: "right", cell: (l) => formatCop(l.cobrado) },
     { key: "gastos", header: "Gastos", align: "right", cell: (l) => formatCop(l.gastos) },
     { key: "comision", header: "Comisión", align: "right", cell: (l) => formatCop(l.comision) },
+  ];
+
+  const estadisticaColumns: Column<{ fecha: string; datos: Record<string, unknown> }>[] = [
+    { key: "fecha", header: "Fecha", cell: (e) => formatDate(e.fecha) },
+    {
+      key: "datos",
+      header: "Datos del cierre",
+      cell: (e) => (
+        <span className="text-body text-xs" title={JSON.stringify(e.datos)}>
+          {Object.entries(e.datos)
+            .slice(0, 5)
+            .map(([k, v]) => `${k}: ${String(v)}`)
+            .join(" · ") || "—"}
+        </span>
+      ),
+    },
   ];
 
   const injectionColumns: Column<PortfolioDetail["inyecciones"][number]>[] = [
@@ -239,6 +256,18 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           getRowKey={(g, idx) => `${g.fecha}-${idx}`}
           emptyTitle="Sin gastos"
           emptyDescription="Los gastos reportados por los gestores aparecerán aquí."
+        />
+      </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">
+          Cierres del día (estadísticas)
+        </h2>
+        <DataTable
+          columns={estadisticaColumns}
+          rows={c.estadisticas}
+          getRowKey={(e, i) => `${e.fecha}-${i}`}
+          emptyTitle="Sin cierres"
+          emptyDescription="Genera el cierre del día desde la tarjeta Caja para ver aquí sus números."
         />
       </section>
       <section className="flex flex-col gap-3">
