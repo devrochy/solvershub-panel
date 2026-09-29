@@ -36,6 +36,24 @@ const RIESGO_TONE: Record<string, "neutral" | "accent" | "danger"> = {
   rojo: "danger",
 };
 
+/** Resumen legible de un snapshot de cierre (aplana `conteos` y similares). */
+function resumenDatos(datos: Record<string, unknown>): string {
+  const partes: string[] = [];
+  for (const [clave, valor] of Object.entries(datos)) {
+    if (valor === null || valor === undefined) continue;
+    if (typeof valor === "object") {
+      const sub = Object.entries(valor as Record<string, unknown>)
+        .filter(([, interno]) => typeof interno !== "object")
+        .map(([k, v]) => `${k}: ${String(v)}`)
+        .join(", ");
+      if (sub) partes.push(`${clave}: ${sub}`);
+    } else {
+      partes.push(`${clave}: ${String(valor)}`);
+    }
+  }
+  return partes.join(" · ") || "—";
+}
+
 type Nota = { id: string; nota: string; fecha: string; autor: string };
 
 type RutaCliente = {
@@ -51,6 +69,16 @@ type RutaOut = {
   plan: { orden: string[]; distancia_km: number; tiempo_min: number; fecha: string } | null;
 };
 
+type ReporteDiario = {
+  fecha: string;
+  cobrado: number;
+  prestado: number;
+  visitados: number;
+  sin_pago: number;
+  inicio: string;
+  fin: string;
+};
+
 type PortfolioDetail = {
   id: string;
   nombre: string;
@@ -63,6 +91,10 @@ type PortfolioDetail = {
   clientes: number;
   prestamos: number;
   saldo: number;
+  mora: number;
+  cobrado_30d: number;
+  gastos_total: number;
+  reportes_diarios: ReporteDiario[];
   caja: { saldo_inicial: number; saldo_actual: number; actualizado: string };
   liquidaciones: {
     cartera: string;
@@ -186,10 +218,33 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       header: "Datos del cierre",
       cell: (e) => (
         <span className="text-body text-xs" title={JSON.stringify(e.datos)}>
-          {Object.entries(e.datos)
-            .slice(0, 5)
-            .map(([k, v]) => `${k}: ${String(v)}`)
-            .join(" · ") || "—"}
+          {resumenDatos(e.datos)}
+        </span>
+      ),
+    },
+  ];
+
+  const reporteColumns: Column<ReporteDiario>[] = [
+    { key: "fecha", header: "Fecha", cell: (r) => formatDate(r.fecha) },
+    {
+      key: "horario",
+      header: "Horario",
+      cell: (r) => (
+        <span className="text-body">
+          {r.inicio || r.fin ? `${r.inicio || "—"} – ${r.fin || "—"}` : "—"}
+        </span>
+      ),
+    },
+    { key: "cobrado", header: "Cobrado", align: "right", cell: (r) => formatCop(r.cobrado) },
+    { key: "prestado", header: "Prestado", align: "right", cell: (r) => formatCop(r.prestado) },
+    { key: "visitados", header: "Visitados", align: "right", cell: (r) => formatNumber(r.visitados) },
+    {
+      key: "sin_pago",
+      header: "Sin pago",
+      align: "right",
+      cell: (r) => (
+        <span className={r.sin_pago > 0 ? "text-danger" : "text-body"}>
+          {formatNumber(r.sin_pago)}
         </span>
       ),
     },
@@ -256,6 +311,13 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
         <StatCard label="Clientes" value={formatNumber(c.clientes)} />
         <StatCard label="Préstamos" value={formatNumber(c.prestamos)} />
         <StatCard label="Saldo" value={formatCop(c.saldo)} />
+        <StatCard
+          label="Mora"
+          value={formatCop(c.mora)}
+          hint={c.mora > 0 ? "Cuotas atrasadas" : undefined}
+        />
+        <StatCard label="Cobrado (30 días)" value={formatCop(c.cobrado_30d)} />
+        <StatCard label="Gastos" value={formatCop(c.gastos_total)} />
         <StatCard
           label="Caja actual"
           value={formatCop(c.caja.saldo_actual)}
@@ -357,6 +419,17 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           emptyDescription="Los gastos reportados por los gestores aparecerán aquí."
         />
       </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">Reportes diarios</h2>
+        <DataTable
+          columns={reporteColumns}
+          rows={c.reportes_diarios}
+          getRowKey={(r) => r.fecha}
+          emptyTitle="Sin reportes diarios"
+          emptyDescription="Los cierres que genera la app de campo aparecerán aquí."
+        />
+      </section>
+
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">
           Cierres del día (estadísticas)
