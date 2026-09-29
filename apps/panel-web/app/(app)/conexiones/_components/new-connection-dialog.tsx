@@ -120,7 +120,7 @@ export function NewConnectionDialog() {
                       )}
                       {type.available && type.id !== "whatsapp_waweb" && (type.setup_kind !== "manual" || !type.has_schema) && type.url && (
                         <Button asChild size="sm" variant="ghost">
-                          <Link href={`/legacy${type.url}`}>Abrir asistente ↗</Link>
+                          <Link href="/conexiones/whatsapp">Abrir asistente</Link>
                         </Button>
                       )}
                     </div>
@@ -133,7 +133,7 @@ export function NewConnectionDialog() {
           {!form && categories && (
             <p className="mt-2 text-xs text-text-soft">
               ¿El asistente falla?{" "}
-              <Link href="/legacy/admin/conexiones/manual" className="text-link hover:underline">
+              <Link href="/conexiones/whatsapp" className="text-link hover:underline">
                 Carga manual de respaldo ↗
               </Link>
             </p>
