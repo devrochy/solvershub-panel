@@ -8,10 +8,11 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
-type Tipo = "int" | "num" | "bool";
-type Campo = { name: string; label: string; tipo: Tipo; seccion: string };
+type Tipo = "int" | "num" | "bool" | "select";
+type Campo = { name: string; label: string; tipo: Tipo; seccion: string; opciones?: string[] };
 
 /** Espejo de _CONFIG_FIELDS del panel clásico (agrupado para el formulario). */
 const CAMPOS: Campo[] = [
@@ -21,8 +22,21 @@ const CAMPOS: Campo[] = [
   { name: "cupo_default", label: "Cupo por defecto", tipo: "num", seccion: "Crédito" },
   { name: "recargo_activo", label: "Recargo activo", tipo: "bool", seccion: "Crédito" },
   { name: "bloquear_cambio_interes", label: "Bloquear cambio de interés", tipo: "bool", seccion: "Crédito" },
+  {
+    name: "permitir_cambio_fecha_prestamo",
+    label: "Permitir cambio de fecha del préstamo",
+    tipo: "bool",
+    seccion: "Crédito",
+  },
   { name: "comision_activa", label: "Comisión activa", tipo: "bool", seccion: "Liquidación" },
   { name: "comision_porcentaje", label: "Comisión %", tipo: "num", seccion: "Liquidación" },
+  {
+    name: "periodo_liquidacion",
+    label: "Periodo de liquidación",
+    tipo: "select",
+    seccion: "Liquidación",
+    opciones: ["diario", "semanal", "quincenal", "mensual"],
+  },
   { name: "mostrar_fecha_ultima_liquidada", label: "Mostrar fecha de última liquidación", tipo: "bool", seccion: "Visibilidad APK" },
   { name: "mostrar_caja", label: "Mostrar caja", tipo: "bool", seccion: "Visibilidad APK" },
   { name: "mostrar_cobrado_liquidada", label: "Mostrar cobrado liquidado", tipo: "bool", seccion: "Visibilidad APK" },
@@ -40,11 +54,39 @@ const CAMPOS: Campo[] = [
   { name: "registro_documento_cliente", label: "Registro de documento del cliente", tipo: "bool", seccion: "Control" },
   { name: "bloqueo_automatico_clientes", label: "Bloqueo automático de clientes", tipo: "bool", seccion: "Control" },
   { name: "borrar_clientes_sin_deuda", label: "Borrar clientes sin deuda", tipo: "bool", seccion: "Control" },
+  {
+    name: "dias_no_laborables",
+    label: "Días no laborables",
+    tipo: "select",
+    seccion: "Operación y avisos",
+    opciones: ["solo_domingos", "domingos_y_feriados"],
+  },
+  {
+    name: "dias_anticipacion_notificacion",
+    label: "Días de anticipación de la notificación",
+    tipo: "int",
+    seccion: "Operación y avisos",
+  },
+  { name: "aviso_dia_cobro", label: "Aviso el día de cobro", tipo: "bool", seccion: "Operación y avisos" },
+  {
+    name: "umbral_mora_notificacion",
+    label: "Umbral de mora para notificar",
+    tipo: "int",
+    seccion: "Operación y avisos",
+  },
+  { name: "ruta_habilitada", label: "Ruta habilitada (función)", tipo: "bool", seccion: "Operación y avisos" },
 ];
 
-const SECCIONES = ["Crédito", "Liquidación", "Visibilidad APK", "Permisos APK", "Control"];
+const SECCIONES = [
+  "Crédito",
+  "Liquidación",
+  "Operación y avisos",
+  "Visibilidad APK",
+  "Permisos APK",
+  "Control",
+];
 
-/** Configuración de la cartera (25 campos, como el clásico). */
+/** Configuración de la cartera (los 32 campos del clásico). */
 export function PortfolioConfigDialog({
   portfolioId,
   values,
@@ -73,6 +115,8 @@ export function PortfolioConfigDialog({
     for (const campo of CAMPOS) {
       if (campo.tipo === "bool") {
         payload[campo.name] = esActivo(campo);
+      } else if (campo.tipo === "select") {
+        payload[campo.name] = String(data.get(campo.name) ?? "");
       } else {
         payload[campo.name] = Number(data.get(campo.name) ?? 0);
       }
@@ -98,7 +142,7 @@ export function PortfolioConfigDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
         title="Configuración de la cartera"
-        description="Crédito, comisión de liquidación, visibilidad y permisos de la app de campo."
+        description="Crédito, liquidación, avisos, visibilidad y permisos de la app de campo."
         className="max-h-[85vh] overflow-y-auto"
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
@@ -118,6 +162,20 @@ export function PortfolioConfigDialog({
                       }
                     />
                   </label>
+                ) : campo.tipo === "select" ? (
+                  <Field key={campo.name} label={campo.label} htmlFor={campo.name}>
+                    <Select
+                      id={campo.name}
+                      name={campo.name}
+                      defaultValue={String(values[campo.name] ?? campo.opciones?.[0] ?? "")}
+                    >
+                      {(campo.opciones ?? []).map((opcion) => (
+                        <option key={opcion} value={opcion}>
+                          {opcion.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
                 ) : (
                   <Field key={campo.name} label={campo.label} htmlFor={campo.name}>
                     <Input
