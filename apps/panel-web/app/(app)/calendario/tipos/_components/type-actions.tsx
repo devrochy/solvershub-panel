@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -71,13 +72,14 @@ export function DeleteTypeButton({ typeId, label }: { typeId: string; label: str
 
   return (
     <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => void remove()}
-      disabled={loading}
       aria-label={`Eliminar ${label}`}
+      disabled={loading}
+      onClick={() => void remove()}
+      size="icon"
+      title={`Eliminar ${label}`}
+      variant="ghost"
     >
-      Eliminar
+      <Trash2 className="h-4 w-4 text-danger" aria-hidden />
     </Button>
   );
 }

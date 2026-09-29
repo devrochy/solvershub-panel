@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -92,9 +93,7 @@ export function PluginActions({
           </p>
           <div className="mt-6 flex justify-end gap-2">
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                Cancelar
-              </Button>
+              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
             </DialogClose>
             <Button type="button" variant="danger" onClick={confirmDeactivate}>
               Deshabilitar

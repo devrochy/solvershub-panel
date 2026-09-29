@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -71,9 +72,7 @@ export function DeleteTemplateButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          Eliminar
-        </Button>
+        <Button aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-danger" aria-hidden /></Button>
       </DialogTrigger>
       <DialogContent
         title="Eliminar plantilla"
@@ -86,9 +85,7 @@ export function DeleteTemplateButton({
         <FormFeedback error={status.error} className="mt-3" />
         <div className="mt-6 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              Cancelar
-            </Button>
+            <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
           </DialogClose>
           <Button type="button" variant="danger" onClick={() => void remove()} disabled={status.loading}>
             {status.loading ? "Eliminando…" : "Eliminar"}

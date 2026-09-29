@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -117,8 +118,6 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                     <TableCell className="text-right">
                       {!v.is_active && (
                         <Button
-                          variant="outline"
-                          size="sm"
                           onClick={() =>
                             void post(
                               { action: "activate-version", record_id: v.id },
@@ -126,9 +125,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                             )
                           }
                           disabled={Boolean(status.loading)}
-                        >
-                          Activar
-                        </Button>
+                         aria-label="Activar" size="icon" title="Activar" variant="outline"><Check className="h-4 w-4" aria-hidden /></Button>
                       )}
                     </TableCell>
                   </TableRow>

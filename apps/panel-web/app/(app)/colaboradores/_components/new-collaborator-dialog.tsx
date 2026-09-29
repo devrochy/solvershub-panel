@@ -105,9 +105,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                Cancelar
-              </Button>
+              <Button type="button" variant="ghost">Cancelar</Button>
             </DialogClose>
             <Button type="submit" variant="accent" disabled={status.loading}>
               {status.loading ? "Creando…" : "Crear cuenta"}

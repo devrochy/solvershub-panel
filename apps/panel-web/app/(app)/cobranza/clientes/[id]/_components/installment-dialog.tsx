@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -119,9 +119,7 @@ export function InstallmentEditor({
                 >
                   {status.loading ? "…" : "Confirmar eliminación"}
                 </Button>
-                <Button onClick={() => setConfirmando(false)} type="button" variant="ghost">
-                  Cancelar
-                </Button>
+                <Button onClick={() => setConfirmando(false)} type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
               </>
             ) : (
               <Button
@@ -176,14 +174,10 @@ export function CreditDelete({ creditId }: { creditId: string }) {
           >
             {loading ? "…" : "Confirmar"}
           </Button>
-          <Button onClick={() => setConfirmando(false)} size="sm" variant="ghost">
-            Cancelar
-          </Button>
+          <Button onClick={() => setConfirmando(false)} aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
         </>
       ) : (
-        <Button onClick={() => setConfirmando(true)} size="sm" variant="ghost">
-          Eliminar
-        </Button>
+        <Button onClick={() => setConfirmando(true)} aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-danger" aria-hidden /></Button>
       )}
       {error && (
         <span className="text-xs text-danger" role="alert">

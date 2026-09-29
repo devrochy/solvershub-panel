@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -63,9 +64,7 @@ export function ProductDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {product ? (
-          <Button variant="outline" size="sm">
-            Editar
-          </Button>
+          <Button aria-label="Editar" size="icon" title="Editar" variant="outline"><Pencil className="h-4 w-4" aria-hidden /></Button>
         ) : (
           <Button variant="accent">Nuevo producto</Button>
         )}
@@ -117,9 +116,7 @@ export function ProductDialog({
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                Cancelar
-              </Button>
+              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
             </DialogClose>
             <Button type="submit" variant="accent" disabled={status.loading}>
               {status.loading ? "Guardando…" : "Guardar producto"}

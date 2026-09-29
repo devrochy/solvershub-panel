@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -99,11 +100,7 @@ export function ChangeActions({ cambios }: { cambios: Cambio[] }) {
                 className="text-danger"
                 disabled={status.loading === cambio.id}
                 onClick={() => decidir(cambio.id, "rechazar")}
-                size="sm"
-                variant="outline"
-              >
-                Rechazar
-              </Button>
+               aria-label="Rechazar" size="icon" title="Rechazar" variant="outline"><X className="h-4 w-4 text-danger" aria-hidden /></Button>
             </div>
           </div>
         ))}

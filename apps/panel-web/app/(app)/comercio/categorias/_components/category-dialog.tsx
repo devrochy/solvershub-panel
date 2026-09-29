@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Pencil, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -54,9 +55,7 @@ export function CategoryDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {category ? (
-          <Button variant="outline" size="sm">
-            Editar
-          </Button>
+          <Button aria-label="Editar" size="icon" title="Editar" variant="outline"><Pencil className="h-4 w-4" aria-hidden /></Button>
         ) : (
           <Button variant="accent">Nueva categoría</Button>
         )}
@@ -86,9 +85,7 @@ export function CategoryDialog({
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                Cancelar
-              </Button>
+              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
             </DialogClose>
             <Button type="submit" variant="accent" disabled={status.loading}>
               {status.loading ? "Guardando…" : "Guardar categoría"}
@@ -121,18 +118,14 @@ export function DeleteCategoryButton({ categoryId, label }: { categoryId: string
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          Eliminar
-        </Button>
+        <Button aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-danger" aria-hidden /></Button>
       </DialogTrigger>
       <DialogContent title="Eliminar categoría" description={label} className="max-w-md">
         <p className="text-sm text-body">Los productos de esta categoría quedarán sin categoría.</p>
         <FormFeedback error={status.error} className="mt-3" />
         <div className="mt-6 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              Cancelar
-            </Button>
+            <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
           </DialogClose>
           <Button type="button" variant="danger" onClick={() => void remove()} disabled={status.loading}>
             {status.loading ? "Eliminando…" : "Eliminar"}
