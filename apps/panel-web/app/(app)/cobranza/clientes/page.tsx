@@ -88,7 +88,14 @@ export default async function ClientesPage({
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (c) => <ClientRowActions cliente={c} carteras={carteras} />,
+      cell: (c) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/cobranza/clientes/${c.id}`}>Ficha</Link>
+          </Button>
+          <ClientRowActions cliente={c} carteras={carteras} />
+        </div>
+      ),
     },
   ];
 
