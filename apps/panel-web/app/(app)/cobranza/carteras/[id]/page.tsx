@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
+import { CashAdjustDialog, CashDayActions } from "./_components/cash-actions";
 
 export const metadata = { title: "Detalle de cartera" };
 
@@ -85,9 +87,16 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
         title={c.nombre}
         description={c.descripcion ?? `Cartera en ${c.moneda} · ${c.num_cuotas} cuotas · interés ${c.tipo_interes}%`}
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/cobranza/carteras">← Carteras</Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <CashAdjustDialog
+              portfolioId={c.id}
+              saldoActual={c.caja.saldo_actual}
+              trigger={<Button variant="accent">Ajustar caja</Button>}
+            />
+            <Button asChild variant="outline">
+              <Link href="/cobranza/carteras">← Carteras</Link>
+            </Button>
+          </div>
         }
       />
 
@@ -106,6 +115,25 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           hint={c.caja.actualizado ? `Actualizada ${c.caja.actualizado}` : undefined}
         />
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">Caja</h2>
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
+            <div>
+              <p className="text-[13px] text-body">Saldo actual</p>
+              <p className="font-display text-lg font-semibold text-headline">
+                {formatCop(c.caja.saldo_actual)}
+              </p>
+              <p className="text-xs text-text-soft">
+                Inicial {formatCop(c.caja.saldo_inicial)}
+                {c.caja.actualizado ? ` · actualizada ${c.caja.actualizado}` : ""}
+              </p>
+            </div>
+            <CashDayActions portfolioId={c.id} />
+          </CardContent>
+        </Card>
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Liquidaciones</h2>
