@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate } from "@/lib/format";
 import { RIESGO_LABEL } from "../_components/client-dialog";
 import { LoanFormDialog, MovementDialog } from "./_components/loan-dialogs";
+import { ChangeActions } from "./_components/change-actions";
 import { CreditDelete, InstallmentEditor } from "./_components/installment-dialog";
 
 export const metadata = { title: "Ficha del cliente" };
@@ -40,6 +41,13 @@ type ClientDetail = {
   };
   prestamos: Prestamo[];
   movimientos: Movimiento[];
+  cambios: {
+    id: string;
+    campos_propuestos: Record<string, unknown>;
+    estado: string;
+    solicitado_por: string;
+    fecha: string;
+  }[];
 };
 
 const RIESGO_TONE: Record<string, "neutral" | "accent" | "danger"> = {
@@ -59,7 +67,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
       </p>
     );
   }
-  const { cliente, prestamos, movimientos } = res.data;
+  const { cliente, prestamos, movimientos, cambios } = res.data;
   const saldoTotal = prestamos.reduce((acc, p) => acc + p.saldo, 0);
   const vencidas = prestamos.reduce(
     (acc, p) => acc + p.cuotas.filter((c) => c.estatus !== "pagada").length,
@@ -176,6 +184,8 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
           tone={vencidas > 0 ? "warning" : "success"}
         />
       </div>
+
+      <ChangeActions cambios={cambios} />
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Préstamos</h2>
