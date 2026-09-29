@@ -8,6 +8,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
+import { ExpenseApprove } from "./_components/expense-approve";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
 import {
   CashAdjustDialog,
@@ -40,7 +41,7 @@ type PortfolioDetail = {
     comision: number;
   }[];
   inyecciones: { fecha: string; valor: number; comentario: string; estado: string }[];
-  gastos: { fecha: string; descripcion: string; valor: number; aprobado: boolean }[];
+  gastos: { id: string; fecha: string; descripcion: string; valor: number; aprobado: boolean }[];
 };
 
 export default async function CarteraDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -83,6 +84,12 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       key: "aprobado",
       header: "Aprobado",
       cell: (g) => <Badge variant={g.aprobado ? "success" : "warning"}>{g.aprobado ? "sí" : "pendiente"}</Badge>,
+    },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (g) => <ExpenseApprove expenseId={g.id} aprobado={g.aprobado} />,
     },
   ];
 

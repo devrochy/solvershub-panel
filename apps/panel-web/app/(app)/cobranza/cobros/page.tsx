@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { ChargeForm } from "./_components/charge-form";
+import { PaymentLinkDialog } from "./_components/payment-link-dialog";
 import { ChargePayment } from "./_components/charge-payment";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate } from "@/lib/format";
@@ -54,9 +55,14 @@ export default async function CobrosPage() {
     },
     {
       key: "acciones",
-      header: "Registrar pago",
+      header: "Acciones",
       align: "right",
-      cell: (c) => <ChargePayment chargeId={c.id} />,
+      cell: (c) => (
+        <div className="flex items-center justify-end gap-1">
+          <ChargePayment chargeId={c.id} />
+          <PaymentLinkDialog chargeId={c.id} />
+        </div>
+      ),
     },
   ];
 
