@@ -1,31 +1,63 @@
-import { PromotionDialog, PromotionToggle } from "@/app/(app)/comercio/promociones/_components/promotion-dialog";
+import {
+  PromotionDialog,
+  PromotionToggle,
+  type Option,
+  type Promotion,
+} from "@/app/(app)/comercio/promociones/_components/promotion-dialog";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import { formatDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Promociones" };
 
-type Promotion = {
-  id: string;
-  type: string;
-  rules: Record<string, unknown>;
-  active: boolean;
-  valid_from: string | null;
-  valid_to: string | null;
-  category_id: string | null;
-  product_id: string | null;
+const TIPO_LABEL: Record<string, string> = {
+  temporada: "Temporada",
+  volumen: "Volumen",
+  campaña: "Campaña",
 };
 
-function rulesSummary(rules: Record<string, unknown>): string {
-  const entries = Object.entries(rules ?? {});
-  if (entries.length === 0) return "—";
-  return entries.map(([k, v]) => `${k}: ${String(v)}`).join(" · ");
+const SEGMENTO_LABEL: Record<string, string> = {
+  nuevo: "Nuevos",
+  ocasional: "Ocasionales",
+  frecuente: "Frecuentes",
+  fiel: "Fieles",
+  inactivo: "Inactivos",
+};
+
+function beneficio(rules: Record<string, unknown>): string {
+  const tiers = rules.tiers;
+  if (Array.isArray(tiers) && tiers.length > 0) {
+    return tiers
+      .map((t) => {
+        const tier = t as Record<string, unknown>;
+        const rango = tier.max ? `${tier.min}-${tier.max}` : `${tier.min}+`;
+        const premio = tier.discount_pct ? `${tier.discount_pct}%` : `regalo ${tier.free_item_sku}`;
+        return `${rango} → ${premio}`;
+      })
+      .join(" · ");
+  }
+  if (rules.discount_pct !== undefined && rules.discount_pct !== null) {
+    return `${rules.discount_pct}%`;
+  }
+  return "—";
+}
+
+function estadoVigencia(active: boolean, from: string | null, to: string | null) {
+  if (!active) return { label: "Inactiva", tone: "neutral" as const };
+  const ahora = Date.now();
+  if (from && new Date(from).getTime() > ahora) return { label: "Programada", tone: "warning" as const };
+  if (to && new Date(to).getTime() < ahora) return { label: "Vencida", tone: "danger" as const };
+  return { label: "Activa", tone: "success" as const };
 }
 
 export default async function PromotionsPage() {
-  const res = await apiFetch<Promotion[]>("/pack/commerce/promotions");
+  const [res, categoriasRes, productosRes] = await Promise.all([
+    apiFetch<Promotion[]>("/pack/commerce/promotions"),
+    apiFetch<Option[]>("/pack/commerce/categories"),
+    apiFetch<Option[]>("/pack/commerce/products"),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -33,39 +65,66 @@ export default async function PromotionsPage() {
       </p>
     );
   }
+  const categorias = categoriasRes.ok ? categoriasRes.data : [];
+  const productos = productosRes.ok ? productosRes.data : [];
+  const nombreCategoria = new Map(categorias.map((c) => [c.id, c.name]));
+  const nombreProducto = new Map(productos.map((p) => [p.id, p.name]));
 
   const columns: Column<Promotion>[] = [
     {
-      key: "tipo",
-      header: "Tipo",
-      cell: (p) => <Badge variant="neutral">{p.type}</Badge>,
+      key: "nombre",
+      header: "Promoción",
+      cell: (p) => (
+        <div className="flex flex-col gap-1">
+          <span className="text-headline">{String(p.rules.label ?? "Sin nombre")}</span>
+          <Badge variant="neutral">{TIPO_LABEL[p.type] ?? p.type}</Badge>
+        </div>
+      ),
     },
     {
-      key: "reglas",
-      header: "Reglas",
-      cell: (p) => <span className="font-mono text-xs text-body">{rulesSummary(p.rules)}</span>,
+      key: "beneficio",
+      header: "Beneficio",
+      cell: (p) => <span className="text-body">{beneficio(p.rules)}</span>,
     },
     {
       key: "vigencia",
       header: "Vigencia",
-      cell: (p) => (
-        <span className="text-body">
-          {p.valid_from ? formatDate(p.valid_from) : "—"} → {p.valid_to ? formatDate(p.valid_to) : "—"}
-        </span>
-      ),
+      cell: (p) => {
+        const estado = estadoVigencia(p.active, p.valid_from, p.valid_to);
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge variant={estado.tone}>{estado.label}</Badge>
+            <span className="text-xs text-body">
+              {p.valid_from ? formatDateTime(p.valid_from) : "—"} →{" "}
+              {p.valid_to ? formatDateTime(p.valid_to) : "—"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "alcance",
       header: "Alcance",
       cell: (p) => (
-        <span className="text-body">
-          {p.product_id ? "Producto" : p.category_id ? "Categoría" : "Toda la tienda"}
-        </span>
+        <div className="flex flex-col gap-1 text-body">
+          <span>
+            {p.product_id
+              ? `Producto: ${nombreProducto.get(p.product_id) ?? "—"}`
+              : p.category_id
+                ? `Categoría: ${nombreCategoria.get(p.category_id) ?? "—"}`
+                : "Toda la tienda"}
+          </span>
+          {p.eligible_segments && p.eligible_segments.length > 0 && (
+            <span className="text-xs text-text-soft">
+              {p.eligible_segments.map((s) => SEGMENTO_LABEL[s] ?? s).join(", ")}
+            </span>
+          )}
+        </div>
       ),
     },
     {
       key: "estado",
-      header: "Estado",
+      header: "Interruptor",
       align: "right",
       cell: (p) => <PromotionToggle promotionId={p.id} active={p.active} />,
     },
@@ -73,7 +132,7 @@ export default async function PromotionsPage() {
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (p) => <PromotionDialog promotion={p} />,
+      cell: (p) => <PromotionDialog promotion={p} categories={categorias} products={productos} />,
     },
   ];
 
@@ -81,8 +140,8 @@ export default async function PromotionsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Promociones"
-        description="Descuentos por temporada, volumen o campaña que el agente puede aplicar."
-        actions={<PromotionDialog />}
+        description="Descuentos por temporada, volumen o campaña que el agente puede aplicar (elige el mayor beneficio, sin acumular)."
+        actions={<PromotionDialog categories={categorias} products={productos} />}
       />
       <DataTable
         columns={columns}
