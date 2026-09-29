@@ -11,6 +11,16 @@ import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Calendario" };
 
+const GOOGLE_AVISO: Record<string, { tone: string; texto: string }> = {
+  ok: { tone: "text-success", texto: "Google Calendar conectado." },
+  cancelado: { tone: "text-warning", texto: "Cancelaste la autorización de Google." },
+  error: { tone: "text-danger", texto: "No se pudo completar la conexión con Google." },
+  not_configured: {
+    tone: "text-warning",
+    texto: "Configura las credenciales de Google del pack antes de conectar.",
+  },
+};
+
 type Status = {
   configured: boolean;
   connected: boolean;
@@ -30,7 +40,13 @@ type Appointment = {
   google_event_id: string | null;
 };
 
-export default async function CalendarPage() {
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ google?: string }>;
+}) {
+  const google = (await searchParams).google;
+  const avisoGoogle = google ? GOOGLE_AVISO[google] : undefined;
   const [statusRes, appointmentsRes] = await Promise.all([
     apiFetch<Status>("/pack/calendar/status"),
     apiFetch<Appointment[]>("/pack/calendar/appointments"),
@@ -98,6 +114,12 @@ export default async function CalendarPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {avisoGoogle && (
+        <p role="status" className={avisoGoogle.tone}>
+          {avisoGoogle.texto}
+        </p>
+      )}
+
       <PageHeader
         title="Calendario"
         description="Conexión con Google Calendar, tipos de cita y agenda del negocio (habilidad Calendario)."
@@ -145,7 +167,7 @@ export default async function CalendarPage() {
               <Link href="/habilidades/pack_calendar">Configurar credenciales</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/legacy/admin/plugins/pack_calendar/oauth">Conectar con Google ↗</Link>
+              <Link href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</Link>
             </Button>
           </div>
         </CardContent>
