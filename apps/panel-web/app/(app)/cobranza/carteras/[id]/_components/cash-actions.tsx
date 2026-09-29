@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 /** Ajuste manual de la caja de la cartera (deja el saldo en el valor indicado). */
@@ -168,6 +169,63 @@ export function InjectionDialog({ portfolioId }: { portfolioId: string }) {
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={status.loading}>
               {status.loading ? "Registrando…" : "Registrar inyección"}
+            </Button>
+            <FormFeedback error={status.error} />
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Genera la liquidación del período (diario, semanal, quincenal o mensual). */
+export function LiquidationDialog({ portfolioId }: { portfolioId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setStatus({ loading: true });
+    const res = await fetch(`/api/pack/cobranza/portfolios/${portfolioId}/liquidations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ periodo: String(data.get("periodo") ?? "diario") }),
+    });
+    setStatus({ loading: false });
+    if (!res.ok) {
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      setStatus({ error: json.error ?? "No se pudo generar la liquidación." });
+      return;
+    }
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          Generar liquidación
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        title="Generar liquidación"
+        description="Calcula cobrado, prestado, gastos, inyección, comisión y el resumen del día."
+      >
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <Field label="Período" htmlFor="periodo">
+            <Select id="periodo" name="periodo" defaultValue="diario">
+              <option value="diario">Diario (hoy)</option>
+              <option value="semanal">Semanal (7 días)</option>
+              <option value="quincenal">Quincenal (15 días)</option>
+              <option value="mensual">Mensual (30 días)</option>
+            </Select>
+          </Field>
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={status.loading}>
+              {status.loading ? "Generando…" : "Generar liquidación"}
             </Button>
             <FormFeedback error={status.error} />
           </div>

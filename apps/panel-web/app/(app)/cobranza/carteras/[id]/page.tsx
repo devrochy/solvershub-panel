@@ -9,7 +9,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
-import { CashAdjustDialog, CashDayActions, InjectionDialog } from "./_components/cash-actions";
+import {
+  CashAdjustDialog,
+  CashDayActions,
+  InjectionDialog,
+  LiquidationDialog,
+} from "./_components/cash-actions";
 
 export const metadata = { title: "Detalle de cartera" };
 
@@ -139,7 +144,10 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Liquidaciones</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">Liquidaciones</h2>
+          <LiquidationDialog portfolioId={c.id} />
+        </div>
         <DataTable
           columns={liquidationColumns}
           rows={c.liquidaciones}
