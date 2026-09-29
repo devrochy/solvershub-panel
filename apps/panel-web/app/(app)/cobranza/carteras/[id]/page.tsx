@@ -16,8 +16,12 @@ import {
   InjectionDialog,
   LiquidationDialog,
 } from "./_components/cash-actions";
+import { NotesCard } from "./_components/notes-card";
+import { PortfolioConfigDialog } from "./_components/portfolio-config-dialog";
 
 export const metadata = { title: "Detalle de cartera" };
+
+type Nota = { id: string; nota: string; fecha: string; autor: string };
 
 type PortfolioDetail = {
   id: string;
@@ -46,7 +50,11 @@ type PortfolioDetail = {
 
 export default async function CarteraDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const res = await apiFetch<PortfolioDetail>(`/pack/cobranza/portfolios/${id}`);
+  const [res, configRes, notasRes] = await Promise.all([
+    apiFetch<PortfolioDetail>(`/pack/cobranza/portfolios/${id}`),
+    apiFetch<{ values: Record<string, unknown> }>(`/pack/cobranza/portfolios/${id}/config`),
+    apiFetch<Nota[]>(`/pack/cobranza/portfolios/${id}/notes`),
+  ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
@@ -56,6 +64,8 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
     );
   }
   const c = res.data;
+  const configValues = configRes.ok ? configRes.data.values : {};
+  const notas = notasRes.ok ? notasRes.data : [];
 
   const liquidationColumns: Column<PortfolioDetail["liquidaciones"][number]>[] = [
     { key: "fecha", header: "Fecha", cell: (l) => formatDate(l.fecha) },
@@ -104,6 +114,11 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
               portfolioId={c.id}
               saldoActual={c.caja.saldo_actual}
               trigger={<Button variant="accent">Ajustar caja</Button>}
+            />
+            <PortfolioConfigDialog
+              portfolioId={c.id}
+              values={configValues}
+              trigger={<Button variant="outline">Configuración</Button>}
             />
             <Button asChild variant="outline">
               <Link href="/cobranza/carteras">← Carteras</Link>
@@ -191,6 +206,8 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           emptyDescription="Los gastos reportados por los gestores aparecerán aquí."
         />
       </section>
+      <NotesCard notes={notas} portfolioId={c.id} />
+
     </div>
   );
 }
