@@ -99,12 +99,56 @@ export function MetaCosts({ connections }: { connections: Connection[] }) {
             {result.credits.length === 0 ? (
               <p className="text-sm text-text-soft">Sin líneas de crédito devueltas por Meta.</p>
             ) : (
-              <pre className="overflow-x-auto font-mono text-xs text-body">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-text-soft">
+                    <th className="py-1 pr-3 font-medium">ID</th>
+                    <th className="py-1 pr-3 font-medium">Razón social</th>
+                    <th className="py-1 font-medium">Moneda</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.credits.map((linea, indice) => (
+                    <tr key={String(linea.id ?? indice)} className="border-t border-border-soft">
+                      <td className="py-1 pr-3 font-mono">{String(linea.id ?? "—")}</td>
+                      <td className="py-1 pr-3">{String(linea.legal_entity_name ?? "—")}</td>
+                      <td className="py-1">{String(linea.currency ?? "—")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-text-soft">Datos crudos</summary>
+              <pre className="mt-1 overflow-x-auto font-mono text-[11px] text-body">
                 {JSON.stringify(result.credits, null, 2)}
               </pre>
-            )}
+            </details>
           </div>
         )}
+
+        <div className="rounded-md border border-border-soft p-3">
+          <p className="text-sm text-headline">Paso manual de facturación</p>
+          <p className="mt-1 text-xs text-body">
+            Meta solo permite <strong>leer</strong> las líneas de crédito
+            (<code>GET /&#123;business_id&#125;/extendedcredits</code>): no hay API para crear ni
+            actualizar saldo. La recarga se hace a mano en Business Manager → WhatsApp Manager /
+            Business Settings → Facturación.
+          </p>
+          <Button asChild className="mt-2" size="sm" variant="outline">
+            <a
+              href={`https://business.facebook.com/${
+                connections.find((c) => c.business_id)?.business_id
+                  ? `?business_id=${connections.find((c) => c.business_id)?.business_id}`
+                  : ""
+              }`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Abrir Business Manager ↗
+            </a>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

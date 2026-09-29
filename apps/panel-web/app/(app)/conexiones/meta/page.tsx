@@ -167,20 +167,47 @@ export default async function MetaHealthPage() {
                   {checks.length > 0 && (
                     <ul className="flex flex-col gap-1.5">
                       {checks.map(([key, value]) => {
-                        const ok =
+                        // Tri-estado como el clásico: `ok: null` = no evaluable en
+                        // este entorno (antes se pintaba como "falla" en rojo).
+                        const okBruto =
                           typeof value === "object" && value !== null && "ok" in value
-                            ? Boolean((value as { ok?: boolean }).ok)
+                            ? (value as { ok?: boolean | null }).ok
                             : Boolean(value);
                         const detail =
                           typeof value === "object" && value !== null && "detail" in value
                             ? String((value as { detail?: unknown }).detail ?? "")
                             : "";
+                        const reparacion: Record<string, { href: string; label: string }> = {
+                          sync_templates: { href: `/conexiones/meta/${c.id}/plantillas`, label: "Sincronizar" },
+                          configure_billing: { href: "/costos", label: "Créditos" },
+                          reauthorize: { href: "/conexiones/whatsapp", label: "Reautorizar" },
+                        };
+                        const enlace = reparacion[key];
                         return (
                           <li key={key} className="flex items-center justify-between gap-3 text-xs">
                             <span className="text-body">{key}</span>
                             <span className="flex items-center gap-2">
                               {detail && <span className="text-text-soft">{detail}</span>}
-                              <Badge variant={ok ? "success" : "danger"}>{ok ? "ok" : "falla"}</Badge>
+                              {okBruto === false && enlace && (
+                                <Link className="text-accent underline" href={enlace.href}>
+                                  {enlace.label}
+                                </Link>
+                              )}
+                              <Badge
+                                variant={
+                                  okBruto === null || okBruto === undefined
+                                    ? "neutral"
+                                    : okBruto
+                                      ? "success"
+                                      : "danger"
+                                }
+                              >
+                                {okBruto === null || okBruto === undefined
+                                  ? "?"
+                                  : okBruto
+                                    ? "ok"
+                                    : "falla"}
+                              </Badge>
                             </span>
                           </li>
                         );

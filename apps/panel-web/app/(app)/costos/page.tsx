@@ -1,4 +1,8 @@
+import Link from "next/link";
+
 import { MetaCosts } from "@/app/(app)/costos/_components/meta-costs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -76,7 +80,39 @@ export default async function CostsPage() {
         />
       </section>
 
-      {d.meta && (d.meta.by_category_country.length > 0 || d.meta.by_phone.length > 0) && (
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">
+            Cambios de facturación de Meta
+          </h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/conexiones/meta">Salud de Meta →</Link>
+          </Button>
+        </div>
+        <div className="rounded-lg border border-border-soft bg-bg-deep p-4 text-sm text-body">
+          <ul className="flex list-disc flex-col gap-2 pl-5">
+            <li>
+              <strong>Desde el 1 de agosto de 2026:</strong> los mensajes de Meta Business Agent se
+              facturan <strong>por token</strong> (2,00 USD por millón de tokens, ~4-5 centavos por
+              mensaje) — categoría separada, no se mezcla con plantillas. Sin ingesta automática
+              todavía: informativo.
+            </li>
+            <li>
+              <strong>Desde el 1 de octubre de 2026:</strong> Meta cobra los <strong>mensajes de
+              servicio</strong> y las plantillas <strong>utility</strong> enviadas dentro de la
+              ventana abierta de 24h, a las tarifas de utility/authentication por mercado — sin
+              tiers de volumen para servicio.
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-text-soft">
+            No hay franquicia de mensajes gratis confirmada oficialmente por Meta para servicio o
+            utility dentro de la ventana. Sigue siendo gratis la ventana de free entry point de 72h
+            (Click to WhatsApp Ads / botones CTA de Página).
+          </p>
+        </div>
+      </section>
+
+      {d.meta && (
         <section className="flex flex-col gap-3">
           <h2 className="font-display text-lg font-semibold text-headline">
             Costos de WhatsApp (Meta, 30 días)
@@ -110,22 +146,33 @@ export default async function CostsPage() {
               emptyTitle="Sin consumo por número"
             />
           </div>
-          {d.meta.discrepancy.some((row) => row.diff !== 0) && (
-            <div className="rounded-lg border border-warning/40 bg-warning/10 p-4">
-              <p className="mb-2 text-sm text-warning">
-                Diferencia entre lo que vio el webhook y lo que reportó Meta (volumen, no dólares):
+          {d.meta.discrepancy.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-body">
+                Comparación <strong>webhook</strong> vs <strong>pricing de Meta</strong> (volumen,
+                no dólares). Las filas marcadas indican diferencias a revisar:
               </p>
-              <ul className="flex flex-col gap-1 text-xs text-body">
-                {d.meta.discrepancy
-                  .filter((row) => row.diff !== 0)
-                  .map((row) => (
-                    <li key={row.category}>
-                      {row.category}: webhook {row.webhook_count} vs pricing {row.pricing_volume} (
-                      {row.diff > 0 ? "+" : ""}
-                      {row.diff})
-                    </li>
-                  ))}
-              </ul>
+              <DataTable
+                columns={[
+                  { key: "categoria", header: "Categoría", cell: (r) => r.category },
+                  { key: "webhook", header: "Webhook", align: "right", cell: (r) => <span className="text-body">{formatNumber(r.webhook_count)}</span> },
+                  { key: "pricing", header: "Pricing Meta", align: "right", cell: (r) => <span className="text-body">{formatNumber(r.pricing_volume)}</span> },
+                  {
+                    key: "diff",
+                    header: "Diferencia",
+                    align: "right",
+                    cell: (r) =>
+                      r.diff === 0 ? (
+                        <Badge variant="neutral">0</Badge>
+                      ) : (
+                        <Badge variant="danger">{r.diff > 0 ? `+${r.diff}` : r.diff}</Badge>
+                      ),
+                  },
+                ]}
+                rows={d.meta.discrepancy}
+                getRowKey={(r) => r.category}
+                emptyTitle="Sin datos para comparar"
+              />
             </div>
           )}
         </section>
