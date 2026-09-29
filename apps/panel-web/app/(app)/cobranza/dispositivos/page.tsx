@@ -3,6 +3,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
+import { DeviceCreateDialog } from "./_components/device-create-dialog";
 import { DeviceStatus } from "./_components/device-status";
 
 export const metadata = { title: "Dispositivos" };
@@ -41,8 +42,16 @@ const DEVICE_TONE: Record<string, "success" | "warning" | "danger"> = {
   bloqueado: "danger",
 };
 
+type Opcion = { id: string; nombre: string };
+
 export default async function DispositivosPage() {
-  const res = await apiFetch<Devices>("/pack/cobranza/devices");
+  const [res, gestoresRes, carterasRes] = await Promise.all([
+    apiFetch<Devices>("/pack/cobranza/devices"),
+    apiFetch<Opcion[]>("/pack/cobranza/collectors"),
+    apiFetch<Opcion[]>("/pack/cobranza/portfolios"),
+  ]);
+  const gestores = gestoresRes.ok ? gestoresRes.data : [];
+  const carteras = carterasRes.ok ? carterasRes.data : [];
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -111,6 +120,7 @@ export default async function DispositivosPage() {
       <PageHeader
         title="Dispositivos"
         description="Equipos vinculados (ADR-0057), intentos de acceso y últimos eventos de sincronización."
+        actions={<DeviceCreateDialog carteras={carteras} gestores={gestores} />}
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Dispositivos" value={dispositivos.length} />
