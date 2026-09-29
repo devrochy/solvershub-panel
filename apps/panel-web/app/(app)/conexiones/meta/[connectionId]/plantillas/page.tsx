@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import { NewTemplateDialog } from "./_components/new-template-dialog";
 
 export const metadata = { title: "Plantillas" };
 
@@ -116,16 +117,12 @@ export default async function TemplatesPage({
         </p>
       )}
 
-      <p className="text-sm text-body">
-        Crear y editar plantillas (con sus componentes y ejemplos) sigue en{" "}
-        <Link
-          href={`/legacy/admin/conexiones/meta/${connectionId}/plantillas/nueva`}
-          className="text-link hover:underline"
-        >
-          el panel clásico ↗
-        </Link>
-        .
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <NewTemplateDialog connectionId={connectionId} />
+        <span className="text-sm text-body">
+          La edición de una plantilla ya creada sigue en el panel clásico.
+        </span>
+      </div>
 
       <DataTable
         columns={columns}

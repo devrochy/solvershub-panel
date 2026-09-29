@@ -162,10 +162,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
       {
         section: "connections",
         label: "Plantillas WhatsApp",
-        href: "/legacy/admin/plantillas",
+        href: "/plantillas",
         icon: FileText,
         ready: true,
-        legacy: true,
       },
       {
         section: "settings",
