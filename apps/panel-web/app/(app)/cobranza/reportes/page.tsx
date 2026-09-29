@@ -74,6 +74,8 @@ export default async function ReportesPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Clientes" value={formatNumber(total((f) => f.clientes))} />
         <StatCard label="Saldo en cartera" value={formatCop(total((f) => f.saldo))} />
+        <StatCard label="Cobrado" value={formatCop(total((f) => f.cobrado))} />
+        <StatCard label="Gastos" value={formatCop(total((f) => f.gastos))} />
         <StatCard label="Cuotas vencidas" value={formatNumber(total((f) => f.vencidas))} />
         <StatCard label="Caja total" value={formatCop(total((f) => f.caja))} />
       </div>
@@ -85,7 +87,7 @@ export default async function ReportesPage() {
           rows={filas}
           getRowKey={(r) => r.cartera}
           emptyTitle="Sin carteras"
-          emptyDescription="Crea una cartera en el panel clásico para ver su consolidado."
+          emptyDescription="Crea una cartera para ver su consolidado."
         />
       </section>
 
