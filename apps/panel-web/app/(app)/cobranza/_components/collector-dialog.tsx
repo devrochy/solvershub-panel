@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { CollectorPermissionsDialog } from "./collector-permissions-dialog";
 
 export type Collector = {
   id: string;
@@ -134,6 +135,15 @@ export function CollectorRowActions({ collector }: { collector: Collector }) {
 
   return (
     <div className="flex items-center justify-end gap-1">
+      <CollectorPermissionsDialog
+        collectorId={collector.id}
+        nombre={collector.nombre}
+        trigger={
+          <Button size="sm" variant="ghost">
+            Permisos
+          </Button>
+        }
+      />
       <CollectorFormDialog
         collector={collector}
         trigger={
