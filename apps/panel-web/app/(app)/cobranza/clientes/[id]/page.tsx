@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate } from "@/lib/format";
 import { RIESGO_LABEL } from "../_components/client-dialog";
 import { LoanFormDialog, MovementDialog } from "./_components/loan-dialogs";
+import { CreditDelete, InstallmentEditor } from "./_components/installment-dialog";
 
 export const metadata = { title: "Ficha del cliente" };
 
@@ -129,6 +130,12 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
     },
     { key: "valor", header: "Valor", align: "right", cell: (m) => formatCop(m.valor) },
     { key: "metodo", header: "Método", cell: (m) => <span className="text-body">{m.metodo || "—"}</span> },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (m) => (m.tipo === "abono" ? <CreditDelete creditId={m.id} /> : null),
+    },
   ];
 
   return (
@@ -194,14 +201,22 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2 pt-0">
                 {p.cuotas.map((c) => (
-                  <span
+                  <InstallmentEditor
                     key={c.id}
-                    className="flex items-center gap-2 rounded-md border border-border-soft px-3 py-1.5 text-xs"
-                  >
-                    <Badge variant={c.estatus === "pagada" ? "success" : "neutral"}>#{c.numero}</Badge>
-                    <span className="text-body">{formatDate(c.vence)}</span>
-                    <span className="text-headline">{formatCop(c.valor)}</span>
-                  </span>
+                    installment={c}
+                    trigger={
+                      <button
+                        className="flex items-center gap-2 rounded-md border border-border-soft px-3 py-1.5 text-xs hover:bg-hover"
+                        type="button"
+                      >
+                        <Badge variant={c.estatus === "pagada" ? "success" : "neutral"}>
+                          {`#${c.numero}`}
+                        </Badge>
+                        <span className="text-body">{formatDate(c.vence)}</span>
+                        <span className="text-headline">{formatCop(c.valor)}</span>
+                      </button>
+                    }
+                  />
                 ))}
               </CardContent>
             </Card>
