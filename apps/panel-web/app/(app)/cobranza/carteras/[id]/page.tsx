@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
-import { CashAdjustDialog, CashDayActions } from "./_components/cash-actions";
+import { CashAdjustDialog, CashDayActions, InjectionDialog } from "./_components/cash-actions";
 
 export const metadata = { title: "Detalle de cartera" };
 
@@ -130,7 +130,10 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
                 {c.caja.actualizado ? ` · actualizada ${c.caja.actualizado}` : ""}
               </p>
             </div>
-            <CashDayActions portfolioId={c.id} />
+            <div className="flex flex-wrap items-center gap-2">
+              <InjectionDialog portfolioId={c.id} />
+              <CashDayActions portfolioId={c.id} />
+            </div>
           </CardContent>
         </Card>
       </section>

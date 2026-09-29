@@ -118,3 +118,61 @@ export function CashDayActions({ portfolioId }: { portfolioId: string }) {
     </div>
   );
 }
+
+/** Aporte de capital a la cartera (suma a la caja). */
+export function InjectionDialog({ portfolioId }: { portfolioId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setStatus({ loading: true });
+    const res = await fetch(`/api/pack/cobranza/portfolios/${portfolioId}/injections`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        valor: Number(data.get("valor") ?? 0),
+        comentario: String(data.get("comentario") ?? ""),
+      }),
+    });
+    setStatus({ loading: false });
+    if (!res.ok) {
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      setStatus({ error: json.error ?? "No se pudo registrar la inyección." });
+      return;
+    }
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          Registrar inyección
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        title="Registrar inyección de capital"
+        description="El aporte suma al saldo de la caja de la cartera y queda auditado."
+      >
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <Field label="Valor" htmlFor="valor">
+            <Input id="valor" name="valor" type="number" min={1} step="0.01" required />
+          </Field>
+          <Field label="Comentario" htmlFor="comentario">
+            <Textarea id="comentario" name="comentario" rows={3} placeholder="Ej.: aporte del propietario" />
+          </Field>
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={status.loading}>
+              {status.loading ? "Registrando…" : "Registrar inyección"}
+            </Button>
+            <FormFeedback error={status.error} />
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
