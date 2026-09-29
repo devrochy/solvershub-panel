@@ -14,7 +14,7 @@ import { Select } from "@/components/ui/select";
 export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value: string; label: string }[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,9 +32,16 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
         pack_roles: data.getAll("pack_roles").map((v) => String(v)),
       }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; resultado?: string };
     if (!res.ok) {
       setStatus({ error: json.error ?? "No se pudo crear la cuenta." });
+      return;
+    }
+    if (json.resultado === "invitado") {
+      setStatus({
+        success: "Ese correo ya tiene cuenta: se envió una invitación al negocio.",
+      });
+      router.refresh();
       return;
     }
     setStatus({});
@@ -49,7 +56,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
       </DialogTrigger>
       <DialogContent
         title="Nuevo colaborador"
-        description="Crea una cuenta de acceso al panel para tu equipo."
+        description="Crea una cuenta de acceso al panel. Si el correo ya tiene cuenta, se envía una invitación al negocio."
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field label="Correo" htmlFor="new-email" required>
@@ -101,7 +108,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
             </fieldset>
           )}
 
-          <FormFeedback error={status.error} />
+          <FormFeedback error={status.error} success={status.success} />
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>

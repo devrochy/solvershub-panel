@@ -1,5 +1,6 @@
 import { CollaboratorActions } from "@/app/(app)/colaboradores/_components/collaborator-actions";
 import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new-collaborator-dialog";
+import { PendingInvitations } from "@/app/(app)/colaboradores/_components/pending-invitations";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
@@ -102,6 +103,7 @@ export default async function CollaboratorsPage() {
         description="Cuentas con acceso al panel, sus permisos por sección y sus negocios vinculados."
         actions={<NewCollaboratorDialog packRoles={rolesRes.ok ? rolesRes.data : []} />}
       />
+      <PendingInvitations />
       <DataTable
         columns={columns}
         rows={res.data}

@@ -33,7 +33,7 @@ export function CollectorFormDialog({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
   const editando = Boolean(collector);
   const [nombre = "", apellido = ""] = (collector?.nombre ?? "").split(" ");
 
@@ -57,9 +57,19 @@ export function CollectorFormDialog({
       },
     );
     setStatus({ loading: false });
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      resultado?: string;
+    };
     if (!res.ok) {
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
       setStatus({ error: json.error ?? "No se pudo guardar el gestor." });
+      return;
+    }
+    if (json.resultado === "invitado") {
+      setStatus({
+        success: "Ese correo ya tiene cuenta: se envió una invitación al gestor.",
+      });
+      router.refresh();
       return;
     }
     setOpen(false);
@@ -74,7 +84,7 @@ export function CollectorFormDialog({
         description={
           editando
             ? "Los datos de contacto del gestor. Su acceso se gestiona en Colaboradores."
-            : "Se crea su cuenta de acceso con el correo y la contraseña (aparece en Colaboradores)."
+            : "Se crea su cuenta de acceso con el correo y la contraseña (aparece en Colaboradores). Si el correo ya existe, se le envía una invitación."
         }
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -106,7 +116,7 @@ export function CollectorFormDialog({
             <Button type="submit" disabled={status.loading}>
               {status.loading ? "Guardando…" : editando ? "Guardar cambios" : "Crear gestor"}
             </Button>
-            <FormFeedback error={status.error} />
+            <FormFeedback error={status.error} success={status.success} />
           </div>
         </form>
       </DialogContent>
