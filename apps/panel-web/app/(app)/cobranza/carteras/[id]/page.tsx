@@ -17,11 +17,25 @@ import {
   LiquidationDialog,
 } from "./_components/cash-actions";
 import { NotesCard } from "./_components/notes-card";
+import { RouteOptimizeButton } from "./_components/route-actions";
 import { PortfolioConfigDialog } from "./_components/portfolio-config-dialog";
 
 export const metadata = { title: "Detalle de cartera" };
 
 type Nota = { id: string; nota: string; fecha: string; autor: string };
+
+type RutaCliente = {
+  id: string;
+  cliente: string;
+  saldo: number;
+  mora: number;
+  riesgo: string;
+};
+
+type RutaOut = {
+  clientes: RutaCliente[];
+  plan: { orden: string[]; distancia_km: number; tiempo_min: number; fecha: string } | null;
+};
 
 type PortfolioDetail = {
   id: string;
@@ -50,10 +64,11 @@ type PortfolioDetail = {
 
 export default async function CarteraDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [res, configRes, notasRes] = await Promise.all([
+  const [res, configRes, notasRes, rutaRes] = await Promise.all([
     apiFetch<PortfolioDetail>(`/pack/cobranza/portfolios/${id}`),
     apiFetch<{ values: Record<string, unknown> }>(`/pack/cobranza/portfolios/${id}/config`),
     apiFetch<Nota[]>(`/pack/cobranza/portfolios/${id}/notes`),
+    apiFetch<RutaOut>(`/pack/cobranza/portfolios/${id}/route`),
   ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
@@ -66,6 +81,26 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
   const c = res.data;
   const configValues = configRes.ok ? configRes.data.values : {};
   const notas = notasRes.ok ? notasRes.data : [];
+  const ruta = rutaRes.ok ? rutaRes.data : { clientes: [], plan: null };
+
+  const rutaColumns = (orden: string[]): Column<RutaCliente>[] => [
+    {
+      key: "orden",
+      header: "#",
+      cell: (r) => {
+        const pos = orden.indexOf(r.id);
+        return <span className="text-body">{pos >= 0 ? pos + 1 : "—"}</span>;
+      },
+    },
+    { key: "cliente", header: "Cliente", cell: (r) => <span className="text-headline">{r.cliente}</span> },
+    { key: "saldo", header: "Saldo", align: "right", cell: (r) => formatCop(r.saldo) },
+    {
+      key: "mora",
+      header: "Mora (días)",
+      align: "right",
+      cell: (r) => <span className={r.mora > 0 ? "text-danger" : "text-body"}>{r.mora}</span>,
+    },
+  ];
 
   const liquidationColumns: Column<PortfolioDetail["liquidaciones"][number]>[] = [
     { key: "fecha", header: "Fecha", cell: (l) => formatDate(l.fecha) },
@@ -206,6 +241,26 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
           emptyDescription="Los gastos reportados por los gestores aparecerán aquí."
         />
       </section>
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">Trayectoria del día</h2>
+          <RouteOptimizeButton portfolioId={c.id} />
+        </div>
+        {ruta.plan && (
+          <p className="text-sm text-body">
+            Último plan ({ruta.plan.fecha}): <strong>{ruta.plan.orden.length}</strong> visitas ·{" "}
+            <strong>{ruta.plan.distancia_km} km</strong> · ~{ruta.plan.tiempo_min} min
+          </p>
+        )}
+        <DataTable
+          columns={rutaColumns(ruta.plan?.orden ?? [])}
+          rows={ruta.clientes}
+          getRowKey={(r) => r.id}
+          emptyTitle="Sin clientes para visitar"
+          emptyDescription="Aparecen los clientes con préstamo vigente y cuotas pendientes."
+        />
+      </section>
+
       <NotesCard notes={notas} portfolioId={c.id} />
 
     </div>
