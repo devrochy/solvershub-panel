@@ -1,3 +1,4 @@
+import { CsvImportDialog } from "@/app/(app)/comercio/productos/_components/csv-import-dialog";
 import { ProductDialog } from "@/app/(app)/comercio/productos/_components/product-dialog";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -91,7 +92,12 @@ export default async function ProductsPage() {
       <PageHeader
         title="Productos"
         description="Catálogo del negocio: precio y stock de la variante por defecto."
-        actions={<ProductDialog categories={categories} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <CsvImportDialog />
+            <ProductDialog categories={categories} />
+          </div>
+        }
       />
       <DataTable
         columns={columns}
