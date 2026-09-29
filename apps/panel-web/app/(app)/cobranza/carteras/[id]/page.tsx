@@ -133,6 +133,11 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
   const ruta = rutaRes.ok ? rutaRes.data : { clientes: [], plan: null };
   const clientes = clientesRes.ok ? clientesRes.data : [];
   const carteras = carterasRes.ok ? carterasRes.data : [];
+  // Tolerante a una API vieja (despliegue desfasado): sin campos nuevos no rompe.
+  const reportesDiarios = c.reportes_diarios ?? [];
+  const mora = c.mora ?? 0;
+  const cobrado30d = c.cobrado_30d ?? 0;
+  const gastosTotal = c.gastos_total ?? 0;
 
   const clientColumns: Column<Cliente>[] = [
     {
@@ -313,11 +318,11 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
         <StatCard label="Saldo" value={formatCop(c.saldo)} />
         <StatCard
           label="Mora"
-          value={formatCop(c.mora)}
-          hint={c.mora > 0 ? "Cuotas atrasadas" : undefined}
+          value={formatCop(mora)}
+          hint={mora > 0 ? "Cuotas atrasadas" : undefined}
         />
-        <StatCard label="Cobrado (30 días)" value={formatCop(c.cobrado_30d)} />
-        <StatCard label="Gastos" value={formatCop(c.gastos_total)} />
+        <StatCard label="Cobrado (30 días)" value={formatCop(cobrado30d)} />
+        <StatCard label="Gastos" value={formatCop(gastosTotal)} />
         <StatCard
           label="Caja actual"
           value={formatCop(c.caja.saldo_actual)}
@@ -423,7 +428,7 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
         <h2 className="font-display text-lg font-semibold text-headline">Reportes diarios</h2>
         <DataTable
           columns={reporteColumns}
-          rows={c.reportes_diarios}
+          rows={reportesDiarios}
           getRowKey={(r) => r.fecha}
           emptyTitle="Sin reportes diarios"
           emptyDescription="Los cierres que genera la app de campo aparecerán aquí."
