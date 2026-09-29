@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,8 +51,10 @@ export default async function CarterasPage() {
       align: "right",
       cell: (c) => (
         <div className="flex items-center justify-end gap-1">
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/cobranza/carteras/${c.id}`}>Ver</Link>
+          <Button asChild aria-label="Ver ficha" size="icon" title="Ver ficha" variant="outline">
+            <Link href={`/cobranza/carteras/${c.id}`}>
+              <Eye className="h-4 w-4" aria-hidden />
+            </Link>
           </Button>
           <PortfolioRowActions cartera={c} gestores={gestores} />
         </div>
@@ -72,7 +75,11 @@ export default async function CarterasPage() {
         actions={
           <PortfolioFormDialog
             gestores={gestores}
-            trigger={<Button variant="accent">Nueva cartera</Button>}
+            trigger={
+              <Button variant="accent">
+                <Plus className="h-4 w-4" aria-hidden /> Nueva cartera
+              </Button>
+            }
           />
         }
       />

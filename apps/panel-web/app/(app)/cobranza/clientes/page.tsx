@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,8 +91,10 @@ export default async function ClientesPage({
       align: "right",
       cell: (c) => (
         <div className="flex items-center justify-end gap-1">
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/cobranza/clientes/${c.id}`}>Ficha</Link>
+          <Button asChild aria-label="Ver ficha" size="icon" title="Ver ficha" variant="outline">
+            <Link href={`/cobranza/clientes/${c.id}`}>
+              <Eye className="h-4 w-4" aria-hidden />
+            </Link>
           </Button>
           <ClientRowActions cliente={c} carteras={carteras} />
         </div>
@@ -108,7 +111,11 @@ export default async function ClientesPage({
           carteras.length > 0 ? (
             <ClientFormDialog
               carteras={carteras}
-              trigger={<Button variant="accent">Nuevo cliente</Button>}
+              trigger={
+              <Button variant="accent">
+                <Plus className="h-4 w-4" aria-hidden /> Nuevo cliente
+              </Button>
+            }
             />
           ) : (
             <Button asChild variant="outline">

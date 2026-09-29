@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { Check, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -122,29 +123,43 @@ export function ExpenseRowActions({
         expense={expense}
         portfolioId={portfolioId}
         trigger={
-          <Button size="sm" variant="ghost">
-            Editar
+          <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
+            <Pencil className="h-4 w-4" aria-hidden />
           </Button>
         }
       />
       {confirmando ? (
         <>
           <Button
+            aria-label="Confirmar aprobación"
             className="text-danger"
             disabled={loading}
             onClick={aprobar}
-            size="sm"
+            size="icon"
+            title="Confirmar aprobación"
             variant="outline"
           >
-            {loading ? "…" : "Confirmar"}
+            <Check className="h-4 w-4" aria-hidden />
           </Button>
-          <Button onClick={() => setConfirmando(false)} size="sm" variant="ghost">
-            Cancelar
+          <Button
+            aria-label="Cancelar"
+            onClick={() => setConfirmando(false)}
+            size="icon"
+            title="Cancelar"
+            variant="ghost"
+          >
+            <X className="h-4 w-4" aria-hidden />
           </Button>
         </>
       ) : (
-        <Button onClick={() => setConfirmando(true)} size="sm" variant="outline">
-          Aprobar
+        <Button
+          aria-label="Aprobar gasto"
+          onClick={() => setConfirmando(true)}
+          size="icon"
+          title="Aprobar gasto"
+          variant="outline"
+        >
+          <Check className="h-4 w-4" aria-hidden />
         </Button>
       )}
       {error && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { Pencil, Trash2, Check, X, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -139,37 +140,51 @@ export function CollectorRowActions({ collector }: { collector: Collector }) {
         collectorId={collector.id}
         nombre={collector.nombre}
         trigger={
-          <Button size="sm" variant="ghost">
-            Permisos
+          <Button aria-label="Permisos" size="icon" title="Permisos" variant="outline">
+            <ShieldCheck className="h-4 w-4" aria-hidden />
           </Button>
         }
       />
       <CollectorFormDialog
         collector={collector}
         trigger={
-          <Button size="sm" variant="ghost">
-            Editar
+          <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
+            <Pencil className="h-4 w-4" aria-hidden />
           </Button>
         }
       />
       {confirmando ? (
         <>
           <Button
+            aria-label="Confirmar eliminación"
             className="text-danger"
             disabled={loading}
             onClick={eliminar}
-            size="sm"
+            size="icon"
+            title="Confirmar eliminación"
             variant="outline"
           >
-            {loading ? "…" : "Confirmar"}
+            <Check className="h-4 w-4" aria-hidden />
           </Button>
-          <Button onClick={() => setConfirmando(false)} size="sm" variant="ghost">
-            Cancelar
+          <Button
+            aria-label="Cancelar"
+            onClick={() => setConfirmando(false)}
+            size="icon"
+            title="Cancelar"
+            variant="ghost"
+          >
+            <X className="h-4 w-4" aria-hidden />
           </Button>
         </>
       ) : (
-        <Button onClick={() => setConfirmando(true)} size="sm" variant="ghost">
-          Eliminar
+        <Button
+          aria-label="Eliminar"
+          onClick={() => setConfirmando(true)}
+          size="icon"
+          title="Eliminar"
+          variant="ghost"
+        >
+          <Trash2 className="h-4 w-4 text-danger" aria-hidden />
         </Button>
       )}
       {error && (

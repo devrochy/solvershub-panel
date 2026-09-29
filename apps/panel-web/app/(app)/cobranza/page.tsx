@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -110,7 +111,11 @@ export default async function CobranzaPage() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold text-headline">Gestores</h2>
-          <CollectorFormDialog trigger={<Button variant="accent">Nuevo gestor</Button>} />
+          <CollectorFormDialog trigger={
+            <Button variant="accent">
+              <Plus className="h-4 w-4" aria-hidden /> Nuevo gestor
+            </Button>
+          } />
         </div>
         <DataTable
           columns={columns}
