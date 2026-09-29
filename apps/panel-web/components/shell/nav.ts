@@ -170,10 +170,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
       {
         section: "settings",
         label: "Bandeja de fallos",
-        href: "/legacy/admin/dlq",
+        href: "/dlq",
         icon: AlertTriangle,
         ready: true,
-        legacy: true,
       },
       {
         section: "connections",
