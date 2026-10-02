@@ -18,6 +18,12 @@ const TONOS = ["calido", "formal", "divertido"];
 const PERSONA_TONES = ["formal", "neutral", "cercano", "informal"];
 const EMOJIS = ["none", "sparse", "free"];
 const DEBOUNCE = ["inmediato", "rapido", "natural", "pausado"];
+// Estilo de envío (HU-ARCH-11): cada mensaje de servicio lo cobra Meta.
+const SPLIT_STYLES: { value: string; label: string }[] = [
+  { value: "un_mensaje", label: "Un solo mensaje (1 por respuesta)" },
+  { value: "pocos_cortos", label: "Pocos mensajes cortos (hasta 3)" },
+  { value: "varios_cortos", label: "Varios mensajes cortos (hasta 6)" },
+];
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
@@ -188,6 +194,26 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
                 ))}
               </Select>
             </Field>
+            <Field
+              label="Estilo de envío"
+              htmlFor="split_style"
+              help="Cuántos mensajes envía el asistente por respuesta. Meta cobra cada mensaje de servicio: 'Un solo mensaje' gasta menos."
+            >
+              <Select
+                id="split_style"
+                value={values.split_style}
+                onChange={(e) => set("split_style", e.target.value)}
+              >
+                {SPLIT_STYLES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <Field
               label="Reintentos de guardrail antes de escalar"
               htmlFor="guardrail_max_retries"
