@@ -1,0 +1,8 @@
+# Solo alertas de seguridad: sin PR por cada versión nueva.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/apps/panel-web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
