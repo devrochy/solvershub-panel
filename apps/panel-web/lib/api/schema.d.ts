@@ -1585,6 +1585,11 @@ export interface components {
             tono: string;
             /** Debounce Mode */
             debounce_mode: string;
+            /**
+             * Split Style
+             * @default un_mensaje
+             */
+            split_style: string;
             /** Guardrail Max Retries */
             guardrail_max_retries: number;
             /** Disabled Guardrails */
@@ -1643,9 +1648,14 @@ export interface components {
             tono: string;
             /**
              * Debounce Mode
-             * @default natural
-             */
+              * @default natural
+              */
             debounce_mode: string;
+            /**
+             * Split Style
+             * @default un_mensaje
+             */
+            split_style: string;
             /**
              * Guardrail Max Retries
              * @default 1
