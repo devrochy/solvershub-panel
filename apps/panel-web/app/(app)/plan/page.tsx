@@ -42,7 +42,8 @@ export default async function PlanPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Plan y consumo" description="Suscripción, cuotas y pagos del negocio." />
+      <PageHeader title="Plan y consumo" description="Suscripción, cuotas y pagos del negocio."   helpSection="plan"
+        />
 
       <Card>
         <CardHeader>

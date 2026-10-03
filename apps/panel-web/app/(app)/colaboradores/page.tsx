@@ -101,6 +101,7 @@ export default async function CollaboratorsPage() {
       <PageHeader
         title="Colaboradores"
         description="Cuentas con acceso al panel, sus permisos por sección y sus negocios vinculados."
+        helpSection="collaborators"
         actions={<NewCollaboratorDialog packRoles={rolesRes.ok ? rolesRes.data : []} />}
       />
       <PendingInvitations />

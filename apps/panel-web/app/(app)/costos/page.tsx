@@ -50,7 +50,8 @@ export default async function CostsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Costos LLM" description="Consumo del agente por modelo y conversación." />
+      <PageHeader title="Costos LLM" description="Consumo del agente por modelo y conversación."   helpSection="costs"
+        />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Costo hoy" value={formatUsd(d.today)} tone="accent" />

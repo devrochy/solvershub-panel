@@ -85,6 +85,7 @@ export default async function ConnectionsPage() {
       <PageHeader
         title="Conexiones"
         description="Canales por los que tu agente atiende. Las credenciales se guardan cifradas (Fernet) y no dependen del .env; cada negocio tiene su propio webhook y verify token."
+        helpSection="connections"
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="default">

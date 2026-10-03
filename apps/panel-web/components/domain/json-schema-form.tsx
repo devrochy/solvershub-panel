@@ -141,7 +141,7 @@ export function JsonSchemaForm({
     const locales: Record<string, string> = {};
     const enviados: Record<string, unknown> = { ...values };
     for (const [name, prop] of Object.entries(properties)) {
-      const { type, source } = effType(prop);
+      const { type } = effType(prop);
       if (type === "object" && typeof enviados[name] === "string") {
         const parsed = parseJsonField(enviados[name] as string);
         if (parsed.ok) enviados[name] = parsed.data;

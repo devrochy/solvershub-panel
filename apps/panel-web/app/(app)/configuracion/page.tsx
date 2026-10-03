@@ -28,7 +28,8 @@ export default async function SettingsPage({
       <PageHeader
         title="Configuración"
         description="Identidad y comportamiento del agente de este negocio."
-      />
+        helpSection="settings"
+        />
       <SettingsTabs advanced={advancedRes.data} defaultTab={tab} settings={res.data} />
     </div>
   );
