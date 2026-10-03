@@ -77,7 +77,8 @@ export default async function EscalationsPage({
       <PageHeader
         title="Escalaciones"
         description="Conversaciones que el agente derivó a una persona."
-      />
+        helpSection="escalations"
+        />
 
       <DataTable
         columns={columns}

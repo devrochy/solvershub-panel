@@ -21,7 +21,8 @@ export default async function PluginsPage() {
       <PageHeader
         title="Habilidades"
         description="Módulos que se suman al agente. El alcance es por negocio: al activar uno se carga su código y su salud se controla aislada por negocio (si falla, se puede reintentar sin afectar al resto)."
-      />
+        helpSection="plugins"
+        />
 
       {res.data.length === 0 ? (
         <EmptyState

@@ -53,7 +53,8 @@ export default async function LeadsPage({
       <PageHeader
         title="Leads"
         description="Clientes que el agente ha atendido. Las columnas de cada habilidad se suman aquí."
-      />
+        helpSection="leads"
+        />
 
       <LeadsFilters q={sp.q} />
 

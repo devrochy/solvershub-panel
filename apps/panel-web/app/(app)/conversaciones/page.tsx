@@ -85,7 +85,8 @@ export default async function ConversationsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Conversaciones" description="Atenciones del agente con cada cliente." />
+      <PageHeader title="Conversaciones" description="Atenciones del agente con cada cliente."   helpSection="conversations"
+        />
 
       <ConversationFilters q={sp.q} status={sp.status} />
 

@@ -36,7 +36,8 @@ export default async function DashboardPage() {
             </Badge>
           ) : undefined
         }
-      />
+        helpSection="dashboard"
+        />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} />

@@ -47,7 +47,8 @@ export default async function DlqPage() {
       <PageHeader
         title="Bandeja de fallos"
         description="Mensajes que fallaron tras varios reintentos. Reintentar los devuelve a la cola de entrada."
-      />
+        helpSection="tools"
+        />
       <DataTable
         columns={columns}
         rows={res.data.entries}
