@@ -1,4 +1,4 @@
-# Solo alertas de seguridad: sin PR por cada versión nueva.
+# npm: solo alertas de seguridad, sin PR por cada versión nueva.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -6,3 +6,16 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0
+
+  # Excepción: las GitHub Actions sí reciben PR de versión, todos en un solo PR
+  # por mes. Son pocas, y quedarse atrás significa correr sobre un runtime que
+  # GitHub retira (hoy `actions/checkout@v4` y `actions/setup-node@v4` apuntan a
+  # Node 20 y GitHub las fuerza a Node 24). `directory: "/"` revisa
+  # `.github/workflows`.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]
