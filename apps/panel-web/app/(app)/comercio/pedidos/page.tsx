@@ -2,8 +2,8 @@ import { OrderStatus } from "@/app/(app)/comercio/pedidos/_components/order-stat
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
-import { formatDateTime, formatUsd } from "@/lib/format";
+import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
+import { formatDateTime, formatMoney } from "@/lib/format";
 
 export const metadata = { title: "Pedidos" };
 
@@ -30,6 +30,8 @@ export default async function OrdersPage() {
       </p>
     );
   }
+
+  const currency = await getBusinessCurrency();
 
   const columns: Column<Order>[] = [
     {
@@ -58,13 +60,13 @@ export default async function OrdersPage() {
             ? "—"
             : o.line_items.map((line, i) => (
                 <span key={`${o.id}-${i}`}>
-                  {line.quantity} × {line.name} · {formatUsd(line.unit_price, 0)}
+                  {line.quantity} × {line.name} · {formatMoney(line.unit_price, currency)}
                 </span>
               ))}
         </div>
       ),
     },
-    { key: "total", header: "Total", align: "right", cell: (o) => formatUsd(o.total, 0) },
+    { key: "total", header: "Total", align: "right", cell: (o) => formatMoney(o.total, currency) },
     {
       key: "pago",
       header: "Pago",

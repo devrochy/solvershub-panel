@@ -2,8 +2,8 @@ import { StatCard } from "@/components/ui/stat-card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/domain/status-badge";
-import { apiFetch } from "@/lib/api/server";
-import { formatDate, formatNumber, formatUsd } from "@/lib/format";
+import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
+import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Comercio" };
 
@@ -35,6 +35,7 @@ export default async function CommercePage() {
       </p>
     );
   }
+  const currency = await getBusinessCurrency();
   const { kpi, recent_orders } = res.data;
 
   const columns: Column<Dashboard["recent_orders"][number]>[] = [
@@ -43,7 +44,7 @@ export default async function CommercePage() {
       header: "Pedido",
       cell: (o) => <span className="font-mono text-xs text-headline">{o.public_order_number}</span>,
     },
-    { key: "total", header: "Total", align: "right", cell: (o) => formatUsd(o.total, 0) },
+    { key: "total", header: "Total", align: "right", cell: (o) => formatMoney(o.total, currency) },
     {
       key: "estado",
       header: "Estado",

@@ -3,8 +3,8 @@ import { ProductDialog } from "@/app/(app)/comercio/productos/_components/produc
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
-import { formatNumber, formatUsd } from "@/lib/format";
+import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
+import { formatMoney, formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Productos" };
 
@@ -34,6 +34,7 @@ export default async function ProductsPage() {
   }
   const categories = categoriesRes.ok ? categoriesRes.data : [];
   const products = productsRes.data;
+  const currency = await getBusinessCurrency();
 
   const columns: Column<Product>[] = [
     {
@@ -61,7 +62,7 @@ export default async function ProductsPage() {
           ) : (
             p.variants.map((v) => (
               <span key={v.id} className="font-mono">
-                {v.sku} · {formatUsd(v.price, 0)} · {formatNumber(v.stock)} en stock
+                {v.sku} · {formatMoney(v.price, currency)} · {formatNumber(v.stock)} en stock
               </span>
             ))
           )}
@@ -72,7 +73,7 @@ export default async function ProductsPage() {
       key: "precio",
       header: "Precio",
       align: "right",
-      cell: (p) => formatUsd(p.price, 0),
+      cell: (p) => formatMoney(p.price, currency),
     },
     {
       key: "acciones",

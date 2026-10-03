@@ -24,6 +24,13 @@ const SPLIT_STYLES: { value: string; label: string }[] = [
   { value: "pocos_cortos", label: "Pocos mensajes cortos (hasta 3)" },
   { value: "varios_cortos", label: "Varios mensajes cortos (hasta 6)" },
 ];
+// Moneda del negocio (HU-UI-01).
+const CURRENCIES: { value: string; label: string }[] = [
+  { value: "COP", label: "Peso colombiano (COP)" },
+  { value: "USD", label: "Dólar (USD)" },
+  { value: "MXN", label: "Peso mexicano (MXN)" },
+  { value: "PEN", label: "Sol peruano (PEN)" },
+];
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
@@ -227,6 +234,23 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
                 value={values.guardrail_max_retries}
                 onChange={(e) => set("guardrail_max_retries", Number(e.target.value))}
               />
+            </Field>
+            <Field
+              label="Moneda del negocio"
+              htmlFor="currency"
+              help="Con qué moneda se muestran los montos de comercio, cobranza y plan. Los costos de proveedor (LLM, Meta) se muestran en USD."
+            >
+              <Select
+                id="currency"
+                value={values.currency}
+                onChange={(e) => set("currency", e.target.value)}
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
           </div>
 

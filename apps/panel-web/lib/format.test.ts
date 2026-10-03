@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatCellValue,
+  formatCop,
   formatDate,
   formatDateTime,
   formatList,
+  formatMoney,
   formatNumber,
   parseList,
 } from "@/lib/format";
@@ -58,5 +60,21 @@ describe("formatNumber", () => {
   it("devuelve un string con los dígitos", () => {
     expect(formatNumber(1234)).toContain("1");
     expect(formatNumber(0)).toBe("0");
+  });
+});
+
+describe("formatMoney (HU-UI-01)", () => {
+  it("usa la moneda del negocio", () => {
+    expect(formatMoney(1500, "COP")).toContain("1.500");
+    expect(formatMoney(1500, "USD")).toContain("US$");
+  });
+
+  it("default COP sin decimales", () => {
+    expect(formatMoney(185000)).not.toContain(",");
+    expect(formatMoney(185000)).toContain("185.000");
+  });
+
+  it("formatCop delega en formatMoney", () => {
+    expect(formatCop(200000)).toBe(formatMoney(200000, "COP"));
   });
 });
