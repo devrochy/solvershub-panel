@@ -27,8 +27,8 @@ jobs:
       panel: ${{ steps.filter.outputs.panel }}
       tokens: ${{ steps.filter.outputs.tokens }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -44,8 +44,8 @@ jobs:
     if: ${{ needs.changes.outputs.tokens == 'true' }}
     runs-on: [self-hosted, linux, x64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
       - name: Generar tokens
@@ -58,8 +58,8 @@ jobs:
     if: ${{ needs.changes.outputs.panel == 'true' }}
     runs-on: [self-hosted, linux, x64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
       - name: Instalar
@@ -80,7 +80,7 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Gitleaks (secret scan)
