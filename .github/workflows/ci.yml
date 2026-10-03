@@ -17,7 +17,9 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Detecta qué cambió para no correr todo en cada PR (path filters).
+  # Detecta qué cambió para no correr todo en cada PR (path filters). Un cambio en
+  # los workflows corre todo, para que se pruebe de verdad. Por ejemplo, los PR de
+  # Dependabot que suben versiones de actions.
   changes:
     runs-on: [self-hosted, linux, x64]
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
@@ -32,8 +34,10 @@ jobs:
           filters: |
             panel:
               - 'apps/panel-web/**'
+              - '.github/workflows/**'
             tokens:
               - 'brand/tokens/**'
+              - '.github/workflows/**'
 
   tokens:
     needs: changes
