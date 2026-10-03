@@ -72,6 +72,9 @@ sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 - Voz de interfaz, frase corta, voz activa y sentence case.
 - El botón dice exactamente lo que pasa ("Guardar identidad", no "Enviar").
 - Errores: qué pasó y cómo seguir. Vacíos: invitación a actuar.
+- **Glosario y arquitectura de información**: ver
+  [`docs/adr/0001-arquitectura-de-informacion.md`](../../docs/adr/0001-arquitectura-de-informacion.md)
+  y `brand/manual-de-marca.md` §9.3. "Habilidad", no plugin/pack; "negocio", no tenant.
 
 ## Gates
 
