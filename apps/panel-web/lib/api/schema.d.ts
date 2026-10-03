@@ -2294,6 +2294,35 @@ export interface components {
             enabled_for_tenant: boolean;
             /** Tenant Health Error */
             tenant_health_error: string | null;
+            /**
+             * Display Name
+             * @default
+             */
+            display_name?: string;
+            /**
+             * Category
+             * @default
+             */
+            category?: string;
+            /**
+             * Description
+             * @default
+             */
+            description?: string;
+            /** Required Connections */
+            required_connections?: string[];
+            /**
+             * Min Plan
+             * @default free
+             */
+            min_plan?: string;
+            /** Action Summary */
+            action_summary?: string[];
+            /**
+             * Setup Guide
+             * @default
+             */
+            setup_guide?: string;
         };
         /** PurgeRequest */
         PurgeRequest: {
