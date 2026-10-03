@@ -87,7 +87,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
     pack: "pack_cobranza",
     items: [
       { label: "Resumen", href: "/cobranza", section: "pack_cobranza:resumen", icon: HandCoins, sub: "General", ready: true },
+      { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "General", ready: true },
       { label: "Carteras", href: "/cobranza/carteras", section: "pack_cobranza:carteras", icon: HandCoins, sub: "General", ready: true },
+      { label: "Clientes", href: "/cobranza/clientes", section: "pack_cobranza:clientes", icon: Users, sub: "General", ready: true },
       { label: "Cobros al propietario", href: "/cobranza/cobros", section: "pack_cobranza:cobros", icon: HandCoins, sub: "General", ready: true },
       { label: "Pagos de clientes", href: "/cobranza/pagos", section: "pack_cobranza:cobros", icon: HandCoins, sub: "General", ready: true },
       { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: HandCoins, sub: "General", ready: true },
@@ -120,6 +122,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
     pack: "pack_calendar",
     items: [
       { section: "pack_calendar:conexion", label: "Conexión", href: "/calendario", icon: CalendarDays, ready: true },
+      { section: "pack_calendar:conexion", label: "Horario de atención", href: "/calendario/horario", icon: CalendarDays, ready: true },
       { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: CalendarDays, ready: true },
       { section: "pack_calendar:citas", label: "Citas", href: "/calendario/citas", icon: CalendarDays, ready: true },
     ],

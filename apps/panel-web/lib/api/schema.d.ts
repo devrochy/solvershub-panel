@@ -1590,6 +1590,11 @@ export interface components {
              * @default un_mensaje
              */
             split_style: string;
+            /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
             /** Guardrail Max Retries */
             guardrail_max_retries: number;
             /** Disabled Guardrails */
@@ -1656,6 +1661,11 @@ export interface components {
              * @default un_mensaje
              */
             split_style: string;
+            /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
             /**
              * Guardrail Max Retries
              * @default 1

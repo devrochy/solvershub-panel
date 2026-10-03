@@ -14,12 +14,21 @@ export function formatUsd(value: number, maximumFractionDigits = 4): string {
   }).format(value);
 }
 
-export function formatCop(value: number): string {
+/**
+ * Monto en la moneda del negocio (HU-UI-01). `COP` no muestra decimales;
+ * otras monedas usan su formato estándar.
+ */
+export function formatMoney(value: number, currency = "COP"): string {
+  const code = (currency || "COP").toUpperCase();
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
+    currency: code,
+    maximumFractionDigits: code === "COP" ? 0 : 2,
   }).format(value);
+}
+
+export function formatCop(value: number): string {
+  return formatMoney(value, "COP");
 }
 
 export function formatDate(value: string | Date | null | undefined): string {

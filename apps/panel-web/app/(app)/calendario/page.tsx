@@ -128,7 +128,8 @@ export default async function CalendarPage({
             <Button asChild variant="outline">
               <Link href="/calendario/tipos">Tipos de cita</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild variant="outline">
+              <Link href="/calendario/horario">Configurar horario</Link>
             </Button>
           </div>
         }

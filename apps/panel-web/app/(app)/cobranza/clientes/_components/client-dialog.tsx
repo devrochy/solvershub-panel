@@ -202,7 +202,7 @@ export function ClientRowActions({
       />
       {confirmando ? (
         <>
-          <IconAction disabled={loading} label="Confirmar eliminación" onClick={eliminar} tone="aprobar">
+          <IconAction disabled={loading} label="Confirmar eliminación" onClick={eliminar} tone="eliminar">
             <Check className="h-4 w-4" aria-hidden />
           </IconAction>
           <IconAction label="Cancelar" onClick={() => setConfirmando(false)} tone="neutro">

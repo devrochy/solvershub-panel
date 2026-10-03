@@ -66,3 +66,10 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
 export async function getSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE)?.value ?? null;
 }
+
+/** Moneda del negocio activo (HU-UI-01). Default `COP` si no se puede leer. */
+export async function getBusinessCurrency(): Promise<string> {
+  const res = await apiFetch<{ identity?: { currency?: string } }>("/admin/settings");
+  if (res.ok && res.data?.identity?.currency) return res.data.identity.currency;
+  return "COP";
+}
