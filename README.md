@@ -1,6 +1,19 @@
-# SolversHub — Centro de lanzamiento
+# SolversHub — Panel
 
-**Producto:** SolversHub · **Empresa:** Roshi — Centro de Inteligencia e Innovación
+> **Un tema, un dueño.** Este repo es el **panel de administración**
+> (`apps/panel-web`) y el sistema de marca (`brand/`). La planificación vigente
+> vive en [`solvershub-docs`](https://github.com/devrochy/solvershub-docs).
+
+| Tema | Dueño |
+|---|---|
+| Planificación, backlog, decisiones | `solvershub-docs` |
+| Motor multi-tenant, API, packs | `solvershub-backend` (GitHub `agent-core`) |
+| Panel de administración | **este repo** |
+| App de campo (cobranza) | `solvershub-apk` |
+| Sitio público y formularios | `solvershub-landing` |
+| Legal, comercial, runbooks | `solvershub-comercial` |
+
+**Producto:** SolversHub · **Titular:** Robinson Aguilar Ramirez (persona natural) · **Empresa:** Roshi
 **Primario de marca:** `#172F6C` · **Última actualización:** 2026-09-23
 
 Esta carpeta reúne **todo** lo necesario para llevar SolversHub a producción y a
