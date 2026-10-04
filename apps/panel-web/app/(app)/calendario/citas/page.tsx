@@ -19,6 +19,20 @@ type Appointment = {
   google_event_id: string | null;
 };
 type Tipo = { id: string; name: string; duration_minutes?: number | null };
+type WeekItem = {
+  kind: "appointment" | "block";
+  id: string;
+  title: string;
+  start_at: string;
+  end_at: string;
+  status: string;
+  source: "local" | "google";
+};
+type WeekOut = {
+  start: string;
+  days: { date: string; weekday: number; business_hours: string }[];
+  items: WeekItem[];
+};
 
 const ESTADO_TONE: Record<string, "success" | "neutral" | "danger"> = {
   scheduled: "success",
@@ -26,10 +40,17 @@ const ESTADO_TONE: Record<string, "success" | "neutral" | "danger"> = {
   completed: "neutral",
 };
 
+const NOMBRE_DIA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+function hora(iso: string): string {
+  return iso.slice(11, 16);
+}
+
 export default async function CitasPage() {
-  const [res, tiposRes] = await Promise.all([
+  const [res, tiposRes, weekRes] = await Promise.all([
     apiFetch<Appointment[]>("/pack/calendar/appointments"),
     apiFetch<Tipo[]>("/pack/calendar/types"),
+    apiFetch<WeekOut>("/pack/calendar/week"),
   ]);
   if (!res.ok) {
     return (
@@ -82,6 +103,43 @@ export default async function CitasPage() {
         emptyTitle="Sin citas"
         emptyDescription="Agenda la primera con «Nueva cita»."
       />
+
+      {weekRes.ok && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-semibold text-headline">
+            Esta semana ({weekRes.data.start})
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            {weekRes.data.days.map((dia) => {
+              const items = weekRes.data.items.filter((i) => i.start_at.slice(0, 10) === dia.date);
+              return (
+                <div key={dia.date} className="flex flex-col gap-2 rounded-md border p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-headline">
+                      {NOMBRE_DIA[dia.weekday]} {dia.date.slice(8)}
+                    </span>
+                    <span className="text-xs text-body">{dia.business_hours || "cerrado"}</span>
+                  </div>
+                  {items.length === 0 ? (
+                    <span className="text-xs text-text-soft">—</span>
+                  ) : (
+                    items.map((item) => (
+                      <div key={`${item.kind}-${item.id}`} className="flex flex-col gap-0.5">
+                        <span className="text-xs text-body">
+                          {hora(item.start_at)} · {item.title}
+                        </span>
+                        <Badge variant={item.kind === "block" ? "warning" : "accent"}>
+                          {item.kind === "block" ? "bloqueo" : item.source}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
