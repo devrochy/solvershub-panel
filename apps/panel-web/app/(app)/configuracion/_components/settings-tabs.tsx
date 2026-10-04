@@ -7,8 +7,9 @@ import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
 import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
+import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { Tabs } from "@/components/ui/tabs";
-import type { SettingsResponse } from "@/lib/api/types";
+import type { SettingsResponse, WebChatSettings } from "@/lib/api/types";
 
 type Advanced = {
   versions: { id: string; version: string; is_active: boolean; created_at: string | null }[];
@@ -26,6 +27,7 @@ const ALIAS_TABS: Record<string, string> = {
   memoria: "memory",
   habilidades: "skills",
   avanzado: "advanced",
+  "chat-web": "web-chat",
 };
 
 const TABS = [
@@ -33,6 +35,7 @@ const TABS = [
   { id: "brain", label: "Cerebro" },
   { id: "memory", label: "Memoria" },
   { id: "skills", label: "Habilidades" },
+  { id: "web-chat", label: "Chat web" },
   { id: "advanced", label: "Avanzado" },
 ];
 
@@ -40,10 +43,12 @@ const TABS = [
 export function SettingsTabs({
   defaultTab,
   settings,
+  webChat,
   advanced,
 }: {
   defaultTab?: string;
   settings: SettingsResponse;
+  webChat: WebChatSettings;
   advanced: Advanced;
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
@@ -57,6 +62,7 @@ export function SettingsTabs({
       {tab === "brain" && <BrainForm brain={settings.brain} />}
       {tab === "memory" && <MemoryForm memory={settings.memory} />}
       {tab === "skills" && <SkillsForm skills={settings.skills} />}
+      {tab === "web-chat" && <WebChatForm webChat={webChat} />}
       {tab === "advanced" && <AdvancedPanel advanced={advanced} />}
     </div>
   );

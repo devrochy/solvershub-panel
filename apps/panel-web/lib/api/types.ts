@@ -10,7 +10,7 @@ export type Me = components["schemas"]["MeResponse"];
 export type TenantOption = components["schemas"]["TenantOption"];
 export type TenantPage = components["schemas"]["Page_TenantOption_"];
 export type Dashboard = components["schemas"]["DashboardResponse"];
-export type Kpi = components["schemas"]["Kpi"];
+export type Kpi = components["schemas"]["core__api__routers__dashboard__Kpi"];
 export type RecentConversation = components["schemas"]["RecentConversation"];
 export type BillingSummary = components["schemas"]["BillingSummary"];
 export type UsageMetric = components["schemas"]["UsageMetric"];
@@ -36,5 +36,6 @@ export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 
 export type SettingsResponse = components["schemas"]["SettingsResponse"];
+export type WebChatSettings = components["schemas"]["WebChatSettings"];
 export type IdentitySettings = components["schemas"]["IdentitySettings"];
 export type BrainSettings = components["schemas"]["BrainSettings"];

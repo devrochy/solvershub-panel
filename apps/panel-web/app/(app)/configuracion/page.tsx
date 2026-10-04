@@ -1,7 +1,7 @@
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { SettingsResponse } from "@/lib/api/types";
+import type { SettingsResponse, WebChatSettings } from "@/lib/api/types";
 
 export const metadata = { title: "Configuración" };
 
@@ -11,9 +11,10 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const tab = (await searchParams).tab;
-  const [res, advancedRes] = await Promise.all([
+  const [res, advancedRes, webChatRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
+    apiFetch<WebChatSettings>("/admin/settings/web-chat"),
   ]);
   if (!res.ok || !advancedRes.ok) {
     return (
@@ -30,7 +31,12 @@ export default async function SettingsPage({
         description="Identidad y comportamiento del agente de este negocio."
         helpSection="settings"
         />
-      <SettingsTabs advanced={advancedRes.data} defaultTab={tab} settings={res.data} />
+      <SettingsTabs
+        advanced={advancedRes.data}
+        defaultTab={tab}
+        settings={res.data}
+        webChat={webChatRes.ok ? webChatRes.data : { enabled: false, key: "", allowed_origins: [], turnstile_configured: false, snippet: "" }}
+      />
     </div>
   );
 }
