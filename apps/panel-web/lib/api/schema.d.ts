@@ -2996,6 +2996,10 @@ export interface paths {
         /**
          * Oauth Start
          * @description Inicia el OAuth2 de Google (302 a accounts.google.com).
+         *
+         *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
+         *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
+         *     entra por la ruta BFF del panel (D-SPEC-24-11, ADR-0093).
          */
         get: operations["oauth_start_api_v1_pack_calendar_oauth_start_get"];
         put?: never;
@@ -3015,11 +3019,12 @@ export interface paths {
         };
         /**
          * Oauth Callback
-         * @description Vuelve de Google: intercambia el código, guarda los tokens y regresa al panel.
+         * @description Vuelve de Google (vía la ruta BFF del panel): valida el `state`, intercambia
+         *     el código, guarda los tokens en la conexión del negocio y regresa al panel.
          *
-         *     El navegador llega desde Google (sin la cookie de sesión del panel), así que la
-         *     autenticación se apoya en la cookie `oauth_next` que dejó `/oauth/start` (ya
-         *     autenticado): sin ella no se procesa nada.
+         *     Exige sesión (el BFF reenvía la del usuario): así el negocio es el del
+         *     principal y no se puede guardar una cuenta en otro (HU-CAL-07). Sin `state`
+         *     o con un `state` distinto al de la cookie, no se intercambia nada (CSRF).
          */
         get: operations["oauth_callback_api_v1_pack_calendar_oauth_callback_get"];
         put?: never;
@@ -12792,9 +12797,12 @@ export interface operations {
         parameters: {
             query?: {
                 code?: string;
+                state?: string;
                 error?: string;
             };
-            header?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
