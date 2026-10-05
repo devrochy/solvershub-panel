@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import { API_BASE, SESSION_COOKIE, TENANT_COOKIE } from "@/lib/api/server";
+import { publicUrl } from "@/lib/public-url";
 
 /** Cookies del flujo OAuth que deja la API en el start (anti-CSRF y destino). */
 const OAUTH_COOKIES = ["oauth_state", "oauth_next"];
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
   const tenant = store.get(TENANT_COOKIE)?.value ?? null;
   if (!token) {
     // Sin sesión no se procesa el código: se vuelve a entrar y se reintenta.
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(publicUrl(request, "/login"));
   }
 
   const oauthCookies = OAUTH_COOKIES.flatMap((name) => {
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
       },
     );
   } catch {
-    return NextResponse.redirect(new URL("/calendario?google=error", request.url));
+    return NextResponse.redirect(publicUrl(request, "/calendario?google=error"));
   }
 
   const location = res.headers.get("location");
@@ -54,5 +55,5 @@ export async function GET(request: Request) {
     }
     return salida;
   }
-  return NextResponse.redirect(new URL("/calendario?google=error", request.url));
+  return NextResponse.redirect(publicUrl(request, "/calendario?google=error"));
 }
