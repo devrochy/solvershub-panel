@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 
+import { describeNotification, type ClientNotification } from "./notification";
 import { type Activity, type CalendarEvent, type Tipo } from "./types";
 
 function toLocalInput(iso: string | undefined): string {
@@ -37,7 +38,8 @@ export function AppointmentPanel({
   event: CalendarEvent | null;
   draft: { start: string; end: string } | null;
   onClose: () => void;
-  onSaved: () => void;
+  /** `message`: qué pasó de verdad (incluido el aviso al cliente) para mostrarlo al cerrar. */
+  onSaved: (message?: string) => void;
 }) {
   const isBlock = event?.kind === "block";
   const isNew = !event;
@@ -74,13 +76,15 @@ export function AppointmentPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      notification?: ClientNotification;
+    };
     if (!res.ok) {
       setStatus({ error: json.error ?? "No se pudo guardar la cita." });
       return;
     }
-    setStatus({ success: notify ? "Guardado y avisado." : "Guardado." });
-    onSaved();
+    onSaved(isNew ? "Cita creada." : describeNotification("Cita guardada.", json.notification));
   }
 
   async function saveBlock(form: HTMLFormElement) {
@@ -103,15 +107,23 @@ export function AppointmentPanel({
   }
 
   async function cancelAppointment() {
-    if (!window.confirm("¿Cancelar esta cita? Se enviará el correo de cancelación.")) return;
+    const message = notify
+      ? "¿Cancelar esta cita? Le avisaremos al cliente por correo y WhatsApp."
+      : "¿Cancelar esta cita? No se le avisará al cliente.";
+    if (!window.confirm(message)) return;
     setStatus({ loading: true });
-    const res = await fetch(`/api/pack/calendar/appointments/${apptId}/cancel`, { method: "POST" });
+    const res = await fetch(`/api/pack/calendar/appointments/${apptId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notify }),
+    });
     setStatus({ loading: false });
     if (!res.ok) {
       setStatus({ error: "No se pudo cancelar la cita." });
       return;
     }
-    onSaved();
+    const json = (await res.json().catch(() => ({}))) as { notification?: ClientNotification };
+    onSaved(describeNotification("Cita cancelada.", json.notification));
   }
 
   async function deleteBlock() {
@@ -200,7 +212,7 @@ export function AppointmentPanel({
             </Field>
             <label className="flex items-center gap-2 text-sm text-body">
               <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
-              Avisar al cliente y a los colaboradores por correo
+              Avisar al cliente (correo y WhatsApp) y a los colaboradores (correo)
             </label>
             <div className="flex justify-between">
               {!isNew && event?.can_cancel ? (

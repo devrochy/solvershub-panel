@@ -12,6 +12,7 @@ import type { DateClickArg, EventResizeDoneArg } from "@fullcalendar/interaction
 import esLocale from "@fullcalendar/core/locales/es";
 
 import { AppointmentPanel } from "./appointment-panel";
+import { describeNotification, type ClientNotification } from "./notification";
 import { type CalendarEvent, type Tipo } from "./types";
 
 /**
@@ -25,6 +26,7 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const [draft, setDraft] = useState<{ start: string; end: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadEvents = useCallback(
     async (info: { startStr: string; endStr: string }) => {
@@ -65,7 +67,7 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
     }
     const id = p.id.replace("appt-", "");
     const avisar = window.confirm(
-      "¿Avisar al cliente y a los colaboradores del nuevo horario por correo?",
+      "¿Avisar al cliente del nuevo horario por correo y WhatsApp (y a los colaboradores por correo)?",
     );
     const res = await fetch(`/api/pack/calendar/appointments/${id}`, {
       method: "PATCH",
@@ -82,7 +84,9 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
       setError(json.error ?? "Ese horario ya está ocupado o está fuera del horario.");
       return;
     }
+    const json = (await res.json().catch(() => ({}))) as { notification?: ClientNotification };
     setError(null);
+    setNotice(describeNotification("Cita movida.", json.notification));
   }
 
   function openDetail(arg: EventClickArg) {
@@ -104,6 +108,11 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
       {error && (
         <p role="alert" className="text-danger">
           {error}
+        </p>
+      )}
+      {notice && !error && (
+        <p role="status" className="text-sm text-body">
+          {notice}
         </p>
       )}
       <div className="rounded-md border p-2">
@@ -140,9 +149,10 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
             setSelected(null);
             setDraft(null);
           }}
-          onSaved={() => {
+          onSaved={(message) => {
             setSelected(null);
             setDraft(null);
+            setNotice(message ?? null);
             calRef.current?.getApi().refetchEvents();
           }}
         />
