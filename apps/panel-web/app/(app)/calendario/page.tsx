@@ -167,7 +167,10 @@ export default async function CalendarPage({
               <Link href="/habilidades/pack_calendar">Configurar credenciales</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</Link>
+              {/* `<a>` y no `<Link>`: el prefetch de Next llamaba al inicio del OAuth en cada
+                  carga y cada llamada renovaba el `state`, así que el retorno de Google no
+                  coincidía (HU-CAL-07). */}
+              <a href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</a>
             </Button>
           </div>
         </CardContent>
