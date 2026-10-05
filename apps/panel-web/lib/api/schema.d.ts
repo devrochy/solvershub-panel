@@ -2848,7 +2848,10 @@ export interface paths {
         put?: never;
         /**
          * Cancel Appointment
-         * @description Cancela la cita: borra el evento en Google (best-effort) y marca el espejo.
+         * @description Cancela la cita: borra el evento en Google (best-effort), marca el espejo,
+         *     registra la actividad y, con `notify` (default), avisa al cliente por correo
+         *     y WhatsApp (HU-CAL-05). Idempotente: cancelar una cita ya cancelada no
+         *     vuelve a avisar.
          */
         post: operations["cancel_appointment_api_v1_pack_calendar_appointments__appointment_id__cancel_post"];
         delete?: never;
@@ -2957,7 +2960,8 @@ export interface paths {
         /**
          * Patch Appointment
          * @description Edita campos/horario de una cita y, si se mueve y `notify`, avisa al cliente
-         *     y a los colaboradores (HU-CAL-02). Valida solapamiento en el servidor.
+         *     por correo y WhatsApp y a los colaboradores (HU-CAL-02/05). Valida
+         *     solapamiento en el servidor.
          */
         patch: operations["patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch"];
         trace?: never;
@@ -3099,6 +3103,20 @@ export interface components {
             /** Items */
             items: components["schemas"]["AccessAttempt"][];
         };
+        /** AppointmentCancel */
+        AppointmentCancel: {
+            /**
+             * Notify
+             * @default true
+             */
+            notify: boolean;
+        };
+        /** AppointmentCancelOut */
+        AppointmentCancelOut: {
+            /** Status */
+            status: string;
+            notification?: components["schemas"]["NotificationOut"] | null;
+        };
         /** AppointmentIn */
         AppointmentIn: {
             /** Title */
@@ -3159,6 +3177,7 @@ export interface components {
             created_by: string;
             /** Timezone */
             timezone: string;
+            notification?: components["schemas"]["NotificationOut"] | null;
         };
         /** AppointmentPatch */
         AppointmentPatch: {
@@ -4881,6 +4900,18 @@ export interface components {
             fecha: string;
             /** Autor */
             autor: string;
+        };
+        /**
+         * NotificationOut
+         * @description Resultado real del aviso al cliente (HU-CAL-05).
+         */
+        NotificationOut: {
+            /** Email Sent */
+            email_sent: boolean;
+            /** Email Reason */
+            email_reason: string;
+            /** Whatsapp Sent */
+            whatsapp_sent: boolean;
         };
         /** NumbersResponse */
         NumbersResponse: {
@@ -12422,14 +12453,20 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AppointmentCancel"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
-            204: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AppointmentCancelOut"];
+                };
             };
             /** @description Validation Error */
             422: {
