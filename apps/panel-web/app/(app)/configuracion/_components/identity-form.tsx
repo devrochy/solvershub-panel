@@ -31,6 +31,30 @@ const CURRENCIES: { value: string; label: string }[] = [
   { value: "MXN", label: "Peso mexicano (MXN)" },
   { value: "PEN", label: "Sol peruano (PEN)" },
 ];
+// Zona horaria del negocio (HU-CAL-04): de ella salen la fecha y hora que usa
+// el asistente ("hoy", "mañana") y el horario de atención.
+const TIMEZONES: { value: string; label: string }[] = [
+  { value: "America/Bogota", label: "Colombia (Bogotá)" },
+  { value: "America/Lima", label: "Perú (Lima)" },
+  { value: "America/Guayaquil", label: "Ecuador (Guayaquil)" },
+  { value: "America/Panama", label: "Panamá" },
+  { value: "America/Mexico_City", label: "México (Ciudad de México)" },
+  { value: "America/Guatemala", label: "Guatemala" },
+  { value: "America/Costa_Rica", label: "Costa Rica" },
+  { value: "America/Caracas", label: "Venezuela (Caracas)" },
+  { value: "America/Santo_Domingo", label: "República Dominicana" },
+  { value: "America/Santiago", label: "Chile (Santiago)" },
+  { value: "America/Argentina/Buenos_Aires", label: "Argentina (Buenos Aires)" },
+  { value: "America/Sao_Paulo", label: "Brasil (São Paulo)" },
+  { value: "America/New_York", label: "Estados Unidos (Nueva York)" },
+  { value: "Europe/Madrid", label: "España (Madrid)" },
+  { value: "UTC", label: "UTC" },
+];
+// Qué hace el asistente si agota los reintentos del guardrail (HU-CAL-04).
+const GUARDRAIL_FAIL_ACTIONS: { value: IdentitySettings["guardrail_fail_action"]; label: string }[] = [
+  { value: "escalate", label: "Escalar a una persona" },
+  { value: "neutral", label: "Responder que va a verificar" },
+];
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
@@ -64,7 +88,8 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
     const res = await fetch("/api/settings/identity", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      // Una sola zona en la UI: el horario de atención usa la del negocio.
+      body: JSON.stringify({ ...values, business_tz: values.timezone }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
@@ -222,9 +247,9 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field
-              label="Reintentos de guardrail antes de escalar"
+              label="Reintentos de guardrail"
               htmlFor="guardrail_max_retries"
-              help="Intentos ante validación fallida o posible alucinación antes de escalar a una persona. Predeterminado: 1."
+              help="Intentos para corregir una respuesta con validación fallida o posible alucinación. Predeterminado: 1."
             >
               <Input
                 id="guardrail_max_retries"
@@ -235,6 +260,28 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
                 onChange={(e) => set("guardrail_max_retries", Number(e.target.value))}
               />
             </Field>
+            <Field
+              label="Si el asistente no logra corregir su respuesta"
+              htmlFor="guardrail_fail_action"
+              help="Responder que va a verificar no pausa el asistente; si el cliente sigue sin solución, el escalamiento por turnos sin resolver sigue activo."
+            >
+              <Select
+                id="guardrail_fail_action"
+                value={values.guardrail_fail_action}
+                onChange={(e) =>
+                  set("guardrail_fail_action", e.target.value as IdentitySettings["guardrail_fail_action"])
+                }
+              >
+                {GUARDRAIL_FAIL_ACTIONS.map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <Field
               label="Moneda del negocio"
               htmlFor="currency"
@@ -267,12 +314,25 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
           </Field>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Zona horaria" htmlFor="business_tz" help="Ej.: America/Bogota">
-              <Input
-                id="business_tz"
-                value={values.business_tz}
-                onChange={(e) => set("business_tz", e.target.value)}
-              />
+            <Field
+              label="Zona horaria del negocio"
+              htmlFor="timezone"
+              help="Con esta zona el asistente sabe qué día y hora es y aplica el horario de atención."
+            >
+              <Select
+                id="timezone"
+                value={values.timezone}
+                onChange={(e) => set("timezone", e.target.value)}
+              >
+                {TIMEZONES.some((z) => z.value === values.timezone) ? null : (
+                  <option value={values.timezone}>{values.timezone}</option>
+                )}
+                {TIMEZONES.map((z) => (
+                  <option key={z.value} value={z.value}>
+                    {z.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field
               label="Horario de atención"
