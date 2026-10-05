@@ -2857,6 +2857,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/calendar/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Blocks
+         * @description Bloqueos de la agenda interna (vacaciones, ausencia, feriados, almuerzo).
+         */
+        get: operations["list_blocks_api_v1_pack_calendar_blocks_get"];
+        put?: never;
+        /** Create Block */
+        post: operations["create_block_api_v1_pack_calendar_blocks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/blocks/{block_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Block */
+        delete: operations["delete_block_api_v1_pack_calendar_blocks__block_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Patch Block
+         * @description Edita un bloqueo de agenda (arrastrar/redimensionar en la grilla, HU-CAL-03).
+         */
+        patch: operations["patch_block_api_v1_pack_calendar_blocks__block_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Week View
+         * @description Citas + bloqueos de la semana que arranca en `start` (YYYY-MM-DD, lunes si se omite).
+         */
+        get: operations["week_view_api_v1_pack_calendar_week_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Calendar Events
+         * @description Citas + bloqueos en formato FullCalendar para la grilla del panel (HU-CAL-03).
+         *
+         *     `start`/`end` ISO (o YYYY-MM-DD). Sin parámetros, cubre el mes en curso.
+         */
+        get: operations["calendar_events_api_v1_pack_calendar_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/appointments/{appointment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Appointment
+         * @description Edita campos/horario de una cita y, si se mueve y `notify`, avisa al cliente
+         *     y a los colaboradores (HU-CAL-02). Valida solapamiento en el servidor.
+         */
+        patch: operations["patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/appointments/{appointment_id}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Appointment Activities
+         * @description Historial de una cita (programada/reprogramada/cancelada) (HU-CAL-03).
+         */
+        get: operations["appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/calendar/oauth/start": {
         parameters: {
             query?: never;
@@ -2919,6 +3044,24 @@ export interface components {
             imei: string;
             /** Critico */
             critico: boolean;
+        };
+        /** ActivityOut */
+        ActivityOut: {
+            /** Action */
+            action: string;
+            /** Title */
+            title: string;
+            /** Actor */
+            actor: string;
+            /** Old Start At */
+            old_start_at: string | null;
+            /** New Start At */
+            new_start_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** AddNumberRequest */
         AddNumberRequest: {
@@ -3012,6 +3155,30 @@ export interface components {
             google_event_id: string | null;
             /** Appointment Type Id */
             appointment_type_id: string | null;
+            /** Created By */
+            created_by: string;
+            /** Timezone */
+            timezone: string;
+        };
+        /** AppointmentPatch */
+        AppointmentPatch: {
+            /** Title */
+            title?: string | null;
+            /** Attendee Email */
+            attendee_email?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Appointment Type Id */
+            appointment_type_id?: string | null;
+            /** Start At */
+            start_at?: string | null;
+            /** End At */
+            end_at?: string | null;
+            /**
+             * Notify
+             * @default true
+             */
+            notify: boolean;
         };
         /** AttemptRow */
         AttemptRow: {
@@ -3075,6 +3242,53 @@ export interface components {
             has_plan: boolean;
             alert_metric?: components["schemas"]["UsageMetric"] | null;
             warning_metric?: components["schemas"]["UsageMetric"] | null;
+        };
+        /** BlockIn */
+        BlockIn: {
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** BlockOut */
+        BlockOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** Reason */
+            reason: string;
+        };
+        /** BlockPatch */
+        BlockPatch: {
+            /** Start At */
+            start_at?: string | null;
+            /** End At */
+            end_at?: string | null;
+            /** Reason */
+            reason?: string | null;
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
@@ -3977,8 +4191,19 @@ export interface components {
              * @default COP
              */
             currency: string;
+            /**
+             * Timezone
+             * @default America/Bogota
+             */
+            timezone: string;
             /** Guardrail Max Retries */
             guardrail_max_retries: number;
+            /**
+             * Guardrail Fail Action
+             * @default escalate
+             * @enum {string}
+             */
+            guardrail_fail_action: "escalate" | "neutral";
             /** Disabled Guardrails */
             disabled_guardrails: string[];
             /** Available Guardrails */
@@ -4048,11 +4273,15 @@ export interface components {
              * @default COP
              */
             currency: string;
+            /** Timezone */
+            timezone?: string | null;
             /**
              * Guardrail Max Retries
              * @default 1
              */
             guardrail_max_retries: number;
+            /** Guardrail Fail Action */
+            guardrail_fail_action?: ("escalate" | "neutral") | null;
             /**
              * Disabled Guardrails
              * @default []
@@ -6073,6 +6302,43 @@ export interface components {
         WebhooksResponse: {
             /** Subscriptions */
             subscriptions: components["schemas"]["SubscriptionItem"][];
+        };
+        /** WeekItem */
+        WeekItem: {
+            /** Kind */
+            kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** Status */
+            status: string;
+            /** Source */
+            source: string;
+        };
+        /** WeekOut */
+        WeekOut: {
+            /** Start */
+            start: string;
+            /** Days */
+            days: {
+                [key: string]: unknown;
+            }[];
+            /** Items */
+            items: components["schemas"]["WeekItem"][];
         };
         /** WizardByokIn */
         WizardByokIn: {
@@ -12164,6 +12430,282 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_blocks_api_v1_pack_calendar_blocks_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                include_past?: boolean;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_block_api_v1_pack_calendar_blocks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_block_api_v1_pack_calendar_blocks__block_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_block_api_v1_pack_calendar_blocks__block_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    week_view_api_v1_pack_calendar_week_get: {
+        parameters: {
+            query?: {
+                start?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_events_api_v1_pack_calendar_events_get: {
+        parameters: {
+            query?: {
+                start?: string | null;
+                end?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
+                };
             };
             /** @description Validation Error */
             422: {
