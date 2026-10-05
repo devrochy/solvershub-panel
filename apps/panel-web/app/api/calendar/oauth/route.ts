@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import { API_BASE, SESSION_COOKIE, TENANT_COOKIE } from "@/lib/api/server";
+import { publicUrl } from "@/lib/public-url";
 
 /** BFF: arranca el OAuth de Google del pack Calendario (redirige a Google). */
 export async function GET(request: Request) {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value ?? null;
   const tenant = store.get(TENANT_COOKIE)?.value ?? null;
-  const next = new URL(request.url).searchParams.get("next") ?? "/calendario";
+  // Solo rutas relativas del panel: `//otro-dominio` sería una redirección abierta.
+  const pedido = new URL(request.url).searchParams.get("next") ?? "";
+  const next = pedido.startsWith("/") && !pedido.startsWith("//") ? pedido : "/calendario";
   if (!token) {
     return NextResponse.json({ error: "Sesión requerida." }, { status: 401 });
   }
@@ -27,7 +30,7 @@ export async function GET(request: Request) {
       },
     );
   } catch {
-    return NextResponse.redirect(new URL(`${next}?google=error`, request.url));
+    return NextResponse.redirect(publicUrl(request, `${next}?google=error`));
   }
 
   if (res.status >= 300 && res.status < 400) {
@@ -41,5 +44,5 @@ export async function GET(request: Request) {
       return salida;
     }
   }
-  return NextResponse.redirect(new URL(`${next}?google=not_configured`, request.url));
+  return NextResponse.redirect(publicUrl(request, `${next}?google=not_configured`));
 }
