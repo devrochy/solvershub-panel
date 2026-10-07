@@ -738,6 +738,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/numbers/{phone_number_id}/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Connection Number
+         * @description Registra el número en la Cloud API con un PIN de verificación en dos pasos, para
+         *     conexiones BYOK y manuales (Embedded Signup lo hace en su wizard). El PIN nunca vuelve.
+         */
+        post: operations["register_connection_number_api_v1_admin_meta_connections__connection_id__numbers__phone_number_id__register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/connections/{connection_id}/templates": {
         parameters: {
             query?: never;
@@ -5452,6 +5473,11 @@ export interface components {
             verified_name: string | null;
             /** Status */
             status: string;
+            /**
+             * Registered
+             * @default false
+             */
+            registered: boolean;
         };
         /** PlanInfo */
         PlanInfo: {
@@ -5955,6 +5981,11 @@ export interface components {
             status: string;
             /** Created At */
             created_at?: string | null;
+        };
+        /** RegisterNumberRequest */
+        RegisterNumberRequest: {
+            /** Pin */
+            pin?: string | null;
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -8257,6 +8288,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["VerifyCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_connection_number_api_v1_admin_meta_connections__connection_id__numbers__phone_number_id__register_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                phone_number_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterNumberRequest"];
             };
         };
         responses: {
