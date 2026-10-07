@@ -14,6 +14,7 @@ import esLocale from "@fullcalendar/core/locales/es";
 import { AppointmentPanel } from "./appointment-panel";
 import { describeNotification, type ClientNotification } from "./notification";
 import { type CalendarEvent, type Tipo } from "./types";
+import { useConfirm } from "@/components/ui/confirm";
 
 /**
  * Grilla de agenda tipo Google Calendar (HU-CAL-03): mes/semana/día con
@@ -23,6 +24,7 @@ import { type CalendarEvent, type Tipo } from "./types";
  */
 export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: string }) {
   const calRef = useRef<FullCalendar | null>(null);
+  const confirm = useConfirm();
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const [draft, setDraft] = useState<{ start: string; end: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,9 +68,14 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
       return;
     }
     const id = p.id.replace("appt-", "");
-    const avisar = window.confirm(
-      "¿Avisar al cliente del nuevo horario por correo y WhatsApp (y a los colaboradores por correo)?",
-    );
+    const avisar = await confirm({
+      title: "Avisar del nuevo horario",
+      description:
+        "¿Avisar al cliente del nuevo horario por correo y WhatsApp (y a los colaboradores por correo)?",
+      confirmLabel: "Sí, avisar",
+      cancelLabel: "No avisar",
+      destructive: false,
+    });
     const res = await fetch(`/api/pack/calendar/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

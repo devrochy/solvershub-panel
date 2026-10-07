@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ type Advanced = {
 /** Configuración avanzada: versiones, LLM, guardrails, flow y evals. */
 export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [llm, setLlm] = useState({ ...advanced.llm, llm_api_key: "" });
   const [guardrails, setGuardrails] = useState(advanced.guardrails_text);
   const [spec, setSpec] = useState(() => JSON.stringify(advanced.spec ?? {}, null, 2));
@@ -158,23 +160,23 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                       {!v.is_active && (
                         <Button
                           onClick={() => {
-                            if (
-                              !window.confirm(
-                                `¿Activar la versión ${v.version}? Reemplaza a la versión activa.`,
-                              )
-                            ) {
-                              return;
-                            }
-                            void post(
-                              { action: "activate-version", record_id: v.id },
-                              `Versión ${v.version} activada.`,
-                            );
+                            void (async () => {
+                              const aceptado = await confirm({
+                                title: "Activar versión",
+                                description: `Se activará la versión ${v.version}, que reemplaza a la versión activa actual.`,
+                                confirmLabel: "Activar",
+                                destructive: true,
+                              });
+                              if (!aceptado) return;
+                              void post(
+                                { action: "activate-version", record_id: v.id },
+                                `Versión ${v.version} activada.`,
+                              );
+                            })();
                           }}
                           disabled={Boolean(status.loading)}
                           aria-label="Activar"
                           size="icon"
-                          title="Activar"
-                          variant="outline"
                         >
                           <Check className="h-4 w-4" aria-hidden />
                         </Button>

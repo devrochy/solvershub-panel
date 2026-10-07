@@ -5,12 +5,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
+import { toast } from "@/lib/toast-store";
 
 import { describeNotification, type ClientNotification } from "./notification";
 import { type Activity, type CalendarEvent, type Tipo } from "./types";
@@ -43,6 +45,7 @@ export function AppointmentPanel({
 }) {
   const isBlock = event?.kind === "block";
   const isNew = !event;
+  const confirm = useConfirm();
   const [notify, setNotify] = useState(true);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -107,10 +110,15 @@ export function AppointmentPanel({
   }
 
   async function cancelAppointment() {
-    const message = notify
-      ? "¿Cancelar esta cita? Le avisaremos al cliente por correo y WhatsApp."
-      : "¿Cancelar esta cita? No se le avisará al cliente.";
-    if (!window.confirm(message)) return;
+    const aceptado = await confirm({
+      title: "Cancelar cita",
+      description: notify
+        ? "Se cancelará la cita y le avisaremos al cliente por correo y WhatsApp. Esta acción no se puede deshacer."
+        : "Se cancelará la cita sin avisar al cliente. Esta acción no se puede deshacer.",
+      confirmLabel: "Cancelar cita",
+      destructive: true,
+    });
+    if (!aceptado) return;
     setStatus({ loading: true });
     const res = await fetch(`/api/pack/calendar/appointments/${apptId}/cancel`, {
       method: "POST",
@@ -119,7 +127,7 @@ export function AppointmentPanel({
     });
     setStatus({ loading: false });
     if (!res.ok) {
-      setStatus({ error: "No se pudo cancelar la cita." });
+      toast.error("No se pudo cancelar la cita.");
       return;
     }
     const json = (await res.json().catch(() => ({}))) as { notification?: ClientNotification };
@@ -127,12 +135,18 @@ export function AppointmentPanel({
   }
 
   async function deleteBlock() {
-    if (!window.confirm("¿Eliminar este bloqueo?")) return;
+    const aceptado = await confirm({
+      title: "Eliminar bloqueo",
+      description: "Se eliminará el bloqueo de la agenda. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!aceptado) return;
     setStatus({ loading: true });
     const res = await fetch(`/api/pack/calendar/blocks/${blockId}`, { method: "DELETE" });
     setStatus({ loading: false });
     if (!res.ok) {
-      setStatus({ error: "No se pudo eliminar el bloqueo." });
+      toast.error("No se pudo eliminar el bloqueo.");
       return;
     }
     onSaved();

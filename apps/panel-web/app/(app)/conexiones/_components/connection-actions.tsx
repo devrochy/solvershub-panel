@@ -7,9 +7,11 @@ import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconAction } from "@/components/ui/icon-action";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { FormFeedback } from "@/components/ui/form-feedback";
+import { useConfirm } from "@/components/ui/confirm";
 import { Separator } from "@/components/ui/separator";
 import { JsonSchemaForm } from "@/components/domain/json-schema-form";
+import { toast } from "@/lib/toast-store";
+import { useAction } from "@/lib/use-action";
 
 /** Acciones de una conexión: activar/desactivar, hacer principal y eliminar. */
 export function ConnectionActions({
@@ -28,13 +30,14 @@ export function ConnectionActions({
   typeId?: string | null;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const { run, pending } = useAction();
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState<
     | { schema: Record<string, unknown>; values: Record<string, unknown>; configured_secrets: string[] }
     | null
   >(null);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
 
   async function openEdit() {
     if (!typeId) return;
@@ -47,28 +50,46 @@ export function ConnectionActions({
       | { schema: Record<string, unknown>; values: Record<string, unknown>; configured_secrets: string[]; error?: string }
       | null;
     if (!res.ok || !json?.schema) {
-      setStatus({ error: json?.error ?? "No se pudo cargar la conexión." });
+      toast.error(json?.error ?? "No se pudo cargar la conexión.");
       setEditOpen(false);
       return;
     }
     setForm(json);
   }
 
-  async function run(action: "activate" | "deactivate" | "primary" | "delete") {
-    setStatus({ loading: true });
+  async function post(action: "activate" | "deactivate" | "primary" | "delete") {
     const res = await fetch(`/api/connections/${connectionId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, kind }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo completar la acción." });
-      return;
+    return { ok: res.ok, error: json.error };
+  }
+
+  async function runAccion(action: "activate" | "deactivate" | "primary" | "delete") {
+    if (action === "delete") {
+      const aceptado = await confirm({
+        title: "Eliminar conexión",
+        description:
+          "Se eliminará la conexión y el negocio dejará de recibir mensajes por este canal. Esta acción no se puede deshacer.",
+        confirmLabel: "Eliminar",
+        destructive: true,
+      });
+      if (!aceptado) return;
     }
-    setStatus({ success: "Listo." });
-    if (action === "delete") setOpen(false);
-    router.refresh();
+    if (action === "deactivate") {
+      const aceptado = await confirm({
+        title: "Desactivar conexión",
+        description:
+          "El negocio dejará de recibir mensajes por esta conexión hasta que la vuelvas a activar.",
+        confirmLabel: "Desactivar",
+        destructive: true,
+      });
+      if (!aceptado) return;
+    }
+    const ok = await run(post.bind(null, action));
+    if (ok && action === "delete") setOpen(false);
   }
 
   return (
@@ -88,16 +109,16 @@ export function ConnectionActions({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void run(active ? "deactivate" : "activate")}
-            disabled={status.loading}
+            onClick={() => void runAccion(active ? "deactivate" : "activate")}
+            disabled={pending}
           >
             {active ? "Desactivar" : "Activar"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void run("primary")}
-            disabled={status.loading || primary || kind === "meta_connection"}
+            onClick={() => void runAccion("primary")}
+            disabled={pending || primary || kind === "meta_connection"}
           >
             {kind === "meta_connection"
               ? "Principal (solo canales manuales)"
@@ -112,13 +133,11 @@ export function ConnectionActions({
           <Button
             variant="danger"
             size="sm"
-            onClick={() => void run("delete")}
-            disabled={status.loading}
+            onClick={() => void runAccion("delete")}
+            disabled={pending}
           >
             Eliminar conexión
           </Button>
-
-          <FormFeedback error={status.error} success={status.success} />
 
           <div className="flex justify-end">
             <DialogClose asChild>
