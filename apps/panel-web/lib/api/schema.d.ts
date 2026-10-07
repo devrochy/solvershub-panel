@@ -38,6 +38,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Forgot Password
+         * @description Siempre 202 con el mismo cuerpo: no filtra si la cuenta existe (ADR-0098).
+         *
+         *     El trabajo pesado (hash + correo) va en background para emparejar el tiempo
+         *     de respuesta de cuentas existentes e inexistentes.
+         */
+        post: operations["post_forgot_password_api_v1_auth_forgot_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Reset Password */
+        post: operations["post_reset_password_api_v1_auth_reset_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/me": {
         parameters: {
             query?: never;
@@ -49,6 +89,75 @@ export interface paths {
         get: operations["get_me_api_v1_admin_me_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/push-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register Push Token */
+        post: operations["register_push_token_api_v1_me_push_token_post"];
+        /** Remove Push Token */
+        delete: operations["remove_push_token_api_v1_me_push_token_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Busqueda Global */
+        get: operations["busqueda_global_api_v1_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sync/{entidad}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sync Entidad */
+        get: operations["sync_entidad_api_v1_sync__entidad__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/mobile-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Registrar Eventos Moviles */
+        post: operations["registrar_eventos_moviles_api_v1_audit_mobile_events_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -938,6 +1047,9 @@ export interface paths {
         /**
          * Wizard Exchange
          * @description Canjea el código del Embedded Signup (el popup ya pudo dar waba/phone).
+         *
+         *     La WABA y el número del popup se guardan recién después del canje, verificados con
+         *     el token nuevo y sin dueño en otro negocio (ADR-0095).
          */
         post: operations["wizard_exchange_api_v1_admin_meta_wizard_exchange_post"];
         delete?: never;
@@ -1678,6 +1790,46 @@ export interface paths {
          */
         put: operations["save_raw_spec_api_v1_admin_settings_advanced_spec_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/domain-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Failed
+         * @description Últimos 50 eventos fallidos del tenant activo (RLS los acota).
+         */
+        get: operations["list_failed_api_v1_admin_domain_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/domain-events/{event_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Event
+         * @description Re-encola un evento fallido: vuelve a `pendiente` con reintento inmediato.
+         */
+        post: operations["retry_event_api_v1_admin_domain_events__event_id__retry_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2755,6 +2907,31 @@ export interface paths {
          * @description Aprueba (aplica los campos propuestos al cliente) o rechaza (con motivo).
          */
         post: operations["decide_client_change_api_v1_pack_cobranza_client_changes__change_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/cobranza/gestor-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Gestor Token
+         * @description Sesión admin → par de tokens de campo del negocio activo (HU-APP-02, ADR-0098).
+         *
+         *     Reusa la lógica del login unificado de la API de campo (ADR-0081): resuelve
+         *     la membresía de campo del admin en el negocio activo (`X-Tenant-Id`) y emite
+         *     access/refresh con el enforcement de vinculación de dispositivo. El core no
+         *     conoce a los usuarios de campo; este endpoint vive en el pack.
+         */
+        post: operations["gestor_token_api_v1_pack_cobranza_gestor_token_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4008,6 +4185,24 @@ export interface components {
             /** Entries */
             entries: components["schemas"]["DlqEntry"][];
         };
+        /** DomainEventEntry */
+        DomainEventEntry: {
+            /** Id */
+            id: string;
+            /** Topic */
+            topic: string;
+            /** Attempts */
+            attempts: number;
+            /** Last Error */
+            last_error: string | null;
+            /** Created At */
+            created_at: string;
+        };
+        /** DomainEventsPage */
+        DomainEventsPage: {
+            /** Entries */
+            entries: components["schemas"]["DomainEventEntry"][];
+        };
         /** EscalationItem */
         EscalationItem: {
             /**
@@ -4112,6 +4307,24 @@ export interface components {
              * @default []
              */
             tools: string[];
+        };
+        /** ForgotPasswordRequest */
+        ForgotPasswordRequest: {
+            /**
+             * Identifier
+             * @description Correo o nombre de usuario.
+             */
+            identifier: string;
+        };
+        /**
+         * GestorTokenRequest
+         * @description Credenciales de dispositivo opcionales para el enforcement (ADR-0068).
+         */
+        GestorTokenRequest: {
+            /** Imei */
+            imei?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
         };
         /** GrantRequest */
         GrantRequest: {
@@ -4481,6 +4694,21 @@ export interface components {
             nombre: string;
             /** Rol */
             rol: string;
+        };
+        /** ItemBusqueda */
+        ItemBusqueda: {
+            /** Id */
+            id: string;
+            /** Tipo */
+            tipo: string;
+            /** Titulo */
+            titulo: string;
+            /** Subtitulo */
+            subtitulo: string;
+            /** Extra */
+            extra?: {
+                [key: string]: unknown;
+            };
         };
         /** LeadColumn */
         LeadColumn: {
@@ -4856,6 +5084,50 @@ export interface components {
         MetaSyncResult: {
             /** Errors */
             errors: string[];
+        };
+        /** MobileEvent */
+        MobileEvent: {
+            /**
+             * Eventid
+             * Format: uuid
+             */
+            eventId: string;
+            /** Accion */
+            accion: string;
+            /** Entidad */
+            entidad: string;
+            /** Entidadid */
+            entidadId?: string | null;
+            /** Payload */
+            payload?: {
+                [key: string]: unknown;
+            };
+            /** Deviceid */
+            deviceId?: string | null;
+            /** Ocurridoen */
+            ocurridoEn?: string | null;
+        };
+        /** MobileEventAck */
+        MobileEventAck: {
+            /**
+             * Eventid
+             * Format: uuid
+             */
+            eventId: string;
+            /** Estado */
+            estado: string;
+            /** Error */
+            error?: string | null;
+        };
+        /** MobileEventsRequest */
+        MobileEventsRequest: {
+            /** Events */
+            events: components["schemas"]["MobileEvent"][];
+        };
+        /** MobileEventsResponse */
+        MobileEventsResponse: {
+            /** Eventos */
+            eventos: components["schemas"]["MobileEventAck"][];
         };
         /** ModelCost */
         ModelCost: {
@@ -5643,6 +5915,17 @@ export interface components {
             /** Confirm Phrase */
             confirm_phrase: string;
         };
+        /** PushTokenRequest */
+        PushTokenRequest: {
+            /** Token */
+            token: string;
+            /**
+             * Platform
+             * @default android
+             * @enum {string}
+             */
+            platform: "android" | "ios";
+        };
         /** RecentConversation */
         RecentConversation: {
             /**
@@ -5731,6 +6014,25 @@ export interface components {
              */
             language: string;
         };
+        /** ResetPasswordRequest */
+        ResetPasswordRequest: {
+            /**
+             * Token
+             * @description Código de recuperación recibido por correo.
+             */
+            token: string;
+            /** New Password */
+            new_password: string;
+        };
+        /** ResultadoSeccion */
+        ResultadoSeccion: {
+            /** Seccion */
+            seccion: string;
+            /** Label */
+            label: string;
+            /** Items */
+            items: components["schemas"]["ItemBusqueda"][];
+        };
         /** RevokeRequest */
         RevokeRequest: {
             /** Section */
@@ -5813,6 +6115,11 @@ export interface components {
              * @default 0
              */
             umbral_saldo_autonomo: number;
+        };
+        /** SearchResponse */
+        SearchResponse: {
+            /** Resultados */
+            resultados: components["schemas"]["ResultadoSeccion"][];
         };
         /** SettingsResponse */
         SettingsResponse: {
@@ -5911,6 +6218,19 @@ export interface components {
             plan: string;
             /** Estado */
             estado: string;
+        };
+        /** SyncResponse */
+        SyncResponse: {
+            /** Entidad */
+            entidad: string;
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Nextcursor */
+            nextCursor: string;
+            /** Deletedids */
+            deletedIds: string[];
         };
         /** SyncRow */
         SyncRow: {
@@ -6595,6 +6915,70 @@ export interface operations {
             };
         };
     };
+    post_forgot_password_api_v1_auth_forgot_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_reset_password_api_v1_auth_reset_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_me_api_v1_admin_me_get: {
         parameters: {
             query?: never;
@@ -6613,6 +6997,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_push_token_api_v1_me_push_token_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_push_token_api_v1_me_push_token_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    busqueda_global_api_v1_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_entidad_api_v1_sync__entidad__get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                entidad: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_eventos_moviles_api_v1_audit_mobile_events_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MobileEventsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MobileEventsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -9711,6 +10266,68 @@ export interface operations {
             };
         };
     };
+    list_failed_api_v1_admin_domain_events_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainEventsPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_event_api_v1_admin_domain_events__event_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     web_chat_config_api_v1_public_web_chat__key__config_get: {
         parameters: {
             query?: never;
@@ -12239,6 +12856,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClientChange"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gestor_token_api_v1_pack_cobranza_gestor_token_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GestorTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
