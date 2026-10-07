@@ -1,60 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm";
+import { useAction } from "@/lib/use-action";
 
 /** Cancela una cita (y su evento de Google si lo tiene). */
 export function CancelAppointmentButton({ id }: { id: string }) {
-  const router = useRouter();
-  const [confirmando, setConfirmando] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>();
+  const confirm = useConfirm();
+  const { run, pending } = useAction();
 
   async function cancelar() {
-    setLoading(true);
-    setError(undefined);
-    const res = await fetch(`/api/pack/calendar/appointments/${id}/cancel`, { method: "POST" });
-    setLoading(false);
-    if (!res.ok) {
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(json.error ?? "No se pudo cancelar.");
-      return;
-    }
-    router.refresh();
+    const aceptado = await confirm({
+      title: "Cancelar cita",
+      description:
+        "Se cancelará la cita y, si tiene evento de Google, se eliminará también. Esta acción no se puede deshacer.",
+      confirmLabel: "Cancelar cita",
+      destructive: true,
+    });
+    if (!aceptado) return;
+    await run(async () => {
+      const res = await fetch(`/api/pack/calendar/appointments/${id}/cancel`, { method: "POST" });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        return { ok: false, error: json.error ?? "No se pudo cancelar." };
+      }
+      return { ok: true, success: "Cita cancelada." };
+    });
   }
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {confirmando ? (
-        <>
-          <Button
-            aria-label="Confirmar cancelación"
-            className="text-danger"
-            disabled={loading}
-            onClick={cancelar}
-            size="icon"
-            title="Confirmar cancelación"
-            variant="outline"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </Button>
-          <Button onClick={() => setConfirmando(false)} size="sm" variant="ghost">
-            Volver
-          </Button>
-        </>
-      ) : (
-        <Button onClick={() => setConfirmando(true)} size="sm" variant="ghost">
-          Cancelar
-        </Button>
-      )}
-      {error && (
-        <span className="text-xs text-danger" role="alert">
-          {error}
-        </span>
-      )}
+      <Button
+        aria-label="Cancelar cita"
+        className="text-danger"
+        disabled={pending}
+        onClick={() => void cancelar()}
+        size="sm"
+        title="Cancelar cita"
+        variant="outline"
+      >
+        <X className="h-4 w-4" aria-hidden />
+        {pending ? "Cancelando…" : "Cancelar"}
+      </Button>
     </div>
   );
 }

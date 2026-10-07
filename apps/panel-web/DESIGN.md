@@ -67,6 +67,26 @@ sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 - El color nunca es el único portador de información (siempre etiqueta o icono).
 - Carga con `Skeleton` (conserva la forma), no spinners.
 
+## Feedback y acciones (kit, HU-UI-02)
+
+Toda acción que cambia estado usa el kit; **nada de `window.confirm`** ni estados
+locales de carga/éxito/error en las páginas migradas.
+
+| Pieza | Regla |
+|---|---|
+| `components/ui/toaster.tsx` + `lib/toast-store.ts` | `toast.success()` (`role="status"`, se cierra a los 5 s y pausa con hover) y `toast.error()` (`role="alert"`, queda hasta cerrarlo). Animación ≤200 ms, sin animación con `prefers-reduced-motion` |
+| `components/ui/confirm.tsx` · `useConfirm()` | Diálogo `alertdialog` con título, **consecuencia** y botón `danger` para lo destructivo. Devuelve `Promise<boolean>`; Escape/Cancelar = `false`. El foco lo devuelve Radix |
+| `lib/use-action.ts` · `useAction()` | Ejecuta el fetch al BFF, muestra el toast, refresca (`router.refresh`) y ejecuta `rollback` de lo optimista si falla |
+| `lib/labels.ts` | Estados, canales, roles, motivos de escalación y claves de permiso en español claro; **nunca** se muestra el enum crudo |
+| `components/ui/providers.tsx` | `FeedbackProviders` (ConfirmProvider + Toaster), montado en el layout de `(app)` |
+
+Destructivas confirmadas con consecuencia: eliminar conexión, desactivar
+colaborador, resolver conversación, cancelar cita/eliminar bloqueo, activar
+versión de spec.
+
+`IconAction` y `ChannelIcon` usan tonos semánticos del tema (sin pasteles fijos
+ni `hover:scale`).
+
 ## Copy
 
 - Voz de interfaz, frase corta, voz activa y sentence case.

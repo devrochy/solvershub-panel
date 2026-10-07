@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { FormFeedback } from "@/components/ui/form-feedback";
+import { useConfirm } from "@/components/ui/confirm";
 import { Textarea } from "@/components/ui/textarea";
+import { useAction } from "@/lib/use-action";
 
 type Action = "message" | "toggle-bot" | "resolve";
 
@@ -19,36 +19,59 @@ export function ConversationActions({
   botPaused: boolean;
   status: string;
 }) {
-  const router = useRouter();
+  const confirm = useConfirm();
   const [content, setContent] = useState("");
   const [paused, setPaused] = useState(botPaused);
-  const [state, setState] = useState<{ loading?: Action; error?: string; success?: string }>({});
+  const [enviando, setEnviando] = useState(false);
+  const [accionEnCurso, setAccionEnCurso] = useState(false);
 
-  async function run(action: Action, body?: Record<string, unknown>) {
-    setState({ loading: action });
+  async function post(action: Action, body?: Record<string, unknown>) {
     const res = await fetch(`/api/conversations/${conversationId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...body }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setState({ error: json.error ?? "No se pudo completar la acción." });
-      return;
-    }
-    setState({ success: action === "message" ? "Mensaje enviado." : "Listo." });
-    router.refresh();
+    return { ok: res.ok, error: json.error };
   }
+
+  const enviar = useAction({ refresh: false });
+  const actuar = useAction();
 
   function send() {
     const text = content.trim();
     if (!text) return;
-    void run("message", { content: text }).then(() => setContent(""));
+    setEnviando(true);
+    void enviar
+      .run(() => post("message", { content: text }))
+      .then((ok) => {
+        if (ok) setContent("");
+      })
+      .finally(() => setEnviando(false));
   }
 
-  function toggleBot() {
-    setPaused((prev) => !prev);
-    void run("toggle-bot");
+  async function toggleBot() {
+    const antes = paused;
+    setPaused(!antes);
+    const ok = await actuar.run(() => post("toggle-bot"));
+    if (!ok) setPaused(antes);
+  }
+
+  async function resolve() {
+    const aceptado = await confirm({
+      title: "Resolver conversación",
+      description:
+        "Se cerrará la conversación y el cliente dejará de recibir respuestas del asistente.",
+      confirmLabel: "Resolver",
+      destructive: true,
+    });
+    if (!aceptado) return;
+    setAccionEnCurso(true);
+    try {
+      await actuar.run(() => post("resolve"));
+    } finally {
+      setAccionEnCurso(false);
+    }
   }
 
   return (
@@ -58,8 +81,8 @@ export function ConversationActions({
           type="button"
           variant="outline"
           size="sm"
-          onClick={toggleBot}
-          disabled={state.loading !== undefined}
+          onClick={() => void toggleBot()}
+          disabled={accionEnCurso}
         >
           {paused ? "Reanudar agente" : "Pausar agente"}
         </Button>
@@ -67,8 +90,8 @@ export function ConversationActions({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => void run("resolve")}
-          disabled={status === "closed" || state.loading !== undefined}
+          onClick={() => void resolve()}
+          disabled={status === "closed" || accionEnCurso}
         >
           Resolver conversación
         </Button>
@@ -78,23 +101,19 @@ export function ConversationActions({
         <Textarea
           rows={2}
           value={content}
-          onChange={(e) => {
-            setContent(e.target.value);
-            setState({});
-          }}
+          onChange={(e) => setContent(e.target.value)}
           placeholder="Escribe como persona del equipo…"
           aria-label="Mensaje para el cliente"
         />
-        <div className="flex items-center justify-between gap-3">
-          <FormFeedback error={state.error} success={state.success} />
+        <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
             variant="accent"
             size="sm"
             onClick={send}
-            disabled={!content.trim() || state.loading === "message"}
+            disabled={!content.trim() || enviando}
           >
-            {state.loading === "message" ? "Enviando…" : "Enviar mensaje"}
+            {enviando ? "Enviando…" : "Enviar mensaje"}
           </Button>
         </div>
       </div>
