@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calidadNumeroLabel,
   canalLabel,
   citaLabel,
   escalacionLabel,
+  estadoNumeroMetaLabel,
   rolLabel,
   seccionLabel,
+  verificacionNumeroLabel,
 } from "./labels";
 
 describe("labels (HU-UI-02)", () => {
@@ -40,5 +43,16 @@ describe("labels (HU-UI-02)", () => {
     expect(seccionLabel("pack_cobranza:suscripciones")).toBe("Suscripciones");
     expect(seccionLabel("pack_commerce:pedidos")).toBe("Pedidos");
     expect(seccionLabel("pack_xyz:otra_cosa")).toBe("Otra cosa");
+  });
+
+  it("etiqueta estado, verificación y calidad de números de Meta", () => {
+    expect(estadoNumeroMetaLabel("CONNECTED")).toBe("Conectado");
+    expect(estadoNumeroMetaLabel("PENDING")).toBe("Pendiente");
+    expect(estadoNumeroMetaLabel("NEW_STATE")).toBe("New state");
+    expect(estadoNumeroMetaLabel(null)).toBe("Sin dato");
+    expect(verificacionNumeroLabel("VERIFIED")).toBe("Verificado");
+    expect(verificacionNumeroLabel("EXPIRED")).toBe("Código vencido");
+    expect(calidadNumeroLabel("GREEN")).toBe("Alta");
+    expect(calidadNumeroLabel(undefined)).toBe("Sin datos");
   });
 });

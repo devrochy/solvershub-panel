@@ -92,3 +92,52 @@ export function seccionLabel(clave: string | null | undefined): string {
   const sinPack = clave.replace(/^pack_[a-z]+:/, "");
   return capitalizar(sinPack);
 }
+
+/** Estado de un número en Meta (`status` de `GET /{waba}/phone_numbers`). */
+export const ESTADO_NUMERO_META: Record<string, string> = {
+  CONNECTED: "Conectado",
+  PENDING: "Pendiente",
+  DISCONNECTED: "Desconectado",
+  DELETED: "Eliminado",
+  BANNED: "Bloqueado",
+  FLAGGED: "Marcado",
+  RESTRICTED: "Restringido",
+  RATE_LIMITED: "Con límite de envío",
+  MIGRATED: "Migrado",
+  UNVERIFIED: "Sin verificar",
+  UNKNOWN: "Desconocido",
+};
+
+/** Verificación del número por código (`code_verification_status`). */
+export const VERIFICACION_NUMERO: Record<string, string> = {
+  VERIFIED: "Verificado",
+  NOT_VERIFIED: "Sin verificar",
+  EXPIRED: "Código vencido",
+};
+
+/** Calidad del número (`quality_rating`). */
+export const CALIDAD_NUMERO: Record<string, string> = {
+  GREEN: "Alta",
+  YELLOW: "Media",
+  RED: "Baja",
+  UNKNOWN: "Sin datos",
+  NA: "Sin datos",
+};
+
+/** Etiqueta del estado de un número de Meta (fallback: capitalizado; vacío: "Sin dato"). */
+export function estadoNumeroMetaLabel(estado: string | null | undefined): string {
+  if (!estado) return "Sin dato";
+  return ESTADO_NUMERO_META[estado] ?? capitalizar(estado.toLowerCase());
+}
+
+/** Etiqueta de la verificación por código de un número. */
+export function verificacionNumeroLabel(estado: string | null | undefined): string {
+  if (!estado) return "Sin dato";
+  return VERIFICACION_NUMERO[estado] ?? capitalizar(estado.toLowerCase());
+}
+
+/** Etiqueta de la calidad de un número. */
+export function calidadNumeroLabel(calidad: string | null | undefined): string {
+  if (!calidad) return "Sin datos";
+  return CALIDAD_NUMERO[calidad] ?? capitalizar(calidad.toLowerCase());
+}

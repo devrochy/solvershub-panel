@@ -99,7 +99,16 @@ export default async function NumbersPage({
       <PageHeader
         title="Números"
         description="Números de la WABA. Agrégalos, verifícalos con el código de Meta y regístralos para enviar y recibir."
-        actions={<AddNumberDialog connectionId={connectionId} />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/conexiones/meta/${connectionId}/numeros/negocio`}>
+                Números del negocio en Meta
+              </Link>
+            </Button>
+            <AddNumberDialog connectionId={connectionId} />
+          </div>
+        }
       />
 
       {sync_error && (

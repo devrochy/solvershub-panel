@@ -704,6 +704,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/business-numbers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Business Numbers
+         * @description Números de todas las WABAs propias del portafolio de Meta de la conexión (el límite de
+         *     números de Meta cuenta el portafolio entero). Solo lectura: no guarda nada.
+         */
+        get: operations["list_business_numbers_api_v1_admin_meta_connections__connection_id__business_numbers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/connections/{connection_id}/numbers/{phone_number_id}/request-code": {
         parameters: {
             query?: never;
@@ -3545,6 +3566,52 @@ export interface components {
              * @default 0.5
              */
             policy_budget: number;
+        };
+        /** BusinessNumberItem */
+        BusinessNumberItem: {
+            /** Waba Id */
+            waba_id: string;
+            /** Waba Name */
+            waba_name?: string | null;
+            /** Is Connection Waba */
+            is_connection_waba: boolean;
+            /** Phone Number Id */
+            phone_number_id: string;
+            /** Display Phone Number */
+            display_phone_number?: string | null;
+            /** Verified Name */
+            verified_name?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Code Verification Status */
+            code_verification_status?: string | null;
+            /** Platform Type */
+            platform_type?: string | null;
+            /** Quality Rating */
+            quality_rating?: string | null;
+            /** Name Status */
+            name_status?: string | null;
+            /** In This Connection */
+            in_this_connection: boolean;
+        };
+        /** BusinessNumbersResponse */
+        BusinessNumbersResponse: {
+            /** Business Id */
+            business_id?: string | null;
+            /** Business Name */
+            business_name?: string | null;
+            /** Numbers */
+            numbers: components["schemas"]["BusinessNumberItem"][];
+            /**
+             * Other Tenants Count
+             * @default 0
+             */
+            other_tenants_count: number;
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
         };
         /** CalendarStatus */
         CalendarStatus: {
@@ -8225,6 +8292,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_business_numbers_api_v1_admin_meta_connections__connection_id__business_numbers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessNumbersResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
