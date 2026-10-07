@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AddNumberDialog } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/add-number-dialog";
 import { NumberActions } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/number-actions";
+import { RegisterNumberDialog } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/register-number-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -16,6 +17,7 @@ type PhoneNumberItem = {
   display_phone_number: string | null;
   verified_name: string | null;
   status: string;
+  registered: boolean;
 };
 
 export default async function NumbersPage({
@@ -70,11 +72,20 @@ export default async function NumbersPage({
       header: "Acciones",
       align: "right",
       cell: (n) => (
-        <NumberActions
-          connectionId={connectionId}
-          phoneNumberId={n.phone_number_id}
-          label={n.display_phone_number ?? n.phone_number_id}
-        />
+        <div className="flex justify-end gap-2">
+          {!n.registered && (
+            <RegisterNumberDialog
+              connectionId={connectionId}
+              phoneNumberId={n.phone_number_id}
+              label={n.display_phone_number ?? n.phone_number_id}
+            />
+          )}
+          <NumberActions
+            connectionId={connectionId}
+            phoneNumberId={n.phone_number_id}
+            label={n.display_phone_number ?? n.phone_number_id}
+          />
+        </div>
       ),
     },
   ];
@@ -87,7 +98,7 @@ export default async function NumbersPage({
 
       <PageHeader
         title="Números"
-        description="Números de la WABA. Agrégalos y verifícalos con el código de Meta."
+        description="Números de la WABA. Agrégalos, verifícalos con el código de Meta y regístralos para enviar y recibir."
         actions={<AddNumberDialog connectionId={connectionId} />}
       />
 
