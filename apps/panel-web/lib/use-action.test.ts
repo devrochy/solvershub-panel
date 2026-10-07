@@ -38,6 +38,19 @@ describe("useAction (HU-UI-02)", () => {
     );
   });
 
+  it("un error que no es texto no llega al toast tal cual", async () => {
+    const { result } = renderHook(() => useAction());
+    await act(async () => {
+      await result.current.run(async () => ({
+        ok: false,
+        error: { code: "origen_no_permitido", message: "Origen no permitido." } as unknown as string,
+      }));
+    });
+    expect(getToasts()).toContainEqual(
+      expect.objectContaining({ kind: "error", message: "Algo salió mal. Inténtalo de nuevo." }),
+    );
+  });
+
   it("excepción de red → toast genérico y rollback", async () => {
     const rollback = vi.fn();
     const { result } = renderHook(() => useAction({ rollback }));

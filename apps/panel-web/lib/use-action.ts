@@ -33,7 +33,10 @@ export function useAction({ refresh = true, rollback }: UseActionOptions = {}) {
       try {
         const result = await action();
         if (!result.ok) {
-          toast.error(result.error ?? "Algo salió mal. Inténtalo de nuevo.");
+          // `error` llega de un JSON: si no es texto (p. ej. `{code, message}`), renderizarlo
+          // tumbaría la página (React #31).
+          const error: unknown = result.error;
+          toast.error(typeof error === "string" && error ? error : "Algo salió mal. Inténtalo de nuevo.");
           rollback?.();
           return false;
         }
