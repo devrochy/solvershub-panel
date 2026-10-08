@@ -22,6 +22,7 @@ export type ConversationPage = components["schemas"]["Page_ConversationSummary_"
 
 export type PluginSummary = components["schemas"]["PluginSummary"];
 export type PluginConfigResponse = components["schemas"]["PluginConfigResponse"];
+export type SubscriptionProviderSettings = components["schemas"]["SubscriptionProviderSettings"];
 
 export type EscalationItem = components["schemas"]["EscalationItem"];
 export type EscalationPage = components["schemas"]["Page_EscalationItem_"];

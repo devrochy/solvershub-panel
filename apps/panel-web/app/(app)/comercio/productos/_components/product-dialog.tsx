@@ -10,6 +10,7 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { COBROS, cuerpoDelPlan } from "@/lib/suscripciones";
 
 type Product = {
   id: string;
@@ -17,7 +18,7 @@ type Product = {
   description: string;
   category_id: string | null;
   price: number;
-  variants: { sku: string; stock: number }[];
+  variants: { sku: string; stock: number; billing_period?: string | null; trial_days?: number | null }[];
 };
 
 /** Alta/edición de producto del pack de Comercio. */
@@ -48,6 +49,7 @@ export function ProductDialog({
         sku: String(data.get("sku") ?? ""),
         price: Number(data.get("price") ?? 0),
         stock: Number(data.get("stock") ?? 0),
+        ...cuerpoDelPlan(data),
       }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
@@ -109,6 +111,32 @@ export function ProductDialog({
             </Field>
             <Field label="Stock" htmlFor="p-stock">
               <Input id="p-stock" name="stock" type="number" min={0} defaultValue={variant?.stock ?? 0} />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Cobro"
+              htmlFor="p-cobro"
+              help="Un plan necesita la habilidad Suscripciones (cobro en línea) o Cobranza (cobro en campo)."
+            >
+              <Select id="p-cobro" name="billing_period" defaultValue={variant?.billing_period ?? ""}>
+                {COBROS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Días de prueba" htmlFor="p-trial" help="Solo el plan Free ($0) tiene prueba.">
+              <Input
+                id="p-trial"
+                name="trial_days"
+                type="number"
+                min={0}
+                max={365}
+                defaultValue={variant?.trial_days ?? ""}
+              />
             </Field>
           </div>
 
