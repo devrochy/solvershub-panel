@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Activity, Check, ExternalLink, RefreshCw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { estadoCheck } from "@/lib/estado-check";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 
 type Paso = { key: string; label: string; link: string; done: boolean; notes: string };
-type Check = { key: string; ok: boolean; detail: string | null };
+type Check = { key: string; ok: boolean | null; detail: string | null };
 
 /** Checklist de puesta en marcha de Meta (requisitos y producción). */
 export function ChecklistMeta({
@@ -73,7 +74,7 @@ export function ChecklistMeta({
             <p className="text-sm font-medium text-headline">Comprobaciones automáticas</p>
             {checksEstado.map((c) => (
               <div key={c.key} className="flex items-start gap-2 text-sm">
-                <Badge variant={c.ok ? "success" : "warning"}>{c.ok ? "ok" : "revisar"}</Badge>
+                <Badge variant={estadoCheck(c.ok).variant}>{estadoCheck(c.ok).label}</Badge>
                 <span className="text-body">
                   <span className="font-mono text-xs">{c.key}</span> — {c.detail ?? "sin detalle"}
                 </span>
