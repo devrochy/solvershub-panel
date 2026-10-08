@@ -4671,6 +4671,23 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * HealthCheck
+         * @description Un check del último diagnóstico. `ok`: `None` = no se pudo evaluar.
+         *     `repair_action`: id corto que la UI traduce a un botón o a una ruta.
+         */
+        HealthCheck: {
+            /** Key */
+            key: string;
+            /** Ok */
+            ok: boolean | null;
+            /** Detail */
+            detail?: string | null;
+            /** Repair Action */
+            repair_action?: string | null;
+            /** Checked At */
+            checked_at?: string | null;
+        };
         /** HealthConnection */
         HealthConnection: {
             /**
@@ -4692,6 +4709,13 @@ export interface components {
             health: {
                 [key: string]: unknown;
             };
+            /**
+             * Checks
+             * @default []
+             */
+            checks: components["schemas"]["HealthCheck"][];
+            /** Billing Manual Status */
+            billing_manual_status?: string | null;
             /** Business Id */
             business_id: string | null;
             /** Meta App Id */
