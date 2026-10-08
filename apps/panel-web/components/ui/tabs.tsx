@@ -33,7 +33,8 @@ export function Tabs({
     <div
       role="tablist"
       onKeyDown={onKeyDown}
-      className={cn("flex gap-1 border-b border-border-soft", className)}
+      // overflow-x-auto: en celular las pestañas no caben y empujaban toda la página.
+      className={cn("flex gap-1 overflow-x-auto border-b border-border-soft", className)}
     >
       {items.map((item) => {
         const active = item.id === value;
@@ -46,7 +47,7 @@ export function Tabs({
             tabIndex={active ? 0 : -1}
             onClick={() => onValueChange(item.id)}
             className={cn(
-              "-mb-px border-b-2 px-4 py-2 text-sm transition-colors duration-150",
+              "-mb-px shrink-0 border-b-2 px-4 py-2 text-sm whitespace-nowrap transition-colors duration-150",
               active
                 ? "border-accent text-headline"
                 : "border-transparent text-body hover:text-headline",

@@ -87,7 +87,7 @@ export default async function ConnectionsPage() {
         description="Canales por los que tu agente atiende. Las credenciales se guardan cifradas (Fernet) y no dependen del .env; cada negocio tiene su propio webhook y verify token."
         helpSection="connections"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline" size="default">
               <Link href="/conexiones/waweb">WhatsApp Web</Link>
             </Button>

@@ -55,7 +55,17 @@ function isActiveHref(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavRow({ item, active, locked }: { item: NavItem; active: boolean; locked?: boolean }) {
+function NavRow({
+  item,
+  active,
+  locked,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  locked?: boolean;
+  onNavigate?: () => void;
+}) {
   const Icon = item.icon;
   const base = "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150";
 
@@ -76,6 +86,7 @@ function NavRow({ item, active, locked }: { item: NavItem; active: boolean; lock
   return (
     <Link
       href={item.href}
+      onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
         base,
@@ -96,7 +107,19 @@ function NavRow({ item, active, locked }: { item: NavItem; active: boolean; lock
  * con sus subsecciones (como el clásico). Un pack sin habilitar se muestra con
  * candado y su CTA para activarlo (ADR-0019), en vez de esconder la sección.
  */
-export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState> }) {
+export function Sidebar({
+  me,
+  packs,
+  className,
+  onNavigate,
+}: {
+  me: Me;
+  packs: Record<string, PackState>;
+  /** Visibilidad/medidas: oculto en celular en el layout, a pantalla en el menú móvil. */
+  className?: string;
+  /** El menú móvil lo usa para cerrarse al elegir una sección. */
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const collapsedIds = useSyncExternalStore(
     suscribir,
@@ -129,8 +152,13 @@ export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState
   }
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-border-soft bg-bg-deep px-3 py-4">
-      <Link href="/dashboard" className="mb-6 flex items-center gap-3 px-3">
+    <aside
+      className={cn(
+        "flex w-60 shrink-0 flex-col border-r border-border-soft bg-bg-deep px-3 py-4",
+        className,
+      )}
+    >
+      <Link href="/dashboard" onClick={onNavigate} className="mb-6 flex items-center gap-3 px-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-wordmark.svg" alt="SolversHub" className="h-6 w-auto" />
       </Link>
@@ -194,7 +222,12 @@ export function Sidebar({ me, packs }: { me: Me; packs: Record<string, PackState
                           {item.sub}
                         </p>
                       )}
-                      <NavRow item={item} active={item.href === activeHref} locked={locked} />
+                      <NavRow
+                        item={item}
+                        active={item.href === activeHref}
+                        locked={locked}
+                        onNavigate={onNavigate}
+                      />
                     </Fragment>
                   ))}
                 </div>

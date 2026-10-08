@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import { MobileNav } from "@/components/shell/mobile-nav";
 import { PackLockBanner } from "@/components/shell/pack-lock-banner";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
@@ -27,10 +28,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <FeedbackProviders>
       <div className="flex min-h-screen">
-        <Sidebar me={me} packs={packs} />
-        <div className="flex flex-1 flex-col">
-          <Topbar me={me} />
-          <main className="flex-1 px-6 py-8">
+        {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
+        <Sidebar me={me} packs={packs} className="hidden md:flex" />
+        {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Topbar me={me} menu={<MobileNav me={me} packs={packs} />} />
+          <main className="flex-1 px-4 py-6 md:px-6 md:py-8">
             <div className="mx-auto w-full max-w-[1200px]">
               <PackLockBanner packs={packs} />
               {children}
