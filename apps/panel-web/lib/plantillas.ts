@@ -6,6 +6,8 @@
 /** Etiqueta de un evento del catálogo. */
 export const EVENTO: Record<string, string> = {
   "subscription.charge_created": "Cargo de suscripción generado",
+  "subscription.charge_reminder": "Recordatorio de pago de suscripción",
+  "subscription.paused": "Suscripción pausada por mora",
 };
 
 export function eventoLabel(evento: string): string {
