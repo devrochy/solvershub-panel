@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
@@ -37,7 +38,8 @@ export default async function DashboardPage() {
           ) : undefined
         }
         helpSection="dashboard"
-        />
+      />
+      <MissingTemplatesBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} />
