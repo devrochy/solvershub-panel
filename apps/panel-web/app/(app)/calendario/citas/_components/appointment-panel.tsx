@@ -11,6 +11,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { mensajeAsistencia, puedeMarcarAsistencia } from "@/lib/citas";
 import { formatDateTime } from "@/lib/format";
 import { toast } from "@/lib/toast-store";
 
@@ -107,6 +108,23 @@ export function AppointmentPanel({
       return;
     }
     onSaved();
+  }
+
+  async function marcarAsistencia(asistio: boolean) {
+    if (!apptId) return;
+    setStatus({ loading: true });
+    const res = await fetch(`/api/pack/calendar/appointments/${apptId}/asistencia`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ asistio }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setStatus({ error: json.error ?? "No se pudo marcar la asistencia." });
+      return;
+    }
+    setStatus({});
+    onSaved(mensajeAsistencia(asistio));
   }
 
   async function cancelAppointment() {
@@ -241,6 +259,23 @@ export function AppointmentPanel({
               </Button>
             </div>
             <FormFeedback error={status.error} success={status.success} />
+
+            {!isNew && event && puedeMarcarAsistencia(event) && (
+              <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+                <span className="text-sm text-body">
+                  ¿El cliente asistió?
+                  {event.status === "asistio" ? " (marcada: asistió)" : event.status === "no_asistio" ? " (marcada: no asistió)" : ""}
+                </span>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" disabled={status.loading} onClick={() => void marcarAsistencia(true)}>
+                    Asistió
+                  </Button>
+                  <Button type="button" variant="outline" disabled={status.loading} onClick={() => void marcarAsistencia(false)}>
+                    No asistió
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {!isNew && activities.length > 0 && (
               <div className="mt-2 border-t pt-3">
