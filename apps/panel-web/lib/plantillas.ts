@@ -8,6 +8,7 @@ export const EVENTO: Record<string, string> = {
   "subscription.charge_created": "Cargo de suscripción generado",
   "subscription.charge_reminder": "Recordatorio de pago de suscripción",
   "subscription.paused": "Suscripción pausada por mora",
+  "subscription.trial_ending": "Fin de la prueba gratis",
 };
 
 export function eventoLabel(evento: string): string {
