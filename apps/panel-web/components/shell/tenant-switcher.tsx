@@ -57,13 +57,13 @@ export function TenantSwitcher({
         aria-expanded={open}
         className="flex items-center gap-2 rounded-md border border-border-strong px-3 py-1.5 text-sm text-headline hover:bg-surface-raised"
       >
-        <span className="max-w-[18rem] truncate">{current?.name ?? "Selecciona negocio"}</span>
+        <span className="max-w-[9rem] truncate sm:max-w-[18rem]">{current?.name ?? "Selecciona negocio"}</span>
         <Badge variant="neutral">{count}</Badge>
         <ChevronsUpDown className="h-4 w-4 text-body" aria-hidden />
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-2 w-80 rounded-md border border-border bg-surface p-2 shadow-lg">
+        <div className="absolute z-20 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-md border border-border bg-surface p-2 shadow-lg">
           <input
             autoFocus
             value={query}

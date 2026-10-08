@@ -176,7 +176,7 @@ export default async function CalendarPage({
               Cuenta: <span className="text-headline">{status.account_email}</span>
             </span>
           )}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button asChild variant="outline" size="sm">
               <Link href="/habilidades/pack_calendar">Configurar credenciales</Link>
             </Button>

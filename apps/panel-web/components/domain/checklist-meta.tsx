@@ -84,7 +84,7 @@ export function ChecklistMeta({
         </Card>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Badge variant={hechos === steps.length ? "success" : "neutral"}>
           {hechos}/{steps.length} pasos
         </Badge>
