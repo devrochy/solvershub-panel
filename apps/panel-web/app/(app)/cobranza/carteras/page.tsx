@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Plus, Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
