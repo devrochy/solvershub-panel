@@ -55,6 +55,36 @@ export const SECCION: Record<string, string> = {
   colaboradores: "Colaboradores",
   conversaciones: "Conversaciones",
   configuracion: "Configuración",
+  // Claves reales de permisos del core (`/admin/me` → `permissions`).
+  collaborators: "Colaboradores",
+  connections: "Conexiones",
+  conversations: "Conversaciones",
+  costs: "Costos LLM",
+  dashboard: "Resumen",
+  escalations: "Escalaciones",
+  leads: "Leads",
+  plan: "Plan y consumo",
+  plugins: "Habilidades",
+  settings: "Configuración",
+  tenants: "Negocios",
+  pack_commerce: "Comercio",
+  "pack_subscriptions:suscripciones": "Suscripciones",
+};
+
+/** Nombre visible de cada pack, para las secciones `pack_<x>:<sección>` sin etiqueta propia. */
+const PACK: Record<string, string> = {
+  pack_calendar: "Calendario",
+  pack_cobranza: "Cobranza",
+  pack_commerce: "Comercio",
+  pack_subscriptions: "Suscripciones",
+};
+
+/** Secciones de packs con tilde o nombre distinto de la clave. */
+const SUBSECCION: Record<string, string> = {
+  auditoria: "Auditoría",
+  conexion: "Conexión",
+  configuracion: "Configuración",
+  tipos: "Tipos de cita",
 };
 
 function capitalizar(texto: string): string {
@@ -89,8 +119,11 @@ export function escalacionLabel(motivo: string | null | undefined): string {
 export function seccionLabel(clave: string | null | undefined): string {
   if (!clave) return "Sin sección";
   if (SECCION[clave]) return SECCION[clave];
-  const sinPack = clave.replace(/^pack_[a-z]+:/, "");
-  return capitalizar(sinPack);
+  const match = /^(pack_[a-z]+):(.+)$/.exec(clave);
+  if (!match) return capitalizar(clave);
+  const [, pack, seccion] = match;
+  const nombre = SUBSECCION[seccion] ?? capitalizar(seccion);
+  return PACK[pack] ? `${PACK[pack]} · ${nombre}` : nombre;
 }
 
 /** Estado de un número en Meta (`status` de `GET /{waba}/phone_numbers`). */
