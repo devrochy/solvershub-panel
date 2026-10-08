@@ -292,6 +292,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/conversations/{conversation_id}/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conversation Templates
+         * @description Plantillas APROBADAS de la WABA de la conexión de esta conversación.
+         */
+        get: operations["list_conversation_templates_api_v1_admin_conversations__conversation_id__templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/{conversation_id}/template-messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Template Message
+         * @description Envía una plantilla aprobada como persona del equipo (fuera de la ventana).
+         */
+        post: operations["send_template_message_api_v1_admin_conversations__conversation_id__template_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/conversations/{conversation_id}/toggle-bot": {
         parameters: {
             query?: never;
@@ -1838,6 +1878,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/message-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Message Templates
+         * @description Catálogo de eventos (con sus variables permitidas) y el mapeo del negocio.
+         */
+        get: operations["get_message_templates_api_v1_admin_settings_message_templates_get"];
+        /**
+         * Save Message Templates
+         * @description Guarda el mapeo evento → plantilla. Valida que el evento exista, que las
+         *     rutas estén permitidas y que la plantilla exista en alguna WABA del negocio
+         *     con la misma cantidad de variables en el cuerpo.
+         */
+        put: operations["save_message_templates_api_v1_admin_settings_message_templates_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/message-templates/missing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Missing Templates
+         * @description Avisos que no salieron por falta de plantilla en los últimos 7 días (alerta del panel).
+         */
+        get: operations["get_missing_templates_api_v1_admin_settings_message_templates_missing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/domain-events": {
         parameters: {
             query?: never;
@@ -3219,6 +3305,10 @@ export interface paths {
          *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
          *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
          *     entra por la ruta BFF del panel (D-SPEC-24-11, ADR-0093).
+         *
+         *     El `state` lleva el negocio que inició el flujo (`<tenant_id>.<aleatorio>`): el
+         *     callback guarda la cuenta en el negocio de la sesión, que puede haber cambiado
+         *     mientras el usuario estaba en Google.
          */
         get: operations["oauth_start_api_v1_pack_calendar_oauth_start_get"];
         put?: never;
@@ -3422,6 +3512,30 @@ export interface components {
              * @default true
              */
             notify: boolean;
+        };
+        /**
+         * ApprovedTemplate
+         * @description Plantilla aprobada de la conexión de la conversación (HU-ARCH-13).
+         */
+        ApprovedTemplate: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Language */
+            language: string;
+            /** Category */
+            category: string | null;
+            /** Body */
+            body: string;
+            /**
+             * Variables
+             * @description Placeholders del cuerpo, en orden.
+             */
+            variables: string[];
         };
         /** AttemptRow */
         AttemptRow: {
@@ -4337,6 +4451,43 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** EventCatalogItem */
+        EventCatalogItem: {
+            /** Event */
+            event: string;
+            /** Variables */
+            variables: {
+                [key: string]: string;
+            };
+        };
+        /**
+         * EventTemplateEntry
+         * @description Evento → plantilla aprobada (HU-ARCH-13, ADR-0108).
+         */
+        EventTemplateEntry: {
+            /**
+             * Template
+             * @default
+             */
+            template: string;
+            /**
+             * Language
+             * @default es
+             */
+            language: string;
+            /**
+             * Variables
+             * @default []
+             */
+            variables: string[] | {
+                [key: string]: string;
+            };
+            /**
+             * Fallback Text
+             * @default
+             */
+            fallback_text: string;
+        };
         /** Expense */
         Expense: {
             /**
@@ -5077,6 +5228,31 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Template Name */
+            template_name?: string | null;
+            /** Error Reason */
+            error_reason?: string | null;
+        };
+        /** MessageTemplatesSettings */
+        MessageTemplatesSettings: {
+            /** Events */
+            events: components["schemas"]["EventCatalogItem"][];
+            /** Mapping */
+            mapping: {
+                [key: string]: components["schemas"]["EventTemplateEntry"];
+            };
+            /**
+             * Templates
+             * @default []
+             */
+            templates: components["schemas"]["TenantTemplateItem"][];
+        };
+        /** MessageTemplatesUpdate */
+        MessageTemplatesUpdate: {
+            /** Mapping */
+            mapping: {
+                [key: string]: components["schemas"]["EventTemplateEntry"];
+            };
         };
         /** MetaCategoryCost */
         MetaCategoryCost: {
@@ -5172,6 +5348,25 @@ export interface components {
         MetaSyncResult: {
             /** Errors */
             errors: string[];
+        };
+        /** MissingTemplateItem */
+        MissingTemplateItem: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Detail */
+            detail: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** MissingTemplates */
+        MissingTemplates: {
+            /** Total 7D */
+            total_7d: number;
+            /** Recent */
+            recent: components["schemas"]["MissingTemplateItem"][];
         };
         /** MobileEvent */
         MobileEvent: {
@@ -6430,6 +6625,18 @@ export interface components {
             /** Rejected Reason */
             rejected_reason: string | null;
         };
+        /** TemplateMessageIn */
+        TemplateMessageIn: {
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
+            /** Variables */
+            variables?: {
+                [key: string]: string;
+            };
+        };
         /** TemplatesResponse */
         TemplatesResponse: {
             /** Templates */
@@ -6534,6 +6741,24 @@ export interface components {
              * @default 0
              */
             extend_days: number;
+        };
+        /**
+         * TenantTemplateItem
+         * @description Plantilla APROBADA de alguna WABA del negocio, con los placeholders del cuerpo.
+         */
+        TenantTemplateItem: {
+            /** Name */
+            name: string;
+            /** Language */
+            language: string;
+            /** Category */
+            category: string | null;
+            /** Body */
+            body: string;
+            /** Variables */
+            variables: string[];
+            /** Named */
+            named: boolean;
         };
         /** TokenConnectionRequest */
         TokenConnectionRequest: {
@@ -7493,6 +7718,74 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_conversation_templates_api_v1_admin_conversations__conversation_id__templates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovedTemplate"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_template_message_api_v1_admin_conversations__conversation_id__template_messages_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateMessageIn"];
             };
         };
         responses: {
@@ -10420,6 +10713,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpecPayload"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_message_templates_api_v1_admin_settings_message_templates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageTemplatesSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_message_templates_api_v1_admin_settings_message_templates_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageTemplatesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageTemplatesSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_missing_templates_api_v1_admin_settings_message_templates_missing_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissingTemplates"];
                 };
             };
             /** @description Validation Error */

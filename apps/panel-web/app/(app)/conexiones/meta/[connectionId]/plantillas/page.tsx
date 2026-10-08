@@ -105,7 +105,14 @@ export default async function TemplatesPage({
       <PageHeader
         title="Plantillas"
         description="Plantillas de WhatsApp de la WABA, sincronizadas desde Meta."
-        actions={<SyncTemplatesButton connectionId={connectionId} />}
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/plantillas/eventos">Plantillas por evento</Link>
+            </Button>
+            <SyncTemplatesButton connectionId={connectionId} />
+          </>
+        }
       />
 
       {sync_error && (

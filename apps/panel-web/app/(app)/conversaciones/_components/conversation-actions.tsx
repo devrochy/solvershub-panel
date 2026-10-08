@@ -7,6 +7,8 @@ import { useConfirm } from "@/components/ui/confirm";
 import { Textarea } from "@/components/ui/textarea";
 import { useAction } from "@/lib/use-action";
 
+import { TemplatePicker } from "./template-picker";
+
 type Action = "message" | "toggle-bot" | "resolve";
 
 /** Acciones de la conversación: responder como humano, pausar el agente y resolver. */
@@ -24,6 +26,8 @@ export function ConversationActions({
   const [paused, setPaused] = useState(botPaused);
   const [enviando, setEnviando] = useState(false);
   const [accionEnCurso, setAccionEnCurso] = useState(false);
+  // HU-ARCH-13: la API respondió 409 `window_expired` → se ofrece una plantilla.
+  const [ventanaVencida, setVentanaVencida] = useState(false);
 
   async function post(action: Action, body?: Record<string, unknown>) {
     const res = await fetch(`/api/conversations/${conversationId}`, {
@@ -31,7 +35,8 @@ export function ConversationActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...body }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    if (action === "message" && json.code === "window_expired") setVentanaVencida(true);
     return { ok: res.ok, error: json.error };
   }
 
@@ -96,6 +101,10 @@ export function ConversationActions({
           Resolver conversación
         </Button>
       </div>
+
+      {ventanaVencida && (
+        <TemplatePicker conversationId={conversationId} onSent={() => setVentanaVencida(false)} />
+      )}
 
       <div className="flex flex-col gap-2">
         <Textarea

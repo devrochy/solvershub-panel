@@ -39,3 +39,10 @@ export type SettingsResponse = components["schemas"]["SettingsResponse"];
 export type WebChatSettings = components["schemas"]["WebChatSettings"];
 export type IdentitySettings = components["schemas"]["IdentitySettings"];
 export type BrainSettings = components["schemas"]["BrainSettings"];
+
+// Plantillas por evento (HU-ARCH-13, ADR-0108).
+export type MessageTemplatesSettings = components["schemas"]["MessageTemplatesSettings"];
+export type EventTemplateEntry = components["schemas"]["EventTemplateEntry"];
+export type TenantTemplateItem = components["schemas"]["TenantTemplateItem"];
+export type MissingTemplates = components["schemas"]["MissingTemplates"];
+export type ApprovedTemplate = components["schemas"]["ApprovedTemplate"];
