@@ -1,13 +1,17 @@
 import { PluginCard } from "@/app/(app)/habilidades/_components/plugin-card";
+import { SubscriptionProviderCard } from "@/app/(app)/habilidades/_components/subscription-provider-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { PluginSummary } from "@/lib/api/types";
+import type { PluginSummary, SubscriptionProviderSettings } from "@/lib/api/types";
 
 export const metadata = { title: "Habilidades" };
 
 export default async function PluginsPage() {
-  const res = await apiFetch<PluginSummary[]>("/admin/plugins");
+  const [res, proveedorRes] = await Promise.all([
+    apiFetch<PluginSummary[]>("/admin/plugins"),
+    apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -23,6 +27,10 @@ export default async function PluginsPage() {
         description="Módulos que se suman al agente. El alcance es por negocio: al activar uno se carga su código y su salud se controla aislada por negocio (si falla, se puede reintentar sin afectar al resto)."
         helpSection="plugins"
         />
+
+      {proveedorRes.ok && proveedorRes.data.estado !== "sin_proveedor" && (
+        <SubscriptionProviderCard settings={proveedorRes.data} />
+      )}
 
       {res.data.length === 0 ? (
         <EmptyState

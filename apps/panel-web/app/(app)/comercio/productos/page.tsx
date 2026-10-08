@@ -8,7 +8,16 @@ import { formatMoney, formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Productos" };
 
-type Variant = { id: string; sku: string; attributes: Record<string, unknown>; price: number; stock: number; active: boolean };
+type Variant = {
+  id: string;
+  sku: string;
+  attributes: Record<string, unknown>;
+  price: number;
+  stock: number;
+  active: boolean;
+  billing_period?: string | null;
+  trial_days?: number | null;
+};
 type Product = {
   id: string;
   name: string;
@@ -63,6 +72,7 @@ export default async function ProductsPage() {
             p.variants.map((v) => (
               <span key={v.id} className="font-mono">
                 {v.sku} · {formatMoney(v.price, currency)} · {formatNumber(v.stock)} en stock
+                {v.billing_period ? ` · plan ${v.billing_period}` : ""}
               </span>
             ))
           )}
@@ -81,7 +91,15 @@ export default async function ProductsPage() {
       align: "right",
       cell: (p) => (
         <ProductDialog
-          product={{ ...p, variants: p.variants.map((v) => ({ sku: v.sku, stock: v.stock })) }}
+          product={{
+            ...p,
+            variants: p.variants.map((v) => ({
+              sku: v.sku,
+              stock: v.stock,
+              billing_period: v.billing_period,
+              trial_days: v.trial_days,
+            })),
+          }}
           categories={categories}
         />
       ),

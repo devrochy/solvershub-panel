@@ -1924,6 +1924,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/subscription-provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subscription Provider
+         * @description Qué habilidad cobra los planes del negocio y, si no hay una clara, por qué.
+         */
+        get: operations["get_subscription_provider_api_v1_admin_settings_subscription_provider_get"];
+        /**
+         * Save Subscription Provider
+         * @description Elige el proveedor entre los habilitados (o lo borra con `null`).
+         *
+         *     Las activaciones de planes que quedaron pendientes por la configuración las
+         *     reintenta el pack del pedido en su próximo ciclo.
+         */
+        put: operations["save_subscription_provider_api_v1_admin_settings_subscription_provider_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/domain-events": {
         parameters: {
             query?: never;
@@ -2021,6 +2048,26 @@ export interface paths {
          * @description Crea (o reutiliza) la suscripción de un `Customer` a un plan.
          */
         post: operations["crear_suscripcion_manual_api_v1_pack_pack_subscriptions_suscripciones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/cargos/{charge_id}/avisos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Avisos Del Cargo
+         * @description Qué se le avisó al cliente por este cargo, cuándo y con qué resultado (HU-SUB-05).
+         */
+        get: operations["avisos_del_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__avisos_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3579,6 +3626,30 @@ export interface components {
             actor: string;
             /** Motivo */
             motivo: string;
+        };
+        /** AvisoOut */
+        AvisoOut: {
+            /** Evento */
+            evento: string;
+            /**
+             * Creado
+             * Format: date-time
+             */
+            creado: string;
+            /** Estado Evento */
+            estado_evento: string;
+            /** Intentos */
+            intentos: number;
+            /** Error Evento */
+            error_evento?: string | null;
+            /** Mensaje Estado */
+            mensaje_estado?: string | null;
+            /** Mensaje Error */
+            mensaje_error?: string | null;
+            /** Plantilla */
+            plantilla?: string | null;
+            /** Enviado */
+            enviado?: string | null;
         };
         /** BillingRequest */
         BillingRequest: {
@@ -5516,6 +5587,10 @@ export interface components {
             created_at: string | null;
             /** Line Items */
             line_items: components["schemas"]["OrderLine"][];
+            /** Plan Activation Status */
+            plan_activation_status?: string | null;
+            /** Plan Activation Error */
+            plan_activation_error?: string | null;
         };
         /** OrderStatusUpdate */
         OrderStatusUpdate: {
@@ -6101,6 +6176,10 @@ export interface components {
              * @default 0
              */
             stock: number;
+            /** Billing Period */
+            billing_period?: ("mensual" | "trimestral" | "anual" | "") | null;
+            /** Trial Days */
+            trial_days?: number | null;
         };
         /** Promise */
         Promise: {
@@ -6197,6 +6276,13 @@ export interface components {
             eligible_segments?: string[] | null;
             /** Active */
             active?: boolean | null;
+        };
+        /** ProveedorSuscripcion */
+        ProveedorSuscripcion: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
         };
         /** PurgeRequest */
         PurgeRequest: {
@@ -6492,6 +6578,33 @@ export interface components {
             fields: string[];
             /** Last Error */
             last_error: string | null;
+        };
+        /** SubscriptionProviderSettings */
+        SubscriptionProviderSettings: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "ok" | "sin_proveedor" | "ambiguo" | "invalido";
+            /** Configurado */
+            configurado?: string | null;
+            /** Efectivo */
+            efectivo?: string | null;
+            /**
+             * Habilitados
+             * @default []
+             */
+            habilitados: components["schemas"]["ProveedorSuscripcion"][];
+            /**
+             * Mensaje
+             * @default
+             */
+            mensaje: string;
+        };
+        /** SubscriptionProviderUpdate */
+        SubscriptionProviderUpdate: {
+            /** Provider */
+            provider?: string | null;
         };
         /** Summary */
         Summary: {
@@ -6906,6 +7019,10 @@ export interface components {
             stock: number;
             /** Active */
             active: boolean;
+            /** Billing Period */
+            billing_period?: string | null;
+            /** Trial Days */
+            trial_days?: number | null;
         };
         /** VerifyCodeRequest */
         VerifyCodeRequest: {
@@ -10823,6 +10940,72 @@ export interface operations {
             };
         };
     };
+    get_subscription_provider_api_v1_admin_settings_subscription_provider_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionProviderSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_subscription_provider_api_v1_admin_settings_subscription_provider_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionProviderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionProviderSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_failed_api_v1_admin_domain_events_get: {
         parameters: {
             query?: never;
@@ -11002,6 +11185,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuscripcionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    avisos_del_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__avisos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisoOut"][];
                 };
             };
             /** @description Validation Error */

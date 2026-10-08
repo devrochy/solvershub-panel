@@ -19,6 +19,8 @@ type Order = {
   delivery_address: string | null;
   created_at: string | null;
   line_items: { name: string; quantity: number; unit_price: number }[];
+  plan_activation_status?: string | null;
+  plan_activation_error?: string | null;
 };
 
 export default async function OrdersPage() {
@@ -71,9 +73,17 @@ export default async function OrdersPage() {
       key: "pago",
       header: "Pago",
       cell: (o) => (
-        <Badge variant={o.payment_status === "pagado" ? "success" : "neutral"}>
-          {o.payment_status}
-        </Badge>
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant={o.payment_status === "pagado" ? "success" : "neutral"}>
+            {o.payment_status}
+          </Badge>
+          {o.plan_activation_status === "pendiente" && (
+            // HU-SUB-09: pagado pero el plan no se activó (configuración del proveedor).
+            <Badge variant="danger" title={o.plan_activation_error ?? undefined}>
+              Plan sin activar
+            </Badge>
+          )}
+        </div>
       ),
     },
     {
