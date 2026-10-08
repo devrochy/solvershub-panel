@@ -45,6 +45,16 @@ describe("labels (HU-UI-02)", () => {
     expect(seccionLabel("pack_xyz:otra_cosa")).toBe("Otra cosa");
   });
 
+  it("etiqueta en español las claves reales que manda /admin/me", () => {
+    expect(seccionLabel("collaborators")).toBe("Colaboradores");
+    expect(seccionLabel("settings")).toBe("Configuración");
+    expect(seccionLabel("tenants")).toBe("Negocios");
+    expect(seccionLabel("pack_commerce")).toBe("Comercio");
+    expect(seccionLabel("pack_calendar:conexion")).toBe("Calendario · Conexión");
+    expect(seccionLabel("pack_cobranza:alertas")).toBe("Cobranza · Alertas");
+    expect(seccionLabel("pack_subscriptions:suscripciones")).toBe("Suscripciones");
+  });
+
   it("etiqueta estado, verificación y calidad de números de Meta", () => {
     expect(estadoNumeroMetaLabel("CONNECTED")).toBe("Conectado");
     expect(estadoNumeroMetaLabel("PENDING")).toBe("Pendiente");

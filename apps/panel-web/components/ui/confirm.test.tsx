@@ -49,4 +49,19 @@ describe("useConfirm (HU-UI-02)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
+
+  it("devuelve el foco al botón que pidió la confirmación", async () => {
+    render(
+      <ConfirmProvider>
+        <BotonDePrueba />
+      </ConfirmProvider>,
+    );
+    const boton = screen.getByRole("button", { name: "pedir" });
+    boton.focus();
+    fireEvent.click(boton);
+    await screen.findByRole("alertdialog");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(boton));
+  });
 });

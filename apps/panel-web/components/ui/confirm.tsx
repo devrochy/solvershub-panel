@@ -27,7 +27,7 @@ const ConfirmContext = createContext<ConfirmFn | null>(null);
 /**
  * Confirmación compartida (HU-04→UI-02): explica la consecuencia antes de una
  * acción irreversible y usa el tono peligro solo cuando `destructive`.
- * Radix atrapa y devuelve el foco; Escape cancela.
+ * Radix atrapa el foco; al cerrar se devuelve a quien lo tenía; Escape cancela.
  */
 export function useConfirm(): ConfirmFn {
   const confirm = useContext(ConfirmContext);
@@ -38,17 +38,25 @@ export function useConfirm(): ConfirmFn {
 interface PendingConfirm {
   options: ConfirmOptions;
   resolve: (result: boolean) => void;
+  // Quién tenía el foco al pedir la confirmación: el diálogo se abre por código
+  // (sin `Trigger` de Radix), así que hay que devolvérselo a mano al cerrar.
+  returnFocus: HTMLElement | null;
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
 
   const confirm = useCallback<ConfirmFn>((options) => {
-    return new Promise<boolean>((resolve) => setPending({ options, resolve }));
+    const activo = typeof document !== "undefined" ? document.activeElement : null;
+    const returnFocus = activo instanceof HTMLElement ? activo : null;
+    return new Promise<boolean>((resolve) => setPending({ options, resolve, returnFocus }));
   }, []);
+
+  const [returnFocus, setReturnFocus] = useState<HTMLElement | null>(null);
 
   function cerrar(resultado: boolean) {
     if (!pending) return;
+    setReturnFocus(pending.returnFocus);
     pending.resolve(resultado);
     setPending(null);
   }
@@ -66,6 +74,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
             )}
             role="alertdialog"
+            onCloseAutoFocus={(event) => {
+              // Devuelve el foco al botón que pidió la confirmación (si sigue en la página).
+              if (returnFocus?.isConnected) {
+                event.preventDefault();
+                returnFocus.focus();
+              }
+            }}
           >
             <DialogPrimitive.Title className="font-display text-lg font-semibold text-headline">
               {pending?.options.title}
