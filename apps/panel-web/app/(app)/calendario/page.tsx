@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
 import { CancelAppointmentButton } from "@/app/(app)/calendario/_components/cancel-appointment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import type { Me } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
 
 export const metadata = { title: "Calendario" };
 
@@ -15,6 +18,11 @@ const GOOGLE_AVISO: Record<string, { tone: string; texto: string }> = {
   ok: { tone: "text-success", texto: "Google Calendar conectado." },
   cancelado: { tone: "text-warning", texto: "Cancelaste la autorización de Google." },
   error: { tone: "text-danger", texto: "No se pudo completar la conexión con Google." },
+  otro_negocio: {
+    tone: "text-danger",
+    texto:
+      "No se conectó: cambiaste de negocio mientras autorizabas en Google. Vuelve a conectar desde el negocio correcto.",
+  },
   not_configured: {
     tone: "text-warning",
     texto: "Configura las credenciales de Google del pack antes de conectar.",
@@ -43,14 +51,18 @@ type Appointment = {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ google?: string }>;
+  // `tenant`: la app abre `/calendario?tenant=<id>` con el negocio en el que está el dueño.
+  searchParams: Promise<{ google?: string; tenant?: string }>;
 }) {
-  const google = (await searchParams).google;
+  const { google, tenant } = await searchParams;
   const avisoGoogle = google ? GOOGLE_AVISO[google] : undefined;
-  const [statusRes, appointmentsRes] = await Promise.all([
+  const [statusRes, appointmentsRes, meRes] = await Promise.all([
     apiFetch<Status>("/pack/calendar/status"),
     apiFetch<Appointment[]>("/pack/calendar/appointments"),
+    apiFetch<Me>("/admin/me"),
   ]);
+  const activo = meRes.ok ? meRes.data.tenant : null;
+  const negocioPedido = negocioPedidoDistinto(tenant, activo?.id);
   if (!statusRes.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -120,6 +132,8 @@ export default async function CalendarPage({
         </p>
       )}
 
+      {negocioPedido && <CambiarNegocioAviso tenantId={negocioPedido} actual={activo?.name ?? null} />}
+
       <PageHeader
         title="Calendario"
         description="Conexión con Google Calendar, tipos de cita y agenda del negocio (habilidad Calendario)."
@@ -166,12 +180,19 @@ export default async function CalendarPage({
             <Button asChild variant="outline" size="sm">
               <Link href="/habilidades/pack_calendar">Configurar credenciales</Link>
             </Button>
-            <Button asChild variant="ghost" size="sm">
-              {/* `<a>` y no `<Link>`: el prefetch de Next llamaba al inicio del OAuth en cada
-                  carga y cada llamada renovaba el `state`, así que el retorno de Google no
-                  coincidía (HU-CAL-07). */}
-              <a href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</a>
-            </Button>
+            {negocioPedido ? (
+              // Con otro negocio pedido por la app, conectar guardaría la cuenta en el activo.
+              <Button variant="ghost" size="sm" disabled>
+                Conectar con Google ↗
+              </Button>
+            ) : (
+              <Button asChild variant="ghost" size="sm">
+                {/* `<a>` y no `<Link>`: el prefetch de Next llamaba al inicio del OAuth en cada
+                    carga y cada llamada renovaba el `state`, así que el retorno de Google no
+                    coincidía (HU-CAL-07). */}
+                <a href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</a>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
