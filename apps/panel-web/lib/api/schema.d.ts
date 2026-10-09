@@ -754,6 +754,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/webhook/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Connection Webhook Route
+         * @description Registra la suscripción de la app de ESA conexión (HU-CONN-05): BYOK en su propia
+         *     app (dueño o master); la app de la plataforma (Embedded Signup), solo el master.
+         */
+        post: operations["register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/webhooks/register": {
         parameters: {
             query?: never;
@@ -763,7 +784,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register Webhook */
+        /**
+         * Register Webhook
+         * @deprecated
+         * @description Obsoleta: usa `POST /connections/{connection_id}/webhook/register`.
+         */
         post: operations["register_webhook_api_v1_admin_meta_webhooks_register_post"];
         delete?: never;
         options?: never;
@@ -1752,6 +1777,132 @@ export interface paths {
          * @description Eliminación física IRREVERSIBLE: exige la frase `ELIMINAR <slug>` (invariante 8).
          */
         post: operations["purge_tenant_endpoint_api_v1_admin_platform_tenants__tenant_id__purge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Vendedores
+         * @description Cada negocio de la allowlist con su interruptor, documentos y altas en revisión.
+         */
+        get: operations["listar_vendedores_api_v1_admin_platform_altas_automaticas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/interruptor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Fijar Interruptor
+         * @description Pausa o reanuda el alta automática. Pausada, cada alta nueva queda en revisión.
+         */
+        put: operations["fijar_interruptor_api_v1_admin_platform_altas_automaticas__vendedor_id__interruptor_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/documentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historial De Documentos
+         * @description Todas las versiones publicadas, la más nueva primero.
+         */
+        get: operations["historial_de_documentos_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_get"];
+        put?: never;
+        /**
+         * Publicar Documento
+         * @description Publica una versión nueva de un documento legal, vigente desde ya. Las altas que
+         *     se pidan desde ahora aceptan esta versión; las anteriores conservan la suya.
+         */
+        post: operations["publicar_documento_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Altas
+         * @description Altas del vendedor, las más nuevas primero (por defecto, las que están en revisión).
+         */
+        get: operations["listar_altas_api_v1_admin_platform_altas_automaticas__vendedor_id__altas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas/{referencia}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprobar
+         * @description Aprueba un alta en revisión: queda `en_curso` y el worker la corre en segundos, sin
+         *     los controles de riesgo que la frenaron (por el outbox, con sus reintentos).
+         */
+        post: operations["aprobar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas/{referencia}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Descartar
+         * @description Cierra un alta en revisión sin crear el negocio.
+         */
+        post: operations["descartar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__descartar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6799,10 +6950,19 @@ export interface components {
             /** Pin */
             pin?: string | null;
         };
-        /** RegisterRequest */
+        /**
+         * RegisterRequest
+         * @description Ruta vieja: mejor `POST /connections/{id}/webhook/register`. Con `connection_id`
+         *     registra esa conexión; con solo `channel`, la única conexión viva del canal.
+         */
         RegisterRequest: {
-            /** Channel */
+            /**
+             * Channel
+             * @default
+             */
             channel: string;
+            /** Connection Id */
+            connection_id?: string | null;
         };
         /** ReportRow */
         ReportRow: {
@@ -7031,8 +7191,23 @@ export interface components {
             /** Checkout Url */
             checkout_url: string;
         };
-        /** SubscriptionItem */
+        /**
+         * SubscriptionItem
+         * @description Suscripción de la APP que usa una conexión (HU-CONN-05). Con la app de la
+         *     plataforma y sin ser master, `callback_url` y `last_error` vienen vacíos.
+         */
         SubscriptionItem: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Origin */
+            origin: string;
+            /** Uses Platform App */
+            uses_platform_app: boolean;
+            /** Can Register */
+            can_register: boolean;
             /** Channel */
             channel: string;
             /** Object */
@@ -7765,6 +7940,107 @@ export interface components {
              * Format: date-time
              */
             fecha_hora: string;
+        };
+        /** AltaOut */
+        AltaOut: {
+            /** Referencia */
+            referencia: string;
+            /** Estado */
+            estado: string;
+            /** Motivo */
+            motivo: string | null;
+            /** Intentos */
+            intentos: number;
+            /** Plan Id */
+            plan_id: string | null;
+            /** Negocio Slug */
+            negocio_slug: string | null;
+            /** Aprobada */
+            aprobada: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** DescartarIn */
+        DescartarIn: {
+            /** Motivo */
+            motivo: string;
+        };
+        /** DocumentoLegalIn */
+        DocumentoLegalIn: {
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "terminos" | "privacidad" | "dpa";
+            /** Version */
+            version: string;
+            /** Url */
+            url: string;
+        };
+        /** DocumentoLegalOut */
+        DocumentoLegalOut: {
+            /** Tipo */
+            tipo: string;
+            /** Nombre */
+            nombre: string;
+            /** Version */
+            version: string;
+            /** Url */
+            url: string;
+            /**
+             * Vigente Desde
+             * Format: date-time
+             */
+            vigente_desde: string;
+            /** Publicado Por */
+            publicado_por?: string | null;
+        };
+        /** Interruptor */
+        Interruptor: {
+            /** Pausado */
+            pausado: boolean;
+            /** Motivo */
+            motivo?: string | null;
+            /** Por */
+            por?: string | null;
+            /** En */
+            en?: string | null;
+        };
+        /** InterruptorIn */
+        InterruptorIn: {
+            /** Pausado */
+            pausado: boolean;
+            /** Motivo */
+            motivo?: string | null;
+        };
+        /** VendedorAltas */
+        VendedorAltas: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Activo */
+            activo: boolean;
+            interruptor: components["schemas"]["Interruptor"];
+            /** Documentos */
+            documentos: components["schemas"]["DocumentoLegalOut"][];
+            /** Documentos Faltantes */
+            documentos_faltantes: string[];
+            /** En Revision */
+            en_revision: number;
         };
     };
     responses: never;
@@ -9147,6 +9423,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WebhooksResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -11006,6 +11313,252 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_vendedores_api_v1_admin_platform_altas_automaticas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendedorAltas"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fijar_interruptor_api_v1_admin_platform_altas_automaticas__vendedor_id__interruptor_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterruptorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendedorAltas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    historial_de_documentos_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoLegalOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publicar_documento_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentoLegalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoLegalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_altas_api_v1_admin_platform_altas_automaticas__vendedor_id__altas_get: {
+        parameters: {
+            query?: {
+                estado?: ("en_curso" | "completado" | "revision" | "omitido") | "todas";
+                limite?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aprobar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+                referencia: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    descartar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__descartar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+                referencia: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DescartarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"];
+                };
             };
             /** @description Validation Error */
             422: {
