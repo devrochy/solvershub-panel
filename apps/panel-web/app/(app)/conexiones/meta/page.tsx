@@ -164,6 +164,9 @@ export default async function MetaHealthPage() {
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/conexiones/meta/${c.id}/plantillas`}>Plantillas</Link>
                     </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={`/conexiones/meta/${c.id}/produccion`}>Producción</Link>
+                    </Button>
                   </div>
 
                   <div id={anclaFacturacion(c.id)} className="scroll-mt-20">
