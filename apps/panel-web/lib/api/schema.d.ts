@@ -1598,7 +1598,10 @@ export interface paths {
         put?: never;
         /**
          * Subscribe To Plan
-         * @description Inicia la suscripción a un plan pago: devuelve la URL del checkout.
+         * @description Link de pago del período que toca pagar (plan actual) o de un plan nuevo.
+         *
+         *     409 `ya_pagado`: ese período ya está pagado (por el panel o por el asistente).
+         *     409 `cambio_en_el_asistente`: el negocio lo creó el asistente; su plan se cambia ahí.
          */
         post: operations["subscribe_to_plan_api_v1_admin_plan_subscribe_post"];
         delete?: never;
@@ -4176,6 +4179,34 @@ export interface components {
             /** Color Riesgo */
             color_riesgo: string;
         };
+        /**
+         * Cobro
+         * @description El período que toca pagar del plan actual (HU-SH-04, ADR-0123).
+         */
+        Cobro: {
+            /** Referencia */
+            referencia: string;
+            /**
+             * Inicio
+             * Format: date-time
+             */
+            inicio: string;
+            /**
+             * Fin
+             * Format: date-time
+             */
+            fin: string;
+            /** Plan Id */
+            plan_id: string;
+            /** Monto Cop */
+            monto_cop: number;
+            /** Estado */
+            estado: string;
+            /** Pagado Por */
+            pagado_por?: string | null;
+            /** Disponible Desde */
+            disponible_desde?: string | null;
+        };
         /** CollaboratorCreate */
         CollaboratorCreate: {
             /** Email */
@@ -6084,6 +6115,12 @@ export interface components {
             payments: components["schemas"]["core__api__routers__plan__Payment"][];
             /** Plans */
             plans: components["schemas"]["PlanInfo"][];
+            cobro?: components["schemas"]["Cobro"] | null;
+            /**
+             * Plan Por El Asistente
+             * @default false
+             */
+            plan_por_el_asistente: boolean;
         };
         /** PlatformTenant */
         PlatformTenant: {
@@ -7513,6 +7550,8 @@ export interface components {
             paid_at: string | null;
             /** Checkout Url */
             checkout_url: string | null;
+            /** Periodo */
+            periodo?: string | null;
         };
         /** Kpi */
         pack_cobranza__admin_api__Kpi: {
