@@ -13,6 +13,13 @@ export const metadata = { title: "Plan y consumo" };
 
 type PaymentRow = PlanResponse["payments"][number];
 
+/** Por dónde entró cada pago del plan (HU-SH-04): el asistente de SolversHub o este panel. */
+const CANAL_DEL_PAGO: Record<string, string> = {
+  asistente: "Asistente",
+  wompi: "Panel",
+  plataforma: "Cobro de renovación",
+};
+
 export default async function PlanPage() {
   const res = await apiFetch<PlanResponse>("/admin/plan");
   if (!res.ok) {
@@ -22,17 +29,28 @@ export default async function PlanPage() {
       </p>
     );
   }
-  const { overview, usage, payments, plans } = res.data;
+  const { overview, usage, payments, plans, cobro, plan_por_el_asistente: planPorElAsistente } = res.data;
 
   const paymentColumns: Column<PaymentRow>[] = [
     { key: "plan", header: "Plan", cell: (p) => p.plan_id ?? "—" },
+    {
+      key: "periodo",
+      header: "Período",
+      cell: (p) => <span className="font-mono text-xs text-body">{p.periodo ?? "—"}</span>,
+    },
     { key: "monto", header: "Monto", align: "right", cell: (p) => formatCop(p.amount_cop) },
     {
       key: "estado",
       header: "Estado",
       cell: (p) => <StatusBadge value={p.status} map={PAYMENT_STATUS} />,
     },
-    { key: "proveedor", header: "Proveedor", cell: (p) => <span className="text-body">{p.provider ?? "—"}</span> },
+    {
+      key: "proveedor",
+      header: "Canal",
+      cell: (p) => (
+        <span className="text-body">{p.provider ? (CANAL_DEL_PAGO[p.provider] ?? p.provider) : "—"}</span>
+      ),
+    },
     {
       key: "fecha",
       header: "Fecha",
@@ -63,6 +81,42 @@ export default async function PlanPage() {
           )}
         </CardContent>
       </Card>
+
+      {cobro && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Período del plan</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-headline">{cobro.referencia}</span>
+              <span className="text-body">
+                {formatDate(cobro.inicio)} – {formatDate(cobro.fin)}
+              </span>
+              <span className="text-headline">{formatCop(cobro.monto_cop)}</span>
+              {cobro.estado === "pagado" ? (
+                <Badge variant="success">
+                  {cobro.pagado_por === "asistente" ? "Pagado por el asistente" : "Pagado"}
+                </Badge>
+              ) : (
+                <Badge variant="warning">Pendiente</Badge>
+              )}
+            </div>
+            {cobro.estado === "pendiente" ? (
+              <div className="max-w-xs">
+                <SubscribeButton planId={cobro.plan_id} label="Pagar el período" />
+              </div>
+            ) : (
+              cobro.disponible_desde && (
+                <p className="text-text-soft">
+                  Tu plan está al día. El cobro del período siguiente se habilita el{" "}
+                  {formatDate(cobro.disponible_desde)}.
+                </p>
+              )
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Consumo del periodo</h2>
@@ -124,6 +178,10 @@ export default async function PlanPage() {
                 {!plan.is_free &&
                   (plan.current ? (
                     <p className="text-sm text-text-soft">Tu plan actual</p>
+                  ) : planPorElAsistente ? (
+                    <p className="text-sm text-text-soft">
+                      Para cambiar de plan, escríbele al asistente de SolversHub por WhatsApp.
+                    </p>
                   ) : (
                     <SubscribeButton planId={plan.id} />
                   ))}

@@ -35,6 +35,12 @@ export const PAYMENT_STATUS: StatusMap = {
   pending: { label: "Pendiente", variant: "warning" },
   declined: { label: "Rechazado", variant: "danger" },
   failed: { label: "Fallido", variant: "danger" },
+  // Pagos del plan (`subscription_payments`, ADR-0123): el backend los manda en español.
+  aprobado: { label: "Aprobado", variant: "success" },
+  pendiente: { label: "Pendiente", variant: "warning" },
+  rechazado: { label: "Rechazado", variant: "danger" },
+  anulado: { label: "Anulado", variant: "neutral" },
+  duplicado: { label: "Pago doble", variant: "danger" },
 };
 
 export function StatusBadge({
