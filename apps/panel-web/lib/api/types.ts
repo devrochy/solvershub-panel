@@ -54,3 +54,8 @@ export type PasoPrimerosPasos = components["schemas"]["PasoOut"];
 export type AcceptInvitationResponse = components["schemas"]["AcceptInvitationResponse"];
 export type InvitationItem = components["schemas"]["InvitationItem"];
 export type PendingInvitations = components["schemas"]["PendingResponse"];
+
+// Alta automática: interruptor, documentos legales y altas en revisión (HU-SH-07, ADR-0125 de agent-core).
+export type VendedorAltas = components["schemas"]["VendedorAltas"];
+export type DocumentoLegal = components["schemas"]["DocumentoLegalOut"];
+export type AltaAutomatica = components["schemas"]["AltaOut"];

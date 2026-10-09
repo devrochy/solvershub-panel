@@ -1705,6 +1705,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/altas-automaticas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Vendedores
+         * @description Cada negocio de la allowlist con su interruptor, documentos y altas en revisión.
+         */
+        get: operations["listar_vendedores_api_v1_admin_platform_altas_automaticas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/interruptor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Fijar Interruptor
+         * @description Pausa o reanuda el alta automática. Pausada, cada alta nueva queda en revisión.
+         */
+        put: operations["fijar_interruptor_api_v1_admin_platform_altas_automaticas__vendedor_id__interruptor_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/documentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historial De Documentos
+         * @description Todas las versiones publicadas, la más nueva primero.
+         */
+        get: operations["historial_de_documentos_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_get"];
+        put?: never;
+        /**
+         * Publicar Documento
+         * @description Publica una versión nueva de un documento legal, vigente desde ya. Las altas que
+         *     se pidan desde ahora aceptan esta versión; las anteriores conservan la suya.
+         */
+        post: operations["publicar_documento_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Altas
+         * @description Altas del vendedor, las más nuevas primero (por defecto, las que están en revisión).
+         */
+        get: operations["listar_altas_api_v1_admin_platform_altas_automaticas__vendedor_id__altas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas/{referencia}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprobar
+         * @description Aprueba un alta en revisión: queda `en_curso` y el worker la corre en segundos, sin
+         *     los controles de riesgo que la frenaron (por el outbox, con sus reintentos).
+         */
+        post: operations["aprobar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/altas-automaticas/{vendedor_id}/altas/{referencia}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Descartar
+         * @description Cierra un alta en revisión sin crear el negocio.
+         */
+        post: operations["descartar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__descartar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings": {
         parameters: {
             query?: never;
@@ -7581,6 +7707,107 @@ export interface components {
              */
             fecha_hora: string;
         };
+        /** AltaOut */
+        AltaOut: {
+            /** Referencia */
+            referencia: string;
+            /** Estado */
+            estado: string;
+            /** Motivo */
+            motivo: string | null;
+            /** Intentos */
+            intentos: number;
+            /** Plan Id */
+            plan_id: string | null;
+            /** Negocio Slug */
+            negocio_slug: string | null;
+            /** Aprobada */
+            aprobada: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** DescartarIn */
+        DescartarIn: {
+            /** Motivo */
+            motivo: string;
+        };
+        /** DocumentoLegalIn */
+        DocumentoLegalIn: {
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "terminos" | "privacidad" | "dpa";
+            /** Version */
+            version: string;
+            /** Url */
+            url: string;
+        };
+        /** DocumentoLegalOut */
+        DocumentoLegalOut: {
+            /** Tipo */
+            tipo: string;
+            /** Nombre */
+            nombre: string;
+            /** Version */
+            version: string;
+            /** Url */
+            url: string;
+            /**
+             * Vigente Desde
+             * Format: date-time
+             */
+            vigente_desde: string;
+            /** Publicado Por */
+            publicado_por?: string | null;
+        };
+        /** Interruptor */
+        Interruptor: {
+            /** Pausado */
+            pausado: boolean;
+            /** Motivo */
+            motivo?: string | null;
+            /** Por */
+            por?: string | null;
+            /** En */
+            en?: string | null;
+        };
+        /** InterruptorIn */
+        InterruptorIn: {
+            /** Pausado */
+            pausado: boolean;
+            /** Motivo */
+            motivo?: string | null;
+        };
+        /** VendedorAltas */
+        VendedorAltas: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Activo */
+            activo: boolean;
+            interruptor: components["schemas"]["Interruptor"];
+            /** Documentos */
+            documentos: components["schemas"]["DocumentoLegalOut"][];
+            /** Documentos Faltantes */
+            documentos_faltantes: string[];
+            /** En Revision */
+            en_revision: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -10755,6 +10982,252 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_vendedores_api_v1_admin_platform_altas_automaticas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendedorAltas"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fijar_interruptor_api_v1_admin_platform_altas_automaticas__vendedor_id__interruptor_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterruptorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendedorAltas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    historial_de_documentos_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoLegalOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publicar_documento_api_v1_admin_platform_altas_automaticas__vendedor_id__documentos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentoLegalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoLegalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_altas_api_v1_admin_platform_altas_automaticas__vendedor_id__altas_get: {
+        parameters: {
+            query?: {
+                estado?: ("en_curso" | "completado" | "revision" | "omitido") | "todas";
+                limite?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aprobar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+                referencia: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    descartar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__descartar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                vendedor_id: string;
+                referencia: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DescartarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltaOut"];
+                };
             };
             /** @description Validation Error */
             422: {
