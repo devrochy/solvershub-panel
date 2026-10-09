@@ -82,7 +82,14 @@ export default async function TenantsPage({
       <PageHeader
         title="Tenants"
         description="Gestión de plataforma: todos los negocios y su plan."
-        actions={<NewTenantDialog />}
+        actions={
+          <div className="flex items-center gap-3">
+            <Link href="/tenants/alta-automatica" className="text-sm text-link hover:underline">
+              Alta automática
+            </Link>
+            <NewTenantDialog />
+          </div>
+        }
       />
 
       <form method="get" className="flex flex-wrap items-end gap-3">

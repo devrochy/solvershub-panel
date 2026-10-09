@@ -16,6 +16,7 @@ import {
   Rocket,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   ShoppingCart,
   UserCog,
   Users,
@@ -175,7 +176,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
     label: "Plataforma",
     items: [
       { section: "tenants", label: "Tenants", href: "/tenants", icon: Building2, ready: true },
-      // Solo master: `tenants` es una sección global. Requisitos de Meta para Embedded Signup (HU-SH-05).
+      // Solo master: `tenants` es una sección global (HU-CONN-07 y HU-SH-05).
+      { section: "tenants", label: "App de Meta", href: "/plataforma/meta", icon: ShieldCheck, ready: true },
       { section: "tenants", label: "Embedded Signup", href: "/plataforma/meta/embedded-signup", icon: LogIn, ready: true },
     ],
   },

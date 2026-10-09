@@ -179,6 +179,9 @@ export default async function MetaHealthPage() {
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/conexiones/meta/${c.id}/plantillas`}>Plantillas</Link>
                     </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={`/conexiones/meta/${c.id}/produccion`}>Producción</Link>
+                    </Button>
                     {c.origin === "byok" && (
                       <Button asChild variant={c.environment === "sandbox" ? "outline" : "ghost"} size="sm">
                         <Link href={`/conexiones/meta/${c.id}/pasar-a-produccion`}>
