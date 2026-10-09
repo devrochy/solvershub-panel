@@ -9,6 +9,7 @@ import {
   HandCoins,
   LayoutDashboard,
   ListChecks,
+  LogIn,
   MessageSquare,
   PlayCircle,
   Plug,
@@ -174,6 +175,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
     label: "Plataforma",
     items: [
       { section: "tenants", label: "Tenants", href: "/tenants", icon: Building2, ready: true },
+      // Solo master: `tenants` es una sección global. Requisitos de Meta para Embedded Signup (HU-SH-05).
+      { section: "tenants", label: "Embedded Signup", href: "/plataforma/meta/embedded-signup", icon: LogIn, ready: true },
     ],
   },
 ];

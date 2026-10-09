@@ -15,6 +15,23 @@ const CSP = [
   "form-action 'self'",
 ].join("; ");
 
+// Solo en el wizard de WhatsApp (HU-SH-05): el SDK de Facebook para Embedded Signup. El
+// script sale de connect.facebook.net y el SDK usa iframes y llamadas a *.facebook.com.
+// El resto del panel no carga nada de Facebook.
+const FACEBOOK = "https://*.facebook.com https://facebook.com";
+const CSP_EMBEDDED_SIGNUP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net",
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${FACEBOOK} https://*.fbcdn.net`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${FACEBOOK} https://connect.facebook.net`,
+  `frame-src ${FACEBOOK}`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
   output: "standalone",
@@ -40,6 +57,11 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
+      },
+      // Va después: con la misma cabecera, la última regla que coincide gana.
+      {
+        source: "/conexiones/whatsapp",
+        headers: [{ key: "Content-Security-Policy", value: CSP_EMBEDDED_SIGNUP }],
       },
     ];
   },

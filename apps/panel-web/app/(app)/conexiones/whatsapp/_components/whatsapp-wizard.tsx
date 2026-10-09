@@ -16,7 +16,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RegistroPinForm } from "@/components/domain/registro-pin-form";
 
-type Estado = { meta_configured: boolean; app_id: string; config_id: string; environments: string[] };
+import { EmbeddedSignup } from "./embedded-signup";
+
+type Estado = components["schemas"]["WizardState"];
+type Sesion = components["schemas"]["WizardSessionOut"];
 
 type AltaByok = components["schemas"]["WizardByokOut"];
 
@@ -33,7 +36,7 @@ async function enviar(action: string, payload: Record<string, unknown>) {
 }
 
 /** Wizard de WhatsApp: Embedded Signup (SDK de Meta), BYOK y carga manual. */
-export function WhatsappWizard({ estado }: { estado: Estado }) {
+export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Sesion | null }) {
   const router = useRouter();
   const [status, setStatus] = useState<{ loading?: string; error?: string; success?: string }>({});
   const [entorno, setEntorno] = useState<"sandbox" | "production">("sandbox");
@@ -97,63 +100,32 @@ export function WhatsappWizard({ estado }: { estado: Estado }) {
     );
   }
 
-  async function abrirEmbeddedSignup() {
-    setStatus({ loading: "session" });
-    const res = await enviar("session", { environment: "production" });
-    if (!res.ok) {
-      setStatus({ error: res.error });
-      return;
-    }
-    setStatus({
-      success:
-        "Sesión del wizard creada. Carga el popup de Embedded Signup con el SDK de Facebook (app " +
-        estado.app_id +
-        ") y envía el código a /exchange.",
-    });
-    router.refresh();
-  }
-
   return (
     <div className="flex flex-col gap-5">
-      {!estado.meta_configured && (
-        <div role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-          <p className="font-medium text-headline">Embedded Signup no disponible en este entorno</p>
-          <p className="text-body">
-            Faltan <code className="font-mono text-xs">META_APP_ID</code>,{" "}
-            <code className="font-mono text-xs">META_APP_SECRET</code> y{" "}
-            <code className="font-mono text-xs">META_CONFIG_ID</code> (ver el checklist). Mientras
-            tanto puedes conectar por <strong>BYOK</strong> (app propia) o con la{" "}
-            <strong>carga manual</strong>.
-          </p>
-        </div>
-      )}
-
-      <FormFeedback error={status.error} success={status.success} />
-
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-text-soft" aria-hidden />
-            <CardTitle className="text-sm">Embedded Signup (app del framework)</CardTitle>
+            <CardTitle className="text-sm">Producción: conectar con Facebook</CardTitle>
             {estado.meta_configured ? (
-              <Badge variant="success">disponible</Badge>
+              <Badge variant="success">recomendado</Badge>
             ) : (
               <Badge variant="warning">sin configurar</Badge>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          <Button disabled={!estado.meta_configured} onClick={() => void abrirEmbeddedSignup()} variant="accent">
-            {status.loading === "session" ? "Abriendo…" : "Vincular con Embedded Signup"}
-          </Button>
+          <EmbeddedSignup estado={estado} inicial={sesion} />
         </CardContent>
       </Card>
+
+      <FormFeedback error={status.error} success={status.success} />
 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-text-soft" aria-hidden />
-            <CardTitle className="text-sm">BYOK: tu propia app de Meta</CardTitle>
+            <CardTitle className="text-sm">Tu propia app de Meta (prueba o producción)</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
