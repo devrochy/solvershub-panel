@@ -754,6 +754,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/webhook/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Connection Webhook Route
+         * @description Registra la suscripción de la app de ESA conexión (HU-CONN-05): BYOK en su propia
+         *     app (dueño o master); la app de la plataforma (Embedded Signup), solo el master.
+         */
+        post: operations["register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/webhooks/register": {
         parameters: {
             query?: never;
@@ -763,7 +784,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register Webhook */
+        /**
+         * Register Webhook
+         * @deprecated
+         * @description Obsoleta: usa `POST /connections/{connection_id}/webhook/register`.
+         */
         post: operations["register_webhook_api_v1_admin_meta_webhooks_register_post"];
         delete?: never;
         options?: never;
@@ -1074,7 +1099,10 @@ export interface paths {
         };
         /**
          * Checklist Production
-         * @description Lista de producción: los mismos pasos manuales, con su estado.
+         * @deprecated
+         * @description Obsoleta (HU-CONN-07): los pasos manuales de Meta viven en `/checklist/requirements`
+         *     y el checklist de producción es por conexión
+         *     (`/connections/{connection_id}/production`). Se mantiene para la app móvil.
          */
         get: operations["checklist_production_api_v1_admin_meta_checklist_production_get"];
         put?: never;
@@ -1116,9 +1144,59 @@ export interface paths {
         put?: never;
         /**
          * Run Production Checks
-         * @description Corre las comprobaciones de puesta en producción (9 checks on-demand).
+         * @deprecated
+         * @description Obsoleta (HU-CONN-07): usar `/connections/{connection_id}/production/run`.
+         *
+         *     Ya no corre nada en el request ni muestra los checks de la plataforma (son del master):
+         *     encola el checklist de producción de cada conexión del negocio y devuelve el último
+         *     resultado guardado de cada una. Se mantiene para la app móvil.
          */
         post: operations["run_production_checks_api_v1_admin_meta_checklist_production_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/production": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Connection Production
+         * @description Checklist de producción de la conexión: el último resultado guardado, con fecha.
+         *
+         *     Número registrado, WABA suscrita, webhook, plantillas mínimas aprobadas y token, evaluados
+         *     con las credenciales de ESTA conexión. No corre nada: para revisar, `POST .../run`.
+         */
+        get: operations["get_connection_production_api_v1_admin_meta_connections__connection_id__production_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/production/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Connection Production
+         * @description Encola la revisión de producción de la conexión (job de Celery) y responde al instante
+         *     con la corrida `queued` (o la que ya estaba en curso). El panel consulta el GET hasta que
+         *     termine.
+         */
+        post: operations["run_connection_production_api_v1_admin_meta_connections__connection_id__production_run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1825,6 +1903,49 @@ export interface paths {
          * @description Cierra un alta en revisión sin crear el negocio.
          */
         post: operations["descartar_api_v1_admin_platform_altas_automaticas__vendedor_id__altas__referencia__descartar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/meta-app": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Platform Meta App
+         * @description Último resultado guardado (con fecha) de los chequeos de la app de Meta de la
+         *     plataforma e infraestructura: webhook, suscripciones de la app, App Secret, claves de
+         *     cifrado, worker, RLS. No corre nada: para revisar, `POST /meta-app/run`.
+         */
+        get: operations["get_platform_meta_app_api_v1_admin_platform_meta_app_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/meta-app/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Platform Meta App
+         * @description Encola la revisión de la plataforma (job de Celery, sin pytest) y responde al instante
+         *     con la corrida `queued` (o la que ya estaba en curso).
+         */
+        post: operations["run_platform_meta_app_api_v1_admin_platform_meta_app_run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4509,6 +4630,43 @@ export interface components {
              */
             coexistence: boolean;
         };
+        /** ConnectionProduction */
+        ConnectionProduction: {
+            /** Run Id */
+            run_id?: string | null;
+            /**
+             * Status
+             * @default never
+             * @enum {string}
+             */
+            status: "never" | "queued" | "running" | "done" | "failed";
+            /** Ready */
+            ready?: boolean | null;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["ReadinessItem"][];
+            /** Error */
+            error?: string | null;
+            /** Requested At */
+            requested_at?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Finished At */
+            finished_at?: string | null;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Channel */
+            channel: string;
+            /** Environment */
+            environment: string;
+            /** Origin */
+            origin: string;
+        };
         /** ConnectionTypeItem */
         ConnectionTypeItem: {
             /** Id */
@@ -6248,6 +6406,40 @@ export interface components {
              */
             plan_por_el_asistente: boolean;
         };
+        /**
+         * PlatformMetaApp
+         * @description Checklist de la app de Meta de la plataforma y la infraestructura (solo master).
+         */
+        PlatformMetaApp: {
+            /** Run Id */
+            run_id?: string | null;
+            /**
+             * Status
+             * @default never
+             * @enum {string}
+             */
+            status: "never" | "queued" | "running" | "done" | "failed";
+            /** Ready */
+            ready?: boolean | null;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["ReadinessItem"][];
+            /** Error */
+            error?: string | null;
+            /** Requested At */
+            requested_at?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Finished At */
+            finished_at?: string | null;
+            /**
+             * Meta App Id
+             * @default
+             */
+            meta_app_id: string;
+        };
         /** PlatformTenant */
         PlatformTenant: {
             /**
@@ -6705,6 +6897,24 @@ export interface components {
              */
             platform: "android" | "ios";
         };
+        /**
+         * ReadinessItem
+         * @description Un ítem del checklist. `ok`: `None` = no se pudo evaluar.
+         */
+        ReadinessItem: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Ok */
+            ok?: boolean | null;
+            /** Detail */
+            detail?: string | null;
+            /** Repair Action */
+            repair_action?: string | null;
+            /** Checked At */
+            checked_at?: string | null;
+        };
         /** RecentConversation */
         RecentConversation: {
             /**
@@ -6740,10 +6950,19 @@ export interface components {
             /** Pin */
             pin?: string | null;
         };
-        /** RegisterRequest */
+        /**
+         * RegisterRequest
+         * @description Ruta vieja: mejor `POST /connections/{id}/webhook/register`. Con `connection_id`
+         *     registra esa conexión; con solo `channel`, la única conexión viva del canal.
+         */
         RegisterRequest: {
-            /** Channel */
+            /**
+             * Channel
+             * @default
+             */
             channel: string;
+            /** Connection Id */
+            connection_id?: string | null;
         };
         /** ReportRow */
         ReportRow: {
@@ -6972,8 +7191,23 @@ export interface components {
             /** Checkout Url */
             checkout_url: string;
         };
-        /** SubscriptionItem */
+        /**
+         * SubscriptionItem
+         * @description Suscripción de la APP que usa una conexión (HU-CONN-05). Con la app de la
+         *     plataforma y sin ser master, `callback_url` y `last_error` vienen vacíos.
+         */
         SubscriptionItem: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Origin */
+            origin: string;
+            /** Uses Platform App */
+            uses_platform_app: boolean;
+            /** Can Register */
+            can_register: boolean;
             /** Channel */
             channel: string;
             /** Object */
@@ -9201,6 +9435,37 @@ export interface operations {
             };
         };
     };
+    register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     register_webhook_api_v1_admin_meta_webhooks_register_post: {
         parameters: {
             query?: never;
@@ -9883,6 +10148,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreflightOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_connection_production_api_v1_admin_meta_connections__connection_id__production_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionProduction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_connection_production_api_v1_admin_meta_connections__connection_id__production_run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionProduction"];
                 };
             };
             /** @description Validation Error */
@@ -11227,6 +11558,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AltaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_platform_meta_app_api_v1_admin_platform_meta_app_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformMetaApp"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_platform_meta_app_api_v1_admin_platform_meta_app_run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformMetaApp"];
                 };
             };
             /** @description Validation Error */

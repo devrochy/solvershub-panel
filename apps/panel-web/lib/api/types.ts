@@ -59,3 +59,7 @@ export type PendingInvitations = components["schemas"]["PendingResponse"];
 export type VendedorAltas = components["schemas"]["VendedorAltas"];
 export type DocumentoLegal = components["schemas"]["DocumentoLegalOut"];
 export type AltaAutomatica = components["schemas"]["AltaOut"];
+// Checklist de producción real (HU-CONN-07 de agent-core).
+export type ReadinessItem = components["schemas"]["ReadinessItem"];
+export type ConnectionProduction = components["schemas"]["ConnectionProduction"];
+export type PlatformMetaApp = components["schemas"]["PlatformMetaApp"];

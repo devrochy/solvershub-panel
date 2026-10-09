@@ -25,7 +25,7 @@ export default async function RequisitosPage() {
         title="Requisitos de Meta"
         description="Pasos manuales de la app de Meta y comprobaciones automáticas del negocio."
       />
-      <ChecklistMeta checks={res.data.checks} kind="requirements" steps={res.data.steps} />
+      <ChecklistMeta checks={res.data.checks} steps={res.data.steps} />
     </div>
   );
 }

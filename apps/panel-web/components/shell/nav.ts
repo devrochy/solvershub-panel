@@ -15,6 +15,7 @@ import {
   Rocket,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   ShoppingCart,
   UserCog,
   Users,
@@ -174,6 +175,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
     label: "Plataforma",
     items: [
       { section: "tenants", label: "Tenants", href: "/tenants", icon: Building2, ready: true },
+      // Solo master: `tenants` es una sección global (HU-CONN-07).
+      { section: "tenants", label: "App de Meta", href: "/plataforma/meta", icon: ShieldCheck, ready: true },
     ],
   },
 ];
