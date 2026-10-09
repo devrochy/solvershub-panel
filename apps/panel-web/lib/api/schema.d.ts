@@ -52,7 +52,9 @@ export interface paths {
          * @description Siempre 202 con el mismo cuerpo: no filtra si la cuenta existe (ADR-0098).
          *
          *     El trabajo pesado (hash + correo) va en background para emparejar el tiempo
-         *     de respuesta de cuentas existentes e inexistentes.
+         *     de respuesta de cuentas existentes e inexistentes. Con un cupo por identificador
+         *     (3 cada 15 min) y por IP (10): pasado el cupo responde igual, pero no genera ni
+         *     envía otro código.
          */
         post: operations["post_forgot_password_api_v1_auth_forgot_password_post"];
         delete?: never;
@@ -70,7 +72,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post Reset Password */
+        /**
+         * Post Reset Password
+         * @description Aplica el código. Con el mismo bloqueo progresivo del login (5 fallos en 10 min → 15
+         *     min), por IP y por identificador si viene (HU-SH-06).
+         */
         post: operations["post_reset_password_api_v1_auth_reset_password_post"];
         delete?: never;
         options?: never;
@@ -90,11 +96,11 @@ export interface paths {
         /**
          * Post Accept Invitation
          * @description Canjea el enlace de un solo uso de una invitación (ADR-0121): define la contraseña de
-         *     una cuenta que el alta automática creó sin ella y la deja como miembro del negocio.
-         *     Luego se entra con `/auth/login`. Un enlace inválido, usado o vencido da 400 sin decir
-         *     cuál de los tres; una cuenta que ya existe (con contraseña, acceso a otro negocio u otra
-         *     invitación pendiente) da 409: entra y acepta en la app. Con el mismo bloqueo progresivo
-         *     del login (5 fallos en 10 min → 15 min), por IP y por invitación.
+         *     una cuenta que el alta automática creó sin ella, la deja como miembro del negocio y abre
+         *     su sesión (ADR-0124), así el dueño entra directo. Un enlace inválido, usado o vencido da
+         *     400 sin decir cuál de los tres; una cuenta que ya existe (con contraseña, acceso a otro
+         *     negocio u otra invitación pendiente) da 409: entra y acepta en la app. Con el mismo
+         *     bloqueo progresivo del login (5 fallos en 10 min → 15 min), por IP y por invitación.
          */
         post: operations["post_accept_invitation_api_v1_auth_accept_invitation_post"];
         delete?: never;
@@ -215,6 +221,23 @@ export interface paths {
         };
         /** Get Dashboard */
         get: operations["get_dashboard_api_v1_admin_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Primeros Pasos */
+        get: operations["get_primeros_pasos_api_v1_admin_onboarding_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3477,6 +3500,30 @@ export interface components {
              */
             new_password: string;
         };
+        /**
+         * AcceptInvitationResponse
+         * @description Sesión del dueño que acaba de definir su contraseña (ADR-0124), como la del login.
+         */
+        AcceptInvitationResponse: {
+            /** Token */
+            token: string;
+            /**
+             * Admin Id
+             * Format: uuid
+             */
+            admin_id: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             * @description Negocio al que entró: el panel lo deja activo.
+             */
+            tenant_id: string;
+            /**
+             * Expires In
+             * @description Segundos de vigencia de la sesión.
+             */
+            expires_in: number;
+        };
         /** AccessAttempt */
         AccessAttempt: {
             /** Fecha */
@@ -5409,6 +5456,8 @@ export interface components {
             permissions: {
                 [key: string]: string | null;
             };
+            /** Invitaciones Pendientes */
+            invitaciones_pendientes: number;
         };
         /** MemorySettings */
         MemorySettings: {
@@ -5889,6 +5938,66 @@ export interface components {
             /** Has More */
             has_more: boolean;
         };
+        /** PasoOut */
+        PasoOut: {
+            /**
+             * Clave
+             * @description datos_negocio | whatsapp | catalogo | probar_asistente | equipo | activar_preset | configurar_<habilidad>
+             */
+            clave: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendiente" | "en_curso" | "completo";
+            /**
+             * Motivo
+             * @description Por qué no está completo (clave para el panel).
+             */
+            motivo?: ("sin_descripcion" | "sin_conexion" | "sin_verificar" | "con_problemas" | "sin_terminar" | "sin_habilidad" | "sin_contenido" | "sin_pruebas" | "sin_invitaciones" | "faltan_datos" | "plan_insuficiente") | null;
+            /**
+             * Cantidad
+             * @description Elementos cargados (paso `catalogo`).
+             */
+            cantidad?: number | null;
+            /**
+             * Pack
+             * @description Habilidad del paso (`catalogo` y `configurar_*`).
+             */
+            pack?: string | null;
+            /** Tipo */
+            tipo?: ("catalogo" | "servicios" | "cartera") | null;
+            /**
+             * Titulo
+             * @description Nombre visible de la habilidad o del tipo de negocio.
+             */
+            titulo?: string | null;
+            /**
+             * Explicacion
+             * @description Guía de configuración de la habilidad (su catálogo).
+             */
+            explicacion?: string | null;
+            /**
+             * Plan Requerido
+             * @description Plan que necesita el tipo de negocio.
+             */
+            plan_requerido?: string | null;
+            /**
+             * Puede Actuar
+             * @description El usuario tiene escritura en la sección del paso.
+             */
+            puede_actuar: boolean;
+            /**
+             * Completado En
+             * @description Primera vez que se cumplió (hito).
+             */
+            completado_en?: string | null;
+            /**
+             * Segundos Desde Alta
+             * @description Del alta a la primera vez que se cumplió.
+             */
+            segundos_desde_alta?: number | null;
+        };
         /** PasswordReset */
         PasswordReset: {
             /** Password */
@@ -6279,6 +6388,25 @@ export interface components {
             /** Detail */
             detail?: string | null;
         };
+        /** PrimerosPasosResponse */
+        PrimerosPasosResponse: {
+            /**
+             * Alta En
+             * Format: date-time
+             */
+            alta_en: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "aprovisionamiento" | "manual";
+            /** Completos */
+            completos: number;
+            /** Total */
+            total: number;
+            /** Pasos */
+            pasos: components["schemas"]["PasoOut"][];
+        };
         /** ProductOut */
         ProductOut: {
             /**
@@ -6553,6 +6681,11 @@ export interface components {
             token: string;
             /** New Password */
             new_password: string;
+            /**
+             * Identifier
+             * @description Correo o usuario de la cuenta: el código solo se busca entre los suyos.
+             */
+            identifier?: string | null;
         };
         /** ResultadoSeccion */
         ResultadoSeccion: {
@@ -7597,11 +7730,13 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            204: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AcceptInvitationResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -7870,6 +8005,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_primeros_pasos_api_v1_admin_onboarding_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrimerosPasosResponse"];
                 };
             };
             /** @description Validation Error */

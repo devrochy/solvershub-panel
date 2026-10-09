@@ -47,3 +47,10 @@ export type EventTemplateEntry = components["schemas"]["EventTemplateEntry"];
 export type TenantTemplateItem = components["schemas"]["TenantTemplateItem"];
 export type MissingTemplates = components["schemas"]["MissingTemplates"];
 export type ApprovedTemplate = components["schemas"]["ApprovedTemplate"];
+
+// Onboarding autoservicio (HU-SH-06, ADR-0124 de agent-core).
+export type PrimerosPasos = components["schemas"]["PrimerosPasosResponse"];
+export type PasoPrimerosPasos = components["schemas"]["PasoOut"];
+export type AcceptInvitationResponse = components["schemas"]["AcceptInvitationResponse"];
+export type InvitationItem = components["schemas"]["InvitationItem"];
+export type PendingInvitations = components["schemas"]["PendingResponse"];

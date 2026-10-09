@@ -1,16 +1,51 @@
+import { cookies } from "next/headers";
+
+import { Bienvenida } from "@/components/domain/bienvenida";
+import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
+import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
-import type { Dashboard } from "@/lib/api/types";
+import type { Dashboard, Me, PrimerosPasos } from "@/lib/api/types";
 import { formatNumber, formatUsd } from "@/lib/format";
+import { PASOS_PLEGADOS_COOKIE, hayPasosParaActuar } from "@/lib/primeros-pasos";
+import { TOUR_COOKIE, debeOfrecerTour } from "@/lib/tour";
 
 export const metadata = { title: "Resumen" };
 
+const DESCRIPCION = "Estado del agente, conversaciones y consumo del negocio.";
+
 export default async function DashboardPage() {
-  const res = await apiFetch<Dashboard>("/admin/dashboard");
+  // `/admin/me` ya lo pidió el layout: el fetch se memoiza en el mismo render.
+  const [meRes, res, pasosRes] = await Promise.all([
+    apiFetch<Me>("/admin/me"),
+    apiFetch<Dashboard>("/admin/dashboard"),
+    apiFetch<PrimerosPasos>("/admin/onboarding"),
+  ]);
+
+  if (meRes.ok && !meRes.data.tenant) {
+    // Cuenta sin negocio todavía: la invitación pendiente (si hay) se muestra arriba.
+    const conInvitacion = meRes.data.invitaciones_pendientes > 0;
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Resumen" description={DESCRIPCION} />
+        <Card>
+          <EmptyState
+            title={conInvitacion ? "Acepta tu invitación para entrar a tu negocio" : "Todavía no tienes un negocio"}
+            description={
+              conInvitacion
+                ? "Cuando la aceptes, aquí vas a ver los primeros pasos para dejar tu asistente listo."
+                : "Si te invitaron, revisa tu correo o pídele a quien te dio de alta una invitación nueva."
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -19,6 +54,11 @@ export default async function DashboardPage() {
     );
   }
   const d = res.data;
+
+  const store = await cookies();
+  const pasos = pasosRes.ok ? pasosRes.data : null;
+  const ofrecerRecorrido =
+    pasos !== null && debeOfrecerTour(store.get(TOUR_COOKIE)?.value, hayPasosParaActuar(pasos.pasos));
 
   const planHint =
     d.billing?.days_left !== null && d.billing?.days_left !== undefined
@@ -29,7 +69,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Resumen"
-        description="Estado del agente, conversaciones y consumo del negocio."
+        description={DESCRIPCION}
         actions={
           d.billing?.has_plan ? (
             <Badge variant={d.billing.operational ? "success" : "danger"}>
@@ -39,6 +79,14 @@ export default async function DashboardPage() {
         }
         helpSection="dashboard"
       />
+      {/* Primeros pasos y recorrido (HU-SH-06). Si no cargan, el Resumen sigue igual. */}
+      {pasos && (
+        <Bienvenida
+          datos={pasos}
+          ofrecerRecorrido={ofrecerRecorrido}
+          pasosPlegados={store.get(PASOS_PLEGADOS_COOKIE)?.value === "1"}
+        />
+      )}
       <MissingTemplatesBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -66,7 +114,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-body">Agente</span>
               <Badge variant={d.bot_paused ? "danger" : "success"}>
-                {d.bot_paused ? "PAUSADO" : "ACTIVO"}
+                {d.bot_paused ? "Pausado" : "Activo"}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -94,9 +142,7 @@ export default async function DashboardPage() {
                     <span className="truncate text-headline">
                       {conv.customer_name ?? conv.external_id ?? "Cliente"}
                     </span>
-                    <Badge variant={conv.status === "escalated" ? "warning" : "neutral"}>
-                      {conv.status}
-                    </Badge>
+                    <StatusBadge value={conv.status} map={CONVERSATION_STATUS} />
                   </li>
                 ))}
               </ul>

@@ -87,6 +87,20 @@ versión de spec.
 `IconAction` y `ChannelIcon` usan tonos semánticos del tema (sin pasteles fijos
 ni `hover:scale`).
 
+## Onboarding (HU-SH-06)
+
+| Pieza | Regla |
+|---|---|
+| `components/domain/primeros-pasos.tsx` | Checklist del Resumen. El estado lo calcula el backend (`GET /admin/onboarding`); el panel solo traduce con `lib/primeros-pasos.ts` (sin claves ni motivos crudos). La acción de un paso se muestra solo si `puede_actuar`. Se pliega (`aria-expanded`); la preferencia va en la cookie `panel_pasos_plegados`, que lee el servidor: sin salto al cargar |
+| `components/domain/tour-guiado.tsx` + `lib/tour.ts` | Recorrido propio de 5 pasos (D-SPEC-12-1 = A, sin librerías). Diálogo sin fondo oscuro, abajo a la derecha, para que se vea lo resaltado (`data-tour` → outline cyan de 2 px, sin animación). Teclado: Tab dentro del diálogo, ← y → cambian de paso, Escape lo salta. Cada paso se anuncia (`role="status"`) y el foco vuelve a quien lo abrió. Cómo terminó queda en la cookie `panel_tour` |
+| `components/domain/bienvenida.tsx` | Primera visita: ofrece el recorrido («Empezar recorrido» / «Ahora no») mientras queden pasos |
+| `components/domain/invitaciones-pendientes.tsx` | Invitaciones que esperan respuesta, en el layout de `(app)`: aceptar deja el negocio activo; rechazar pide confirmación |
+| `components/domain/tarjeta-de-acceso.tsx` | Marco de las pantallas sin sesión: `/login`, `/invitacion` (el token llega en el fragmento `#` y se borra de la barra) y `/recuperar` |
+
+Un elemento que quiera aparecer en el recorrido lleva `data-tour="<id>"` (los enlaces del
+menú ya llevan su `href`). Los modales de ayuda por sección y las guías por habilidad son de
+SPEC-12, no de este recorrido.
+
 ## Copy
 
 - Voz de interfaz, frase corta, voz activa y sentence case.

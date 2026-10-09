@@ -174,3 +174,15 @@ export function calidadNumeroLabel(calidad: string | null | undefined): string {
   if (!calidad) return "Sin datos";
   return CALIDAD_NUMERO[calidad] ?? capitalizar(calidad.toLowerCase());
 }
+
+/** Estado de un primer paso del onboarding (HU-SH-06). */
+export const ESTADO_PASO: Record<string, string> = {
+  pendiente: "Pendiente",
+  en_curso: "En curso",
+  completo: "Listo",
+};
+
+export function estadoPasoLabel(estado: string | null | undefined): string {
+  if (!estado) return "Pendiente";
+  return ESTADO_PASO[estado] ?? capitalizar(estado);
+}

@@ -97,3 +97,11 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Recorrido guiado (HU-SH-06): el elemento del paso actual se resalta con el acento de datos,
+   sin animación (DESIGN.md · motion sobrio). */
+[data-tour-activo="true"] {
+  outline: 2px solid var(--sh-cyan-400);
+  outline-offset: 3px;
+  border-radius: var(--sh-radius-md);
+}
