@@ -71,7 +71,9 @@ export function RecuperarForm() {
       setError(invalida);
       return;
     }
-    if (await enviar("/api/password/reset", { code: codigo, password: clave })) setEtapa("listo");
+    if (await enviar("/api/password/reset", { code: codigo, password: clave, identifier: correo.trim() })) {
+      setEtapa("listo");
+    }
   }
 
   if (etapa === "listo") {

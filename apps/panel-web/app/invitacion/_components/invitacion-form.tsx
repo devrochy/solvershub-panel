@@ -9,14 +9,23 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { errorDeContrasenaNueva, tokenDelFragmento, type ResultadoDelCanje } from "@/lib/acceso";
+import {
+  VARIABLE_DEL_TOKEN,
+  errorDeContrasenaNueva,
+  tokenDelFragmento,
+  type ResultadoDelCanje,
+} from "@/lib/acceso";
 
 // El token se lee una vez del fragmento y se guarda aquí: después se borra de la barra de
 // direcciones (y del historial) para que no quede a la vista.
 let tokenLeido: string | null | undefined;
 
 function leerToken(): string | null {
-  if (tokenLeido === undefined) tokenLeido = tokenDelFragmento(window.location.hash);
+  if (tokenLeido === undefined) {
+    // Lo normal: el script de la página ya lo guardó y borró la URL antes de hidratar.
+    const guardado = (window as unknown as Record<string, unknown>)[VARIABLE_DEL_TOKEN];
+    tokenLeido = tokenDelFragmento(typeof guardado === "string" ? guardado : window.location.hash);
+  }
   return tokenLeido;
 }
 

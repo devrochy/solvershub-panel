@@ -38,7 +38,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: MENSAJE_DEL_CANJE[resultado], resultado }, { status });
   }
 
-  (await cookies()).set(SESSION_COOKIE, json.token, {
+  const store = await cookies();
+  // Si en este navegador había otra sesión, se cierra en la API antes de reemplazarla: si no,
+  // seguiría viva aunque la cookie ya no la nombre.
+  const anterior = store.get(SESSION_COOKIE)?.value;
+  if (anterior && anterior !== json.token) {
+    await fetch(`${API_BASE}/api/v1/auth/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${anterior}` },
+      cache: "no-store",
+    }).catch(() => {});
+  }
+  store.set(SESSION_COOKIE, json.token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

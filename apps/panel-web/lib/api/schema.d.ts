@@ -52,7 +52,9 @@ export interface paths {
          * @description Siempre 202 con el mismo cuerpo: no filtra si la cuenta existe (ADR-0098).
          *
          *     El trabajo pesado (hash + correo) va en background para emparejar el tiempo
-         *     de respuesta de cuentas existentes e inexistentes.
+         *     de respuesta de cuentas existentes e inexistentes. Con un cupo por identificador
+         *     (3 cada 15 min) y por IP (10): pasado el cupo responde igual, pero no genera ni
+         *     envía otro código.
          */
         post: operations["post_forgot_password_api_v1_auth_forgot_password_post"];
         delete?: never;
@@ -70,7 +72,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post Reset Password */
+        /**
+         * Post Reset Password
+         * @description Aplica el código. Con el mismo bloqueo progresivo del login (5 fallos en 10 min → 15
+         *     min), por IP y por identificador si viene (HU-SH-06).
+         */
         post: operations["post_reset_password_api_v1_auth_reset_password_post"];
         delete?: never;
         options?: never;
@@ -6638,6 +6644,11 @@ export interface components {
             token: string;
             /** New Password */
             new_password: string;
+            /**
+             * Identifier
+             * @description Correo o usuario de la cuenta: el código solo se busca entre los suyos.
+             */
+            identifier?: string | null;
         };
         /** ResultadoSeccion */
         ResultadoSeccion: {

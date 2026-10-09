@@ -24,6 +24,16 @@ export function tokenDelFragmento(hash: string | null | undefined): string | nul
   return crudo;
 }
 
+/** Donde el script de la página deja el fragmento crudo antes de borrarlo de la URL. */
+export const VARIABLE_DEL_TOKEN = "__shInvitacionToken";
+
+/**
+ * Script en línea de `/invitacion`: corre al parsear el HTML, antes de hidratar React. Guarda el
+ * fragmento en `window` y lo borra de la barra de direcciones y del historial (`replaceState`),
+ * así el `#token` no queda a la vista ni en la entrada del historial.
+ */
+export const SCRIPT_QUE_GUARDA_EL_TOKEN = `(function(){try{var h=window.location.hash;if(h&&h.length>1){window.${VARIABLE_DEL_TOKEN}=h;window.history.replaceState(null,"",window.location.pathname+window.location.search);}}catch(e){}})();`;
+
 export const LARGO_MINIMO_CONTRASENA = 8;
 
 /** Error de la contraseña nueva (mínimo 8 y confirmada), o null si sirve. */
