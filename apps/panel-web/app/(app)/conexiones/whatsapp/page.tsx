@@ -1,13 +1,19 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import type { components } from "@/lib/api/schema";
 import { WhatsappWizard } from "./_components/whatsapp-wizard";
 
 export const metadata = { title: "Conectar WhatsApp" };
 
-type Estado = { meta_configured: boolean; app_id: string; config_id: string; environments: string[] };
+type Estado = components["schemas"]["WizardState"];
+type Sesion = components["schemas"]["WizardSessionOut"];
 
 export default async function ConectarWhatsappPage() {
-  const res = await apiFetch<Estado>("/admin/meta/wizard");
+  const [res, sesionRes] = await Promise.all([
+    apiFetch<Estado>("/admin/meta/wizard"),
+    // En qué paso quedó el alta con Facebook (sin efectos): para reanudarla.
+    apiFetch<Sesion | null>("/admin/meta/wizard/session?environment=production"),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -19,9 +25,9 @@ export default async function ConectarWhatsappPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Conectar WhatsApp"
-        description="Embedded Signup con la app del framework, BYOK con tu propia app o carga manual."
+        description="Conecta tu número con Facebook (producción), con tu propia app de Meta o con la carga manual."
       />
-      <WhatsappWizard estado={res.data} />
+      <WhatsappWizard estado={res.data} sesion={sesionRes.ok ? (sesionRes.data ?? null) : null} />
     </div>
   );
 }
