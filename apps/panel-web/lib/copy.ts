@@ -17,7 +17,11 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
   dashboard: {
     question: "¿Qué es el Resumen?",
     what: "Es la foto del día: cuántas conversaciones hubo, cuántas escalaron y cómo va el consumo.",
-    first: ["Revisa las conversaciones sin responder.", "Confirma que tu asistente está activo."],
+    first: [
+      "Sigue los primeros pasos hasta dejar tu asistente listo.",
+      "Revisa las conversaciones sin responder.",
+      "Confirma que tu asistente está activo.",
+    ],
   },
   conversations: {
     question: "¿Qué son las Conversaciones?",

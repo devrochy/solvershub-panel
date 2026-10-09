@@ -87,6 +87,8 @@ function NavRow({
     <Link
       href={item.href}
       onClick={onNavigate}
+      // Objetivo del recorrido guiado (HU-SH-06): el tour resalta el enlace por su ruta.
+      data-tour={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
         base,

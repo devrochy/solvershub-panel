@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { SESSION_COOKIE, TENANT_COOKIE, apiFetch } from "@/lib/api/server";
+import { guardarNegocioActivo } from "@/lib/api/negocio-activo";
+import { SESSION_COOKIE, apiFetch } from "@/lib/api/server";
 import type { Me } from "@/lib/api/types";
 
 /** BFF: fija el negocio activo, validándolo contra la API antes de guardarlo. */
@@ -20,13 +21,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No tienes acceso a ese negocio." }, { status: 403 });
   }
 
-  const store = await cookies();
-  store.set(TENANT_COOKIE, body.tenantId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  await guardarNegocioActivo(body.tenantId);
   return NextResponse.json({ ok: true });
 }
