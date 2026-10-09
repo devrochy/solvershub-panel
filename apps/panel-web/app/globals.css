@@ -53,6 +53,12 @@
   color-scheme: light;
 }
 
+/* El logo cambia de tinta con el tema: blanco en oscuro, navy en claro (components/ui/marca.tsx). */
+[data-theme="sh-light"] .marca-tema-oscuro,
+[data-theme="sh-dark"] .marca-tema-claro {
+  display: none;
+}
+
 html,
 body {
   height: 100%;
