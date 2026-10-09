@@ -9,6 +9,9 @@ export const EVENTO: Record<string, string> = {
   "subscription.charge_reminder": "Recordatorio de pago de suscripción",
   "subscription.paused": "Suscripción pausada por mora",
   "subscription.trial_ending": "Fin de la prueba gratis",
+  "appointment.confirmed": "Cita agendada desde el panel",
+  "appointment.reminder": "Recordatorio de cita",
+  "appointment.no_show": "Cita perdida: oferta de reagendar",
 };
 
 export function eventoLabel(evento: string): string {

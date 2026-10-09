@@ -38,6 +38,7 @@ describe("plantillas por evento (HU-ARCH-13)", () => {
     expect(eventoLabel("subscription.charge_reminder")).toBe("Recordatorio de pago de suscripción");
     expect(eventoLabel("subscription.paused")).toBe("Suscripción pausada por mora");
     expect(eventoLabel("subscription.trial_ending")).toBe("Fin de la prueba gratis");
+    expect(eventoLabel("appointment.reminder")).toBe("Recordatorio de cita");
     expect(eventoLabel("otro.evento")).toBe("otro.evento");
     expect(claveDePlantilla("aviso", "es")).toBe("aviso|es");
   });

@@ -1,6 +1,8 @@
 import {
   DeleteTypeButton,
+  EditTypeDialog,
   NewTypeForm,
+  type Responsable,
 } from "@/app/(app)/calendario/tipos/_components/type-actions";
 import { BinaryBadge } from "@/components/domain/status-badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -15,10 +17,19 @@ type Type = {
   duration_minutes: number;
   description: string;
   active: boolean;
+  responsable_admin_id?: string | null;
+  enlace_reunion?: string | null;
 };
 
 export default async function CalendarTypesPage() {
-  const res = await apiFetch<Type[]>("/pack/calendar/types");
+  const [res, colaboradoresRes] = await Promise.all([
+    apiFetch<Type[]>("/pack/calendar/types"),
+    apiFetch<{ id: string; email: string; active: boolean }[]>("/admin/collaborators"),
+  ]);
+  const responsables: Responsable[] = colaboradoresRes.ok
+    ? colaboradoresRes.data.filter((c) => c.active).map((c) => ({ id: c.id, email: c.email }))
+    : [];
+  const emailDe = (id?: string | null) => responsables.find((r) => r.id === id)?.email;
   if (!res.ok) {
     return (
       <p role="alert" className="text-danger">
@@ -41,6 +52,16 @@ export default async function CalendarTypesPage() {
       cell: (t) => <span className="text-body">{t.description || "—"}</span>,
     },
     {
+      key: "responsable",
+      header: "Responsable",
+      cell: (t) => <span className="text-body">{emailDe(t.responsable_admin_id) ?? "Dueños"}</span>,
+    },
+    {
+      key: "enlace",
+      header: "Enlace",
+      cell: (t) => <span className="text-body">{t.enlace_reunion ? "Propio" : "General"}</span>,
+    },
+    {
       key: "estado",
       header: "Estado",
       cell: (t) => <BinaryBadge active={t.active} activeLabel="Activo" inactiveLabel="Inactivo" />,
@@ -49,7 +70,12 @@ export default async function CalendarTypesPage() {
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (t) => <DeleteTypeButton typeId={t.id} label={t.name} />,
+      cell: (t) => (
+        <div className="flex justify-end gap-1">
+          <EditTypeDialog tipo={t} responsables={responsables} />
+          <DeleteTypeButton typeId={t.id} label={t.name} />
+        </div>
+      ),
     },
   ];
 
@@ -57,9 +83,9 @@ export default async function CalendarTypesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Tipos de cita"
-        description="Servicios que el agente puede agendar, con su duración."
+        description="Servicios que el agente puede agendar, con su duración, responsable y enlace de la reunión."
       />
-      <NewTypeForm />
+      <NewTypeForm responsables={responsables} />
       <DataTable
         columns={columns}
         rows={res.data}
