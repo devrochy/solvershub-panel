@@ -754,6 +754,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/webhook/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Connection Webhook Route
+         * @description Registra la suscripción de la app de ESA conexión (HU-CONN-05): BYOK en su propia
+         *     app (dueño o master); la app de la plataforma (Embedded Signup), solo el master.
+         */
+        post: operations["register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/webhooks/register": {
         parameters: {
             query?: never;
@@ -763,7 +784,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register Webhook */
+        /**
+         * Register Webhook
+         * @deprecated
+         * @description Obsoleta: usa `POST /connections/{connection_id}/webhook/register`.
+         */
         post: operations["register_webhook_api_v1_admin_meta_webhooks_register_post"];
         delete?: never;
         options?: never;
@@ -6614,10 +6639,19 @@ export interface components {
             /** Pin */
             pin?: string | null;
         };
-        /** RegisterRequest */
+        /**
+         * RegisterRequest
+         * @description Ruta vieja: mejor `POST /connections/{id}/webhook/register`. Con `connection_id`
+         *     registra esa conexión; con solo `channel`, la única conexión viva del canal.
+         */
         RegisterRequest: {
-            /** Channel */
+            /**
+             * Channel
+             * @default
+             */
             channel: string;
+            /** Connection Id */
+            connection_id?: string | null;
         };
         /** ReportRow */
         ReportRow: {
@@ -6846,8 +6880,23 @@ export interface components {
             /** Checkout Url */
             checkout_url: string;
         };
-        /** SubscriptionItem */
+        /**
+         * SubscriptionItem
+         * @description Suscripción de la APP que usa una conexión (HU-CONN-05). Con la app de la
+         *     plataforma y sin ser master, `callback_url` y `last_error` vienen vacíos.
+         */
         SubscriptionItem: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Origin */
+            origin: string;
+            /** Uses Platform App */
+            uses_platform_app: boolean;
+            /** Can Register */
+            can_register: boolean;
             /** Channel */
             channel: string;
             /** Object */
@@ -8962,6 +9011,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WebhooksResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_connection_webhook_route_api_v1_admin_meta_connections__connection_id__webhook_register_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

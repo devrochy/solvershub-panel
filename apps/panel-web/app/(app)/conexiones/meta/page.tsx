@@ -18,14 +18,12 @@ export const metadata = { title: "Salud de Meta" };
 
 type HealthConnection = components["schemas"]["HealthConnection"];
 
-type Subscription = {
-  channel: string;
-  object: string;
-  meta_app_id: string;
-  callback_url: string | null;
-  active: boolean | null;
-  fields: string[];
-  last_error: string | null;
+type Subscription = components["schemas"]["SubscriptionItem"];
+
+const ORIGENES: Record<string, string> = {
+  byok: "App propia",
+  embedded_signup: "Conectada con Facebook",
+  manual: "Carga manual",
 };
 
 export default async function MetaHealthPage() {
@@ -49,6 +47,15 @@ export default async function MetaHealthPage() {
       key: "canal",
       header: "Canal",
       cell: (s) => <Badge variant="neutral">{s.channel}</Badge>,
+    },
+    {
+      key: "app",
+      header: "App de Meta",
+      cell: (s) => (
+        <span className="text-body">
+          {s.uses_platform_app ? "De la plataforma" : (ORIGENES[s.origin] ?? s.origin)}
+        </span>
+      ),
     },
     { key: "objeto", header: "Objeto", cell: (s) => <span className="text-body">{s.object}</span> },
     {
@@ -81,7 +88,13 @@ export default async function MetaHealthPage() {
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (s) => <WebhookRegister channel={s.channel} />,
+      cell: (s) => (
+        <WebhookRegister
+          connectionId={s.connection_id}
+          canRegister={s.can_register}
+          usesPlatformApp={s.uses_platform_app}
+        />
+      ),
     },
   ];
 
@@ -181,7 +194,7 @@ export default async function MetaHealthPage() {
         <DataTable
           columns={columns}
           rows={subscriptions}
-          getRowKey={(s) => `${s.channel}-${s.object}`}
+          getRowKey={(s) => s.connection_id}
           emptyTitle="Sin suscripciones"
           emptyDescription="Aparecerán aquí cuando haya canales de Meta conectados."
         />
