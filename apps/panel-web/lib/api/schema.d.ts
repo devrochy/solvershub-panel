@@ -1028,6 +1028,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Promotion State
+         * @description Pasos de "Pasar a producción" de una conexión BYOK de prueba.
+         */
+        get: operations["promotion_state_api_v1_admin_meta_connections__connection_id__promotion_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Number
+         * @description Paso 1: crea (o actualiza) la conexión de producción de la misma app con el número real
+         *     y su WABA, con el alta BYOK. Si el número no está registrado en la Cloud API, esa conexión
+         *     queda `pending` hasta registrarlo con su PIN. La de prueba no cambia.
+         */
+        post: operations["promotion_number_api_v1_admin_meta_connections__connection_id__promotion_number_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Verify
+         * @description Chequeos de producción con la app del negocio (nunca la de la plataforma), sin cambiar
+         *     nada.
+         */
+        post: operations["promotion_verify_api_v1_admin_meta_connections__connection_id__promotion_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Finish
+         * @description Paso 4: si los chequeos de la conexión de producción con la app del negocio pasan, se da
+         *     de baja la de prueba (sus conversaciones quedan en pausa: nunca se responden desde el
+         *     número real). Si alguno falla, no cambia nada y vuelven los chequeos. `state` es el de la
+         *     conexión de producción.
+         */
+        post: operations["promotion_finish_api_v1_admin_meta_connections__connection_id__promotion_finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/byok/token/inspect": {
         parameters: {
             query?: never;
@@ -1212,7 +1298,9 @@ export interface paths {
         };
         /**
          * Wizard State
-         * @description Qué puede ofrecer el wizard en este entorno (app de Meta configurada o no).
+         * @description Qué puede ofrecer el wizard en este entorno (app de Meta configurada o no). El App ID y
+         *     el `config_id` son públicos (los usa el SDK de Facebook en el navegador); el App Secret
+         *     nunca sale del servidor.
          */
         get: operations["wizard_state_api_v1_admin_meta_wizard_get"];
         put?: never;
@@ -1230,11 +1318,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Wizard Session State
+         * @description En qué paso quedó el alta con Facebook de este negocio (sin tocar nada): la viva, o la
+         *     última terminada. `null` si nunca empezó una.
+         */
+        get: operations["wizard_session_state_api_v1_admin_meta_wizard_session_get"];
         put?: never;
         /**
          * Wizard Session
-         * @description Arranca (o reanuda) la sesión del wizard para el negocio.
+         * @description Arranca o reanuda el alta con Facebook. Un alta vencida (más de 24 h) se cierra y se
+         *     empieza otra reutilizando el borrador. Si el alta ya pasó el popup, sigue con los pasos
+         *     automáticos; si lo espera, devuelve un `attempt` nuevo para el canje.
          */
         post: operations["wizard_session_api_v1_admin_meta_wizard_session_post"];
         delete?: never;
@@ -1254,10 +1349,12 @@ export interface paths {
         put?: never;
         /**
          * Wizard Exchange
-         * @description Canjea el código del Embedded Signup (el popup ya pudo dar waba/phone).
+         * @description Canjea el código del Embedded Signup y encadena el alta: suscribir la WABA, registrar el
+         *     número con el PIN, sincronizar plantillas y verificar salud (HU-SH-05).
          *
-         *     La WABA y el número del popup se guardan recién después del canje, verificados con
-         *     el token nuevo y sin dueño en otro negocio (ADR-0095).
+         *     La WABA y el número del popup se guardan recién después del canje, verificados con el
+         *     token nuevo y sin dueño en otro negocio (ADR-0095). Si el canje falla, 400 (hay que repetir
+         *     el popup); si falla un paso posterior, 200 con el paso y el error para retomarlo.
          */
         post: operations["wizard_exchange_api_v1_admin_meta_wizard_exchange_post"];
         delete?: never;
@@ -1277,7 +1374,7 @@ export interface paths {
         put?: never;
         /**
          * Wizard Number
-         * @description Paso «registrar el número» del wizard.
+         * @description Paso «registrar el número» con el PIN del negocio, y lo que sigue.
          */
         post: operations["wizard_number_api_v1_admin_meta_wizard_number_post"];
         delete?: never;
@@ -1297,7 +1394,8 @@ export interface paths {
         put?: never;
         /**
          * Wizard Pin
-         * @description Paso «fijar PIN nuevo» (verificación en dos pasos).
+         * @description Fija un PIN nuevo de verificación en dos pasos (el número tenía otro que nadie recuerda),
+         *     registra el número con él y sigue con el alta.
          */
         post: operations["wizard_pin_api_v1_admin_meta_wizard_pin_post"];
         delete?: never;
@@ -1317,7 +1415,10 @@ export interface paths {
         put?: never;
         /**
          * Wizard Byok
-         * @description Alta con app propia (BYOK): guarda credenciales, suscribe la WABA y deja la conexión.
+         * @description Alta con app propia (BYOK), de prueba o de producción: guarda credenciales, suscribe la
+         *     WABA y deja la conexión. Si el número no está registrado en la Cloud API, lo registra con
+         *     el PIN enviado; sin PIN (o si Meta lo rechaza), la conexión queda `pending` hasta que se
+         *     registre (HU-CONN-06).
          */
         post: operations["wizard_byok_api_v1_admin_meta_wizard_byok_post"];
         delete?: never;
@@ -3730,6 +3831,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/meta-app/embedded-signup/step": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Embedded Signup Step
+         * @description Marca o desmarca un requisito manual (con nota), guardando quién y cuándo.
+         */
+        post: operations["embedded_signup_step_api_v1_admin_platform_meta_app_embedded_signup_step_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/wizard/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Wizard Cancel
+         * @description Registra que el popup se cerró o falló. El alta sigue viva en el mismo paso: el panel
+         *     ofrece reintentar (un `POST /wizard/session` da un intento nuevo).
+         */
+        post: operations["wizard_cancel_api_v1_admin_meta_wizard_cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/meta-app/embedded-signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Embedded Signup Requirements */
+        get: operations["embedded_signup_requirements_api_v1_admin_platform_meta_app_embedded_signup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/test-message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Test Message Options */
+        get: operations["test_message_options_api_v1_admin_meta_connections__connection_id__test_message_get"];
+        put?: never;
+        /**
+         * Send Test Message
+         * @description Envía una plantilla aprobada sin variables al número indicado (uno cada 30 s, 10 al día).
+         *     En producción, solo el propietario del negocio o el master.
+         */
+        post: operations["send_test_message_api_v1_admin_meta_connections__connection_id__test_message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/wizard/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Wizard Resume
+         * @description Reintenta el alta desde el paso donde quedó (después del popup).
+         */
+        post: operations["wizard_resume_api_v1_admin_meta_wizard_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5151,6 +5352,11 @@ export interface components {
             channel: string;
             /** Environment */
             environment: string;
+            /**
+             * Origin
+             * @default
+             */
+            origin: string;
             /** Status */
             status: string;
             /** Status Reason */
@@ -6806,6 +7012,35 @@ export interface components {
             /** Estado */
             estado: string;
         };
+        /** PromotionCheck */
+        PromotionCheck: {
+            /** Key */
+            key: string;
+            /** Ok */
+            ok: boolean | null;
+            /** Detail */
+            detail: string;
+            /** Checked At */
+            checked_at?: string | null;
+        };
+        /** PromotionChecks */
+        PromotionChecks: {
+            /** Checks */
+            checks: components["schemas"]["PromotionCheck"][];
+        };
+        /**
+         * PromotionNumberIn
+         * @description Número de producción. `access_token`: el token permanente (System User) con acceso a
+         *     esa WABA; sin él se usa el guardado. `SecretStr`: no sale en el repr.
+         */
+        PromotionNumberIn: {
+            /** Waba Id */
+            waba_id: string;
+            /** Phone Number Id */
+            phone_number_id: string;
+            /** Access Token */
+            access_token?: string | null;
+        };
         /** PromotionOut */
         PromotionOut: {
             /**
@@ -6841,6 +7076,14 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** PromotionResult */
+        PromotionResult: {
+            /** Promoted */
+            promoted: boolean;
+            /** Checks */
+            checks: components["schemas"]["PromotionCheck"][];
+            state: components["schemas"]["PromotionState"];
+        };
         /** PromotionSave */
         PromotionSave: {
             /** Promotion Id */
@@ -6873,6 +7116,54 @@ export interface components {
             eligible_segments?: string[] | null;
             /** Active */
             active?: boolean | null;
+        };
+        /**
+         * PromotionState
+         * @description Dónde va la promoción (con lo guardado, sin llamar a Meta). Los pasos 1 a 3 miran la
+         *     conexión de producción de la misma app (`production_connection_id`), que crea el paso 1;
+         *     la de prueba sigue igual hasta terminar. `blocked_reason`: por qué no se puede pasar a
+         *     producción (no es BYOK, usa la app de la plataforma, está desactivada).
+         */
+        PromotionState: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Environment */
+            environment: string;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Meta App Id */
+            meta_app_id: string;
+            /** Production Connection Id */
+            production_connection_id: string | null;
+            /** Production Status */
+            production_status: string | null;
+            /** Production Status Reason */
+            production_status_reason: string | null;
+            /** Phone Number Id */
+            phone_number_id: string | null;
+            /** Blocked Reason */
+            blocked_reason: string | null;
+            /** Steps */
+            steps: components["schemas"]["PromotionStep"][];
+        };
+        /** PromotionStep */
+        PromotionStep: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Done */
+            done: boolean;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
         };
         /** ProveedorSuscripcion */
         ProveedorSuscripcion: {
@@ -7808,16 +8099,62 @@ export interface components {
              * @default
              */
             verify_token: string;
+            /**
+             * Environment
+             * @default sandbox
+             * @enum {string}
+             */
+            environment: "sandbox" | "production";
+            /** Pin */
+            pin?: string | null;
         };
-        /** WizardExchangeIn */
+        /**
+         * WizardByokOut
+         * @description Resultado del alta BYOK. `needsRegistration`: la conexión quedó `pending` esperando
+         *     que el número se registre en la Cloud API con su PIN (`registrationError` dice por qué
+         *     no se pudo con el PIN enviado, si vino uno).
+         */
+        WizardByokOut: {
+            /** Connectionid */
+            connectionId: string;
+            /** Environment */
+            environment: string;
+            /** Status */
+            status: string;
+            /** Phonenumberid */
+            phoneNumberId: string;
+            /**
+             * Needsregistration
+             * @default false
+             */
+            needsRegistration: boolean;
+            /** Registrationerror */
+            registrationError?: string | null;
+        };
+        /**
+         * WizardExchangeIn
+         * @description Lo que el panel recibe del popup: `code` (de `FB.login`, TTL de 30 s, se canjea solo en
+         *     el servidor) y, del evento `WA_EMBEDDED_SIGNUP`, la WABA, el número y el portafolio.
+         *     `attempt`: el de `POST /wizard/session`. `pin`: el PIN de 6 dígitos con el que se registra
+         *     el número (el que ya tenga en verificación en dos pasos, o uno nuevo). `SecretStr`: no salen
+         *     en el repr del modelo.
+         */
         WizardExchangeIn: {
             /**
              * Wizard Id
              * Format: uuid
              */
             wizard_id: string;
-            /** Code */
+            /**
+             * Code
+             * Format: password
+             */
             code: string;
+            /**
+             * Attempt
+             * Format: password
+             */
+            attempt: string;
             /**
              * Event Type
              * @default FINISH
@@ -7838,16 +8175,29 @@ export interface components {
              * @default
              */
             business_id: string;
+            /** Pin */
+            pin?: string | null;
         };
         /** WizardSessionIn */
         WizardSessionIn: {
             /**
              * Environment
              * @default production
+             * @enum {string}
              */
-            environment: string;
+            environment: "sandbox" | "production";
+            /**
+             * Restart
+             * @default false
+             */
+            restart: boolean;
         };
-        /** WizardSessionOut */
+        /**
+         * WizardSessionOut
+         * @description Estado del alta con Facebook (Embedded Signup). `attempt`: solo al abrir o reanudar una
+         *     sesión que todavía espera el popup; el panel lo devuelve con el `code` (un solo uso).
+         *     `needs_pin`: el paso que falta es registrar el número con su PIN.
+         */
         WizardSessionOut: {
             /**
              * Wizard Id
@@ -7858,8 +8208,48 @@ export interface components {
             step: string;
             /** Connection Id */
             connection_id?: string | null;
+            /**
+             * Environment
+             * @default production
+             */
+            environment: string;
+            /**
+             * Completed Steps
+             * @default []
+             */
+            completed_steps: string[];
+            /**
+             * Done
+             * @default false
+             */
+            done: boolean;
+            /**
+             * Expired
+             * @default false
+             */
+            expired: boolean;
+            /** Expires At */
+            expires_at?: string | null;
+            /**
+             * Needs Pin
+             * @default false
+             */
+            needs_pin: boolean;
+            last_error?: components["schemas"]["WizardErrorOut"] | null;
+            cancelled?: components["schemas"]["WizardCancel"] | null;
+            /** Attempt */
+            attempt?: string | null;
+            /** Connection Status */
+            connection_status?: string | null;
+            /** Connection Status Reason */
+            connection_status_reason?: string | null;
         };
-        /** WizardState */
+        /**
+         * WizardState
+         * @description Qué puede ofrecer el wizard en este entorno. `missing_settings`: las variables de
+         *     entorno de la app de la plataforma que faltan para Embedded Signup (vacío si está lista).
+         *     `graph_api_version`: la versión con la que el panel inicializa el SDK de Facebook.
+         */
         WizardState: {
             /** Meta Configured */
             meta_configured: boolean;
@@ -7869,6 +8259,16 @@ export interface components {
             config_id: string;
             /** Environments */
             environments: string[];
+            /**
+             * Graph Api Version
+             * @default
+             */
+            graph_api_version: string;
+            /**
+             * Missing Settings
+             * @default []
+             */
+            missing_settings: string[];
         };
         /** WizardStepIn */
         WizardStepIn: {
@@ -7877,6 +8277,8 @@ export interface components {
              * Format: uuid
              */
             wizard_id: string;
+            /** Pin */
+            pin?: string | null;
         };
         /** Kpi */
         core__api__routers__dashboard__Kpi: {
@@ -8041,6 +8443,152 @@ export interface components {
             documentos_faltantes: string[];
             /** En Revision */
             en_revision: number;
+        };
+        /** TestMessageOut */
+        TestMessageOut: {
+            /** Message Id */
+            message_id: string;
+            template: components["schemas"]["TestTemplate"];
+        };
+        /** WizardCancel */
+        WizardCancel: {
+            /** Current Step */
+            current_step?: string | null;
+            /**
+             * With Error
+             * @default false
+             */
+            with_error: boolean;
+            /** At */
+            at?: string | null;
+        };
+        /**
+         * WizardErrorOut
+         * @description Último error del wizard, sin nada sensible: código, mensaje y paso. `fbtrace_id` es el
+         *     identificador de Meta para soporte.
+         */
+        WizardErrorOut: {
+            /** Code */
+            code?: string | null;
+            /** Message */
+            message?: string | null;
+            /** At Step */
+            at_step?: string | null;
+            /** Fbtrace Id */
+            fbtrace_id?: string | null;
+        };
+        /** EsManualStep */
+        EsManualStep: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Help */
+            help: string;
+            /** Link */
+            link: string;
+            /** Done */
+            done: boolean;
+            /** Notes */
+            notes: string | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * EmbeddedSignupRequirements
+         * @description `ready`: todo lo automático en verde y todo lo manual confirmado.
+         */
+        EmbeddedSignupRequirements: {
+            /** App Id */
+            app_id: string;
+            /** Config Id */
+            config_id: string;
+            /** Graph Api Version */
+            graph_api_version: string;
+            /** Ready */
+            ready: boolean;
+            /** Automatic */
+            automatic: components["schemas"]["EsAutomaticCheck"][];
+            /** Manual */
+            manual: components["schemas"]["EsManualStep"][];
+        };
+        /**
+         * WizardCancelIn
+         * @description Evento `CANCEL` del popup (o el popup cerrado sin `code`). Los textos vienen de Meta a
+         *     través del navegador: se guardan recortados, como dato.
+         */
+        WizardCancelIn: {
+            /**
+             * Wizard Id
+             * Format: uuid
+             */
+            wizard_id: string;
+            /** Current Step */
+            current_step?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Error Code */
+            error_code?: string | null;
+            /** Error Id */
+            error_id?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+        };
+        /** EsStepIn */
+        EsStepIn: {
+            /** Key */
+            key: string;
+            /** Done */
+            done: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** EsAutomaticCheck */
+        EsAutomaticCheck: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Ok */
+            ok: boolean | null;
+            /** Detail */
+            detail: string;
+        };
+        /** TestMessageOptions */
+        TestMessageOptions: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Status */
+            status: string;
+            /** Phone Number Id */
+            phone_number_id: string | null;
+            /** Display Phone Number */
+            display_phone_number: string | null;
+            /** Templates */
+            templates: components["schemas"]["TestTemplate"][];
+            /** Can Send */
+            can_send: boolean;
+            /** Blocked Reason */
+            blocked_reason: string | null;
+        };
+        /** TestMessageIn */
+        TestMessageIn: {
+            /** To */
+            to: string;
+            /** Template Name */
+            template_name?: string | null;
+            /** Language */
+            language?: string | null;
+        };
+        /** TestTemplate */
+        TestTemplate: {
+            /** Name */
+            name: string;
+            /** Language */
+            language: string;
         };
     };
     responses: never;
@@ -9965,6 +10513,142 @@ export interface operations {
             };
         };
     };
+    promotion_state_api_v1_admin_meta_connections__connection_id__promotion_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_number_api_v1_admin_meta_connections__connection_id__promotion_number_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionNumberIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_verify_api_v1_admin_meta_connections__connection_id__promotion_verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionChecks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_finish_api_v1_admin_meta_connections__connection_id__promotion_finish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     inspect_byok_token_api_v1_admin_meta_byok_token_inspect_post: {
         parameters: {
             query?: never;
@@ -10258,6 +10942,39 @@ export interface operations {
             };
         };
     };
+    wizard_session_state_api_v1_admin_meta_wizard_session_get: {
+        parameters: {
+            query?: {
+                environment?: "sandbox" | "production";
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WizardSessionOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     wizard_session_api_v1_admin_meta_wizard_session_post: {
         parameters: {
             query?: never;
@@ -10314,9 +11031,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["WizardSessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -10421,9 +11136,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["WizardByokOut"];
                 };
             };
             /** @description Validation Error */
@@ -15539,6 +16252,210 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    embedded_signup_step_api_v1_admin_platform_meta_app_embedded_signup_step_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EsStepIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wizard_cancel_api_v1_admin_meta_wizard_cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WizardCancelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WizardSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    embedded_signup_requirements_api_v1_admin_platform_meta_app_embedded_signup_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbeddedSignupRequirements"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_message_options_api_v1_admin_meta_connections__connection_id__test_message_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestMessageOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_test_message_api_v1_admin_meta_connections__connection_id__test_message_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestMessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestMessageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wizard_resume_api_v1_admin_meta_wizard_resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WizardStepIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WizardSessionOut"];
                 };
             };
             /** @description Validation Error */

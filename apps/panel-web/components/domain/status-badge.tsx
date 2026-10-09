@@ -43,6 +43,16 @@ export const PAYMENT_STATUS: StatusMap = {
   duplicado: { label: "Pago doble", variant: "danger" },
 };
 
+/** Estado de una conexión de Meta (`meta_connections.status`, SPEC-08). */
+export const META_CONNECTION_STATUS: StatusMap = {
+  draft: { label: "Borrador", variant: "neutral" },
+  pending: { label: "Pendiente", variant: "warning" },
+  connected: { label: "Conectada", variant: "success" },
+  degraded: { label: "Degradada", variant: "warning" },
+  revoked: { label: "Pausada", variant: "neutral" },
+  error: { label: "Error", variant: "danger" },
+};
+
 export function StatusBadge({
   value,
   map,
