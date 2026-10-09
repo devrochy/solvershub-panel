@@ -78,6 +78,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/accept-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Accept Invitation
+         * @description Canjea el enlace de un solo uso de una invitación (ADR-0121): define la contraseña de
+         *     una cuenta que el alta automática creó sin ella y la deja como miembro del negocio.
+         *     Luego se entra con `/auth/login`. Un enlace inválido, usado o vencido da 400 sin decir
+         *     cuál de los tres; una cuenta que ya existe (con contraseña, acceso a otro negocio u otra
+         *     invitación pendiente) da 409: entra y acepta en la app. Con el mismo bloqueo progresivo
+         *     del login (5 fallos en 10 min → 15 min), por IP y por invitación.
+         */
+        post: operations["post_accept_invitation_api_v1_auth_accept_invitation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/me": {
         parameters: {
             query?: never;
@@ -1550,7 +1575,10 @@ export interface paths {
         put?: never;
         /**
          * Subscribe To Plan
-         * @description Inicia la suscripción a un plan pago: devuelve la URL del checkout.
+         * @description Link de pago del período que toca pagar (plan actual) o de un plan nuevo.
+         *
+         *     409 `ya_pagado`: ese período ya está pagado (por el panel o por el asistente).
+         *     409 `cambio_en_el_asistente`: el negocio lo creó el asistente; su plan se cambia ahí.
          */
         post: operations["subscribe_to_plan_api_v1_admin_plan_subscribe_post"];
         delete?: never;
@@ -3148,6 +3176,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/calendar/types/{type_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Type
+         * @description Edita un tipo de cita (HU-SH-02: responsable y enlace de la reunión).
+         */
+        put: operations["update_type_api_v1_pack_calendar_types__type_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/calendar/types/{type_id}/delete": {
         parameters: {
             query?: never;
@@ -3391,10 +3439,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/calendar/appointments/{appointment_id}/asistencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marcar Asistencia
+         * @description Marca una cita pasada `asistio` o `no_asistio`. Al `no_asistio`, el asistente le
+         *     ofrece reagendar al cliente (plantilla si la ventana está cerrada).
+         */
+        post: operations["marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptInvitationRequest */
+        AcceptInvitationRequest: {
+            /**
+             * Token
+             * @description Token del enlace de la invitación: lo que va después de `#` en `/invitacion#…`.
+             */
+            token: string;
+            /**
+             * New Password
+             * @description Contraseña nueva de la cuenta (8+).
+             */
+            new_password: string;
+        };
         /** AccessAttempt */
         AccessAttempt: {
             /** Fecha */
@@ -3504,6 +3586,8 @@ export interface components {
             notes: string;
             /** Appointment Type Id */
             appointment_type_id?: string | null;
+            /** Customer Id */
+            customer_id?: string | null;
         };
         /** AppointmentOut */
         AppointmentOut: {
@@ -3539,6 +3623,10 @@ export interface components {
             /** Timezone */
             timezone: string;
             notification?: components["schemas"]["NotificationOut"] | null;
+            /** Customer Id */
+            customer_id?: string | null;
+            /** Asignado Admin Id */
+            asignado_admin_id?: string | null;
         };
         /** AppointmentPatch */
         AppointmentPatch: {
@@ -3583,6 +3671,11 @@ export interface components {
              * @description Placeholders del cuerpo, en orden.
              */
             variables: string[];
+        };
+        /** AsistenciaIn */
+        AsistenciaIn: {
+            /** Asistio */
+            asistio: boolean;
         };
         /** AttemptRow */
         AttemptRow: {
@@ -4038,6 +4131,34 @@ export interface components {
             tope_maximo_deuda: number;
             /** Color Riesgo */
             color_riesgo: string;
+        };
+        /**
+         * Cobro
+         * @description El período que toca pagar del plan actual (HU-SH-04, ADR-0123).
+         */
+        Cobro: {
+            /** Referencia */
+            referencia: string;
+            /**
+             * Inicio
+             * Format: date-time
+             */
+            inicio: string;
+            /**
+             * Fin
+             * Format: date-time
+             */
+            fin: string;
+            /** Plan Id */
+            plan_id: string;
+            /** Monto Cop */
+            monto_cop: number;
+            /** Estado */
+            estado: string;
+            /** Pagado Por */
+            pagado_por?: string | null;
+            /** Disponible Desde */
+            disponible_desde?: string | null;
         };
         /** CollaboratorCreate */
         CollaboratorCreate: {
@@ -5885,6 +6006,12 @@ export interface components {
             payments: components["schemas"]["core__api__routers__plan__Payment"][];
             /** Plans */
             plans: components["schemas"]["PlanInfo"][];
+            cobro?: components["schemas"]["Cobro"] | null;
+            /**
+             * Plan Por El Asistente
+             * @default false
+             */
+            plan_por_el_asistente: boolean;
         };
         /** PlatformTenant */
         PlatformTenant: {
@@ -6969,6 +7096,10 @@ export interface components {
             description: string;
             /** Active */
             active: boolean;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+            /** Enlace Reunion */
+            enlace_reunion?: string | null;
         };
         /** TypeSave */
         TypeSave: {
@@ -6984,6 +7115,13 @@ export interface components {
              * @default
              */
             description: string;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+            /**
+             * Enlace Reunion
+             * @default
+             */
+            enlace_reunion: string;
         };
         /**
          * UsageMetric
@@ -7279,6 +7417,8 @@ export interface components {
             paid_at: string | null;
             /** Checkout Url */
             checkout_url: string | null;
+            /** Periodo */
+            periodo?: string | null;
         };
         /** Kpi */
         pack_cobranza__admin_api__Kpi: {
@@ -7422,6 +7562,37 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_accept_invitation_api_v1_auth_accept_invitation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInvitationRequest"];
             };
         };
         responses: {
@@ -13796,6 +13967,41 @@ export interface operations {
             };
         };
     };
+    update_type_api_v1_pack_calendar_types__type_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TypeSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_type_api_v1_pack_calendar_types__type_id__delete_post: {
         parameters: {
             query?: never;
@@ -14264,6 +14470,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AsistenciaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentOut"];
                 };
             };
             /** @description Validation Error */
