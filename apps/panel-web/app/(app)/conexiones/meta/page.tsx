@@ -126,7 +126,9 @@ export default async function MetaHealthPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle>{c.channel}</CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant="neutral">{c.environment}</Badge>
+                      <Badge variant={c.environment === "production" ? "accent" : "neutral"}>
+                        {c.environment === "production" ? "Producción" : "Prueba"}
+                      </Badge>
                       <Badge
                         variant={
                           c.status === "connected"
@@ -177,6 +179,13 @@ export default async function MetaHealthPage() {
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/conexiones/meta/${c.id}/plantillas`}>Plantillas</Link>
                     </Button>
+                    {c.origin === "byok" && (
+                      <Button asChild variant={c.environment === "sandbox" ? "outline" : "ghost"} size="sm">
+                        <Link href={`/conexiones/meta/${c.id}/pasar-a-produccion`}>
+                          {c.environment === "sandbox" ? "Pasar a producción" : "Chequeos con tu app"}
+                        </Link>
+                      </Button>
+                    )}
                   </div>
 
                   <div id={anclaFacturacion(c.id)} className="scroll-mt-20">
