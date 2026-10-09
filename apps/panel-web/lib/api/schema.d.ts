@@ -1028,6 +1028,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Promotion State
+         * @description Pasos de "Pasar a producción" de una conexión BYOK de prueba.
+         */
+        get: operations["promotion_state_api_v1_admin_meta_connections__connection_id__promotion_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Number
+         * @description Paso 1: crea (o actualiza) la conexión de producción de la misma app con el número real
+         *     y su WABA, con el alta BYOK. Si el número no está registrado en la Cloud API, esa conexión
+         *     queda `pending` hasta registrarlo con su PIN. La de prueba no cambia.
+         */
+        post: operations["promotion_number_api_v1_admin_meta_connections__connection_id__promotion_number_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Verify
+         * @description Chequeos de producción con la app del negocio (nunca la de la plataforma), sin cambiar
+         *     nada.
+         */
+        post: operations["promotion_verify_api_v1_admin_meta_connections__connection_id__promotion_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/promotion/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promotion Finish
+         * @description Paso 4: si los chequeos de la conexión de producción con la app del negocio pasan, se da
+         *     de baja la de prueba (sus conversaciones quedan en pausa: nunca se responden desde el
+         *     número real). Si alguno falla, no cambia nada y vuelven los chequeos. `state` es el de la
+         *     conexión de producción.
+         */
+        post: operations["promotion_finish_api_v1_admin_meta_connections__connection_id__promotion_finish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/byok/token/inspect": {
         parameters: {
             query?: never;
@@ -1264,7 +1350,10 @@ export interface paths {
         put?: never;
         /**
          * Wizard Byok
-         * @description Alta con app propia (BYOK): guarda credenciales, suscribe la WABA y deja la conexión.
+         * @description Alta con app propia (BYOK), de prueba o de producción: guarda credenciales, suscribe la
+         *     WABA y deja la conexión. Si el número no está registrado en la Cloud API, lo registra con
+         *     el PIN enviado; sin PIN (o si Meta lo rechaza), la conexión queda `pending` hasta que se
+         *     registre (HU-CONN-06).
          */
         post: operations["wizard_byok_api_v1_admin_meta_wizard_byok_post"];
         delete?: never;
@@ -4892,6 +4981,11 @@ export interface components {
             channel: string;
             /** Environment */
             environment: string;
+            /**
+             * Origin
+             * @default
+             */
+            origin: string;
             /** Status */
             status: string;
             /** Status Reason */
@@ -6513,6 +6607,35 @@ export interface components {
             /** Estado */
             estado: string;
         };
+        /** PromotionCheck */
+        PromotionCheck: {
+            /** Key */
+            key: string;
+            /** Ok */
+            ok: boolean | null;
+            /** Detail */
+            detail: string;
+            /** Checked At */
+            checked_at?: string | null;
+        };
+        /** PromotionChecks */
+        PromotionChecks: {
+            /** Checks */
+            checks: components["schemas"]["PromotionCheck"][];
+        };
+        /**
+         * PromotionNumberIn
+         * @description Número de producción. `access_token`: el token permanente (System User) con acceso a
+         *     esa WABA; sin él se usa el guardado. `SecretStr`: no sale en el repr.
+         */
+        PromotionNumberIn: {
+            /** Waba Id */
+            waba_id: string;
+            /** Phone Number Id */
+            phone_number_id: string;
+            /** Access Token */
+            access_token?: string | null;
+        };
         /** PromotionOut */
         PromotionOut: {
             /**
@@ -6548,6 +6671,14 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** PromotionResult */
+        PromotionResult: {
+            /** Promoted */
+            promoted: boolean;
+            /** Checks */
+            checks: components["schemas"]["PromotionCheck"][];
+            state: components["schemas"]["PromotionState"];
+        };
         /** PromotionSave */
         PromotionSave: {
             /** Promotion Id */
@@ -6580,6 +6711,54 @@ export interface components {
             eligible_segments?: string[] | null;
             /** Active */
             active?: boolean | null;
+        };
+        /**
+         * PromotionState
+         * @description Dónde va la promoción (con lo guardado, sin llamar a Meta). Los pasos 1 a 3 miran la
+         *     conexión de producción de la misma app (`production_connection_id`), que crea el paso 1;
+         *     la de prueba sigue igual hasta terminar. `blocked_reason`: por qué no se puede pasar a
+         *     producción (no es BYOK, usa la app de la plataforma, está desactivada).
+         */
+        PromotionState: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Environment */
+            environment: string;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Meta App Id */
+            meta_app_id: string;
+            /** Production Connection Id */
+            production_connection_id: string | null;
+            /** Production Status */
+            production_status: string | null;
+            /** Production Status Reason */
+            production_status_reason: string | null;
+            /** Phone Number Id */
+            phone_number_id: string | null;
+            /** Blocked Reason */
+            blocked_reason: string | null;
+            /** Steps */
+            steps: components["schemas"]["PromotionStep"][];
+        };
+        /** PromotionStep */
+        PromotionStep: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Done */
+            done: boolean;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
         };
         /** ProveedorSuscripcion */
         ProveedorSuscripcion: {
@@ -7497,6 +7676,37 @@ export interface components {
              * @default
              */
             verify_token: string;
+            /**
+             * Environment
+             * @default sandbox
+             * @enum {string}
+             */
+            environment: "sandbox" | "production";
+            /** Pin */
+            pin?: string | null;
+        };
+        /**
+         * WizardByokOut
+         * @description Resultado del alta BYOK. `needsRegistration`: la conexión quedó `pending` esperando
+         *     que el número se registre en la Cloud API con su PIN (`registrationError` dice por qué
+         *     no se pudo con el PIN enviado, si vino uno).
+         */
+        WizardByokOut: {
+            /** Connectionid */
+            connectionId: string;
+            /** Environment */
+            environment: string;
+            /** Status */
+            status: string;
+            /** Phonenumberid */
+            phoneNumberId: string;
+            /**
+             * Needsregistration
+             * @default false
+             */
+            needsRegistration: boolean;
+            /** Registrationerror */
+            registrationError?: string | null;
         };
         /** WizardExchangeIn */
         WizardExchangeIn: {
@@ -9553,6 +9763,142 @@ export interface operations {
             };
         };
     };
+    promotion_state_api_v1_admin_meta_connections__connection_id__promotion_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_number_api_v1_admin_meta_connections__connection_id__promotion_number_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionNumberIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_verify_api_v1_admin_meta_connections__connection_id__promotion_verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionChecks"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promotion_finish_api_v1_admin_meta_connections__connection_id__promotion_finish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     inspect_byok_token_api_v1_admin_meta_byok_token_inspect_post: {
         parameters: {
             query?: never;
@@ -9943,9 +10289,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["WizardByokOut"];
                 };
             };
             /** @description Validation Error */

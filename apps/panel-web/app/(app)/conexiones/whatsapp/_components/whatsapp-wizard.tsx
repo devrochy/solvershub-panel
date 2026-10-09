@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+
+import type { components } from "@/lib/api/schema";
 import { KeyRound, Phone, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { RegistroPinForm } from "@/components/domain/registro-pin-form";
 
 type Estado = { meta_configured: boolean; app_id: string; config_id: string; environments: string[] };
+
+type AltaByok = components["schemas"]["WizardByokOut"];
 
 async function enviar(action: string, payload: Record<string, unknown>) {
   const res = await fetch("/api/meta/wizard", {
@@ -21,13 +27,18 @@ async function enviar(action: string, payload: Record<string, unknown>) {
     body: JSON.stringify({ action, ...payload }),
   });
   const json = (await res.json().catch(() => ({}))) as { error?: string };
-  return res.ok ? { ok: true as const } : { ok: false as const, error: json.error ?? "No se pudo completar." };
+  return res.ok
+    ? { ok: true as const, data: json as unknown }
+    : { ok: false as const, error: json.error ?? "No se pudo completar." };
 }
 
 /** Wizard de WhatsApp: Embedded Signup (SDK de Meta), BYOK y carga manual. */
 export function WhatsappWizard({ estado }: { estado: Estado }) {
   const router = useRouter();
   const [status, setStatus] = useState<{ loading?: string; error?: string; success?: string }>({});
+  const [entorno, setEntorno] = useState<"sandbox" | "production">("sandbox");
+  // Alta BYOK que quedó esperando el registro del número con su PIN (HU-CONN-06).
+  const [porRegistrar, setPorRegistrar] = useState<AltaByok | null>(null);
 
   async function correr(action: string, payload: Record<string, unknown>, ok: string) {
     setStatus({ loading: action });
@@ -40,21 +51,35 @@ export function WhatsappWizard({ estado }: { estado: Estado }) {
     router.refresh();
   }
 
-  function onByok(event: FormEvent<HTMLFormElement>) {
+  async function onByok(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    void correr(
-      "byok",
-      {
-        app_id: String(data.get("app_id") ?? ""),
-        app_secret: String(data.get("app_secret") ?? ""),
-        phone_number_id: String(data.get("phone_number_id") ?? ""),
-        access_token: String(data.get("access_token") ?? ""),
-        waba_id: String(data.get("waba_id") ?? ""),
-        verify_token: String(data.get("verify_token") ?? ""),
-      },
-      "Conexión BYOK creada.",
-    );
+    setStatus({ loading: "byok" });
+    setPorRegistrar(null);
+    const res = await enviar("byok", {
+      app_id: String(data.get("app_id") ?? ""),
+      app_secret: String(data.get("app_secret") ?? ""),
+      phone_number_id: String(data.get("phone_number_id") ?? ""),
+      access_token: String(data.get("access_token") ?? ""),
+      waba_id: String(data.get("waba_id") ?? ""),
+      verify_token: String(data.get("verify_token") ?? ""),
+      environment: entorno,
+    });
+    if (!res.ok) {
+      setStatus({ error: res.error });
+      return;
+    }
+    const alta = res.data as AltaByok;
+    const destino = alta.environment === "production" ? "de producción" : "de prueba";
+    if (alta.needsRegistration) {
+      setPorRegistrar(alta);
+      setStatus({
+        success: `Conexión ${destino} creada. Falta registrar el número en la Cloud API con su PIN.`,
+      });
+    } else {
+      setStatus({ success: `Conexión ${destino} creada y conectada.` });
+    }
+    router.refresh();
   }
 
   function onManual(event: FormEvent<HTMLFormElement>) {
@@ -132,7 +157,26 @@ export function WhatsappWizard({ estado }: { estado: Estado }) {
           </div>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-col gap-4" onSubmit={onByok}>
+          <form className="flex flex-col gap-4" onSubmit={(e) => void onByok(e)}>
+            <Field
+              label="Entorno"
+              htmlFor="byok_environment"
+              help={
+                entorno === "production"
+                  ? "Tu número real. Tu app de Meta tiene que estar en modo Live y el token debe ser permanente (usuario del sistema). Si el número no está registrado, después te pedimos su PIN."
+                  : "El número de prueba que Meta crea en tu app (pestaña API Setup). Luego puedes pasarla a producción."
+              }
+            >
+              <Select
+                id="byok_environment"
+                name="environment"
+                value={entorno}
+                onChange={(e) => setEntorno(e.target.value === "production" ? "production" : "sandbox")}
+              >
+                <option value="sandbox">Prueba (número de prueba de Meta)</option>
+                <option value="production">Producción (mi número real)</option>
+              </Select>
+            </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="App ID" htmlFor="byok_app_id">
                 <Input id="byok_app_id" name="app_id" required />
@@ -152,7 +196,11 @@ export function WhatsappWizard({ estado }: { estado: Estado }) {
             <Field label="Access token" htmlFor="byok_token">
               <Textarea id="byok_token" name="access_token" required rows={2} />
             </Field>
-            <Field label="Verify token del webhook" htmlFor="byok_verify" help="Opcional.">
+            <Field
+              label="Verify token del webhook"
+              htmlFor="byok_verify"
+              help="Opcional: si lo dejas vacío, se genera uno propio de esta conexión."
+            >
               <Input id="byok_verify" name="verify_token" />
             </Field>
             <div>
@@ -161,6 +209,26 @@ export function WhatsappWizard({ estado }: { estado: Estado }) {
               </Button>
             </div>
           </form>
+
+          {porRegistrar && (
+            <div className="mt-6 rounded-lg border border-warning/40 bg-warning/10 p-4">
+              <p className="font-medium text-headline">Registra el número con su PIN</p>
+              <p className="mb-4 text-sm text-body">
+                Meta todavía no tiene el número {porRegistrar.phoneNumberId} registrado en la Cloud
+                API: hasta registrarlo no envía ni recibe mensajes.
+                {porRegistrar.registrationError ? ` ${porRegistrar.registrationError}` : ""}
+              </p>
+              <RegistroPinForm
+                connectionId={porRegistrar.connectionId}
+                phoneNumberId={porRegistrar.phoneNumberId}
+                requerido={porRegistrar.environment === "production"}
+                onRegistered={() => {
+                  setPorRegistrar(null);
+                  setStatus({ success: "Número registrado: la conexión quedó conectada." });
+                }}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
