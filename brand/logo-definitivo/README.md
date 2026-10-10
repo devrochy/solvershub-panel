@@ -100,7 +100,7 @@ En la landing (Next.js, carpeta `app/`) el reemplazo es directo:
 
 ## Cómo se construyó
 
-- El arte final es un JPG de 1033 × 1024 px. Se midió con precisión subpíxel y se reconstruyó
+- El arte final es un JPG de 1033 × 1024 px (`_src/arte-original.jpg`). Se midió con precisión subpíxel y se reconstruyó
   con geometría limpia: el contorno del cerebro son 8 lóbulos circulares simétricos con trazo
   de 12,5 u, el núcleo es un círculo de radio 66,6 u y la rosca son 3 líneas de remate redondo.
   El calco coincide con el original (IoU por elemento de 0,94 a 0,99).
