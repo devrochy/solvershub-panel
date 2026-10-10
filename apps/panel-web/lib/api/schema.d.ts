@@ -1082,7 +1082,7 @@ export interface paths {
         /**
          * Promotion Verify
          * @description Chequeos de producción con la app del negocio (nunca la de la plataforma), sin cambiar
-         *     nada.
+         *     nada: el checklist por conexión de HU-CONN-07 más `own_app` y `real_number`.
          */
         post: operations["promotion_verify_api_v1_admin_meta_connections__connection_id__promotion_verify_post"];
         delete?: never;
@@ -7012,21 +7012,14 @@ export interface components {
             /** Estado */
             estado: string;
         };
-        /** PromotionCheck */
-        PromotionCheck: {
-            /** Key */
-            key: string;
-            /** Ok */
-            ok: boolean | null;
-            /** Detail */
-            detail: string;
-            /** Checked At */
-            checked_at?: string | null;
-        };
-        /** PromotionChecks */
+        /**
+         * PromotionChecks
+         * @description Los ítems del checklist por conexión (HU-CONN-07) más los de la promoción, con el mismo
+         *     formato que "Producción" de la conexión.
+         */
         PromotionChecks: {
             /** Checks */
-            checks: components["schemas"]["PromotionCheck"][];
+            checks: components["schemas"]["ReadinessItem"][];
         };
         /**
          * PromotionNumberIn
@@ -7081,7 +7074,7 @@ export interface components {
             /** Promoted */
             promoted: boolean;
             /** Checks */
-            checks: components["schemas"]["PromotionCheck"][];
+            checks: components["schemas"]["ReadinessItem"][];
             state: components["schemas"]["PromotionState"];
         };
         /** PromotionSave */
@@ -8496,7 +8489,8 @@ export interface components {
         };
         /**
          * EmbeddedSignupRequirements
-         * @description `ready`: todo lo automático en verde y todo lo manual confirmado.
+         * @description `ready`: la revisión de la plataforma en verde (`platform_check.ok`) y todo lo manual
+         *     confirmado.
          */
         EmbeddedSignupRequirements: {
             /** App Id */
@@ -8507,8 +8501,7 @@ export interface components {
             graph_api_version: string;
             /** Ready */
             ready: boolean;
-            /** Automatic */
-            automatic: components["schemas"]["EsAutomaticCheck"][];
+            platform_check: components["schemas"]["EsPlatformCheck"];
             /** Manual */
             manual: components["schemas"]["EsManualStep"][];
         };
@@ -8543,16 +8536,24 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
-        /** EsAutomaticCheck */
-        EsAutomaticCheck: {
-            /** Key */
-            key: string;
-            /** Label */
-            label: string;
+        /**
+         * EsPlatformCheck
+         * @description Última revisión de "Plataforma → App de Meta" (HU-CONN-07). `ok`: terminó, sin ítems en
+         *     rojo y con las variables de la app, el webhook y la suscripción en verde. `pending`: las
+         *     etiquetas de los ítems que lo impiden.
+         */
+        EsPlatformCheck: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "never" | "queued" | "running" | "done" | "failed";
+            /** Finished At */
+            finished_at: string | null;
             /** Ok */
-            ok: boolean | null;
-            /** Detail */
-            detail: string;
+            ok: boolean;
+            /** Pending */
+            pending: string[];
         };
         /** TestMessageOptions */
         TestMessageOptions: {

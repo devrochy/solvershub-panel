@@ -3,8 +3,9 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Circle, CircleAlert, CircleHelp } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 
+import { ItemsChecklist } from "@/components/domain/checklist-produccion";
 import { RegistroPinForm } from "@/components/domain/registro-pin-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,11 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { components } from "@/lib/api/schema";
-import { bloquean, nombreCheckPromocion, pasoActual } from "@/lib/promocion";
+import { bloquean, pasoActual } from "@/lib/promocion";
 import { useAction } from "@/lib/use-action";
 
 type PromotionState = components["schemas"]["PromotionState"];
-type PromotionCheck = components["schemas"]["PromotionCheck"];
+type PromotionCheck = components["schemas"]["ReadinessItem"];
 
 async function promocion(connectionId: string, payload: Record<string, unknown>) {
   const res = await fetch(`/api/meta/connections/${connectionId}/promotion`, {
@@ -59,28 +60,6 @@ function Paso({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">{children}</CardContent>
     </Card>
-  );
-}
-
-function Chequeos({ checks }: { checks: PromotionCheck[] }) {
-  return (
-    <ul className="flex flex-col gap-1.5">
-      {checks.map((c) => (
-        <li key={c.key} className="flex items-start gap-2 text-xs">
-          {c.ok === true ? (
-            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-label="bien" />
-          ) : c.ok === false ? (
-            <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" aria-label="falla" />
-          ) : (
-            <CircleHelp className="mt-0.5 h-3.5 w-3.5 shrink-0 text-text-soft" aria-label="sin dato" />
-          )}
-          <span className="flex flex-col">
-            <span className="text-body">{nombreCheckPromocion(c.key)}</span>
-            <span className="text-text-soft">{c.detail}</span>
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -130,9 +109,13 @@ export function PasarAProduccion({ estado }: { estado: PromotionState }) {
       const lista = (res.data.checks ?? []) as PromotionCheck[];
       setChecks(lista);
       if (terminar && res.data.promoted !== true) {
+        const fallan = bloquean(lista);
         return {
           ok: false,
-          error: `Todavía no: ${bloquean(lista)} chequeo(s) con problemas. Revísalos abajo.`,
+          error:
+            fallan > 0
+              ? `Todavía no: ${fallan} chequeo(s) con problemas. Revísalos abajo.`
+              : "Todavía no: hay chequeos obligatorios sin dato. Vuelve a verificar en unos segundos.",
         };
       }
       if (terminar && prod) {
@@ -264,10 +247,11 @@ export function PasarAProduccion({ estado }: { estado: PromotionState }) {
       <Paso numero={4} titulo="Verificar y pasar a producción" hecho={promovida} activo={actual === "verify"}>
         <p className="text-sm text-body">
           Revisamos la conexión de producción con tu app de Meta (tu token, tu App Secret y tus
-          suscripciones), no con la de SolversHub. Si nada falla, la conexión de prueba se da de baja: sus
-          conversaciones de prueba no pasan a tu número real.
+          suscripciones), no con la de SolversHub: es el mismo checklist de «Producción» de la conexión,
+          más que la app sea tuya y que el número sea real. Si nada falla, la conexión de prueba se da de
+          baja: sus conversaciones de prueba no pasan a tu número real.
         </p>
-        {checks && <Chequeos checks={checks} />}
+        {checks && checks.length > 0 && <ItemsChecklist items={checks} connectionId={prod ?? id} />}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={pending || bloqueada || !prod} onClick={() => void verificar(false)}>
             Verificar

@@ -118,35 +118,44 @@ export function ChecklistProduccion({
       )}
       <FormFeedback error={error} />
 
-      {items.length > 0 && (
-        <Card>
-          <CardContent className="pt-5">
-            <ul className="flex flex-col divide-y divide-border-soft">
-              {items.map((item) => {
-                const estado = estadoItem(item.ok);
-                const arreglo =
-                  connectionId && item.ok !== true ? enlaceReparacion(item.repair_action, connectionId) : null;
-                return (
-                  <li key={item.key} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-                    <span className="flex flex-col gap-0.5">
-                      <span className="text-headline">{item.label}</span>
-                      {item.detail && <span className="text-xs text-text-soft">{item.detail}</span>}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2">
-                      {arreglo && (
-                        <Link className="text-xs text-accent underline" href={arreglo.href}>
-                          {arreglo.label}
-                        </Link>
-                      )}
-                      <Badge variant={estado.variant}>{estado.label}</Badge>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+      {items.length > 0 && <ItemsChecklist items={items} connectionId={connectionId} />}
     </div>
+  );
+}
+
+/**
+ * Ítems de un checklist de producción (HU-CONN-07) con su estado y, si se pasa `connectionId`,
+ * el enlace para reparar los que no están en verde. Lo usan "Producción" de la conexión, la App
+ * de Meta y el paso "Verificar" de "Pasar a producción".
+ */
+export function ItemsChecklist({ items, connectionId }: { items: ReadinessItem[]; connectionId?: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-5">
+        <ul className="flex flex-col divide-y divide-border-soft">
+          {items.map((item) => {
+            const estado = estadoItem(item.ok);
+            const arreglo =
+              connectionId && item.ok !== true ? enlaceReparacion(item.repair_action, connectionId) : null;
+            return (
+              <li key={item.key} className="flex items-start justify-between gap-3 py-2.5 text-sm">
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-headline">{item.label}</span>
+                  {item.detail && <span className="text-xs text-text-soft">{item.detail}</span>}
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  {arreglo && (
+                    <Link className="text-xs text-accent underline" href={arreglo.href}>
+                      {arreglo.label}
+                    </Link>
+                  )}
+                  <Badge variant={estado.variant}>{estado.label}</Badge>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
