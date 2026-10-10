@@ -8539,8 +8539,9 @@ export interface components {
         /**
          * EsPlatformCheck
          * @description Última revisión de "Plataforma → App de Meta" (HU-CONN-07). `ok`: terminó, sin ítems en
-         *     rojo y con las variables de la app, el webhook y la suscripción en verde. `pending`: las
-         *     etiquetas de los ítems que lo impiden.
+         *     rojo, con las variables de la app, el webhook y la suscripción en verde, y no vencida (vale
+         *     30 días). `pending`: las etiquetas de los ítems que lo impiden. `expired`: la corrida terminada
+         *     venció y hay que revisar de nuevo; `expires_at`: cuándo vence (o venció).
          */
         EsPlatformCheck: {
             /**
@@ -8554,6 +8555,10 @@ export interface components {
             ok: boolean;
             /** Pending */
             pending: string[];
+            /** Expired */
+            expired: boolean;
+            /** Expires At */
+            expires_at: string | null;
         };
         /** TestMessageOptions */
         TestMessageOptions: {

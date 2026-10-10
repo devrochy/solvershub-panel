@@ -57,14 +57,14 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
           <CardTitle className="text-sm">Revisión del servidor</CardTitle>
           <p className="text-xs text-text-soft">
             Las variables de la app, el webhook en HTTPS y su suscripción se revisan en «App de Meta», junto con
-            el resto de la infraestructura.
+            el resto de la infraestructura. La revisión vale 30 días.
           </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             {revision.ok ? (
               <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden />
-            ) : revision.pending.length > 0 ? (
+            ) : revision.expired || revision.pending.length > 0 ? (
               <CircleAlert className="h-4 w-4 shrink-0 text-danger" aria-hidden />
             ) : (
               <CircleHelp className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
@@ -79,8 +79,11 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
             </ul>
           )}
           <Link className="text-xs text-accent underline-offset-2 hover:underline" href="/plataforma/meta">
-            Ver y revisar en App de Meta
+            {revision.expired ? "Revisar de nuevo en App de Meta" : "Ver y revisar en App de Meta"}
           </Link>
+          {!revision.expired && revision.expires_at && (
+            <span className="text-xs text-text-soft">Vale hasta {formatDateTime(revision.expires_at)} (30 días).</span>
+          )}
         </CardContent>
       </Card>
 
