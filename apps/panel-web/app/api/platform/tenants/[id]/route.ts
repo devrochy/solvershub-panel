@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { apiFetch } from "@/lib/api/server";
+import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
+import { mensajeErrorNegocio } from "@/lib/eliminar-negocio";
 
 const PATHS: Record<string, string> = {
   plan: "plan",
@@ -24,12 +26,20 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const payload = { ...(body ?? {}) };
   delete payload.action;
 
+  // La API rechaza un `X-Tenant-Id` suspendido: si el negocio activo del panel es el mismo
+  // sobre el que se actúa (p. ej. purgar el que se acaba de desactivar), no se manda y la API
+  // usa otro negocio activo del master.
+  const activo = (await cookies()).get(TENANT_COOKIE)?.value;
   const res = await apiFetch(`/admin/platform/tenants/${id}/${segment}`, {
     method: "POST",
     body: payload,
+    ...(activo === id ? { tenant: null } : {}),
   });
   if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json(
+      { error: mensajeErrorNegocio(res), code: res.code },
+      { status: res.status },
+    );
   }
   return NextResponse.json({ ok: true });
 }

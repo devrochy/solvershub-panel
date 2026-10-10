@@ -17,7 +17,7 @@ export const TENANT_COOKIE = "panel_tenant";
 
 export type ApiResult<T> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; code?: string };
 
 type FetchOptions = {
   token?: string | null;
@@ -51,14 +51,19 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   if (res.status === 204) return { ok: true, status: 204, data: undefined as T };
 
   const json = (await res.json().catch(() => null)) as
-    | { error?: { message?: string } }
+    | { error?: { code?: string; message?: string } }
     | T
     | null;
 
   if (!res.ok) {
-    const message =
-      (json as { error?: { message?: string } } | null)?.error?.message ?? `Error ${res.status}`;
-    return { ok: false, status: res.status, error: message };
+    const error = (json as { error?: { code?: string; message?: string } } | null)?.error;
+    const message = error?.message ?? `Error ${res.status}`;
+    return {
+      ok: false,
+      status: res.status,
+      error: message,
+      ...(typeof error?.code === "string" ? { code: error.code } : {}),
+    };
   }
   return { ok: true, status: res.status, data: json as T };
 }
