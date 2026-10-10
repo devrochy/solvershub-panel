@@ -1,11 +1,18 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+
 import { ChecklistProduccion } from "@/components/domain/checklist-produccion";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { PlatformMetaApp } from "@/lib/api/types";
 
 export const metadata = { title: "App de Meta" };
 
-/** "Plataforma → App de Meta" (solo master, HU-CONN-07): la app de la plataforma y la infraestructura. */
+/**
+ * "Plataforma → App de Meta" (solo master, HU-CONN-07): la app de la plataforma y la infraestructura.
+ * Los requisitos de Meta para Embedded Signup (HU-SH-05) se enlazan desde aquí y usan esta revisión.
+ */
 export default async function AppDeMetaPage() {
   const res = await apiFetch<PlatformMetaApp>("/admin/platform/meta-app");
   if (!res.ok) {
@@ -26,6 +33,23 @@ export default async function AppDeMetaPage() {
         <span className="font-mono text-xs">{res.data.meta_app_id || "sin configurar"}</span>
       </p>
       <ChecklistProduccion endpoint="/api/platform/meta-app" initial={res.data} />
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5 text-sm">
+          <span className="flex flex-col gap-0.5">
+            <span className="font-medium text-headline">Requisitos de Embedded Signup</span>
+            <span className="text-xs text-body">
+              Lo que Meta tiene que aprobar (verificación del negocio, Tech Provider, App Review, modo Live…)
+              para que los negocios conecten su WhatsApp con Facebook. Quedan listos con esta revisión en verde.
+            </span>
+          </span>
+          <Link
+            className="inline-flex items-center gap-1 text-sm text-accent underline-offset-2 hover:underline"
+            href="/plataforma/meta/embedded-signup"
+          >
+            Ver requisitos <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,21 +1,8 @@
 /**
- * "Pasar a producción" de una conexión BYOK (HU-CONN-06): nombres de los chequeos que corre
- * el backend con la app del negocio y el paso en el que va la guía.
+ * "Pasar a producción" de una conexión BYOK (HU-CONN-06): el paso en el que va la guía y cuántos
+ * chequeos bloquean. Los chequeos son los del checklist por conexión (HU-CONN-07) y llegan con su
+ * etiqueta desde el backend.
  */
-
-const NOMBRES: Record<string, string> = {
-  own_app: "Tu app de Meta",
-  token_valid: "Token de acceso",
-  app_subscription_active: "Webhook de tu app",
-  real_number: "Número real",
-  number_registered: "Número registrado",
-  waba_subscribed_to_own_app: "WABA suscrita a tu app",
-  templates: "Plantillas aprobadas",
-};
-
-export function nombreCheckPromocion(key: string): string {
-  return NOMBRES[key] ?? key;
-}
 
 export type PasoPromocion = { key: string; label: string; done: boolean; detail?: string };
 
@@ -25,6 +12,6 @@ export function pasoActual(pasos: PasoPromocion[]): string | null {
 }
 
 /** Un chequeo bloquea solo si dio `false`; `null` es "no se pudo evaluar". */
-export function bloquean(checks: { ok: boolean | null }[]): number {
+export function bloquean(checks: { ok?: boolean | null }[]): number {
   return checks.filter((c) => c.ok === false).length;
 }

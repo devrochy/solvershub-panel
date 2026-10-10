@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, CircleAlert, CircleHelp, ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import type { components } from "@/lib/api/schema";
 import { formatDateTime } from "@/lib/format";
+import { resumenRevision } from "@/lib/requisitos-embedded-signup";
 import { useAction } from "@/lib/use-action";
 
 type Requisitos = components["schemas"]["EmbeddedSignupRequirements"];
 
 export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
   const [estado, setEstado] = useState(inicial);
+  const revision = estado.platform_check;
   const { run, pending } = useAction({ refresh: false });
 
   async function marcar(key: string, done: boolean) {
@@ -51,26 +54,36 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Configuración del servidor</CardTitle>
+          <CardTitle className="text-sm">Revisión del servidor</CardTitle>
+          <p className="text-xs text-text-soft">
+            Las variables de la app, el webhook en HTTPS y su suscripción se revisan en «App de Meta», junto con
+            el resto de la infraestructura. La revisión vale 30 días.
+          </p>
         </CardHeader>
-        <CardContent>
-          <ul className="flex flex-col gap-2">
-            {estado.automatic.map((c) => (
-              <li key={c.key} className="flex items-start gap-2 text-sm">
-                {c.ok === true ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-label="bien" />
-                ) : c.ok === false ? (
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-danger" aria-label="falla" />
-                ) : (
-                  <CircleHelp className="mt-0.5 h-4 w-4 shrink-0 text-text-soft" aria-label="sin dato" />
-                )}
-                <span className="flex flex-col">
-                  <span className="text-body">{c.label}</span>
-                  <span className="text-xs text-text-soft">{c.detail}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+        <CardContent className="flex flex-col gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            {revision.ok ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden />
+            ) : revision.expired || revision.pending.length > 0 ? (
+              <CircleAlert className="h-4 w-4 shrink-0 text-danger" aria-hidden />
+            ) : (
+              <CircleHelp className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
+            )}
+            <span className="text-body">{resumenRevision(revision)}</span>
+          </div>
+          {revision.pending.length > 0 && (
+            <ul className="ml-6 list-disc text-xs text-text-soft">
+              {revision.pending.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          )}
+          <Link className="text-xs text-accent underline-offset-2 hover:underline" href="/plataforma/meta">
+            {revision.expired ? "Revisar de nuevo en App de Meta" : "Ver y revisar en App de Meta"}
+          </Link>
+          {!revision.expired && revision.expires_at && (
+            <span className="text-xs text-text-soft">Vale hasta {formatDateTime(revision.expires_at)} (30 días).</span>
+          )}
         </CardContent>
       </Card>
 
