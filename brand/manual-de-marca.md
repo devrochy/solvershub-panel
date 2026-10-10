@@ -1,6 +1,6 @@
 # Manual de Marca — SolversHub
 
-**Versión:** 1.4 · **Fecha:** 2026-09-28
+**Versión:** 1.5 · **Fecha:** 2026-10-09
 **Empresa:** Roshi — Centro de Inteligencia e Innovación
 **Producto:** SolversHub — Centro de soluciones impulsado con IA
 **Primario de marca:** `#172F6C`
@@ -110,80 +110,74 @@ Roshi  (empresa / respaldo institucional)
 
 ### 4.1 Construcción
 
-El logotipo tiene dos elementos:
+Logo definitivo (v1.5, 2026-10-09). Tiene dos elementos y se apila en vertical:
 
-1. **Isotipo "Cerebro en red"** — un **cerebro con volumen** (cuerpo con degradado
-   oscuro, contorno neón y un halo suave) conectado a **cuatro esferas 3D**, cada una
-   con un glifo: **cliente** (avatar), **conversación**, **agenda** y **pedido**.
-   Estilo **moderno y 3D**: profundidad por degradados, brillo superior y nodos
-   esféricos con luz. Es la metáfora de SolversHub: una inteligencia central
-   conectada a las operaciones del negocio.
-2. **Logotipo de texto "SolversHub"** — la letra **"v" se sustituye por un check**
-   grueso y redondeado (la solución/lo resuelto), con el brazo derecho largo que sube
-   por encima de las letras, en el gradiente de marca `#2F6BFF → #22C7E0`. El resto
-   de las letras van en el color de contraste según el fondo (blanco sobre navy,
-   navy `#0B1733` sobre claro). Tipografía **geométrica Montserrat**, de ojo alto
-   y formas redondas.
+1. **Isotipo "cerebro-foco"** — un cerebro de **8 lóbulos** dibujado con un trazo
+   continuo, grueso y de remates redondos, que se cierra en el cuello de un **foco**
+   con **3 líneas de rosca**. En el centro, un **núcleo circular** en el gradiente de
+   marca (135°) con un **check blanco**; sobre él, la fisura del cerebro en forma de
+   cruz y tres destellos. Alrededor, **10 mini-iconos de línea** (personas, ficha,
+   documento, dial, flujo, carpeta, chat, casilla, historial): las operaciones del
+   negocio que la inteligencia central resuelve.
+2. **Logotipo de texto** — **SOLVERS** en mayúsculas, Montserrat Bold (tracking
+   ≈ −0,02 em), con la **"V" sustituida por un check** (brazos a ±27,5°, base
+   redondeada, brazo derecho que sube por encima de las letras) en el gradiente de
+   marca de izquierda a derecha. Debajo, **HUB** flanqueado por dos líneas que
+   llegan a los bordes de SOLVERS.
 
-**Concepto recomendado:** `logos/solvershub-logo-horizontal-light.svg` (uso principal
-sobre navy) y `-dark.svg` (sobre claro). El wordmark aislado está en
-`logos/solvershub-wordmark-light.svg` / `-dark.svg`.
-**Alternativas de isotipo:** `logos/solvershub-icon-hexhub.svg` (hub hexagonal), `logos/solvershub-icon-spark.svg`
-(chispa IA), `logos/solvershub-icon-cluster.svg` (red de 6 nodos).
-
-**Variante plana (flat):** `logos/solvershub-logo-horizontal-flat.svg` reproduce el
-mismo concepto en estilo **línea plana** —contorno de cerebro de trazo suave y
-brillante, unido por líneas curvas finas a los cuatro iconos (cliente, conversación,
-agenda y pedido)—, sin volumen 3D. Fondo **transparente**, pensado para fondos navy;
-el wordmark y el check-`v` se conservan idénticos. Úsala cuando la pieza pida una
-lectura más limpia, ligera o técnica (UI, documentación, iconografía de producto).
+El set completo (SVG maestros, PNG, favicon, íconos de app) y su generador están en
+`brand/logo-definitivo/` (lámina en `index.html`, guía en `README.md`).
 
 ### 4.2 Versiones
 
-| Versión | Archivo | Uso |
-|---|---|---|
-| Horizontal sobre navy (principal) | `logos/solvershub-logo-horizontal-light.svg` | Web oscura, propuestas, email |
-| Horizontal sobre claro | `logos/solvershub-logo-horizontal-dark.svg` | Documentos, fondos claros |
-| Horizontal plano (flat, sobre navy) | `logos/solvershub-logo-horizontal-flat.svg` | UI, documentación, piezas técnicas sobre navy |
-| Vertical (apilada) | `logos/solvershub-logo-vertical-light.svg` | Splash, aplicaciones, merchandising |
-| Wordmark | `logos/solvershub-wordmark-light.svg` / `-dark.svg` | Cabeceras, firmas |
-| Isotipo | `logos/solvershub-icon-brain.svg` | Marca de agua, espacios reducidos |
-| Monocromo | `logos/solvershub-icon-mono.svg` | Un color, sellos, grabados, print B/N |
-| Favicon | `logos/solvershub-favicon.svg` | Navegador, PWA (cerebro + 4 nodos simplificado) |
-| App icon | `logos/solvershub-appicon.svg` | App stores, PWA, redes (512×512) |
-| App icon maskable | `logos/solvershub-appicon-maskable.svg` | PWA / Android adaptativo (fondo a sangre, zona segura) |
-| Iconos raster | `logos/png/*.png` | Export de app icon y favicon para PWA, stores y apple-touch |
+Cada pieza existe en `-tema-oscuro` (para fondos navy: tinta blanca, HUB cian
+`#22C7E0`), `-tema-claro` (para blanco/paper: tinta navy `#0B1733`, HUB azul
+`#2F6BFF`), `-mono-blanco` y `-mono-navy` (una tinta, check del núcleo calado).
+Todas las rutas son relativas a `brand/logo-definitivo/svg/`.
 
-> **Derivados raster:** los PNG de `logos/png/` se **generan siempre desde los SVG
-> fuente** (`logos/solvershub-appicon.svg`, `logos/solvershub-appicon-maskable.svg`, `logos/solvershub-favicon.svg`), nunca se editan a
-> mano. Set actual: `appicon-{512,256,192,180,152,120,96,64}.png`,
-> `appicon-maskable-512.png` y `favicon-{32,16}.png`. Para tamaños ≤ 32 px usa el
-> favicon simplificado (el app icon completo no es legible). El gradiente del emblema
-> es el oficial `#2F6BFF → #22C7E0`.
+| Versión | Carpeta | Uso |
+|---|---|---|
+| Vertical (principal) | `logo-vertical/` | Portadas, splash, presentaciones, redes |
+| Horizontal · 2 líneas | `logo-horizontal/` | Cabecera de la landing, documentos, propuestas |
+| Horizontal · 1 línea | `logo-horizontal-1-linea/` | Barras de navegación, pies de página, banners |
+| Horizontal simple (2 y 1 línea) | `logo-horizontal-simple/`, `logo-horizontal-1-linea-simple/` | Por debajo de 240 px de ancho: firmas, panel, cabecera de la app |
+| Wordmark · 2 líneas | `wordmark-2-lineas/` | SOLVERS / — HUB — cuando el isotipo ya está cerca |
+| Wordmark · 1 línea | `wordmark-1-linea/` | SOLVERSHUB; HUB se distingue por color |
+| Isotipo completo | `isotipo/` | Desde 96 px |
+| Isotipo simple | `isotipo-simple/` | 24–96 px, avatares (sin mini-iconos) |
+| App icon | `app-icon/` | Cuadrado (iOS, maskable), redondeado (PWA, redes), capas de Android |
+| Favicon | `favicon/` | Silueta sólida en el gradiente con check blanco; sirve en pestañas claras y oscuras |
+
+> **Derivados raster:** los PNG, el `favicon.ico` y los íconos de app se generan con
+> `python3 brand/logo-definitivo/_src/build.py`; nunca se editan a mano.
 
 > **Regla de la "v"-check:** el check siempre sustituye a la "v" y siempre va en el
-> gradiente de marca. No se añade a otra letra ni se usa como elemento suelto.
+> gradiente de marca (salvo en las versiones monocromo). No se añade a otra letra ni
+> se usa como elemento suelto.
 
 ### 4.3 Área de respeto
 
-Deja libre alrededor del logotipo una distancia mínima igual a la **altura del nodo
-central del isotipo** (≈ 1/6 del alto del isotipo) por cada lado. Nada —texto, borde,
+Deja libre alrededor del logotipo una distancia mínima igual al **radio del núcleo
+del isotipo** (≈ 1/5 del alto del isotipo) por cada lado. Nada —texto, borde,
 imagen— entra en esa zona.
 
 ### 4.4 Tamaños mínimos
 
-| Soporte | Horizontal | Isotipo |
-|---|---|---|
-| Digital | 120 px de ancho | 24 px |
-| Impreso | 30 mm de ancho | 8 mm |
+| Soporte | Horizontal | Isotipo simple | Isotipo completo |
+|---|---|---|---|
+| Digital | 120 px de ancho (versión simple bajo 240 px) | 24 px | 96 px |
+| Impreso | 30 mm de ancho | 8 mm | 25 mm |
 
-Por debajo de estos mínimos, usa solo el isotipo.
+Por debajo de 24 px, usa el favicon.
 
 ### 4.5 Usos correctos
 
-- Sobre navy `#172F6C`, `#0B1733` o `#11224D` → versión clara (texto blanco).
-- Sobre blanco o `#F7F9FC` → versión principal (texto navy).
-- Sobre foto → aplica una capa navy al 60–75 % o usa el isotipo monocromo blanco.
+- Sobre navy `#172F6C`, `#0B1733`, `#11224D` o `#080F22` → `-tema-oscuro`.
+- Sobre blanco o `#F7F9FC` → `-tema-claro`.
+- Sobre foto → capa navy al 60–75 % con `-tema-oscuro`, o `-mono-blanco`.
+- Impresión a una tinta, sellos, grabados → `-mono-navy`.
+- En texto corrido el nombre sigue siendo **SolversHub** (§3); las mayúsculas son solo
+  del logotipo.
 
 ### 4.6 Usos incorrectos (nunca)
 
@@ -191,7 +185,7 @@ Por debajo de estos mínimos, usa solo el isotipo.
 - ❌ Recolorear fuera de la paleta (nada de neón, degradados ajenos, dorado en el texto).
 - ❌ Añadir sombras duras, biseles, contornos o efectos 3D.
 - ❌ Poner el logotipo sobre fondos de bajo contraste o muy ruidosos.
-- ❌ Separar "Solvers" de "Hub" en el logotipo de texto.
+- ❌ Separar SOLVERS de HUB, o quitar las líneas que flanquean HUB.
 - ❌ Quitar el check del wordmark (la "v" no puede volver a ser una "v" normal).
 - ❌ Usar el check suelto como logotipo completo, o recolorearlo fuera del gradiente.
 
@@ -317,7 +311,7 @@ autoalojadas; nunca más de dos familias por pieza.
   (navy o cyan). Librería base recomendada: **Lucide** (ya en la landing).
 - **Tamaños:** 16, 20, 24, 32 px. Alineados a la rejilla de 4 px.
 - **Ilustración:** geométrica y abstracta (nodos, rutas, capas). Nada de robots
-  humanoides ni circuitos de PCB. El **cerebro en red** es un recurso reservado del
+  humanoides ni circuitos de PCB. El **cerebro-foco** es un recurso reservado del
   isotipo: no se reutiliza como ilustración decorativa en otras piezas.
 - **Datos:** gráficas con la paleta navy + cyan; usa forma y etiqueta además del color
   (accesible para daltonismo).
@@ -403,7 +397,7 @@ autoalojadas; nunca más de dos familias por pieza.
 ## 13. Gobernanza de marca
 
 - **Dueño de la marca:** Roshi. Toda excepción se aprueba y se documenta.
-- **Assets oficiales:** `solvershub/brand/logos/` y `solvershub/brand/tokens/`.
+- **Assets oficiales:** `brand/logo-definitivo/` (logo, desde v1.5) y `brand/tokens/`. `brand/logos/` y las carpetas `propuesta-*` quedan como historial.
 - **Cambios:** cualquier cambio de logotipo, paleta o tipografía se versiona aquí y
   sube la versión del manual.
 - **Checklist antes de publicar cualquier pieza:**

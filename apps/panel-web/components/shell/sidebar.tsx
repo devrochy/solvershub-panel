@@ -11,6 +11,7 @@ import {
   NAV_GROUPS,
   type NavItem,
 } from "@/components/shell/nav";
+import { Marca } from "@/components/ui/marca";
 import type { Me } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -161,8 +162,7 @@ export function Sidebar({
       )}
     >
       <Link href="/dashboard" onClick={onNavigate} className="mb-6 flex items-center gap-3 px-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-wordmark.svg" alt="SolversHub" className="h-6 w-auto" />
+        <Marca pieza="wordmark" className="h-6 w-auto" />
       </Link>
 
       <nav
