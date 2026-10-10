@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="SolversHub">
-  <g stroke="currentColor" stroke-width="1.6" opacity="0.6" fill="none"><line x1="22" y1="22" x2="43" y2="40"/><line x1="98" y1="22" x2="77" y2="40"/><line x1="22" y1="98" x2="43" y2="67"/><line x1="98" y1="98" x2="77" y2="67"/></g>
-  <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M58.75 25 C45 23.75 35 33.75 35 48.75 C27.5 52.5 27.5 62.5 35 67.5 C35 75 45 80 58.75 75 Z"/><path d="M61.25 25 C75 23.75 85 33.75 85 48.75 C92.5 52.5 92.5 62.5 85 67.5 C85 75 75 80 61.25 75 Z"/></g>
-  <line x1="60" y1="28.75" x2="60" y2="72.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-  <g fill="currentColor"><circle cx="22" cy="22" r="6"/><circle cx="98" cy="22" r="6"/><circle cx="22" cy="98" r="6"/><circle cx="98" cy="98" r="6"/></g>
-</svg>

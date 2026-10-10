@@ -397,7 +397,7 @@ autoalojadas; nunca más de dos familias por pieza.
 ## 13. Gobernanza de marca
 
 - **Dueño de la marca:** Roshi. Toda excepción se aprueba y se documenta.
-- **Assets oficiales:** `brand/logo-definitivo/` (logo, desde v1.5) y `brand/tokens/`. `brand/logos/` y las carpetas `propuesta-*` quedan como historial.
+- **Assets oficiales:** `brand/logo-definitivo/` (logo, desde v1.5) y `brand/tokens/`. Los logos y propuestas anteriores se retiraron (siguen en el historial de git).
 - **Cambios:** cualquier cambio de logotipo, paleta o tipografía se versiona aquí y
   sube la versión del manual.
 - **Checklist antes de publicar cualquier pieza:**

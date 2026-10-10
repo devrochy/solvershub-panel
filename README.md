@@ -91,8 +91,8 @@ Leyenda: 🟢 avanzado · 🟡 a medias · 🔴 por hacer
 ## Fase 2 · Marca — 🟢
 
 - [x] Manual de marca completo (`brand/manual-de-marca.md`).
-- [x] Brand book visual (`brand/brand-book.html`).
-- [x] Logos vectoriales + tokens (`brand/logos/`, `brand/tokens/`).
+- [x] Lámina visual del set de marca (`brand/logo-definitivo/index.html`).
+- [x] Logo definitivo vectorial (`brand/logo-definitivo/`) + tokens (`brand/tokens/`).
 - [x] Tipografía del logo: geométrica **Montserrat** (v1.3 del manual).
 - [x] Aplicar Montserrat en la landing y el panel (tokens + `next/font`, display en titulares).
 - [ ] Kit de aplicaciones: firma de email, plantillas de redes, deck, one-pager PDF.
