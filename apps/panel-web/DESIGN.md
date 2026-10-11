@@ -47,7 +47,13 @@ tailwind-merge las tomaba por colores y las descartaba.
 
 
 - Contenedor de contenido: `max-w-[1200px]` centrado, padding `px-6 py-8`.
-- Sidebar `w-60`; topbar `h-16`.
+- Barra lateral adaptativa (HU-DS-04, ADR-0003): expandida 256 px, plegada 72 px (íconos)
+  o cajón en celular. Sin preferencia se pliega entre 768 y 1279 px. La preferencia del
+  usuario va en la cookie `panel_sidebar`; se alterna con el botón del pie o con `[`.
+- Cada sección de un pack necesita un ícono propio (la barra plegada se lee por íconos).
+- Migas y pestañas de sección salen solas del `PageHeader` (desde `nav.ts` y los
+  permisos). En un detalle, el título de la página es el último nivel de las migas.
+- Topbar `h-16`.
 - Ritmo vertical entre bloques: 24 px (`gap-6`); dentro de tarjetas, 20 px.
 - Una sola `PageHeader` por página (es el único `h1`).
 

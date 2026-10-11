@@ -34,6 +34,14 @@ const SECCIONES = [
   "plan",
   "costs",
   "pack_cobranza:resumen",
+  "pack_cobranza:carteras",
+  "pack_cobranza:clientes",
+  "pack_cobranza:promesas",
+  "pack_cobranza:reportes",
+  "pack_calendar:conexion",
+  "pack_calendar:tipos",
+  "pack_calendar:bloqueos",
+  "pack_calendar:citas",
 ];
 
 export const me: Me = {

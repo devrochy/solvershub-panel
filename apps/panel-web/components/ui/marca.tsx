@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
  *
  * - `wordmark`: SOLVERSHUB en una línea (barra lateral).
  * - `logo`: isotipo simple + SOLVERSHUB (pantallas de acceso).
+ * - `isotipo`: solo el símbolo, cuadrado (barra lateral plegada).
  */
-export function Marca({ pieza, className }: { pieza: "wordmark" | "logo"; className?: string }) {
+export function Marca({ pieza, className }: { pieza: "wordmark" | "logo" | "isotipo"; className?: string }) {
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
