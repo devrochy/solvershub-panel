@@ -109,6 +109,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Agents */
+        get: operations["list_agents_api_v1_admin_agents_get"];
+        put?: never;
+        /** Create Agent */
+        post: operations["create_agent_api_v1_admin_agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Agent */
+        get: operations["get_agent_api_v1_admin_agents__agent_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Agent */
+        patch: operations["patch_agent_api_v1_admin_agents__agent_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Draft */
+        get: operations["get_draft_api_v1_admin_agents__agent_id__draft_get"];
+        /** Save Draft */
+        put: operations["save_draft_api_v1_admin_agents__agent_id__draft_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Versions */
+        get: operations["list_versions_api_v1_admin_agents__agent_id__versions_get"];
+        put?: never;
+        /** Publish Version */
+        post: operations["publish_version_api_v1_admin_agents__agent_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Version */
+        get: operations["get_version_api_v1_admin_agents__agent_id__versions__version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/me": {
         parameters: {
             query?: never;
@@ -420,6 +509,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/conversations/{conversation_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tasks
+         * @description Tareas de la conversación: primero las abiertas (en foco y en pausa), luego las cerradas.
+         */
+        get: operations["list_tasks_api_v1_admin_conversations__conversation_id__tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/{conversation_id}/tasks/{task_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Task Events
+         * @description Historia de la tarea (`task_events`), en orden de `seq`.
+         */
+        get: operations["list_task_events_api_v1_admin_conversations__conversation_id__tasks__task_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/playground": {
         parameters: {
             query?: never;
@@ -566,6 +695,26 @@ export interface paths {
         /** Save Plugin Config */
         put: operations["save_plugin_config_api_v1_admin_plugins__plugin_id__config_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/procedures/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate Procedure
+         * @description Valida un procedimiento `procedure/1` y aplica el linter.
+         */
+        post: operations["validate_procedure_api_v1_admin_procedures_validate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2053,6 +2202,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/declarative-tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Declarative Tools */
+        get: operations["get_declarative_tools_api_v1_admin_settings_declarative_tools_get"];
+        /** Save Declarative Tools */
+        put: operations["save_declarative_tools_api_v1_admin_settings_declarative_tools_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings": {
         parameters: {
             query?: never;
@@ -2259,7 +2426,8 @@ export interface paths {
         };
         /**
          * Get Raw Spec
-         * @description AgentSpec activo tal cual (editor crudo de Configuración → Avanzado).
+         * @description AgentSpec activo (editor crudo de Configuración → Avanzado), con los headers sensibles
+         *     de las tools declarativas enmascarados (HU-AOS-12).
          */
         get: operations["get_raw_spec_api_v1_admin_settings_advanced_spec_get"];
         /**
@@ -6415,6 +6583,19 @@ export interface components {
             /** Has More */
             has_more: boolean;
         };
+        /** Page[TaskEventItem] */
+        Page_TaskEventItem_: {
+            /** Items */
+            items: components["schemas"]["TaskEventItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
         /** Page[TenantOption] */
         Page_TenantOption_: {
             /** Items */
@@ -6930,6 +7111,22 @@ export interface components {
             total: number;
             /** Pasos */
             pasos: components["schemas"]["PasoOut"][];
+        };
+        /** ProcedureIssue */
+        ProcedureIssue: {
+            /** Code */
+            code: string;
+            /** Path */
+            path: string;
+            /** Message */
+            message: string;
+        };
+        /** ProcedureValidateOut */
+        ProcedureValidateOut: {
+            /** Valid */
+            valid: boolean;
+            /** Errors */
+            errors: components["schemas"]["ProcedureIssue"][];
         };
         /** ProductOut */
         ProductOut: {
@@ -7580,6 +7777,95 @@ export interface components {
             evento: string;
             /** Critico */
             critico: boolean;
+        };
+        /** TaskEventItem */
+        TaskEventItem: {
+            /** Seq */
+            seq: number;
+            /** Type */
+            type: string;
+            /** Actor */
+            actor: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Turn Id */
+            turn_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** TaskItem */
+        TaskItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Procedure Id */
+            procedure_id: string;
+            /** Procedure Version */
+            procedure_version: string;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Stage */
+            stage: string;
+            /** Stack Position */
+            stack_position: number;
+            /** In Focus */
+            in_focus: boolean;
+            /** Parent Task Id */
+            parent_task_id: string | null;
+            /** Owner Instance Id */
+            owner_instance_id: string | null;
+            /** Slots */
+            slots: {
+                [key: string]: components["schemas"]["TaskSlot"];
+            };
+            /** Pending Confirmation */
+            pending_confirmation: {
+                [key: string]: unknown;
+            } | null;
+            /** Last Seq */
+            last_seq: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Completed At */
+            completed_at: string | null;
+        };
+        /** TaskList */
+        TaskList: {
+            /** Items */
+            items: components["schemas"]["TaskItem"][];
+        };
+        /** TaskSlot */
+        TaskSlot: {
+            /** Value */
+            value: unknown;
+            /** Source */
+            source?: string | null;
+            /** Actor */
+            actor?: string | null;
+            /**
+             * Confirmed
+             * @default false
+             */
+            confirmed: boolean;
+            /** Data Class */
+            data_class?: string | null;
         };
         /**
          * TemplateCreate
@@ -8596,6 +8882,201 @@ export interface components {
             /** Language */
             language: string;
         };
+        /** AgentCreate */
+        AgentCreate: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "core" | "specialist" | "backoffice";
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+        };
+        /** AgentDetail */
+        AgentDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "core" | "specialist" | "backoffice";
+            /** Contract */
+            contract: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /** Latest Version */
+            latest_version: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            draft: components["schemas"]["AgentDraft"];
+            /** Versions */
+            versions: components["schemas"]["AgentVersionSummary"][];
+        };
+        /** AgentDraft */
+        AgentDraft: {
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /** Lock Version */
+            lock_version: number;
+            /** Base Version Id */
+            base_version_id: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AgentPatch */
+        AgentPatch: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Status */
+            status?: ("active" | "archived") | null;
+        };
+        /** AgentSummary */
+        AgentSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "core" | "specialist" | "backoffice";
+            /** Contract */
+            contract: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /** Latest Version */
+            latest_version: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AgentVersionDetail */
+        AgentVersionDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            /** Label */
+            label: string;
+            /** Contract */
+            contract: string;
+            /** Content Hash */
+            content_hash: string;
+            /** Notes */
+            notes: string;
+            /** Legacy */
+            legacy: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+        };
+        /** AgentVersionSummary */
+        AgentVersionSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            /** Label */
+            label: string;
+            /** Contract */
+            contract: string;
+            /** Content Hash */
+            content_hash: string;
+            /** Notes */
+            notes: string;
+            /** Legacy */
+            legacy: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ConfiguredSecret */
+        ConfiguredSecret: {
+            /** Name */
+            name: string;
+            /** Domains */
+            domains: string[];
+        };
+        /** DeclarativeToolsOut */
+        DeclarativeToolsOut: {
+            /** Tools */
+            tools: {
+                [key: string]: unknown;
+            }[];
+            /** Secrets */
+            secrets: components["schemas"]["ConfiguredSecret"][];
+            /** Literals To Migrate */
+            literals_to_migrate: string[];
+        };
+        /** PublishIn */
+        PublishIn: {
+            /** Lock Version */
+            lock_version?: number | null;
+            /** Label */
+            label?: string | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
+        /** PublishOut */
+        PublishOut: {
+            version: components["schemas"]["AgentVersionSummary"];
+            /** Created */
+            created: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -8751,6 +9232,322 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcceptInvitationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agents_api_v1_admin_agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_agent_api_v1_admin_agents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_api_v1_admin_agents__agent_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_agent_api_v1_admin_agents__agent_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_api_v1_admin_agents__agent_id__draft_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_draft_api_v1_admin_agents__agent_id__draft_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description AgentSpec v3 (agentspec/3) o KernelSpec v1 (kernelspec/1), según el kind. */
+                    content: {
+                        [key: string]: unknown;
+                    };
+                    lock_version: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_versions_api_v1_admin_agents__agent_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentVersionSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_version_api_v1_admin_agents__agent_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_version_api_v1_admin_agents__agent_id__versions__version_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentVersionDetail"];
                 };
             };
             /** @description Validation Error */
@@ -9364,6 +10161,76 @@ export interface operations {
             };
         };
     };
+    list_tasks_api_v1_admin_conversations__conversation_id__tasks_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_task_events_api_v1_admin_conversations__conversation_id__tasks__task_id__events_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TaskEventItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     playground_history_api_v1_admin_playground_get: {
         parameters: {
             query?: never;
@@ -9652,6 +10519,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PluginConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_procedure_api_v1_admin_procedures_validate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Procedimiento procedure/1 (ADR-0113). */
+                    procedure: {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProcedureValidateOut"];
                 };
             };
             /** @description Validation Error */
@@ -12339,6 +13246,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMetaApp"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_declarative_tools_api_v1_admin_settings_declarative_tools_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeclarativeToolsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_declarative_tools_api_v1_admin_settings_declarative_tools_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Tools declarativas (ADR-0052). Headers sensibles como {"secret": "<nombre>"}. */
+                    tools: {
+                        [key: string]: unknown;
+                    }[];
+                    /** @description Valores de secretos (solo escritura); null quita el secreto. */
+                    secrets?: {
+                        [key: string]: string | null;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeclarativeToolsOut"];
                 };
             };
             /** @description Validation Error */

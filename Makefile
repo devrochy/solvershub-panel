@@ -30,7 +30,7 @@ api-contract: ## Exporta el OpenAPI de agent-core a docs/openapi.json
 	$(AGENT_PY) $(AGENT_CORE)/scripts/export_openapi.py
 
 api-types: api-contract ## Regenera el contrato y los tipos TS del panel
-	cd $(PANEL) && npm run api:types
+	cd $(PANEL) && OPENAPI_PATH=$(abspath $(AGENT_CORE))/docs/openapi.json npm run api:types
 
 ## --- Panel web ---
 panel-install: ## Instala dependencias del panel

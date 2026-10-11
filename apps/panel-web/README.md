@@ -20,11 +20,17 @@ admin creado (`python scripts/init_db.py` en agent-core).
   `POST /api/v1/auth/login` y guarda el token opaco en una cookie `httpOnly`
   (`panel_session`); `lib/api/server.ts` lo reenvía como `Authorization: Bearer`.
 - **Tipos desde el contrato**: `lib/api/schema.d.ts` se genera del OpenAPI de
-  agent-core. Regenerar:
+  agent-core (`scripts/api-types.mjs`). Por defecto lee `origin/develop:docs/openapi.json`
+  de `../../../solvershub-backend` sin tocar su árbol de trabajo; `OPENAPI_PATH` apunta a
+  otro archivo (es lo que hace `make api-types` con el OpenAPI recién exportado).
   ```bash
-  (cd ../../../agent-core && python scripts/export_openapi.py)
-  npm run api:types
+  npm run api:types          # regenera
+  npm run api:types:check    # falla si hay deriva (lo corre el CI, HU-UI-04)
   ```
+- **Tests**: `npm run test` (o `npm run test:coverage`, que deja el reporte en
+  `coverage/`). Corren en el CI con cobertura. Las páginas principales se renderizan con
+  respuestas de prueba (`lib/testing/fixtures.ts`) y axe no debe encontrar violaciones
+  graves (`lib/a11y/paginas.test.tsx`).
 - **Tokens de marca**: `app/tokens.css` es copia generada de
   `brand/tokens/tokens.css`. Sincronizar tras cambiar la paleta:
   ```bash
@@ -123,6 +129,6 @@ enlazados al panel clásico con sesión compartida (decisión: `agent-core/docs/
 
 El plan de pruebas completo está en [`../../PLAN-DE-PRUEBAS.md`](../../PLAN-DE-PRUEBAS.md).
 
-> **Rutas del ecosistema**: los tipos de la API se generan desde
-> `../solvershub-backend/docs/openapi.json` (`npm run api:types`) y el tema viene de
+> **Rutas del ecosistema**: los tipos de la API se generan desde el
+> `docs/openapi.json` de `develop` de `../solvershub-backend` (`npm run api:types`) y el tema viene de
 > `brand/tokens` (mismo repo). Ver la tabla de proyectos en el README raíz.
