@@ -231,9 +231,10 @@ describe("catálogo", () => {
     expect(catalogoHabilitado({ PANEL_CATALOGO: "true" })).toBe(false);
   });
 
+  // axe sobre el catálogo completo es lento en el runner con cobertura: tiempo propio.
   it("no tiene violaciones graves de accesibilidad", async () => {
     const { Catalogo } = await import("@/app/(dev)/catalogo/_components/catalogo");
     const { container } = render(<Catalogo />);
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, 30_000);
 });

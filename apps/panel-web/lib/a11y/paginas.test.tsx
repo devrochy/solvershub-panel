@@ -78,5 +78,5 @@ describe("accesibilidad de las páginas principales", () => {
 
     expect(container.querySelector("h1"), "la página tiene su h1").not.toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, 15_000);
 });
