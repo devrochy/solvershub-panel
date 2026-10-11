@@ -48,7 +48,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          # Igual que el Dockerfile (node:22-alpine). jsdom 30 exige >= 22.22.2:
+          # check-latest evita que el caché del runner sirva una 22.x más vieja.
+          node-version: "22"
+          check-latest: true
       - name: Generar tokens
         run: node brand/tokens/build.mjs
       - name: Verificar que los generados están al día
@@ -66,7 +69,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          # Igual que el Dockerfile (node:22-alpine). jsdom 30 exige >= 22.22.2:
+          # check-latest evita que el caché del runner sirva una 22.x más vieja.
+          node-version: "22"
+          check-latest: true
       - name: Instalar
         working-directory: apps/panel-web
         run: npm ci
@@ -79,6 +85,59 @@ jobs:
       - name: Build
         working-directory: apps/panel-web
         run: npm run build
+      - name: Tests (con cobertura)
+        working-directory: apps/panel-web
+        run: npm run test:coverage
+      - name: Publicar el reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-panel
+          path: apps/panel-web/coverage
+          if-no-files-found: ignore
+
+  # Deriva de tipos (HU-UI-04): lib/api/schema.d.ts debe coincidir con el OpenAPI de
+  # `develop` de agent-core. agent-core es privado: el checkout usa el secreto
+  # AGENT_CORE_READ_TOKEN (token de solo lectura del contenido de ese repo). Sin el
+  # secreto, el job avisa y no bloquea, para no romper el CI mientras se configura.
+  api-types:
+    needs: changes
+    if: ${{ needs.changes.outputs.panel == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    env:
+      HAS_TOKEN: ${{ secrets.AGENT_CORE_READ_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Falta el secreto AGENT_CORE_READ_TOKEN
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::Sin AGENT_CORE_READ_TOKEN no se puede verificar la deriva de tipos contra agent-core."
+      - name: OpenAPI de agent-core (develop)
+        if: env.HAS_TOKEN == 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: devrochy/agent-core
+          ref: develop
+          token: ${{ secrets.AGENT_CORE_READ_TOKEN }}
+          path: agent-core
+          sparse-checkout: docs/openapi.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v7
+        if: env.HAS_TOKEN == 'true'
+        with:
+          # Igual que el Dockerfile (node:22-alpine). jsdom 30 exige >= 22.22.2:
+          # check-latest evita que el caché del runner sirva una 22.x más vieja.
+          node-version: "22"
+          check-latest: true
+      - name: Instalar
+        if: env.HAS_TOKEN == 'true'
+        working-directory: apps/panel-web
+        run: npm ci
+      - name: Los tipos del panel coinciden con el OpenAPI
+        if: env.HAS_TOKEN == 'true'
+        working-directory: apps/panel-web
+        env:
+          OPENAPI_PATH: ${{ github.workspace }}/agent-core/docs/openapi.json
+        run: npm run api:types:check
 
   # Escaneo de secretos sobre la historia (falla si aparece una credencial real).
   secret-scan:
