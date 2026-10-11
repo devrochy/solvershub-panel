@@ -25,9 +25,28 @@ if (process.env.BOT_PAUSADO === "1") {
   respuestas["/admin/settings"] = { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } };
 }
 
+// Búsqueda global de la paleta (HU-DS-05): filtra unos registros fijos por `q`.
+const REGISTROS = [
+  { seccion: "pack_cobranza:clientes", label: "Clientes de cobranza", id: "k1", tipo: "cliente_cobranza", titulo: "Ana Pérez", subtitulo: "CC 1.020.333" },
+  { seccion: "pack_cobranza:promesas", label: "Promesas", id: "p1", tipo: "promesa", titulo: "Ana Pérez", subtitulo: "Promesa de $250.000", extra: { clienteId: "k1" } },
+  { seccion: "conversations", label: "Conversaciones", id: "c1", tipo: "conversacion", titulo: "Andrés Gómez", subtitulo: "Conversación" },
+];
+function buscar(q) {
+  const t = q.toLowerCase();
+  const porSeccion = new Map();
+  for (const { seccion, label, extra = {}, ...item } of REGISTROS) {
+    if (!item.titulo.toLowerCase().includes(t)) continue;
+    if (!porSeccion.has(seccion)) porSeccion.set(seccion, { seccion, label, items: [] });
+    porSeccion.get(seccion).items.push({ ...item, extra });
+  }
+  return { resultados: [...porSeccion.values()] };
+}
+
 createServer((req, res) => {
-  const ruta = (req.url ?? "").split("?")[0].replace(/^\/api\/v1/, "");
-  const cuerpo = req.method === "GET" ? respuestas[ruta] : { ok: true };
+  const url = new URL(req.url ?? "/", "http://localhost");
+  const ruta = url.pathname.replace(/^\/api\/v1/, "");
+  const cuerpo =
+    req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];
   res.setHeader("Content-Type", "application/json");
   if (cuerpo === undefined) {
     res.statusCode = 404;

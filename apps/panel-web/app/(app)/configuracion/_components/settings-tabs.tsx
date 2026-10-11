@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
@@ -28,6 +29,7 @@ const ALIAS_TABS: Record<string, string> = {
   habilidades: "skills",
   avanzado: "advanced",
   "chat-web": "web-chat",
+  accesibilidad: "a11y",
 };
 
 const TABS = [
@@ -37,6 +39,7 @@ const TABS = [
   { id: "skills", label: "Habilidades" },
   { id: "web-chat", label: "Chat web" },
   { id: "advanced", label: "Avanzado" },
+  { id: "a11y", label: "Accesibilidad" },
 ];
 
 /** Shell de Configuración: elige la pestaña activa y monta su formulario. */
@@ -64,6 +67,7 @@ export function SettingsTabs({
       {tab === "skills" && <SkillsForm skills={settings.skills} />}
       {tab === "web-chat" && <WebChatForm webChat={webChat} />}
       {tab === "advanced" && <AdvancedPanel advanced={advanced} />}
+      {tab === "a11y" && <AccesibilidadPanel />}
     </div>
   );
 }

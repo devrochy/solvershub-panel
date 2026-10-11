@@ -63,3 +63,8 @@ export type AltaAutomatica = components["schemas"]["AltaOut"];
 export type ReadinessItem = components["schemas"]["ReadinessItem"];
 export type ConnectionProduction = components["schemas"]["ConnectionProduction"];
 export type PlatformMetaApp = components["schemas"]["PlatformMetaApp"];
+
+/** Búsqueda global (`GET /search`, ADR-0096): la usa la paleta de comandos (HU-DS-05). */
+export type SearchResponse = components["schemas"]["SearchResponse"];
+export type SearchSection = components["schemas"]["ResultadoSeccion"];
+export type SearchItem = components["schemas"]["ItemBusqueda"];

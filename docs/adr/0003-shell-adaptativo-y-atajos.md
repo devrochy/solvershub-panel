@@ -3,7 +3,7 @@
 - **Estado:** aceptado
 - **Fecha:** 2026-10-11
 - **Ámbito:** `apps/panel-web` (shell del panel: `components/shell/`, `lib/shell/`, `components/ui/page-header.tsx`).
-- **Origen:** SPEC-29 de `solvershub-docs` (D-32: D-SPEC-29-4), HU-DS-04. Se apoya en HU-UI-03 (skip link, error, carga).
+- **Origen:** SPEC-29 de `solvershub-docs` (D-32: D-SPEC-29-4), HU-DS-04 y HU-DS-05 (paleta y atajos, sección 6). Se apoya en HU-UI-03 (skip link, error, carga).
 
 ## Contexto
 
@@ -56,7 +56,37 @@ subsección (`TabLinks`, enlaces con `aria-current`). Todo sale de `nav.ts` y de
 
 `[` pliega o expande la barra (no se dispara dentro de campos editables ni con
 modificadores). La paleta Ctrl/⌘ K, la ayuda de atajos y el interruptor para apagar los
-atajos de una tecla (WCAG 2.1.4) son de HU-DS-05.
+atajos de una tecla (WCAG 2.1.4) son de HU-DS-05 (sección 6).
+
+### 6. Paleta de comandos y atajos de una tecla (HU-DS-05)
+
+| Atajo | Acción | Se puede apagar |
+|---|---|---|
+| Ctrl/⌘ K | Abre o cierra la paleta, también desde un campo | No (lleva modificador) |
+| `/` | Enfoca el buscador de la página (`input[type="search"]`, `name="q"` o `data-buscador`) | Sí |
+| `[` | Pliega o expande la barra | Sí |
+| `g` + `i` · `a` · `c` · `v` | Resumen · Escalaciones · Conversaciones · Cobranza o Comercio | Sí |
+| `?` | Ayuda de atajos | Sí |
+
+- **Índice de la paleta** (`lib/shell/paleta.ts`, con tests de permisos): secciones de `nav.ts`
+  que el usuario ve, sin los packs apagados del negocio; acciones rápidas (pausar o
+  reactivar el asistente solo con escritura en Configuración, tema, menú, atajos); y
+  registros de `GET /api/v1/search` (ADR-0096 del backend) por el BFF `/api/buscar`, a los
+  250 ms de la última tecla, agrupados por sección. El backend filtra por permisos y negocio.
+- **Filtro propio, no el de `cmdk`:** sin tildes ni mayúsculas, el inicio de palabra gana. Los
+  registros ya vienen filtrados y pueden coincidir por un dato que no se muestra (el teléfono).
+- **Carga diferida:** `cmdk` y la paleta (`next/dynamic`) se descargan al abrirla por primera
+  vez (7 KB comprimidos), no con cada página.
+- **Lector de pantalla:** `cmdk` 1.1.1 no actualiza `aria-activedescendant` al cambiar la
+  consulta; la paleta controla la selección y lo pone a mano tras cada render. Una región
+  `aria-live` dice cuántos resultados hay. El foco vuelve a donde estaba al cerrar.
+- **Acciones con consecuencia:** "Pausar asistente" cierra la paleta, espera a que devuelva el
+  foco y pide confirmación diciendo qué pasa con los clientes.
+- **Las letras de `g`** son las del menú v2 (Inicio, Atención, Conversaciones, Ventas y
+  cobros; HU-UX-02). Hasta que llegue, apuntan a las secciones actuales y la ayuda las nombra
+  como se ven en el menú.
+- **Preferencia:** cookie `panel_atajos=apagados` (un año, `samesite=lax`), leída en el
+  servidor. Es personal y de este navegador: no va en la configuración del negocio.
 
 ## Consecuencias
 
@@ -72,3 +102,7 @@ atajos de una tecla (WCAG 2.1.4) son de HU-DS-05.
 - **Medir el ancho con JS para el modo auto:** salto visible al hidratar.
 - **Solo `localStorage` para la preferencia:** ídem.
 - **`Tooltip` del kit en la barra plegada:** suma un tab stop por ícono.
+- **Filtro de `cmdk` para la paleta:** escondía registros que coinciden por un campo oculto y
+  no ignora tildes.
+- **Preferencia de atajos en el backend:** valdría en todos los dispositivos del usuario, pero
+  pide un endpoint nuevo para una preferencia de un navegador; se revisa si alguien lo pide.

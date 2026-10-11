@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Loader2, Search, X } from "lucide-react";
 
+import { useAtajos } from "@/components/shell/atajos-context";
 import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 
@@ -28,20 +29,23 @@ export function SearchInput({
   className?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+  // Con los atajos de una tecla apagados (HU-DS-05), el atajo del buscador tampoco va.
+  const atajosActivos = useAtajos()?.atajosActivos ?? true;
+  const atajo = atajosActivos ? shortcut : undefined;
 
   useEffect(() => {
-    if (!shortcut) return;
+    if (!atajo) return;
     function alPulsar(e: KeyboardEvent) {
       const destino = e.target as HTMLElement | null;
       const editando = destino?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(destino?.tagName ?? "");
-      if (e.key === shortcut && !editando && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === atajo && !editando && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         ref.current?.focus();
       }
     }
     window.addEventListener("keydown", alPulsar);
     return () => window.removeEventListener("keydown", alPulsar);
-  }, [shortcut]);
+  }, [atajo]);
 
   return (
     <div className={cn("relative flex items-center", className)}>
@@ -80,7 +84,7 @@ export function SearchInput({
             <X className="h-3.5 w-3.5" aria-hidden />
           </button>
         ) : (
-          shortcut && <Kbd keys={[shortcut]} />
+          atajo && <Kbd keys={[atajo]} />
         )}
       </span>
     </div>
