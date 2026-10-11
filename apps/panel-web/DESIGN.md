@@ -40,7 +40,26 @@ y oscuro lado a lado. Una pieza nueva del kit entra al catálogo en el mismo PR.
 | Átomos | `Button` (`loading` conserva el ancho y pone `aria-busy`), `Badge` (con tono de estado trae su ícono y el tipo no deja quitarlo), `Avatar`, `Kbd`, `Skeleton` (estático, `lines`), `Input`/`Select`/`Textarea` (`aria-invalid` pinta el borde de error), `Checkbox`, `RadioGroup`, `Switch`, `Tooltip` |
 | Moléculas | `Field` (une ayuda o error con el control vía `aria-describedby`), `SearchInput` (atajo opcional, Escape limpia), `Breadcrumbs`, `Tabs` (contenido en la misma página) y `TabLinks` (pestañas que cambian de ruta), `DropdownMenu`, `Popover`, `KpiTile` (delta escrito + `polarity`; `StatCard` es alias deprecado), `EmptyState`, `Pagination` |
 | Organismos | `DataTable` (`density`, `maxHeight` con encabezado fijo, `loading`, `error` + `errorAction`, `caption`), `Dialog`, `Confirm`, `Sheet` (panel lateral), `PageHeader` (migas + título + acciones + pestañas) |
+| Gráficos (`components/dataviz`) | `Sparkline` (ranura de `KpiTile`; decorativa o con `label` resumen), `LineChart` (con `area`), `BarChart` (una serie o agrupadas), `ProgressRing` (consumo del plan). Geometría y formato puros en `escalas.ts` (los mismos casos en la app) |
 | Plantillas (`components/templates`) | `ListPage` (cabecera, filtros, contenido), `DetailPage` (cabecera, resumen, contenido), `DashboardPage` (grilla 12/6/1), `SettingsPage` (pestañas, ancho de lectura) |
+
+### Gráficos (HU-DS-06)
+
+SVG propio sobre `d3-scale`/`d3-shape` (ADR-0002, D-SPEC-29-2); nada de Recharts ni ECharts.
+
+- **Un solo eje Y.** La API no tiene segundo eje (`yFormat` y `yDomain` son escalares). Dos
+  medidas de escala distinta van en dos gráficos o indexadas a una base común.
+- **Color por entidad.** Cada serie tiene `key` estable; el color sale de su posición en
+  `series` (orden fijo `data-1…4`, nunca cíclico; desde la 5.ª se suman en «Otros», neutro).
+  `visibleKeys` filtra sin repintar. Una sola serie usa `data-single`. Los estados no son series.
+- **Marcas finas.** Línea de 2 px, área al 10 %, punto de r 4 con anillo de superficie, barras de
+  24 px como máximo con extremo redondeado de 4 px y 2 px de aire; grilla y base de 1 px sólidas
+  (`data-grid`, `data-axis`). El texto (ticks, leyenda, tooltip) va en tokens de texto.
+- **Leyenda** desde 2 series; etiqueta directa solo para el valor final de una serie única.
+- **Accesible:** «Ver tabla» con los mismos datos (`DataTable`), crosshair o barra activa con
+  puntero y con ← → cuando el gráfico tiene el foco, anunciado por `aria-live`. Sin animación
+  de entrada.
+- El filtro de series o período va en la fila de filtros de la página, nunca dentro de la tarjeta.
 
 `cn()` (`lib/utils.ts`) conoce la escala `text-sh-*` y las sombras `shadow-elev-*`: sin eso,
 tailwind-merge las tomaba por colores y las descartaba.
