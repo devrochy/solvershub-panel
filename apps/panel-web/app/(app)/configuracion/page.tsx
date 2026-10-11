@@ -18,7 +18,7 @@ export default async function SettingsPage({
   ]);
   if (!res.ok || !advancedRes.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la configuración: {res.ok ? (advancedRes as { error: string }).error : res.error}
       </p>
     );

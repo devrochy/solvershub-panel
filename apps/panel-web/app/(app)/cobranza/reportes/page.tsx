@@ -32,7 +32,7 @@ export default async function ReportesPage() {
   const res = await apiFetch<Reports>("/pack/cobranza/reports");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los reportes: {res.error}
       </p>
     );

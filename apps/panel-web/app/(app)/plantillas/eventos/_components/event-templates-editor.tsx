@@ -155,7 +155,7 @@ export function EventTemplatesEditor({ initial }: { initial: MessageTemplatesSet
       })}
       <div className="flex items-center justify-end gap-3">
         {incompletos.length > 0 && (
-          <p className="text-sm text-warning">Completa las variables de cada plantilla elegida.</p>
+          <p className="text-sm text-status-warning-fg">Completa las variables de cada plantilla elegida.</p>
         )}
         <Button
           type="button"

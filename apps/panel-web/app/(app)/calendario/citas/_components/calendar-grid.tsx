@@ -113,7 +113,7 @@ export function CalendarGrid({ tipos, timezone }: { tipos: Tipo[]; timezone: str
   return (
     <>
       {error && (
-        <p role="alert" className="text-danger">
+        <p role="alert" className="text-status-danger-fg">
           {error}
         </p>
       )}

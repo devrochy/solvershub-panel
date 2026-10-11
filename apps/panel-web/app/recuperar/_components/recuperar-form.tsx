@@ -11,7 +11,7 @@ import { codigoValido, errorDeContrasenaNueva } from "@/lib/acceso";
 
 type Etapa = "pedir" | "aplicar" | "listo";
 
-const enlace = "font-medium text-accent underline-offset-4 hover:underline";
+const enlace = "font-medium text-link underline-offset-4 hover:underline";
 
 /**
  * Recuperar la contraseña con un código por correo (ADR-0098): primero se pide el código y

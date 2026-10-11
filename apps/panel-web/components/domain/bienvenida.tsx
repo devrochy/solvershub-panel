@@ -47,7 +47,7 @@ export function Bienvenida({
           className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border-soft bg-surface p-5"
         >
           <div className="flex items-start gap-3">
-            <Compass className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+            <Compass className="mt-0.5 h-5 w-5 shrink-0 text-link" aria-hidden />
             <div>
               <h2 id={tituloId} className="font-display text-base font-semibold text-headline">
                 ¿Primera vez aquí?

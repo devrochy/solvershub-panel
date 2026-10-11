@@ -13,7 +13,7 @@ export default async function CobranzaPage() {
   const summaryRes = await apiFetch<Summary>("/pack/cobranza/summary");
   if (!summaryRes.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar Cobranza: {summaryRes.error}
       </p>
     );

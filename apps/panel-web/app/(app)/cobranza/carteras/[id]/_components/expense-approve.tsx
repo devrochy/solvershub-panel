@@ -132,7 +132,7 @@ export function ExpenseRowActions({
         <>
           <Button
             aria-label="Confirmar aprobación"
-            className="text-danger"
+            className="text-status-danger-fg"
             disabled={loading}
             onClick={aprobar}
             size="icon"
@@ -163,7 +163,7 @@ export function ExpenseRowActions({
         </Button>
       )}
       {error && (
-        <span className="text-xs text-danger" role="alert">
+        <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}

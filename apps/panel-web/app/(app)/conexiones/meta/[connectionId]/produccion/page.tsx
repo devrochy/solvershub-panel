@@ -19,7 +19,7 @@ export default async function ProduccionDeConexionPage({
   const res = await apiFetch<ConnectionProduction>(`/admin/meta/connections/${connectionId}/production`);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         {res.status === 404 ? "Conexión no encontrada." : `No se pudo cargar el checklist: ${res.error}`}
       </p>
     );

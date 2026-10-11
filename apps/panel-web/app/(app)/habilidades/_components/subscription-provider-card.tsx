@@ -40,7 +40,7 @@ export function SubscriptionProviderCard({ settings }: { settings: SubscriptionP
       <CardContent className="flex flex-col gap-3 pt-5">
         <div className="flex flex-col gap-1">
           <h2 className="text-sm font-semibold text-headline">Cobro de planes recurrentes</h2>
-          <p role={problema ? "alert" : undefined} className={problema ? "text-sm text-danger" : "text-sm text-body"}>
+          <p role={problema ? "alert" : undefined} className={problema ? "text-sm text-status-danger-fg" : "text-sm text-body"}>
             {textoEstado(settings)}
           </p>
         </div>

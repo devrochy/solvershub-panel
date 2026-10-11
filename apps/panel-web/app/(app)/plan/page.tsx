@@ -24,7 +24,7 @@ export default async function PlanPage() {
   const res = await apiFetch<PlanResponse>("/admin/plan");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el plan: {res.error}
       </p>
     );
@@ -143,7 +143,7 @@ export default async function PlanPage() {
         <h2 className="font-display text-lg font-semibold text-headline">Planes disponibles</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {plans.map((plan) => (
-            <Card key={plan.id} className={plan.current ? "ring-1 ring-accent" : undefined}>
+            <Card key={plan.id} className={plan.current ? "ring-1 ring-focus" : undefined}>
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle>{plan.name}</CardTitle>

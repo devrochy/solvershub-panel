@@ -129,7 +129,7 @@ export function ConnectionActions({
 
           <Separator />
 
-          <p className="text-sm text-danger">Eliminar la conexión es irreversible.</p>
+          <p className="text-sm text-status-danger-fg">Eliminar la conexión es irreversible.</p>
           <Button
             variant="danger"
             size="sm"

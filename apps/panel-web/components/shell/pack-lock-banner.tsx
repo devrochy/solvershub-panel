@@ -31,7 +31,7 @@ export function PackLockBanner({ packs }: { packs: Record<string, PackState> }) 
   if (!pack || pack.enabled) return null;
 
   return (
-    <div role="alert" className="mb-6 rounded-lg border border-warning/40 bg-warning/10 p-4">
+    <div role="alert" className="mb-6 rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-headline">
           El pack {grupo.label} no está habilitado para este negocio.

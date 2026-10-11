@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 
 function IconoDeEstado({ estado }: { estado: PasoPrimerosPasos["estado"] }) {
   // El estado también va en texto (sr-only o la insignia): el color nunca es el único portador.
-  if (estado === "completo") return <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />;
-  if (estado === "en_curso") return <CircleDot className="h-5 w-5 shrink-0 text-warning" aria-hidden />;
+  if (estado === "completo") return <CheckCircle2 className="h-5 w-5 shrink-0 text-status-success-fg" aria-hidden />;
+  if (estado === "en_curso") return <CircleDot className="h-5 w-5 shrink-0 text-status-warning-fg" aria-hidden />;
   return <Circle className="h-5 w-5 shrink-0 text-text-soft" aria-hidden />;
 }
 
@@ -120,7 +120,7 @@ export function PrimerosPasos({
           aria-valuetext={`${datos.completos} de ${datos.total} pasos listos`}
         >
           <div
-            className="h-full rounded-pill bg-accent transition-[width] duration-200"
+            className="h-full rounded-pill bg-focus transition-[width] duration-200"
             style={{ width: `${porcentaje}%` }}
           />
         </div>

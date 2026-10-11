@@ -72,8 +72,8 @@ export function WawebPanel({ initial }: { initial: State }) {
         </p>
 
         {!state.risk_ok ? (
-          <div className="flex flex-col gap-3 rounded-md border border-warning/40 bg-warning/10 p-4">
-            <p className="text-sm text-warning">
+          <div className="flex flex-col gap-3 rounded-md border border-status-warning-border bg-status-warning-bg p-4">
+            <p className="text-sm text-status-warning-fg">
               Antes de generar el QR tienes que aceptar el aviso de riesgo.
             </p>
             <div>

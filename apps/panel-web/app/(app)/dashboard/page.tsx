@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el panel: {res.error}
       </p>
     );

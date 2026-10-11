@@ -49,7 +49,7 @@ export function Tabs({
             className={cn(
               "-mb-px shrink-0 border-b-2 px-4 py-2 text-sm whitespace-nowrap transition-colors duration-150",
               active
-                ? "border-accent text-headline"
+                ? "border-focus text-headline"
                 : "border-transparent text-body hover:text-headline",
             )}
           >

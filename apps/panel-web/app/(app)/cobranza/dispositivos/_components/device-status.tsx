@@ -52,11 +52,11 @@ export function DeviceStatus({ deviceId, estado }: { deviceId: string; estado: s
           title="Bloquear dispositivo"
           variant="ghost"
         >
-          <Ban className="h-4 w-4 text-danger" aria-hidden />
+          <Ban className="h-4 w-4 text-status-danger-fg" aria-hidden />
         </Button>
       )}
       {error && (
-        <span className="text-xs text-danger" role="alert">
+        <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}

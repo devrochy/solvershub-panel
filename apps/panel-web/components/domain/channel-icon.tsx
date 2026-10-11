@@ -14,18 +14,18 @@ import type { LucideIcon } from "lucide-react";
 
 /** Icono por canal/tipo de conexión, en tonos semánticos del tema. */
 const CHANNELS: Record<string, { icon: LucideIcon; tone: string; label: string }> = {
-  whatsapp: { icon: MessageCircle, tone: "text-success", label: "WhatsApp" },
-  whatsapp_cloud: { icon: MessageCircle, tone: "text-success", label: "WhatsApp Cloud" },
-  whatsapp_waweb: { icon: QrCode, tone: "text-success", label: "WhatsApp Web (QR)" },
-  instagram: { icon: Camera, tone: "text-danger", label: "Instagram" },
+  whatsapp: { icon: MessageCircle, tone: "text-status-success-fg", label: "WhatsApp" },
+  whatsapp_cloud: { icon: MessageCircle, tone: "text-status-success-fg", label: "WhatsApp Cloud" },
+  whatsapp_waweb: { icon: QrCode, tone: "text-status-success-fg", label: "WhatsApp Web (QR)" },
+  instagram: { icon: Camera, tone: "text-status-danger-fg", label: "Instagram" },
   messenger: { icon: Send, tone: "text-link", label: "Messenger" },
   facebook: { icon: Send, tone: "text-link", label: "Facebook" },
-  email: { icon: Mail, tone: "text-gold", label: "Correo" },
-  sms: { icon: MessageSquare, tone: "text-accent", label: "SMS" },
-  webchat: { icon: Globe, tone: "text-primary", label: "Chat web" },
-  web: { icon: Globe, tone: "text-primary", label: "Web" },
-  calendar: { icon: Calendar, tone: "text-blue", label: "Calendario" },
-  commerce: { icon: ShoppingCart, tone: "text-warning", label: "Comercio" },
+  email: { icon: Mail, tone: "text-data-2", label: "Correo" },
+  sms: { icon: MessageSquare, tone: "text-link", label: "SMS" },
+  webchat: { icon: Globe, tone: "text-data-4", label: "Chat web" },
+  web: { icon: Globe, tone: "text-data-4", label: "Web" },
+  calendar: { icon: Calendar, tone: "text-data-1", label: "Calendario" },
+  commerce: { icon: ShoppingCart, tone: "text-status-warning-fg", label: "Comercio" },
 };
 
 export function channelMeta(id: string | null | undefined) {

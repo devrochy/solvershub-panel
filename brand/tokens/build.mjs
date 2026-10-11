@@ -150,7 +150,14 @@ writeFileSync(join(ROOT, "tokens.css"), css);
 // v1.4 (SPEC-29): estados con AA, datos, elevación, motion y escala tipográfica.
 // Los tamaños usan el prefijo `sh-` (text-sh-h1…) para no chocar con colores como `text-body`.
 const STATUS = ["success", "warning", "danger", "info"];
-const twLines = ["  /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */"];
+const twLines = [
+  "  /* acción con texto blanco (AA en los dos temas) e indicadores no textuales (foco del tema, >= 3:1) */",
+  "  --color-action: var(--sh-blue-600);",
+  "  --color-danger-strong: var(--sh-status-light-danger);",
+  "  --color-focus: var(--sh-focus);",
+  "",
+  "  /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */",
+];
 for (const s of STATUS) {
   for (const part of ["fg", "bg", "border"]) twLines.push(`  --color-status-${s}-${part}: var(--sh-status-${s}-${part});`);
 }

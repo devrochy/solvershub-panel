@@ -44,11 +44,11 @@ function Paso({
   children: ReactNode;
 }) {
   return (
-    <Card aria-current={activo ? "step" : undefined} className={activo ? "border-accent/50" : undefined}>
+    <Card aria-current={activo ? "step" : undefined} className={activo ? "border-focus" : undefined}>
       <CardHeader>
         <div className="flex items-center gap-2">
           {hecho ? (
-            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+            <CheckCircle2 className="h-4 w-4 text-status-success-fg" aria-hidden />
           ) : (
             <Circle className="h-4 w-4 text-text-soft" aria-hidden />
           )}
@@ -151,13 +151,13 @@ export function PasarAProduccion({ estado }: { estado: PromotionState }) {
       )}
 
       {promovida && (
-        <div role="status" className="rounded-lg border border-success/40 bg-success/10 p-4 text-sm">
+        <div role="status" className="rounded-lg border border-status-success-border bg-status-success-bg p-4 text-sm">
           <p className="font-medium text-headline">La conexión ya está en producción.</p>
           <p className="text-body">Tus clientes ya pueden escribirle a tu número real.</p>
         </div>
       )}
       {bloqueada && (
-        <div role="alert" className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-body">
+        <div role="alert" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-4 text-sm text-body">
           {estado.blocked_reason}
         </div>
       )}

@@ -60,7 +60,7 @@ export function InvitacionesPendientes({ items }: { items: InvitationItem[] }) {
   return (
     <section aria-labelledby={tituloId} className="mb-6 rounded-lg border border-accent/40 bg-accent/12 p-4">
       <h2 id={tituloId} className="flex items-center gap-2 text-sm font-semibold text-headline">
-        <MailOpen className="h-4 w-4 text-accent" aria-hidden />
+        <MailOpen className="h-4 w-4 text-link" aria-hidden />
         {items.length === 1 ? "Tienes una invitación pendiente" : `Tienes ${items.length} invitaciones pendientes`}
       </h2>
       <ul className="mt-3 flex flex-col gap-3">

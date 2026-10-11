@@ -33,7 +33,7 @@ export default async function CalendarHoursPage() {
       />
 
       {!res.ok && (
-        <p role="alert" className="text-danger">
+        <p role="alert" className="text-status-danger-fg">
           No se pudo cargar la configuración de Calendario: {res.error}
         </p>
       )}

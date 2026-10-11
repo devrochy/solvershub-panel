@@ -118,7 +118,7 @@ export function DeleteCategoryButton({ categoryId, label }: { categoryId: string
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-danger" aria-hidden /></Button>
+        <Button aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
       </DialogTrigger>
       <DialogContent title="Eliminar categoría" description={label} className="max-w-md">
         <p className="text-sm text-body">Los productos de esta categoría quedarán sin categoría.</p>

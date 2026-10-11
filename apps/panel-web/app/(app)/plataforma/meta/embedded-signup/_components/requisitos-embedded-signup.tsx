@@ -63,9 +63,9 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
         <CardContent className="flex flex-col gap-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             {revision.ok ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-status-success-fg" aria-hidden />
             ) : revision.expired || revision.pending.length > 0 ? (
-              <CircleAlert className="h-4 w-4 shrink-0 text-danger" aria-hidden />
+              <CircleAlert className="h-4 w-4 shrink-0 text-status-danger-fg" aria-hidden />
             ) : (
               <CircleHelp className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
             )}
@@ -78,7 +78,7 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
               ))}
             </ul>
           )}
-          <Link className="text-xs text-accent underline-offset-2 hover:underline" href="/plataforma/meta">
+          <Link className="text-xs text-link underline-offset-2 hover:underline" href="/plataforma/meta">
             {revision.expired ? "Revisar de nuevo en App de Meta" : "Ver y revisar en App de Meta"}
           </Link>
           {!revision.expired && revision.expires_at && (
@@ -103,7 +103,7 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
                     href={m.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-accent underline-offset-2 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs text-link underline-offset-2 hover:underline"
                   >
                     Abrir en Meta <ExternalLink className="h-3 w-3" aria-hidden />
                   </a>

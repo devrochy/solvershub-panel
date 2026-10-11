@@ -41,17 +41,17 @@ function ToastCard({ item }: { item: ToastItem }) {
         "pointer-events-auto flex items-start gap-3 rounded-lg border p-3 shadow-lg",
         "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
         esError
-          ? "border-danger/40 bg-surface-raised text-headline"
-          : "border-success/40 bg-surface-raised text-headline",
+          ? "border-status-danger-border bg-surface-raised text-headline"
+          : "border-status-success-border bg-surface-raised text-headline",
       )}
       onMouseEnter={() => pauseAutoDismiss(item.id)}
       onMouseLeave={() => resumeAutoDismiss(item.id, item.kind)}
       role={esError ? "alert" : "status"}
     >
       {esError ? (
-        <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+        <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-status-danger-fg" />
       ) : (
-        <CircleCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+        <CircleCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-status-success-fg" />
       )}
       <p className="flex-1 text-sm leading-5">{item.message}</p>
       <button

@@ -9,10 +9,10 @@ const badgeVariants = cva(
     variants: {
       variant: {
         neutral: "bg-hover text-body",
-        success: "bg-success/12 text-success",
-        warning: "bg-warning/12 text-warning",
-        danger: "bg-danger/12 text-danger",
-        accent: "bg-accent/12 text-accent",
+        success: "bg-status-success-bg text-status-success-fg",
+        warning: "bg-status-warning-bg text-status-warning-fg",
+        danger: "bg-status-danger-bg text-status-danger-fg",
+        accent: "bg-accent/12 text-link",
       },
     },
     defaultVariants: { variant: "neutral" },

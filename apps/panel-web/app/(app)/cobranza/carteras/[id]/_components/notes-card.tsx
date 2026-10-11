@@ -86,7 +86,7 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                   <div className="flex items-center gap-1">
                     <Button
                       aria-label="Confirmar eliminación"
-                      className="text-danger"
+                      className="text-status-danger-fg"
                       disabled={status.loading}
                       onClick={() => eliminar(n.id)}
                       size="icon"
@@ -113,7 +113,7 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                     title="Eliminar nota"
                     variant="ghost"
                   >
-                    <Trash2 className="h-4 w-4 text-danger" aria-hidden />
+                    <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
                   </Button>
                 )}
               </li>

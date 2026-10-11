@@ -117,7 +117,7 @@ export function TenantActions({
           <Separator />
 
           <form onSubmit={onPurge} className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-danger">Eliminar negocio (irreversible)</p>
+            <p className="text-sm font-medium text-status-danger-fg">Eliminar negocio (irreversible)</p>
             {!eliminable && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
                 <p className="text-sm text-body">{AVISO_DESACTIVAR_PRIMERO}</p>

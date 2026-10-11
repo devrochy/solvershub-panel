@@ -115,7 +115,15 @@ function ctaPairs() {
   const stops = gradient.match(/#[0-9a-f]{6}/gi) ?? [];
   if (stops.length < 2) throw new Error("gradient.cta sin paradas hex");
   const white = parse(resolve(byPath.get("color.white")));
-  return stops.map((s) => ({ fgName: "white", bgName: `gradient-cta ${s}`, value: ratio(white, parse(s)), min: TEXT }));
+  const cta = stops.map((s) => ({ fgName: "white", bgName: `gradient-cta ${s}`, value: ratio(white, parse(s)), min: TEXT }));
+  // Rellenos de botón con texto blanco en los dos temas (Tailwind: bg-action, bg-danger-strong).
+  const rellenos = ["color.blue.600", "color.status.light.danger", "color.navy.600"].map((ref) => ({
+    fgName: "white",
+    bgName: ref,
+    value: ratio(white, parse(resolve(byPath.get(ref)))),
+    min: TEXT,
+  }));
+  return [...cta, ...rellenos];
 }
 
 const results = [

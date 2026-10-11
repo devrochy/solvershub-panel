@@ -35,6 +35,11 @@
   --color-danger: var(--sh-danger);
 
   /* v1.4 · SPEC-29 (HU-DS-01). Mismo bloque que brand/tokens/dist/tailwind-theme.css. */
+  /* acción con texto blanco (AA en los dos temas) e indicadores no textuales (foco del tema, >= 3:1) */
+  --color-action: var(--sh-blue-600);
+  --color-danger-strong: var(--sh-status-light-danger);
+  --color-focus: var(--sh-focus);
+
   /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */
   --color-status-success-fg: var(--sh-status-success-fg);
   --color-status-success-bg: var(--sh-status-success-bg);
@@ -110,6 +115,12 @@
   --radius-md: var(--sh-radius-md);
   --radius-lg: var(--sh-radius-lg);
   --radius-pill: var(--sh-radius-pill);
+}
+
+/* CTA principal (HU-DS-02): degradado navy-700 → blue-600 con texto blanco >= 5,39:1.
+   El degradado de marca (blue → cyan) queda para acentos sin texto. */
+@utility bg-cta {
+  background-image: var(--sh-gradient-cta);
 }
 
 /* El tema vive en <html data-theme="sh-dark|sh-light"> (lo fija el servidor). */

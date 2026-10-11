@@ -36,7 +36,7 @@ export default async function TenantsPage({
   ]);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         {res.status === 403
           ? "Solo el admin de plataforma puede ver esto."
           : `Error: ${res.error}`}

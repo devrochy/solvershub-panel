@@ -183,7 +183,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
           </form>
 
           {porRegistrar && (
-            <div className="mt-6 rounded-lg border border-warning/40 bg-warning/10 p-4">
+            <div className="mt-6 rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
               <p className="font-medium text-headline">Registra el número con su PIN</p>
               <p className="mb-4 text-sm text-body">
                 Meta todavía no tiene el número {porRegistrar.phoneNumberId} registrado en la Cloud

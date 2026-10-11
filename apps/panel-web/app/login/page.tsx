@@ -17,7 +17,7 @@ export default async function LoginPage() {
       <LoginForm />
       <Link
         href="/recuperar"
-        className="mt-5 inline-block text-sm font-medium text-accent underline-offset-4 hover:underline"
+        className="mt-5 inline-block text-sm font-medium text-link underline-offset-4 hover:underline"
       >
         ¿Olvidaste tu contraseña?
       </Link>

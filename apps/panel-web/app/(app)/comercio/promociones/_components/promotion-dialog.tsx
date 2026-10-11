@@ -314,7 +314,7 @@ export function PromotionDialog({
                     onClick={() => setTiers((previo) => previo.filter((_, i) => i !== indice))}
                     disabled={tiers.length === 1}
                   >
-                    <Trash2 className="h-4 w-4 text-danger" aria-hidden />
+                    <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
                   </Button>
                 </div>
               ))}

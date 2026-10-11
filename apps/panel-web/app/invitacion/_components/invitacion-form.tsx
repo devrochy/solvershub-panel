@@ -103,7 +103,7 @@ export function InvitacionForm() {
         </p>
         <p>
           ¿Ya definiste tu contraseña?{" "}
-          <Link href="/login" className="font-medium text-accent underline-offset-4 hover:underline">
+          <Link href="/login" className="font-medium text-link underline-offset-4 hover:underline">
             Inicia sesión
           </Link>
           .
@@ -141,10 +141,10 @@ export function InvitacionForm() {
       <FormFeedback error={error} />
       {(resultado === "cuenta_existente" || resultado === "enlace_invalido") && (
         <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <Link href="/login" className="font-medium text-accent underline-offset-4 hover:underline">
+          <Link href="/login" className="font-medium text-link underline-offset-4 hover:underline">
             Iniciar sesión
           </Link>
-          <Link href="/recuperar" className="font-medium text-accent underline-offset-4 hover:underline">
+          <Link href="/recuperar" className="font-medium text-link underline-offset-4 hover:underline">
             Recuperar mi contraseña
           </Link>
         </p>

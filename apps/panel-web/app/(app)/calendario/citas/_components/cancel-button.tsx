@@ -34,7 +34,7 @@ export function CancelAppointmentButton({ id }: { id: string }) {
     <div className="flex items-center justify-end gap-1">
       <Button
         aria-label="Cancelar cita"
-        className="text-danger"
+        className="text-status-danger-fg"
         disabled={pending}
         onClick={() => void cancelar()}
         size="sm"

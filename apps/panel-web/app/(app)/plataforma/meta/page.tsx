@@ -17,7 +17,7 @@ export default async function AppDeMetaPage() {
   const res = await apiFetch<PlatformMetaApp>("/admin/platform/meta-app");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         {res.status === 403 ? "Solo el admin de plataforma puede ver esto." : `Error: ${res.error}`}
       </p>
     );
@@ -43,7 +43,7 @@ export default async function AppDeMetaPage() {
             </span>
           </span>
           <Link
-            className="inline-flex items-center gap-1 text-sm text-accent underline-offset-2 hover:underline"
+            className="inline-flex items-center gap-1 text-sm text-link underline-offset-2 hover:underline"
             href="/plataforma/meta/embedded-signup"
           >
             Ver requisitos <ArrowRight className="h-4 w-4" aria-hidden />

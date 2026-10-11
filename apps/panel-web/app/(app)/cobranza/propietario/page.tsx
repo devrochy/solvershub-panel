@@ -28,7 +28,7 @@ export default async function PropietarioPage() {
   const res = await apiFetch<OwnerThread>("/pack/cobranza/owner-thread");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el hilo con el propietario: {res.error}
       </p>
     );
@@ -61,7 +61,7 @@ export default async function PropietarioPage() {
             {mensajes.map((m) => (
               <Card
                 key={m.id}
-                className={m.direccion === "saliente" ? "border-l-4 border-l-accent" : "border-l-4 border-l-border-soft"}
+                className={m.direccion === "saliente" ? "border-l-4 border-l-focus" : "border-l-4 border-l-border-soft"}
               >
                 <div className="flex flex-wrap items-center gap-2 pb-2">
                   <Badge variant={m.direccion === "saliente" ? "accent" : "neutral"}>{m.direccion}</Badge>

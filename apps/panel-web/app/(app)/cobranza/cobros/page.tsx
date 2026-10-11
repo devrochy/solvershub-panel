@@ -31,7 +31,7 @@ export default async function CobrosPage() {
   const res = await apiFetch<OwnerCharges>("/pack/cobranza/owner-charges");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los cobros: {res.error}
       </p>
     );

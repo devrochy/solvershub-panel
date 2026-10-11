@@ -34,7 +34,7 @@ export default async function MetaHealthPage() {
 
   if (!healthRes.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la salud de Meta: {healthRes.error}
       </p>
     );
@@ -81,7 +81,7 @@ export default async function MetaHealthPage() {
       key: "error",
       header: "Último error",
       cell: (s) => (
-        <span className="block max-w-xs truncate text-xs text-danger">{s.last_error ?? "—"}</span>
+        <span className="block max-w-xs truncate text-xs text-status-danger-fg">{s.last_error ?? "—"}</span>
       ),
     },
     {
