@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Bell, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { BarChart, LineChart, ProgressRing, Sparkline, resumenSerie, type ChartDatum, type ChartSeries } from "@/components/dataviz";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -50,6 +51,33 @@ const COLUMNAS: Column<Fila>[] = [
   { key: "saldo", header: "Saldo", cell: (f) => f.saldo, align: "right", info: "Saldo pendiente con intereses." },
 ];
 
+// Datos de prueba de los gráficos (HU-DS-06): 14 días de conversaciones por canal.
+const CANALES: ChartSeries[] = [
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "web", label: "Chat web" },
+  { key: "instagram", label: "Instagram" },
+];
+const BASE = [
+  [118, 42, 20], [132, 47, 18], [127, 51, 25], [141, 49, 27], [156, 58, 24], [98, 33, 15], [84, 29, 12],
+  [137, 52, 28], [149, 55, 31], [162, 61, 29], [158, 64, 34], [171, 66, 33], [112, 40, 21], [95, 35, 17],
+];
+const CONVERSACIONES: ChartDatum[] = BASE.map(([whatsapp, web, instagram], i) => ({
+  x: new Date(Date.UTC(2026, 8, 28 + i)).toISOString().slice(0, 10),
+  values: { whatsapp, web, instagram },
+}));
+const TOTAL: ChartDatum[] = CONVERSACIONES.map((d) => ({
+  x: d.x,
+  values: { total: (d.values.whatsapp ?? 0) + (d.values.web ?? 0) + (d.values.instagram ?? 0) },
+}));
+const RECAUDO: ChartDatum[] = [
+  { x: "Lun", values: { recaudo: 1_850_000, meta: 2_000_000 } },
+  { x: "Mar", values: { recaudo: 2_240_000, meta: 2_000_000 } },
+  { x: "Mié", values: { recaudo: 1_420_000, meta: 2_000_000 } },
+  { x: "Jue", values: { recaudo: 2_610_000, meta: 2_500_000 } },
+  { x: "Vie", values: { recaudo: 3_080_000, meta: 2_500_000 } },
+];
+const SPARK = TOTAL.slice(-7).map((d) => d.values.total ?? null);
+
 /** Una sección del catálogo, repetida en claro y en oscuro lado a lado. */
 function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; children: ReactNode }) {
   return (
@@ -76,11 +104,25 @@ function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; ch
   );
 }
 
+/** Tarjeta de demostración: título, período y el gráfico (el `ChartCard` real es de HU-DS-07). */
+function TarjetaDeGrafico({ titulo, periodo, children }: { titulo: string; periodo: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-5">
+      <div>
+        <h3 className="font-display text-sh-block text-headline">{titulo}</h3>
+        <p className="text-sh-caption text-text-soft">{periodo}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
   const [busqueda, setBusqueda] = useState("");
   const [pestana, setPestana] = useState("identidad");
+  const [canales, setCanales] = useState<string[]>(CANALES.map((c) => c.key));
 
   return (
     <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-4 py-8 md:px-6">
@@ -173,6 +215,85 @@ export function Catalogo() {
           />
           <KpiTile label="Recaudo de hoy" loading />
           <KpiTile label="Consumo del plan" error="No se pudo calcular el consumo." />
+        </div>
+      </Seccion>
+
+      <Seccion
+        titulo="Gráficos"
+        nota="SVG propio con colores data-* de orden fijo, un solo eje Y, crosshair con flechas y «Ver tabla». Filtra un canal: los otros conservan su color."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <KpiTile
+            label="Conversaciones (7 días)"
+            value="1.284"
+            delta={{ value: 12, versus: "los 7 días anteriores" }}
+            sparkline={<Sparkline values={SPARK} />}
+          />
+          <KpiTile
+            label="Escalaciones (7 días)"
+            value="31"
+            delta={{ value: -8, versus: "los 7 días anteriores" }}
+            polarity="up-bad"
+            sparkline={<Sparkline values={[9, 7, 8, 5, 4, 6, 3]} area />}
+          />
+        </div>
+        {/* Filtro de la página, arriba de lo que afecta (nunca dentro de la tarjeta del gráfico). */}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Canales visibles">
+          {CANALES.map((c) => {
+            const activo = canales.includes(c.key);
+            return (
+              <Button
+                key={c.key}
+                size="sm"
+                variant="outline"
+                aria-pressed={activo}
+                className={activo ? "bg-hover" : "text-text-soft"}
+                onClick={() =>
+                  setCanales((v) => (activo ? (v.length > 1 ? v.filter((k) => k !== c.key) : v) : [...v, c.key]))
+                }
+              >
+                {c.label}
+              </Button>
+            );
+          })}
+        </div>
+        <TarjetaDeGrafico titulo="Conversaciones por canal" periodo="Últimos 14 días">
+          <LineChart title="Conversaciones por canal" series={CANALES} data={CONVERSACIONES} visibleKeys={canales} />
+        </TarjetaDeGrafico>
+        <TarjetaDeGrafico titulo="Tendencia de atención" periodo="Últimos 14 días · una serie con área">
+          <LineChart title="Conversaciones totales" series={[{ key: "total", label: "Conversaciones" }]} data={TOTAL} area height={200} />
+        </TarjetaDeGrafico>
+        <TarjetaDeGrafico titulo="Recaudo vs meta" periodo="Esta semana">
+          <BarChart
+            title="Recaudo vs meta por día"
+            series={[
+              { key: "recaudo", label: "Recaudo" },
+              { key: "meta", label: "Meta" },
+            ]}
+            data={RECAUDO}
+            yFormat="currency"
+            xHeader="Día"
+          />
+        </TarjetaDeGrafico>
+        <TarjetaDeGrafico titulo="Recaudo por día" periodo="Esta semana · una serie">
+          <BarChart
+            title="Recaudo por día"
+            series={[{ key: "recaudo", label: "Recaudo" }]}
+            data={RECAUDO}
+            yFormat="currency"
+            xHeader="Día"
+            height={200}
+          />
+        </TarjetaDeGrafico>
+        <div className="flex flex-wrap items-start gap-6 rounded-lg border border-border-soft bg-surface p-5">
+          <ProgressRing label="Conversaciones del plan" value={900} max={2000} caption="900 de 2.000" />
+          <ProgressRing label="Mensajes de plantilla" value={1700} max={2000} caption="1.700 de 2.000 · aviso" />
+          <ProgressRing label="Colaboradores" value={7} max={6} caption="7 de 6 · excedido" />
+          <ProgressRing label="Consumo del mes" value={62} size={96} caption="Tamaño grande" />
+          <div className="flex min-w-40 flex-1 flex-col gap-1">
+            <p className="text-sh-caption text-body">Sparkline sola (se anuncia con su resumen)</p>
+            <Sparkline values={SPARK} label={`Conversaciones de la semana: ${resumenSerie(SPARK)}`} height={40} />
+          </div>
         </div>
       </Seccion>
 
