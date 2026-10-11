@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 
+import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanResponse, PlatformTenant } from "@/lib/api/types";
+import { AVISO_DESACTIVAR_PRIMERO, sePuedeEliminar } from "@/lib/eliminar-negocio";
 
 /** Ciclo de vida y plan de un negocio (master). */
 export function TenantActions({
@@ -24,6 +26,8 @@ export function TenantActions({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const activo = tenant.status === "active";
+  const eliminable = sePuedeEliminar(tenant.status);
 
   async function run(action: string, payload: Record<string, unknown> = {}) {
     setStatus({ loading: true });
@@ -72,15 +76,16 @@ export function TenantActions({
         <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto pr-1">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-body">
-              Estado: <span className="text-headline">{tenant.status}</span>
+              Estado:{" "}
+              <span className="text-headline">{TENANT_STATUS[tenant.status]?.label ?? tenant.status}</span>
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void run(tenant.status === "active" ? "deactivate" : "activate")}
+              onClick={() => void run(activo ? "deactivate" : "activate")}
               disabled={status.loading}
             >
-              {tenant.status === "active" ? "Suspender" : "Activar"}
+              {activo ? "Desactivar" : "Activar"}
             </Button>
           </div>
 
@@ -113,6 +118,22 @@ export function TenantActions({
 
           <form onSubmit={onPurge} className="flex flex-col gap-3">
             <p className="text-sm font-medium text-danger">Eliminar negocio (irreversible)</p>
+            {!eliminable && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
+                <p className="text-sm text-body">{AVISO_DESACTIVAR_PRIMERO}</p>
+                {activo && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void run("deactivate")}
+                    disabled={status.loading}
+                  >
+                    Desactivar
+                  </Button>
+                )}
+              </div>
+            )}
             <Field
               label="Escribe la frase de confirmación"
               htmlFor={`purge-${tenant.id}`}
@@ -123,10 +144,11 @@ export function TenantActions({
                 name="confirm_phrase"
                 placeholder={`ELIMINAR ${tenant.slug}`}
                 autoComplete="off"
+                disabled={!eliminable}
               />
             </Field>
             <div>
-              <Button type="submit" variant="danger" size="sm" disabled={status.loading}>
+              <Button type="submit" variant="danger" size="sm" disabled={status.loading || !eliminable}>
                 Eliminar definitivamente
               </Button>
             </div>
