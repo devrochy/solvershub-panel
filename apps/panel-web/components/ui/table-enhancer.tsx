@@ -125,6 +125,7 @@ export function TableEnhancer({ pageSize = 20 }: { pageSize?: number }) {
         <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-soft" aria-hidden />
         <Input
           aria-label="Buscar en la tabla"
+          data-buscador
           className="h-9 w-64 pl-9"
           onChange={(e) => {
             setQuery(e.target.value);

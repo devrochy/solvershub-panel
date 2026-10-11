@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 
+import { BotonBuscar } from "@/components/shell/boton-buscar";
 import { EstadoAsistente } from "@/components/shell/estado-asistente";
 import { LogoutButton } from "@/components/shell/logout-button";
 import { TenantSwitcher } from "@/components/shell/tenant-switcher";
@@ -30,6 +31,7 @@ export async function Topbar({
           <TenantSwitcher current={me.tenant} count={me.tenant_count} />
         </div>
         <div className="flex shrink-0 items-center gap-2 md:gap-3">
+          <BotonBuscar />
           <EstadoAsistente pausado={asistentePausado} puedeReactivar={puedeReactivar} className="hidden md:flex" />
           <span className="hidden text-sm text-body sm:inline">{me.username ?? me.email}</span>
           <ThemeToggle initialTheme={theme} />

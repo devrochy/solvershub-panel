@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useEffectEvent, useState, useSyncExternalStore } from "react";
 import { ArrowUpRight, ChevronRight, Lock, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 
+import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-context";
 import { EnablePackButton } from "@/components/shell/enable-pack-button";
 import { DEFAULT_COLLAPSED_GROUPS, type NavGroupDef, type NavItem } from "@/components/shell/nav";
 import {
@@ -18,6 +19,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { Marca } from "@/components/ui/marca";
 import type { Me } from "@/lib/api/types";
 import { gruposVisibles, itemActivo } from "@/lib/shell/navegacion";
+import { esCampoEditable } from "@/lib/shell/paleta";
 import { cookieModoSidebar, type ModoSidebar } from "@/lib/shell/preferencias";
 import { cn } from "@/lib/utils";
 
@@ -228,20 +230,25 @@ export function Sidebar({
     setModo(siguiente);
   }
 
-  // Atajo `[` (no en el cajón móvil ni mientras se escribe en un campo). El listener se
-  // registra una sola vez; `useEffectEvent` le da siempre el estado actual.
+  // Atajo `[` (no en el cajón móvil, ni mientras se escribe, ni con los atajos de una
+  // tecla apagados, HU-DS-05) y la acción "Plegar o expandir el menú" de la paleta. Los
+  // listeners se registran una sola vez; `useEffectEvent` les da siempre el estado actual.
+  const atajosActivos = useAtajos()?.atajosActivos ?? true;
   const alPulsar = useEffectEvent((e: KeyboardEvent) => {
-    const destino = e.target as HTMLElement | null;
-    const editando = destino?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(destino?.tagName ?? "");
-    if (e.key === "[" && !editando && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (e.key === "[" && atajosActivos && !esCampoEditable(e.target) && !e.metaKey && !e.ctrlKey && !e.altKey) {
       e.preventDefault();
       alternar();
     }
   });
+  const alPedirlo = useEffectEvent(() => alternar());
   useEffect(() => {
     if (esMovil) return;
     window.addEventListener("keydown", alPulsar);
-    return () => window.removeEventListener("keydown", alPulsar);
+    window.addEventListener(EVENTO_ALTERNAR_MENU, alPedirlo);
+    return () => {
+      window.removeEventListener("keydown", alPulsar);
+      window.removeEventListener(EVENTO_ALTERNAR_MENU, alPedirlo);
+    };
   }, [esMovil]);
 
   function toggle(id: string) {

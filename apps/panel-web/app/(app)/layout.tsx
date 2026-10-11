@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
+import { AtajosProvider } from "@/components/shell/atajos";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { PackLockBanner } from "@/components/shell/pack-lock-banner";
 import { ShellProvider } from "@/components/shell/shell-context";
@@ -12,7 +13,7 @@ import { FeedbackProviders } from "@/components/ui/providers";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, PendingInvitations, PluginSummary, SettingsResponse } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
-import { SIDEBAR_COOKIE, leerModoSidebar } from "@/lib/shell/preferencias";
+import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const [res, packsRes] = await Promise.all([
@@ -39,39 +40,49 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ]),
   );
 
-  // Preferencia de la barra lateral (HU-DS-04): la lee el servidor, sin salto al cargar.
-  const modoSidebar = leerModoSidebar((await cookies()).get(SIDEBAR_COOKIE)?.value);
+  // Preferencias del shell en cookies (HU-DS-04 y HU-DS-05): las lee el servidor, sin salto al cargar.
+  const store = await cookies();
+  const modoSidebar = leerModoSidebar(store.get(SIDEBAR_COOKIE)?.value);
+  const atajosActivos = leerAtajosActivos(store.get(ATAJOS_COOKIE)?.value);
+  const puedeEditar = puedeEditarAsistente(me.permissions);
 
   return (
-    <ShellProvider permisos={me.permissions}>
+    <ShellProvider
+      permisos={me.permissions}
+      packs={packs}
+      asistentePausado={asistentePausado}
+      puedeEditarAsistente={puedeEditar}
+    >
       <FeedbackProviders>
-        {/* Salto al contenido (HU-UI-03): primer elemento enfocable de cada página. */}
-        <a
-          href="#contenido"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-headline focus:shadow-elev-2"
-        >
-          Saltar al contenido
-        </a>
-        <div className="flex min-h-screen">
-          {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-          <Sidebar me={me} packs={packs} modo={modoSidebar} className="sticky top-0 hidden h-screen md:flex" />
-          {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
-          <div className="flex min-w-0 flex-1 flex-col">
-            <Topbar
-              me={me}
-              menu={<MobileNav me={me} packs={packs} />}
-              asistentePausado={asistentePausado}
-              puedeReactivar={puedeEditarAsistente(me.permissions)}
-            />
-            <main id="contenido" tabIndex={-1} className="flex-1 px-4 py-6 focus:outline-none md:px-6 md:py-8">
-              <div className="mx-auto w-full max-w-[1200px]">
-                {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
-                <PackLockBanner packs={packs} />
-                {children}
-              </div>
-            </main>
+        <AtajosProvider atajosActivosIniciales={atajosActivos}>
+          {/* Salto al contenido (HU-UI-03): primer elemento enfocable de cada página. */}
+          <a
+            href="#contenido"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-headline focus:shadow-elev-2"
+          >
+            Saltar al contenido
+          </a>
+          <div className="flex min-h-screen">
+            {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
+            <Sidebar me={me} packs={packs} modo={modoSidebar} className="sticky top-0 hidden h-screen md:flex" />
+            {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Topbar
+                me={me}
+                menu={<MobileNav me={me} packs={packs} />}
+                asistentePausado={asistentePausado}
+                puedeReactivar={puedeEditar}
+              />
+              <main id="contenido" tabIndex={-1} className="flex-1 px-4 py-6 focus:outline-none md:px-6 md:py-8">
+                <div className="mx-auto w-full max-w-[1200px]">
+                  {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
+                  <PackLockBanner packs={packs} />
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
+        </AtajosProvider>
       </FeedbackProviders>
     </ShellProvider>
   );

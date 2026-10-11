@@ -72,7 +72,13 @@ tailwind-merge las tomaba por colores y las descartaba.
 - Cada sección de un pack necesita un ícono propio (la barra plegada se lee por íconos).
 - Migas y pestañas de sección salen solas del `PageHeader` (desde `nav.ts` y los
   permisos). En un detalle, el título de la página es el último nivel de las migas.
-- Topbar `h-16`.
+- Topbar `h-16`, con el botón «Buscar…» que abre la paleta (solo ícono debajo de 1024 px).
+- Paleta de comandos y atajos (HU-DS-05, ADR-0003): Ctrl/⌘ K abre la paleta (secciones
+  permitidas, acciones rápidas y registros de `GET /search`). Los atajos de una tecla (`/`,
+  `[`, `?`, `g` + letra) no se disparan en campos ni diálogos y se apagan en la ayuda (`?`),
+  en la paleta o en Configuración → Accesibilidad (cookie `panel_atajos`). Una página que
+  quiera que `/` enfoque su buscador usa `input[type="search"]`, `name="q"` o `data-buscador`.
+  Una acción que afecte a clientes pide confirmación con su consecuencia.
 - Ritmo vertical entre bloques: 24 px (`gap-6`); dentro de tarjetas, 20 px.
 - Una sola `PageHeader` por página (es el único `h1`).
 

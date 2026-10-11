@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
+import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";
 
 /** Cambia el tema sin recargar: actualiza data-theme y persiste en cookie. */
@@ -15,6 +16,13 @@ export function ThemeToggle({ initialTheme }: { initialTheme: ThemeName }) {
     document.documentElement.dataset.theme = next;
     document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
   }
+
+  // La paleta de comandos (HU-DS-05) también cambia el tema.
+  const alPedirlo = useEffectEvent(onToggle);
+  useEffect(() => {
+    window.addEventListener(EVENTO_CAMBIAR_TEMA, alPedirlo);
+    return () => window.removeEventListener(EVENTO_CAMBIAR_TEMA, alPedirlo);
+  }, []);
 
   return (
     <button
