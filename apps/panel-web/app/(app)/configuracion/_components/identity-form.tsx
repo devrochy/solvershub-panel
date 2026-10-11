@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { IdentitySettings } from "@/lib/api/types";
+import { cuerpoIdentidad } from "@/lib/asistente";
 import { formatList, parseList } from "@/lib/format";
 
 const TONOS = ["calido", "formal", "divertido"];
@@ -89,7 +90,7 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       // Una sola zona en la UI: el horario de atención usa la del negocio.
-      body: JSON.stringify({ ...values, business_tz: values.timezone }),
+      body: JSON.stringify(cuerpoIdentidad(values, identity)),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {

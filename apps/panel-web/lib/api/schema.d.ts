@@ -738,6 +738,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/{connection_id}/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Connection Agents */
+        get: operations["list_connection_agents_api_v1_admin_connections__connection_id__agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/catalog": {
         parameters: {
             query?: never;
@@ -2247,6 +2264,30 @@ export interface paths {
         get?: never;
         /** Save Identity */
         put: operations["save_identity_api_v1_admin_settings_identity_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/bot-paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Bot Paused
+         * @description Pausa o reactiva el asistente del negocio (kill-switch por tenant).
+         *
+         *     Fija el valor pedido (repetirlo no cambia nada) y solo escribe
+         *     `app_settings.bot_paused`: a diferencia de `PUT .../identity`, no reenvía la
+         *     identidad completa, así que no pisa lo que otra persona esté editando.
+         */
+        put: operations["save_bot_paused_api_v1_admin_settings_bot_paused_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -5739,11 +5780,8 @@ export interface components {
              * @default []
              */
             persona_forbidden: string[];
-            /**
-             * Bot Paused
-             * @default false
-             */
-            bot_paused: boolean;
+            /** Bot Paused */
+            bot_paused?: boolean | null;
             /**
              * Business Tz
              * @default
@@ -9077,6 +9115,46 @@ export interface components {
             /** Created */
             created: boolean;
         };
+        /** ConnectionAgentInstance */
+        ConnectionAgentInstance: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "core" | "specialist" | "backoffice";
+            /** Is Default */
+            is_default: boolean;
+            /** Priority */
+            priority: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Latest Version */
+            latest_version: number | null;
+        };
+        /** BotPausedState */
+        BotPausedState: {
+            /** Paused */
+            paused: boolean;
+        };
+        /** BotPausedUpdate */
+        BotPausedUpdate: {
+            /** Paused */
+            paused: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -10590,6 +10668,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConnectionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_connection_agents_api_v1_admin_connections__connection_id__agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionAgentInstance"][];
                 };
             };
             /** @description Validation Error */
@@ -13387,6 +13498,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdentitySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_bot_paused_api_v1_admin_settings_bot_paused_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BotPausedUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotPausedState"];
                 };
             };
             /** @description Validation Error */

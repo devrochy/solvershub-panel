@@ -1,19 +1,17 @@
-import type { SettingsResponse } from "@/lib/api/types";
+import type { IdentitySettings } from "@/lib/api/types";
 
 /**
- * Cuerpo de `PUT /admin/settings/identity` que solo cambia `bot_paused` (HU-UI-03).
- *
- * El backend reescribe **todos** los campos de identidad con lo que recibe (lo que falta
- * vuelve a su valor por defecto), así que pausar o reactivar desde la barra superior
- * reenvía la identidad completa que acaba de leer y cambia únicamente `bot_paused`.
- * Los campos de solo lectura de la respuesta (`available_guardrails`,
- * `brand_voice_warning`) no se reenvían.
+ * Cuerpo de `PUT /admin/settings/identity`. `bot_paused` solo viaja si el usuario movió el
+ * interruptor: si no, el backend lo deja como está y guardar no deshace una pausa hecha
+ * desde la barra superior mientras el formulario estaba abierto.
  */
-export function identidadConPausa(identity: SettingsResponse["identity"], pausado: boolean) {
-  const editable: Partial<SettingsResponse["identity"]> = { ...identity, bot_paused: pausado };
-  delete editable.available_guardrails;
-  delete editable.brand_voice_warning;
-  return editable;
+export function cuerpoIdentidad(values: IdentitySettings, inicial: IdentitySettings) {
+  const { bot_paused, ...resto } = values;
+  return {
+    ...resto,
+    business_tz: values.timezone,
+    ...(bot_paused !== inicial.bot_paused ? { bot_paused } : {}),
+  };
 }
 
 /** El usuario puede pausar o reactivar el asistente si escribe en Configuración. */

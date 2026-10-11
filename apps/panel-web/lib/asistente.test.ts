@@ -1,23 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { identidadConPausa, puedeEditarAsistente } from "./asistente";
+import { cuerpoIdentidad, puedeEditarAsistente } from "./asistente";
 import { ajustes } from "./testing/fixtures";
 
-describe("identidadConPausa", () => {
-  it("cambia solo bot_paused y conserva el resto de la identidad", () => {
-    const pausada = { ...ajustes.identity, bot_paused: true, assistant_name: "Sofía" };
-    const cuerpo = identidadConPausa(pausada, false);
+describe("cuerpoIdentidad", () => {
+  it("no manda bot_paused si el usuario no movió el interruptor", () => {
+    const inicial = { ...ajustes.identity, bot_paused: false };
+    const cuerpo = cuerpoIdentidad({ ...inicial, assistant_name: "Sofía" }, inicial);
 
-    expect(cuerpo.bot_paused).toBe(false);
+    expect(cuerpo).not.toHaveProperty("bot_paused");
     expect(cuerpo.assistant_name).toBe("Sofía");
-    expect(cuerpo.business_description).toBe(pausada.business_description);
-    expect(cuerpo.persona_forbidden).toEqual(pausada.persona_forbidden);
   });
 
-  it("no reenvía los campos de solo lectura", () => {
-    const cuerpo = identidadConPausa(ajustes.identity, true);
-    expect(cuerpo).not.toHaveProperty("available_guardrails");
-    expect(cuerpo).not.toHaveProperty("brand_voice_warning");
+  it("manda bot_paused cuando el usuario lo cambió", () => {
+    const inicial = { ...ajustes.identity, bot_paused: false };
+    expect(cuerpoIdentidad({ ...inicial, bot_paused: true }, inicial)).toMatchObject({ bot_paused: true });
+  });
+
+  it("usa la zona del negocio para el horario de atención", () => {
+    const inicial = { ...ajustes.identity, timezone: "America/Lima", business_tz: "" };
+    expect(cuerpoIdentidad(inicial, inicial).business_tz).toBe("America/Lima");
   });
 });
 
