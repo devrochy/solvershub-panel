@@ -1,5 +1,5 @@
 /* SolversHub — Design Tokens (GENERADO por build.mjs — NO EDITAR A MANO)
- * Fuente: tokens.json · v1.3 · SolversHub (Roshi)
+ * Fuente: tokens.json · v1.4 · SolversHub (Roshi)
  * Tema oscuro por defecto: usar .sh-dark / [data-theme="sh-dark"] en un ancestro. */
 :root {
   /* color */
@@ -30,8 +30,33 @@
   --sh-success: #22A06B;
   --sh-warning: #E0A106;
   --sh-danger: #D64545;
+  --sh-status-light-success: #17784F;
+  --sh-status-light-warning: #8A6100;
+  --sh-status-light-danger: #B42E2E;
+  --sh-status-light-info: #2058D6;
+  --sh-status-dark-success: #2FBF7F;
+  --sh-status-dark-danger: #F28B82;
+  --sh-data-light-1: #2560E6;
+  --sh-data-light-2: #B8860B;
+  --sh-data-light-3: #0E9DB5;
+  --sh-data-light-4: #7B4FD6;
+  --sh-data-light-seq-1: #52C2D5;
+  --sh-data-light-seq-2: #2AA9BF;
+  --sh-data-light-seq-3: #13929F;
+  --sh-data-light-seq-4: #0E7585;
+  --sh-data-light-seq-5: #0A5866;
+  --sh-data-dark-1: #4F7FF5;
+  --sh-data-dark-2: #A8851A;
+  --sh-data-dark-3: #139AAF;
+  --sh-data-dark-4: #8E6CE8;
+  --sh-data-dark-seq-1: #13798A;
+  --sh-data-dark-seq-2: #1A9BB0;
+  --sh-data-dark-seq-3: #3DBCD0;
+  --sh-data-dark-seq-4: #73D3E2;
+  --sh-data-dark-seq-5: #AEE7F0;
   /* gradient */
   --sh-gradient-brand: linear-gradient(135deg, #2F6BFF 0%, #22C7E0 100%);
+  --sh-gradient-cta: linear-gradient(135deg, #172F6C 0%, #2560E6 100%);
   /* font */
   --sh-font-display: Montserrat, 'Century Gothic', 'Didact Gothic', system-ui, sans-serif;
   --sh-font-body: Inter, 'Segoe UI', system-ui, sans-serif;
@@ -50,6 +75,58 @@
   --sh-space-8: 32px;
   --sh-space-12: 48px;
   --sh-space-16: 64px;
+  /* density */
+  --sh-density-row-comfortable: 48px;
+  --sh-density-row-compact: 40px;
+  --sh-density-control-md: 40px;
+  --sh-density-control-lg: 48px;
+  /* motion */
+  --sh-motion-duration-instant: 100ms;
+  --sh-motion-duration-fast: 150ms;
+  --sh-motion-duration-base: 200ms;
+  --sh-motion-duration-slow: 250ms;
+  --sh-motion-easing-out: cubic-bezier(0.2, 0, 0, 1);
+  --sh-motion-easing-in: cubic-bezier(0.3, 0, 1, 1);
+  --sh-motion-easing-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  /* breakpoint */
+  --sh-breakpoint-sm: 640px;
+  --sh-breakpoint-md: 768px;
+  --sh-breakpoint-lg: 1024px;
+  --sh-breakpoint-xl: 1280px;
+  --sh-breakpoint-2xl: 1536px;
+  /* type (web) */
+  --sh-type-hero-font-family: Montserrat, 'Century Gothic', 'Didact Gothic', system-ui, sans-serif;
+  --sh-type-hero-font-size: 30px;
+  --sh-type-hero-line-height: 36px;
+  --sh-type-hero-font-weight: 700;
+  --sh-type-h1-font-family: Montserrat, 'Century Gothic', 'Didact Gothic', system-ui, sans-serif;
+  --sh-type-h1-font-size: 24px;
+  --sh-type-h1-line-height: 32px;
+  --sh-type-h1-font-weight: 600;
+  --sh-type-block-font-family: Montserrat, 'Century Gothic', 'Didact Gothic', system-ui, sans-serif;
+  --sh-type-block-font-size: 17px;
+  --sh-type-block-line-height: 24px;
+  --sh-type-block-font-weight: 600;
+  --sh-type-body-font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --sh-type-body-font-size: 15px;
+  --sh-type-body-line-height: 24px;
+  --sh-type-body-font-weight: 400;
+  --sh-type-dense-font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --sh-type-dense-font-size: 14px;
+  --sh-type-dense-line-height: 20px;
+  --sh-type-dense-font-weight: 400;
+  --sh-type-label-font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --sh-type-label-font-size: 13px;
+  --sh-type-label-line-height: 18px;
+  --sh-type-label-font-weight: 500;
+  --sh-type-caption-font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --sh-type-caption-font-size: 12px;
+  --sh-type-caption-line-height: 16px;
+  --sh-type-caption-font-weight: 400;
+  --sh-type-mono-font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --sh-type-mono-font-size: 13px;
+  --sh-type-mono-line-height: 18px;
+  --sh-type-mono-font-weight: 400;
   /* alias */
   --sh-gradient: var(--sh-gradient-brand);
 }
@@ -72,6 +149,34 @@
   --sh-focus: #22C7E0;
   --sh-hover: rgba(201, 210, 227, 0.06);
   --sh-overlay: rgba(8, 15, 34, 0.72);
+  --sh-status-success-fg: #2FBF7F;
+  --sh-status-success-bg: rgba(34, 160, 107, 0.12);
+  --sh-status-success-border: rgba(34, 160, 107, 0.32);
+  --sh-status-warning-fg: #E0A106;
+  --sh-status-warning-bg: rgba(224, 161, 6, 0.12);
+  --sh-status-warning-border: rgba(224, 161, 6, 0.32);
+  --sh-status-danger-fg: #F28B82;
+  --sh-status-danger-bg: rgba(214, 69, 69, 0.12);
+  --sh-status-danger-border: rgba(214, 69, 69, 0.32);
+  --sh-status-info-fg: #22C7E0;
+  --sh-status-info-bg: rgba(34, 199, 224, 0.12);
+  --sh-status-info-border: rgba(34, 199, 224, 0.32);
+  --sh-data-cat-1: #4F7FF5;
+  --sh-data-cat-2: #A8851A;
+  --sh-data-cat-3: #139AAF;
+  --sh-data-cat-4: #8E6CE8;
+  --sh-data-single: #22C7E0;
+  --sh-data-seq-1: #13798A;
+  --sh-data-seq-2: #1A9BB0;
+  --sh-data-seq-3: #3DBCD0;
+  --sh-data-seq-4: #73D3E2;
+  --sh-data-seq-5: #AEE7F0;
+  --sh-data-grid: rgba(201, 210, 227, 0.10);
+  --sh-data-axis: #8695B0;
+  --sh-elev-0: none;
+  --sh-elev-1: none;
+  --sh-elev-2: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --sh-elev-3: 0 16px 48px rgba(0, 0, 0, 0.40);
 }
 
 [data-theme="sh-light"], .sh-light {
@@ -92,4 +197,32 @@
   --sh-focus: #2560E6;
   --sh-hover: #F1F5FA;
   --sh-overlay: rgba(11, 23, 51, 0.48);
+  --sh-status-success-fg: #17784F;
+  --sh-status-success-bg: rgba(34, 160, 107, 0.12);
+  --sh-status-success-border: rgba(34, 160, 107, 0.32);
+  --sh-status-warning-fg: #8A6100;
+  --sh-status-warning-bg: rgba(224, 161, 6, 0.12);
+  --sh-status-warning-border: rgba(224, 161, 6, 0.32);
+  --sh-status-danger-fg: #B42E2E;
+  --sh-status-danger-bg: rgba(214, 69, 69, 0.12);
+  --sh-status-danger-border: rgba(214, 69, 69, 0.32);
+  --sh-status-info-fg: #2058D6;
+  --sh-status-info-bg: rgba(37, 96, 230, 0.12);
+  --sh-status-info-border: rgba(37, 96, 230, 0.32);
+  --sh-data-cat-1: #2560E6;
+  --sh-data-cat-2: #B8860B;
+  --sh-data-cat-3: #0E9DB5;
+  --sh-data-cat-4: #7B4FD6;
+  --sh-data-single: #0E9DB5;
+  --sh-data-seq-1: #52C2D5;
+  --sh-data-seq-2: #2AA9BF;
+  --sh-data-seq-3: #13929F;
+  --sh-data-seq-4: #0E7585;
+  --sh-data-seq-5: #0A5866;
+  --sh-data-grid: #E2E8F2;
+  --sh-data-axis: #616F88;
+  --sh-elev-0: none;
+  --sh-elev-1: 0 1px 2px rgba(8, 15, 34, 0.06);
+  --sh-elev-2: 0 8px 24px rgba(8, 15, 34, 0.12);
+  --sh-elev-3: 0 16px 48px rgba(8, 15, 34, 0.18);
 }

@@ -8,7 +8,11 @@
 //   dist/android/colors.xml         recursos Android (tema claro)
 //   dist/android/values-night/*.xml recursos Android (tema oscuro)
 //
-// Uso: node build.mjs   (o `npm run build`)
+// Uso: node build.mjs   (o `npm run build`). El contraste se verifica aparte con
+// `node contrast.mjs` (lo corre el CI).
+//
+// v1.4 (SPEC-29, HU-DS-01): estados con AA por tema, paleta de datos, CTA,
+// tipografía (web en CSS, app en RN), elevación, motion, densidad y breakpoints.
 //
 // Regla de nombres: `--sh-` + ruta del token con `-`, quitando el prefijo del
 // grupo `color` (así `color.navy.700` → `--sh-navy-700`). El resto conserva su
@@ -64,6 +68,15 @@ function resolve(value, seen = new Set()) {
   });
 }
 
+// Valores compuestos (typography) resuelven sus alias campo por campo.
+function resolveDeep(value) {
+  if (Array.isArray(value)) return value.map(resolveDeep);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveDeep(v)]));
+  }
+  return resolve(value);
+}
+
 // ---- nombres ----
 function cssName(path) {
   const p = path[0] === "color" ? path.slice(1) : path;
@@ -71,6 +84,14 @@ function cssName(path) {
 }
 
 const pxToNum = (v) => (typeof v === "string" && /^-?\d+(\.\d+)?px$/.test(v) ? Number(v.slice(0, -2)) : v);
+const msToNum = (v) => (typeof v === "string" && /^\d+(\.\d+)?ms$/.test(v) ? Number(v.slice(0, -2)) : v);
+const kebab = (s) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+
+function cssValue(t) {
+  const v = resolveDeep(t.value);
+  if (t.type === "cubicBezier") return `cubic-bezier(${v.join(", ")})`;
+  return v;
+}
 
 // ---- tokens.css ----
 const groups = new Map();
@@ -79,24 +100,34 @@ for (const t of tokens) {
   if (!groups.has(g)) groups.set(g, []);
   groups.get(g).push(t);
 }
-const order = ["color", "gradient", "font", "radius", "space"];
+const order = ["color", "gradient", "font", "radius", "space", "density", "motion", "breakpoint"];
 const rootLines = [];
 for (const g of order) {
   const list = groups.get(g) ?? [];
   if (!list.length) continue;
   rootLines.push(`  /* ${g} */`);
-  for (const t of list) rootLines.push(`  ${cssName(t.path)}: ${resolve(t.value)};`);
+  for (const t of list) rootLines.push(`  ${cssName(t.path)}: ${cssValue(t)};`);
+}
+// Tipografía web: cada rol se abre en sus propiedades (--sh-type-h1-font-size…).
+// `type.app` es solo del tema React Native.
+const typeWeb = (groups.get("type") ?? []).filter((t) => t.path[1] === "web");
+if (typeWeb.length) {
+  rootLines.push("  /* type (web) */");
+  for (const t of typeWeb) {
+    for (const [prop, v] of Object.entries(resolveDeep(t.value))) {
+      rootLines.push(`  --sh-type-${t.path[2]}-${kebab(prop)}: ${v};`);
+    }
+  }
 }
 // alias histórico
 rootLines.push("  /* alias */", "  --sh-gradient: var(--sh-gradient-brand);");
 
+const themeEntries = (themeName) =>
+  Object.entries(doc.theme?.[themeName] ?? {}).filter(([k, v]) => !k.startsWith("$") && v?.$value);
+
 function themeBlock(themeName) {
-  const theme = doc.theme?.[themeName] ?? {};
   const lines = [`[data-theme="sh-${themeName}"], .sh-${themeName} {`];
-  for (const [k, v] of Object.entries(theme)) {
-    if (k.startsWith("$") || !v?.$value) continue;
-    lines.push(`  --sh-${k}: ${resolve(v.$value)};`);
-  }
+  for (const [k, v] of themeEntries(themeName)) lines.push(`  --sh-${k}: ${resolve(v.$value)};`);
   lines.push("}");
   return lines.join("\n");
 }
@@ -116,6 +147,37 @@ ${themeBlock("light")}
 writeFileSync(join(ROOT, "tokens.css"), css);
 
 // ---- dist/tailwind-theme.css (Tailwind v4) ----
+// v1.4 (SPEC-29): estados con AA, datos, elevación, motion y escala tipográfica.
+// Los tamaños usan el prefijo `sh-` (text-sh-h1…) para no chocar con colores como `text-body`.
+const STATUS = ["success", "warning", "danger", "info"];
+const twLines = ["  /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */"];
+for (const s of STATUS) {
+  for (const part of ["fg", "bg", "border"]) twLines.push(`  --color-status-${s}-${part}: var(--sh-status-${s}-${part});`);
+}
+twLines.push("", "  /* datos (orden fijo, nunca se cicla) */");
+for (const i of [1, 2, 3, 4]) twLines.push(`  --color-data-${i}: var(--sh-data-cat-${i});`);
+twLines.push("  --color-data-single: var(--sh-data-single);");
+for (const i of [1, 2, 3, 4, 5]) twLines.push(`  --color-data-seq-${i}: var(--sh-data-seq-${i});`);
+twLines.push("  --color-data-grid: var(--sh-data-grid);", "  --color-data-axis: var(--sh-data-axis);");
+twLines.push("", "  /* elevación: shadow-elev-0…3 */");
+for (const i of [0, 1, 2, 3]) twLines.push(`  --shadow-elev-${i}: var(--sh-elev-${i});`);
+twLines.push("", "  /* motion: ease-sh-out/in/emphasized; `transition` usa fast + out por defecto */");
+for (const e of ["out", "in", "emphasized"]) twLines.push(`  --ease-sh-${e}: var(--sh-motion-easing-${e});`);
+twLines.push(
+  "  --default-transition-duration: var(--sh-motion-duration-fast);",
+  "  --default-transition-timing-function: var(--sh-motion-easing-out);",
+);
+twLines.push("", "  /* tipografía: text-sh-hero, text-sh-h1… (la familia va aparte: font-display / font-sans) */");
+for (const t of typeWeb) {
+  const r = t.path[2];
+  twLines.push(
+    `  --text-sh-${r}: var(--sh-type-${r}-font-size);`,
+    `  --text-sh-${r}--line-height: var(--sh-type-${r}-line-height);`,
+    `  --text-sh-${r}--font-weight: var(--sh-type-${r}-font-weight);`,
+  );
+}
+const TAILWIND_V2 = twLines.join("\n") + "\n";
+
 const tw = `/* SolversHub — mapeo @theme para Tailwind v4 (GENERADO).
  * Los utilitarios (bg-surface, text-body, font-display…) referencian var(--sh-*),
  * así que cambiar de tema en un ancestro (.sh-dark/.sh-light) los actualiza. */
@@ -146,6 +208,7 @@ const tw = `/* SolversHub — mapeo @theme para Tailwind v4 (GENERADO).
   --color-warning: var(--sh-warning);
   --color-danger: var(--sh-danger);
 
+${TAILWIND_V2}
   --font-display: var(--sh-font-display);
   --font-sans: var(--sh-font-body);
   --font-mono: var(--sh-font-mono);
@@ -177,7 +240,7 @@ for (const t of tokens.filter((t) => t.path[0] === "color")) {
 const themeObj = {};
 for (const name of ["dark", "light"]) {
   themeObj[name] = toObj(
-    Object.entries(doc.theme?.[name] ?? {}).filter(([k, v]) => !k.startsWith("$") && v?.$value).map(([k, v]) => ({ k, value: v.$value })),
+    themeEntries(name).map(([k, v]) => ({ k, value: v.$value })),
     (t) => camel(t.k),
     (t) => resolve(t.value),
   );
@@ -188,6 +251,33 @@ const dimObj = (group) =>
     (t) => camel(t.path.slice(1).join("-")),
     (t) => pxToNum(resolve(t.value)),
   );
+
+// Motion para RN: duraciones en ms (número) y curvas como [x1, y1, x2, y2] (Easing.bezier).
+const motionObj = { duration: {}, easing: {} };
+for (const t of groups.get("motion") ?? []) {
+  const [, kind, name] = t.path;
+  motionObj[kind][camel(name)] = kind === "duration" ? msToNum(resolve(t.value)) : resolveDeep(t.value);
+}
+
+// Tipografía de la app: en RN cada peso es una familia distinta (las que carga App.tsx
+// con @expo-google-fonts). La referencia {font.x} decide la familia.
+const RN_FONTS = {
+  display: { 600: "Montserrat_600SemiBold", 700: "Montserrat_700Bold" },
+  body: { 400: "Inter_400Regular", 500: "Inter_500Medium" },
+  mono: { 400: "monospace" },
+};
+const typeAppObj = {};
+for (const t of (groups.get("type") ?? []).filter((t) => t.path[1] === "app")) {
+  const raw = t.value;
+  const fontKey = /^\{font\.(\w+)\}$/.exec(raw.fontFamily)?.[1];
+  const family = RN_FONTS[fontKey]?.[raw.fontWeight];
+  if (!family) throw new Error(`type.app.${t.path[2]}: sin familia RN para ${raw.fontFamily} ${raw.fontWeight}`);
+  typeAppObj[camel(t.path[2])] = {
+    fontFamily: family,
+    fontSize: pxToNum(raw.fontSize),
+    lineHeight: pxToNum(raw.lineHeight),
+  };
+}
 
 const ts = `// SolversHub — tema React Native (GENERADO por build.mjs — NO EDITAR).
 import type { TextStyle } from "react-native";
@@ -204,6 +294,13 @@ export const shFont = {
 
 export const shRadius = ${JSON.stringify(dimObj("radius"), null, 2)} as const;
 export const shSpace = ${JSON.stringify(dimObj("space"), null, 2)} as const;
+export const shDensity = ${JSON.stringify(dimObj("density"), null, 2)} as const;
+
+/** Duraciones en ms y curvas [x1, y1, x2, y2] para Easing.bezier. Con reducir movimiento, usar 0. */
+export const shMotion = ${JSON.stringify(motionObj, null, 2)} as const;
+
+/** Escala tipográfica de la app (la familia ya trae el peso: Montserrat_700Bold…). */
+export const shType = ${JSON.stringify(typeAppObj, null, 2)} as const satisfies Record<string, TextStyle>;
 
 export const shTheme = ${JSON.stringify(themeObj, null, 2)} as const;
 
@@ -224,10 +321,10 @@ function toAndroidColor(value) {
   return `#${hex(alpha)}${hex(m[1])}${hex(m[2])}${hex(m[3])}`;
 }
 function androidXml(themeName) {
-  const theme = doc.theme?.[themeName] ?? {};
   const lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>"];
-  for (const [k, v] of Object.entries(theme)) {
-    if (k.startsWith("$") || !v?.$value) continue;
+  for (const [k, v] of themeEntries(themeName)) {
+    // Solo colores: las sombras (elev-*) no son recursos de color.
+    if (v.$type && v.$type !== "color") continue;
     lines.push(`  <color name="${androidColorName(k)}">${toAndroidColor(resolve(v.$value))}</color>`);
   }
   for (const t of tokens.filter((t) => t.path[0] === "color")) {

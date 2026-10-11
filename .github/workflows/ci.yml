@@ -37,6 +37,7 @@ jobs:
               - '.github/workflows/**'
             tokens:
               - 'brand/tokens/**'
+              - 'apps/panel-web/app/tokens.css'
               - '.github/workflows/**'
 
   tokens:
@@ -52,6 +53,10 @@ jobs:
         run: node brand/tokens/build.mjs
       - name: Verificar que los generados están al día
         run: git diff --exit-code -- brand/tokens
+      - name: Contraste WCAG de los temas (texto ≥ 4,5:1, no texto ≥ 3:1)
+        run: node brand/tokens/contrast.mjs
+      - name: El panel usa la copia al día de tokens.css
+        run: diff -u brand/tokens/tokens.css apps/panel-web/app/tokens.css
 
   panel:
     needs: changes

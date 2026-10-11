@@ -34,6 +34,74 @@
   --color-warning: var(--sh-warning);
   --color-danger: var(--sh-danger);
 
+  /* v1.4 · SPEC-29 (HU-DS-01). Mismo bloque que brand/tokens/dist/tailwind-theme.css. */
+  /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */
+  --color-status-success-fg: var(--sh-status-success-fg);
+  --color-status-success-bg: var(--sh-status-success-bg);
+  --color-status-success-border: var(--sh-status-success-border);
+  --color-status-warning-fg: var(--sh-status-warning-fg);
+  --color-status-warning-bg: var(--sh-status-warning-bg);
+  --color-status-warning-border: var(--sh-status-warning-border);
+  --color-status-danger-fg: var(--sh-status-danger-fg);
+  --color-status-danger-bg: var(--sh-status-danger-bg);
+  --color-status-danger-border: var(--sh-status-danger-border);
+  --color-status-info-fg: var(--sh-status-info-fg);
+  --color-status-info-bg: var(--sh-status-info-bg);
+  --color-status-info-border: var(--sh-status-info-border);
+
+  /* datos (orden fijo, nunca se cicla) */
+  --color-data-1: var(--sh-data-cat-1);
+  --color-data-2: var(--sh-data-cat-2);
+  --color-data-3: var(--sh-data-cat-3);
+  --color-data-4: var(--sh-data-cat-4);
+  --color-data-single: var(--sh-data-single);
+  --color-data-seq-1: var(--sh-data-seq-1);
+  --color-data-seq-2: var(--sh-data-seq-2);
+  --color-data-seq-3: var(--sh-data-seq-3);
+  --color-data-seq-4: var(--sh-data-seq-4);
+  --color-data-seq-5: var(--sh-data-seq-5);
+  --color-data-grid: var(--sh-data-grid);
+  --color-data-axis: var(--sh-data-axis);
+
+  /* elevación: shadow-elev-0…3 */
+  --shadow-elev-0: var(--sh-elev-0);
+  --shadow-elev-1: var(--sh-elev-1);
+  --shadow-elev-2: var(--sh-elev-2);
+  --shadow-elev-3: var(--sh-elev-3);
+
+  /* motion: ease-sh-out/in/emphasized; `transition` usa fast + out por defecto */
+  --ease-sh-out: var(--sh-motion-easing-out);
+  --ease-sh-in: var(--sh-motion-easing-in);
+  --ease-sh-emphasized: var(--sh-motion-easing-emphasized);
+  --default-transition-duration: var(--sh-motion-duration-fast);
+  --default-transition-timing-function: var(--sh-motion-easing-out);
+
+  /* tipografía: text-sh-hero, text-sh-h1… (la familia va aparte: font-display / font-sans) */
+  --text-sh-hero: var(--sh-type-hero-font-size);
+  --text-sh-hero--line-height: var(--sh-type-hero-line-height);
+  --text-sh-hero--font-weight: var(--sh-type-hero-font-weight);
+  --text-sh-h1: var(--sh-type-h1-font-size);
+  --text-sh-h1--line-height: var(--sh-type-h1-line-height);
+  --text-sh-h1--font-weight: var(--sh-type-h1-font-weight);
+  --text-sh-block: var(--sh-type-block-font-size);
+  --text-sh-block--line-height: var(--sh-type-block-line-height);
+  --text-sh-block--font-weight: var(--sh-type-block-font-weight);
+  --text-sh-body: var(--sh-type-body-font-size);
+  --text-sh-body--line-height: var(--sh-type-body-line-height);
+  --text-sh-body--font-weight: var(--sh-type-body-font-weight);
+  --text-sh-dense: var(--sh-type-dense-font-size);
+  --text-sh-dense--line-height: var(--sh-type-dense-line-height);
+  --text-sh-dense--font-weight: var(--sh-type-dense-font-weight);
+  --text-sh-label: var(--sh-type-label-font-size);
+  --text-sh-label--line-height: var(--sh-type-label-line-height);
+  --text-sh-label--font-weight: var(--sh-type-label-font-weight);
+  --text-sh-caption: var(--sh-type-caption-font-size);
+  --text-sh-caption--line-height: var(--sh-type-caption-line-height);
+  --text-sh-caption--font-weight: var(--sh-type-caption-font-weight);
+  --text-sh-mono: var(--sh-type-mono-font-size);
+  --text-sh-mono--line-height: var(--sh-type-mono-line-height);
+  --text-sh-mono--font-weight: var(--sh-type-mono-font-weight);
+
   --font-display: var(--sh-font-display);
   --font-sans: var(--sh-font-body);
   --font-mono: var(--sh-font-mono);
