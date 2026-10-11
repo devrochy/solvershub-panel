@@ -39,6 +39,8 @@ export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 export type SettingsResponse = components["schemas"]["SettingsResponse"];
 export type WebChatSettings = components["schemas"]["WebChatSettings"];
 export type IdentitySettings = components["schemas"]["IdentitySettings"];
+export type BotPausedUpdate = components["schemas"]["BotPausedUpdate"];
+export type BotPausedState = components["schemas"]["BotPausedState"];
 export type BrainSettings = components["schemas"]["BrainSettings"];
 
 // Plantillas por evento (HU-ARCH-13, ADR-0108).
