@@ -27,6 +27,11 @@ admin creado (`python scripts/init_db.py` en agent-core).
   npm run api:types          # regenera
   npm run api:types:check    # falla si hay deriva (lo corre el CI, HU-UI-04)
   ```
+- **Mirar el panel sin agent-core**: `node scripts/backend-de-prueba.mjs` sirve `/api/v1`
+  con las fixtures de los tests (Node >= 23.6). Luego
+  `AGENT_CORE_API_URL=http://localhost:8765 npm run start -- -p 3293` y, en el navegador,
+  `document.cookie = "panel_session=prueba; path=/"`. `BOT_PAUSADO=1` simula el asistente
+  pausado.
 - **Tests**: `npm run test` (o `npm run test:coverage`, que deja el reporte en
   `coverage/`). Corren en el CI con cobertura. Las páginas principales se renderizan con
   respuestas de prueba (`lib/testing/fixtures.ts`) y axe no debe encontrar violaciones

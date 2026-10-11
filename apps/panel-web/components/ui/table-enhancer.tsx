@@ -36,19 +36,38 @@ export function TableEnhancer({ pageSize = 20 }: { pageSize?: number }) {
       if (th.dataset.ordenable === "no") return;
       th.style.cursor = "pointer";
       th.title = "Ordenar";
+      // Ordenable con teclado y anunciado al lector de pantalla (HU-UI-03).
+      th.tabIndex = 0;
+      th.setAttribute("aria-sort", "none");
       const manejar = () => {
         setPagina(1);
         setOrden((previo) =>
           previo?.col === indice ? { col: indice, asc: !previo.asc } : { col: indice, asc: true },
         );
       };
+      const alPulsar = (e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          manejar();
+        }
+      };
       th.addEventListener("click", manejar);
+      th.addEventListener("keydown", alPulsar);
       th.dataset.conEscucha = "si";
     });
     return () => {
       ths.forEach((th) => th.replaceWith(th.cloneNode(true)));
     };
   }, [buscarTabla]);
+
+  // `aria-sort` refleja el orden activo: ascendente, descendente o sin orden.
+  useEffect(() => {
+    const ths = Array.from(buscarTabla()?.querySelectorAll<HTMLTableCellElement>("thead th") ?? []);
+    ths.forEach((th, indice) => {
+      if (th.dataset.ordenable === "no") return;
+      th.setAttribute("aria-sort", orden?.col === indice ? (orden.asc ? "ascending" : "descending") : "none");
+    });
+  }, [orden, buscarTabla]);
 
   useEffect(() => {
     const tabla = buscarTabla();
