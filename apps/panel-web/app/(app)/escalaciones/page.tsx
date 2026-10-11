@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ESCALATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { EscalationPage } from "@/lib/api/types";
@@ -23,14 +23,9 @@ export default async function EscalationsPage({
   const res = await apiFetch<EscalationPage>(
     `/admin/escalations${sp.page ? `?page=${sp.page}` : ""}`,
   );
-  if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las escalaciones: {res.error}
-      </p>
-    );
-  }
-  const { items, page, has_more, total } = res.data;
+  const { items, page, has_more, total } = res.ok
+    ? res.data
+    : { items: [], page: 1, has_more: false, total: 0 };
 
   const columns: Column<EscalationRow>[] = [
     {
@@ -73,28 +68,32 @@ export default async function EscalationsPage({
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Escalaciones"
-        description="Conversaciones que el agente derivó a una persona."
-        helpSection="escalations"
-        />
-
+    <ListPage
+      header={{
+        title: "Escalaciones",
+        description: "Conversaciones que el agente derivó a una persona.",
+        helpSection: "escalations",
+      }}
+    >
       <DataTable
         columns={columns}
         rows={items}
         getRowKey={(esc, index) => `${esc.conversation_id}-${index}`}
         emptyTitle="No hay escalaciones"
         emptyDescription="Cuando el agente derive una conversación, aparecerá aquí."
+        error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}
+        caption="Escalaciones"
       />
 
-      <Pagination
-        page={page}
-        hasMore={has_more}
-        total={total}
-        label="escalaciones"
-        makeHref={(target) => `/escalaciones?page=${target}`}
-      />
-    </div>
+      {res.ok && (
+        <Pagination
+          page={page}
+          hasMore={has_more}
+          total={total}
+          label="escalaciones"
+          makeHref={(target) => `/escalaciones?page=${target}`}
+        />
+      )}
+    </ListPage>
   );
 }

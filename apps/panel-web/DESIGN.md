@@ -29,7 +29,22 @@ algunas guías anti-slop la eviten — el manual de marca manda.
 Reglas: si un componente se usa en 2+ secciones, sube a `ui`/`domain`; si es de una
 sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 
-## Layout
+## Kit de componentes (HU-DS-03)
+
+Antes de escribir markup, busca en el kit. **Catálogo vivo**: `/catalogo` con
+`PANEL_CATALOGO=1` (desarrollo y test; en producción da 404), con cada componente en claro
+y oscuro lado a lado. Una pieza nueva del kit entra al catálogo en el mismo PR.
+
+| Nivel | Componentes (`components/ui` salvo indicación) |
+|---|---|
+| Átomos | `Button` (`loading` conserva el ancho y pone `aria-busy`), `Badge` (con tono de estado trae su ícono y el tipo no deja quitarlo), `Avatar`, `Kbd`, `Skeleton` (estático, `lines`), `Input`/`Select`/`Textarea` (`aria-invalid` pinta el borde de error), `Checkbox`, `RadioGroup`, `Switch`, `Tooltip` |
+| Moléculas | `Field` (une ayuda o error con el control vía `aria-describedby`), `SearchInput` (atajo opcional, Escape limpia), `Breadcrumbs`, `Tabs` (contenido en la misma página) y `TabLinks` (pestañas que cambian de ruta), `DropdownMenu`, `Popover`, `KpiTile` (delta escrito + `polarity`; `StatCard` es alias deprecado), `EmptyState`, `Pagination` |
+| Organismos | `DataTable` (`density`, `maxHeight` con encabezado fijo, `loading`, `error` + `errorAction`, `caption`), `Dialog`, `Confirm`, `Sheet` (panel lateral), `PageHeader` (migas + título + acciones + pestañas) |
+| Plantillas (`components/templates`) | `ListPage` (cabecera, filtros, contenido), `DetailPage` (cabecera, resumen, contenido), `DashboardPage` (grilla 12/6/1), `SettingsPage` (pestañas, ancho de lectura) |
+
+`cn()` (`lib/utils.ts`) conoce la escala `text-sh-*` y las sombras `shadow-elev-*`: sin eso,
+tailwind-merge las tomaba por colores y las descartaba.
+
 
 - Contenedor de contenido: `max-w-[1200px]` centrado, padding `px-6 py-8`.
 - Sidebar `w-60`; topbar `h-16`.
@@ -100,7 +115,8 @@ separa popovers y diálogos. Sin `backdrop-filter` ni transparencias detrás de 
 - Foco visible (outline 2 px del tema) en todo elemento interactivo.
 - Controles con nombre accesible; iconos decorativos `aria-hidden`.
 - El color nunca es el único portador de información (siempre etiqueta o icono).
-- Carga con `Skeleton` (conserva la forma), no spinners.
+- Carga con `Skeleton` estático (conserva la forma), no spinners. La única excepción es
+  el indicador dentro de un `Button` en carga.
 
 ## Feedback y acciones (kit, HU-UI-02)
 

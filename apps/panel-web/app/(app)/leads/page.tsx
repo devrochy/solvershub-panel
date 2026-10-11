@@ -1,7 +1,7 @@
 import { LeadsFilters } from "@/app/(app)/leads/_components/leads-filters";
 import { Badge } from "@/components/ui/badge";
+import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { LeadsResponse } from "@/lib/api/types";
@@ -22,14 +22,9 @@ export default async function LeadsPage({
   if (sp.page) qs.set("page", sp.page);
 
   const res = await apiFetch<LeadsResponse>(`/admin/leads${qs.size ? `?${qs.toString()}` : ""}`);
-  if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los leads: {res.error}
-      </p>
-    );
-  }
-  const { items, columns, page, has_more, total } = res.data;
+  const { items, columns, page, has_more, total } = res.ok
+    ? res.data
+    : { items: [], columns: [], page: 1, has_more: false, total: 0 };
 
   const tableColumns: Column<LeadRow>[] = [
     { key: "cliente", header: "Cliente", cell: (lead) => lead.cliente },
@@ -49,34 +44,37 @@ export default async function LeadsPage({
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Leads"
-        description="Clientes que el agente ha atendido. Las columnas de cada habilidad se suman aquí."
-        helpSection="leads"
-        />
-
-      <LeadsFilters q={sp.q} />
-
+    <ListPage
+      header={{
+        title: "Leads",
+        description: "Clientes que el agente ha atendido. Las columnas de cada habilidad se suman aquí.",
+        helpSection: "leads",
+      }}
+      filters={<LeadsFilters q={sp.q} />}
+    >
       <DataTable
         columns={tableColumns}
         rows={items}
         getRowKey={(lead) => lead.id}
         emptyTitle="Sin leads todavía"
         emptyDescription="Cuando el agente atienda al primer cliente, aparecerá aquí."
+        error={res.ok ? null : `No se pudieron cargar los leads: ${res.error}`}
+        caption="Leads"
       />
 
-      <Pagination
-        page={page}
-        hasMore={has_more}
-        total={total}
-        label="leads"
-        makeHref={(target) => {
-          const next = new URLSearchParams(qs);
-          next.set("page", String(target));
-          return `/leads?${next.toString()}`;
-        }}
-      />
-    </div>
+      {res.ok && (
+        <Pagination
+          page={page}
+          hasMore={has_more}
+          total={total}
+          label="leads"
+          makeHref={(target) => {
+            const next = new URLSearchParams(qs);
+            next.set("page", String(target));
+            return `/leads?${next.toString()}`;
+          }}
+        />
+      )}
+    </ListPage>
   );
 }
