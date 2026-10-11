@@ -93,7 +93,7 @@ export function MetaCosts({ connections }: { connections: Connection[] }) {
           </ul>
         )}
 
-        {result?.error && <p className="text-sm text-danger">{result.error}</p>}
+        {result?.error && <p className="text-sm text-status-danger-fg">{result.error}</p>}
         {result && !result.error && (
           <div className="rounded-md border border-border-soft bg-bg-deep p-3">
             {result.credits.length === 0 ? (

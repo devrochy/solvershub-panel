@@ -22,7 +22,7 @@ export default async function ConversationDetailPage({
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la conversación: {res.error}
       </p>
     );

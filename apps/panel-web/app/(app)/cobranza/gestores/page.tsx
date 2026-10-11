@@ -26,7 +26,7 @@ export default async function GestoresPage() {
   const collectorsRes = await apiFetch<Collector[]>("/pack/cobranza/collectors");
   if (!collectorsRes.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los gestores: {collectorsRes.error}
       </p>
     );

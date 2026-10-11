@@ -123,7 +123,7 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la cartera: {res.error}
       </p>
     );
@@ -203,7 +203,7 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       key: "mora",
       header: "Mora (días)",
       align: "right",
-      cell: (r) => <span className={r.mora > 0 ? "text-danger" : "text-body"}>{r.mora}</span>,
+      cell: (r) => <span className={r.mora > 0 ? "text-status-danger-fg" : "text-body"}>{r.mora}</span>,
     },
   ];
 
@@ -247,7 +247,7 @@ export default async function CarteraDetallePage({ params }: { params: Promise<{
       header: "Sin pago",
       align: "right",
       cell: (r) => (
-        <span className={r.sin_pago > 0 ? "text-danger" : "text-body"}>
+        <span className={r.sin_pago > 0 ? "text-status-danger-fg" : "text-body"}>
           {formatNumber(r.sin_pago)}
         </span>
       ),

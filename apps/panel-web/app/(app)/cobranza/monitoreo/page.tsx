@@ -36,7 +36,7 @@ export default async function MonitoreoPage() {
   const res = await apiFetch<Monitoring>("/pack/cobranza/monitoring");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el monitoreo: {res.error}
       </p>
     );

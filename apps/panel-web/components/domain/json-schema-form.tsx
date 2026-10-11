@@ -317,7 +317,7 @@ export function JsonSchemaForm({
         <div key={name} className="flex flex-col gap-1.5">
           {renderControl(name, prop)}
           {fieldErrors[name] ? (
-            <p role="alert" className="text-xs text-danger">
+            <p role="alert" className="text-xs text-status-danger-fg">
               {fieldErrors[name]}
             </p>
           ) : (
@@ -345,7 +345,7 @@ export function JsonSchemaForm({
       {grupos.map(({ grupo, campos }, i) => (
         <fieldset key={`${grupo ?? "sin-grupo"}-${i}`} className="flex flex-col gap-4">
           {grupo && (
-            <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+            <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-link">
               {grupo}
             </legend>
           )}

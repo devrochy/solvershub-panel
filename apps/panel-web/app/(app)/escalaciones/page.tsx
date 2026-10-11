@@ -25,7 +25,7 @@ export default async function EscalationsPage({
   );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar las escalaciones: {res.error}
       </p>
     );

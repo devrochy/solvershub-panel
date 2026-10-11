@@ -31,7 +31,7 @@ export default async function AltaAutomaticaPage() {
   const res = await apiFetch<VendedorAltas[]>("/admin/platform/altas-automaticas");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         {res.status === 403 ? "Solo el admin de plataforma puede ver esto." : `Error: ${res.error}`}
       </p>
     );
@@ -132,7 +132,7 @@ async function Vendedor({ vendedor }: { vendedor: VendedorAltas }) {
             <PublicarDocumento vendedor={vendedor.id} tipo={vendedor.documentos_faltantes[0]} />
           </div>
           {vendedor.documentos_faltantes.length > 0 && (
-            <p role="alert" className="rounded-md bg-warning/12 p-3 text-sm text-warning">
+            <p role="alert" className="rounded-md bg-status-warning-bg p-3 text-sm text-status-warning-fg">
               Falta publicar: {vendedor.documentos_faltantes.map((t) => NOMBRES[t] ?? t).join(", ")}. Mientras
               falte alguno, el asistente no pide la aceptación y toda alta queda en revisión.
             </p>

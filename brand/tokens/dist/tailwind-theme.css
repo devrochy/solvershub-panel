@@ -28,6 +28,11 @@
   --color-warning: var(--sh-warning);
   --color-danger: var(--sh-danger);
 
+  /* acción con texto blanco (AA en los dos temas) e indicadores no textuales (foco del tema, >= 3:1) */
+  --color-action: var(--sh-blue-600);
+  --color-danger-strong: var(--sh-status-light-danger);
+  --color-focus: var(--sh-focus);
+
   /* estados con AA por tema: text-status-*-fg, bg-status-*-bg, border-status-*-border */
   --color-status-success-fg: var(--sh-status-success-fg);
   --color-status-success-bg: var(--sh-status-success-bg);

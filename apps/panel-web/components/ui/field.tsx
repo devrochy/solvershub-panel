@@ -24,11 +24,11 @@ export function Field({
     <div className={cn("flex flex-col gap-1.5", className)}>
       <label htmlFor={htmlFor} className="text-[13px] font-medium text-body">
         {label}
-        {required && <span className="text-danger"> *</span>}
+        {required && <span className="text-status-danger-fg"> *</span>}
       </label>
       {children}
       {error ? (
-        <p role="alert" className="text-xs text-danger">
+        <p role="alert" className="text-xs text-status-danger-fg">
           {error}
         </p>
       ) : (

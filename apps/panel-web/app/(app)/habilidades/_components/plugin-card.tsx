@@ -53,7 +53,7 @@ export function PluginCard({ plugin }: { plugin: PluginSummary }) {
         />
 
         {hasError && (
-          <p className="text-xs text-danger">
+          <p className="text-xs text-status-danger-fg">
             {plugin.tenant_health_error ?? plugin.error_message}
           </p>
         )}

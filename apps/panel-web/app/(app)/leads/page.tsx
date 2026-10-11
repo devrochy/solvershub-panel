@@ -24,7 +24,7 @@ export default async function LeadsPage({
   const res = await apiFetch<LeadsResponse>(`/admin/leads${qs.size ? `?${qs.toString()}` : ""}`);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los leads: {res.error}
       </p>
     );

@@ -23,7 +23,7 @@ export default async function CarterasPage() {
   const gestores = gestoresRes.ok ? gestoresRes.data : [];
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar las carteras: {res.error}
       </p>
     );

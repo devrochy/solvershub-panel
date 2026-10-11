@@ -31,7 +31,7 @@ export default async function NumbersPage({
   );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los números: {res.error}
       </p>
     );
@@ -112,7 +112,7 @@ export default async function NumbersPage({
       />
 
       {sync_error && (
-        <p role="status" className="text-sm text-warning">
+        <p role="status" className="text-sm text-status-warning-fg">
           Aviso al sincronizar con Meta: {sync_error}
         </p>
       )}

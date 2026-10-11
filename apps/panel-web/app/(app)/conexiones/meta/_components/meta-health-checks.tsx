@@ -54,7 +54,7 @@ export function MetaHealthChecks({ connectionId, checks }: { connectionId: strin
               </span>
               <span className="flex shrink-0 items-center gap-2">
                 {arreglo?.tipo === "enlace" && (
-                  <Link className="text-accent underline" href={arreglo.href}>
+                  <Link className="text-link underline" href={arreglo.href}>
                     {arreglo.label}
                   </Link>
                 )}

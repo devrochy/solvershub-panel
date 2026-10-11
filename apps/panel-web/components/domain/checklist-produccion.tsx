@@ -112,7 +112,7 @@ export function ChecklistProduccion({
       </div>
 
       {corrida.status === "failed" && corrida.error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-sm text-status-danger-fg">
           {corrida.error}
         </p>
       )}
@@ -145,7 +145,7 @@ export function ItemsChecklist({ items, connectionId }: { items: ReadinessItem[]
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {arreglo && (
-                    <Link className="text-xs text-accent underline" href={arreglo.href}>
+                    <Link className="text-xs text-link underline" href={arreglo.href}>
                       {arreglo.label}
                     </Link>
                   )}

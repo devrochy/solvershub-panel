@@ -20,7 +20,7 @@ export async function MissingTemplatesBanner() {
         {total === 1 ? "1 aviso no se envió" : `${total} avisos no se enviaron`} en los últimos 7 días:
         el cliente llevaba más de 24 horas sin escribir y el evento no tiene una plantilla aprobada.
       </p>
-      <Link href="/plantillas/eventos" className="font-medium text-accent underline-offset-4 hover:underline">
+      <Link href="/plantillas/eventos" className="font-medium text-link underline-offset-4 hover:underline">
         Configurar plantillas por evento
       </Link>
     </div>

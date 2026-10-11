@@ -14,7 +14,7 @@ export function FormFeedback({
   return (
     <p
       role={error ? "alert" : "status"}
-      className={cn("text-sm", error ? "text-danger" : "text-success", className)}
+      className={cn("text-sm", error ? "text-status-danger-fg" : "text-status-success-fg", className)}
     >
       {error ?? success}
     </p>

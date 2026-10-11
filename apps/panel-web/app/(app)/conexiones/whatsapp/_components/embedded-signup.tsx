@@ -86,9 +86,9 @@ function Progreso({ step }: { step: string }) {
       {estadoPasos(step).map((p) => (
         <li key={p.key} className="flex items-center gap-1.5" aria-current={p.estado === "actual" ? "step" : undefined}>
           {p.estado === "hecho" ? (
-            <CheckCircle2 className="h-3.5 w-3.5 text-success" aria-hidden />
+            <CheckCircle2 className="h-3.5 w-3.5 text-status-success-fg" aria-hidden />
           ) : p.estado === "actual" ? (
-            <CircleDot className="h-3.5 w-3.5 text-accent" aria-hidden />
+            <CircleDot className="h-3.5 w-3.5 text-link" aria-hidden />
           ) : (
             <Circle className="h-3.5 w-3.5 text-text-soft" aria-hidden />
           )}
@@ -295,7 +295,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
 
   if (!estado.meta_configured) {
     return (
-      <div role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
+      <div role="status" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-4 text-sm">
         <p className="font-medium text-headline">Conectar con Facebook no está disponible en este entorno</p>
         <p className="text-body">
           Falta configurar la app de Meta de la plataforma
@@ -336,7 +336,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
           {sesion?.done && sesion.connection_id && (
             <p className="text-sm text-body">
               Ya conectaste un número con Facebook.{" "}
-              <Link className="text-accent underline-offset-2 hover:underline" href={`/conexiones/meta/${sesion.connection_id}`}>
+              <Link className="text-link underline-offset-2 hover:underline" href={`/conexiones/meta/${sesion.connection_id}`}>
                 Ver la conexión
               </Link>
               . Si vuelves a conectar, se reautoriza la misma conexión.
@@ -410,7 +410,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
       )}
 
       {vivo && !sesion.expired && sesion.step === "register_number" && (
-        <div className="flex flex-col gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
           <p className="font-medium text-headline">Registra el número con su PIN</p>
           <p className="text-sm text-body">
             {ultimoError ?? "Falta registrar el número en la Cloud API con su PIN de verificación en dos pasos."}

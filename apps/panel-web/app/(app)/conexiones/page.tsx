@@ -21,7 +21,7 @@ export default async function ConnectionsPage() {
   const res = await apiFetch<ConnectionsResponse>("/admin/connections");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar las conexiones: {res.error}
       </p>
     );
@@ -109,7 +109,7 @@ export default async function ConnectionsPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <code className="block break-all rounded-md bg-bg-deep px-3 py-2 font-mono text-xs text-accent">
+            <code className="block break-all rounded-md bg-bg-deep px-3 py-2 font-mono text-xs text-link">
               {webhook_url}
             </code>
           </CardContent>

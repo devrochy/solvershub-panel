@@ -62,7 +62,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el cliente: {res.error}
       </p>
     );

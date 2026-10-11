@@ -27,8 +27,11 @@ preciso, sin decoración que no sirva.
 - **Nada de fetch en `components/`**: los datos entran por props; el fetch vive en
   `page.tsx` o en `lib/api/resources/*` (una función por endpoint, tipada).
 - **Color solo por tokens semánticos** (`surface`, `border-soft`, `text-soft`…),
-  nunca hex suelto. Estados con tinte suave `/12`, no relleno saturado. Gradiente
-  de marca **solo** en la CTA principal.
+  nunca hex suelto. Estados con `text-status-*-fg` sobre `bg-status-*-bg`; enlaces
+  con `text-link`; CTA principal con `Button variant="accent"` (`bg-cta`); series e
+  identidades con `text-data-*`. El lint rechaza `text-success/warning/danger`,
+  `text-accent`, `bg-blue` y similares porque no cumplen AA en algún tema (tabla en
+  `DESIGN.md` · Color).
 - **Tipografía**: Montserrat en display, Inter 15 px en cuerpo; mayúsculas solo en
   cabeceras de tabla (`tracking 0.06em`). Una sola `PageHeader` por página (único `h1`).
 - **Motion**: microinteracciones 150 ms, overlays 200 ms, `ease-out`; se anima solo

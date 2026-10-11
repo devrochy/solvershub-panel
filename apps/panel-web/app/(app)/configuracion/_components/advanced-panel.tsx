@@ -83,7 +83,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
       <FormFeedback error={status.error} success={status.success} />
 
       {status.ignored && (
-        <div role="alert" className="rounded-lg border border-warning/40 bg-warning/10 p-4">
+        <div role="alert" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
           <p className="text-sm font-medium text-headline">
             Se ignoraron {status.ignored.length} línea(s) de guardrails (el resto sí se guardó):
           </p>
@@ -281,7 +281,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
             </ul>
           )}
           {advanced.flow.unknown_tools.length > 0 && (
-            <p className="text-xs text-warning">
+            <p className="text-xs text-status-warning-fg">
               Herramientas desconocidas: {advanced.flow.unknown_tools.join(", ")}
             </p>
           )}

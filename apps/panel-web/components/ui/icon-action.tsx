@@ -10,10 +10,10 @@ export type ActionTone = "ver" | "editar" | "eliminar" | "permisos" | "aprobar" 
 /** Tonos semánticos (tokens del tema, sin pasteles fijos). */
 const TONOS: Record<ActionTone, string> = {
   ver: "text-link hover:bg-border-soft",
-  editar: "text-gold hover:bg-border-soft",
-  eliminar: "text-danger hover:bg-border-soft",
-  permisos: "text-accent hover:bg-border-soft",
-  aprobar: "text-success hover:bg-border-soft",
+  editar: "text-data-2 hover:bg-border-soft",
+  eliminar: "text-status-danger-fg hover:bg-border-soft",
+  permisos: "text-data-4 hover:bg-border-soft",
+  aprobar: "text-status-success-fg hover:bg-border-soft",
   neutro: "text-body hover:bg-border-soft",
 };
 
@@ -36,7 +36,7 @@ export function IconAction({
   const clases = cn(
     "inline-flex h-8 w-8 items-center justify-center rounded-lg bg-hover",
     "transition-[background-color,box-shadow] duration-150",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
     "motion-reduce:transition-none",
     disabled && "pointer-events-none opacity-50",
     TONOS[tone],

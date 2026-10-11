@@ -20,7 +20,7 @@ export function UsageBar({
   className?: string;
 }) {
   const ratio = percent ?? 0;
-  const tone = exceeded ? "bg-danger" : ratio >= 80 ? "bg-warning" : "bg-accent";
+  const tone = exceeded ? "bg-status-danger-fg" : ratio >= 80 ? "bg-status-warning-fg" : "bg-data-single";
   const limitLabel = limit === null ? "∞" : formatNumber(limit);
 
   return (

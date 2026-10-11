@@ -44,7 +44,7 @@ export default async function TemplatesPage({
   }>(`/admin/meta/connections/${connectionId}/templates`);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar las plantillas: {res.error}
       </p>
     );
@@ -71,7 +71,7 @@ export default async function TemplatesPage({
         <div className="flex flex-col gap-1">
           <Badge variant={STATUS_VARIANT[t.status] ?? "neutral"}>{t.status}</Badge>
           {t.rejected_reason && (
-            <span className="text-xs text-danger">{t.rejected_reason}</span>
+            <span className="text-xs text-status-danger-fg">{t.rejected_reason}</span>
           )}
         </div>
       ),
@@ -116,12 +116,12 @@ export default async function TemplatesPage({
       />
 
       {sync_error && (
-        <p role="status" className="text-sm text-warning">
+        <p role="status" className="text-sm text-status-warning-fg">
           Aviso al sincronizar con Meta: {sync_error}
         </p>
       )}
       {at_limit && (
-        <p role="status" className="text-sm text-warning">
+        <p role="status" className="text-sm text-status-warning-fg">
           La WABA alcanzó el límite de plantillas de Meta.
         </p>
       )}

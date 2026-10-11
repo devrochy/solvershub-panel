@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 
 const TONE: Record<string, string> = {
   default: "text-headline",
-  accent: "text-accent",
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
+  accent: "text-link",
+  success: "text-status-success-fg",
+  warning: "text-status-warning-fg",
+  danger: "text-status-danger-fg",
 };
 
 /** Tarjeta de métrica (KPI). Un solo número destacado, sin decoración extra. */

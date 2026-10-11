@@ -51,7 +51,7 @@ export default async function AuditoriaPage({
   const res = await apiFetch<AuditLog>(`/pack/cobranza/audit${qs.size ? `?${qs}` : ""}`);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la auditoría: {res.error}
       </p>
     );

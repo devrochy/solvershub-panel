@@ -194,7 +194,7 @@ export function PortfolioRowActions({
         </IconAction>
       )}
       {error && (
-        <span className="text-xs text-danger" role="alert">
+        <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}

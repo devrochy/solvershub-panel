@@ -22,7 +22,7 @@ export default async function PlantillasPorEventoPage() {
         <EventTemplatesEditor initial={res.data} />
       ) : (
         <Card>
-          <CardContent className="pt-5 text-sm text-danger">{res.error}</CardContent>
+          <CardContent className="pt-5 text-sm text-status-danger-fg">{res.error}</CardContent>
         </Card>
       )}
     </div>

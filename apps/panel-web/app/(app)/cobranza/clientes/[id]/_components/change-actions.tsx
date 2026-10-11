@@ -97,10 +97,10 @@ export function ChangeActions({ cambios }: { cambios: Cambio[] }) {
                 value={motivo[cambio.id] ?? ""}
               />
               <Button
-                className="text-danger"
+                className="text-status-danger-fg"
                 disabled={status.loading === cambio.id}
                 onClick={() => decidir(cambio.id, "rechazar")}
-               aria-label="Rechazar" size="icon" title="Rechazar" variant="outline"><X className="h-4 w-4 text-danger" aria-hidden /></Button>
+               aria-label="Rechazar" size="icon" title="Rechazar" variant="outline"><X className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
             </div>
           </div>
         ))}

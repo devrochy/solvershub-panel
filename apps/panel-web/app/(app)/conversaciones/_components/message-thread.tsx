@@ -35,7 +35,7 @@ export function MessageThread({ messages }: { messages: ConversationDetail["mess
                 "rounded-lg px-4 py-2 text-sm",
                 inbound
                   ? "bg-surface-2 text-headline"
-                  : "bg-gradient-to-br from-blue to-accent text-white",
+                  : "bg-cta text-white",
               )}
             >
               {message.content || <span className="italic opacity-70">(sin texto)</span>}
@@ -44,7 +44,7 @@ export function MessageThread({ messages }: { messages: ConversationDetail["mess
               <span className="text-xs text-text-soft">Plantilla: {message.template_name}</span>
             )}
             {message.status === "failed" && (
-              <span className="text-xs text-danger">
+              <span className="text-xs text-status-danger-fg">
                 {message.error_reason === "sin_plantilla"
                   ? "No enviado: el cliente llevaba más de 24 h sin escribir y el aviso no tiene plantilla."
                   : "No enviado."}

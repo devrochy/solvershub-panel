@@ -15,16 +15,16 @@ import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
 export const metadata = { title: "Calendario" };
 
 const GOOGLE_AVISO: Record<string, { tone: string; texto: string }> = {
-  ok: { tone: "text-success", texto: "Google Calendar conectado." },
-  cancelado: { tone: "text-warning", texto: "Cancelaste la autorización de Google." },
-  error: { tone: "text-danger", texto: "No se pudo completar la conexión con Google." },
+  ok: { tone: "text-status-success-fg", texto: "Google Calendar conectado." },
+  cancelado: { tone: "text-status-warning-fg", texto: "Cancelaste la autorización de Google." },
+  error: { tone: "text-status-danger-fg", texto: "No se pudo completar la conexión con Google." },
   otro_negocio: {
-    tone: "text-danger",
+    tone: "text-status-danger-fg",
     texto:
       "No se conectó: cambiaste de negocio mientras autorizabas en Google. Vuelve a conectar desde el negocio correcto.",
   },
   not_configured: {
-    tone: "text-warning",
+    tone: "text-status-warning-fg",
     texto: "Configura las credenciales de Google del pack antes de conectar.",
   },
 };
@@ -65,7 +65,7 @@ export default async function CalendarPage({
   const negocioPedido = negocioPedidoDistinto(tenant, activo?.id);
   if (!statusRes.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar Calendario: {statusRes.error}
       </p>
     );

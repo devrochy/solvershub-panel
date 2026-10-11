@@ -99,7 +99,7 @@ export function ChatPrueba() {
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
                     t.role === "user"
-                      ? "bg-blue text-white"
+                      ? "bg-action text-white"
                       : "border border-border-soft bg-surface text-body"
                   }`}
                 >

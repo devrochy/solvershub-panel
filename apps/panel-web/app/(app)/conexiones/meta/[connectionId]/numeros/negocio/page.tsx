@@ -42,7 +42,7 @@ export default async function BusinessNumbersPage({
     return (
       <div className="flex flex-col gap-6">
         {volver}
-        <p role="alert" className="text-danger">
+        <p role="alert" className="text-status-danger-fg">
           No se pudieron leer los números del negocio en Meta: {res.error}
         </p>
       </div>
@@ -130,7 +130,7 @@ export default async function BusinessNumbersPage({
       </p>
 
       {warnings.map((aviso) => (
-        <p key={aviso} role="status" className="text-sm text-warning">
+        <p key={aviso} role="status" className="text-sm text-status-warning-fg">
           {aviso}
         </p>
       ))}

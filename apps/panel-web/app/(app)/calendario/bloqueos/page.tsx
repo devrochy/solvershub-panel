@@ -27,7 +27,7 @@ export default async function CalendarBlocksPage() {
   ]);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los bloqueos: {res.error}
       </p>
     );
@@ -66,7 +66,7 @@ export default async function CalendarBlocksPage() {
       />
 
       {statusRes.ok && !statusRes.data.connected && !statusRes.data.configured && (
-        <p role="status" className="text-warning">
+        <p role="status" className="text-status-warning-fg">
           El Calendario no está configurado para este negocio. Los bloqueos aplican a la agenda
           interna.
         </p>

@@ -32,7 +32,7 @@ export default async function PasarAProduccionPage({
       {res.ok ? (
         <PasarAProduccion estado={res.data} />
       ) : (
-        <p role="alert" className="text-danger">
+        <p role="alert" className="text-status-danger-fg">
           No se pudo cargar la conexión: {res.error}
         </p>
       )}

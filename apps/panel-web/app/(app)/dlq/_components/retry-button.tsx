@@ -38,7 +38,7 @@ export function RetryButton({ entryId }: { entryId: string }) {
         <RefreshCw className="h-4 w-4" aria-hidden />
       </Button>
       {error && (
-        <span className="text-xs text-danger" role="alert">
+        <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}

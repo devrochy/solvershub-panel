@@ -111,7 +111,7 @@ export function InstallmentEditor({
             {confirmando ? (
               <>
                 <Button
-                  className="text-danger"
+                  className="text-status-danger-fg"
                   disabled={status.loading}
                   onClick={eliminar}
                   type="button"
@@ -130,7 +130,7 @@ export function InstallmentEditor({
                 type="button"
                 variant="ghost"
               >
-                <Trash2 className="h-4 w-4 text-danger" aria-hidden />
+                <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
               </Button>
             )}
           </div>
@@ -166,7 +166,7 @@ export function CreditDelete({ creditId }: { creditId: string }) {
       {confirmando ? (
         <>
           <Button
-            className="text-danger"
+            className="text-status-danger-fg"
             disabled={loading}
             onClick={eliminar}
             size="sm"
@@ -177,10 +177,10 @@ export function CreditDelete({ creditId }: { creditId: string }) {
           <Button onClick={() => setConfirmando(false)} aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
         </>
       ) : (
-        <Button onClick={() => setConfirmando(true)} aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-danger" aria-hidden /></Button>
+        <Button onClick={() => setConfirmando(true)} aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
       )}
       {error && (
-        <span className="text-xs text-danger" role="alert">
+        <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}

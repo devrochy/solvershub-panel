@@ -19,7 +19,7 @@ export default async function CobrosPage() {
   const res = await apiFetch<Payment[]>("/pack/cobranza/payments");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar los pagos: {res.error}
       </p>
     );

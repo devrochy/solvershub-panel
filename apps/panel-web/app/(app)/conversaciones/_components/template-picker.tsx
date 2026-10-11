@@ -75,7 +75,7 @@ export function TemplatePicker({
         Pasaron más de 24 horas desde el último mensaje del cliente. WhatsApp solo permite
         escribirle con una plantilla aprobada.
       </p>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-status-danger-fg">{error}</p>}
       {plantillas && plantillas.length === 0 && (
         <p className="text-sm text-body">
           Esta conexión no tiene plantillas aprobadas. Créalas en Plantillas de WhatsApp.

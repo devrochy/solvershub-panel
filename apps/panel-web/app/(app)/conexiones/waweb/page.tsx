@@ -19,7 +19,7 @@ export default async function WawebPage() {
   const res = await apiFetch<State>("/admin/meta/waweb");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar el canal WhatsApp Web: {res.error}
       </p>
     );

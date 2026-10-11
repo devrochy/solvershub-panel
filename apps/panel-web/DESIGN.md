@@ -1,8 +1,8 @@
 # DESIGN.md — Panel SolversHub
 
-Reglas del sistema de diseño del panel. Toda pieza nueva debe cumplirlas. La
-identidad viene de `solvershub/brand/` (manual + tokens DTCG); aquí se documenta
-cómo se aplica en este proyecto.
+Reglas del sistema de diseño del panel (**v2**, SPEC-29). Toda pieza nueva debe
+cumplirlas. La identidad viene de `brand/` (manual + tokens DTCG v1.4); aquí se
+documenta cómo se aplica en este proyecto. Decisiones: ADR-0002 (`docs/adr/`).
 
 ## Principio
 
@@ -38,9 +38,19 @@ sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 
 ## Tipografía
 
-- Display: **Montserrat** — títulos de página 24 px/600, cifras grandes 30 px/700.
-- Cuerpo: **Inter** 15 px, `line-height 1.6`.
-- Labels y ayudas: 12–13 px.
+Escala por token (`text-sh-*`; la familia va aparte con `font-display` o `font-sans`):
+
+| Rol | Utilidad | Tamaño / alto / peso | Familia |
+|---|---|---|---|
+| Cifra héroe (KPI) | `text-sh-hero` | 30/36/700 | Montserrat · `tabular-nums` |
+| Título de página (`h1`) | `text-sh-h1` | 24/32/600 | Montserrat |
+| Título de bloque | `text-sh-block` | 17/24/600 | Montserrat |
+| Cuerpo | `text-sh-body` | 15/24/400 | Inter |
+| Cuerpo denso (tablas compactas) | `text-sh-dense` | 14/20/400 | Inter |
+| Etiqueta | `text-sh-label` | 13/18/500 | Inter |
+| Ayuda | `text-sh-caption` | 12/16/400 | Inter |
+
+- Toda cifra comparable (KPI, montos en tablas) lleva `tabular-nums`.
 - Mayúsculas **solo** en cabeceras de tabla, con `tracking 0.06em`.
 - Nada de justificado.
 
@@ -49,13 +59,38 @@ sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 - Tokens semánticos siempre (`surface`, `border-soft`, `text-soft`…); nunca hex suelto.
 - Oscuro: texto `ice #E8EDF7` (no blanco puro), secundario `fog`, terciario `haze`.
 - Claro: `paper #F7F9FC`, texto `navy-900`, secundario `slate-600`, terciario `slate-500`.
-- Acentos: cyan para **datos** y enlaces; gradiente de marca **solo** en la CTA principal.
-- Estados en **tinte suave** (`/12`), nunca relleno saturado.
-- Contraste verificado: AA mínimo; AAA en texto de cuerpo.
+
+| Necesito… | Uso | No uso (lo bloquea el lint) |
+|---|---|---|
+| Texto o ícono de estado | `text-status-{success,warning,danger,info}-fg` | `text-success`, `text-warning`, `text-danger` |
+| Fondo de badge o banner de estado | `bg-status-*-bg` + `border-status-*-border` | `bg-success/10`, `border-warning/40`… |
+| Enlace o texto de acento | `text-link` (blue-600 en claro, cyan en oscuro) | `text-accent` (cyan sobre blanco da 2,0:1) |
+| Botón principal | `Button variant="accent"` → `bg-cta` (navy-700 → blue-600) | `from-blue to-accent` con texto blanco |
+| Botón por defecto / destructivo | `bg-action` / `bg-danger-strong` (blanco ≥ 5,4:1) | `bg-blue`, `bg-danger` con texto blanco |
+| Indicador no textual (foco, pestaña activa, interruptor) | `border-focus`, `bg-focus`, `ring-focus` | `border-accent`, `bg-accent` |
+| Serie o identidad categórica (canales, gráficos) | `text-data-1…4`, `bg-data-*` (orden fijo) | `text-gold`, `text-primary`, `text-blue` |
+| Barra de progreso | `bg-data-single`; aviso y exceso con `bg-status-*-fg` | `bg-warning` (2,3:1 sobre blanco) |
+
+- Los colores base `success/warning/danger`, el cyan y el oro siguen existiendo para
+  rellenos decorativos y marcas que no necesitan contraste (bordes de banner, tintes).
+- El gradiente de marca (blue → cyan) es solo para acentos sin texto.
+- Estados en **tinte suave**, nunca relleno saturado, y siempre con ícono o texto.
+- El contraste **se verifica en el CI**: `brand/tokens/contrast.mjs` mide 91 pares
+  (texto ≥ 4,5:1, no texto ≥ 3:1, estados sobre su tinte, blanco sobre rellenos de botón).
+
+## Elevación
+
+`shadow-elev-0…3`: plano, tarjeta, popover y diálogo. En oscuro la jerarquía la marca el
+paso de superficie (`surface` → `surface-2` → `surface-raised`) y el borde; la sombra solo
+separa popovers y diálogos. Sin `backdrop-filter` ni transparencias detrás de texto.
 
 ## Motion
 
-- Microinteracciones 150 ms; overlays 200 ms; `ease-out`.
+- Duraciones por token: `--sh-motion-duration-{instant 100, fast 150, base 200, slow 250}`.
+  La transición por defecto de Tailwind (`transition`) ya usa `fast` + curva `out`.
+- Curvas: `ease-sh-out` (entradas), `ease-sh-in` (salidas, 75 % de la entrada),
+  `ease-sh-emphasized` (sheet y cajón). Nada de `duration-300` sueltos.
+- Microinteracciones 150 ms; overlays 200 ms.
 - Se anima solo lo que cambia de estado (hover, foco, apertura). Nada de pulsing,
   hover-scale global ni stagger decorativo.
 - `prefers-reduced-motion` respetado de forma global.
@@ -112,5 +147,13 @@ SPEC-12, no de este recorrido.
 
 ## Gates
 
-`npm run test` · `npm run typecheck` · `npm run lint` · `npm run build`
-(`make panel-check`) + auditorías de accesibilidad y anti-patterns antes de cerrar.
+En el CI de cada PR:
+
+- `npm run typecheck` · `npm run lint` (incluye la regla de colores sin AA) ·
+  `npm run build` · `npm run test:coverage`.
+- `lib/a11y/paginas.test.tsx`: las páginas principales sin violaciones graves de axe.
+  Una página nueva importante se agrega a esa lista con sus fixtures.
+- `node brand/tokens/contrast.mjs` y la copia de `tokens.css` al día (job `tokens`).
+- `npm run api:types:check`: los tipos coinciden con el OpenAPI de `develop` (job `api-types`).
+
+Antes de cerrar, además: revisión de foco y teclado y mirar la página en claro y oscuro.

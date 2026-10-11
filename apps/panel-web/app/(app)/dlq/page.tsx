@@ -28,7 +28,7 @@ export default async function DlqPage() {
   ]);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudo cargar la bandeja de fallos: {res.error}
       </p>
     );

@@ -15,7 +15,7 @@ export default async function RulesPage() {
   const res = await apiFetch<Rules>("/pack/cobranza/rules");
   if (!res.ok) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         No se pudieron cargar las reglas: {res.error}
       </p>
     );

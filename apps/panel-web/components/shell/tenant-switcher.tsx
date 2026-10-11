@@ -89,7 +89,7 @@ export function TenantSwitcher({
                   <span className="truncate">{t.name}</span>
                   <span className="flex items-center gap-2">
                     <span className="text-xs text-body/60">{t.role}</span>
-                    {t.active && <Check className="h-4 w-4 text-accent" aria-hidden />}
+                    {t.active && <Check className="h-4 w-4 text-link" aria-hidden />}
                   </span>
                 </button>
               </li>

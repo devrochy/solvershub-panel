@@ -43,7 +43,7 @@ export default async function ConexionMetaPage({
   const conexion = healthRes.ok ? healthRes.data.connections.find((c) => c.id === connectionId) : undefined;
   if (!conexion) {
     return (
-      <p role="alert" className="text-danger">
+      <p role="alert" className="text-status-danger-fg">
         {healthRes.ok ? "No encontramos esta conexión." : `No se pudo cargar la conexión: ${healthRes.error}`}
       </p>
     );
@@ -64,8 +64,8 @@ export default async function ConexionMetaPage({
       />
 
       {alta === "1" && conexion.status === "connected" && (
-        <div role="status" className="flex items-start gap-2 rounded-lg border border-success/40 bg-success/10 p-4 text-sm">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" aria-hidden />
+        <div role="status" className="flex items-start gap-2 rounded-lg border border-status-success-border bg-status-success-bg p-4 text-sm">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 text-status-success-fg" aria-hidden />
           <p className="text-body">
             Tu número quedó conectado. Envía un mensaje de prueba para confirmarlo y recuerda agregar el método de pago
             de Meta en WhatsApp Manager.
@@ -113,7 +113,7 @@ export default async function ConexionMetaPage({
           {pruebaRes.ok ? (
             <MensajePrueba connectionId={conexion.id} opciones={pruebaRes.data} />
           ) : (
-            <p className="text-sm text-danger">No se pudo preparar la prueba: {pruebaRes.error}</p>
+            <p className="text-sm text-status-danger-fg">No se pudo preparar la prueba: {pruebaRes.error}</p>
           )}
         </CardContent>
       </Card>
