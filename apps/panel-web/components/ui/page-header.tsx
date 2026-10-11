@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { SectionHelpButton } from "@/app/(app)/_components/section-help-button";
+import { MigasDeShell, PestanasDeShell } from "@/components/shell/navegacion-de-pagina";
 import { Breadcrumbs, type Miga } from "@/components/ui/breadcrumbs";
 import { cn } from "@/lib/utils";
 
@@ -22,15 +23,15 @@ export function PageHeader({
   actions?: ReactNode;
   /** Clave de `lib/copy.ts` para el "¿Qué es esto?". Opcional. */
   helpSection?: string;
-  /** Migas de pan (la última es esta página). */
+  /** Migas propias. Sin esta prop salen solas del menú y la ruta (HU-DS-04). */
   breadcrumbs?: Miga[];
-  /** Pestañas de sección (`Tabs asLinks`), debajo del título. */
+  /** Pestañas propias. Sin esta prop, las de la sección del pack salen solas (HU-DS-04). */
   tabs?: ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
+      {breadcrumbs ? breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} /> : <MigasDeShell titulo={title} />}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -41,7 +42,7 @@ export function PageHeader({
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {tabs}
+      {tabs ?? <PestanasDeShell />}
     </div>
   );
 }

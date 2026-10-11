@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 
 import { cn } from "@/lib/utils";
@@ -57,6 +58,35 @@ export function DropdownMenuItem({
     >
       {icon && <span className="text-text-soft [&>svg]:h-4 [&>svg]:w-4">{icon}</span>}
       {children}
+    </Menu.Item>
+  );
+}
+
+/** Ítem que navega: enlace real (abre en pestaña nueva, se ve en la barra de estado) con el foco por flechas de Radix. */
+export function DropdownMenuLinkItem({
+  href,
+  children,
+  current = false,
+  disabled = false,
+}: {
+  href: string;
+  children: ReactNode;
+  current?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <Menu.Item asChild disabled={disabled}>
+      <Link
+        href={href}
+        aria-current={current ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+          "data-[highlighted]:bg-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          current ? "bg-surface-raised text-headline" : "text-body",
+        )}
+      >
+        {children}
+      </Link>
     </Menu.Item>
   );
 }
