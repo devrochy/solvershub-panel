@@ -748,11 +748,108 @@ export interface paths {
         /** List Connection Agents */
         get: operations["list_connection_agents_api_v1_admin_connections__connection_id__agents_get"];
         put?: never;
+        /**
+         * Add Connection Agent
+         * @description Agrega un especialista a la conexión. Con el Agent OS (runtime v3), el cambio aplica con la próxima release de la conexión.
+         */
+        post: operations["add_connection_agent_api_v1_admin_connections__connection_id__agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Releases */
+        get: operations["list_releases_api_v1_admin_connections__connection_id__releases_get"];
+        put?: never;
+        /** Build Release */
+        post: operations["build_release_api_v1_admin_connections__connection_id__releases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Release */
+        get: operations["get_release_api_v1_admin_connections__connection_id__releases__release_id__get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Promote Release */
+        post: operations["promote_release_api_v1_admin_connections__connection_id__releases__release_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rollback Release */
+        post: operations["rollback_release_api_v1_admin_connections__connection_id__rollback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/agents/{instance_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Connection Agent
+         * @description Quita un especialista de la conexión (borrado lógico). Con el Agent OS (runtime v3), el cambio aplica con la próxima release de la conexión.
+         */
+        delete: operations["delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Patch Connection Agent
+         * @description Habilita o deshabilita, cambia la prioridad o vuelve por defecto a un agente de la conexión. Con el Agent OS (runtime v3), el cambio aplica con la próxima release de la conexión.
+         */
+        patch: operations["patch_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__patch"];
         trace?: never;
     };
     "/api/v1/admin/connections/catalog": {
@@ -2327,8 +2424,11 @@ export interface paths {
         /**
          * Save Web Chat Settings
          * @description Habilita/deshabilita el chat web, edita dominios permitidos, rota la clave
-         *     o cambia el secreto de Turnstile. Todo se guarda en
-         *     `app_settings.web_chat_config` (JSONB, migración 0047).
+         *     o cambia el secreto de Turnstile. Se guarda en `app_settings.web_chat_config`
+         *     (JSONB, migración 0047) y, en la misma transacción, en la conexión `webchat` del
+         *     negocio (ADR-0115 §4, doble escritura hasta el *contract*: `chat_web_conexion`). El
+         *     primer guardado crea la conexión con sus instancias de agentes si el negocio ya las
+         *     tiene (HU-AOS-11 parte 2).
          */
         put: operations["save_web_chat_settings_api_v1_admin_settings_web_chat_put"];
         post?: never;
@@ -7241,6 +7341,11 @@ export interface components {
             tipo: string;
             /** Creado Por */
             creado_por: string;
+            /**
+             * Alcance
+             * @description Por qué monto fue la promesa del asistente: vencido o saldo_total (null en las demás).
+             */
+            alcance?: string | null;
         };
         /** PromiseStatusUpdate */
         PromiseStatusUpdate: {
@@ -7619,6 +7724,13 @@ export interface components {
             max_reprogramaciones: number;
             /** Umbral Saldo Autonomo */
             umbral_saldo_autonomo: number;
+            /**
+             * Alcance Promesa
+             * @description Alcances de la promesa de pago que acepta el asistente: lo vencido, el saldo total o ambos (HU-AOS-08).
+             * @default ambos
+             * @enum {string}
+             */
+            alcance_promesa: "ambos" | "vencido" | "saldo_total";
         };
         /** RulesUpdate */
         RulesUpdate: {
@@ -7642,6 +7754,11 @@ export interface components {
              * @default 0
              */
             umbral_saldo_autonomo: number;
+            /**
+             * Alcance Promesa
+             * @description Alcances de la promesa de pago (ambos, vencido o saldo_total). Si no se envía, se conserva el actual.
+             */
+            alcance_promesa?: ("ambos" | "vencido" | "saldo_total") | null;
         };
         /** SearchResponse */
         SearchResponse: {
@@ -9154,6 +9271,170 @@ export interface components {
         BotPausedUpdate: {
             /** Paused */
             paused: boolean;
+        };
+        /** BuildIn */
+        BuildIn: {
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
+        /** BuildOut */
+        BuildOut: {
+            release: components["schemas"]["ReleaseSummary"];
+            /** Created */
+            created: boolean;
+        };
+        /** PromoteIn */
+        PromoteIn: {
+            /**
+             * Reason
+             * @default manual
+             */
+            reason: string;
+        };
+        /** ReleaseChange */
+        ReleaseChange: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** From Release Id */
+            from_release_id: string | null;
+            /**
+             * To Release Id
+             * Format: uuid
+             */
+            to_release_id: string;
+        };
+        /** ReleaseDetail */
+        ReleaseDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "owner" | "platform";
+            /** Manifest Hash */
+            manifest_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Active */
+            active: boolean;
+            /** Canary */
+            canary: boolean;
+            /** Last Event */
+            last_event: string | null;
+            /** Last Event At */
+            last_event_at: string | null;
+            /**
+             * Manifest
+             * @description Manifiesto `release/1` sin textos: hashes y tamaños.
+             */
+            manifest: {
+                [key: string]: unknown;
+            };
+            /** Events */
+            events: components["schemas"]["ReleaseEvent"][];
+        };
+        /** ReleaseEvent */
+        ReleaseEvent: {
+            /** Type */
+            type: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Actor */
+            actor: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ReleaseSummary */
+        ReleaseSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "owner" | "platform";
+            /** Manifest Hash */
+            manifest_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Active */
+            active: boolean;
+            /** Canary */
+            canary: boolean;
+            /** Last Event */
+            last_event: string | null;
+            /** Last Event At */
+            last_event_at: string | null;
+        };
+        /** RollbackIn */
+        RollbackIn: {
+            /** To Release Id */
+            to_release_id?: string | null;
+            /**
+             * Reason
+             * @default manual
+             */
+            reason: string;
+        };
+        /** ConnectionAgentCreate */
+        ConnectionAgentCreate: {
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /**
+             * Priority
+             * @default 100
+             */
+            priority: number;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+        };
+        /** ConnectionAgentPatch */
+        ConnectionAgentPatch: {
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Priority */
+            priority?: number | null;
+            /** Is Default */
+            is_default?: true | null;
         };
     };
     responses: never;
@@ -10701,6 +10982,295 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConnectionAgentInstance"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_connection_agent_api_v1_admin_connections__connection_id__agents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionAgentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionAgentInstance"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_releases_api_v1_admin_connections__connection_id__releases_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                before?: number | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    build_release_api_v1_admin_connections__connection_id__releases_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_release_api_v1_admin_connections__connection_id__releases__release_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_release_api_v1_admin_connections__connection_id__releases__release_id__promote_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChange"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rollback_release_api_v1_admin_connections__connection_id__rollback_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollbackIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChange"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                instance_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                instance_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionAgentPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionAgentInstance"];
                 };
             };
             /** @description Validation Error */
