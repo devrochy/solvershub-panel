@@ -15,11 +15,13 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(soloAtencion[0].visible.map((i) => i.label)).toEqual(["Conversaciones", "Escalaciones"]);
   });
 
-  it("un tester (master sin colaboradores, ADR-0134) ve Pruebas y no Colaboradores", () => {
-    const tester = { ...TODO, collaborators: null };
+  it("un tester (ADR-0134) ve Pruebas y Colaboradores; sin la sección, Colaboradores se oculta", () => {
+    const tester = { ...TODO };
     const visibles = gruposVisibles(tester).flatMap((g) => g.visible.map((i) => i.label));
     expect(visibles).toContain("Pruebas");
-    expect(visibles).not.toContain("Colaboradores");
+    expect(visibles).toContain("Colaboradores");
+    const sinCuentas = { ...TODO, collaborators: null };
+    expect(gruposVisibles(sinCuentas).flatMap((g) => g.visible.map((i) => i.label))).not.toContain("Colaboradores");
     expect(itemActivo("/pruebas/informes/1", gruposVisibles(tester))?.item.label).toBe("Pruebas");
     // Un owner de negocio no tiene la sección `qa`: no ve Pruebas.
     const owner = { ...TODO, qa: null };

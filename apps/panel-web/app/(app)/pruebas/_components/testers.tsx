@@ -30,8 +30,8 @@ function EstadoTester({ estado }: { estado: QaTesterOut["estado"] }) {
 }
 
 /**
- * Testers del centro de pruebas (HU-QA-04, ADR-0134). Un tester actúa como master en test
- * salvo Colaboradores. Se invita por correo con un enlace de un solo uso; si el correo de
+ * Testers del centro de pruebas (HU-QA-04, ADR-0134). Un tester actúa como master en test y,
+ * en Colaboradores, como dueño del negocio activo. Se invita por correo con un enlace de un solo uso; si el correo de
  * sistema no está configurado, el enlace se muestra aquí para compartirlo a mano.
  */
 export function GestionDeTesters({ inicial }: { inicial: QaTestersOut }) {
@@ -114,7 +114,8 @@ export function GestionDeTesters({ inicial }: { inicial: QaTestersOut }) {
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-sh-block text-headline">Invitar un tester</h2>
             <p className="max-w-prose text-sm text-body">
-              Un tester entra al panel de test con los permisos de un master, salvo Colaboradores: no gestiona cuentas.
+              Un tester entra al panel de test con los permisos de un master. En Colaboradores actúa como dueño del
+              negocio que tenga activo: no crea masters ni toca cuentas de plataforma.
               Usa una cuenta propia, solo para pruebas. El enlace sirve una vez y vence en 7 días.
             </p>
           </div>
