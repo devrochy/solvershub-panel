@@ -6,6 +6,7 @@ import { TabLinks } from "@/components/ui/tab-links";
 
 const PESTANAS = [
   { href: "/pruebas", label: "Ejecutar" },
+  { href: "/pruebas/datos", label: "Datos de prueba" },
   { href: "/pruebas/informes", label: "Informes" },
   { href: "/pruebas/ciclos", label: "Ciclos" },
   { href: "/pruebas/configuracion", label: "Configurar test" },

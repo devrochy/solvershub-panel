@@ -124,7 +124,7 @@ afterEach(() => {
 function montar(run: QaEjecucion | null) {
   return render(
     <FeedbackProviders>
-      <EjecucionDePruebas catalogo={CATALOGO} inicial={run} />
+      <EjecucionDePruebas guia={{}} catalogo={CATALOGO} inicial={run} />
     </FeedbackProviders>,
   );
 }

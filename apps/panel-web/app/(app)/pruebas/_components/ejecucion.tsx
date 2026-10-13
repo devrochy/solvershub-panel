@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { ListChecks } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { QaAdjunto, QaCatalogo, QaEjecucion, QaResultadoPrueba } from "@/lib/api/types";
 import { estadoDePrueba, type EstadoPaso } from "@/lib/qa/estados";
-import { FILTROS_INICIALES, filtrar, siguientePendiente, vecina, type Filtros } from "@/lib/qa/lista";
+import { FILTROS_INICIALES, enOrdenDeLista, filtrar, siguientePendiente, vecina, type Filtros } from "@/lib/qa/lista";
 import { toast } from "@/lib/toast-store";
 
 import { llamarQa, type Respuesta } from "./api";
@@ -17,16 +17,72 @@ import { InformePrevio } from "./informe-previo";
 import { ListaDePruebas } from "./lista-de-pruebas";
 
 const VACIO: QaResultadoPrueba = { estado: "sin_correr", nota: null, pasos: {}, adjuntos: [] };
+// Los filtros de la lista (menos el texto) se recuerdan en este navegador, con el mismo patrón
+// que los grupos del menú lateral: `useSyncExternalStore` sobre localStorage.
+const CLAVE_FILTROS = "qa:filtros";
+type FiltrosGuardados = Omit<Filtros, "texto">;
+const GUARDADOS_INICIALES: FiltrosGuardados = {
+  estado: FILTROS_INICIALES.estado,
+  entorno: FILTROS_INICIALES.entorno,
+  area: FILTROS_INICIALES.area,
+  soloHumo: FILTROS_INICIALES.soloHumo,
+};
+let filtrosCache: FiltrosGuardados | null = null;
+const oyentes = new Set<() => void>();
+
+function leerFiltros(): FiltrosGuardados {
+  if (filtrosCache) return filtrosCache;
+  try {
+    const crudo = window.localStorage.getItem(CLAVE_FILTROS);
+    filtrosCache = { ...GUARDADOS_INICIALES, ...(crudo ? (JSON.parse(crudo) as Partial<FiltrosGuardados>) : {}) };
+  } catch {
+    filtrosCache = GUARDADOS_INICIALES;
+  }
+  return filtrosCache;
+}
+
+function escribirFiltros(next: FiltrosGuardados) {
+  filtrosCache = next;
+  try {
+    window.localStorage.setItem(CLAVE_FILTROS, JSON.stringify(next));
+  } catch {
+    // Sin almacenamiento (ventana privada): el filtro vale solo para esta visita.
+  }
+  oyentes.forEach((notificar) => notificar());
+}
+
+function suscribir(notificar: () => void) {
+  oyentes.add(notificar);
+  return () => {
+    oyentes.delete(notificar);
+  };
+}
 
 /**
  * Ejecución de pruebas de un tester (HU-QA-03). Todo se guarda al instante: cada acción
  * actualiza la vista primero (optimista) y la respuesta de la API reemplaza el estado; si
  * falla, se revierte y se avisa.
  */
-export function EjecucionDePruebas({ catalogo, inicial }: { catalogo: QaCatalogo; inicial: QaEjecucion | null }) {
-  const items = catalogo.items;
+export function EjecucionDePruebas({
+  catalogo,
+  inicial,
+  guia,
+}: {
+  catalogo: QaCatalogo;
+  inicial: QaEjecucion | null;
+  /** Títulos de la guía de datos por slug, para los enlaces de «Necesitas». */
+  guia: Record<string, string>;
+}) {
+  const items = useMemo(() => enOrdenDeLista(catalogo.items), [catalogo.items]);
   const [run, setRun] = useState<QaEjecucion | null>(inicial);
-  const [filtros, setFiltros] = useState<Filtros>(FILTROS_INICIALES);
+  const guardados = useSyncExternalStore(suscribir, leerFiltros, () => GUARDADOS_INICIALES);
+  const [texto, setTexto] = useState("");
+  const filtros = useMemo<Filtros>(() => ({ ...guardados, texto }), [guardados, texto]);
+  const setFiltros = useCallback((f: Filtros) => {
+    const { texto: nuevoTexto, ...resto } = f;
+    setTexto(nuevoTexto);
+    escribirFiltros(resto);
+  }, []);
   const [guardado, setGuardado] = useState<EstadoGuardado>({ estado: "idle" });
   const [empezando, setEmpezando] = useState(false);
   const [informeAbierto, setInformeAbierto] = useState(false);
@@ -195,6 +251,7 @@ export function EjecucionDePruebas({ catalogo, inicial }: { catalogo: QaCatalogo
           <Ejecutor
             key={item.slug}
             item={item}
+            guia={guia}
             resultado={resultados[item.slug]}
             empezada={!!run}
             editable={editable}
