@@ -3,7 +3,17 @@ import { describe, expect, it } from "vitest";
 import type { QaEvento, QaItem } from "@/lib/api/types";
 import { estadoDePrueba, fechaDeCatalogo, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
 import { describirEvento } from "@/lib/qa/historial";
-import { FILTROS_INICIALES, agrupar, filtrar, modulos, primerPasoPendiente, siguientePendiente, vecina } from "@/lib/qa/lista";
+import {
+  FILTROS_INICIALES,
+  agrupar,
+  areas,
+  enOrdenDeLista,
+  entornos,
+  filtrar,
+  primerPasoPendiente,
+  siguientePendiente,
+  vecina,
+} from "@/lib/qa/lista";
 import { accionDeTecla } from "@/lib/qa/teclas";
 
 function item(slug: string, extra: Partial<QaItem> = {}): QaItem {
@@ -20,9 +30,9 @@ function item(slug: string, extra: Partial<QaItem> = {}): QaItem {
 }
 
 const ITEMS = [
-  item("a", { modulo: "Panel", prioridad: "P0", hu: ["HU-DS-05"], titulo: "Ir con Ctrl+K" }),
-  item("b", { modulo: "Panel" }),
-  item("c", { modulo: "App de campo", grupo: "Pagos", titulo: "Pago sin conexión" }),
+  item("a", { modulo: "Panel", entorno: "panel", area: "Navegación y sesión", prioridad: "P0", hu: ["HU-DS-05"], titulo: "Ir con Ctrl+K" }),
+  item("b", { modulo: "Panel", entorno: "panel", area: "Navegación y sesión" }),
+  item("c", { modulo: "App de campo", entorno: "apk", area: "Campo (gestor)", grupo: "Pagos", titulo: "Pago sin conexión" }),
 ];
 const MIS_ESTADOS: Record<string, string> = { a: "ok", c: "falla" };
 const estadoDe = (slug: string) => MIS_ESTADOS[slug] ?? "sin_correr";
@@ -50,22 +60,36 @@ describe("estados", () => {
 });
 
 describe("lista lateral", () => {
-  it("filtra por texto sin tildes, estado, módulo y humo", () => {
+  it("filtra por texto sin tildes, estado, entorno, sección y humo", () => {
     expect(filtrar(ITEMS, { ...FILTROS_INICIALES, texto: "conexion" }, estadoDe).map((i) => i.slug)).toEqual(["c"]);
     expect(filtrar(ITEMS, { ...FILTROS_INICIALES, texto: "hu-ds-05" }, estadoDe).map((i) => i.slug)).toEqual(["a"]);
     expect(filtrar(ITEMS, { ...FILTROS_INICIALES, estado: "pendientes" }, estadoDe).map((i) => i.slug)).toEqual(["b"]);
     expect(filtrar(ITEMS, { ...FILTROS_INICIALES, estado: "falla" }, estadoDe).map((i) => i.slug)).toEqual(["c"]);
-    expect(filtrar(ITEMS, { ...FILTROS_INICIALES, modulo: "Panel" }, estadoDe)).toHaveLength(2);
+    expect(filtrar(ITEMS, { ...FILTROS_INICIALES, entorno: "panel" }, estadoDe)).toHaveLength(2);
+    expect(filtrar(ITEMS, { ...FILTROS_INICIALES, area: "Campo (gestor)" }, estadoDe).map((i) => i.slug)).toEqual(["c"]);
+    expect(filtrar(ITEMS, { ...FILTROS_INICIALES, texto: "campo" }, estadoDe).map((i) => i.slug)).toEqual(["c"]);
     expect(filtrar(ITEMS, { ...FILTROS_INICIALES, soloHumo: true }, estadoDe).map((i) => i.slug)).toEqual(["a"]);
   });
 
-  it("agrupa por módulo y grupo con lo terminado", () => {
+  it("agrupa por entorno y sección con lo terminado", () => {
     const grupos = agrupar(ITEMS, estadoDe);
     expect(grupos.map((g) => [g.titulo, g.items.length, g.terminadas])).toEqual([
-      ["Panel · Navegación", 2, 1],
-      ["App de campo · Pagos", 1, 1],
+      ["Panel", 2, 1],
+      ["APK", 1, 1],
     ]);
-    expect(modulos(ITEMS)).toEqual(["App de campo", "Panel"]);
+    expect(grupos[0].areas.map((a) => [a.titulo, a.items.length, a.terminadas])).toEqual([["Navegación y sesión", 2, 1]]);
+    expect(entornos(ITEMS)).toEqual([
+      { id: "panel", titulo: "Panel" },
+      { id: "apk", titulo: "APK" },
+    ]);
+    expect(areas(ITEMS, "apk")).toEqual(["Campo (gestor)"]);
+    expect(areas(ITEMS, "")).toEqual(["Navegación y sesión", "Campo (gestor)"]);
+  });
+
+  it("ordena por entorno aunque el catálogo venga mezclado y deja aparte lo anterior a la v6", () => {
+    const mezclado = [ITEMS[2], item("viejo", { grupo: "Viejo" }), ITEMS[0]];
+    expect(enOrdenDeLista(mezclado).map((i) => i.slug)).toEqual(["a", "c", "viejo"]);
+    expect(agrupar(mezclado, estadoDe).at(-1)?.titulo).toBe("Sin clasificar");
   });
 
   it("encuentra la siguiente pendiente y las vecinas", () => {

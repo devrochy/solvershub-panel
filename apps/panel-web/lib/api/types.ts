@@ -85,4 +85,7 @@ export type QaConfig = components["schemas"]["QaConfig"];
 export type QaTestersOut = components["schemas"]["QaTestersOut"];
 export type QaTesterOut = components["schemas"]["QaTesterOut"];
 export type QaTesterInvitado = components["schemas"]["QaTesterInvitado"];
+export type QaMisDatos = components["schemas"]["QaMisDatos"];
+export type QaDatos = components["schemas"]["QaDatos"];
+export type QaDatosCuenta = components["schemas"]["QaDatosCuenta"];
 export type AcceptTesterInvitationResponse = components["schemas"]["AcceptTesterInvitationResponse"];

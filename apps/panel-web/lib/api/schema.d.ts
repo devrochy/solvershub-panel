@@ -4551,6 +4551,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/qa/datos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Mis Datos
+         * @description Negocio de prueba y cuentas del tester (sin contraseñas).
+         */
+        get: operations["get_mis_datos_api_v1_admin_qa_datos_get"];
+        put?: never;
+        /**
+         * Preparar Mis Datos
+         * @description Prepara el negocio de prueba del tester con sus datos y cuentas. 409 si ya existe.
+         */
+        post: operations["preparar_mis_datos_api_v1_admin_qa_datos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/datos/contrasenas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Contrasenas Nuevas
+         * @description Contraseñas nuevas para las tres cuentas de prueba; cierra sus sesiones.
+         */
+        post: operations["contrasenas_nuevas_api_v1_admin_qa_datos_contrasenas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/wizard/cancel": {
         parameters: {
             query?: never;
@@ -8205,7 +8249,7 @@ export interface components {
              * Seccion
              * @enum {string}
              */
-            seccion: "pruebas" | "test" | "prod";
+            seccion: "pruebas" | "test" | "prod" | "datos";
             /** Orden */
             orden: number;
             /** Modulo */
@@ -8264,8 +8308,23 @@ export interface components {
              */
             origen: string[];
             /**
+             * Entorno
+             * @description Pruebas: dónde se ejecuta (HU-QA-08).
+             */
+            entorno?: ("panel" | "apk" | "whatsapp" | "web" | "api") | null;
+            /**
+             * Area
+             * @description Pruebas: sección del panel o pantalla de la APK.
+             */
+            area?: string | null;
+            /**
+             * Requiere
+             * @description Pruebas: slugs de la guía de datos que necesita.
+             */
+            requiere?: string[];
+            /**
              * Estado
-             * @description Pruebas: estado consolidado del ciclo. Test/prod: estado de la configuración.
+             * @description Pruebas: estado consolidado del ciclo. Test/prod: estado de la configuración. Datos: `guia`.
              */
             estado: string;
             /**
@@ -10320,6 +10379,78 @@ export interface components {
             priority?: number | null;
             /** Is Default */
             is_default?: true | null;
+        };
+        /** QaDatos */
+        QaDatos: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "creando" | "listo" | "error" | "purgado";
+            /** Error */
+            error?: string | null;
+            negocio: components["schemas"]["QaDatosNegocio"];
+            /** Cuentas */
+            cuentas: components["schemas"]["QaDatosCuenta"][];
+            /** Contenido */
+            contenido: components["schemas"]["QaDatosContenido"][];
+            /** Creado En */
+            creado_en?: string | null;
+            /** Actualizado En */
+            actualizado_en?: string | null;
+            /**
+             * Contrasenas
+             * @description Solo al preparar o al pedir contraseñas nuevas: se muestran una vez y no se guardan.
+             */
+            contrasenas?: {
+                [key: string]: string;
+            } | null;
+        };
+        /** QaDatosContenido */
+        QaDatosContenido: {
+            /** Habilidad */
+            habilidad: string;
+            /** Detalle */
+            detalle: string[];
+        };
+        /** QaDatosCuenta */
+        QaDatosCuenta: {
+            /**
+             * Rol
+             * @enum {string}
+             */
+            rol: "dueno" | "gestor" | "colaborador";
+            /** Titulo */
+            titulo: string;
+            /** Uso */
+            uso: string;
+            /** Email */
+            email: string;
+            /** Creada */
+            creada: boolean;
+        };
+        /** QaDatosNegocio */
+        QaDatosNegocio: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Nombre */
+            nombre?: string | null;
+        };
+        /** QaMisDatos */
+        QaMisDatos: {
+            /**
+             * Disponible
+             * @description `QA_TESTERS_ENABLED` en este entorno: los datos solo existen en test.
+             */
+            disponible: boolean;
+            datos: components["schemas"]["QaDatos"] | null;
+            /** Contenido */
+            contenido: components["schemas"]["QaDatosContenido"][];
         };
     };
     responses: never;
@@ -18923,7 +19054,7 @@ export interface operations {
     get_catalog_api_v1_admin_qa_catalog_get: {
         parameters: {
             query?: {
-                seccion?: ("pruebas" | "test" | "prod") | null;
+                seccion?: ("pruebas" | "test" | "prod" | "datos") | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -19580,6 +19711,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QaTesterOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_mis_datos_api_v1_admin_qa_datos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaMisDatos"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preparar_mis_datos_api_v1_admin_qa_datos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaDatos"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    contrasenas_nuevas_api_v1_admin_qa_datos_contrasenas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaDatos"];
                 };
             };
             /** @description Validation Error */

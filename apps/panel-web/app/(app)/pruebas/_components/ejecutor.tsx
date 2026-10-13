@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, FileText, Trash2 } from "lucide-react";
 
 import { useAtajos } from "@/components/shell/atajos-context";
@@ -15,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { QaAdjunto, QaItem, QaResultadoPrueba } from "@/lib/api/types";
 import { esCampoEditable } from "@/lib/shell/paleta";
 import { ESTADO_PASO, esTerminada, etiquetaPrueba, tonoPrueba, type EstadoPaso } from "@/lib/qa/estados";
-import { primerPasoPendiente } from "@/lib/qa/lista";
+import { ENTORNOS, areaDe, entornoDe, primerPasoPendiente } from "@/lib/qa/lista";
 import { accionDeTecla } from "@/lib/qa/teclas";
 import { toast } from "@/lib/toast-store";
 
@@ -103,6 +104,7 @@ function Capturas({
  */
 export function Ejecutor({
   item,
+  guia,
   resultado,
   empezada,
   editable,
@@ -115,6 +117,7 @@ export function Ejecutor({
   onVecina,
 }: {
   item: QaItem;
+  guia: Record<string, string>;
   resultado: QaResultadoPrueba | undefined;
   empezada: boolean;
   editable: boolean;
@@ -280,7 +283,9 @@ export function Ejecutor({
         <header className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-text-soft">
-              {[item.modulo, item.grupo].filter(Boolean).join(" · ")}
+              {[ENTORNOS[entornoDe(item)], areaDe(item), item.grupo !== areaDe(item) ? item.grupo : null]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
             <div className="flex items-center gap-1">
               <Button size="icon" variant="ghost" aria-label="Prueba anterior (K)" onClick={() => onVecina(-1)}>
@@ -313,7 +318,7 @@ export function Ejecutor({
             )}
           </div>
           {(item.contexto || item.resumen) && <p className="max-w-prose text-sm text-body">{item.contexto ?? item.resumen}</p>}
-          {((item.precondiciones ?? []).length > 0 || (item.datos ?? []).length > 0) && (
+          {((item.precondiciones ?? []).length > 0 || (item.datos ?? []).length > 0 || (item.requiere ?? []).length > 0) && (
             <dl className="grid gap-4 rounded-md bg-surface-2 p-4 text-sm sm:grid-cols-2">
               {(item.precondiciones ?? []).length > 0 && (
                 <div className="flex flex-col gap-1">
@@ -334,6 +339,25 @@ export function Ejecutor({
                     <ul className="list-disc space-y-0.5 pl-4 text-body">
                       {(item.datos ?? []).map((d) => (
                         <li key={d}>{d}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              )}
+              {(item.requiere ?? []).length > 0 && (
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <dt className="text-sh-label text-headline">Cómo conseguir los datos</dt>
+                  <dd>
+                    <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                      {(item.requiere ?? []).map((slug) => (
+                        <li key={slug}>
+                          <Link
+                            href={`/pruebas/datos#${slug}`}
+                            className="text-link underline-offset-2 hover:underline"
+                          >
+                            {guia[slug] ?? slug}
+                          </Link>
+                        </li>
                       ))}
                     </ul>
                   </dd>

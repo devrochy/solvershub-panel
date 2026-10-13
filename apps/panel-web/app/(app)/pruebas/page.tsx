@@ -9,9 +9,10 @@ import { EjecucionDePruebas } from "./_components/ejecucion";
  * la derecha, con el avance propio y el del ciclo arriba.
  */
 export default async function EjecutarPruebasPage() {
-  const [catalogo, run] = await Promise.all([
+  const [catalogo, run, guia] = await Promise.all([
     apiFetch<QaCatalogo>("/admin/qa/catalog?seccion=pruebas"),
     apiFetch<QaEjecucion | null>("/admin/qa/runs/me"),
+    apiFetch<QaCatalogo>("/admin/qa/catalog?seccion=datos"),
   ]);
   if (!catalogo.ok) {
     return (
@@ -28,5 +29,6 @@ export default async function EjecutarPruebasPage() {
       />
     );
   }
-  return <EjecucionDePruebas catalogo={catalogo.data} inicial={run.ok ? run.data : null} />;
+  const titulos = Object.fromEntries((guia.ok ? guia.data.items : []).map((i) => [i.slug, i.titulo]));
+  return <EjecucionDePruebas catalogo={catalogo.data} inicial={run.ok ? run.data : null} guia={titulos} />;
 }
