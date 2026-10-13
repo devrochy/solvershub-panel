@@ -109,6 +109,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/accept-tester-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Accept Tester Invitation
+         * @description Canjea el enlace de un tester (SPEC-30, ADR-0134): define su contraseña y abre su sesión.
+         *     Inválido, usado, vencido o con el rol apagado: 400 sin decir cuál. Mismo bloqueo
+         *     progresivo del login, por IP y por invitación.
+         */
+        post: operations["post_accept_tester_invitation_api_v1_auth_accept_tester_invitation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agents": {
         parameters: {
             query?: never;
@@ -2138,7 +2160,10 @@ export interface paths {
         put?: never;
         /**
          * Purge Tenant Endpoint
-         * @description Eliminación física IRREVERSIBLE: exige la frase `ELIMINAR <slug>` (invariante 8).
+         * @description Eliminación física IRREVERSIBLE (invariante 8).
+         *
+         *     Exige el tenant suspendido (409 `tenant_not_suspended`) y la frase `ELIMINAR <slug>`.
+         *     Solo el master, también en test (invariante 8: el tester no purga).
          */
         post: operations["purge_tenant_endpoint_api_v1_admin_platform_tenants__tenant_id__purge_post"];
         delete?: never;
@@ -2568,7 +2593,8 @@ export interface paths {
         /**
          * Get Raw Spec
          * @description AgentSpec activo (editor crudo de Configuración → Avanzado), con los headers sensibles
-         *     de las tools declarativas enmascarados (HU-AOS-12).
+         *     de las tools declarativas enmascarados (HU-AOS-12). El `tenantId` mostrado es el del
+         *     negocio de la sesión, aunque la fila traiga otro.
          */
         get: operations["get_raw_spec_api_v1_admin_settings_advanced_spec_get"];
         /**
@@ -2576,7 +2602,8 @@ export interface paths {
          * @description Valida el JSON contra el contrato del AgentSpec y guarda si cambió.
          *
          *     `save_spec_if_changed` solo crea versión cuando el contenido difiere, así que
-         *     guardar el mismo spec es un no-op (no ensucia el historial).
+         *     guardar el mismo spec es un no-op (no ensucia el historial). El `tenantId` es
+         *     siempre el del negocio de la sesión: el del cuerpo se ignora.
          */
         put: operations["save_raw_spec_api_v1_admin_settings_advanced_spec_put"];
         post?: never;
@@ -4160,6 +4187,370 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/qa/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalog
+         * @description Catálogo del ciclo abierto con el estado consolidado de cada prueba y el de la config.
+         */
+        get: operations["get_catalog_api_v1_admin_qa_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/catalog/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Catalog
+         * @description Importa el catálogo (solo master). Idempotente: el mismo contenido no se duplica.
+         */
+        post: operations["import_catalog_api_v1_admin_qa_catalog_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/items/{slug}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Item History
+         * @description Historial de una prueba en el ciclo (abierto por defecto) o de un punto de configuración.
+         */
+        get: operations["item_history_api_v1_admin_qa_items__slug__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get My Run
+         * @description Mi ejecución del ciclo abierto (`null` si todavía no la empecé).
+         */
+        get: operations["get_my_run_api_v1_admin_qa_runs_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start My Run
+         * @description Empieza (o devuelve) mi ejecución del ciclo abierto.
+         */
+        post: operations["start_my_run_api_v1_admin_qa_runs_me_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me/items/{slug}/steps/{paso}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Mark Step
+         * @description Marca un paso de mi ejecución (guardado inmediato) y recalcula la prueba.
+         */
+        put: operations["mark_step_api_v1_admin_qa_runs_me_items__slug__steps__paso__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me/items/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Note Item
+         * @description Nota general de una prueba en mi ejecución.
+         */
+        put: operations["note_item_api_v1_admin_qa_runs_me_items__slug__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Attachment
+         * @description Adjunta una captura (jpeg, png, webp o pdf; hasta 5 MB) a un paso de mi ejecución.
+         */
+        post: operations["upload_attachment_api_v1_admin_qa_runs_me_attachments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/attachments/{adjunto_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Attachment
+         * @description Sirve una captura (dueño de la ejecución o master).
+         */
+        get: operations["get_attachment_api_v1_admin_qa_attachments__adjunto_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Attachment
+         * @description Quita una captura de mi ejecución en curso.
+         */
+        delete: operations["delete_attachment_api_v1_admin_qa_attachments__adjunto_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/me/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit My Run
+         * @description Envía mi informe: la ejecución queda en solo lectura y se avisa por correo al dueño.
+         */
+        post: operations["submit_my_run_api_v1_admin_qa_runs_me_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runs
+         * @description Ejecuciones e informes: el master ve todos, el resto solo los suyos.
+         */
+        get: operations["list_runs_api_v1_admin_qa_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run */
+        get: operations["get_run_api_v1_admin_qa_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/runs/{run_id}/report.md": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run Markdown
+         * @description Informe enviado en Markdown, para descargar.
+         */
+        get: operations["get_run_markdown_api_v1_admin_qa_runs__run_id__report_md_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/cycles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Cycles
+         * @description Ciclos con su progreso consolidado; los cerrados, con la foto guardada al cerrarlos.
+         */
+        get: operations["list_cycles_api_v1_admin_qa_cycles_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/cycles/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Cycle
+         * @description Cierra el ciclo abierto (foto fija) y abre uno nuevo con la última versión del catálogo.
+         *
+         *     Congela las ejecuciones en curso de todos: master, o tester en test (ADR-0134).
+         */
+        post: operations["close_cycle_api_v1_admin_qa_cycles_close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/config/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Config
+         * @description Estado y nota de un punto de configuración de test o de paso a producción.
+         */
+        put: operations["update_config_api_v1_admin_qa_config__slug__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/testers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Testers */
+        get: operations["list_testers_api_v1_admin_qa_testers_get"];
+        put?: never;
+        /**
+         * Invite Tester
+         * @description Invita (o reinvita) a un tester por correo con un enlace de un solo uso.
+         */
+        post: operations["invite_tester_api_v1_admin_qa_testers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/testers/{tester_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Tester
+         * @description Desactiva al tester y cierra sus sesiones: el siguiente pedido ya falla.
+         */
+        post: operations["revoke_tester_api_v1_admin_qa_testers__tester_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/wizard/cancel": {
         parameters: {
             query?: never;
@@ -4275,6 +4666,34 @@ export interface components {
              * @description Negocio al que entró: el panel lo deja activo.
              */
             tenant_id: string;
+            /**
+             * Expires In
+             * @description Segundos de vigencia de la sesión.
+             */
+            expires_in: number;
+        };
+        /** AcceptTesterInvitationRequest */
+        AcceptTesterInvitationRequest: {
+            /**
+             * Token
+             * @description Lo que va después de `#` en `/invitacion-tester#…`.
+             */
+            token: string;
+            /**
+             * New Password
+             * @description Contraseña nueva del tester (8+).
+             */
+            new_password: string;
+        };
+        /** AcceptTesterInvitationResponse */
+        AcceptTesterInvitationResponse: {
+            /** Token */
+            token: string;
+            /**
+             * Admin Id
+             * Format: uuid
+             */
+            admin_id: string;
             /**
              * Expires In
              * @description Segundos de vigencia de la sesión.
@@ -4619,6 +5038,15 @@ export interface components {
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
             /** File */
             file: string;
+        };
+        /** Body_upload_attachment_api_v1_admin_qa_runs_me_attachments_post */
+        Body_upload_attachment_api_v1_admin_qa_runs_me_attachments_post: {
+            /** Item Slug */
+            item_slug: string;
+            /** Paso */
+            paso: number;
+            /** Archivo */
+            archivo: string;
         };
         /** BotState */
         BotState: {
@@ -6254,6 +6682,11 @@ export interface components {
             };
             /** Invitaciones Pendientes */
             invitaciones_pendientes: number;
+            /**
+             * Qa Testers Habilitados
+             * @default false
+             */
+            qa_testers_habilitados: boolean;
         };
         /** MemorySettings */
         MemorySettings: {
@@ -7520,6 +7953,458 @@ export interface components {
              * @enum {string}
              */
             platform: "android" | "ios";
+        };
+        /** QaAdjunto */
+        QaAdjunto: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Paso */
+            paso: number;
+            /** Nombre */
+            nombre: string;
+            /** Mimetype */
+            mimetype: string;
+            /** Tamano */
+            tamano: number;
+            /** Subido En */
+            subido_en?: string | null;
+        };
+        /** QaCatalogo */
+        QaCatalogo: {
+            ciclo: components["schemas"]["QaCicloRef"] | null;
+            catalogo: components["schemas"]["QaCatalogoRef"] | null;
+            progreso: components["schemas"]["QaProgreso"];
+            /** Items */
+            items: components["schemas"]["QaItem"][];
+        };
+        /** QaCatalogoRef */
+        QaCatalogoRef: {
+            /** Version */
+            version: number;
+            /** Fecha */
+            fecha: string;
+            /** Commit Docs */
+            commit_docs?: string | null;
+        };
+        /** QaCerrarCiclo */
+        QaCerrarCiclo: {
+            /**
+             * Cerrado Id
+             * Format: uuid
+             */
+            cerrado_id: string;
+            /**
+             * Abierto Id
+             * Format: uuid
+             */
+            abierto_id: string;
+            /** Nombre */
+            nombre: string;
+        };
+        /** QaCerrarCicloIn */
+        QaCerrarCicloIn: {
+            /**
+             * Nombre
+             * @description Nombre del ciclo que se abre.
+             */
+            nombre: string;
+        };
+        /** QaCiclo */
+        QaCiclo: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Abierto En */
+            abierto_en?: string | null;
+            /** Cerrado En */
+            cerrado_en?: string | null;
+            /** Abierto */
+            abierto: boolean;
+            catalogo: components["schemas"]["QaCatalogoRef"];
+            progreso: components["schemas"]["QaProgreso"];
+            /**
+             * Por Prueba
+             * @description Estado consolidado por slug.
+             */
+            por_prueba?: {
+                [key: string]: string;
+            };
+            /**
+             * Ejecuciones
+             * @default []
+             */
+            ejecuciones: components["schemas"]["QaCicloEjecucion"][];
+        };
+        /** QaCicloEjecucion */
+        QaCicloEjecucion: {
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Tester */
+            tester: string;
+            /** Estado */
+            estado: string;
+            /** Enviada En */
+            enviada_en?: string | null;
+            progreso: components["schemas"]["QaProgreso"];
+        };
+        /** QaCicloRef */
+        QaCicloRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Abierto En */
+            abierto_en?: string | null;
+        };
+        /** QaConfig */
+        QaConfig: {
+            /** Slug */
+            slug: string;
+            /** Estado */
+            estado: string;
+            /** Nota */
+            nota?: string | null;
+            /** Actualizado En */
+            actualizado_en?: string | null;
+        };
+        /** QaConfigIn */
+        QaConfigIn: {
+            /** Estado */
+            estado?: ("pendiente" | "en_curso" | "listo" | "no_aplica") | null;
+            /**
+             * Nota
+             * @description Si se envía (aunque sea `null`), reemplaza la nota.
+             */
+            nota?: string | null;
+        };
+        /** QaEjecucion */
+        QaEjecucion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Cycle Id
+             * Format: uuid
+             */
+            cycle_id: string;
+            /** Ciclo Nombre */
+            ciclo_nombre: string;
+            tester: components["schemas"]["QaTester"];
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "en_curso" | "enviada";
+            /** Editable */
+            editable: boolean;
+            /** Comentario */
+            comentario?: string | null;
+            /** Iniciada En */
+            iniciada_en?: string | null;
+            /** Actualizada En */
+            actualizada_en?: string | null;
+            /** Enviada En */
+            enviada_en?: string | null;
+            progreso: components["schemas"]["QaProgreso"];
+            /**
+             * Resultados
+             * @description Por slug de prueba.
+             */
+            resultados?: {
+                [key: string]: components["schemas"]["QaResultadoPrueba"];
+            } | null;
+            /**
+             * Informe
+             * @description Informe congelado al enviar (formato 1).
+             */
+            informe?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** QaEnviarIn */
+        QaEnviarIn: {
+            /** Comentario */
+            comentario?: string | null;
+        };
+        /** QaEvento */
+        QaEvento: {
+            /** Campo */
+            campo: string;
+            /** Paso */
+            paso?: number | null;
+            /** Antes */
+            antes?: string | null;
+            /** Despues */
+            despues?: string | null;
+            /** Por */
+            por: string;
+            /** En */
+            en?: string | null;
+            /** Run Id */
+            run_id?: string | null;
+        };
+        /** QaImport */
+        QaImport: {
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version */
+            version: number;
+            /** Items */
+            items: number;
+            /** Creada */
+            creada: boolean;
+            /**
+             * Ciclo Id
+             * Format: uuid
+             */
+            ciclo_id: string;
+            /** Ciclo Nombre */
+            ciclo_nombre: string;
+        };
+        /** QaImportIn */
+        QaImportIn: {
+            /**
+             * Contenido
+             * @description El YAML completo de `11-pruebas/catalogo.yaml`.
+             */
+            contenido: string;
+            /**
+             * Commit Docs
+             * @description Commit de solvershub-docs del que sale.
+             */
+            commit_docs?: string | null;
+        };
+        /** QaInvitarTesterIn */
+        QaInvitarTesterIn: {
+            /** Email */
+            email: string;
+        };
+        /** QaItem */
+        QaItem: {
+            /** Slug */
+            slug: string;
+            /**
+             * Seccion
+             * @enum {string}
+             */
+            seccion: "pruebas" | "test" | "prod";
+            /** Orden */
+            orden: number;
+            /** Modulo */
+            modulo?: string | null;
+            /** Grupo */
+            grupo: string;
+            /** Titulo */
+            titulo: string;
+            /** Resumen */
+            resumen?: string | null;
+            /** Contexto */
+            contexto?: string | null;
+            /** Prioridad */
+            prioridad?: string | null;
+            /**
+             * Plataforma
+             * @default []
+             */
+            plataforma: string[];
+            /**
+             * Precondiciones
+             * @default []
+             */
+            precondiciones: string[];
+            /**
+             * Datos
+             * @default []
+             */
+            datos: string[];
+            /**
+             * Pasos
+             * @default []
+             */
+            pasos: components["schemas"]["QaPaso"][];
+            /** Esperado */
+            esperado?: string | null;
+            /** Porque */
+            porque?: string | null;
+            /** Como */
+            como?: string | null;
+            /**
+             * Vars
+             * @default []
+             */
+            vars: string[];
+            /** Quien */
+            quien?: string | null;
+            /**
+             * Hu
+             * @default []
+             */
+            hu: string[];
+            /**
+             * Origen
+             * @default []
+             */
+            origen: string[];
+            /**
+             * Estado
+             * @description Pruebas: estado consolidado del ciclo. Test/prod: estado de la configuración.
+             */
+            estado: string;
+            /**
+             * Ejecuciones
+             * @description Pruebas: cuántas ejecuciones hay en cada estado.
+             */
+            ejecuciones?: {
+                [key: string]: number;
+            };
+            /** Nota */
+            nota?: string | null;
+            /** Actualizado En */
+            actualizado_en?: string | null;
+        };
+        /** QaNotaIn */
+        QaNotaIn: {
+            /** Nota */
+            nota?: string | null;
+        };
+        /** QaPaso */
+        QaPaso: {
+            /** Accion */
+            accion: string;
+            /** Esperado */
+            esperado?: string | null;
+        };
+        /** QaPasoIn */
+        QaPasoIn: {
+            /**
+             * Estado
+             * @description `null` desmarca el paso.
+             */
+            estado?: ("ok" | "falla" | "bloqueado" | "omitido") | null;
+            /**
+             * Nota
+             * @description Si se envía (aunque sea `null`), reemplaza la nota.
+             */
+            nota?: string | null;
+        };
+        /** QaPasoResultado */
+        QaPasoResultado: {
+            /** Estado */
+            estado?: string | null;
+            /** Nota */
+            nota?: string | null;
+        };
+        /** QaProgreso */
+        QaProgreso: {
+            /** Total */
+            total: number;
+            /** Terminadas */
+            terminadas: number;
+            /** Sin Correr */
+            sin_correr: number;
+            /** En Curso */
+            en_curso: number;
+            /** Omitida */
+            omitida: number;
+            /** Ok */
+            ok: number;
+            /** Bloqueada */
+            bloqueada: number;
+            /** Falla */
+            falla: number;
+        };
+        /** QaResultadoPrueba */
+        QaResultadoPrueba: {
+            /** Estado */
+            estado: string;
+            /** Nota */
+            nota?: string | null;
+            /**
+             * Pasos
+             * @description Por número de paso (desde 1).
+             */
+            pasos?: {
+                [key: string]: components["schemas"]["QaPasoResultado"];
+            };
+            /**
+             * Adjuntos
+             * @default []
+             */
+            adjuntos: components["schemas"]["QaAdjunto"][];
+        };
+        /** QaTester */
+        QaTester: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Email */
+            email: string;
+        };
+        /** QaTesterInvitado */
+        QaTesterInvitado: {
+            tester: components["schemas"]["QaTesterOut"];
+            /** Correo Enviado */
+            correo_enviado: boolean;
+            /**
+             * Enlace
+             * @description Enlace de un solo uso, solo si el correo no salió (SMTP de sistema sin configurar).
+             */
+            enlace?: string | null;
+        };
+        /** QaTesterOut */
+        QaTesterOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Email */
+            email: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "invitado" | "activo" | "vencido" | "revocado";
+            /** Creado En */
+            creado_en?: string | null;
+            /** Invitado En */
+            invitado_en?: string | null;
+            /** Expira En */
+            expira_en?: string | null;
+            /** Aceptado En */
+            aceptado_en?: string | null;
+        };
+        /** QaTestersOut */
+        QaTestersOut: {
+            /**
+             * Habilitado
+             * @description `QA_TESTERS_ENABLED` en este entorno.
+             */
+            habilitado: boolean;
+            /** Testers */
+            testers: components["schemas"]["QaTesterOut"][];
         };
         /**
          * ReadinessItem
@@ -9591,6 +10476,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcceptInvitationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_accept_tester_invitation_api_v1_auth_accept_tester_invitation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptTesterInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptTesterInvitationResponse"];
                 };
             };
             /** @description Validation Error */
@@ -17990,6 +18908,679 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalog_api_v1_admin_qa_catalog_get: {
+        parameters: {
+            query?: {
+                seccion?: ("pruebas" | "test" | "prod") | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaCatalogo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_catalog_api_v1_admin_qa_catalog_import_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaImportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaImport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    item_history_api_v1_admin_qa_items__slug__history_get: {
+        parameters: {
+            query?: {
+                cycle_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEvento"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_run_api_v1_admin_qa_runs_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_my_run_api_v1_admin_qa_runs_me_start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_step_api_v1_admin_qa_runs_me_items__slug__steps__paso__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+                paso: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaPasoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    note_item_api_v1_admin_qa_runs_me_items__slug__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaNotaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_attachment_api_v1_admin_qa_runs_me_attachments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_attachment_api_v1_admin_qa_runs_me_attachments_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaAdjunto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_attachment_api_v1_admin_qa_attachments__adjunto_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                adjunto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_attachment_api_v1_admin_qa_attachments__adjunto_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                adjunto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_my_run_api_v1_admin_qa_runs_me_submit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaEnviarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runs_api_v1_admin_qa_runs_get: {
+        parameters: {
+            query?: {
+                cycle_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_api_v1_admin_qa_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_markdown_api_v1_admin_qa_runs__run_id__report_md_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cycles_api_v1_admin_qa_cycles_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaCiclo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_cycle_api_v1_admin_qa_cycles_close_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaCerrarCicloIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaCerrarCiclo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_config_api_v1_admin_qa_config__slug__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaConfig"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_testers_api_v1_admin_qa_testers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaTestersOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_tester_api_v1_admin_qa_testers_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QaInvitarTesterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaTesterInvitado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_tester_api_v1_admin_qa_testers__tester_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tester_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaTesterOut"];
+                };
             };
             /** @description Validation Error */
             422: {

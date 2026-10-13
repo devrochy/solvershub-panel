@@ -64,7 +64,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </a>
           <div className="flex min-h-screen">
             {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-            <Sidebar me={me} packs={packs} modo={modoSidebar} className="sticky top-0 hidden h-screen md:flex" />
+            <Sidebar me={me} packs={packs} modo={modoSidebar} className="sticky top-0 hidden h-screen md:flex print:hidden" />
             {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
             <div className="flex min-w-0 flex-1 flex-col">
               <Topbar

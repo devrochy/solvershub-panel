@@ -10,6 +10,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { Dropzone } from "@/components/ui/dropzone";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -30,6 +31,8 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Stepper } from "@/components/ui/stepper";
 import { toast } from "@/lib/toast-store";
 
 type Fila = { id: string; cliente: string; estado: "al_dia" | "mora"; saldo: string };
@@ -295,6 +298,38 @@ export function Catalogo() {
             <Sparkline values={SPARK} label={`Conversaciones de la semana: ${resumenSerie(SPARK)}`} height={40} />
           </div>
         </div>
+      </Seccion>
+
+      <Seccion titulo="Avance y pasos" nota="Barra por estados con su leyenda aparte, pasos numerados con estado escrito y zona para adjuntar capturas (HU-QA-03).">
+        <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-5">
+          <Progress label="Avance simple" value={42} max={100} />
+          <Progress
+            label="Avance por estado"
+            value={24}
+            max={40}
+            segments={[
+              { key: "ok", value: 18, label: "OK", tone: "success" },
+              { key: "falla", value: 3, label: "Falla", tone: "danger" },
+              { key: "bloqueada", value: 2, label: "Bloqueada", tone: "warning" },
+              { key: "en_curso", value: 1, label: "En curso", tone: "info" },
+            ]}
+          />
+          <Progress size="sm" label="Barra fina" value={7} max={10} />
+        </div>
+        <div className="rounded-lg border border-border-soft bg-surface p-5">
+          <Stepper
+            label="Pasos de ejemplo"
+            onSelect={() => {}}
+            steps={[
+              { id: "1", title: "Pulsar Ctrl+K", description: "Esperado: se abre la paleta", state: "complete", stateLabel: "Aprobado" },
+              { id: "2", title: "Escribir «prom»", state: "current", content: <p className="text-sm text-body">Contenido del paso activo.</p> },
+              { id: "3", title: "Pulsar Enter", state: "upcoming" },
+              { id: "4", title: "Revisar el foco", state: "error", stateLabel: "Falla" },
+              { id: "5", title: "Paso omitido", state: "skipped", stateLabel: "Omitido" },
+            ]}
+          />
+        </div>
+        <Dropzone accept={["image/png", "image/jpeg"]} maxBytes={5 * 1024 * 1024} hint="PNG o JPG de hasta 5 MB." onFiles={() => {}} />
       </Seccion>
 
       <Seccion titulo="Tabla" nota="Densidad compacta, encabezado fijo con scroll propio, carga, vacío y error.">
