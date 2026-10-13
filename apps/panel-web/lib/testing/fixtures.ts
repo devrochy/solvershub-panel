@@ -53,6 +53,7 @@ export const me: Me = {
   tenant_count: 1,
   permissions: Object.fromEntries(SECCIONES.map((s) => [s, "write"])),
   invitaciones_pendientes: 0,
+  qa_testers_habilitados: false,
 };
 
 export const dashboard: Dashboard = {

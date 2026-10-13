@@ -70,3 +70,19 @@ export type PlatformMetaApp = components["schemas"]["PlatformMetaApp"];
 export type SearchResponse = components["schemas"]["SearchResponse"];
 export type SearchSection = components["schemas"]["ResultadoSeccion"];
 export type SearchItem = components["schemas"]["ItemBusqueda"];
+
+// Centro de pruebas (SPEC-30, HU-QA-03/04)
+export type QaCatalogo = components["schemas"]["QaCatalogo"];
+export type QaItem = components["schemas"]["QaItem"];
+export type QaPaso = components["schemas"]["QaPaso"];
+export type QaProgreso = components["schemas"]["QaProgreso"];
+export type QaEjecucion = components["schemas"]["QaEjecucion"];
+export type QaResultadoPrueba = components["schemas"]["QaResultadoPrueba"];
+export type QaAdjunto = components["schemas"]["QaAdjunto"];
+export type QaEvento = components["schemas"]["QaEvento"];
+export type QaCiclo = components["schemas"]["QaCiclo"];
+export type QaConfig = components["schemas"]["QaConfig"];
+export type QaTestersOut = components["schemas"]["QaTestersOut"];
+export type QaTesterOut = components["schemas"]["QaTesterOut"];
+export type QaTesterInvitado = components["schemas"]["QaTesterInvitado"];
+export type AcceptTesterInvitationResponse = components["schemas"]["AcceptTesterInvitationResponse"];

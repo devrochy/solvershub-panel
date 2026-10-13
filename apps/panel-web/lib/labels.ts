@@ -32,6 +32,7 @@ export const ROL: Record<string, string> = {
   propietario: "Propietario",
   gestor: "Gestor",
   colaborador: "Colaborador",
+  tester: "Tester",
 };
 
 export const ESCALACION: Record<string, string> = {
@@ -67,6 +68,7 @@ export const SECCION: Record<string, string> = {
   plugins: "Habilidades",
   settings: "Configuración",
   tenants: "Negocios",
+  qa: "Pruebas",
   pack_commerce: "Comercio",
   "pack_subscriptions:suscripciones": "Suscripciones",
 };

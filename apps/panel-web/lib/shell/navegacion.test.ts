@@ -15,6 +15,17 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(soloAtencion[0].visible.map((i) => i.label)).toEqual(["Conversaciones", "Escalaciones"]);
   });
 
+  it("un tester (master sin colaboradores, ADR-0134) ve Pruebas y no Colaboradores", () => {
+    const tester = { ...TODO, collaborators: null };
+    const visibles = gruposVisibles(tester).flatMap((g) => g.visible.map((i) => i.label));
+    expect(visibles).toContain("Pruebas");
+    expect(visibles).not.toContain("Colaboradores");
+    expect(itemActivo("/pruebas/informes/1", gruposVisibles(tester))?.item.label).toBe("Pruebas");
+    // Un owner de negocio no tiene la sección `qa`: no ve Pruebas.
+    const owner = { ...TODO, qa: null };
+    expect(gruposVisibles(owner).flatMap((g) => g.visible.map((i) => i.label))).not.toContain("Pruebas");
+  });
+
   it("el ítem activo es el más específico", () => {
     expect(itemActivo("/cobranza/carteras/7", grupos)?.item.label).toBe("Carteras");
     expect(itemActivo("/cobranza", grupos)?.item.label).toBe("Resumen");

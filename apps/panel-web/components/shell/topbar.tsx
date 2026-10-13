@@ -25,7 +25,7 @@ export async function Topbar({
 
   return (
     <>
-      <header className="flex h-16 items-center justify-between gap-2 border-b border-border-soft bg-surface px-4 md:px-6">
+      <header className="flex h-16 items-center justify-between gap-2 border-b border-border-soft bg-surface px-4 md:px-6 print:hidden">
         <div className="flex min-w-0 items-center gap-2">
           {menu}
           <TenantSwitcher current={me.tenant} count={me.tenant_count} />

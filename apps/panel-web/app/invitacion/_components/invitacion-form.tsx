@@ -33,9 +33,16 @@ const sinSuscripcion = () => () => {};
 
 /**
  * Define la contraseña con el enlace de un solo uso y entra al negocio (HU-SH-06). El BFF
- * canjea el token y deja la sesión en una cookie `httpOnly`.
+ * canjea el token y deja la sesión en una cookie `httpOnly`. La invitación de un tester
+ * (SPEC-30, HU-QA-04) usa el mismo formulario con su BFF y su destino.
  */
-export function InvitacionForm() {
+export function InvitacionForm({
+  endpoint = "/api/invitacion",
+  destino = "/dashboard",
+}: {
+  endpoint?: string;
+  destino?: string;
+} = {}) {
   const router = useRouter();
   // En el servidor no hay fragmento: `undefined` = todavía no se leyó.
   const token = useSyncExternalStore<string | null | undefined>(sinSuscripcion, leerToken, () => undefined);
@@ -63,7 +70,7 @@ export function InvitacionForm() {
     setError(null);
     setResultado(null);
     try {
-      const res = await fetch("/api/invitacion", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password: clave }),
@@ -80,7 +87,7 @@ export function InvitacionForm() {
       setEnviando(false);
       return;
     }
-    router.replace("/dashboard");
+    router.replace(destino);
     router.refresh();
   }
 
