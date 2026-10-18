@@ -4,6 +4,9 @@
  * del OpenAPI: si el contrato cambia, el typecheck obliga a actualizarlas.
  */
 import type {
+  AgentConversationPage,
+  AgentsOverview,
+  AgentTaskPage,
   CollaboratorItem,
   ConnectionsResponse,
   ConversationPage,
@@ -24,6 +27,7 @@ const TENANT = { id: "test-tenant-1", name: "Negocio de prueba", role: "owner", 
 
 const SECCIONES = [
   "dashboard",
+  "agents",
   "conversations",
   "escalations",
   "leads",
@@ -297,9 +301,73 @@ export const resumenCobranza = {
   ],
 };
 
+export const agentes: AgentsOverview = {
+  runtime: "v3",
+  items: [
+    {
+      id: "00000000-0000-4000-8000-000000000001",
+      ref: "general",
+      key: "general",
+      name: "General",
+      kind: "specialist",
+      status: "active",
+      virtual: false,
+      published: true,
+      connections: [{ id: "00000000-0000-4000-8000-0000000000c1", label: "test-Chat web", enabled: true }],
+      incluye_sin_atribuir: true,
+      turns: 12,
+      conversations: 4,
+      cost_usd: 0.42,
+      last_activity_at: "2026-10-18T10:00:00Z",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000002",
+      ref: "00000000-0000-4000-8000-000000000002",
+      key: "ventas",
+      name: "Ventas",
+      kind: "specialist",
+      status: "active",
+      virtual: false,
+      published: true,
+      connections: [{ id: "00000000-0000-4000-8000-0000000000c1", label: "test-Chat web", enabled: true }],
+      incluye_sin_atribuir: false,
+      turns: 0,
+      conversations: 0,
+      cost_usd: 0,
+      last_activity_at: null,
+    },
+  ],
+  sin_atribuir: { turns: 0, conversations: 0, cost_usd: 0, last_activity_at: null },
+};
+
+export const conversacionesDeAgente: AgentConversationPage = {
+  items: [
+    {
+      conversation_id: "00000000-0000-4000-8000-0000000000a1",
+      customer_id: "00000000-0000-4000-8000-0000000000b1",
+      customer_name: "test-Ana",
+      channel: "web",
+      status: "open",
+      connection_id: "00000000-0000-4000-8000-0000000000c1",
+      connection_label: "test-Chat web",
+      agent_version: 3,
+      turns: 2,
+      cost_usd: 0.02,
+      last_turn_at: "2026-10-18T10:00:00Z",
+    },
+  ],
+  total: 1,
+  page: 1,
+  page_size: 20,
+  has_more: false,
+};
+
+export const tareasVacias: AgentTaskPage = { items: [], total: 0, page: 1, page_size: 20, has_more: false };
+
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/me": me,
+  "/admin/agents/overview": agentes,
   "/admin/dashboard": dashboard,
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,

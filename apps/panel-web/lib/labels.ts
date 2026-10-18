@@ -57,6 +57,7 @@ export const SECCION: Record<string, string> = {
   conversaciones: "Conversaciones",
   configuracion: "Configuración",
   // Claves reales de permisos del core (`/admin/me` → `permissions`).
+  agents: "Agentes",
   collaborators: "Colaboradores",
   connections: "Conexiones",
   conversations: "Conversaciones",

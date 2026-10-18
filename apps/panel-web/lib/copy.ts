@@ -28,6 +28,14 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     what: "Cada chat entre tu asistente y un cliente. Aquí ves lo que se dijo y puedes tomar el control.",
     first: ["Abre una conversación para leer el contexto.", "Toma el control si necesitas responder tú."],
   },
+  agents: {
+    question: "¿Qué son los Agentes?",
+    what: "Cada agente que atiende tu negocio (Ventas, Agenda, Cobranza…) y lo que construyó: conversaciones, tareas, clientes, registros y consumo.",
+    first: [
+      "Abre un agente para ver lo que hizo en el período.",
+      "Revisa su consumo para saber qué te está rindiendo.",
+    ],
+  },
   escalations: {
     question: "¿Qué son las Escalaciones?",
     what: "Los casos que el asistente pasó a una persona: quejas, temas delicados o cuando el cliente lo pidió.",

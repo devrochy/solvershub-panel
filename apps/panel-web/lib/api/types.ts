@@ -89,3 +89,12 @@ export type QaMisDatos = components["schemas"]["QaMisDatos"];
 export type QaDatos = components["schemas"]["QaDatos"];
 export type QaDatosCuenta = components["schemas"]["QaDatosCuenta"];
 export type AcceptTesterInvitationResponse = components["schemas"]["AcceptTesterInvitationResponse"];
+
+// Mi agente y su data (HU-AOS-47)
+export type AgentsOverview = components["schemas"]["AgentsOverview"];
+export type AgentOverviewItem = components["schemas"]["AgentOverviewItem"];
+export type AgentConversationPage = components["schemas"]["Page_AgentConversation_"];
+export type AgentCustomerPage = components["schemas"]["Page_AgentCustomer_"];
+export type AgentTaskPage = components["schemas"]["Page_AgentTask_"];
+export type AgentRecordPage = components["schemas"]["Page_AgentRecordItem_"];
+export type AgentUsage = components["schemas"]["AgentUsage"];
