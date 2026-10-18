@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
@@ -8,6 +9,7 @@ import {
   TareasDelAgente,
 } from "@/app/(app)/agentes/_components/agent-tabs";
 import { DetailPage } from "@/components/templates/detail-page";
+import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { TabLinks } from "@/components/ui/tab-links";
 import { apiFetch, type ApiResult } from "@/lib/api/server";
@@ -25,6 +27,7 @@ import {
   hrefDeAgente,
   PESTANAS,
   pestanaValida,
+  puedeEditarAgentes,
   queryDeApi,
   refValido,
   tipoDeAgente,
@@ -135,6 +138,12 @@ export default async function AgentePage({
         title: agente.name,
         description: descripcion,
         breadcrumbs: [{ label: "Agentes", href: "/agentes" }, { label: agente.name }],
+        actions:
+          agente.id && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime) ? (
+            <Button asChild variant="outline">
+              <Link href={`/agentes/${agente.id}/editar`}>Editar agente</Link>
+            </Button>
+          ) : undefined,
         tabs: (
           <TabLinks
             label={`Secciones de ${agente.name}`}

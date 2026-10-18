@@ -1,13 +1,17 @@
+import Link from "next/link";
+
 import { AgentCard } from "@/app/(app)/agentes/_components/agent-card";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentsOverview } from "@/lib/api/types";
+import type { AgentsOverview, Me } from "@/lib/api/types";
+import { puedeEditarAgentes } from "@/lib/agentes";
 
 export const metadata = { title: "Agentes" };
 
 export default async function AgentesPage() {
-  const res = await apiFetch<AgentsOverview>("/admin/agents/overview");
+  const [res, meRes] = await Promise.all([apiFetch<AgentsOverview>("/admin/agents/overview"), apiFetch<Me>("/admin/me")]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -25,6 +29,14 @@ export default async function AgentesPage() {
         title="Agentes"
         description="Cada agente que atiende tu negocio y lo que construyó: conversaciones, tareas, clientes, registros y consumo."
         helpSection="agents"
+        actions={
+          // El editor (HU-AOS-24) escribe en `settings`; sin ese permiso el botón no se muestra.
+          meRes.ok && puedeEditarAgentes(meRes.data, runtime) ? (
+            <Button asChild variant="accent">
+              <Link href="/agentes/nuevo">Nuevo agente</Link>
+            </Button>
+          ) : undefined
+        }
       />
 
       {runtime !== "v3" && (

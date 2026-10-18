@@ -133,3 +133,15 @@ export function consistencia(mediciones: { pass_k: number; k: number }[]): {
   const delta = previa ? Math.round((ultima.pass_k - previa.pass_k) * 1000) / 10 : null;
   return { actual, k: ultima.k, delta };
 }
+
+/**
+ * ¿Mostrar «Nuevo agente» y «Editar» (editor de HU-AOS-24)? Escriben en la sección `settings` y,
+ * con el runtime legacy, solo el master (la API responde 403 `aos_runtime_legacy`).
+ */
+export function puedeEditarAgentes(
+  me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null },
+  runtime: string,
+): boolean {
+  if (me.role === "master") return true;
+  return runtime === "v3" && me.permissions?.settings === "write";
+}

@@ -4879,6 +4879,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agent-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_api_v1_admin_agent_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agent-templates/{template_key}/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create From Template */
+        post: operations["create_from_template_api_v1_admin_agent_templates__template_key__agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agent-superpowers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Superpowers */
+        get: operations["list_superpowers_api_v1_admin_agent_superpowers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agent-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Models */
+        get: operations["list_models_api_v1_admin_agent_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/publish-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Publish Targets */
+        get: operations["list_publish_targets_api_v1_admin_agents__agent_id__publish_targets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish To Connections */
+        post: operations["publish_to_connections_api_v1_admin_agents__agent_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -11272,6 +11374,195 @@ export interface components {
              * @description Solo con acceso a la sección `costs`; si no, null.
              */
             cost_usd: number | null;
+        };
+        /** AgentTemplate */
+        AgentTemplate: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Skills */
+            skills: string[];
+            /** Optional Skills */
+            optional_skills: string[];
+            /** Available */
+            available: boolean;
+            /** Missing Skills */
+            missing_skills: string[];
+            /** Superpowers */
+            superpowers: components["schemas"]["Superpower"][];
+        };
+        /** EditorPublishIn */
+        EditorPublishIn: {
+            /** Connection Ids */
+            connection_ids: string[];
+            /** Lock Version */
+            lock_version?: number | null;
+            /** Label */
+            label?: string | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
+        /** EditorPublishOut */
+        EditorPublishOut: {
+            version: components["schemas"]["AgentVersionSummary"];
+            /** Created */
+            created: boolean;
+            /** Connections */
+            connections: components["schemas"]["PublishedConnection"][];
+            /** Warnings */
+            warnings: string[];
+        };
+        /** FromTemplateIn */
+        FromTemplateIn: {
+            /** Name */
+            name?: string | null;
+        };
+        /** FromTemplateOut */
+        FromTemplateOut: {
+            agent: components["schemas"]["AgentSummary"];
+            draft: components["schemas"]["AgentDraft"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /** LlmModel */
+        LlmModel: {
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Input Usd Per Mtok */
+            input_usd_per_mtok: number;
+            /** Output Usd Per Mtok */
+            output_usd_per_mtok: number;
+            /** Selectable */
+            selectable: boolean;
+            /** Retired */
+            retired: boolean;
+            /** Estimated Usd Per 1000 Turns */
+            estimated_usd_per_1000_turns: number | null;
+        };
+        /** LlmModelCatalog */
+        LlmModelCatalog: {
+            /** Items */
+            items: components["schemas"]["LlmModel"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+            /** Provider */
+            provider: string;
+            /** Byok Model */
+            byok_model: string | null;
+            /** Avg Input Tokens */
+            avg_input_tokens: number | null;
+            /** Avg Output Tokens */
+            avg_output_tokens: number | null;
+            /** Sample Turns */
+            sample_turns: number;
+            /** Min Phrases */
+            min_phrases: number;
+        };
+        /** Page[AgentTemplate] */
+        Page_AgentTemplate_: {
+            /** Items */
+            items: components["schemas"]["AgentTemplate"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[PublishTarget] */
+        Page_PublishTarget_: {
+            /** Items */
+            items: components["schemas"]["PublishTarget"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[Superpower] */
+        Page_Superpower_: {
+            /** Items */
+            items: components["schemas"]["Superpower"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** PublishTarget */
+        PublishTarget: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Label */
+            label: string;
+            /** Channel */
+            channel: string;
+            /** Installed */
+            installed: boolean;
+            /** Covers Skills */
+            covers_skills: boolean;
+            /** Missing Skills */
+            missing_skills: string[];
+            /** Active Release Id */
+            active_release_id: string | null;
+        };
+        /** PublishedConnection */
+        PublishedConnection: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Instance */
+            instance: string;
+            /** Release Id */
+            release_id: string | null;
+            /** Release Number */
+            release_number: number | null;
+            /** Release Created */
+            release_created: boolean | null;
+            /** Error */
+            error: string | null;
+        };
+        /** Superpower */
+        Superpower: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: string;
+            /** Skill */
+            skill: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Phrases */
+            phrases: string[];
         };
     };
     responses: never;
@@ -21202,6 +21493,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConnectionsConsole"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_admin_agent_templates_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentTemplate_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_from_template_api_v1_admin_agent_templates__template_key__agents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                template_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FromTemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_superpowers_api_v1_admin_agent_superpowers_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Superpower_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_models_api_v1_admin_agent_models_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LlmModelCatalog"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_publish_targets_api_v1_admin_agents__agent_id__publish_targets_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PublishTarget_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_to_connections_api_v1_admin_agents__agent_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditorPublishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorPublishOut"];
                 };
             };
             /** @description Validation Error */

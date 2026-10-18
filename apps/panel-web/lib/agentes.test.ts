@@ -7,6 +7,7 @@ import {
   hrefDeAgente,
   nombreDeProcedimiento,
   pestanaValida,
+  puedeEditarAgentes,
   queryDeApi,
   refValido,
   tipoDeRegistro,
@@ -68,5 +69,12 @@ describe("sección Agentes (HU-AOS-47)", () => {
   it("calcula pass^k y su tendencia", () => {
     expect(consistencia([])).toEqual({ actual: null, k: null, delta: null });
     expect(consistencia([{ pass_k: 0.9, k: 4 }, { pass_k: 0.85, k: 4 }])).toEqual({ actual: 90, k: 4, delta: 5 });
+  });
+
+  it("muestra el editor solo a quien puede escribir", () => {
+    expect(puedeEditarAgentes({ role: "master" }, "legacy")).toBe(true);
+    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "v3")).toBe(true);
+    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "legacy")).toBe(false);
+    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "read" } }, "v3")).toBe(false);
   });
 });

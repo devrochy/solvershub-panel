@@ -189,3 +189,8 @@ export function estadoPasoLabel(estado: string | null | undefined): string {
   if (!estado) return "Pendiente";
   return ESTADO_PASO[estado] ?? capitalizar(estado);
 }
+
+/** Nombre visible de una habilidad (`pack_commerce` → «Comercio»), para no mostrar ids. */
+export function habilidadLabel(id: string): string {
+  return PACK[id] ?? capitalizar(id.replace(/^pack_/, ""));
+}
