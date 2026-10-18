@@ -30,7 +30,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post Logout */
+        /**
+         * Post Logout
+         * @description Cierra la sesión del token presentado. No resuelve negocio ni permisos: quien quedó
+         *     con un negocio suspendido (403 en el resto de la API) también puede salir (ADR-0136).
+         */
         post: operations["post_logout_api_v1_auth_logout_post"];
         delete?: never;
         options?: never;
@@ -695,8 +699,10 @@ export interface paths {
          * Plugin Action
          * @description Habilita/deshabilita el pack para el tenant, o limpia su salud de error.
          *
-         *     Habilitar aplica la cuota del plan; deshabilitar no toca a otros tenants; y
-         *     `retry` reinicia la salud (ADR-0024). Reusa el servicio del panel SSR.
+         *     Habilitar aplica la cuota del plan (409 `plan_limit_plugins` con `used`/`limit` y
+         *     `enabled: false`: nada cambia y `GET /admin/plugins` la sigue mostrando deshabilitada);
+         *     deshabilitar no toca a otros tenants; y `retry` reinicia la salud (ADR-0024). Reusa el
+         *     servicio del panel SSR.
          */
         post: operations["plugin_action_api_v1_admin_plugins__plugin_id__action_post"];
         delete?: never;
@@ -1211,7 +1217,13 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sync Connection Templates */
+        /**
+         * Sync Connection Templates
+         * @description Sincroniza las plantillas con Meta ahora mismo (sin el candado horario del cron).
+         *
+         *     429 `sync_rate_limited`: ya se sincronizó a mano hace menos de un minuto. 400 `sync_failed`:
+         *     Meta rechazó la consulta (el mensaje trae el motivo).
+         */
         post: operations["sync_connection_templates_api_v1_admin_meta_connections__connection_id__templates_sync_post"];
         delete?: never;
         options?: never;
@@ -1231,6 +1243,9 @@ export interface paths {
         /**
          * Delete Connection Template
          * @description Borra TODAS las versiones de idioma de la plantilla.
+         *
+         *     409 `template_not_deletable`: Meta no permite borrarla (sus plantillas de ejemplo); la
+         *     plantilla sigue como estaba. 404 `not_found` si no es de este negocio.
          */
         post: operations["delete_connection_template_api_v1_admin_meta_connections__connection_id__templates__template_id__delete_post"];
         delete?: never;
@@ -1305,6 +1320,10 @@ export interface paths {
         /**
          * Meta Connection Action
          * @description Activa, desactiva o elimina (soft-delete) una conexión de Meta.
+         *
+         *     `primary` responde 409 `primary_not_applicable` con la explicación: la primacía es el respaldo
+         *     de credenciales de las conexiones manuales (ADR-0069); una cuenta de Meta resuelve las suyas y su
+         *     conexión canónica nace y queda con `is_primary = false` (ADR-0115 §1).
          */
         post: operations["meta_connection_action_api_v1_admin_meta_connections__connection_id__action_post"];
         delete?: never;
@@ -4675,6 +4694,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/skills/installations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Installations */
+        get: operations["list_installations_api_v1_admin_skills_installations_get"];
+        put?: never;
+        /**
+         * Create Installation
+         * @description Instala una habilidad solo para una conexión; 200 si ya estaba. Aplica con la próxima release de la conexión.
+         */
+        post: operations["create_installation_api_v1_admin_skills_installations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/skills/installations/{installation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Installation
+         * @description Quita la instalación. Aplica con la próxima release de la conexión.
+         */
+        delete: operations["delete_installation_api_v1_admin_skills_installations__installation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/collaborators/{admin_id}/unlink": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlink Collaborator Tenant
+         * @description Desvincula la cuenta de un negocio (ADR-0136). Un owner solo de su negocio activo y
+         *     solo a colaboradores; el master, de cualquiera. Nadie deja un negocio sin propietario.
+         */
+        post: operations["unlink_collaborator_tenant_api_v1_admin_collaborators__admin_id__unlink_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/console": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connections Console
+         * @description Consola de conexiones (HU-AOS-23): por cada conexión del negocio, su Coordinador y
+         *     agentes con la versión de la release activa, salud y consumo de 7 días. Solo lectura.
+         */
+        get: operations["connections_console_api_v1_admin_connections_console_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6809,7 +6911,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "activate" | "deactivate" | "delete";
+            action: "activate" | "deactivate" | "delete" | "primary";
         };
         /** MetaCreditConnection */
         MetaCreditConnection: {
@@ -9508,6 +9610,11 @@ export interface components {
             needsRegistration: boolean;
             /** Registrationerror */
             registrationError?: string | null;
+            /**
+             * Reused
+             * @default false
+             */
+            reused: boolean;
         };
         /**
          * WizardExchangeIn
@@ -10114,6 +10221,11 @@ export interface components {
             content: {
                 [key: string]: unknown;
             };
+            /**
+             * Procedures
+             * @default []
+             */
+            procedures: components["schemas"]["ResolvedProcedure"][];
         };
         /** AgentVersionSummary */
         AgentVersionSummary: {
@@ -10452,6 +10564,287 @@ export interface components {
             /** Contenido */
             contenido: components["schemas"]["QaDatosContenido"][];
         };
+        /** ResolvedProcedure */
+        ResolvedProcedure: {
+            /** Id */
+            id: string;
+            /** Range */
+            range: string;
+            /** Resolved Version */
+            resolved_version: string | null;
+            /** Problem */
+            problem: string | null;
+        };
+        /** SkillInstallation */
+        SkillInstallation: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pack Id */
+            pack_id: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "tenant" | "connection";
+            /** Connection Id */
+            connection_id: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Installed At
+             * Format: date-time
+             */
+            installed_at: string;
+        };
+        /** SkillInstallationCreate */
+        SkillInstallationCreate: {
+            /** Pack Id */
+            pack_id: string;
+            /**
+             * Scope
+             * @default connection
+             * @constant
+             */
+            scope: "connection";
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+        };
+        /**
+         * BrainUpdate
+         * @description Entrada de `PUT /brain`: mismos rangos que recorta `save_brain` (temperatura 0–2,
+         *     1–50 llamadas a tools por turno, presupuesto ≥ 0); fuera de rango responde 422.
+         */
+        BrainUpdate: {
+            /** Model Primary */
+            model_primary: string;
+            /** Model Fallback */
+            model_fallback?: string | null;
+            /** Model Router */
+            model_router?: string | null;
+            /**
+             * Model Temperature
+             * @default 0.3
+             */
+            model_temperature: number;
+            /**
+             * Policy Max Tool Calls
+             * @default 10
+             */
+            policy_max_tool_calls: number;
+            /**
+             * Policy Budget
+             * @default 0.5
+             */
+            policy_budget: number;
+        };
+        /**
+         * MemoryUpdate
+         * @description Entrada de `PUT /memory`: turnos de contexto 1–200, top-k 0–20 (0 = sin RAG) y
+         *     umbral 0–1 (los rangos de `save_memory`); fuera de rango responde 422.
+         */
+        MemoryUpdate: {
+            /** Short Term Turns */
+            short_term_turns: number;
+            /** Rag Top K */
+            rag_top_k: number;
+            /** Rag Min Score */
+            rag_min_score: number;
+        };
+        /** UnlinkRequest */
+        UnlinkRequest: {
+            /** Tenant */
+            tenant: string;
+        };
+        /**
+         * ConnectionsConsole
+         * @description Con la sección `connections` basta para el consumo (turnos y tokens), la consistencia del
+         *     negocio y los agentes de cada conexión: es lo que pide la consola (SPEC-26 §5.1,
+         *     `conexiones:ver`). El costo en dinero sigue en `costs`.
+         */
+        ConnectionsConsole: {
+            /** Items */
+            items: components["schemas"]["ConsoleConnection"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "legacy" | "v3";
+            /**
+             * Routing
+             * @description `tenants.aos_routing`, solo lectura.
+             * @enum {string}
+             */
+            routing: "off" | "shadow" | "active";
+            /** @description pass^k del último run del negocio. */
+            consistency: components["schemas"]["ConsoleConsistency"] | null;
+            /**
+             * Can Edit
+             * @description Acceso de escritura a `connections`.
+             */
+            can_edit: boolean;
+            /**
+             * Unassigned Agents
+             * @description D-35: agentes publicados sin ninguna conexión (máx. 50).
+             */
+            unassigned_agents: components["schemas"]["ConsoleUnassignedAgent"][];
+        };
+        /** ConsoleAgent */
+        ConsoleAgent: {
+            /**
+             * Instance Id
+             * Format: uuid
+             */
+            instance_id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "core" | "specialist" | "backoffice";
+            /** Is Default */
+            is_default: boolean;
+            /** Enabled */
+            enabled: boolean;
+            /** Priority */
+            priority: number;
+            /**
+             * Release Version
+             * @description Versión que corre en la release activa; null si no figura.
+             */
+            release_version: number | null;
+            /**
+             * Latest Version
+             * @description Última versión publicada del agente.
+             */
+            latest_version: number | null;
+        };
+        /** ConsoleConnection */
+        ConsoleConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Channel */
+            channel: string;
+            /** Type Id */
+            type_id: string | null;
+            /** Label */
+            label: string;
+            /** External Id */
+            external_id: string;
+            /** Conversational */
+            conversational: boolean;
+            /** Active */
+            active: boolean;
+            /** Is Primary */
+            is_primary: boolean;
+            /** Created At */
+            created_at: string | null;
+            /** Meta Connection Id */
+            meta_connection_id: string | null;
+            /**
+             * Health
+             * @enum {string}
+             */
+            health: "ok" | "degraded" | "error" | "paused" | "pending";
+            /**
+             * Pause Scope
+             * @enum {string}
+             */
+            pause_scope: "meta_account" | "connection" | "webchat_settings";
+            /**
+             * Pausable
+             * @description La consola ofrece pausar: hoy solo la cuenta de Meta (ADR-0122).
+             */
+            pausable: boolean;
+            coordinator: components["schemas"]["ConsoleAgent"] | null;
+            /**
+             * Agents
+             * @description Especialistas y back-office, sin el Coordinador.
+             */
+            agents: components["schemas"]["ConsoleAgent"][];
+            active_release: components["schemas"]["ConsoleRelease"] | null;
+            canary_release: components["schemas"]["ConsoleRelease"] | null;
+            usage_7d: components["schemas"]["ConsoleUsage"];
+        };
+        /** ConsoleConsistency */
+        ConsoleConsistency: {
+            /** Pass K */
+            pass_k: number;
+            /** K */
+            k: number;
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+        };
+        /** ConsoleRelease */
+        ConsoleRelease: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ConsoleUnassignedAgent */
+        ConsoleUnassignedAgent: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+        };
+        /** ConsoleUsage */
+        ConsoleUsage: {
+            /** Turns */
+            turns: number;
+            /** Conversations */
+            conversations: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /**
+             * Cost Usd
+             * @description Solo con acceso a la sección `costs`; si no, null.
+             */
+            cost_usd: number | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -10497,9 +10890,7 @@ export interface operations {
     post_logout_api_v1_auth_logout_post: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -10511,15 +10902,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
             };
         };
     };
@@ -11859,6 +12241,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description El plan no permite habilitar más habilidades: `error.code = plan_limit_plugins`, `error.details = {metric, used, limit, enabled: false}`; la habilidad queda deshabilitada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -11928,6 +12317,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PluginConfigResponse"];
                 };
+            };
+            /** @description El plan no permite habilitar más habilidades: `error.code = plan_limit_plugins`, `error.details = {metric, used, limit, enabled: false}`; la habilidad queda deshabilitada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -15176,7 +15572,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BrainSettings"];
+                "application/json": components["schemas"]["BrainUpdate"];
             };
         };
         responses: {
@@ -15277,7 +15673,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MemorySettings"];
+                "application/json": components["schemas"]["MemoryUpdate"];
             };
         };
         responses: {
@@ -19975,6 +20371,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WizardSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_installations_api_v1_admin_skills_installations_get: {
+        parameters: {
+            query?: {
+                connection_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillInstallation"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_installation_api_v1_admin_skills_installations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SkillInstallationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillInstallation"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillInstallation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_installation_api_v1_admin_skills_installations__installation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_collaborator_tenant_api_v1_admin_collaborators__admin_id__unlink_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connections_console_api_v1_admin_connections_console_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionsConsole"];
                 };
             };
             /** @description Validation Error */

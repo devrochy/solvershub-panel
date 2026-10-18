@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ConnectionActions } from "@/app/(app)/conexiones/_components/connection-actions";
+import { ConsolaConexiones } from "@/app/(app)/conexiones/_components/consola-conexiones";
 import { NewConnectionDialog } from "@/app/(app)/conexiones/_components/new-connection-dialog";
 import { ChannelBadge } from "@/components/domain/channel-icon";
 import { BinaryBadge } from "@/components/domain/status-badge";
@@ -9,16 +10,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { ConnectionsResponse } from "@/lib/api/types";
+import type { ConnectionsConsole, ConnectionsResponse } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Conexiones" };
 
 type ConnectionRow = ConnectionsResponse["items"][number];
 
-export default async function ConnectionsPage() {
-  const res = await apiFetch<ConnectionsResponse>("/admin/connections");
+const POR_PAGINA = 50;
+
+export default async function ConnectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const pagina = Math.max(1, Number.parseInt((await searchParams).page ?? "1", 10) || 1);
+  const [res, resConsola] = await Promise.all([
+    apiFetch<ConnectionsResponse>("/admin/connections"),
+    apiFetch<ConnectionsConsole>(`/admin/connections/console?page=${pagina}&page_size=${POR_PAGINA}`),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -27,6 +39,9 @@ export default async function ConnectionsPage() {
     );
   }
   const { items, webhook_url } = res.data;
+  const consola = resConsola.ok ? resConsola.data : null;
+  // Sin la consola no se sabe si puede editar: se ocultan las acciones (HU-AOS-23, Permisos).
+  const puedeEditar = consola?.can_edit ?? false;
 
   const columns: Column<ConnectionRow>[] = [
     { key: "origen", header: "Origen", info: "Cómo se creó: formulario manual, OAuth del framework o app propia del negocio (BYOK).", cell: (c) => <span className="text-body">{c.origin}</span> },
@@ -63,7 +78,7 @@ export default async function ConnectionsPage() {
       header: "Creada",
       cell: (c) => <span className="text-body">{formatDateTime(c.created_at)}</span>,
     },
-    {
+    ...(puedeEditar ? [{
       key: "acciones",
       header: "Acciones",
       align: "right",
@@ -77,7 +92,7 @@ export default async function ConnectionsPage() {
           typeId={c.kind === "channel_connection" ? c.type_id : null}
         />
       ),
-    },
+    } satisfies Column<ConnectionRow>] : []),
   ];
 
   return (
@@ -94,10 +109,29 @@ export default async function ConnectionsPage() {
             <Button asChild variant="outline" size="default">
               <Link href="/conexiones/meta">Salud de Meta</Link>
             </Button>
-            <NewConnectionDialog />
+            {puedeEditar && <NewConnectionDialog />}
           </div>
         }
       />
+
+      {consola ? (
+        <>
+          <ConsolaConexiones consola={consola} />
+          {(consola.has_more || pagina > 1) && (
+            <Pagination
+              page={pagina}
+              hasMore={consola.has_more}
+              total={consola.total}
+              label="conexiones"
+              makeHref={(p) => `/conexiones?page=${p}`}
+            />
+          )}
+        </>
+      ) : (
+        <p role="alert" className="text-status-danger-fg">
+          No se pudo cargar la consola de conexiones: {resConsola.ok ? "" : resConsola.error}
+        </p>
+      )}
 
       {webhook_url && (
         <Card>
@@ -116,6 +150,7 @@ export default async function ConnectionsPage() {
         </Card>
       )}
 
+      <h2 className="font-display text-lg font-semibold text-headline">Cuentas y credenciales</h2>
       <DataTable
         columns={columns}
         rows={items}
