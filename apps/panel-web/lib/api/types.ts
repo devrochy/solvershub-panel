@@ -90,3 +90,17 @@ export type QaMisDatos = components["schemas"]["QaMisDatos"];
 export type QaDatos = components["schemas"]["QaDatos"];
 export type QaDatosCuenta = components["schemas"]["QaDatosCuenta"];
 export type AcceptTesterInvitationResponse = components["schemas"]["AcceptTesterInvitationResponse"];
+
+// Editor de agentes desde plantillas (HU-AOS-24).
+export type AgentDetail = components["schemas"]["AgentDetail"];
+export type AgentDraft = components["schemas"]["AgentDraft"];
+export type AgentTemplate = components["schemas"]["AgentTemplate"];
+export type AgentTemplatePage = components["schemas"]["Page_AgentTemplate_"];
+export type Superpower = components["schemas"]["Superpower"];
+export type SuperpowerPage = components["schemas"]["Page_Superpower_"];
+export type LlmModel = components["schemas"]["LlmModel"];
+export type LlmModelCatalog = components["schemas"]["LlmModelCatalog"];
+export type PublishTarget = components["schemas"]["PublishTarget"];
+export type PublishTargetPage = components["schemas"]["Page_PublishTarget_"];
+export type FromTemplateOut = components["schemas"]["FromTemplateOut"];
+export type EditorPublishOut = components["schemas"]["EditorPublishOut"];

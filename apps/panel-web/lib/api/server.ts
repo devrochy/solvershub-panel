@@ -19,7 +19,7 @@ export const TENANT_COOKIE = "panel_tenant";
 
 export type ApiResult<T> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number; error: string; code?: string };
+  | { ok: false; status: number; error: string; code?: string; fields?: Record<string, string> };
 
 type FetchOptions = {
   token?: string | null;
@@ -53,12 +53,12 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   if (res.status === 204) return { ok: true, status: 204, data: undefined as T };
 
   const json = (await res.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string }; detail?: unknown }
+    | { error?: { code?: string; message?: string; fields?: unknown }; detail?: unknown }
     | T
     | null;
 
   if (!res.ok) {
-    const cuerpo = json as { error?: { code?: string; message?: string }; detail?: unknown } | null;
+    const cuerpo = json as { error?: { code?: string; message?: string; fields?: unknown }; detail?: unknown } | null;
     const error = cuerpo?.error;
     // 422 de FastAPI: `detail` con mensajes en inglés; se traduce a qué campos revisar.
     const message =
@@ -68,9 +68,20 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
       status: res.status,
       error: message,
       ...(typeof error?.code === "string" ? { code: error.code } : {}),
+      // Errores por campo (HU-FWK-08): el formulario los muestra junto a cada campo.
+      ...(camposDeError(error?.fields) ? { fields: camposDeError(error?.fields) } : {}),
     };
   }
   return { ok: true, status: res.status, data: json as T };
+}
+
+/** `fields` del error de la API como `{campo: mensaje}` de textos, o undefined. */
+function camposDeError(fields: unknown): Record<string, string> | undefined {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) return undefined;
+  const salida = Object.fromEntries(
+    Object.entries(fields as Record<string, unknown>).filter(([, v]) => typeof v === "string"),
+  ) as Record<string, string>;
+  return Object.keys(salida).length > 0 ? salida : undefined;
 }
 
 export async function getSessionToken(): Promise<string | null> {
