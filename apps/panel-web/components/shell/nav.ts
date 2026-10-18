@@ -12,6 +12,7 @@ import {
   ListChecks,
   LogIn,
   MessageSquare,
+  UserRoundPlus,
   PlayCircle,
   Plug,
   Rocket,
@@ -53,6 +54,11 @@ export type NavItem = {
   legacy?: boolean;
   /** Sub-sección del pack (mismo agrupamiento que el clásico). */
   sub?: string;
+  /**
+   * true = solo para el admin de plataforma (`role === "master"`), aunque la sección esté en
+   * los permisos: un tester actúa como master en la operación pero no gestiona la plataforma.
+   */
+  soloMaster?: boolean;
 };
 
 export type NavGroupDef = {
@@ -198,6 +204,15 @@ export const NAV_GROUPS: NavGroupDef[] = [
       // Solo master: `tenants` es una sección global (HU-CONN-07 y HU-SH-05).
       { section: "tenants", label: "App de Meta", href: "/plataforma/meta", icon: ShieldCheck, ready: true },
       { section: "tenants", label: "Embedded Signup", href: "/plataforma/meta/embedded-signup", icon: LogIn, ready: true },
+      // Alta automática (HU-SH-07): configuración propia del agente de ventas de SolversHub. Solo master.
+      {
+        section: "tenants",
+        label: "Alta automática",
+        href: "/tenants/alta-automatica",
+        icon: UserRoundPlus,
+        ready: true,
+        soloMaster: true,
+      },
       // Centro de pruebas (SPEC-30): sección global `qa`, de master y testers (solo en test).
       { section: "qa", label: "Pruebas", href: "/pruebas", icon: FlaskConical, ready: true },
     ],

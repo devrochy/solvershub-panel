@@ -1,39 +1,34 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import type { BrainSettings } from "@/lib/api/types";
+import { useAction } from "@/lib/use-action";
 
 /** Formulario del Cerebro (modelos y límites). Responsabilidad: editar y guardar. */
 export function BrainForm({ brain }: { brain: BrainSettings }) {
-  const router = useRouter();
   const [values, setValues] = useState(brain);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   const set = <K extends keyof BrainSettings>(key: K, value: BrainSettings[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setStatus({ loading: true });
-    const res = await fetch("/api/settings/brain", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+    await run(async () => {
+      const res = await fetch("/api/settings/brain", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el cerebro." };
+      return { ok: true, success: "Cerebro guardado." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setStatus({ success: "Cerebro guardado." });
-    router.refresh();
   }
 
   return (
@@ -107,11 +102,10 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
             </Field>
           </div>
 
-          <FormFeedback error={status.error} success={status.success} />
 
           <div>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Guardando…" : "Guardar cerebro"}
+            <Button type="submit" variant="accent" disabled={pending}>
+              {pending ? "Guardando…" : "Guardar cerebro"}
             </Button>
           </div>
         </form>

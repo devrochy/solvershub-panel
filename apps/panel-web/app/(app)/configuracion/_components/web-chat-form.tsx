@@ -1,57 +1,52 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { WebChatSettings } from "@/lib/api/types";
+import { useAction } from "@/lib/use-action";
 
 /** Chat web embebible: habilita el widget, dominios permitidos y Turnstile. */
 export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
-  const router = useRouter();
   const [enabled, setEnabled] = useState(webChat.enabled);
   const [originsText, setOriginsText] = useState(webChat.allowed_origins.join("\n"));
   const [turnstile, setTurnstile] = useState("");
   const [rotateKey, setRotateKey] = useState(false);
   const [snippet, setSnippet] = useState(webChat.snippet);
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setStatus({ loading: true });
     const allowed_origins = originsText
       .split(/[\n,]/)
       .map((o) => o.trim())
       .filter(Boolean);
-    const res = await fetch("/api/settings/web-chat", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        enabled,
-        allowed_origins,
-        // undefined = no tocar el secreto existente.
-        turnstile_secret: turnstile.trim() === "" ? undefined : turnstile.trim(),
-        rotate_key: rotateKey,
-      }),
+    await run(async () => {
+      const res = await fetch("/api/settings/web-chat", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled,
+          allowed_origins,
+          // undefined = no tocar el secreto existente.
+          turnstile_secret: turnstile.trim() === "" ? undefined : turnstile.trim(),
+          rotate_key: rotateKey,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el chat web." };
+      setSnippet(json.snippet ?? "");
+      setRotateKey(false);
+      setTurnstile("");
+      return { ok: true, success: "Chat web guardado." };
     });
-    const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setSnippet(json.snippet ?? "");
-    setRotateKey(false);
-    setTurnstile("");
-    setStatus({ success: "Chat web guardado." });
-    router.refresh();
   }
 
   async function copySnippet() {
@@ -121,7 +116,6 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
             Rotar la clave pública (el fragmento actual deja de funcionar)
           </label>
 
-          <FormFeedback error={status.error} success={status.success} />
 
           {snippet ? (
             <div className="flex flex-col gap-2">
@@ -136,8 +130,8 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
           ) : null}
 
           <div>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Guardando…" : "Guardar chat web"}
+            <Button type="submit" variant="accent" disabled={pending}>
+              {pending ? "Guardando…" : "Guardar chat web"}
             </Button>
           </div>
         </form>

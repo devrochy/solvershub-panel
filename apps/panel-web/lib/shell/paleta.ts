@@ -26,10 +26,11 @@ export function seccionesDePaleta(
   permisos: Permisos,
   packs: PacksDelNegocio = {},
   grupos: NavGroupDef[] = NAV_GROUPS,
+  esMaster = false,
 ): EntradaSeccion[] {
   const vistas = new Set<string>();
   const entradas: EntradaSeccion[] = [];
-  for (const { group, visible } of gruposVisibles(permisos, grupos)) {
+  for (const { group, visible } of gruposVisibles(permisos, grupos, esMaster)) {
     if (group.pack && packs[group.pack]?.enabled === false) continue;
     for (const item of visible) {
       if (!item.ready || vistas.has(item.href)) continue;

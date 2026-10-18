@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import {
   AccionesDeAlta,
   Interruptor,
@@ -11,7 +9,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AltaAutomatica, DocumentoLegal, VendedorAltas } from "@/lib/api/types";
+import type { AltaAutomatica, DocumentoLegal, Me, VendedorAltas } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Alta automática" };
@@ -22,17 +20,32 @@ const NOMBRES: Record<string, string> = {
   dpa: "Acuerdo de tratamiento de datos (DPA)",
 };
 
+const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
+
 /**
- * Plataforma → Alta automática (HU-SH-07, ADR-0125 de agent-core). Por cada negocio
- * vendedor: el interruptor ante un ataque, los documentos legales vigentes (con su
- * historial) y la cola de altas en revisión para aprobar o descartar. Solo el master.
+ * Plataforma → Alta automática (HU-SH-07, ADR-0125 de agent-core): la configuración propia
+ * del agente de ventas de SolversHub, el que da de alta negocios nuevos solo cuando un
+ * cliente compra un plan por WhatsApp. Por cada negocio vendedor: el interruptor ante un
+ * ataque, los documentos legales vigentes (con su historial) y la cola de altas en revisión
+ * para aprobar o descartar. Solo el master: un tester actúa como master en la API, pero no
+ * gestiona la plataforma.
  */
 export default async function AltaAutomaticaPage() {
-  const res = await apiFetch<VendedorAltas[]>("/admin/platform/altas-automaticas");
+  const [meRes, res] = await Promise.all([
+    apiFetch<Me>("/admin/me"),
+    apiFetch<VendedorAltas[]>("/admin/platform/altas-automaticas"),
+  ]);
+  if (!meRes.ok || meRes.data.role !== "master") {
+    return (
+      <p role="alert" className="text-status-danger-fg">
+        {SOLO_MASTER}
+      </p>
+    );
+  }
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
-        {res.status === 403 ? "Solo el admin de plataforma puede ver esto." : `Error: ${res.error}`}
+        {res.status === 403 ? SOLO_MASTER : `Error: ${res.error}`}
       </p>
     );
   }
@@ -42,12 +55,7 @@ export default async function AltaAutomaticaPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Alta automática"
-        description="Controles del alta de negocios que venden los vendedores de la plataforma: interruptor, términos y altas en revisión."
-        actions={
-          <Link href="/tenants" className="text-sm text-link hover:underline">
-            Volver a Tenants
-          </Link>
-        }
+        description="Configuración propia del agente de ventas de SolversHub: cuando un cliente compra un plan por WhatsApp, el agente crea su negocio solo. Aquí se pausa ante un ataque, se publican los términos que el cliente acepta y se revisan las altas que quedaron frenadas. No es una función de los negocios."
       />
       {vendedores.length === 0 ? (
         <EmptyState

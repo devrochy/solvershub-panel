@@ -28,6 +28,14 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(gruposVisibles(owner).flatMap((g) => g.visible.map((i) => i.label))).not.toContain("Pruebas");
   });
 
+  it("Alta automática es solo del master, aunque tenga la sección `tenants`", () => {
+    const etiquetas = (esMaster: boolean) =>
+      gruposVisibles({ tenants: "write" }, NAV_GROUPS, esMaster).flatMap((g) => g.visible.map((i) => i.label));
+    expect(etiquetas(false)).toEqual(["Tenants", "App de Meta", "Embedded Signup"]);
+    expect(etiquetas(true)).toContain("Alta automática");
+    expect(itemActivo("/tenants/alta-automatica", gruposVisibles(TODO, NAV_GROUPS, true))?.item.label).toBe("Alta automática");
+  });
+
   it("el ítem activo es el más específico", () => {
     expect(itemActivo("/cobranza/carteras/7", grupos)?.item.label).toBe("Carteras");
     expect(itemActivo("/cobranza", grupos)?.item.label).toBe("Resumen");

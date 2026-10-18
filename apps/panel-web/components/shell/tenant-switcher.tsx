@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { TenantOption } from "@/lib/api/types";
+import { toast } from "@/lib/toast-store";
 
 export function TenantSwitcher({
   current,
@@ -74,13 +75,29 @@ export function TenantSwitcher({
     }
   }
 
+  /**
+   * Fija el negocio por el BFF (valida el acceso antes de guardar la cookie) y vuelve a pedir
+   * la vista al servidor: el layout la monta de nuevo con la clave del negocio nuevo, así
+   * ningún formulario conserva datos del anterior. Si la API no lo acepta, se avisa.
+   */
   async function choose(id: string) {
     setOpen(false);
-    await fetch("/api/tenant", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tenantId: id }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/tenant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId: id }),
+      });
+    } catch {
+      toast.error("No se pudo cambiar de negocio: sin conexión con el servidor.");
+      return;
+    }
+    if (!res.ok) {
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
+      toast.error(json?.error ?? "No se pudo cambiar de negocio.");
+      return;
+    }
     router.refresh();
   }
 

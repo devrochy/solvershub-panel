@@ -1,19 +1,18 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 
 import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { PlanResponse, PlatformTenant } from "@/lib/api/types";
 import { AVISO_DESACTIVAR_PRIMERO, sePuedeEliminar } from "@/lib/eliminar-negocio";
+import { useAction } from "@/lib/use-action";
 
 /** Ciclo de vida y plan de un negocio (master). */
 export function TenantActions({
@@ -23,26 +22,29 @@ export function TenantActions({
   tenant: PlatformTenant;
   plans: PlanResponse["plans"];
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run: ejecutar, pending } = useAction();
   const activo = tenant.status === "active";
   const eliminable = sePuedeEliminar(tenant.status);
 
+  const AVISOS: Record<string, string> = {
+    activate: "Negocio activado.",
+    deactivate: "Negocio desactivado.",
+    plan: "Plan aplicado.",
+    purge: "Negocio eliminado.",
+  };
+
   async function run(action: string, payload: Record<string, unknown> = {}) {
-    setStatus({ loading: true });
-    const res = await fetch(`/api/platform/tenants/${tenant.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...payload }),
+    await ejecutar(async () => {
+      const res = await fetch(`/api/platform/tenants/${tenant.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo completar la acción." };
+      return { ok: true, success: AVISOS[action] ?? "Listo." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo completar la acción." });
-      return;
-    }
-    setStatus({ success: "Listo." });
-    router.refresh();
   }
 
   function onPlan(event: FormEvent<HTMLFormElement>) {
@@ -83,7 +85,7 @@ export function TenantActions({
               variant="outline"
               size="sm"
               onClick={() => void run(activo ? "deactivate" : "activate")}
-              disabled={status.loading}
+              disabled={pending}
             >
               {activo ? "Desactivar" : "Activar"}
             </Button>
@@ -108,7 +110,7 @@ export function TenantActions({
               </Field>
             </div>
             <div>
-              <Button type="submit" variant="outline" size="sm" disabled={status.loading}>
+              <Button type="submit" variant="outline" size="sm" disabled={pending}>
                 Aplicar plan
               </Button>
             </div>
@@ -127,7 +129,7 @@ export function TenantActions({
                     variant="outline"
                     size="sm"
                     onClick={() => void run("deactivate")}
-                    disabled={status.loading}
+                    disabled={pending}
                   >
                     Desactivar
                   </Button>
@@ -148,13 +150,11 @@ export function TenantActions({
               />
             </Field>
             <div>
-              <Button type="submit" variant="danger" size="sm" disabled={status.loading || !eliminable}>
+              <Button type="submit" variant="danger" size="sm" disabled={pending || !eliminable}>
                 Eliminar definitivamente
               </Button>
             </div>
           </form>
-
-          <FormFeedback error={status.error} success={status.success} />
 
           <div className="flex justify-end">
             <DialogClose asChild>

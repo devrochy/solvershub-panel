@@ -7,6 +7,8 @@
  */
 import { cookies } from "next/headers";
 
+import { mensajeDeValidacion } from "@/lib/api/validacion";
+
 export const API_BASE = (process.env.AGENT_CORE_API_URL ?? "http://localhost:8000").replace(
   /\/$/,
   "",
@@ -51,13 +53,16 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   if (res.status === 204) return { ok: true, status: 204, data: undefined as T };
 
   const json = (await res.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string } }
+    | { error?: { code?: string; message?: string }; detail?: unknown }
     | T
     | null;
 
   if (!res.ok) {
-    const error = (json as { error?: { code?: string; message?: string } } | null)?.error;
-    const message = error?.message ?? `Error ${res.status}`;
+    const cuerpo = json as { error?: { code?: string; message?: string }; detail?: unknown } | null;
+    const error = cuerpo?.error;
+    // 422 de FastAPI: `detail` con mensajes en inglés; se traduce a qué campos revisar.
+    const message =
+      error?.message ?? (res.status === 422 ? mensajeDeValidacion(cuerpo?.detail) : `Error ${res.status}`);
     return {
       ok: false,
       status: res.status,
