@@ -33,6 +33,7 @@ export type PlanResponse = components["schemas"]["PlanResponse"];
 export type CollaboratorItem = components["schemas"]["CollaboratorItem"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
+export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];
 export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 
