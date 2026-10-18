@@ -7,10 +7,20 @@ export type GrupoVisible = { group: NavGroupDef; visible: NavItem[] };
 
 export type Miga = { label: string; href?: string };
 
-/** Grupos del menú con los ítems que el usuario puede ver (sin grupos vacíos). */
-export function gruposVisibles(permisos: Permisos, grupos: NavGroupDef[] = NAV_GROUPS): GrupoVisible[] {
+/**
+ * Grupos del menú con los ítems que el usuario puede ver (sin grupos vacíos). Un ítem
+ * `soloMaster` exige además ser el admin de plataforma (`esMaster`), no solo el permiso.
+ */
+export function gruposVisibles(
+  permisos: Permisos,
+  grupos: NavGroupDef[] = NAV_GROUPS,
+  esMaster = false,
+): GrupoVisible[] {
   return grupos
-    .map((group) => ({ group, visible: group.items.filter((item) => permisos?.[item.section]) }))
+    .map((group) => ({
+      group,
+      visible: group.items.filter((item) => permisos?.[item.section] && (!item.soloMaster || esMaster)),
+    }))
     .filter(({ visible }) => visible.length > 0);
 }
 

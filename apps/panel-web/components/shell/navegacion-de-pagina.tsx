@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { NAV_GROUPS } from "@/components/shell/nav";
 import { useShell } from "@/components/shell/shell-context";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { TabLinks } from "@/components/ui/tab-links";
@@ -15,7 +16,7 @@ export function MigasDeShell({ titulo }: { titulo: string }) {
   const pathname = usePathname();
   const shell = useShell();
   if (!shell) return null;
-  const migas = migasPara(pathname, gruposVisibles(shell.permisos), titulo);
+  const migas = migasPara(pathname, gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster), titulo);
   return migas.length > 0 ? <Breadcrumbs items={migas} /> : null;
 }
 
@@ -24,7 +25,7 @@ export function PestanasDeShell() {
   const pathname = usePathname();
   const shell = useShell();
   if (!shell) return null;
-  const grupos = gruposVisibles(shell.permisos);
+  const grupos = gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster);
   const pestanas = pestanasPara(pathname, grupos);
   if (pestanas.length === 0) return null;
   // La más específica: `/calendario` es prefijo de todas las de Agenda.

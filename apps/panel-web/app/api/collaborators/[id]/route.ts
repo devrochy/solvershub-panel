@@ -7,10 +7,13 @@ const PATHS: Record<string, string> = {
   grant: "grant",
   revoke: "revoke",
   link: "link",
+  // Desvincular de un negocio: `POST /admin/collaborators/{id}/unlink` con `{tenant: <slug>}`
+  // (mismo cuerpo que `link`, sin rol). Lo agrega agent-core en `fix/p0-seguridad-pruebas`.
+  unlink: "unlink",
   toggle: "toggle",
 };
 
-/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, activar). */
+/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, desvincular, activar). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as

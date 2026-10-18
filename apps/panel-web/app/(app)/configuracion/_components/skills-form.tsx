@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useAction } from "@/lib/use-action";
 
 type SkillBinding = {
   name: string;
@@ -20,29 +19,24 @@ type SkillBinding = {
 
 /** Herramientas del agente: activar, límite por conversación y confirmación. */
 export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
-  const router = useRouter();
   const [values, setValues] = useState(skills);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   function update(name: string, patch: Partial<SkillBinding>) {
     setValues((prev) => prev.map((tool) => (tool.name === name ? { ...tool, ...patch } : tool)));
-    setStatus({});
   }
 
   async function onSubmit() {
-    setStatus({ loading: true });
-    const res = await fetch("/api/settings/skills", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tools: values }),
+    await run(async () => {
+      const res = await fetch("/api/settings/skills", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tools: values }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudieron guardar las herramientas." };
+      return { ok: true, success: "Herramientas guardadas." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setStatus({ success: "Herramientas guardadas." });
-    router.refresh();
   }
 
   return (
@@ -97,11 +91,9 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
           </ul>
         )}
 
-        <FormFeedback error={status.error} success={status.success} />
-
         <div>
-          <Button variant="accent" onClick={() => void onSubmit()} disabled={status.loading}>
-            {status.loading ? "Guardando…" : "Guardar herramientas"}
+          <Button variant="accent" onClick={() => void onSubmit()} disabled={pending}>
+            {pending ? "Guardando…" : "Guardar herramientas"}
           </Button>
         </div>
       </CardContent>

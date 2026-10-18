@@ -1,37 +1,32 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { useAction } from "@/lib/use-action";
 
 type MemorySettings = { short_term_turns: number; rag_top_k: number; rag_min_score: number };
 
 /** Memoria del agente: turnos de contexto y recall RAG. */
 export function MemoryForm({ memory }: { memory: MemorySettings }) {
-  const router = useRouter();
   const [values, setValues] = useState(memory);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setStatus({ loading: true });
-    const res = await fetch("/api/settings/memory", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+    await run(async () => {
+      const res = await fetch("/api/settings/memory", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar la memoria." };
+      return { ok: true, success: "Memoria guardada." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setStatus({ success: "Memoria guardada." });
-    router.refresh();
   }
 
   return (
@@ -77,11 +72,10 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
             </Field>
           </div>
 
-          <FormFeedback error={status.error} success={status.success} />
 
           <div>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Guardando…" : "Guardar memoria"}
+            <Button type="submit" variant="accent" disabled={pending}>
+              {pending ? "Guardando…" : "Guardar memoria"}
             </Button>
           </div>
         </form>

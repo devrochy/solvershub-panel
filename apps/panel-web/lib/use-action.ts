@@ -9,6 +9,8 @@ export interface ActionResult {
   ok: boolean;
   error?: string;
   success?: string;
+  /** Estado HTTP del BFF, si se conoce: con 401 la sesión ya no vale y se vuelve a /login. */
+  status?: number;
 }
 
 export interface UseActionOptions {
@@ -17,6 +19,8 @@ export interface UseActionOptions {
   /** Reversa del estado optimista si la acción falla. */
   rollback?: () => void;
 }
+
+export const MENSAJE_SESION_TERMINADA = "Tu sesión terminó. Vuelve a iniciar sesión.";
 
 /**
  * Ciclo de acción del panel (HU-UI-02): ejecuta el fetch al BFF, muestra el
@@ -33,11 +37,18 @@ export function useAction({ refresh = true, rollback }: UseActionOptions = {}) {
       try {
         const result = await action();
         if (!result.ok) {
+          rollback?.();
+          if (result.status === 401) {
+            // Cuenta desactivada o sesión invalidada: se cierra la sesión del navegador.
+            toast.error(MENSAJE_SESION_TERMINADA);
+            await fetch("/api/session", { method: "DELETE" }).catch(() => {});
+            router.replace("/login");
+            return false;
+          }
           // `error` llega de un JSON: si no es texto (p. ej. `{code, message}`), renderizarlo
           // tumbaría la página (React #31).
           const error: unknown = result.error;
           toast.error(typeof error === "string" && error ? error : "Algo salió mal. Inténtalo de nuevo.");
-          rollback?.();
           return false;
         }
         toast.success(result.success ?? "Listo.");

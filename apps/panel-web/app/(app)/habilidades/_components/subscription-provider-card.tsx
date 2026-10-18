@@ -1,38 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { SubscriptionProviderSettings } from "@/lib/api/types";
 import { textoEstado } from "@/lib/suscripciones";
+import { useAction } from "@/lib/use-action";
 
 /** Qué habilidad cobra los planes recurrentes del negocio y, si hay dos, cuál usar. */
 export function SubscriptionProviderCard({ settings }: { settings: SubscriptionProviderSettings }) {
-  const router = useRouter();
   const [provider, setProvider] = useState(settings.configurado ?? "");
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
   const problema = settings.estado === "ambiguo" || settings.estado === "invalido";
   const elegible = settings.habilitados.length > 1 || problema;
 
   async function guardar() {
-    setStatus({ loading: true });
-    const res = await fetch("/api/settings/subscription-provider", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider: provider || null }),
+    await run(async () => {
+      const res = await fetch("/api/settings/subscription-provider", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: provider || null }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el proveedor." };
+      return { ok: true, success: "Proveedor guardado. Los planes pendientes se activan en unos minutos." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setStatus({ success: "Proveedor guardado. Los planes pendientes se activan en unos minutos." });
-    router.refresh();
   }
 
   return (
@@ -56,12 +51,11 @@ export function SubscriptionProviderCard({ settings }: { settings: SubscriptionP
                 ))}
               </Select>
             </Field>
-            <Button type="button" variant="accent" onClick={guardar} disabled={status.loading || !provider}>
-              {status.loading ? "Guardando…" : "Guardar"}
+            <Button type="button" variant="accent" onClick={guardar} disabled={pending || !provider}>
+              {pending ? "Guardando…" : "Guardar"}
             </Button>
           </div>
         )}
-        <FormFeedback error={status.error} success={status.success} />
       </CardContent>
     </Card>
   );

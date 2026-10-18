@@ -7,7 +7,7 @@ import { ArrowUpRight, ChevronRight, Lock, PanelLeftClose, PanelLeftOpen, X } fr
 
 import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-context";
 import { EnablePackButton } from "@/components/shell/enable-pack-button";
-import { DEFAULT_COLLAPSED_GROUPS, type NavGroupDef, type NavItem } from "@/components/shell/nav";
+import { DEFAULT_COLLAPSED_GROUPS, NAV_GROUPS, type NavGroupDef, type NavItem } from "@/components/shell/nav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -257,7 +257,8 @@ export function Sidebar({
     );
   }
 
-  const visibleByGroup = gruposVisibles(me.permissions);
+  // Permisos y rol del `/admin/me` de este render (el vigilante lo refresca si cambian).
+  const visibleByGroup = gruposVisibles(me.permissions, NAV_GROUPS, me.role === "master");
   const activeHref = itemActivo(pathname, visibleByGroup)?.item.href ?? "";
 
   // Qué estructura se ve en cada modo (CSS; las dos se renderizan y una queda oculta).

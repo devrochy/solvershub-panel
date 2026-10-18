@@ -1,52 +1,52 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
+import { CampoDeNegocio } from "@/app/(app)/colaboradores/_components/campo-de-negocio";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { mensajeDeAlta } from "@/lib/colaboradores";
+import { useAction } from "@/lib/use-action";
 
-/** Alta de colaborador (diálogo). */
-export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value: string; label: string }[] }) {
-  const router = useRouter();
+/**
+ * Alta de colaborador (diálogo). Si el correo ya tiene cuenta, la API no la duplica: envía
+ * una invitación al negocio y lo dice en `resultado`; el aviso lo cuenta. El negocio (slug
+ * con autocompletado) y el rol master son solo del master: un dueño da de alta en el suyo.
+ */
+export function NewCollaboratorDialog({
+  packRoles = [],
+  esMaster = false,
+}: {
+  packRoles?: { value: string; label: string }[];
+  esMaster?: boolean;
+}) {
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setStatus({ loading: true });
-    const res = await fetch("/api/collaborators", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: String(data.get("email") ?? ""),
-        password: String(data.get("password") ?? ""),
-        role: String(data.get("role") ?? "colaborador"),
-        username: String(data.get("username") ?? ""),
-        tenant: String(data.get("tenant") ?? ""),
-        pack_roles: data.getAll("pack_roles").map((v) => String(v)),
-      }),
-    });
-    const json = (await res.json().catch(() => ({}))) as { error?: string; resultado?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo crear la cuenta." });
-      return;
-    }
-    if (json.resultado === "invitado") {
-      setStatus({
-        success: "Ese correo ya tiene cuenta: se envió una invitación al negocio.",
+    const ok = await run(async () => {
+      const res = await fetch("/api/collaborators", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(data.get("email") ?? ""),
+          password: String(data.get("password") ?? ""),
+          role: String(data.get("role") ?? "colaborador"),
+          username: String(data.get("username") ?? ""),
+          tenant: String(data.get("tenant") ?? ""),
+          pack_roles: data.getAll("pack_roles").map((v) => String(v)),
+        }),
       });
-      router.refresh();
-      return;
-    }
-    setStatus({});
-    setOpen(false);
-    router.refresh();
+      const json = (await res.json().catch(() => ({}))) as { error?: string; resultado?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo crear la cuenta." };
+      return { ok: true, success: mensajeDeAlta(json.resultado) };
+    });
+    if (ok) setOpen(false);
   }
 
   return (
@@ -56,7 +56,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
       </DialogTrigger>
       <DialogContent
         title="Nuevo colaborador"
-        description="Crea una cuenta de acceso al panel. Si el correo ya tiene cuenta, se envía una invitación al negocio."
+        description="Crea una cuenta de acceso al panel. Si el correo ya tiene cuenta, se le envía una invitación al negocio."
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field label="Correo" htmlFor="new-email" required>
@@ -70,7 +70,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
               <Select id="new-role" name="role" defaultValue="colaborador">
                 <option value="colaborador">Colaborador</option>
                 <option value="owner">Propietario</option>
-                <option value="master">Master (plataforma)</option>
+                {esMaster && <option value="master">Master (plataforma)</option>}
               </Select>
             </Field>
           </div>
@@ -78,13 +78,7 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
             <Field label="Usuario" htmlFor="new-username" help="Opcional.">
               <Input id="new-username" name="username" autoComplete="off" />
             </Field>
-            <Field
-              label="Negocio"
-              htmlFor="new-tenant"
-              help="Slug del negocio (vacío = sin vínculo)."
-            >
-              <Input id="new-tenant" name="tenant" autoComplete="off" />
-            </Field>
+            {esMaster && <CampoDeNegocio id="new-tenant" help="Vacío = cuenta sin negocio." />}
           </div>
 
           {packRoles.length > 0 && (
@@ -108,14 +102,12 @@ export function NewCollaboratorDialog({ packRoles = [] }: { packRoles?: { value:
             </fieldset>
           )}
 
-          <FormFeedback error={status.error} success={status.success} />
-
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
               <Button type="button" variant="ghost">Cancelar</Button>
             </DialogClose>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Creando…" : "Crear cuenta"}
+            <Button type="submit" variant="accent" disabled={pending}>
+              {pending ? "Creando…" : "Crear cuenta"}
             </Button>
           </div>
         </form>

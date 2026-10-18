@@ -4,23 +4,36 @@ import { redirect } from "next/navigation";
 
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
 import { AtajosProvider } from "@/components/shell/atajos";
+import { GuardiaDeSeccion } from "@/components/shell/guardia-de-seccion";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { PackLockBanner } from "@/components/shell/pack-lock-banner";
 import { ShellProvider } from "@/components/shell/shell-context";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
+import { VigilanteDeSesion } from "@/components/shell/vigilante-de-sesion";
 import { FeedbackProviders } from "@/components/ui/providers";
-import { apiFetch } from "@/lib/api/server";
+import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
 import type { Me, PendingInvitations, PluginSummary, SettingsResponse } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
 import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
+import { claveDeNegocio } from "@/lib/shell/sesion";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  // Preferencias del shell en cookies (HU-DS-04 y HU-DS-05): las lee el servidor, sin salto al cargar.
+  const store = await cookies();
   const [res, packsRes] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<PluginSummary[]>("/admin/plugins"),
   ]);
-  if (!res.ok) redirect("/login");
+  if (!res.ok) {
+    // Negocio suspendido (403 `tenant_suspended`) o cuenta desactivada (401): la sesión ya no
+    // vale; se cierra en el navegador (cookies) y se vuelve a /login.
+    if (res.status === 401 || res.code === "tenant_suspended") redirect("/api/session/cerrar");
+    // El negocio guardado ya no es de esta cuenta (se desvinculó): se olvida y se vuelve a
+    // entrar con el que la API elija, en vez de rebotar a /login en bucle.
+    if (res.status === 403 && store.get(TENANT_COOKIE)?.value) redirect("/api/tenant/reset");
+    redirect("/login");
+  }
   const me = res.data;
   // Invitaciones que esperan respuesta (HU-SH-06): se muestran al entrar, en cualquier sección.
   // Solo se pide la lista si `/me` dice que hay alguna.
@@ -40,21 +53,24 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ]),
   );
 
-  // Preferencias del shell en cookies (HU-DS-04 y HU-DS-05): las lee el servidor, sin salto al cargar.
-  const store = await cookies();
   const modoSidebar = leerModoSidebar(store.get(SIDEBAR_COOKIE)?.value);
   const atajosActivos = leerAtajosActivos(store.get(ATAJOS_COOKIE)?.value);
   const puedeEditar = puedeEditarAsistente(me.permissions);
+  const esMaster = me.role === "master";
 
   return (
     <ShellProvider
       permisos={me.permissions}
+      esMaster={esMaster}
+      negocioId={me.tenant?.id ?? null}
       packs={packs}
       asistentePausado={asistentePausado}
       puedeEditarAsistente={puedeEditar}
     >
       <FeedbackProviders>
         <AtajosProvider atajosActivosIniciales={atajosActivos}>
+          {/* Permisos y negocio vigentes en cada navegación (no un snapshot de la primera carga). */}
+          <VigilanteDeSesion />
           {/* Salto al contenido (HU-UI-03): primer elemento enfocable de cada página. */}
           <a
             href="#contenido"
@@ -73,11 +89,21 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 asistentePausado={asistentePausado}
                 puedeReactivar={puedeEditar}
               />
-              <main id="contenido" tabIndex={-1} className="flex-1 px-4 py-6 focus:outline-none md:px-6 md:py-8">
+              {/*
+               * La clave es el negocio activo: al cambiarlo, la vista se vuelve a montar y los
+               * formularios del cliente arrancan con los datos del negocio nuevo (un
+               * `router.refresh()` solo conserva el estado que ya tenían).
+               */}
+              <main
+                key={claveDeNegocio(me)}
+                id="contenido"
+                tabIndex={-1}
+                className="flex-1 px-4 py-6 focus:outline-none md:px-6 md:py-8"
+              >
                 <div className="mx-auto w-full max-w-[1200px]">
                   {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
                   <PackLockBanner packs={packs} />
-                  {children}
+                  <GuardiaDeSeccion>{children}</GuardiaDeSeccion>
                 </div>
               </main>
             </div>

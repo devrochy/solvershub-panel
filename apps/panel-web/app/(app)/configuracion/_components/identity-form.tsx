@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { IdentitySettings } from "@/lib/api/types";
 import { cuerpoIdentidad } from "@/lib/asistente";
 import { formatList, parseList } from "@/lib/format";
+import { useAction } from "@/lib/use-action";
 
 const TONOS = ["calido", "formal", "divertido"];
 const PERSONA_TONES = ["formal", "neutral", "cercano", "informal"];
@@ -74,31 +73,30 @@ function textToRanges(text: string): { day: number; from: string; to: string }[]
   return out;
 }
 
-/** Formulario de Identidad del agente. Responsabilidad: editar y guardar. */
+/**
+ * Formulario de Identidad del agente. Responsabilidad: editar y guardar. El resultado va en
+ * un aviso del kit (HU-UI-02): éxito que se cierra solo, error hasta cerrarlo, en español.
+ */
 export function IdentityForm({ identity }: { identity: IdentitySettings }) {
-  const router = useRouter();
   const [values, setValues] = useState(identity);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction();
 
   const set = <K extends keyof IdentitySettings>(key: K, value: IdentitySettings[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setStatus({ loading: true });
-    const res = await fetch("/api/settings/identity", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      // Una sola zona en la UI: el horario de atención usa la del negocio.
-      body: JSON.stringify(cuerpoIdentidad(values, identity)),
+    await run(async () => {
+      const res = await fetch("/api/settings/identity", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        // Una sola zona en la UI: el horario de atención usa la del negocio.
+        body: JSON.stringify(cuerpoIdentidad(values, identity)),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar la identidad." };
+      return { ok: true, success: "Identidad guardada." };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    setStatus({ success: "Identidad guardada." });
-    router.refresh();
   }
 
   return (
@@ -446,11 +444,9 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
             </span>
           </label>
 
-          <FormFeedback error={status.error} success={status.success} />
-
           <div>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Guardando…" : "Guardar identidad"}
+            <Button type="submit" variant="accent" disabled={pending}>
+              {pending ? "Guardando…" : "Guardar identidad"}
             </Button>
           </div>
         </form>

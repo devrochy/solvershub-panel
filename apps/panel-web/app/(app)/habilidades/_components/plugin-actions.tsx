@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Switch } from "@/components/ui/switch";
+import { mensajeDeHabilitacion } from "@/lib/habilidades";
+import { useAction } from "@/lib/use-action";
 
-/** Habilita/deshabilita una habilidad, o reintenta su salud si falló. */
+/**
+ * Habilita/deshabilita una habilidad, o reintenta su salud si falló. El interruptor se mueve
+ * en optimista y vuelve al estado real si la API no acepta el cambio (por ejemplo, al tope
+ * de habilidades del plan), con el motivo en un aviso.
+ */
 export function PluginActions({
   pluginId,
   enabled,
@@ -19,13 +23,19 @@ export function PluginActions({
   enabled: boolean;
   hasError: boolean;
 }) {
-  const router = useRouter();
-  const [isEnabled, setIsEnabled] = useState(enabled);
+  // Estado optimista mientras la API responde; `null` = lo que dice el servidor.
+  const [optimista, setOptimista] = useState<boolean | null>(null);
+  // Cuando el servidor trae un valor nuevo (tras refrescar), el optimista ya no manda.
+  const [enabledVisto, setEnabledVisto] = useState(enabled);
+  if (enabledVisto !== enabled) {
+    setEnabledVisto(enabled);
+    setOptimista(null);
+  }
+  const isEnabled = optimista ?? enabled;
   const [confirming, setConfirming] = useState(false);
-  const [state, setState] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const { run, pending } = useAction({ rollback: () => setOptimista(null) });
 
-  async function run(action: "activate" | "deactivate" | "retry") {
-    setState({ loading: true });
+  async function accion(action: "activate" | "deactivate" | "retry", success: string) {
     const res = await fetch(`/api/plugins/${encodeURIComponent(pluginId)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,18 +43,19 @@ export function PluginActions({
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
-      setState({ error: json.error ?? "No se pudo completar la acción." });
-      return;
+      return {
+        ok: false,
+        status: res.status,
+        error: action === "activate" ? mensajeDeHabilitacion(json.error, res.status) : json.error,
+      };
     }
-    setState({ success: "Listo." });
-    router.refresh();
+    return { ok: true, success };
   }
 
   function onToggle(checked: boolean) {
-    setState({});
     if (checked) {
-      setIsEnabled(true);
-      void run("activate");
+      setOptimista(true);
+      void run(() => accion("activate", "Habilidad habilitada."));
       return;
     }
     setConfirming(true);
@@ -52,8 +63,8 @@ export function PluginActions({
 
   function confirmDeactivate() {
     setConfirming(false);
-    setIsEnabled(false);
-    void run("deactivate");
+    setOptimista(false);
+    void run(() => accion("deactivate", "Habilidad deshabilitada."));
   }
 
   return (
@@ -62,7 +73,7 @@ export function PluginActions({
         <Switch
           checked={isEnabled}
           onCheckedChange={onToggle}
-          disabled={state.loading}
+          disabled={pending}
           aria-label={isEnabled ? `Deshabilitar ${pluginId}` : `Habilitar ${pluginId}`}
         />
         <span className="text-sm text-body">{isEnabled ? "Habilitada" : "No habilitada"}</span>
@@ -72,15 +83,13 @@ export function PluginActions({
             variant="outline"
             size="sm"
             className="ml-auto"
-            onClick={() => void run("retry")}
-            disabled={state.loading}
+            onClick={() => void run(() => accion("retry", "Salud reiniciada. Si vuelve a fallar, revisa su configuración."))}
+            disabled={pending}
           >
             Reintentar
           </Button>
         )}
       </div>
-
-      <FormFeedback error={state.error} success={state.success} />
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent
