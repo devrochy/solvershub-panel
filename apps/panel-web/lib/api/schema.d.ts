@@ -4756,6 +4756,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agents Overview */
+        get: operations["agents_overview_api_v1_admin_agents_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{ref}/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent Conversations */
+        get: operations["agent_conversations_api_v1_admin_agents__ref__conversations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{ref}/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent Customers */
+        get: operations["agent_customers_api_v1_admin_agents__ref__customers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{ref}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent Tasks */
+        get: operations["agent_tasks_api_v1_admin_agents__ref__tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{ref}/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent Records */
+        get: operations["agent_records_api_v1_admin_agents__ref__records_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{ref}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agent Usage */
+        get: operations["agent_usage_api_v1_admin_agents__ref__usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/console": {
         parameters: {
             query?: never;
@@ -10762,6 +10864,332 @@ export interface components {
         UnlinkRequest: {
             /** Tenant */
             tenant: string;
+        };
+        /** Activity */
+        Activity: {
+            /** Turns */
+            turns: number;
+            /** Conversations */
+            conversations: number;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
+        };
+        /** AgentConnection */
+        AgentConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** AgentConversation */
+        AgentConversation: {
+            /**
+             * Conversation Id
+             * Format: uuid
+             */
+            conversation_id: string;
+            /** Customer Id */
+            customer_id: string | null;
+            /** Customer Name */
+            customer_name: string | null;
+            /** Channel */
+            channel: string | null;
+            /** Status */
+            status: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /** Connection Label */
+            connection_label: string | null;
+            /** Agent Version */
+            agent_version: number | null;
+            /** Turns */
+            turns: number;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /**
+             * Last Turn At
+             * Format: date-time
+             */
+            last_turn_at: string;
+        };
+        /** AgentCustomer */
+        AgentCustomer: {
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Name */
+            name: string | null;
+            /** Channel */
+            channel: string | null;
+            /** Conversations */
+            conversations: number;
+            /** Turns */
+            turns: number;
+            /**
+             * Last Turn At
+             * Format: date-time
+             */
+            last_turn_at: string;
+        };
+        /** AgentOverviewItem */
+        AgentOverviewItem: {
+            /** Turns */
+            turns: number;
+            /** Conversations */
+            conversations: number;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /** Last Activity At */
+            last_activity_at: string | null;
+            /** Id */
+            id: string | null;
+            /** Ref */
+            ref: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Virtual */
+            virtual: boolean;
+            /** Published */
+            published: boolean;
+            /** Connections */
+            connections: components["schemas"]["AgentConnection"][];
+            /** Incluye Sin Atribuir */
+            incluye_sin_atribuir: boolean;
+        };
+        /** AgentRecordItem */
+        AgentRecordItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pack Id */
+            pack_id: string;
+            /** Kind */
+            kind: string;
+            /** Record Ref */
+            record_ref: string;
+            /** Label */
+            label: string | null;
+            /** Tool */
+            tool: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /** Connection Label */
+            connection_label: string | null;
+            /** Agent Version */
+            agent_version: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AgentTask */
+        AgentTask: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Procedure Id */
+            procedure_id: string;
+            /** Procedure Version */
+            procedure_version: string;
+            /** Status */
+            status: string;
+            /** Open */
+            open: boolean;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Stage */
+            stage: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Completed At */
+            completed_at: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+        };
+        /** AgentUsage */
+        AgentUsage: {
+            periodo: components["schemas"]["UsagePeriod"];
+            /** Incluye Sin Atribuir */
+            incluye_sin_atribuir: boolean;
+            total: components["schemas"]["UsageTotals"];
+            /** By Connection */
+            by_connection: components["schemas"]["UsageByConnection"][];
+            /** By Day */
+            by_day: components["schemas"]["UsageByDay"][];
+            consistency: components["schemas"]["Consistency"];
+        };
+        /** AgentsOverview */
+        AgentsOverview: {
+            /** Runtime */
+            runtime: string;
+            /** Items */
+            items: components["schemas"]["AgentOverviewItem"][];
+            sin_atribuir: components["schemas"]["Activity"];
+        };
+        /** Consistency */
+        Consistency: {
+            /**
+             * Scope
+             * @constant
+             */
+            scope: "negocio";
+            /** Measurements */
+            measurements: components["schemas"]["ConsistencyMeasurement"][];
+        };
+        /** ConsistencyMeasurement */
+        ConsistencyMeasurement: {
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+            /** K */
+            k: number;
+            /** Pass 1 */
+            pass_1: number | null;
+            /** Pass K */
+            pass_k: number;
+            /** Spec Version */
+            spec_version: string | null;
+        };
+        /** Page[AgentConversation] */
+        Page_AgentConversation_: {
+            /** Items */
+            items: components["schemas"]["AgentConversation"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[AgentCustomer] */
+        Page_AgentCustomer_: {
+            /** Items */
+            items: components["schemas"]["AgentCustomer"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[AgentRecordItem] */
+        Page_AgentRecordItem_: {
+            /** Items */
+            items: components["schemas"]["AgentRecordItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[AgentTask] */
+        Page_AgentTask_: {
+            /** Items */
+            items: components["schemas"]["AgentTask"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** UsageByConnection */
+        UsageByConnection: {
+            /** Turns */
+            turns: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /** Connection Label */
+            connection_label: string | null;
+        };
+        /** UsageByDay */
+        UsageByDay: {
+            /** Turns */
+            turns: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+        };
+        /** UsagePeriod */
+        UsagePeriod: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+        };
+        /** UsageTotals */
+        UsageTotals: {
+            /** Turns */
+            turns: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cost Usd */
+            cost_usd: number | null;
         };
         /**
          * ConnectionsConsole
@@ -20806,6 +21234,232 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agents_overview_api_v1_admin_agents_overview_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentsOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_conversations_api_v1_admin_agents__ref__conversations_get: {
+        parameters: {
+            query?: {
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentConversation_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_customers_api_v1_admin_agents__ref__customers_get: {
+        parameters: {
+            query?: {
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentCustomer_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_tasks_api_v1_admin_agents__ref__tasks_get: {
+        parameters: {
+            query?: {
+                state?: ("open" | "closed") | null;
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentTask_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_records_api_v1_admin_agents__ref__records_get: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentRecordItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agent_usage_api_v1_admin_agents__ref__usage_get: {
+        parameters: {
+            query?: {
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentUsage"];
+                };
             };
             /** @description Validation Error */
             422: {

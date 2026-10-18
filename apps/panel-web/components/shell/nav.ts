@@ -28,6 +28,7 @@ import {
   Banknote,
   BarChart3,
   BellRing,
+  Bot,
   CalendarX,
   Clock,
   Handshake,
@@ -84,6 +85,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
     label: "Operación",
     items: [
       { section: "dashboard", label: "Resumen", href: "/dashboard", icon: LayoutDashboard, ready: true },
+      { section: "agents", label: "Agentes", href: "/agentes", icon: Bot, ready: true },
       { section: "conversations", label: "Conversaciones", href: "/conversaciones", icon: MessageSquare, ready: true },
       { section: "escalations", label: "Escalaciones", href: "/escalaciones", icon: ShieldAlert, ready: true },
       { section: "leads", label: "Leads", href: "/leads", icon: Users, ready: true },
