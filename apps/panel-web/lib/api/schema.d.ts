@@ -10872,7 +10872,7 @@ export interface components {
             /** Conversations */
             conversations: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
             /** Last Activity At */
             last_activity_at: string | null;
         };
@@ -10912,7 +10912,7 @@ export interface components {
             /** Turns */
             turns: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
             /**
              * Last Turn At
              * Format: date-time
@@ -10947,7 +10947,7 @@ export interface components {
             /** Conversations */
             conversations: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
             /** Last Activity At */
             last_activity_at: string | null;
             /** Id */
@@ -11145,7 +11145,7 @@ export interface components {
             /** Output Tokens */
             output_tokens: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
             /** Connection Id */
             connection_id: string | null;
             /** Connection Label */
@@ -11160,7 +11160,7 @@ export interface components {
             /** Output Tokens */
             output_tokens: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
             /**
              * Day
              * Format: date
@@ -11189,7 +11189,7 @@ export interface components {
             /** Output Tokens */
             output_tokens: number;
             /** Cost Usd */
-            cost_usd: number;
+            cost_usd: number | null;
         };
         /**
          * ConnectionsConsole

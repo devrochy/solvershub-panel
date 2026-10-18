@@ -44,7 +44,7 @@ export function AgentCard({ agent }: { agent: AgentOverviewItem }) {
           ))}
         </div>
 
-        <dl className="grid grid-cols-3 gap-3 border-t border-border-soft pt-4">
+        <dl className={`grid gap-3 border-t border-border-soft pt-4 ${agent.cost_usd === null ? "grid-cols-2" : "grid-cols-3"}`}>
           <div>
             <dt className="text-sh-caption text-text-soft">Conversaciones</dt>
             <dd className="text-sh-block tabular-nums text-headline">{formatNumber(agent.conversations)}</dd>
@@ -53,10 +53,13 @@ export function AgentCard({ agent }: { agent: AgentOverviewItem }) {
             <dt className="text-sh-caption text-text-soft">Turnos</dt>
             <dd className="text-sh-block tabular-nums text-headline">{formatNumber(agent.turns)}</dd>
           </div>
-          <div>
-            <dt className="text-sh-caption text-text-soft">Costo</dt>
-            <dd className="text-sh-block tabular-nums text-headline">{formatUsd(agent.cost_usd, 2)}</dd>
-          </div>
+          {/* El costo solo llega con la sección `costs`. */}
+          {agent.cost_usd !== null && (
+            <div>
+              <dt className="text-sh-caption text-text-soft">Costo</dt>
+              <dd className="text-sh-block tabular-nums text-headline">{formatUsd(agent.cost_usd, 2)}</dd>
+            </div>
+          )}
         </dl>
         <p className="text-sh-caption text-text-soft">
           {agent.last_activity_at

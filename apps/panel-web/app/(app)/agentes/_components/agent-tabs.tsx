@@ -36,7 +36,7 @@ export function ConversacionesDelAgente({ page, nombre }: { page: AgentConversat
       cell: (r) => (r.agent_version ? <Badge variant="neutral">v{r.agent_version}</Badge> : <span className="text-text-soft">Antes del Agent OS</span>),
     },
     { key: "turnos", header: "Turnos", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.turns)}</span> },
-    { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd, 4)}</span> },
+    { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd ?? 0, 4)}</span> },
     { key: "ultimo", header: "Último turno", cell: (r) => formatDateTime(r.last_turn_at) },
     {
       key: "ver",
@@ -49,7 +49,16 @@ export function ConversacionesDelAgente({ page, nombre }: { page: AgentConversat
       ),
     },
   ];
-  return <DataTable columns={columns} rows={page.items} getRowKey={(r) => r.conversation_id} caption="Conversaciones que atendió" />;
+  // El costo solo llega con la sección `costs`: sin él, la columna no se muestra.
+  const conCosto = page.items.some((r) => r.cost_usd !== null);
+  return (
+    <DataTable
+      columns={conCosto ? columns : columns.filter((c) => c.key !== "costo")}
+      rows={page.items}
+      getRowKey={(r) => r.conversation_id}
+      caption="Conversaciones que atendió"
+    />
+  );
 }
 
 export function TareasDelAgente({ page, nombre }: { page: AgentTaskPage; nombre: string }) {
@@ -141,14 +150,17 @@ export function ConsumoDelAgente({ usage, nombre }: { usage: AgentUsage; nombre:
     { key: "conexion", header: "Conexión", cell: (r) => r.connection_label ?? "Antes del Agent OS" },
     { key: "turnos", header: "Turnos", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.turns)}</span> },
     { key: "tokens", header: "Tokens", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.input_tokens + r.output_tokens)}</span> },
-    { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd, 4)}</span> },
+    { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd ?? 0, 4)}</span> },
   ];
+  const conCosto = usage.total.cost_usd !== null;
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 ${conCosto ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <KpiTile label="Turnos atendidos" value={formatNumber(usage.total.turns)} />
         <KpiTile label="Tokens" value={formatNumber(usage.total.input_tokens + usage.total.output_tokens)} />
-        <KpiTile label="Costo del período" value={formatUsd(usage.total.cost_usd, 2)} tone="accent" />
+        {usage.total.cost_usd !== null && (
+          <KpiTile label="Costo del período" value={formatUsd(usage.total.cost_usd, 2)} tone="accent" />
+        )}
         <KpiTile
           label={k ? `Consistencia pass^${k}` : "Consistencia"}
           value={actual === null ? "—" : `${actual.toLocaleString("es-CO")} %`}
@@ -177,7 +189,7 @@ export function ConsumoDelAgente({ usage, nombre }: { usage: AgentUsage; nombre:
           <section className="flex flex-col gap-3">
             <Titulo>Por conexión</Titulo>
             <DataTable
-              columns={conexionColumns}
+              columns={conCosto ? conexionColumns : conexionColumns.filter((c) => c.key !== "costo")}
               rows={usage.by_connection}
               getRowKey={(r, i) => `${r.connection_id ?? "sin"}-${i}`}
               caption="Consumo por conexión"

@@ -114,6 +114,34 @@ describe("vista de un agente", () => {
     expect(llamadas.some((r) => r.includes("/conversations"))).toBe(false);
   });
 
+  it("sin la sección de costos no muestra el costo, pero sí turnos y tokens", async () => {
+    const fila = { turns: 2, input_tokens: 10, output_tokens: 5, cost_usd: null };
+    Object.assign(respuestas, {
+      "/admin/agents/overview": agentes,
+      "/admin/me": me,
+      "/admin/agents/general/usage": {
+        periodo: { desde: "2026-09-18T00:00:00Z", hasta: "2026-10-18T00:00:00Z" },
+        incluye_sin_atribuir: true,
+        total: fila,
+        by_connection: [{ ...fila, connection_id: null, connection_label: null }],
+        by_day: [{ ...fila, day: "2026-10-18" }],
+        consistency: { scope: "negocio", measurements: [] },
+      },
+      "/admin/agents/general/conversations": {
+        ...conversacionesDeAgente,
+        items: conversacionesDeAgente.items.map((c) => ({ ...c, cost_usd: null })),
+      },
+    });
+    await abrir("general", { tab: "consumo" });
+    expect(screen.getByText("Turnos atendidos")).toBeTruthy();
+    expect(screen.queryByText("Costo del período")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: /costo/i })).toBeNull();
+    cleanup();
+    await abrir("general");
+    expect(screen.getByText("test-Ana")).toBeTruthy();
+    expect(screen.queryByRole("columnheader", { name: /costo/i })).toBeNull();
+  });
+
   it("un ref que no es id ni `general` es 404", async () => {
     await expect(abrir("ventas")).rejects.toThrow("NOT_FOUND");
   });
