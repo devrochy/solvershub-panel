@@ -15,7 +15,9 @@ export default async function AgentesPage() {
       </p>
     );
   }
-  const { items, runtime } = res.data;
+  const { runtime } = res.data;
+  // El General «virtual» (negocio sin el agente General) solo se muestra si tiene algo que ver.
+  const items = res.data.items.filter((a) => !a.virtual || runtime !== "v3" || a.turns > 0);
 
   return (
     <div className="flex flex-col gap-6">

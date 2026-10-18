@@ -151,10 +151,10 @@ export function ConsumoDelAgente({ usage, nombre }: { usage: AgentUsage; nombre:
         <KpiTile label="Costo del período" value={formatUsd(usage.total.cost_usd, 2)} tone="accent" />
         <KpiTile
           label={k ? `Consistencia pass^${k}` : "Consistencia"}
-          value={actual === null ? "Sin medición" : `${actual.toLocaleString("es-CO")} %`}
+          value={actual === null ? "—" : `${actual.toLocaleString("es-CO")} %`}
           hint={
             actual === null
-              ? "Aparece cuando se mida la consistencia del negocio."
+              ? "Sin medición todavía: aparece cuando se mida la consistencia del negocio."
               : delta === null
                 ? "Del negocio, no solo de este agente."
                 : `${delta > 0 ? "+" : delta < 0 ? "−" : ""}${Math.abs(delta).toLocaleString("es-CO")} puntos frente a la medición anterior · del negocio`

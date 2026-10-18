@@ -31,7 +31,7 @@ export function AgentCard({ agent }: { agent: AgentOverviewItem }) {
 
         <div className="flex flex-wrap gap-2">
           {agent.virtual ? (
-            <Badge variant="info">Sin Agent OS todavía</Badge>
+            <Badge variant="info">Historial del asistente</Badge>
           ) : agent.published ? (
             <Badge variant="success">Atendiendo</Badge>
           ) : (
