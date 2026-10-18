@@ -4756,6 +4756,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/console": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connections Console
+         * @description Consola de conexiones (HU-AOS-23): por cada conexión del negocio, su Coordinador y
+         *     agentes con la versión de la release activa, salud y consumo de 7 días. Solo lectura.
+         */
+        get: operations["connections_console_api_v1_admin_connections_console_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agent-templates": {
         parameters: {
             query?: never;
@@ -10741,6 +10762,190 @@ export interface components {
         UnlinkRequest: {
             /** Tenant */
             tenant: string;
+        };
+        /**
+         * ConnectionsConsole
+         * @description Con la sección `connections` basta para el consumo (turnos y tokens), la consistencia del
+         *     negocio y los agentes de cada conexión: es lo que pide la consola (SPEC-26 §5.1,
+         *     `conexiones:ver`). El costo en dinero sigue en `costs`.
+         */
+        ConnectionsConsole: {
+            /** Items */
+            items: components["schemas"]["ConsoleConnection"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "legacy" | "v3";
+            /**
+             * Routing
+             * @description `tenants.aos_routing`, solo lectura.
+             * @enum {string}
+             */
+            routing: "off" | "shadow" | "active";
+            /** @description pass^k del último run del negocio. */
+            consistency: components["schemas"]["ConsoleConsistency"] | null;
+            /**
+             * Can Edit
+             * @description Acceso de escritura a `connections`.
+             */
+            can_edit: boolean;
+            /**
+             * Unassigned Agents
+             * @description D-35: agentes publicados sin ninguna conexión (máx. 50).
+             */
+            unassigned_agents: components["schemas"]["ConsoleUnassignedAgent"][];
+        };
+        /** ConsoleAgent */
+        ConsoleAgent: {
+            /**
+             * Instance Id
+             * Format: uuid
+             */
+            instance_id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "core" | "specialist" | "backoffice";
+            /** Is Default */
+            is_default: boolean;
+            /** Enabled */
+            enabled: boolean;
+            /** Priority */
+            priority: number;
+            /**
+             * Release Version
+             * @description Versión que corre en la release activa; null si no figura.
+             */
+            release_version: number | null;
+            /**
+             * Latest Version
+             * @description Última versión publicada del agente.
+             */
+            latest_version: number | null;
+        };
+        /** ConsoleConnection */
+        ConsoleConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Channel */
+            channel: string;
+            /** Type Id */
+            type_id: string | null;
+            /** Label */
+            label: string;
+            /** External Id */
+            external_id: string;
+            /** Conversational */
+            conversational: boolean;
+            /** Active */
+            active: boolean;
+            /** Is Primary */
+            is_primary: boolean;
+            /** Created At */
+            created_at: string | null;
+            /** Meta Connection Id */
+            meta_connection_id: string | null;
+            /**
+             * Health
+             * @enum {string}
+             */
+            health: "ok" | "degraded" | "error" | "paused" | "pending";
+            /**
+             * Pause Scope
+             * @enum {string}
+             */
+            pause_scope: "meta_account" | "connection" | "webchat_settings";
+            /**
+             * Pausable
+             * @description La consola ofrece pausar: hoy solo la cuenta de Meta (ADR-0122).
+             */
+            pausable: boolean;
+            coordinator: components["schemas"]["ConsoleAgent"] | null;
+            /**
+             * Agents
+             * @description Especialistas y back-office, sin el Coordinador.
+             */
+            agents: components["schemas"]["ConsoleAgent"][];
+            active_release: components["schemas"]["ConsoleRelease"] | null;
+            canary_release: components["schemas"]["ConsoleRelease"] | null;
+            usage_7d: components["schemas"]["ConsoleUsage"];
+        };
+        /** ConsoleConsistency */
+        ConsoleConsistency: {
+            /** Pass K */
+            pass_k: number;
+            /** K */
+            k: number;
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+        };
+        /** ConsoleRelease */
+        ConsoleRelease: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ConsoleUnassignedAgent */
+        ConsoleUnassignedAgent: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+        };
+        /** ConsoleUsage */
+        ConsoleUsage: {
+            /** Turns */
+            turns: number;
+            /** Conversations */
+            conversations: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /**
+             * Cost Usd
+             * @description Solo con acceso a la sección `costs`; si no, null.
+             */
+            cost_usd: number | null;
         };
         /** AgentTemplate */
         AgentTemplate: {
@@ -20601,6 +20806,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connections_console_api_v1_admin_connections_console_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionsConsole"];
+                };
             };
             /** @description Validation Error */
             422: {
