@@ -11328,7 +11328,7 @@ export interface components {
             pause_scope: "meta_account" | "connection" | "webchat_settings";
             /**
              * Pausable
-             * @description La consola ofrece pausar: la cuenta de Meta y las conexiones manuales o de WhatsApp Web (ADR-0122 y su adenda 2026-10-19). El chat web se pausa en Configuración → Chat web.
+             * @description La consola ofrece pausar: la cuenta de Meta, las conexiones manuales o de WhatsApp Web (ADR-0122 y su adenda 2026-10-19) y el chat web (alcance `connection`: el mismo estado que Configuración → Chat web). `webchat_settings` ya no se emite.
              */
             pausable: boolean;
             coordinator: components["schemas"]["ConsoleAgent"] | null;

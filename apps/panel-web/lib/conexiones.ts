@@ -53,18 +53,29 @@ export function separarConexiones(items: ConexionConsola[]): {
   };
 }
 
+/** Alcance de la pausa, junto al botón y en la confirmación (lo pidió el dueño tras confundirse en test). */
+export const TEXTO_ALCANCE_PAUSA =
+  "Pausa solo este canal; los demás canales del negocio siguen atendiendo.";
+
+/** ¿Es el chat web? Su pausa es el mismo interruptor que Configuración → Chat web. */
+export function esChatWeb(c: Pick<ConexionConsola, "type_id">): boolean {
+  return c.type_id === "webchat";
+}
+
 /** Texto de la confirmación de pausa: en Meta alcanza a todos los números de la cuenta. */
-export function textoConfirmarPausa(c: Pick<ConexionConsola, "pause_scope" | "label">): string {
+export function textoConfirmarPausa(c: Pick<ConexionConsola, "pause_scope" | "label" | "type_id">): string {
   if (c.pause_scope === "meta_account") {
-    return `Se pausa la cuenta de Meta de «${c.label}»: alcanza a todos los números de esa cuenta. Lo que entre se guarda sin respuesta hasta que la reactives.`;
+    return `Se pausa la cuenta de Meta de «${c.label}»: alcanza a todos los números de esa cuenta. Lo que entre se guarda sin respuesta hasta que la reactives. ${TEXTO_ALCANCE_PAUSA}`;
   }
-  return `La conexión «${c.label}» deja de responder: lo que entre se guarda sin respuesta y no sale nada por ella hasta que la reactives.`;
+  if (esChatWeb(c)) {
+    return `El chat web deja de responder: quien abra el chat verá que está en pausa y no podrá escribir hasta que lo reanudes. Es el mismo interruptor de Configuración → Chat web. ${TEXTO_ALCANCE_PAUSA}`;
+  }
+  return `La conexión «${c.label}» deja de responder: lo que entre se guarda sin respuesta y no sale nada por ella hasta que la reactives. ${TEXTO_ALCANCE_PAUSA}`;
 }
 
 /**
  * ¿La consola ofrece pausar o reanudar? Solo con permiso de edición y donde la pausa detiene de
- * verdad: la cuenta de Meta y las conexiones manuales o de WhatsApp Web (el chat web se pausa
- * en Configuración → Chat web).
+ * verdad: la cuenta de Meta y las conexiones sin cuenta (manuales, WhatsApp Web y chat web).
  */
 export function puedePausar(
   c: Pick<ConexionConsola, "pausable" | "meta_connection_id" | "pause_scope">,

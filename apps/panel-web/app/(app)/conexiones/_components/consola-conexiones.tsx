@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionsConsole } from "@/lib/api/types";
 import {
+  esChatWeb,
   etiquetaRuteo,
   puedePausar,
   resumenConsumo,
   saludDeConexion,
   separarConexiones,
+  TEXTO_ALCANCE_PAUSA,
   textoConfirmarPausa,
   versionDeAgente,
   type ConexionConsola,
@@ -112,6 +114,12 @@ function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; 
             )}
           </div>
         </div>
+        {puedePausar(c, canEdit) && (
+          <p className="text-xs text-text-soft sm:text-right">
+            {TEXTO_ALCANCE_PAUSA}
+            {esChatWeb(c) ? " Es el mismo interruptor de Configuración → Chat web." : ""}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-2 text-sm">
         <p className="text-body">
@@ -134,9 +142,6 @@ function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; 
           <p className="text-text-soft">Sin agentes en esta conexión.</p>
         )}
         <p className="text-xs text-body">7 días: {resumenConsumo(c.usage_7d)}</p>
-        {c.pause_scope === "webchat_settings" && canEdit && (
-          <p className="text-xs text-text-soft">El chat web se pausa desde Configuración → Chat web.</p>
-        )}
       </CardContent>
     </Card>
   );
