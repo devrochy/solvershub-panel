@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cuerpoIdentidad, puedeEditarAsistente } from "./asistente";
+import { ayudaFueraDeHorario, cuerpoIdentidad, puedeEditarAsistente } from "./asistente";
 import { ajustes } from "./testing/fixtures";
 
 describe("cuerpoIdentidad", () => {
@@ -17,6 +17,11 @@ describe("cuerpoIdentidad", () => {
     expect(cuerpoIdentidad({ ...inicial, bot_paused: true }, inicial)).toMatchObject({ bot_paused: true });
   });
 
+  it("no manda el aviso por defecto, que es de solo lectura", () => {
+    const inicial = ajustes.identity;
+    expect(cuerpoIdentidad(inicial, inicial)).not.toHaveProperty("out_of_hours_default_message");
+  });
+
   it("usa la zona del negocio para el horario de atención", () => {
     const inicial = { ...ajustes.identity, timezone: "America/Lima", business_tz: "" };
     expect(cuerpoIdentidad(inicial, inicial).business_tz).toBe("America/Lima");
@@ -29,5 +34,23 @@ describe("puedeEditarAsistente", () => {
     expect(puedeEditarAsistente({ settings: "read" })).toBe(false);
     expect(puedeEditarAsistente({})).toBe(false);
     expect(puedeEditarAsistente(null)).toBe(false);
+  });
+});
+
+describe("ayudaFueraDeHorario", () => {
+  const porDefecto = "¡Hola! Ahora estamos fuera de nuestro horario de atención. Te respondemos apenas volvamos.";
+
+  it("sin mensaje dice que va el mensaje por defecto y cuál es", () => {
+    const ayuda = ayudaFueraDeHorario("  ", porDefecto, true);
+    expect(ayuda).toContain("mensaje por defecto");
+    expect(ayuda).toContain(`«${porDefecto}»`);
+  });
+
+  it("con mensaje dice que el cliente recibe ese mensaje", () => {
+    expect(ayudaFueraDeHorario("Cerrado", porDefecto, true)).toContain("recibe este mensaje");
+  });
+
+  it("sin horario aclara que el mensaje no se usa", () => {
+    expect(ayudaFueraDeHorario("", porDefecto, false)).toContain("responde siempre");
   });
 });
