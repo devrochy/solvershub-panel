@@ -167,13 +167,18 @@ export function escalacionCodigo(motivo: string | null | undefined): string {
 /**
  * Etiqueta de un motivo de escalación crudo, de respaldo cuando la API no manda
  * `reason_label`. `tool:<código>` usa la etiqueta del código (el texto libre de antes
- * queda como «Otro») y `plugin:<tool>` se lee como «Acción de <tool>».
+ * queda como «Otro»), `plugin:<tool>` se lee como «Acción de <tool>» y `regla:<x>` lleva
+ * el nombre de la regla, como en el backend.
  */
 export function escalacionLabel(motivo: string | null | undefined): string {
   if (!motivo) return "Sin motivo";
   if (motivo.startsWith("plugin:")) {
     const tool = capitalizar(motivo.slice("plugin:".length));
     return tool ? `Acción de ${tool}` : ESCALACION.accion_habilidad;
+  }
+  if (motivo.startsWith("regla:")) {
+    const regla = capitalizar(motivo.slice("regla:".length));
+    return regla ? `${ESCALACION.regla_negocio}: ${regla}` : ESCALACION.regla_negocio;
   }
   return ESCALACION[escalacionCodigo(motivo)];
 }

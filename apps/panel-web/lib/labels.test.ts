@@ -43,7 +43,7 @@ describe("labels (HU-UI-02)", () => {
     expect(escalacionLabel("tool:manual")).toBe("Otro");
     expect(escalacionLabel("tool:el cliente quiere al gerente")).toBe("Otro");
     expect(escalacionLabel("plugin:crear_pedido")).toBe("Acción de Crear pedido");
-    expect(escalacionLabel("regla:sin_descuentos")).toBe("Regla del negocio");
+    expect(escalacionLabel("regla:sin_descuentos")).toBe("Regla del negocio: Sin descuentos");
     expect(escalacionLabel(null)).toBe("Sin motivo");
   });
 
