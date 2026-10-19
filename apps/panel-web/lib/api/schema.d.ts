@@ -6237,8 +6237,22 @@ export interface components {
             customer_name: string | null;
             /** External Id */
             external_id: string | null;
-            /** Reason */
+            /**
+             * Reason
+             * @description Motivo tal como se guardó (crudo)
+             */
             reason: string;
+            /**
+             * Reason Code
+             * @description Código cerrado del motivo (HU-UX-17)
+             * @enum {string}
+             */
+            reason_code: "solicitud_cliente" | "queja" | "fuera_de_alcance" | "intentos_fallidos" | "monto_alto" | "palabra_clave" | "accion_habilidad" | "regla_negocio" | "verificacion" | "frase_prohibida" | "falla_ia" | "rechazo_ia" | "envio_fallido" | "sin_resolver" | "limite_iteraciones" | "otro";
+            /**
+             * Reason Label
+             * @description Motivo legible en español
+             */
+            reason_label: string;
             /** Summary */
             summary: string;
             /** Status */
@@ -12925,6 +12939,8 @@ export interface operations {
     list_escalations_api_v1_admin_escalations_get: {
         parameters: {
             query?: {
+                /** @description Filtra por código de motivo */
+                reason_code?: ("solicitud_cliente" | "queja" | "fuera_de_alcance" | "intentos_fallidos" | "monto_alto" | "palabra_clave" | "accion_habilidad" | "regla_negocio" | "verificacion" | "frase_prohibida" | "falla_ia" | "rechazo_ia" | "envio_fallido" | "sin_resolver" | "limite_iteraciones" | "otro") | null;
                 page?: number;
                 page_size?: number;
             };

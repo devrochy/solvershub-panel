@@ -4,6 +4,7 @@ import {
   calidadNumeroLabel,
   canalLabel,
   citaLabel,
+  escalacionCodigo,
   escalacionLabel,
   estadoNumeroMetaLabel,
   rolLabel,
@@ -32,11 +33,28 @@ describe("labels (HU-UI-02)", () => {
     expect(rolLabel("colaborador")).toBe("Colaborador");
   });
 
-  it("etiqueta motivos de escalación, incluidos los tool:*", () => {
-    expect(escalacionLabel("send_failed")).toBe("Fallo al enviar");
-    expect(escalacionLabel("turns_unresolved")).toBe("Turnos sin resolver");
-    expect(escalacionLabel("tool:manual")).toBe("Solicitud manual");
+  it("etiqueta motivos de escalación, incluidos los tool:* (HU-UX-17)", () => {
+    expect(escalacionLabel("send_failed")).toBe("No se pudo enviar el mensaje");
+    expect(escalacionLabel("turns_unresolved")).toBe("Varios turnos sin resolver");
+    expect(escalacionLabel("keyword")).toBe("Pidió hablar con una persona");
+    expect(escalacionLabel("tool:queja")).toBe("Queja");
+    expect(escalacionLabel("tool:monto_alto")).toBe("Monto alto");
+    // No todo `tool:*` es «Solicitud manual»: el texto libre de antes queda como «Otro».
+    expect(escalacionLabel("tool:manual")).toBe("Otro");
+    expect(escalacionLabel("tool:el cliente quiere al gerente")).toBe("Otro");
+    expect(escalacionLabel("plugin:crear_pedido")).toBe("Acción de Crear pedido");
+    expect(escalacionLabel("regla:sin_descuentos")).toBe("Regla del negocio");
     expect(escalacionLabel(null)).toBe("Sin motivo");
+  });
+
+  it("clasifica motivos crudos con los mismos códigos que el backend", () => {
+    expect(escalacionCodigo("tool:queja")).toBe("queja");
+    expect(escalacionCodigo("tool:otro")).toBe("otro");
+    expect(escalacionCodigo("llm_error")).toBe("falla_ia");
+    expect(escalacionCodigo("guardrail")).toBe("verificacion");
+    expect(escalacionCodigo("precio: no verificado")).toBe("verificacion");
+    expect(escalacionCodigo("algo_nuevo")).toBe("otro");
+    expect(escalacionCodigo(undefined)).toBe("otro");
   });
 
   it("etiqueta claves de permiso con humanización de fallback", () => {

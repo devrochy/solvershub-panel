@@ -35,13 +35,52 @@ export const ROL: Record<string, string> = {
   tester: "Tester",
 };
 
+/**
+ * Motivos de escalación (HU-UX-17). Las claves son los códigos cerrados que expone la API
+ * (`reason_code`); la API ya manda `reason_label`, y este catálogo es el respaldo.
+ */
 export const ESCALACION: Record<string, string> = {
-  send_failed: "Fallo al enviar",
-  turns_unresolved: "Turnos sin resolver",
-  guardrail: "Guardrail de seguridad",
-  max_iterations: "Límite de turnos",
-  manual: "Solicitud manual",
+  solicitud_cliente: "Solicitud del cliente",
+  queja: "Queja",
+  fuera_de_alcance: "Fuera de alcance",
+  intentos_fallidos: "Intentos fallidos",
+  monto_alto: "Monto alto",
+  palabra_clave: "Pidió hablar con una persona",
+  accion_habilidad: "Acción de una habilidad",
+  regla_negocio: "Regla del negocio",
+  verificacion: "Respuesta no verificada",
+  frase_prohibida: "Frase prohibida por la personalidad",
+  falla_ia: "Falla del asistente de IA",
+  rechazo_ia: "El asistente no pudo responder",
+  envio_fallido: "No se pudo enviar el mensaje",
+  sin_resolver: "Varios turnos sin resolver",
+  limite_iteraciones: "El asistente no llegó a una respuesta",
+  otro: "Otro",
 };
+
+/** Motivos crudos que guarda el sistema y su código (respaldo si la API no manda `reason_code`). */
+const ESCALACION_CRUDO: Record<string, string> = {
+  keyword: "palabra_clave",
+  llm_error: "falla_ia",
+  llm_refusal: "rechazo_ia",
+  persona_forbidden_phrase: "frase_prohibida",
+  send_failed: "envio_fallido",
+  turns_unresolved: "sin_resolver",
+  max_iterations: "limite_iteraciones",
+  guardrail: "verificacion",
+};
+
+/** Motivos que el modelo puede elegir en `escalate_to_human`. */
+const ESCALACION_DE_TOOL = new Set([
+  "solicitud_cliente",
+  "queja",
+  "fuera_de_alcance",
+  "intentos_fallidos",
+  "monto_alto",
+]);
+
+/** Motivos de riesgo (como en agent-sale: cliente molesto o venta grande): tono de advertencia. */
+export const ESCALACION_RIESGO = new Set(["queja", "monto_alto"]);
 
 export const SECCION: Record<string, string> = {
   "pack_cobranza:suscripciones": "Suscripciones",
@@ -111,11 +150,32 @@ export function rolLabel(rol: string | null | undefined): string {
   return (rol && ROL[rol]) || capitalizar(rol ?? "");
 }
 
-/** Etiqueta de motivo de escalación; los motivos `tool:<x>` se leen como "Solicitud manual". */
+/** Código cerrado de un motivo crudo (`Escalation.reason`), igual que el backend. */
+export function escalacionCodigo(motivo: string | null | undefined): string {
+  if (!motivo) return "otro";
+  if (ESCALACION_CRUDO[motivo]) return ESCALACION_CRUDO[motivo];
+  if (motivo.startsWith("tool:")) {
+    const codigo = motivo.slice("tool:".length);
+    return ESCALACION_DE_TOOL.has(codigo) ? codigo : "otro";
+  }
+  if (motivo.startsWith("plugin:")) return "accion_habilidad";
+  if (motivo.startsWith("regla:")) return "regla_negocio";
+  if (motivo.includes(": ")) return "verificacion";
+  return "otro";
+}
+
+/**
+ * Etiqueta de un motivo de escalación crudo, de respaldo cuando la API no manda
+ * `reason_label`. `tool:<código>` usa la etiqueta del código (el texto libre de antes
+ * queda como «Otro») y `plugin:<tool>` se lee como «Acción de <tool>».
+ */
 export function escalacionLabel(motivo: string | null | undefined): string {
   if (!motivo) return "Sin motivo";
-  if (motivo.startsWith("tool:")) return "Solicitud manual";
-  return ESCALACION[motivo] ?? capitalizar(motivo);
+  if (motivo.startsWith("plugin:")) {
+    const tool = capitalizar(motivo.slice("plugin:".length));
+    return tool ? `Acción de ${tool}` : ESCALACION.accion_habilidad;
+  }
+  return ESCALACION[escalacionCodigo(motivo)];
 }
 
 /** Etiqueta de clave de permiso/sección (fallback: humanizada). */

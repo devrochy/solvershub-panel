@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { EscalacionFilters, MotivoBadge, ResumenEscalacion } from "@/components/domain/escalacion";
 import { ESCALATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -17,11 +17,14 @@ type EscalationRow = EscalationPage["items"][number];
 export default async function EscalationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; reason_code?: string }>;
 }) {
   const sp = await searchParams;
+  const qs = new URLSearchParams();
+  if (sp.reason_code) qs.set("reason_code", sp.reason_code);
+  if (sp.page) qs.set("page", sp.page);
   const res = await apiFetch<EscalationPage>(
-    `/admin/escalations${sp.page ? `?page=${sp.page}` : ""}`,
+    `/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`,
   );
   const { items, page, has_more, total } = res.ok
     ? res.data
@@ -36,14 +39,12 @@ export default async function EscalationsPage({
     {
       key: "motivo",
       header: "Motivo",
-      cell: (esc) => <Badge variant="neutral">{esc.reason}</Badge>,
+      cell: (esc) => <MotivoBadge esc={esc} />,
     },
     {
       key: "resumen",
       header: "Resumen",
-      cell: (esc) => (
-        <span className="block max-w-md truncate text-body">{esc.summary || "—"}</span>
-      ),
+      cell: (esc) => <ResumenEscalacion esc={esc} />,
     },
     {
       key: "estado",
@@ -74,13 +75,18 @@ export default async function EscalationsPage({
         description: "Conversaciones que el agente derivó a una persona.",
         helpSection: "escalations",
       }}
+      filters={<EscalacionFilters motivo={sp.reason_code} />}
     >
       <DataTable
         columns={columns}
         rows={items}
         getRowKey={(esc, index) => `${esc.conversation_id}-${index}`}
-        emptyTitle="No hay escalaciones"
-        emptyDescription="Cuando el agente derive una conversación, aparecerá aquí."
+        emptyTitle={sp.reason_code ? "No hay escalaciones con este motivo" : "No hay escalaciones"}
+        emptyDescription={
+          sp.reason_code
+            ? "Prueba con otro motivo o quita el filtro."
+            : "Cuando el agente derive una conversación, aparecerá aquí."
+        }
         error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}
         caption="Escalaciones"
       />
@@ -91,7 +97,11 @@ export default async function EscalationsPage({
           hasMore={has_more}
           total={total}
           label="escalaciones"
-          makeHref={(target) => `/escalaciones?page=${target}`}
+          makeHref={(target) => {
+            const destino = new URLSearchParams(qs);
+            destino.set("page", String(target));
+            return `/escalaciones?${destino.toString()}`;
+          }}
         />
       )}
     </ListPage>
