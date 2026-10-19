@@ -31,14 +31,15 @@ export const PASOS_DEL_TOUR: readonly PasoDelTour[] = [
   {
     id: "habilidades",
     titulo: "Lo que sabe hacer tu asistente",
-    texto: "En Habilidades activas y configuras lo que hace: vender, agendar o cobrar.",
-    objetivo: "/habilidades",
+    texto: "En Configuración › Habilidades activas y configuras lo que hace: vender, agendar o cobrar.",
+    objetivo: "/configuracion",
   },
   {
     id: "probar",
     titulo: "Pruébalo antes de abrirlo",
-    texto: "En Probar asistente conversas con él como si fueras un cliente, sin enviar nada por WhatsApp.",
-    objetivo: "/asistente",
+    texto:
+      "En Agentes › Probar asistente conversas con él como si fueras un cliente, sin enviar nada por WhatsApp.",
+    objetivo: "/agentes",
   },
   {
     id: "conversaciones",

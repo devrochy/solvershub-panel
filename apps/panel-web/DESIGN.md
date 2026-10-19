@@ -69,7 +69,10 @@ tailwind-merge las tomaba por colores y las descartaba.
 - Barra lateral adaptativa (HU-DS-04, ADR-0003): expandida 256 px, plegada 72 px (íconos)
   o cajón en celular. Sin preferencia se pliega entre 768 y 1279 px. La preferencia del
   usuario va en la cookie `panel_sidebar`; se alterna con el botón del pie o con `[`.
-- Cada sección de un pack necesita un ícono propio (la barra plegada se lee por íconos).
+- Menú v2 (HU-UX-02, D-37): una entrada por tarea y sus páginas como pestañas (`tabs` en
+  `nav.ts`). Una página nueva entra como pestaña de su entrada, no como ítem nuevo del menú;
+  toda ruta del panel es una entrada o una pestaña (lo verifica `navegacion.test.ts`).
+- Cada entrada del menú necesita un ícono propio (la barra plegada se lee por íconos).
 - Migas y pestañas de sección salen solas del `PageHeader` (desde `nav.ts` y los
   permisos). En un detalle, el título de la página es el último nivel de las migas.
 - Topbar `h-16`, con el botón «Buscar…» que abre la paleta (solo ícono debajo de 1024 px).

@@ -64,7 +64,7 @@ export const SECCION: Record<string, string> = {
   costs: "Costos LLM",
   dashboard: "Resumen",
   escalations: "Escalaciones",
-  leads: "Leads",
+  leads: "Clientes",
   plan: "Plan y consumo",
   plugins: "Habilidades",
   settings: "Configuración",

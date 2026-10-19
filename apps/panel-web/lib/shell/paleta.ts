@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { NAV_GROUPS, type NavGroupDef } from "@/components/shell/nav";
 import type { SearchItem, SearchSection } from "@/lib/api/types";
-import { gruposVisibles, type Permisos } from "@/lib/shell/navegacion";
+import { gruposVisibles, hojaDe, rutasDelMenu, type Permisos } from "@/lib/shell/navegacion";
 
 /**
  * Índice de la paleta de comandos (HU-DS-05). Todo sale del menú (`nav.ts`) y de los
@@ -30,20 +30,24 @@ export function seccionesDePaleta(
 ): EntradaSeccion[] {
   const vistas = new Set<string>();
   const entradas: EntradaSeccion[] = [];
-  for (const { group, visible } of gruposVisibles(permisos, grupos, esMaster)) {
-    if (group.pack && packs[group.pack]?.enabled === false) continue;
-    for (const item of visible) {
-      if (!item.ready || vistas.has(item.href)) continue;
-      vistas.add(item.href);
-      entradas.push({
-        id: `seccion:${item.href}`,
-        label: `${group.label} › ${item.label}`,
-        nombre: item.label,
-        grupo: group.label,
-        href: item.href,
-        icon: item.icon,
-      });
-    }
+  const visibles = gruposVisibles(permisos, grupos, esMaster).map(({ group, visible }) => ({ ...group, items: visible }));
+  for (const ruta of rutasDelMenu(visibles)) {
+    const { group, entrada, tab } = ruta;
+    if (entrada.pack && packs[entrada.pack]?.enabled === false) continue;
+    const item = hojaDe(ruta);
+    if (!item.ready || vistas.has(item.href)) continue;
+    vistas.add(item.href);
+    // Una pestaña se nombra por su entrada ("Cobranza › Promesas"); una entrada, o la pestaña
+    // que se llama como su entrada ("Conversaciones"), por su grupo.
+    const contexto = tab && tab.label !== entrada.label ? entrada.label : group.label;
+    entradas.push({
+      id: `seccion:${item.href}`,
+      label: `${contexto} › ${item.label}`,
+      nombre: item.label,
+      grupo: contexto,
+      href: item.href,
+      icon: item.icon,
+    });
   }
   return entradas;
 }
@@ -157,16 +161,14 @@ export function rutaDeResultado(item: ItemBusqueda): string | null {
 }
 
 /**
- * Atajos de dos teclas `g` + letra (ADR-0003). Las letras son las del diseño, pensadas
- * para el menú v2 (Inicio, Atención, Conversaciones, Ventas y cobros; HU-UX-02). Mientras
- * ese menú no llegue, cada una lleva a la sección actual equivalente y la ayuda la nombra
- * como se ve en el menú. Si el usuario no puede ver ninguna, el atajo no hace nada.
+ * Atajos de dos teclas `g` + letra (ADR-0003), con los nombres del menú v2 (HU-UX-02).
+ * Cada uno lleva a la primera página que el usuario puede ver; si no ve ninguna, no hace nada.
  */
 export const ATAJOS_IR: { tecla: string; label: string; hrefs: string[] }[] = [
   { tecla: "i", label: "Resumen", hrefs: ["/dashboard"] },
   { tecla: "a", label: "Escalaciones", hrefs: ["/escalaciones"] },
   { tecla: "c", label: "Conversaciones", hrefs: ["/conversaciones"] },
-  { tecla: "v", label: "Cobranza o Comercio", hrefs: ["/cobranza", "/comercio"] },
+  { tecla: "v", label: "Cobranza o Ventas", hrefs: ["/cobranza", "/comercio"] },
 ];
 
 export function destinoDeAtajo(tecla: string, secciones: EntradaSeccion[]): string | null {

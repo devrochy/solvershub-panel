@@ -20,18 +20,31 @@ export function MigasDeShell({ titulo }: { titulo: string }) {
   return migas.length > 0 ? <Breadcrumbs items={migas} /> : null;
 }
 
-/** Pestañas de sección automáticas: las hermanas de la sección dentro de su pack. */
+/** La pestaña más específica para la ruta: `/cobranza` es prefijo de todas las de Cobranza. */
+function actualDe(pathname: string, items: { href: string }[]): string {
+  return (
+    items
+      .filter((p) => pathname === p.href || pathname.startsWith(`${p.href}/`))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? pathname
+  );
+}
+
+/**
+ * Pestañas de la entrada del menú (HU-UX-02). Con subgrupos (Cobranza) van dos filas: los
+ * subgrupos y las pestañas del subgrupo actual.
+ */
 export function PestanasDeShell() {
   const pathname = usePathname();
   const shell = useShell();
   if (!shell) return null;
   const grupos = gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster);
-  const pestanas = pestanasPara(pathname, grupos);
-  if (pestanas.length === 0) return null;
-  // La más específica: `/calendario` es prefijo de todas las de Agenda.
-  const actual =
-    pestanas
-      .filter((p) => pathname === p.href || pathname.startsWith(`${p.href}/`))
-      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? pathname;
-  return <TabLinks label="Secciones" items={pestanas} current={actual} />;
+  const { subgrupos, subgrupoActual, pestanas } = pestanasPara(pathname, grupos);
+  if (subgrupos.length === 0 && pestanas.length === 0) return null;
+  const actual = actualDe(pathname, pestanas);
+  return (
+    <div className="flex flex-col gap-2">
+      {subgrupos.length > 0 && <TabLinks label="Grupos de la sección" items={subgrupos} current={subgrupoActual ?? ""} />}
+      {pestanas.length > 0 && <TabLinks label="Secciones" items={pestanas} current={actual} />}
+    </div>
+  );
 }

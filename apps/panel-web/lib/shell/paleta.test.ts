@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NAV_GROUPS } from "@/components/shell/nav";
+import { hojaDe, rutasDelMenu } from "@/lib/shell/navegacion";
 
 import {
   accionesDePaleta,
@@ -13,13 +13,13 @@ import {
 } from "./paleta";
 import { cookieAtajos, leerAtajosActivos } from "./preferencias";
 
-const TODO = Object.fromEntries(NAV_GROUPS.flatMap((g) => g.items.map((i) => [i.section, "write"])));
+const TODO = Object.fromEntries(rutasDelMenu().map((r) => [hojaDe(r).section, "write"]));
 const labels = (entradas: { label: string }[]) => entradas.map((e) => e.label);
 
 describe("índice de la paleta: permisos (HU-DS-05)", () => {
-  it("con permiso de cobranza, «prom» encuentra Cobranza › Promesas primero", () => {
+  it("con permiso de cobranza, «prome» encuentra Cobranza › Promesas primero", () => {
     const secciones = seccionesDePaleta(TODO);
-    const encontradas = filtrar(secciones, "prom", (s) => [s.nombre, s.grupo]);
+    const encontradas = filtrar(secciones, "prome", (s) => [s.nombre, s.grupo]);
     expect(encontradas[0]).toMatchObject({ label: "Cobranza › Promesas", href: "/cobranza/promesas" });
   });
 
@@ -27,7 +27,7 @@ describe("índice de la paleta: permisos (HU-DS-05)", () => {
     const colaborador = { conversations: "write", escalations: "read", leads: "read", pack_commerce: "read" };
     const secciones = seccionesDePaleta(colaborador);
     expect(secciones.some((s) => s.href.startsWith("/cobranza"))).toBe(false);
-    expect(labels(filtrar(secciones, "prom", (s) => [s.nombre, s.grupo]))).toEqual(["Comercio › Promociones"]);
+    expect(labels(filtrar(secciones, "prom", (s) => [s.nombre, s.grupo]))).toEqual(["Ventas › Promociones"]);
   });
 
   it("solo la sección que permite el permiso, aunque el pack tenga más", () => {
@@ -67,14 +67,14 @@ describe("filtro", () => {
   it("ignora tildes y mayúsculas", () => {
     expect(normalizar("  Configuración ")).toBe("configuracion");
     const secciones = seccionesDePaleta(TODO);
-    expect(labels(filtrar(secciones, "CONFIGURACION", (s) => [s.nombre, s.grupo]))).toContain("Configuración › Configuración");
+    expect(labels(filtrar(secciones, "CONFIGURACION", (s) => [s.nombre, s.grupo]))).toContain("Configuración › General");
   });
 
   it("el nombre de la sección gana sobre su grupo", () => {
     const secciones = seccionesDePaleta(TODO);
     const co = labels(filtrar(secciones, "co", (s) => [s.nombre, s.grupo]));
-    expect(co.slice(0, 2)).toEqual(["Operación › Conversaciones", "Configuración › Conexiones"]);
-    expect(co.indexOf("Cobranza › Carteras")).toBeGreaterThan(co.indexOf("Negocio › Costos LLM"));
+    expect(co.slice(0, 2)).toEqual(["Operación › Conversaciones", "Tu asistente › Conexiones"]);
+    expect(co.indexOf("Cobranza › Carteras")).toBeGreaterThan(co.indexOf("Consumo y plan › Costos"));
   });
 
   it("el inicio de palabra gana sobre una coincidencia en medio", () => {
