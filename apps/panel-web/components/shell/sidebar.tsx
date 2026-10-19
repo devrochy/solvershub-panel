@@ -9,6 +9,7 @@ import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-conte
 import { DEFAULT_COLLAPSED_GROUPS, NAV_GROUPS, type NavItem } from "@/components/shell/nav";
 import { Kbd } from "@/components/ui/kbd";
 import { Marca } from "@/components/ui/marca";
+import { Tooltip } from "@/components/ui/tooltip";
 import type { Me } from "@/lib/api/types";
 import { gruposVisibles, itemActivo } from "@/lib/shell/navegacion";
 import { esCampoEditable } from "@/lib/shell/paleta";
@@ -117,30 +118,27 @@ function NavRow({
 }
 
 /**
- * Ícono de la barra plegada: el nombre va en `aria-label` y, a la vista, en una etiqueta
- * que aparece al pasar el puntero o al enfocar (sin un segundo tab stop).
+ * Ícono de la barra plegada: el nombre va en `aria-label` y, a la vista, en un `Tooltip`
+ * con portal que aparece al pasar el puntero o al enfocar (sin un segundo tab stop). Al
+ * ir en un portal, el scroll de la barra no lo recorta ni crea un scroll lateral.
  */
 function IconoDeRiel({ item, active, locked }: { item: NavItem; active: boolean; locked: boolean }) {
   const Icon = item.icon;
   const nombre = locked ? `${item.label} (no habilitado)` : item.label;
   return (
-    <Link
-      href={item.href}
-      aria-label={nombre}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group/riel flex h-10 w-10 items-center justify-center rounded-md transition-colors",
-        active ? ACTIVO : "text-body hover:bg-hover hover:text-headline",
-      )}
-    >
-      <Icon className="h-[18px] w-[18px]" aria-hidden />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-md border border-border-soft bg-surface px-2.5 py-1.5 text-xs text-headline shadow-elev-2 group-hover/riel:block group-focus-visible/riel:block"
+    <Tooltip label={nombre} side="right" focusable={false}>
+      <Link
+        href={item.href}
+        aria-label={nombre}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+          active ? ACTIVO : "text-body hover:bg-hover hover:text-headline",
+        )}
       >
-        {nombre}
-      </span>
-    </Link>
+        <Icon className="h-[18px] w-[18px]" aria-hidden />
+      </Link>
+    </Tooltip>
   );
 }
 
@@ -273,16 +271,14 @@ export function Sidebar({
           <Link href="/dashboard" aria-label="SolversHub, ir al Resumen" className="mb-5 flex h-10 w-10 items-center justify-center">
             <Marca pieza="isotipo" className="h-8 w-8" />
           </Link>
-          <nav aria-label="Secciones del panel" className="flex flex-1 flex-col items-center gap-1 overflow-y-auto overflow-x-visible">
+          <nav aria-label="Secciones del panel" className="flex flex-1 flex-col items-center gap-1 overflow-x-hidden overflow-y-auto">
             {visibleByGroup.map(({ group, visible }, i) => (
-              <div key={group.id} className="relative flex flex-col items-center gap-1">
+              <div key={group.id} className="flex flex-col items-center gap-1">
                 {i > 0 && <span aria-hidden className="my-1 h-px w-8 bg-border-soft" />}
                 {visible
                   .filter((item) => item.ready)
                   .map((item) => (
-                    <div key={item.href} className="relative">
-                      <IconoDeRiel item={item} active={item.href === activeHref} locked={bloqueada(item)} />
-                    </div>
+                    <IconoDeRiel key={item.href} item={item} active={item.href === activeHref} locked={bloqueada(item)} />
                   ))}
               </div>
             ))}

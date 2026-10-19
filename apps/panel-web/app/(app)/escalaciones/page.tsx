@@ -89,6 +89,7 @@ export default async function EscalationsPage({
         }
         error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}
         caption="Escalaciones"
+        serverPaginated
       />
 
       {res.ok && (
