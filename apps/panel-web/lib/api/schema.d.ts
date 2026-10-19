@@ -15303,6 +15303,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Tope del plan: `error.code = plan_limit_colaboradores`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
