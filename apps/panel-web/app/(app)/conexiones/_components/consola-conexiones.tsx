@@ -1,4 +1,4 @@
-import { PausarCuentaMeta } from "@/app/(app)/conexiones/_components/pausar-cuenta-meta";
+import { PausarConexion } from "@/app/(app)/conexiones/_components/pausar-conexion";
 import { ChannelBadge } from "@/components/domain/channel-icon";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,9 +102,10 @@ function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; 
               {c.active_release ? `Versión ${c.active_release.number}` : "Sin versión activa"}
             </Badge>
             {c.canary_release && <Badge variant="info">Prueba v{c.canary_release.number}</Badge>}
-            {puedePausar(c, canEdit) && c.meta_connection_id && (
-              <PausarCuentaMeta
-                metaConnectionId={c.meta_connection_id}
+            {puedePausar(c, canEdit) && (
+              <PausarConexion
+                id={c.meta_connection_id ?? c.id}
+                tipo={c.meta_connection_id ? "meta_connection" : "channel"}
                 pausada={c.health === "paused"}
                 textoConfirmacion={textoConfirmarPausa(c)}
               />
