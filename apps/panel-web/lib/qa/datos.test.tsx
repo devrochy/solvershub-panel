@@ -128,6 +128,62 @@ describe("Datos de prueba", () => {
     expect(llamadas.at(-1)).toEqual({ url: "/api/qa/datos/contrasenas", method: "POST" });
   });
 
+  it("con datos listos, «Actualizar mis datos» confirma, no muestra contraseñas y trae el Agent OS", async () => {
+    const agentOs = {
+      estado: "listo" as const,
+      motivo: null,
+      chat_web: { clave: "wk_abc", enlace: "https://solvershub.site/w/wk_abc", activo: true },
+      agentes: [
+        { key: "recepcion", nombre: "Recepción", rol: "Coordinador", por_defecto: true },
+        { key: "ventas", nombre: "Ventas", rol: "Especialista", por_defecto: false },
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        llamadas.push({ url, method: init?.method ?? "GET" });
+        return Response.json(datos({ agent_os: agentOs }), { status: 200 });
+      }),
+    );
+    const { container } = montar({ disponible: true, datos: datos(), contenido: CONTENIDO });
+    fireEvent.click(screen.getByRole("button", { name: /Actualizar mis datos/ }));
+    const dialogo = await screen.findByRole("alertdialog");
+    expect(within(dialogo).getByText(/no se vuelven a mostrar/)).toBeTruthy();
+    expect(llamadas).toEqual([]);
+    fireEvent.click(within(dialogo).getByRole("button", { name: /Actualizar mis datos/ }));
+
+    const enlace = await screen.findByRole("link", { name: /solvershub\.site\/w\/wk_abc/ });
+    expect(llamadas).toEqual([{ url: "/api/qa/datos", method: "POST" }]);
+    expect(enlace.getAttribute("target")).toBe("_blank");
+    expect(enlace.getAttribute("rel")).toContain("noopener");
+    expect(screen.getByRole("button", { name: "Copiar el enlace del chat web" })).toBeTruthy();
+    const agentes = screen.getByRole("list", { name: "Agentes del chat web" });
+    const recepcion = within(agentes).getByText("Recepción").closest("li") as HTMLElement;
+    expect(within(recepcion).getByText("Por defecto")).toBeTruthy();
+    expect(within(within(agentes).getByText("Ventas").closest("li") as HTMLElement).queryByText("Por defecto")).toBeNull();
+    expect(screen.queryByText("Contraseña")).toBeNull();
+    expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("con el Agent OS en error muestra el motivo y reintenta", async () => {
+    const conError = datos({
+      agent_os: { estado: "error", motivo: "No se pudo activar el chat web.", chat_web: null, agentes: [] },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        llamadas.push({ url, method: init?.method ?? "GET" });
+        return Response.json(datos({ agent_os: { estado: "listo", agentes: [] } }));
+      }),
+    );
+    montar({ disponible: true, datos: conError, contenido: CONTENIDO });
+    const alerta = screen.getByRole("alert");
+    expect(within(alerta).getByText(/No se pudo activar el chat web\./)).toBeTruthy();
+    fireEvent.click(within(alerta).getByRole("button", { name: /Reintentar/ }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(llamadas).toEqual([{ url: "/api/qa/datos", method: "POST" }]);
+  });
+
   it("fuera de test avisa, no deja preparar y la guía queda con su ancla", () => {
     montar({ disponible: false, datos: null, contenido: CONTENIDO });
     expect(screen.getByText(/solo existen en el entorno de test/)).toBeTruthy();

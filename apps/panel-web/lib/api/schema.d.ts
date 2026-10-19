@@ -4585,7 +4585,9 @@ export interface paths {
         put?: never;
         /**
          * Preparar Mis Datos
-         * @description Prepara el negocio de prueba del tester con sus datos y cuentas. 409 si ya existe.
+         * @description Prepara el negocio de prueba del tester con sus datos y cuentas (201, con las contraseñas)
+         *     y lo deja listo para el Agent OS. Si ya está preparado, solo pone al día el Agent OS: 200 sin
+         *     contraseñas (HU-QA-09). 409 si hay otra preparación en curso.
          */
         post: operations["preparar_mis_datos_api_v1_admin_qa_datos_post"];
         delete?: never;
@@ -10705,6 +10707,8 @@ export interface components {
             estado: "creando" | "listo" | "error" | "purgado";
             /** Error */
             error?: string | null;
+            /** @description Solo con los datos listos y el negocio vivo. */
+            agent_os?: components["schemas"]["QaDatosAgentOS"] | null;
             negocio: components["schemas"]["QaDatosNegocio"];
             /** Cuentas */
             cuentas: components["schemas"]["QaDatosCuenta"][];
@@ -11563,6 +11567,58 @@ export interface components {
             description: string;
             /** Phrases */
             phrases: string[];
+        };
+        /**
+         * QaDatosAgentOS
+         * @description Agent OS del negocio de prueba (HU-QA-09): v3 con procedimientos, agentes del preset v2
+         *     en el chat web y enrutamiento activo.
+         */
+        QaDatosAgentOS: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "listo" | "pendiente" | "error";
+            /**
+             * Motivo
+             * @description Por qué no quedó listo; se reintenta con «Preparar mis datos».
+             */
+            motivo?: string | null;
+            chat_web?: components["schemas"]["QaDatosChatWeb"] | null;
+            /**
+             * Agentes
+             * @description Agentes con instancia en el chat web.
+             */
+            agentes?: components["schemas"]["QaDatosAgente"][];
+        };
+        /** QaDatosAgente */
+        QaDatosAgente: {
+            /** Key */
+            key: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Rol
+             * @description Coordinador, Especialista o Backoffice.
+             */
+            rol: string;
+            /** Por Defecto */
+            por_defecto: boolean;
+        };
+        /** QaDatosChatWeb */
+        QaDatosChatWeb: {
+            /**
+             * Clave
+             * @description Clave pública del widget (`/w/<clave>`).
+             */
+            clave: string;
+            /**
+             * Enlace
+             * @description `LANDING_BASE_URL/w/<clave>`, para conversar como cliente.
+             */
+            enlace?: string | null;
+            /** Activo */
+            activo: boolean;
         };
     };
     responses: never;
@@ -20881,6 +20937,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description Ya estaba preparado: solo se puso al día el Agent OS. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaDatos"];
+                };
+            };
             /** @description Successful Response */
             201: {
                 headers: {
