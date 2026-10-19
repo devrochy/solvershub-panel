@@ -10,7 +10,16 @@ import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpo
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import { esLimiteDePlan, etiquetaDeLimite, limitesOrdenados, RUTA_MEJORAR_PLAN, separarConsumo } from "./plan-limite";
+import {
+  avisoDeCredito,
+  desgloseDeCredito,
+  esLimiteDePlan,
+  etiquetaDeLimite,
+  formatoCreditos,
+  limitesOrdenados,
+  RUTA_MEJORAR_PLAN,
+  separarConsumo,
+} from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -79,9 +88,70 @@ describe("barras de Plan y consumo", () => {
     expect(barras[0].getAttribute("aria-valuenow")).toBe("2");
     expect(barras[0].getAttribute("aria-valuemax")).toBe("2");
     expect(barras[2].getAttribute("aria-valuemax")).toBe("20000");
-    expect(within(incluye).getByText(/medición del consumo en créditos llega pronto/)).toBeTruthy();
+    // Crédito medido (HU-BILL-04/06): consumo real, sin aviso por debajo del 80 %.
+    expect(barras[2].getAttribute("aria-valuenow")).toBe("1234.5");
+    expect(within(incluye).getByText(/1 crédito = COP 10 · se renueva el/)).toBeTruthy();
+    expect(within(incluye).queryByRole("status")).toBeNull();
+    const conceptos = within(incluye).getByRole("list", { name: "Crédito por concepto" });
+    expect(within(conceptos).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Respuestas del asistente (IA)1.100",
+      "Plantillas enviadas130",
+      "Notas de voz4,5",
+    ]);
+    const agentes = within(incluye).getByRole("list", { name: "Crédito por agente" });
+    expect(within(agentes).getByText("Ventas")).toBeTruthy();
     // El catálogo dice los topes con nombre legible, no la clave.
     expect(screen.getAllByText("Agentes publicados").length).toBeGreaterThan(1);
+  });
+});
+
+describe("crédito mensual medido (HU-BILL-04/06)", () => {
+  const conCredito = (used: number | null, percent: number | null): PlanResponse => ({
+    ...planDePrueba,
+    credit: { ...planDePrueba.credit!, used, percent },
+  });
+
+  it("avisa al 80 % y al 100 % sin hablar de bloqueo; por debajo, nada", () => {
+    expect(avisoDeCredito(conCredito(15000, 75).credit)).toBeNull();
+    expect(avisoDeCredito(conCredito(null, null).credit)).toBeNull();
+    expect(avisoDeCredito(conCredito(16400, 82).credit, "5 nov")).toMatchObject({
+      nivel: "alto",
+      titulo: "Llevas el 82 % del crédito del mes",
+    });
+    const agotado = avisoDeCredito(conCredito(21000, 105).credit, "5 nov");
+    expect(agotado?.nivel).toBe("agotado");
+    expect(agotado?.texto).toMatch(/sigue respondiendo/);
+    expect(agotado?.texto).toMatch(/se renueva el 5 nov/);
+  });
+
+  it("desglose legible, de mayor a menor y sin conceptos en cero", () => {
+    expect(desgloseDeCredito(planDePrueba.credit).map((d) => d.concepto)).toEqual([
+      "Respuestas del asistente (IA)",
+      "Plantillas enviadas",
+      "Notas de voz",
+    ]);
+    expect(formatoCreditos(1234.5)).toBe("1.234,5");
+  });
+
+  it.each([
+    [82, "Llevas el 82 % del crédito del mes"],
+    [100, "Usaste todo el crédito del mes"],
+  ])("al %i %% la página muestra el aviso y la barra sigue", async (percent, titulo) => {
+    respuestaDelPlan.actual = conCredito(percent * 200, percent);
+    const { default: PlanPage } = await import("@/app/(app)/plan/page");
+    render(<FeedbackProviders>{await resolverServidor(await PlanPage())}</FeedbackProviders>);
+    const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
+    expect(within(within(incluye).getByRole("status")).getByText(titulo)).toBeTruthy();
+    expect(within(incluye).getByRole("progressbar", { name: "Crédito mensual" })).toBeTruthy();
+  });
+
+  it("si el core no pudo medir, la barra queda vacía con «medición pendiente»", async () => {
+    respuestaDelPlan.actual = { ...planDePrueba, credit: { limit: 20000, used: null, percent: null } };
+    const { default: PlanPage } = await import("@/app/(app)/plan/page");
+    render(<FeedbackProviders>{await resolverServidor(await PlanPage())}</FeedbackProviders>);
+    const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
+    expect(within(incluye).getByText(/medición del consumo en créditos llega pronto/)).toBeTruthy();
+    expect(within(incluye).queryByRole("status")).toBeNull();
   });
 });
 
