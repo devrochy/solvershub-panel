@@ -45,6 +45,7 @@ export function DataTable<T>({
   errorAction,
   maxHeight,
   caption,
+  serverPaginated = false,
   className,
 }: {
   columns: Column<T>[];
@@ -62,6 +63,11 @@ export function DataTable<T>({
   maxHeight?: string;
   /** Descripción de la tabla para lectores de pantalla. */
   caption?: string;
+  /**
+   * La página ya pagina en el servidor (`ui/pagination.tsx`): sin el buscador ni las flechas
+   * del `TableEnhancer`, que solo verían las filas de esta página (HU-UX-12).
+   */
+  serverPaginated?: boolean;
   className?: string;
 }) {
   const marco = cn("overflow-hidden rounded-lg border border-border-soft bg-surface", className);
@@ -86,7 +92,7 @@ export function DataTable<T>({
 
   return (
     <div className={marco} aria-busy={loading || undefined}>
-      {!loading && rows.length > 7 && <TableEnhancer />}
+      {!loading && !serverPaginated && rows.length > 7 && <TableEnhancer />}
       <Table containerClassName={cn(maxHeight && cn(maxHeight, "overflow-y-auto"))}>
         {caption && <caption className="sr-only">{caption}</caption>}
         <TableHeader className={cn(maxHeight && "sticky top-0 z-10 bg-surface-2")}>

@@ -57,6 +57,7 @@ export function ConversacionesDelAgente({ page, nombre }: { page: AgentConversat
       rows={page.items}
       getRowKey={(r) => r.conversation_id}
       caption="Conversaciones que atendió"
+      serverPaginated
     />
   );
 }
@@ -85,7 +86,7 @@ export function TareasDelAgente({ page, nombre }: { page: AgentTaskPage; nombre:
         ) : null,
     },
   ];
-  return <DataTable columns={columns} rows={page.items} getRowKey={(r) => r.id} caption="Tareas del agente" />;
+  return <DataTable columns={columns} rows={page.items} getRowKey={(r) => r.id} caption="Tareas del agente" serverPaginated />;
 }
 
 export function RegistrosDelAgente({
@@ -121,7 +122,7 @@ export function RegistrosDelAgente({
         {records.total === 0 ? (
           <SinDatos que="registros" nombre={nombre} />
         ) : (
-          <DataTable columns={recordColumns} rows={records.items} getRowKey={(r) => r.id} caption="Registros que creó" />
+          <DataTable columns={recordColumns} rows={records.items} getRowKey={(r) => r.id} caption="Registros que creó" serverPaginated />
         )}
       </section>
       {customers && (
@@ -135,6 +136,7 @@ export function RegistrosDelAgente({
               rows={customers.items}
               getRowKey={(r) => r.customer_id}
               caption={`${formatNumber(customers.total)} clientes atendidos`}
+              serverPaginated
             />
           )}
         </section>

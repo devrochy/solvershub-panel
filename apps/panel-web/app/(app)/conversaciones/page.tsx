@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { ConversationPage } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { canalLabel } from "@/lib/labels";
 
 export const metadata = { title: "Conversaciones" };
 
@@ -47,7 +48,7 @@ export default async function ConversationsPage({
     {
       key: "canal",
       header: "Canal",
-      cell: (conv) => <Badge variant="neutral">{conv.channel}</Badge>,
+      cell: (conv) => <Badge variant="neutral">{canalLabel(conv.channel)}</Badge>,
     },
     {
       key: "estado",
@@ -96,6 +97,7 @@ export default async function ConversationsPage({
         getRowKey={(conv) => conv.id}
         emptyTitle="Sin conversaciones todavía"
         emptyDescription="Aparecerán aquí en cuanto el agente atienda mensajes."
+        serverPaginated
       />
 
       <Pagination

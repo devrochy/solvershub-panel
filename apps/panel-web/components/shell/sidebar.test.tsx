@@ -88,6 +88,29 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
     expect(aside()).toBe("expandida");
   });
 
+  it("en la barra plegada el nombre sale en un tooltip con portal, sin scroll lateral (HU-UX-12)", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const { container } = render(<Sidebar me={me} packs={PACKS} modo="plegada" />);
+    const { plegada } = contenedores(container);
+    expect(plegada.querySelector("nav")?.className).toMatch(/overflow-x-hidden/);
+
+    const enlace = within(plegada).getByRole("link", { name: "Conversaciones" });
+    fireEvent.mouseEnter(enlace.closest("[data-tooltip]") as HTMLElement);
+    const etiqueta = screen.getByRole("tooltip", { hidden: true });
+    expect(etiqueta.textContent).toBe("Conversaciones");
+    // Fuera del `aside`: el overflow de la barra ya no la recorta.
+    expect(container.contains(etiqueta)).toBe(false);
+    // El enlace sigue siendo el único tab stop.
+    expect(enlace.closest("[data-tooltip]")?.hasAttribute("tabindex")).toBe(false);
+  });
+
   it("marca la sección actual en las dos estructuras", () => {
     const { container } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
     const { expandida, plegada } = contenedores(container);

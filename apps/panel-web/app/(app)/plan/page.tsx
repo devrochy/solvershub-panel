@@ -1,8 +1,11 @@
+import { CreditCard } from "lucide-react";
+
 import { SubscribeButton } from "@/app/(app)/plan/_components/subscribe-button";
 import { PAYMENT_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { IconAction } from "@/components/ui/icon-action";
 import { PageHeader } from "@/components/ui/page-header";
 import { UsageBar } from "@/components/ui/usage-bar";
 import { apiFetch } from "@/lib/api/server";
@@ -12,6 +15,7 @@ import {
   avisoDeCredito,
   CREDITO_SIN_MEDICION,
   desgloseDeCredito,
+  enlaceDePago,
   etiquetaDeLimite,
   formatoCreditos,
   limitesOrdenados,
@@ -72,6 +76,20 @@ export default async function PlanPage() {
       key: "fecha",
       header: "Fecha",
       cell: (p) => <span className="text-body">{formatDate(p.paid_at ?? p.created_at)}</span>,
+    },
+    {
+      key: "acciones",
+      header: <span className="sr-only">Acciones</span>,
+      align: "right",
+      cell: (p) => {
+        // Un pago pendiente con su checkout se puede terminar desde aquí (HU-UX-12).
+        const href = enlaceDePago(p);
+        return href ? (
+          <IconAction tone="aprobar" label={`Pagar ${formatCop(p.amount_cop)}`} href={href}>
+            <CreditCard className="h-4 w-4" aria-hidden />
+          </IconAction>
+        ) : null;
+      },
     },
   ];
 

@@ -55,6 +55,23 @@ export function limitesOrdenados(limits: Record<string, number | null>): [string
 /** Texto bajo la barra del crédito cuando el core no pudo medir el consumo en créditos. */
 export const CREDITO_SIN_MEDICION = "1 crédito = COP 10. La medición del consumo en créditos llega pronto.";
 
+type Pago = Pick<PlanResponse["payments"][number], "status" | "checkout_url">;
+
+const PAGO_PENDIENTE = new Set(["pending", "pendiente"]);
+
+/**
+ * Enlace para terminar un pago del plan (HU-UX-12): solo si sigue pendiente y trae su
+ * checkout. Se exige `https:` para no pintar como enlace una URL rara de la API.
+ */
+export function enlaceDePago(pago: Pago): string | null {
+  if (!PAGO_PENDIENTE.has(pago.status) || !pago.checkout_url) return null;
+  try {
+    return new URL(pago.checkout_url).protocol === "https:" ? pago.checkout_url : null;
+  } catch {
+    return null;
+  }
+}
+
 type Credito = NonNullable<PlanResponse["credit"]>;
 
 /** Umbrales de aviso del crédito mensual (SPEC-03): 80 % y 100 %. */

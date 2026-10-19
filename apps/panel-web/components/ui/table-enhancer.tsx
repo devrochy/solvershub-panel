@@ -39,16 +39,19 @@ export function TableEnhancer({ pageSize = 20 }: { pageSize?: number }) {
       // Ordenable con teclado y anunciado al lector de pantalla (HU-UI-03).
       th.tabIndex = 0;
       th.setAttribute("aria-sort", "none");
-      const manejar = () => {
+      // La ayuda ⓘ de la cabecera (`Tooltip`) no ordena la columna.
+      const enAyuda = (e: Event) => e.target instanceof Element && Boolean(e.target.closest("[data-tooltip]"));
+      const manejar = (e: Event) => {
+        if (enAyuda(e)) return;
         setPagina(1);
         setOrden((previo) =>
           previo?.col === indice ? { col: indice, asc: !previo.asc } : { col: indice, asc: true },
         );
       };
       const alPulsar = (e: KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if ((e.key === "Enter" || e.key === " ") && !enAyuda(e)) {
           e.preventDefault();
-          manejar();
+          manejar(e);
         }
       };
       th.addEventListener("click", manejar);

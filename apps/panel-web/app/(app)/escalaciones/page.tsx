@@ -83,6 +83,7 @@ export default async function EscalationsPage({
         emptyDescription="Cuando el agente derive una conversación, aparecerá aquí."
         error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}
         caption="Escalaciones"
+        serverPaginated
       />
 
       {res.ok && (

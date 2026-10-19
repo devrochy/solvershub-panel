@@ -58,4 +58,17 @@ describe("DataTable (HU-UI-04)", () => {
     const vacia = render(<DataTable columns={COLUMNAS} rows={[]} getRowKey={(f) => f.id} />);
     expect(await violacionesGraves(vacia.container)).toEqual([]);
   });
+
+  it("con más de 7 filas suma buscador y flechas locales, salvo si pagina el servidor (HU-UX-12)", () => {
+    const muchas = Array.from({ length: 9 }, (_, i) => ({ id: String(i), cliente: `Cliente ${i}`, total: "$ 1" }));
+    render(<DataTable columns={COLUMNAS} rows={muchas} getRowKey={(f) => f.id} />);
+    expect(screen.getByRole("textbox", { name: "Buscar en la tabla" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Página siguiente" })).toBeTruthy();
+    cleanup();
+
+    render(<DataTable columns={COLUMNAS} rows={muchas} getRowKey={(f) => f.id} serverPaginated />);
+    expect(screen.queryByRole("textbox", { name: "Buscar en la tabla" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Página siguiente" })).toBeNull();
+    expect(screen.getAllByRole("row")).toHaveLength(1 + muchas.length);
+  });
 });
