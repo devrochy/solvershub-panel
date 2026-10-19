@@ -24,7 +24,7 @@ export default async function CalendarHoursPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Horario de atención"
-        description="Días y horas en que el asistente puede agendar citas (habilidad Calendario)."
+        description="Días y horas en que el asistente puede agendar citas (habilidad Calendario). No cambia cuándo responde el chat: eso es el horario de atención de Configuración."
         actions={
           <Button asChild variant="outline" size="sm">
             <Link href="/calendario">← Volver a Calendario</Link>

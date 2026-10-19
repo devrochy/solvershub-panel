@@ -261,6 +261,8 @@ export const ajustes: SettingsResponse = {
     difficulty_score_threshold: 3,
     escalation_keywords: [],
     out_of_hours_message: "",
+    out_of_hours_default_message:
+      "¡Hola! Ahora estamos fuera de nuestro horario de atención. Te respondemos apenas volvamos.",
     auto_escalate_after_turns: 0,
     persona_tone: "cercano",
     persona_warmth: 3,

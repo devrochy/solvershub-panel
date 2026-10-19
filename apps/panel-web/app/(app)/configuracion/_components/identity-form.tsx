@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { IdentitySettings } from "@/lib/api/types";
-import { cuerpoIdentidad } from "@/lib/asistente";
+import { ayudaFueraDeHorario, cuerpoIdentidad } from "@/lib/asistente";
 import { formatList, parseList } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
@@ -351,7 +351,15 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
             Días: {DAYS.join(" · ")}
           </p>
 
-          <Field label="Mensaje fuera de horario" htmlFor="out_of_hours_message">
+          <Field
+            label="Mensaje fuera de horario"
+            htmlFor="out_of_hours_message"
+            help={ayudaFueraDeHorario(
+              values.out_of_hours_message,
+              identity.out_of_hours_default_message,
+              values.business_ranges.length > 0,
+            )}
+          >
             <Textarea
               id="out_of_hours_message"
               rows={2}

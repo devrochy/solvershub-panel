@@ -6536,6 +6536,8 @@ export interface components {
             escalation_keywords: string[];
             /** Out Of Hours Message */
             out_of_hours_message: string;
+            /** Out Of Hours Default Message */
+            out_of_hours_default_message: string;
             /** Auto Escalate After Turns */
             auto_escalate_after_turns: number;
             /** Persona Tone */
