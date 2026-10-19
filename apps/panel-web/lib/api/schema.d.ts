@@ -6554,7 +6554,10 @@ export interface components {
             bot_paused: boolean;
             /** Business Tz */
             business_tz: string;
-            /** Business Ranges */
+            /**
+             * Business Ranges
+             * @description Franjas del horario de atención: [{day, from, to}]. `day` va de 0=lunes a 6=domingo (criterio de `datetime.weekday()`); `from`/`to` en HH:MM, hora local de `business_tz`.
+             */
             business_ranges: {
                 [key: string]: unknown;
             }[];
@@ -6671,6 +6674,7 @@ export interface components {
             business_tz: string;
             /**
              * Business Ranges
+             * @description Franjas del horario de atención: [{day, from, to}]. `day` va de 0=lunes a 6=domingo (criterio de `datetime.weekday()`); `from`/`to` en HH:MM, hora local de `business_tz`.
              * @default []
              */
             business_ranges: {
