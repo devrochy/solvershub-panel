@@ -240,7 +240,19 @@ export const plan: PlanResponse = {
     { id: "free", name: "Free", price_cop: 0, is_free: true, current: false, limits: { colaboradores: 2, agentes: 1 }, features: {}, monthly_credits: 2500 },
     { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: true, limits: { colaboradores: 5, agentes: 2 }, features: {}, monthly_credits: 20000 },
   ],
-  credit: { limit: 20000, used: null, percent: null },
+  credit: {
+    limit: 20000,
+    used: 1234.5,
+    percent: 6.2,
+    period_start: "2026-10-05T12:00:00Z",
+    period_end: "2026-11-05T12:00:00Z",
+    by_concept: { llm_turn: 1100, stt: 4.5, vision: 0, template_sent: 130 },
+    by_agent: [
+      { agent_id: "00000000-0000-4000-8000-0000000000a1", name: "Ventas", used: 900 },
+      { agent_id: null, name: null, used: 334.5 },
+    ],
+    by_agent_truncated: false,
+  },
   plan_por_el_asistente: false,
 };
 
