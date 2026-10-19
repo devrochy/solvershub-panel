@@ -79,12 +79,12 @@ afterEach(() => {
 });
 
 describe("paleta de comandos (HU-DS-05)", () => {
-  it("Ctrl+K, «prom» y Enter llevan a Cobranza › Promesas, y el foco vuelve a donde estaba", async () => {
+  it("Ctrl+K, «prome» y Enter llevan a Cobranza › Promesas, y el foco vuelve a donde estaba", async () => {
     montar();
     const antes = screen.getByRole("button", { name: "Antes" });
     antes.focus();
     const entrada = await abrirPaleta();
-    fireEvent.change(entrada, { target: { value: "prom" } });
+    fireEvent.change(entrada, { target: { value: "prome" } });
     const opcion = screen.getAllByRole("option")[0];
     expect(opcion.textContent).toBe("Cobranza › Promesas");
     expect(opcion.getAttribute("aria-selected")).toBe("true");
@@ -110,7 +110,7 @@ describe("paleta de comandos (HU-DS-05)", () => {
     const entrada = await abrirPaleta();
     fireEvent.change(entrada, { target: { value: "prom" } });
     const opciones = screen.getAllByRole("option").map((o) => o.textContent);
-    expect(opciones).toContain("Comercio › Promociones");
+    expect(opciones).toContain("Ventas › Promociones");
     expect(opciones.some((o) => o?.startsWith("Cobranza"))).toBe(false);
   });
 

@@ -91,9 +91,10 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
   it("marca la sección actual en las dos estructuras", () => {
     const { container } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
     const { expandida, plegada } = contenedores(container);
-    expect(within(expandida).getByRole("link", { name: "Carteras" }).getAttribute("aria-current")).toBe("page");
-    // En la plegada, el pack es un botón con menú flotante que contiene la página actual.
-    expect(within(plegada).getByRole("button", { name: "Cobranza" }).className).toMatch(/before:bg-focus/);
+    // Menú v2 (HU-UX-02): Carteras es una pestaña; el menú marca su entrada, Cobranza.
+    expect(within(expandida).getByRole("link", { name: "Cobranza" }).getAttribute("aria-current")).toBe("page");
+    expect(within(expandida).queryByRole("link", { name: "Carteras" })).toBeNull();
+    expect(within(plegada).getByRole("link", { name: "Cobranza" }).className).toMatch(/before:bg-focus/);
     expect(within(plegada).getByRole("link", { name: "Conversaciones" })).toBeTruthy();
   });
 
@@ -112,7 +113,7 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
 describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
   const TODO = { ...me.permissions };
 
-  it("en una sección de pack: migas grupo › sección y pestañas con la actual marcada", () => {
+  it("en una pestaña: migas grupo › entrada › pestaña y pestañas con la actual marcada", () => {
     ruta = "/calendario/tipos";
     render(
       <ShellProvider permisos={TODO}>
@@ -121,7 +122,7 @@ describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
     );
     const migas = screen.getByRole("navigation", { name: "Migas de pan" });
     expect(within(migas).getByText("Tipos de cita").getAttribute("aria-current")).toBe("page");
-    expect(within(migas).getByText("Calendario")).toBeTruthy();
+    expect(within(migas).getAllByRole("link", { name: "Agenda" })[0].getAttribute("href")).toBe("/calendario/citas");
     const pestanas = screen.getByRole("navigation", { name: "Secciones" });
     expect(within(pestanas).getByRole("link", { name: "Tipos de cita" }).getAttribute("aria-current")).toBe("page");
     expect(within(pestanas).getAllByRole("link").length).toBeGreaterThan(1);

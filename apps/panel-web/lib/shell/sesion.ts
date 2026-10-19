@@ -1,6 +1,6 @@
 import { NAV_GROUPS, type NavGroupDef, type NavItem } from "@/components/shell/nav";
 import type { Me } from "@/lib/api/types";
-import { gruposVisibles, type Permisos } from "@/lib/shell/navegacion";
+import { gruposVisibles, hojaDe, rutasDelMenu, type Permisos } from "@/lib/shell/navegacion";
 
 /**
  * Sesión vigente del shell (P0 de pruebas, ciclo 2026-10-13): los permisos y el negocio
@@ -38,16 +38,15 @@ export function cambioLaSesion(renderizada: SesionRenderizada, vigente: SesionVi
 }
 
 /**
- * Ítem del menú al que pertenece una ruta, sin mirar permisos: el más específico (como
- * `itemActivo`). `null` si la ruta no es de ninguna sección (por ejemplo el catálogo).
+ * Página del menú (entrada o pestaña) a la que pertenece una ruta, sin mirar permisos: la
+ * más específica (como `itemActivo`). `null` si la ruta no es de ninguna sección (por ejemplo el catálogo).
  */
 export function itemDeRuta(pathname: string, grupos: NavGroupDef[] = NAV_GROUPS): NavItem | null {
   let mejor: NavItem | null = null;
-  for (const grupo of grupos) {
-    for (const item of grupo.items) {
-      const coincide = pathname === item.href || pathname.startsWith(`${item.href}/`);
-      if (coincide && item.href.length > (mejor?.href.length ?? 0)) mejor = item;
-    }
+  for (const ruta of rutasDelMenu(grupos)) {
+    const item = hojaDe(ruta);
+    const coincide = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (coincide && item.href.length > (mejor?.href.length ?? 0)) mejor = item;
   }
   return mejor;
 }
