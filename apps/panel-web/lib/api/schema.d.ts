@@ -11638,10 +11638,24 @@ export interface components {
             activo: boolean;
         };
         /**
+         * CreditByAgent
+         * @description Créditos del mes de un agente. `agent_id`/`name` null: consumo sin agente (turnos de antes
+         *     del runtime v3 y fees de notas de voz, imágenes y plantillas).
+         */
+        CreditByAgent: {
+            /** Agent Id */
+            agent_id?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Used */
+            used: number;
+        };
+        /**
          * CreditUsage
-         * @description Crédito mensual del plan (D-35, ADR-0142). `used`/`percent` son `null` mientras el core no
-         *     mide el consumo en créditos (ledger multiconcepto, HU-BILL-04/06): el panel muestra el tope
-         *     y la barra vacía con «medición pendiente».
+         * @description Crédito mensual del plan (D-35, ADR-0142; medición ADR-0144). `used` en créditos con
+         *     décimas (1 crédito = COP 10), `percent` sin tope de 100 (puede pasarse: hoy solo se avisa).
+         *     `used`/`percent` son `null` si no se pudo medir: el panel muestra «medición pendiente».
+         *     El mes de consumo es `[period_start, period_end)`, alineado con el ciclo de la suscripción.
          */
         CreditUsage: {
             /** Limit */
@@ -11650,6 +11664,21 @@ export interface components {
             used?: number | null;
             /** Percent */
             percent?: number | null;
+            /** Period Start */
+            period_start?: string | null;
+            /** Period End */
+            period_end?: string | null;
+            /** By Concept */
+            by_concept?: {
+                [key: string]: number;
+            } | null;
+            /** By Agent */
+            by_agent?: components["schemas"]["CreditByAgent"][] | null;
+            /**
+             * By Agent Truncated
+             * @default false
+             */
+            by_agent_truncated: boolean;
         };
     };
     responses: never;

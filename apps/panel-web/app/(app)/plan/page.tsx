@@ -8,7 +8,15 @@ import { UsageBar } from "@/components/ui/usage-bar";
 import { apiFetch } from "@/lib/api/server";
 import type { PlanResponse } from "@/lib/api/types";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
-import { CREDITO_SIN_MEDICION, etiquetaDeLimite, limitesOrdenados, separarConsumo } from "@/lib/plan-limite";
+import {
+  avisoDeCredito,
+  CREDITO_SIN_MEDICION,
+  desgloseDeCredito,
+  etiquetaDeLimite,
+  formatoCreditos,
+  limitesOrdenados,
+  separarConsumo,
+} from "@/lib/plan-limite";
 
 export const metadata = { title: "Plan y consumo" };
 
@@ -33,6 +41,12 @@ export default async function PlanPage() {
   const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: planPorElAsistente } = res.data;
   // Lo que vende el plan (D-35): agentes publicados, colaboradores y crédito mensual, primero.
   const { delPlan, resto } = separarConsumo(usage);
+  // Crédito mensual medido (HU-BILL-04/06): aviso al 80 % y al 100 %, sin bloquear.
+  const creditoMedido = credit != null && credit.used != null;
+  const reinicio = credit?.period_end ? formatDate(credit.period_end) : undefined;
+  const aviso = avisoDeCredito(credit, reinicio);
+  const desglose = desgloseDeCredito(credit);
+  const porAgente = (credit?.by_agent ?? []).filter((a) => a.used > 0);
 
   const paymentColumns: Column<PaymentRow>[] = [
     { key: "plan", header: "Plan", cell: (p) => p.plan_id ?? "—" },
@@ -145,10 +159,69 @@ export default async function PlanPage() {
                 limit={credit.limit}
                 percent={credit.percent ?? null}
                 unit="créditos"
-                nota={credit.used === null || credit.used === undefined ? CREDITO_SIN_MEDICION : undefined}
+                exceeded={(credit.percent ?? 0) >= 100}
+                nota={
+                  creditoMedido
+                    ? `1 crédito = COP 10${reinicio ? ` · se renueva el ${reinicio}` : ""}`
+                    : CREDITO_SIN_MEDICION
+                }
               />
             )}
           </div>
+          {aviso && (
+            <div
+              role="status"
+              className={
+                aviso.nivel === "agotado"
+                  ? "flex flex-col gap-1 rounded-lg border border-status-danger-border bg-status-danger-bg p-4 text-sm"
+                  : "flex flex-col gap-1 rounded-lg border border-status-warning-border bg-status-warning-bg p-4 text-sm"
+              }
+            >
+              <span
+                className={
+                  aviso.nivel === "agotado"
+                    ? "font-semibold text-status-danger-fg"
+                    : "font-semibold text-status-warning-fg"
+                }
+              >
+                {aviso.titulo}
+              </span>
+              <span className="text-body">{aviso.texto}</span>
+            </div>
+          )}
+          {creditoMedido && (desglose.length > 0 || porAgente.length > 0) && (
+            <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 text-sm md:grid-cols-2">
+              {desglose.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-headline">En qué se usó el crédito</h3>
+                  <ul className="flex flex-col gap-1 text-body" aria-label="Crédito por concepto">
+                    {desglose.map((d) => (
+                      <li key={d.concepto} className="flex items-center justify-between gap-3">
+                        <span>{d.concepto}</span>
+                        <span className="text-headline">{formatoCreditos(d.usado)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {porAgente.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-headline">Por agente</h3>
+                  <ul className="flex flex-col gap-1 text-body" aria-label="Crédito por agente">
+                    {porAgente.map((a) => (
+                      <li key={a.agent_id ?? "sin-agente"} className="flex items-center justify-between gap-3">
+                        <span>{a.name ?? "Sin agente (medios y turnos anteriores)"}</span>
+                        <span className="text-headline">{formatoCreditos(a.used)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {credit?.by_agent_truncated && (
+                    <p className="text-xs text-text-soft">Se muestran los agentes con más consumo.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
 
