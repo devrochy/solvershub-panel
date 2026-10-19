@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightLeft, Copy, KeyRound, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRightLeft, Copy, ExternalLink, KeyRound, RefreshCw, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
-import type { QaDatos, QaDatosCuenta, QaItem, QaMisDatos } from "@/lib/api/types";
+import type { QaDatos, QaDatosAgentOS, QaDatosCuenta, QaItem, QaMisDatos } from "@/lib/api/types";
 import { toast } from "@/lib/toast-store";
 
 import { llamarQa } from "./api";
@@ -24,6 +24,8 @@ function copiar(texto: string, que: string) {
  * Datos de prueba (HU-QA-07): «Preparar mis datos» crea el negocio de prueba del tester con sus
  * cuentas; las contraseñas viven solo en el estado de esta vista (se muestran una vez y no se
  * guardan en ningún lado). Debajo, la guía de los datos externos agrupada como en el catálogo.
+ * Con los datos listos, «Actualizar mis datos» vuelve a pulsar «Preparar» (HU-QA-09): el backend
+ * responde 200 sin contraseñas y pone al día el Agent OS (agentes y chat web).
  */
 export function DatosDePrueba({ inicial, guia }: { inicial: QaMisDatos; guia: QaItem[] }) {
   const router = useRouter();
@@ -54,8 +56,24 @@ export function DatosDePrueba({ inicial, guia }: { inicial: QaMisDatos; guia: Qa
       return;
     }
     setDatos(r.data);
-    setContrasenas(r.data.contrasenas ?? null);
-    toast.success("Tus datos de prueba están listos.");
+    // Al volver a preparar no llegan contraseñas: se conservan las que ya estuvieran a la vista.
+    if (r.data.contrasenas) {
+      setContrasenas(r.data.contrasenas);
+      toast.success("Tus datos de prueba están listos.");
+    } else {
+      toast.success("Tus datos de prueba están al día.");
+    }
+  }
+
+  async function actualizar() {
+    const ok = await confirmar({
+      title: "¿Actualizar tus datos de prueba?",
+      description:
+        "Se agrega lo nuevo (agentes y chat web) sin borrar lo que ya creaste. Tus contraseñas siguen igual y no se vuelven a mostrar.",
+      confirmLabel: "Actualizar mis datos",
+      destructive: false,
+    });
+    if (ok) await preparar();
   }
 
   async function contrasenasNuevas() {
@@ -116,6 +134,7 @@ export function DatosDePrueba({ inicial, guia }: { inicial: QaMisDatos; guia: Qa
               contrasenas={contrasenas}
               trabajando={trabajando}
               onPreparar={preparar}
+              onActualizarDatos={actualizar}
               onContrasenas={contrasenasNuevas}
               onIrAMiNegocio={irAMiNegocio}
               onActualizar={() => router.refresh()}
@@ -135,6 +154,7 @@ function EstadoDeMisDatos({
   contrasenas,
   trabajando,
   onPreparar,
+  onActualizarDatos,
   onContrasenas,
   onIrAMiNegocio,
   onActualizar,
@@ -143,6 +163,7 @@ function EstadoDeMisDatos({
   contrasenas: Record<string, string> | null;
   trabajando: string | null;
   onPreparar: () => void;
+  onActualizarDatos: () => void;
   onContrasenas: () => void;
   onIrAMiNegocio: (tenantId: string) => void;
   onActualizar: () => void;
@@ -210,6 +231,10 @@ function EstadoDeMisDatos({
           <Button variant="outline" loading={trabajando === "contrasenas"} onClick={onContrasenas}>
             <KeyRound aria-hidden className="h-4 w-4" /> Contraseñas nuevas
           </Button>
+          <Button variant="outline" loading={trabajando === "preparar"} onClick={onActualizarDatos}>
+            <RefreshCw aria-hidden className="h-4 w-4" />
+            {trabajando === "preparar" ? "Actualizando…" : "Actualizar mis datos"}
+          </Button>
         </div>
       </div>
       {contrasenas && (
@@ -222,7 +247,95 @@ function EstadoDeMisDatos({
         Las cuentas usan el dominio pruebas.solvershub.test y no reciben correo. Para las pruebas de correo, crea un
         colaborador con tu correo con alias.
       </p>
+      {datos.agent_os && (
+        <AgentOs agentOs={datos.agent_os} reintentando={trabajando === "preparar"} onReintentar={onPreparar} />
+      )}
     </div>
+  );
+}
+
+/** Agent OS del negocio de prueba (HU-QA-09): chat web para conversar como cliente y sus agentes. */
+function AgentOs({
+  agentOs,
+  reintentando,
+  onReintentar,
+}: {
+  agentOs: QaDatosAgentOS;
+  reintentando: boolean;
+  onReintentar: () => void;
+}) {
+  const chat = agentOs.chat_web;
+  const enlace = chat?.enlace;
+  const agentes = agentOs.agentes ?? [];
+  return (
+    <section aria-labelledby="datos-agent-os" className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 id="datos-agent-os" className="text-sh-label text-headline">
+          Agent OS
+        </h3>
+        {agentOs.estado === "listo" ? (
+          <Badge variant="success">Listo</Badge>
+        ) : agentOs.estado === "pendiente" ? (
+          <Badge variant="warning">Pendiente</Badge>
+        ) : (
+          <Badge variant="danger">Con error</Badge>
+        )}
+      </div>
+      {agentOs.estado !== "listo" && (
+        <div
+          className={
+            agentOs.estado === "error"
+              ? "flex flex-col gap-3 rounded-md border border-status-danger-border bg-status-danger-bg p-3"
+              : "flex flex-col gap-3 rounded-md border border-status-warning-border bg-status-warning-bg p-3"
+          }
+          role={agentOs.estado === "error" ? "alert" : "status"}
+        >
+          <p className="text-sm text-headline">
+            {agentOs.estado === "error" ? "El Agent OS no quedó listo" : "El Agent OS todavía no está listo"}
+            {agentOs.motivo ? `: ${agentOs.motivo}` : "."}
+          </p>
+          <Button variant="outline" className="self-start" loading={reintentando} onClick={onReintentar}>
+            <RefreshCw aria-hidden className="h-4 w-4" /> {reintentando ? "Reintentando…" : "Reintentar"}
+          </Button>
+        </div>
+      )}
+      {chat && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-text-soft">Chat web (conversa como cliente)</span>
+          {enlace ? (
+            <div className="flex items-center gap-1">
+              <a
+                href={enlace}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-w-0 items-center gap-1 break-all font-mono text-xs text-link underline-offset-2 hover:underline"
+              >
+                {enlace}
+                <ExternalLink aria-hidden className="h-3.5 w-3.5 shrink-0" />
+                <span className="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+              <Button size="icon" variant="ghost" aria-label="Copiar el enlace del chat web" onClick={() => copiar(enlace, "Enlace")}>
+                <Copy aria-hidden className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <span className="font-mono text-xs text-headline">Clave {chat.clave}</span>
+          )}
+          {!chat.activo && <span className="text-xs text-text-soft">El chat web está desactivado.</span>}
+        </div>
+      )}
+      {agentes.length > 0 && (
+        <ul aria-label="Agentes del chat web" className="flex flex-col gap-1.5 text-sm">
+          {agentes.map((a) => (
+            <li key={a.key} className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-headline">{a.nombre}</span>
+              <span className="text-xs text-text-soft">{a.rol}</span>
+              {a.por_defecto && <Badge variant="accent">Por defecto</Badge>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

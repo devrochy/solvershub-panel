@@ -89,6 +89,7 @@ export type QaTesterInvitado = components["schemas"]["QaTesterInvitado"];
 export type QaMisDatos = components["schemas"]["QaMisDatos"];
 export type QaDatos = components["schemas"]["QaDatos"];
 export type QaDatosCuenta = components["schemas"]["QaDatosCuenta"];
+export type QaDatosAgentOS = components["schemas"]["QaDatosAgentOS"];
 export type AcceptTesterInvitationResponse = components["schemas"]["AcceptTesterInvitationResponse"];
 
 // Mi agente y su data (HU-AOS-47)
