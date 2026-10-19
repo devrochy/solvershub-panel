@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { IdentitySettings } from "@/lib/api/types";
 import { ayudaFueraDeHorario, cuerpoIdentidad } from "@/lib/asistente";
 import { formatList, parseList } from "@/lib/format";
+import { franjasATexto, leyendaDias, textoAFranjas } from "@/lib/horario-atencion";
 import { useAction } from "@/lib/use-action";
 
 const TONOS = ["calido", "formal", "divertido"];
@@ -55,23 +56,6 @@ const GUARDRAIL_FAIL_ACTIONS: { value: IdentitySettings["guardrail_fail_action"]
   { value: "escalate", label: "Escalar a una persona" },
   { value: "neutral", label: "Responder que va a verificar" },
 ];
-
-const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
-function rangesToText(ranges: Record<string, unknown>[]): string {
-  return ranges
-    .map((r) => `${r.day} ${r.from}-${r.to}`)
-    .join("\n");
-}
-
-function textToRanges(text: string): { day: number; from: string; to: string }[] {
-  const out: { day: number; from: string; to: string }[] = [];
-  for (const line of text.split("\n")) {
-    const m = /^([0-6])\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(line.trim());
-    if (m) out.push({ day: Number(m[1]), from: m[2], to: m[3] });
-  }
-  return out;
-}
 
 /**
  * Formulario de Identidad del agente. Responsabilidad: editar y guardar. El resultado va en
@@ -336,19 +320,19 @@ export function IdentityForm({ identity }: { identity: IdentitySettings }) {
             <Field
               label="Horario de atención"
               htmlFor="business_ranges"
-              help="Una franja por línea: día (0=Dom…6=Sáb) HH:MM-HH:MM. Ej.: 1 08:00-18:00"
+              help="Una franja por línea: día (0=Lun…6=Dom) HH:MM-HH:MM. Ej.: 0 08:00-18:00 es el lunes"
             >
               <Textarea
                 id="business_ranges"
                 rows={3}
-                defaultValue={rangesToText(values.business_ranges)}
-                onChange={(e) => set("business_ranges", textToRanges(e.target.value))}
+                defaultValue={franjasATexto(values.business_ranges)}
+                onChange={(e) => set("business_ranges", textoAFranjas(e.target.value))}
               />
             </Field>
           </div>
 
           <p className="text-xs text-text-soft">
-            Días: {DAYS.join(" · ")}
+            Días: {leyendaDias()}
           </p>
 
           <Field
