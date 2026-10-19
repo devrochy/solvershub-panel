@@ -105,6 +105,7 @@ export default async function TenantsPage({
         getRowKey={(t) => t.id}
         emptyTitle="Sin resultados"
         emptyDescription="Ajusta la búsqueda para encontrar un negocio."
+        serverPaginated
       />
 
       <Pagination

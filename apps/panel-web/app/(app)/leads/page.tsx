@@ -6,6 +6,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { LeadsResponse } from "@/lib/api/types";
 import { formatCellValue } from "@/lib/format";
+import { canalLabel } from "@/lib/labels";
 
 export const metadata = { title: "Leads" };
 
@@ -31,7 +32,7 @@ export default async function LeadsPage({
     {
       key: "canal",
       header: "Canal",
-      cell: (lead) => <Badge variant="neutral">{lead.canal}</Badge>,
+      cell: (lead) => <Badge variant="neutral">{canalLabel(lead.canal)}</Badge>,
     },
     { key: "alta", header: "Alta", cell: (lead) => <span className="text-body">{lead.alta}</span> },
     ...columns.map((column) => ({
@@ -60,6 +61,7 @@ export default async function LeadsPage({
         emptyDescription="Cuando el agente atienda al primer cliente, aparecerá aquí."
         error={res.ok ? null : `No se pudieron cargar los leads: ${res.error}`}
         caption="Leads"
+        serverPaginated
       />
 
       {res.ok && (
