@@ -5,15 +5,19 @@ import { useConfirm } from "@/components/ui/confirm";
 import { useAction } from "@/lib/use-action";
 
 /**
- * Pausar o reanudar desde la consola (HU-AOS-23). Solo la cuenta de Meta (ADR-0122): es la
- * única pausa que hoy detiene la entrada y la salida. Reusa el BFF de acciones de conexiones.
+ * Pausar o reanudar desde la consola (HU-AOS-23). La cuenta de Meta (ADR-0122) o una conexión
+ * manual o de WhatsApp Web (adenda 2026-10-19): las dos detienen la entrada y la salida. Reusa
+ * el BFF de acciones de conexiones, que el backend audita (`connection.paused` / `resumed`).
  */
-export function PausarCuentaMeta({
-  metaConnectionId,
+export function PausarConexion({
+  id,
+  tipo,
   pausada,
   textoConfirmacion,
 }: {
-  metaConnectionId: string;
+  id: string;
+  /** `meta_connection`: la cuenta de Meta; `channel`: la conexión manual o de WhatsApp Web. */
+  tipo: "meta_connection" | "channel";
   pausada: boolean;
   textoConfirmacion: string;
 }) {
@@ -31,10 +35,13 @@ export function PausarCuentaMeta({
       if (!aceptado) return;
     }
     await run(async () => {
-      const res = await fetch(`/api/connections/${metaConnectionId}`, {
+      const res = await fetch(`/api/connections/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: pausada ? "activate" : "deactivate", kind: "meta_connection" }),
+        body: JSON.stringify({
+          action: pausada ? "activate" : "deactivate",
+          ...(tipo === "meta_connection" ? { kind: "meta_connection" } : {}),
+        }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       return {

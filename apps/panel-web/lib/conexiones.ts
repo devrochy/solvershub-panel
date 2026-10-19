@@ -58,12 +58,21 @@ export function textoConfirmarPausa(c: Pick<ConexionConsola, "pause_scope" | "la
   if (c.pause_scope === "meta_account") {
     return `Se pausa la cuenta de Meta de «${c.label}»: alcanza a todos los números de esa cuenta. Lo que entre se guarda sin respuesta hasta que la reactives.`;
   }
-  return `La conexión «${c.label}» deja de responder hasta que la reactives.`;
+  return `La conexión «${c.label}» deja de responder: lo que entre se guarda sin respuesta y no sale nada por ella hasta que la reactives.`;
 }
 
-/** ¿La consola ofrece pausar o reanudar? Solo con permiso de edición y donde la pausa detiene de verdad. */
-export function puedePausar(c: Pick<ConexionConsola, "pausable" | "meta_connection_id">, canEdit: boolean): boolean {
-  return canEdit && c.pausable && c.meta_connection_id != null;
+/**
+ * ¿La consola ofrece pausar o reanudar? Solo con permiso de edición y donde la pausa detiene de
+ * verdad: la cuenta de Meta y las conexiones manuales o de WhatsApp Web (el chat web se pausa
+ * en Configuración → Chat web).
+ */
+export function puedePausar(
+  c: Pick<ConexionConsola, "pausable" | "meta_connection_id" | "pause_scope">,
+  canEdit: boolean,
+): boolean {
+  if (!canEdit || !c.pausable) return false;
+  if (c.pause_scope === "meta_account") return c.meta_connection_id != null;
+  return c.pause_scope === "connection";
 }
 
 export function resumenConsumo(u: ConexionConsola["usage_7d"]): string {

@@ -63,6 +63,17 @@ describe("consola de conexiones", () => {
     expect(puedePausar(conexion({ pausable: false, meta_connection_id: null }), true)).toBe(false);
   });
 
+  it("también se pausan las conexiones manuales y de WhatsApp Web; el chat web no", () => {
+    const manual = { meta_connection_id: null, pause_scope: "connection" as const, pausable: true };
+    expect(puedePausar(conexion(manual), true)).toBe(true);
+    expect(puedePausar(conexion({ ...manual, type_id: "whatsapp_waweb" }), true)).toBe(true);
+    expect(puedePausar(conexion(manual), false)).toBe(false);
+    expect(
+      puedePausar(conexion({ meta_connection_id: null, pause_scope: "webchat_settings", pausable: false }), true),
+    ).toBe(false);
+    expect(textoConfirmarPausa(conexion(manual))).toContain("no sale nada");
+  });
+
   it("salud, ruteo y consumo", () => {
     expect(saludDeConexion("paused")).toEqual({ label: "Pausada", tono: "neutral" });
     expect(etiquetaRuteo("shadow")).toBe("En sombra");
