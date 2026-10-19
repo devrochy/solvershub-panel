@@ -1,7 +1,10 @@
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/format";
 
-/** Barra de consumo: tono por umbral, texto accesible con el valor real. */
+/**
+ * Barra de consumo: tono por umbral, texto accesible con el valor real. `used = null` = el tope
+ * existe pero el consumo todavía no se mide (el crédito mensual, HU-BILL-05): barra vacía y `nota`.
+ */
 export function UsageBar({
   label,
   used,
@@ -9,14 +12,16 @@ export function UsageBar({
   percent,
   unit,
   exceeded,
+  nota,
   className,
 }: {
   label: string;
-  used: number;
+  used: number | null;
   limit: number | null;
   percent: number | null;
   unit: string;
   exceeded?: boolean;
+  nota?: string;
   className?: string;
 }) {
   const ratio = percent ?? 0;
@@ -28,14 +33,14 @@ export function UsageBar({
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="text-headline">{label}</span>
         <span className="text-body">
-          {formatNumber(used)} / {limitLabel}
+          {used === null ? "—" : formatNumber(used)} / {limitLabel}
         </span>
       </div>
       <div
         className="h-1.5 w-full overflow-hidden rounded-pill bg-hover"
         role="progressbar"
         aria-label={label}
-        aria-valuenow={used}
+        aria-valuenow={used ?? undefined}
         aria-valuemin={0}
         aria-valuemax={limit ?? undefined}
       >
@@ -44,7 +49,7 @@ export function UsageBar({
           style={{ width: `${Math.min(ratio, 100)}%` }}
         />
       </div>
-      <span className="text-xs text-text-soft">{unit}</span>
+      <span className="text-xs text-text-soft">{nota ? `${unit} · ${nota}` : unit}</span>
     </div>
   );
 }

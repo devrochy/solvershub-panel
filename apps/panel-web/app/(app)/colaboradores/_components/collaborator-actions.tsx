@@ -51,7 +51,7 @@ export function CollaboratorActions({
       const aceptado = await confirm({
         title: "Desactivar colaborador",
         description:
-          "Quedará sin acceso al panel y sus permisos dejarán de aplicar hasta que lo reactives.",
+          "Quedará sin acceso al panel y sus permisos dejarán de aplicar hasta que lo reactives. Libera su cupo de colaboradores del plan; para reactivarlo necesitarás cupo.",
         confirmLabel: "Desactivar",
         destructive: true,
       });

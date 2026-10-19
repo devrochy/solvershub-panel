@@ -9,6 +9,7 @@ import {
   PasoPublicar,
   PasoSuperpoderes,
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { Stepper, type StepItem } from "@/components/ui/stepper";
@@ -26,6 +27,7 @@ import {
   type PasoId,
 } from "@/lib/agentes-editor";
 import type { AgentDetail, EditorPublishOut, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
 type Respuesta = { error?: string; code?: string; fields?: Record<string, string> };
@@ -62,6 +64,7 @@ export function EditorDeAgente({
   const [paso, setPaso] = useState<PasoId>("identidad");
   const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad"]));
   const [errores, setErrores] = useState<Errores>({});
+  const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
     destinos.filter((d) => d.covers_skills && (d.installed || destinos.length === 1)).map((d) => d.connection_id),
   );
@@ -158,6 +161,9 @@ export function EditorDeAgente({
       const json = (await res.json().catch(() => ({}))) as Respuesta & Partial<EditorPublishOut>;
       if (!res.ok) {
         if (json.fields) mostrarErrores(json.fields);
+        // Tope de agentes publicados del plan (HU-BILL-05): no se publicó nada; se explica y se
+        // ofrece mejorar el plan junto al botón.
+        setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de agentes de tu plan.") : null);
         return {
           ok: false,
           status: res.status,
@@ -165,6 +171,7 @@ export function EditorDeAgente({
         };
       }
       setErrores({});
+      setLimite(null);
       setPublicado(json as EditorPublishOut);
       return { ok: true, success: `Versión ${json.version?.version} publicada. Actívala cuando quieras que tus clientes la vean.` };
     });
@@ -231,6 +238,7 @@ export function EditorDeAgente({
       content: actual ? (
         <div className="flex flex-col gap-6">
           {contenidoDelPaso[p.id]}
+          {ultimo && limite && <AvisoLimiteDePlan mensaje={limite} />}
           <div className="flex flex-wrap gap-3">
             {ultimo ? (
               <Button

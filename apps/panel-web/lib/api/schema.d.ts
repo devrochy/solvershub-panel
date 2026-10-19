@@ -1781,7 +1781,12 @@ export interface paths {
         /** List Collaborators */
         get: operations["list_collaborators_api_v1_admin_collaborators_get"];
         put?: never;
-        /** Create Collaborator Endpoint */
+        /**
+         * Create Collaborator Endpoint
+         * @description Alta de una cuenta nueva o invitación de una existente (ADR-0081). Al tope de
+         *     colaboradores del plan, 409 `plan_limit_colaboradores` y no se crea ni se invita a nadie
+         *     (D-35, ADR-0142).
+         */
         post: operations["create_collaborator_endpoint_api_v1_admin_collaborators_post"];
         delete?: never;
         options?: never;
@@ -1900,7 +1905,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create Invitation */
+        /**
+         * Create Invitation
+         * @description Al tope de colaboradores del plan, 409 `plan_limit_colaboradores` (ADR-0142).
+         */
         post: operations["create_invitation_api_v1_admin_invitations_post"];
         delete?: never;
         options?: never;
@@ -7690,6 +7698,8 @@ export interface components {
             features: {
                 [key: string]: unknown;
             };
+            /** Monthly Credits */
+            monthly_credits?: number | null;
         };
         /** PlanOverview */
         PlanOverview: {
@@ -7716,6 +7726,7 @@ export interface components {
             /** Plans */
             plans: components["schemas"]["PlanInfo"][];
             cobro?: components["schemas"]["Cobro"] | null;
+            credit?: components["schemas"]["CreditUsage"] | null;
             /**
              * Plan Por El Asistente
              * @default false
@@ -11626,6 +11637,20 @@ export interface components {
             /** Activo */
             activo: boolean;
         };
+        /**
+         * CreditUsage
+         * @description Crédito mensual del plan (D-35, ADR-0142). `used`/`percent` son `null` mientras el core no
+         *     mide el consumo en créditos (ledger multiconcepto, HU-BILL-04/06): el panel muestra el tope
+         *     y la barra vacía con «medición pendiente».
+         */
+        CreditUsage: {
+            /** Limit */
+            limit: number;
+            /** Used */
+            used?: number | null;
+            /** Percent */
+            percent?: number | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -13246,6 +13271,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ConnectionAgentInstance"];
                 };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_agentes`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -15093,6 +15125,13 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Tope del plan: `error.code = plan_limit_colaboradores`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15264,6 +15303,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Tope del plan: `error.code = plan_limit_colaboradores`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15323,6 +15369,13 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tope del plan: `error.code = plan_limit_colaboradores`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17803,6 +17856,13 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_colaboradores`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -21777,6 +21837,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EditorPublishOut"];
                 };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_agentes`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

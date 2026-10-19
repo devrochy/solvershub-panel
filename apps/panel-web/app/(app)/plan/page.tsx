@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { UsageBar } from "@/components/ui/usage-bar";
 import { apiFetch } from "@/lib/api/server";
 import type { PlanResponse } from "@/lib/api/types";
-import { formatCop, formatDate } from "@/lib/format";
+import { formatCop, formatDate, formatNumber } from "@/lib/format";
+import { CREDITO_SIN_MEDICION, etiquetaDeLimite, limitesOrdenados, separarConsumo } from "@/lib/plan-limite";
 
 export const metadata = { title: "Plan y consumo" };
 
@@ -29,7 +30,9 @@ export default async function PlanPage() {
       </p>
     );
   }
-  const { overview, usage, payments, plans, cobro, plan_por_el_asistente: planPorElAsistente } = res.data;
+  const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: planPorElAsistente } = res.data;
+  // Lo que vende el plan (D-35): agentes publicados, colaboradores y crédito mensual, primero.
+  const { delPlan, resto } = separarConsumo(usage);
 
   const paymentColumns: Column<PaymentRow>[] = [
     { key: "plan", header: "Plan", cell: (p) => p.plan_id ?? "—" },
@@ -118,13 +121,44 @@ export default async function PlanPage() {
         </Card>
       )}
 
+      {(delPlan.length > 0 || credit) && (
+        <section className="flex flex-col gap-3" aria-labelledby="incluye-titulo">
+          <h2 id="incluye-titulo" className="font-display text-lg font-semibold text-headline">
+            Lo que incluye tu plan
+          </h2>
+          <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 md:grid-cols-3">
+            {delPlan.map((metric) => (
+              <UsageBar
+                key={metric.key}
+                label={metric.label}
+                used={metric.used}
+                limit={metric.limit}
+                percent={metric.percent}
+                unit={metric.unit}
+                exceeded={metric.exceeded}
+              />
+            ))}
+            {credit && (
+              <UsageBar
+                label="Crédito mensual"
+                used={credit.used ?? null}
+                limit={credit.limit}
+                percent={credit.percent ?? null}
+                unit="créditos"
+                nota={credit.used === null || credit.used === undefined ? CREDITO_SIN_MEDICION : undefined}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Consumo del periodo</h2>
-        {usage.length === 0 ? (
+        {resto.length === 0 ? (
           <p className="text-sm text-text-soft">Sin métricas de consumo.</p>
         ) : (
           <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 md:grid-cols-2">
-            {usage.map((metric) => (
+            {resto.map((metric) => (
               <UsageBar
                 key={metric.key}
                 label={metric.label}
@@ -156,12 +190,18 @@ export default async function PlanPage() {
               <CardContent className="flex flex-col gap-4">
                 {Object.keys(plan.limits).length > 0 && (
                   <ul className="flex flex-col gap-1 text-xs text-body">
-                    {Object.entries(plan.limits).map(([key, value]) => (
+                    {limitesOrdenados(plan.limits).map(([key, value]) => (
                       <li key={key} className="flex items-center justify-between gap-3">
-                        <span>{key}</span>
+                        <span>{etiquetaDeLimite(key)}</span>
                         <span className="text-headline">{value ?? "∞"}</span>
                       </li>
                     ))}
+                    {plan.monthly_credits != null && (
+                      <li className="flex items-center justify-between gap-3">
+                        <span>Crédito mensual</span>
+                        <span className="text-headline">{formatNumber(plan.monthly_credits)}</span>
+                      </li>
+                    )}
                   </ul>
                 )}
                 {Object.keys(plan.features).length > 0 && (

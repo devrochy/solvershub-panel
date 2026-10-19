@@ -232,12 +232,15 @@ export const plan: PlanResponse = {
   overview: { plan_id: "basic", plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
   usage: [
     { key: "conversations", label: "Conversaciones", unit: "conv", scope: "month", used: 120, limit: 500, percent: 24, exceeded: false },
+    { key: "agentes", label: "Agentes publicados", unit: "agentes", scope: "lifetime", used: 2, limit: 2, percent: 100, exceeded: false },
+    { key: "colaboradores", label: "Colaboradores", unit: "colaboradores", scope: "lifetime", used: 1, limit: 5, percent: 20, exceeded: false },
   ],
   payments: [],
   plans: [
-    { id: "free", name: "Free", price_cop: 0, is_free: true, current: false, limits: {}, features: {} },
-    { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: true, limits: {}, features: {} },
+    { id: "free", name: "Free", price_cop: 0, is_free: true, current: false, limits: { colaboradores: 2, agentes: 1 }, features: {}, monthly_credits: 2500 },
+    { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: true, limits: { colaboradores: 5, agentes: 2 }, features: {}, monthly_credits: 20000 },
   ],
+  credit: { limit: 20000, used: null, percent: null },
   plan_por_el_asistente: false,
 };
 

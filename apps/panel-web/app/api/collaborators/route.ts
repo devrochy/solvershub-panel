@@ -14,7 +14,8 @@ export async function POST(request: Request) {
   }
   const res = await apiFetch<{ resultado?: string }>("/admin/collaborators", { method: "POST", body });
   if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+    // El `code` estable deja al diálogo reconocer el tope del plan (409 `plan_limit_colaboradores`).
+    return NextResponse.json({ error: res.error, ...(res.code ? { code: res.code } : {}) }, { status: res.status });
   }
   return NextResponse.json({ ok: true, ...(res.data ?? {}) });
 }
