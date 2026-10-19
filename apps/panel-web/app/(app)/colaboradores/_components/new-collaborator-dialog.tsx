@@ -3,12 +3,14 @@
 import { useState, type FormEvent } from "react";
 
 import { CampoDeNegocio } from "@/app/(app)/colaboradores/_components/campo-de-negocio";
+import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { mensajeDeAlta } from "@/lib/colaboradores";
+import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -24,6 +26,7 @@ export function NewCollaboratorDialog({
   esMaster?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [limite, setLimite] = useState<string | null>(null);
   const { run, pending } = useAction();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -42,8 +45,13 @@ export function NewCollaboratorDialog({
           pack_roles: data.getAll("pack_roles").map((v) => String(v)),
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string; resultado?: string };
-      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo crear la cuenta." };
+      const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string; resultado?: string };
+      if (!res.ok) {
+        // Tope de colaboradores del plan (HU-BILL-05): no se creó ni se invitó a nadie.
+        setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de colaboradores de tu plan.") : null);
+        return { ok: false, status: res.status, error: json.error ?? "No se pudo crear la cuenta." };
+      }
+      setLimite(null);
       return { ok: true, success: mensajeDeAlta(json.resultado) };
     });
     if (ok) setOpen(false);
@@ -101,6 +109,8 @@ export function NewCollaboratorDialog({
               </div>
             </fieldset>
           )}
+
+          {limite && <AvisoLimiteDePlan mensaje={limite} />}
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
