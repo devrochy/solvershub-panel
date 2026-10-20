@@ -121,3 +121,8 @@ export type EditorPublishOut = components["schemas"]["EditorPublishOut"];
 
 // Conocimiento del agente (HU-AOS-49, pack_knowledge).
 export type KnowledgeDocument = components["schemas"]["DocumentoOut"];
+
+// Datos de prueba por agente (HU-QA-10, solo en test).
+export type EstadoDatosDePrueba = components["schemas"]["EstadoDatosDePrueba"];
+export type LoteGenerado = components["schemas"]["LoteGenerado"];
+export type DatosRetirados = components["schemas"]["DatosRetirados"];
