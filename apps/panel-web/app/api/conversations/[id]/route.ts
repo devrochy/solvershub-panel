@@ -2,16 +2,20 @@ import { NextResponse } from "next/server";
 
 import { apiFetch } from "@/lib/api/server";
 
-const ACTIONS = new Set(["message", "toggle-bot", "resolve", "template"]);
+const ACTIONS = new Set(["message", "toggle-bot", "resolve", "template", "take", "return-to-bot", "note"]);
 
 type Body = {
   action?: string;
   content?: string;
   template_id?: string;
   variables?: Record<string, string>;
+  text?: string;
 };
 
-/** BFF: acciones sobre una conversación (mensaje humano, plantilla, bot, resolver). */
+type Action = "message" | "template" | "toggle-bot" | "resolve" | "take" | "return-to-bot" | "note";
+
+/** BFF: acciones sobre una conversación (mensaje humano, plantilla, bot, resolver, tomar,
+ * devolver al agente y notas internas). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as Body | null;
@@ -25,14 +29,19 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     template: `/admin/conversations/${id}/template-messages`,
     "toggle-bot": `/admin/conversations/${id}/toggle-bot`,
     resolve: `/admin/conversations/${id}/resolve`,
-  }[action as "message" | "template" | "toggle-bot" | "resolve"];
+    take: `/admin/conversations/${id}/take`,
+    "return-to-bot": `/admin/conversations/${id}/return-to-bot`,
+    note: `/admin/conversations/${id}/notes`,
+  }[action as Action];
 
   const payload =
     action === "message"
       ? { content: body?.content ?? "" }
       : action === "template"
         ? { template_id: body?.template_id ?? "", variables: body?.variables ?? {} }
-        : undefined;
+        : action === "note"
+          ? { text: body?.text ?? "" }
+          : undefined;
 
   const res = await apiFetch(path, { method: "POST", body: payload });
   if (!res.ok) {

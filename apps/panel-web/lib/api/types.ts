@@ -18,6 +18,10 @@ export type UsageMetric = components["schemas"]["UsageMetric"];
 export type ConversationSummary = components["schemas"]["ConversationSummary"];
 export type ConversationDetail = components["schemas"]["ConversationDetail"];
 export type MessageItem = components["schemas"]["MessageItem"];
+export type MessagesSince = components["schemas"]["MessagesSince"];
+export type ConversationConnection = components["schemas"]["ConversationConnection"];
+export type ActiveEscalation = components["schemas"]["ActiveEscalation"];
+export type ConversationNote = components["schemas"]["ConversationNote"];
 export type ConversationPage = components["schemas"]["Page_ConversationSummary_"];
 
 export type PluginSummary = components["schemas"]["PluginSummary"];

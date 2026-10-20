@@ -1,35 +1,27 @@
-import Link from "next/link";
-
+import { Bandeja } from "@/app/(app)/conversaciones/_components/bandeja";
 import { ConversationFilters } from "@/app/(app)/conversaciones/_components/conversation-filters";
-import { BinaryBadge, CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { ConversationPage } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
-import { canalLabel } from "@/lib/labels";
+import type { ConversationConnection, ConversationDetail, ConversationPage } from "@/lib/api/types";
 
 export const metadata = { title: "Conversaciones" };
 
-type ConversationRow = ConversationPage["items"][number];
+type Filtros = { q?: string; status?: string; connection_id?: string; page?: string; c?: string };
 
-export default async function ConversationsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
-}) {
+export default async function ConversationsPage({ searchParams }: { searchParams: Promise<Filtros> }) {
   const sp = await searchParams;
   const qs = new URLSearchParams();
   if (sp.q) qs.set("q", sp.q);
   if (sp.status) qs.set("status", sp.status);
+  if (sp.connection_id) qs.set("connection_id", sp.connection_id);
   if (sp.page) qs.set("page", sp.page);
 
-  const res = await apiFetch<ConversationPage>(
-    `/admin/conversations${qs.size ? `?${qs.toString()}` : ""}`,
-  );
+  const [res, conexiones, detalle] = await Promise.all([
+    apiFetch<ConversationPage>(`/admin/conversations${qs.size ? `?${qs.toString()}` : ""}`),
+    apiFetch<ConversationConnection[]>("/admin/conversations/connections"),
+    sp.c ? apiFetch<ConversationDetail>(`/admin/conversations/${encodeURIComponent(sp.c)}`) : null,
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -39,78 +31,47 @@ export default async function ConversationsPage({
   }
   const { items, page, has_more, total } = res.data;
 
-  const columns: Column<ConversationRow>[] = [
-    {
-      key: "cliente",
-      header: "Cliente",
-      cell: (conv) => conv.customer_name ?? conv.external_id ?? "Cliente",
-    },
-    {
-      key: "canal",
-      header: "Canal",
-      cell: (conv) => <Badge variant="neutral">{canalLabel(conv.channel)}</Badge>,
-    },
-    {
-      key: "estado",
-      header: "Estado",
-      cell: (conv) => <StatusBadge value={conv.status} map={CONVERSATION_STATUS} />,
-    },
-    {
-      key: "agente",
-      header: "Agente",
-      cell: (conv) => (
-        <BinaryBadge
-          active={!conv.bot_paused}
-          activeLabel="Activo"
-          inactiveLabel="Pausado"
-          tone="success"
-        />
-      ),
-    },
-    {
-      key: "inicio",
-      header: "Inicio",
-      cell: (conv) => <span className="text-body">{formatDateTime(conv.started_at)}</span>,
-    },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (conv) => (
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/conversaciones/${conv.id}`}>Ver</Link>
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Conversaciones" description="Atenciones del agente con cada cliente."   helpSection="conversations"
+      <PageHeader
+        title="Conversaciones"
+        description="Atiende a tus clientes en vivo: los mensajes llegan solos."
+        helpSection="conversations"
+      />
+
+      {/* En el celular, con un chat abierto, los filtros quedan en la lista («Volver»). */}
+      <div className={sp.c ? "hidden lg:block" : undefined}>
+        <ConversationFilters
+          q={sp.q}
+          status={sp.status}
+          connectionId={sp.connection_id}
+          connections={conexiones.ok ? conexiones.data : []}
         />
+      </div>
 
-      <ConversationFilters q={sp.q} status={sp.status} />
+      {detalle && !detalle.ok && (
+        <p role="alert" className="text-sm text-status-danger-fg">
+          {detalle.status === 404
+            ? "Esa conversación no existe o es de otro negocio."
+            : `No se pudo abrir la conversación: ${detalle.error}`}
+        </p>
+      )}
 
-      <DataTable
-        columns={columns}
-        rows={items}
-        getRowKey={(conv) => conv.id}
-        emptyTitle="Sin conversaciones todavía"
-        emptyDescription="Aparecerán aquí en cuanto el agente atienda mensajes."
-        serverPaginated
-      />
+      <Bandeja chats={items} query={qs.toString()} detalle={detalle?.ok ? detalle.data : null} />
 
-      <Pagination
-        page={page}
-        hasMore={has_more}
-        total={total}
-        label="conversaciones"
-        makeHref={(target) => {
-          const next = new URLSearchParams(qs);
-          next.set("page", String(target));
-          return `/conversaciones?${next.toString()}`;
-        }}
-      />
+      {(page > 1 || has_more) && (
+        <Pagination
+          page={page}
+          hasMore={has_more}
+          total={total}
+          label="conversaciones"
+          makeHref={(target) => {
+            const next = new URLSearchParams(qs);
+            next.set("page", String(target));
+            return `/conversaciones?${next.toString()}`;
+          }}
+        />
+      )}
     </div>
   );
 }

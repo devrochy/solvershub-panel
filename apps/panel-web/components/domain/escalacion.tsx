@@ -72,7 +72,7 @@ export function ResumenEscalacion({ esc }: { esc: Fila }) {
         description={formatDateTime(esc.created_at)}
         footer={
           <Button asChild variant="outline" size="sm">
-            <Link href={`/conversaciones/${esc.conversation_id}`}>Ver conversación</Link>
+            <Link href={`/conversaciones?c=${esc.conversation_id}`}>Ver conversación</Link>
           </Button>
         }
       >

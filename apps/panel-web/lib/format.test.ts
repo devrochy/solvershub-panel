@@ -5,6 +5,7 @@ import {
   formatCop,
   formatDate,
   formatDateTime,
+  formatHoraChat,
   formatList,
   formatMoney,
   formatNumber,
@@ -76,5 +77,14 @@ describe("formatMoney (HU-UI-01)", () => {
 
   it("formatCop delega en formatMoney", () => {
     expect(formatCop(200000)).toBe(formatMoney(200000, "COP"));
+  });
+});
+
+describe("formatHoraChat (HU-UX-15)", () => {
+  const ahora = new Date(2026, 9, 19, 18, 0);
+  it("de hoy muestra la hora y de otro día la fecha", () => {
+    expect(formatHoraChat(new Date(2026, 9, 19, 9, 5), ahora)).toMatch(/9:05/);
+    expect(formatHoraChat(new Date(2026, 9, 18, 9, 5), ahora)).toMatch(/18\/10\/(20)?26/);
+    expect(formatHoraChat(null, ahora)).toBe("");
   });
 });
