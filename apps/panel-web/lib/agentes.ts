@@ -8,6 +8,8 @@ export const PESTANAS = [
   { id: "tareas", label: "Tareas" },
   { id: "registros", label: "Clientes y registros" },
   { id: "consumo", label: "Consumo y calidad" },
+  // HU-AOS-49: documentos del negocio con los que responde. Solo especialistas con id.
+  { id: "conocimiento", label: "Conocimiento" },
 ] as const;
 
 export type Pestana = (typeof PESTANAS)[number]["id"];
@@ -138,6 +140,19 @@ export function consistencia(mediciones: { pass_k: number; k: number }[]): {
  * ¿Mostrar «Nuevo agente» y «Editar» (editor de HU-AOS-24)? Escriben en la sección `settings` y,
  * con el runtime legacy, solo el master (la API responde 403 `aos_runtime_legacy`).
  */
+/** ¿La pestaña Conocimiento aplica? Solo a especialistas (el Coordinador no tiene documentos). */
+export function tieneConocimiento(agente: { id?: string | null; kind: string }): boolean {
+  return Boolean(agente.id) && agente.kind === "specialist";
+}
+
+/** Subir, borrar y reprocesar documentos: escritura en la sección `agents` (o master). */
+export function puedeEscribirConocimiento(me: {
+  role?: string | null;
+  permissions?: Record<string, string | null | undefined> | null;
+}): boolean {
+  return me.role === "master" || me.permissions?.agents === "write";
+}
+
 export function puedeEditarAgentes(
   me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null },
   runtime: string,

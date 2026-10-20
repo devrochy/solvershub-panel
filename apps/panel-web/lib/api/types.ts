@@ -118,3 +118,6 @@ export type PublishTarget = components["schemas"]["PublishTarget"];
 export type PublishTargetPage = components["schemas"]["Page_PublishTarget_"];
 export type FromTemplateOut = components["schemas"]["FromTemplateOut"];
 export type EditorPublishOut = components["schemas"]["EditorPublishOut"];
+
+// Conocimiento del agente (HU-AOS-49, pack_knowledge).
+export type KnowledgeDocument = components["schemas"]["DocumentoOut"];

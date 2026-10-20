@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
+import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimiento";
 import {
   ConsumoDelAgente,
   ConversacionesDelAgente,
@@ -16,10 +17,12 @@ import { apiFetch, type ApiResult } from "@/lib/api/server";
 import type {
   AgentConversationPage,
   AgentCustomerPage,
+  AgentDetail,
   AgentRecordPage,
   AgentsOverview,
   AgentTaskPage,
   AgentUsage,
+  KnowledgeDocument,
   Me,
 } from "@/lib/api/types";
 import {
@@ -28,11 +31,14 @@ import {
   PESTANAS,
   pestanaValida,
   puedeEditarAgentes,
+  puedeEscribirConocimiento,
   queryDeApi,
   refValido,
+  tieneConocimiento,
   tipoDeAgente,
   type Pestana,
 } from "@/lib/agentes";
+import { usaConocimiento } from "@/lib/conocimiento";
 
 export const metadata = { title: "Agente" };
 
@@ -69,7 +75,10 @@ export default async function AgentePage({
   // Nunca un 403 por diseño: sin permiso de conversaciones, esa pestaña no se muestra.
   const permisos = (meRes.ok ? meRes.data.permissions : null) ?? {};
   const verConversaciones = meRes.ok && (meRes.data.role === "master" || Boolean(permisos.conversations));
-  const pestanas = PESTANAS.filter((p) => p.id !== "conversaciones" || verConversaciones);
+  const pestanas = PESTANAS.filter(
+    (p) =>
+      (p.id !== "conversaciones" || verConversaciones) && (p.id !== "conocimiento" || tieneConocimiento(agente)),
+  );
   const actual: Pestana = pestanas.some((p) => p.id === tab) ? tab : pestanas[0].id;
   const vigente = { tab: actual, ...filtros };
   const base = `/admin/agents/${ref}`;
@@ -118,6 +127,23 @@ export default async function AgentePage({
     );
     paginada = records.data;
     etiqueta = "registros";
+  } else if (actual === "conocimiento" && agente.id) {
+    const [docs, detalle] = await Promise.all([
+      apiFetch<KnowledgeDocument[]>(`/pack/pack_knowledge/agents/${agente.id}/documents`),
+      apiFetch<AgentDetail>(`/admin/agents/${agente.id}`),
+    ]);
+    if (!docs.ok) return <ErrorDeCarga res={docs} />;
+    const borrador = detalle.ok ? (detalle.data.draft?.content as Record<string, unknown> | undefined) : undefined;
+    contenido = (
+      <ConocimientoDelAgente
+        agenteId={agente.id}
+        nombre={agente.name}
+        documentos={docs.data}
+        puedeEscribir={meRes.ok && puedeEscribirConocimiento(meRes.data)}
+        usaConocimiento={borrador ? usaConocimiento(borrador) : false}
+        puedeEditar={meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime)}
+      />
+    );
   } else {
     const res = await apiFetch<AgentUsage>(`${base}/usage?${queryDeApi(filtros, new Date(), false)}`);
     if (!res.ok) return <ErrorDeCarga res={res} />;
@@ -153,13 +179,15 @@ export default async function AgentePage({
         ),
       }}
     >
-      <AgentFilters
-        baseHref={`/agentes/${ref}`}
-        tab={actual}
-        dias={filtros.dias}
-        conexion={filtros.conexion}
-        connections={conexiones}
-      />
+      {actual !== "conocimiento" && (
+        <AgentFilters
+          baseHref={`/agentes/${ref}`}
+          tab={actual}
+          dias={filtros.dias}
+          conexion={filtros.conexion}
+          connections={conexiones}
+        />
+      )}
       {contenido}
       {paginada && paginada.total > 0 && (
         <Pagination

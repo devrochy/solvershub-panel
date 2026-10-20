@@ -3,11 +3,12 @@
  *
  * El borrador es un AgentSpec v3 (`agentspec/3`). El editor solo toca lo que el dueño ve
  * (persona, modelo, superpoderes y sus frases, memoria) y conserva intacto el resto del
- * contenido (tools, guardrails, playbooks, declarativas...). Las reglas que se repiten aquí
+ * contenido (guardrails, declarativas, tools y playbooks ajenos...). Las reglas que se repiten aquí
  * las vuelve a exigir la API al publicar (`POST /admin/agents/{id}/publish`); este módulo solo
  * adelanta los mismos errores junto a cada campo.
  */
 import type { Superpower } from "@/lib/api/types";
+import { aplicarConocimiento, conocimientoDesdeContenido, type ConocimientoEnEditor } from "@/lib/conocimiento";
 
 export type PasoId = "identidad" | "modelo" | "superpoderes" | "memoria" | "publicar";
 
@@ -15,7 +16,7 @@ export const PASOS: { id: PasoId; titulo: string; descripcion: string }[] = [
   { id: "identidad", titulo: "Identidad", descripcion: "Nombre y cómo habla tu agente." },
   { id: "modelo", titulo: "Proveedor y modelo", descripcion: "La IA que usa y lo que cuesta." },
   { id: "superpoderes", titulo: "Superpoderes", descripcion: "Qué sabe hacer y con qué frases lo reconoce." },
-  { id: "memoria", titulo: "Memoria", descripcion: "Cuánto recuerda de cada conversación." },
+  { id: "memoria", titulo: "Memoria y conocimiento", descripcion: "Cuánto recuerda y si responde con tus documentos." },
   { id: "publicar", titulo: "Publicar", descripcion: "Dónde atiende y su nueva versión." },
 ];
 
@@ -42,6 +43,8 @@ export type EstadoDelEditor = {
   superpoderes: Record<string, SuperpoderEnEditor>;
   turnosDeMemoria: number;
   alcances: string[];
+  /** Documentos del negocio (HU-AOS-49): la tool, el playbook y el bloque `knowledge`. */
+  conocimiento: ConocimientoEnEditor;
 };
 
 type Ref = { id: string; version: string; overrides?: { examples?: string[]; description?: string | null } };
@@ -90,6 +93,7 @@ export function estadoDesdeBorrador(
     superpoderes,
     turnosDeMemoria: typeof memoria.shortTermTurns === "number" ? memoria.shortTermTurns : 30,
     alcances: Array.isArray(memoria.readScopes) ? textos(memoria.readScopes) : ["customer", "connection", "tenant"],
+    conocimiento: conocimientoDesdeContenido(contenido),
   };
 }
 
@@ -131,7 +135,7 @@ export function contenidoDesdeEstado(base: Contenido, estado: EstadoDelEditor, c
     };
     procedures.push({ id, version, ...(Object.keys(overrides).length > 0 ? { overrides } : {}) });
   }
-  return {
+  return aplicarConocimiento({
     ...base,
     persona: {
       ...objeto(base.persona),
@@ -142,7 +146,7 @@ export function contenidoDesdeEstado(base: Contenido, estado: EstadoDelEditor, c
     model: { ...objeto(base.model), primary: estado.modelo, temperature: estado.temperatura },
     procedures,
     memory: { ...objeto(base.memory), shortTermTurns: estado.turnosDeMemoria, readScopes: estado.alcances },
-  };
+  }, estado.conocimiento);
 }
 
 /** Minúsculas, sin tildes ni signos, espacios simples (como `textos.normalizar` del core). */
@@ -198,7 +202,7 @@ export function pasoDelCampo(campo: string): PasoId {
   if (campo === "name" || campo === "description" || campo.startsWith("persona")) return "identidad";
   if (campo.startsWith("model")) return "modelo";
   if (campo.startsWith("procedures") || campo.startsWith("tools") || campo.startsWith("playbooks")) return "superpoderes";
-  if (campo.startsWith("memory")) return "memoria";
+  if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "memoria";
   return "publicar";
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
 import { ListaDeFrases } from "@/app/(app)/agentes/[id]/editar/_components/lista-de-frases";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +21,7 @@ import {
   type EstadoDelEditor,
 } from "@/lib/agentes-editor";
 import type { LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 
@@ -46,10 +49,10 @@ function ErrorDeCampo({ id, mensaje }: { id: string; mensaje?: string }) {
   );
 }
 
-function Avanzado({ children }: { children: React.ReactNode }) {
+function Avanzado({ children, titulo = "Opciones avanzadas" }: { children: React.ReactNode; titulo?: string }) {
   return (
     <details className="rounded-md border border-border-soft px-4 py-3">
-      <summary className="cursor-pointer text-sm font-medium text-headline">Opciones avanzadas</summary>
+      <summary className="cursor-pointer text-sm font-medium text-headline">{titulo}</summary>
       <div className="mt-4 flex flex-col gap-4">{children}</div>
     </details>
   );
@@ -299,7 +302,17 @@ export function PasoSuperpoderes({
 }
 
 // ------------------------------------------------------------------ 4. memoria
-export function PasoMemoria({ estado, cambiar, errores }: { estado: EstadoDelEditor; cambiar: Cambiar; errores: Errores }) {
+export function PasoMemoria({
+  estado,
+  cambiar,
+  errores,
+  agenteId,
+}: {
+  estado: EstadoDelEditor;
+  cambiar: Cambiar;
+  errores: Errores;
+  agenteId: string;
+}) {
   function alternar(id: string, activo: boolean) {
     cambiar({ alcances: activo ? [...new Set([...estado.alcances, id])] : estado.alcances.filter((a) => a !== id) });
   }
@@ -336,7 +349,122 @@ export function PasoMemoria({ estado, cambiar, errores }: { estado: EstadoDelEdi
           />
         </Field>
       </Avanzado>
+      <SeccionConocimiento
+        conocimiento={estado.conocimiento}
+        cambiar={(cambio) => cambiar({ conocimiento: { ...estado.conocimiento, ...cambio } })}
+        agenteId={agenteId}
+        errores={errores}
+      />
     </div>
+  );
+}
+
+/** Documentos del negocio (HU-AOS-49): activar la búsqueda y ajustarla. */
+function SeccionConocimiento({
+  conocimiento,
+  cambiar,
+  agenteId,
+  errores,
+}: {
+  conocimiento: ConocimientoEnEditor;
+  cambiar: (cambio: Partial<ConocimientoEnEditor>) => void;
+  agenteId: string;
+  errores: Errores;
+}) {
+  const umbralPropio = conocimiento.umbral !== null;
+  return (
+    <section aria-labelledby="conocimiento-titulo" className="flex flex-col gap-4 border-t border-border-soft pt-4">
+      <h3 id="conocimiento-titulo" className="text-sm font-medium text-headline">
+        Documentos del negocio
+      </h3>
+      <div className="flex items-start gap-3">
+        <Switch
+          id="conocimiento-activo"
+          checked={conocimiento.activo}
+          onCheckedChange={(activo) => cambiar({ activo })}
+          aria-describedby="conocimiento-ayuda"
+        />
+        <div>
+          <label htmlFor="conocimiento-activo" className="text-sm font-medium text-headline">
+            Responder con los documentos que le subas
+          </label>
+          <p id="conocimiento-ayuda" className="text-sm text-text-soft">
+            Busca en tus preguntas frecuentes, catálogos y políticas antes de responder, y cita de dónde sale el dato.
+            Los documentos se suben en la{" "}
+            <Link href={`/agentes/${agenteId}?tab=conocimiento`} className="text-link underline underline-offset-2">
+              pestaña Conocimiento
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+      {conocimiento.activo && (
+        <>
+          <RadioGroup
+            label="Cómo busca"
+            name="conocimiento-modo"
+            options={MODOS}
+            value={conocimiento.modo}
+            onValueChange={(modo) => cambiar({ modo: modo as ModoDeBusqueda })}
+          />
+          <Avanzado titulo="Ajustes de la búsqueda">
+            <Field
+              label="Fragmentos que usa por respuesta"
+              htmlFor="conocimiento-fragmentos"
+              help={`Entre 1 y ${MAX_FRAGMENTOS}. Más fragmentos = más contexto y más costo por respuesta.`}
+              error={errores["knowledge.topK"]}
+            >
+              <Input
+                id="conocimiento-fragmentos"
+                type="number"
+                min={1}
+                max={MAX_FRAGMENTOS}
+                value={conocimiento.fragmentos}
+                onChange={(e) =>
+                  cambiar({ fragmentos: Math.max(1, Math.min(MAX_FRAGMENTOS, Number(e.target.value) || 1)) })
+                }
+                className="max-w-32"
+              />
+            </Field>
+            <div className="flex items-start gap-3">
+              <Switch
+                id="conocimiento-umbral-propio"
+                checked={umbralPropio}
+                onCheckedChange={(propio) => cambiar({ umbral: propio ? 0.45 : null })}
+                aria-describedby="conocimiento-umbral-ayuda"
+              />
+              <div>
+                <label htmlFor="conocimiento-umbral-propio" className="text-sm font-medium text-headline">
+                  Fijar la similitud mínima
+                </label>
+                <p id="conocimiento-umbral-ayuda" className="text-sm text-text-soft">
+                  Apagado, usa el valor calibrado para cada modo (recomendado).
+                </p>
+              </div>
+            </div>
+            {umbralPropio && (
+              <Field
+                label="Similitud mínima (0 a 1)"
+                htmlFor="conocimiento-umbral"
+                help="Más alto = menos fragmentos y solo los muy parecidos a la pregunta."
+                error={errores["knowledge.minScore"]}
+              >
+                <Input
+                  id="conocimiento-umbral"
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={conocimiento.umbral ?? 0}
+                  onChange={(e) => cambiar({ umbral: Math.max(0, Math.min(1, Number(e.target.value) || 0)) })}
+                  className="max-w-32"
+                />
+              </Field>
+            )}
+          </Avanzado>
+        </>
+      )}
+    </section>
   );
 }
 
