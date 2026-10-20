@@ -2463,6 +2463,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Os
+         * @description Banderas del Agent OS del negocio, la global del entorno y el último cambio (quién y cuándo).
+         */
+        get: operations["get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get"];
+        /**
+         * Put Agent Os
+         * @description Lleva el negocio al estado pedido (HU-AOS-15, orden de ADR-0112): al pasar a v3 corre los
+         *     backfills del negocio y `migrar-a-v3` (con `construir` si se pide); al volver a legacy apaga
+         *     todo. Escribe con `aos_fijar_banderas` (auditada). 422 `agent_os_orden` (combinación fuera de
+         *     orden), 409 `agent_os_bloqueado` (precondiciones; `details` trae bloqueos y avisos) o
+         *     `agent_os_en_curso` (otro cambio en curso).
+         */
+        put: operations["put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os/simular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simular Agent Os
+         * @description Dry-run del cambio: bloqueos, avisos y los pasos que aplicaría. No escribe nada (ni
+         *     backfills, ni releases, ni banderas). 422 `agent_os_orden` si el objetivo viola el orden.
+         */
+        post: operations["simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/declarative-tools": {
         parameters: {
             query?: never;
@@ -5136,6 +5185,34 @@ export interface paths {
         /** Publish To Connections */
         post: operations["publish_to_connections_api_v1_admin_agents__agent_id__publish_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/datos-de-prueba": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado Datos De Prueba
+         * @description Estado de los datos de prueba del agente.
+         */
+        get: operations["estado_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_get"];
+        put?: never;
+        /**
+         * Generar Datos De Prueba
+         * @description Genera los datos de prueba del agente según la descripción del negocio y reemplaza los anteriores.
+         */
+        post: operations["generar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_post"];
+        /**
+         * Borrar Datos De Prueba
+         * @description Retira los datos de prueba del agente; lo creado a mano no se toca.
+         */
+        delete: operations["borrar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -10675,6 +10752,87 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * AgentOSBanderas
+         * @description Estado de las banderas del Agent OS de un negocio (ADR-0112, ADR-0138).
+         */
+        AgentOSBanderas: {
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "legacy" | "v3";
+            /** Procedures */
+            procedures: boolean;
+            /**
+             * Routing
+             * @enum {string}
+             */
+            routing: "off" | "shadow" | "active";
+        };
+        /** AgentOSCambio */
+        AgentOSCambio: {
+            /** Actor */
+            actor: string;
+            /**
+             * Fecha
+             * Format: date-time
+             */
+            fecha: string;
+        };
+        /** AgentOSEstado */
+        AgentOSEstado: {
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "legacy" | "v3";
+            /** Procedures */
+            procedures: boolean;
+            /**
+             * Routing
+             * @enum {string}
+             */
+            routing: "off" | "shadow" | "active";
+            /** Aos Connection Routing */
+            aos_connection_routing: boolean;
+            ultimo_cambio?: components["schemas"]["AgentOSCambio"] | null;
+        };
+        /** AgentOSObjetivo */
+        AgentOSObjetivo: {
+            /**
+             * Runtime
+             * @enum {string}
+             */
+            runtime: "legacy" | "v3";
+            /** Procedures */
+            procedures: boolean;
+            /**
+             * Routing
+             * @enum {string}
+             */
+            routing: "off" | "shadow" | "active";
+            /**
+             * Construir
+             * @default false
+             */
+            construir: boolean;
+        };
+        /** AgentOSResultado */
+        AgentOSResultado: {
+            /** Accion */
+            accion: string;
+            antes: components["schemas"]["AgentOSBanderas"];
+            despues: components["schemas"]["AgentOSBanderas"];
+            /** Aos Connection Routing */
+            aos_connection_routing: boolean;
+            /** Pasos */
+            pasos: string[];
+            /** Bloqueos */
+            bloqueos: string[];
+            /** Avisos */
+            avisos: string[];
+        };
         /** AgentPatch */
         AgentPatch: {
             /** Name */
@@ -12041,6 +12199,99 @@ export interface components {
             created_at: string;
             /** Processed At */
             processed_at: string | null;
+        };
+        /** DatosRetirados */
+        DatosRetirados: {
+            /** Retirados */
+            retirados: number;
+        };
+        /** EstadoDatosDePrueba */
+        EstadoDatosDePrueba: {
+            /** Disponible */
+            disponible: boolean;
+            /**
+             * Motivo
+             * @description Por qué el agente no tiene datos que generar.
+             */
+            motivo?: string | null;
+            /**
+             * Falta Descripcion
+             * @description El negocio no tiene descripción propia: hay que escribirla antes.
+             */
+            falta_descripcion: boolean;
+            forma: components["schemas"]["FormaDeDatosOut"] | null;
+            lote: components["schemas"]["LoteDePrueba"] | null;
+        };
+        /** FormaDeDatosOut */
+        FormaDeDatosOut: {
+            /** Modo */
+            modo: string;
+            /** Titulo */
+            titulo: string;
+        };
+        /** LoteDePrueba */
+        LoteDePrueba: {
+            /**
+             * Lote Id
+             * Format: uuid
+             */
+            lote_id: string;
+            /** Modo */
+            modo: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla";
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Conteos
+             * @description Registros creados por tipo (`producto`, `cita`, `cliente`…).
+             */
+            conteos: {
+                [key: string]: number;
+            };
+        };
+        /** LoteGenerado */
+        LoteGenerado: {
+            /**
+             * Lote Id
+             * Format: uuid
+             */
+            lote_id: string;
+            /** Modo */
+            modo: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla";
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Conteos
+             * @description Registros creados por tipo (`producto`, `cita`, `cliente`…).
+             */
+            conteos: {
+                [key: string]: number;
+            };
+            /**
+             * Motivo Plantilla
+             * @description Por qué se usó la plantilla: el LLM falló o su respuesta no cumplió el formato.
+             */
+            motivo_plantilla?: ("proveedor" | "formato") | null;
+            /**
+             * Retirados
+             * @description Registros del lote anterior que se retiraron.
+             */
+            retirados: number;
         };
     };
     responses: never;
@@ -16769,6 +17020,113 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMetaApp"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentOSEstado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentOSObjetivo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentOSResultado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentOSObjetivo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentOSResultado"];
                 };
             };
             /** @description Validation Error */
@@ -22555,6 +22913,105 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoDatosDePrueba"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoteGenerado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatosRetirados"];
+                };
             };
             /** @description Validation Error */
             422: {
