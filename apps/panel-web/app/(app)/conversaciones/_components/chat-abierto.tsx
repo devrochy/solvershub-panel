@@ -106,7 +106,7 @@ function NotasInternas({ conversationId, notas }: { conversationId: string; nota
 
   return (
     <details>
-      <summary className="cursor-pointer list-none rounded-sm text-sm font-semibold text-headline focus-visible:outline-2">
+      <summary className="cursor-pointer list-none rounded-sm text-sm font-semibold [&::-webkit-details-marker]:hidden text-headline focus-visible:outline-2">
         Notas internas{notas.length ? ` (${notas.length})` : ""}
       </summary>
       <div className="mt-3 flex flex-col gap-3">

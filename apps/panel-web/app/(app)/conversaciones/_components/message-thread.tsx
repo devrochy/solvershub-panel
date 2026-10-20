@@ -14,7 +14,7 @@ const SENDER_LABEL: Record<string, string> = {
 function HerramientasDelTurno({ nombres }: { nombres: string[] }) {
   return (
     <details className="group text-xs text-text-soft">
-      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-sm hover:text-headline focus-visible:outline-2">
+      <summary className="inline-flex cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden gap-1 rounded-sm hover:text-headline focus-visible:outline-2">
         <Wrench aria-hidden className="h-3 w-3" />
         {nombres.length === 1 ? "Usó 1 herramienta" : `Usó ${nombres.length} herramientas`}
       </summary>
