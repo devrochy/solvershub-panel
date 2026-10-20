@@ -190,3 +190,83 @@ body {
   outline-offset: 3px;
   border-radius: var(--sh-radius-md);
 }
+
+/* Agenda (HU-UX-08): FullCalendar con los tokens del sistema de diseño, en claro y oscuro. */
+.agenda-grilla {
+  --fc-border-color: var(--sh-border-soft);
+  --fc-page-bg-color: var(--sh-surface);
+  --fc-neutral-bg-color: var(--sh-surface-2);
+  --fc-list-event-hover-bg-color: var(--sh-hover);
+  --fc-today-bg-color: color-mix(in oklab, var(--sh-cyan-400) 8%, transparent);
+  --fc-now-indicator-color: var(--sh-danger);
+  --fc-highlight-color: color-mix(in oklab, var(--sh-focus) 18%, transparent);
+  --fc-button-text-color: var(--sh-text);
+  --fc-button-bg-color: var(--sh-surface);
+  --fc-button-border-color: var(--sh-control-border);
+  --fc-button-hover-bg-color: var(--sh-hover);
+  --fc-button-hover-border-color: var(--sh-border-strong);
+  --fc-button-active-bg-color: var(--sh-surface-2);
+  --fc-button-active-border-color: var(--sh-focus);
+  color: var(--sh-text);
+}
+.agenda-grilla .fc-toolbar-title {
+  font-family: var(--sh-font-display);
+  font-size: 1.125rem;
+}
+/* Franjas de media hora más altas: una cita de 20-30 min deja leer hora, código y cliente. */
+.agenda-grilla .fc-timegrid-slot {
+  height: 2.5rem;
+}
+.agenda-grilla .fc-col-header-cell-cushion,
+.agenda-grilla .fc-daygrid-day-number,
+.agenda-grilla .fc-timegrid-slot-label-cushion {
+  color: var(--sh-text-muted);
+}
+
+/* Cita: fondo apenas teñido con el color de su tipo y borde izquierdo lleno. El texto va en
+   el color de texto, así el contraste no depende del color de la serie (AA en claro y oscuro). */
+.agenda-grilla .fc-event[class*="evt-cat-"],
+.agenda-grilla .fc-event.evt-sin-tipo {
+  --evt-color: var(--sh-border-strong);
+  background: color-mix(in oklab, var(--evt-color) 16%, var(--sh-surface));
+  border: 0;
+  border-left: 4px solid var(--evt-color);
+  border-radius: var(--sh-radius-sm);
+}
+.agenda-grilla .fc-event.evt-cat-1 { --evt-color: var(--sh-data-cat-1); }
+.agenda-grilla .fc-event.evt-cat-2 { --evt-color: var(--sh-data-cat-2); }
+.agenda-grilla .fc-event.evt-cat-3 { --evt-color: var(--sh-data-cat-3); }
+.agenda-grilla .fc-event.evt-cat-4 { --evt-color: var(--sh-data-cat-4); }
+.agenda-grilla .fc-event[class*="evt-cat-"] .fc-event-main,
+.agenda-grilla .fc-event.evt-sin-tipo .fc-event-main,
+.agenda-grilla .fc-daygrid-event[class*="evt-cat-"],
+.agenda-grilla .fc-daygrid-event.evt-sin-tipo {
+  color: var(--sh-text);
+}
+.agenda-grilla .fc-daygrid-event[class*="evt-cat-"] .fc-daygrid-event-dot,
+.agenda-grilla .fc-daygrid-event.evt-sin-tipo .fc-daygrid-event-dot {
+  border-color: var(--evt-color);
+}
+.agenda-grilla .fc-event.evt-cancelada {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+/* Bloqueo: franja rayada a lo ancho de la columna, detrás de las citas y arrastrable. */
+.agenda-grilla .fc-event.evt-bloqueo {
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--sh-text-soft) 22%, transparent) 0 6px,
+    transparent 6px 12px
+  ),
+    var(--sh-surface-2);
+  border: 1px dashed var(--sh-border-strong);
+  color: var(--sh-text-muted);
+}
+.agenda-grilla .fc-event.evt-bloqueo .fc-event-main {
+  color: var(--sh-text-muted);
+}
+.agenda-grilla .fc-timegrid-event-harness:has(> .evt-bloqueo) {
+  inset-inline: 0 !important;
+  z-index: 0 !important;
+}

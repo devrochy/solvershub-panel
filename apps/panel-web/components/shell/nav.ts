@@ -75,6 +75,12 @@ export type NavItem = {
    * menú. Cada ruta del panel es una entrada o una pestaña de una entrada.
    */
   tabs?: NavItem[];
+  /**
+   * true = página de la entrada que no se muestra como pestaña (HU-UX-08: Bloqueos se crea
+   * y se mueve desde el Calendario). Sigue en `rutasDelMenu`, así su ruta queda protegida
+   * por su clave de permiso y las migas la ubican.
+   */
+  oculta?: boolean;
 };
 
 export type NavGroupDef = {
@@ -139,8 +145,11 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: Shapes, ready: true },
           // Misma clave que el backend (`pack_calendar:configuracion`, «Horarios y calendario»).
           { section: "pack_calendar:configuracion", label: "Horario", href: "/calendario/horario", icon: Clock, ready: true },
-          { section: "pack_calendar:bloqueos", label: "Bloqueos", href: "/calendario/bloqueos", icon: CalendarX, ready: true },
+          // Google Calendar pasa a la ficha de su conexión con HU-UX-09; hasta entonces queda aquí.
           { section: "pack_calendar:conexion", label: "Google Calendar", href: "/calendario", icon: Link2, ready: true },
+          // HU-UX-08: los bloqueos se crean y se arrastran en el Calendario. Va al final para
+          // que la entrada nunca abra en ella si el usuario ve el Calendario.
+          { section: "pack_calendar:bloqueos", label: "Bloqueos", href: "/calendario/bloqueos", icon: CalendarX, ready: true, oculta: true },
         ],
         { pack: "pack_calendar" },
       ),

@@ -108,6 +108,7 @@ export type Pestana = { href: string; label: string };
  * Pestañas de la entrada actual (HU-UX-02). Si la entrada tiene subgrupos (Cobranza:
  * Operación, Monitoreo, Seguridad), `subgrupos` lleva a la primera pestaña de cada uno
  * (`subgrupoActual` es la del subgrupo de la página) y `pestanas` son las del subgrupo actual. Cada fila solo se muestra si tiene más de una.
+ * Las páginas `oculta` no salen como pestaña, aunque se esté en ellas.
  */
 export function pestanasPara(
   pathname: string,
@@ -116,7 +117,7 @@ export function pestanasPara(
   const vacio = { subgrupos: [], subgrupoActual: null, pestanas: [] };
   const activo = itemActivo(pathname, grupos);
   if (!activo?.tab || !activo.item.tabs) return vacio;
-  const tabs = activo.item.tabs.filter((tab) => tab.ready);
+  const tabs = activo.item.tabs.filter((tab) => tab.ready && !tab.oculta);
   const subs = [...new Set(tabs.map((tab) => tab.sub))];
   const subgrupos =
     subs.length > 1

@@ -407,6 +407,21 @@ export const conversacionesDeAgente: AgentConversationPage = {
 
 export const tareasVacias: AgentTaskPage = { items: [], total: 0, page: 1, page_size: 20, has_more: false };
 
+/** Agenda (HU-UX-08): tipos con color y código, y estado del calendario. */
+export const tiposDeCita = [
+  { id: "t-1", name: "Valoración", duration_minutes: 30, description: "", active: true, color: "cat-1", codigo: "VAL" },
+  { id: "t-2", name: "Control", duration_minutes: 20, description: "", active: true, color: "cat-3", codigo: "CTL" },
+];
+
+export const estadoCalendario = {
+  configured: true,
+  connected: false,
+  account_email: "",
+  connection_label: "",
+  timezone: "America/Bogota",
+  default_duration_minutes: 60,
+};
+
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/me": me,
@@ -427,4 +442,6 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/settings/web-chat": chatWeb,
   "/admin/settings/advanced": ajustesAvanzados,
   "/pack/cobranza/summary": resumenCobranza,
+  "/pack/calendar/types": tiposDeCita,
+  "/pack/calendar/status": estadoCalendario,
 };

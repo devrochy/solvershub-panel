@@ -48,6 +48,9 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Plan", () => import("@/app/(app)/plan/page")],
   ["Configuración", () => import("@/app/(app)/configuracion/page")],
   ["Cobranza", () => import("@/app/(app)/cobranza/page")],
+  ["Agenda · Calendario", () => import("@/app/(app)/calendario/citas/page")],
+  ["Agenda · Tipos de cita", () => import("@/app/(app)/calendario/tipos/page")],
+  ["Agenda · Google Calendar", () => import("@/app/(app)/calendario/page")],
 ];
 
 beforeAll(() => {

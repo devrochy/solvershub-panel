@@ -5,6 +5,7 @@ import {
   type Responsable,
 } from "@/app/(app)/calendario/tipos/_components/type-actions";
 import { BinaryBadge } from "@/components/domain/status-badge";
+import { EtiquetaDeTipo } from "@/components/domain/tipo-de-cita";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
@@ -19,6 +20,8 @@ type Type = {
   active: boolean;
   responsable_admin_id?: string | null;
   enlace_reunion?: string | null;
+  color?: string;
+  codigo?: string;
 };
 
 export default async function CalendarTypesPage() {
@@ -39,7 +42,11 @@ export default async function CalendarTypesPage() {
   }
 
   const columns: Column<Type>[] = [
-    { key: "nombre", header: "Tipo", cell: (t) => <span className="text-headline">{t.name}</span> },
+    {
+      key: "nombre",
+      header: "Tipo",
+      cell: (t) => <EtiquetaDeTipo tipo={{ name: t.name, color: t.color ?? "", codigo: t.codigo ?? "" }} />,
+    },
     {
       key: "duracion",
       header: "Duración",
@@ -83,7 +90,7 @@ export default async function CalendarTypesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Tipos de cita"
-        description="Servicios que el agente puede agendar, con su duración, responsable y enlace de la reunión."
+        description="Servicios que el agente puede agendar. El color y el código distinguen sus citas en el calendario."
       />
       <NewTypeForm responsables={responsables} />
       <DataTable
