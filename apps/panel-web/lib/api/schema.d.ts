@@ -408,8 +408,32 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Conversations */
+        /**
+         * List Conversations
+         * @description Chats del negocio, del más reciente por actividad (último mensaje o inicio).
+         */
         get: operations["list_conversations_api_v1_admin_conversations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conversation Connections
+         * @description Conexiones del negocio para filtrar la bandeja (HU-UX-15). Con el permiso de
+         *     Conversaciones: quien atiende no necesita ver la sección Conexiones.
+         */
+        get: operations["list_conversation_connections_api_v1_admin_conversations_connections_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -442,7 +466,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Messages Since
+         * @description Mensajes nuevos del hilo para el polling de la bandeja (HU-UX-15). Sin `after`, los
+         *     últimos `MENSAJES_MAX`.
+         */
+        get: operations["list_messages_since_api_v1_admin_conversations__conversation_id__messages_get"];
         put?: never;
         /**
          * Send Human Message
@@ -529,6 +558,72 @@ export interface paths {
          * @description Resuelve la conversación: reactiva el agente y cierra sus escalaciones.
          */
         post: operations["resolve_conversation_api_v1_admin_conversations__conversation_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/{conversation_id}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take Conversation
+         * @description Toma el chat escalado: la escalación activa queda `asignada` a quien la toma y el
+         *     agente se pausa en esta conversación hasta devolverla (como `tomarTicket` de agent-sale).
+         *
+         *     409 `no_escalation` si no hay escalación activa; 409 `already_taken` si la tiene otra
+         *     persona del equipo (tomarla de nuevo uno mismo es idempotente).
+         */
+        post: operations["take_conversation_api_v1_admin_conversations__conversation_id__take_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/{conversation_id}/return-to-bot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Return Conversation To Bot
+         * @description Devuelve el chat al agente: cierra la atención humana (escalaciones `resuelta`), deja
+         *     la conversación abierta y reactiva el agente (`reasignarTicketABot` de agent-sale).
+         */
+        post: operations["return_conversation_to_bot_api_v1_admin_conversations__conversation_id__return_to_bot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/conversations/{conversation_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Conversation Note
+         * @description Nota interna de una persona del equipo (`source="human"`), junto a las del agente en
+         *     `state.notes`. Nunca se envía al cliente ni entra al prompt.
+         */
+        post: operations["add_conversation_note_api_v1_admin_conversations__conversation_id__notes_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5075,6 +5170,40 @@ export interface components {
             /** Critico */
             critico: boolean;
         };
+        /**
+         * ActiveEscalation
+         * @description Escalación sin resolver más reciente de la conversación (el «ticket»).
+         */
+        ActiveEscalation: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Reason Code
+             * @enum {string}
+             */
+            reason_code: "solicitud_cliente" | "queja" | "fuera_de_alcance" | "intentos_fallidos" | "monto_alto" | "palabra_clave" | "accion_habilidad" | "regla_negocio" | "verificacion" | "frase_prohibida" | "falla_ia" | "rechazo_ia" | "envio_fallido" | "sin_resolver" | "limite_iteraciones" | "otro";
+            /** Reason Label */
+            reason_label: string;
+            /** Summary */
+            summary: string;
+            /**
+             * Status
+             * @description pendiente | asignada
+             */
+            status: string;
+            /** Assigned Admin Id */
+            assigned_admin_id: string | null;
+            /** Assigned Admin Email */
+            assigned_admin_email: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** ActivityOut */
         ActivityOut: {
             /** Action */
@@ -6024,8 +6153,51 @@ export interface components {
              * Format: date-time
              */
             started_at: string;
+            /** Last Message */
+            last_message?: string | null;
+            /** Last Message At */
+            last_message_at?: string | null;
+            /**
+             * Last Message Sender
+             * @description customer | agent | human
+             */
+            last_message_sender?: string | null;
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Connection Label */
+            connection_label?: string | null;
+            /** Connection Provider */
+            connection_provider?: string | null;
+            /**
+             * Connection Type
+             * @description Tipo del catálogo (p. ej. whatsapp_cloud, whatsapp_waweb, web)
+             */
+            connection_type?: string | null;
             /** Messages */
             messages: components["schemas"]["MessageItem"][];
+            escalation?: components["schemas"]["ActiveEscalation"] | null;
+            /** Notes */
+            notes?: components["schemas"]["ConversationNote"][];
+            usage?: components["schemas"]["ConversationUsage"];
+        };
+        /** ConversationNote */
+        ConversationNote: {
+            /** Text */
+            text: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "agent" | "human";
+            /** Author Email */
+            author_email?: string | null;
+            /** Created At */
+            created_at?: string | null;
+        };
+        /** ConversationNoteIn */
+        ConversationNoteIn: {
+            /** Text */
+            text: string;
         };
         /** ConversationSummary */
         ConversationSummary: {
@@ -6049,6 +6221,37 @@ export interface components {
              * Format: date-time
              */
             started_at: string;
+            /** Last Message */
+            last_message?: string | null;
+            /** Last Message At */
+            last_message_at?: string | null;
+            /**
+             * Last Message Sender
+             * @description customer | agent | human
+             */
+            last_message_sender?: string | null;
+            /** Connection Id */
+            connection_id?: string | null;
+            /** Connection Label */
+            connection_label?: string | null;
+            /** Connection Provider */
+            connection_provider?: string | null;
+            /**
+             * Connection Type
+             * @description Tipo del catálogo (p. ej. whatsapp_cloud, whatsapp_waweb, web)
+             */
+            connection_type?: string | null;
+        };
+        /** ConversationUsage */
+        ConversationUsage: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Turns */
+            turns: number;
         };
         /** CostsResponse */
         CostsResponse: {
@@ -7106,6 +7309,8 @@ export interface components {
             template_name?: string | null;
             /** Error Reason */
             error_reason?: string | null;
+            /** Tool Calls */
+            tool_calls?: string[];
         };
         /** MessageTemplatesSettings */
         MessageTemplatesSettings: {
@@ -7127,6 +7332,16 @@ export interface components {
             mapping: {
                 [key: string]: components["schemas"]["EventTemplateEntry"];
             };
+        };
+        /** MessagesSince */
+        MessagesSince: {
+            /** Items */
+            items: components["schemas"]["MessageItem"][];
+            /**
+             * Has More
+             * @description Hay más mensajes después del último devuelto
+             */
+            has_more: boolean;
         };
         /** MetaCategoryCost */
         MetaCategoryCost: {
@@ -11424,6 +11639,25 @@ export interface components {
              */
             cost_usd: number | null;
         };
+        /**
+         * ConversationConnection
+         * @description Conexión por la que pueden llegar chats (opciones del filtro de la bandeja).
+         */
+        ConversationConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Provider */
+            provider: string;
+            /** Type Id */
+            type_id: string | null;
+            /** Channel */
+            channel: string;
+        };
         /** AgentTemplate */
         AgentTemplate: {
             /** Key */
@@ -12583,6 +12817,8 @@ export interface operations {
                 status?: string | null;
                 /** @description Busca por nombre o identificador. */
                 q?: string | null;
+                /** @description Solo los chats de esta conexión */
+                connection_id?: string | null;
                 page?: number;
                 page_size?: number;
             };
@@ -12601,6 +12837,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_ConversationSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_conversation_connections_api_v1_admin_conversations_connections_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationConnection"][];
                 };
             };
             /** @description Validation Error */
@@ -12634,6 +12901,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConversationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_messages_since_api_v1_admin_conversations__conversation_id__messages_get: {
+        parameters: {
+            query?: {
+                /** @description `created_at` del último mensaje que ya tiene el panel, tal como lo devolvió la API. Se re-entregan los 2 s anteriores: el panel deduplica por `id`. */
+                after?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagesSince"];
                 };
             };
             /** @description Validation Error */
@@ -12802,6 +13105,107 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    take_conversation_api_v1_admin_conversations__conversation_id__take_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveEscalation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    return_conversation_to_bot_api_v1_admin_conversations__conversation_id__return_to_bot_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_conversation_note_api_v1_admin_conversations__conversation_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversationNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationNote"];
+                };
             };
             /** @description Validation Error */
             422: {
