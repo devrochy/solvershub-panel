@@ -34,6 +34,14 @@ conversations inbox, agenda, billing and observability — all over the
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui ·
 FullCalendar · d3 · Vitest · Testing Library · axe-core · openapi-typescript.
 
+## Demo
+
+Running locally against a seeded [agent-core](https://github.com/devrochy/agent-core) instance (dark theme by default):
+
+| Dashboard | Agent editor | Live inbox | Connections |
+|---|---|---|---|
+| ![Dashboard](docs/assets/panel-dashboard.png) | ![Agents](docs/assets/panel-agentes.png) | ![Inbox](docs/assets/panel-conversaciones.png) | ![Connections](docs/assets/panel-conexiones.png) |
+
 ## Structure
 
 | Path | What it is |
