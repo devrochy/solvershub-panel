@@ -1,19 +1,16 @@
-export type CalendarEvent = {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  kind: "appointment" | "block";
-  status: string;
-  source: "local" | "google";
-  color: string;
-  can_cancel: boolean;
-  attendee_email: string;
-  notes: string;
-  appointment_type_id: string;
-};
+import type { EventoAgenda } from "@/lib/calendario/agenda";
 
-export type Tipo = { id: string; name: string; duration_minutes?: number | null };
+export type CalendarEvent = EventoAgenda;
+
+/** Tipo de cita: `color` (`cat-1`…`cat-4`) y `codigo` desde HU-UX-08. */
+export type Tipo = {
+  id: string;
+  name: string;
+  duration_minutes?: number | null;
+  color?: string;
+  codigo?: string;
+  active?: boolean;
+};
 
 export type Activity = {
   action: string;

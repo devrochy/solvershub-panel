@@ -11,6 +11,8 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { SelectorDeColor } from "@/components/domain/tipo-de-cita";
+import { CODIGO_MAX, normalizarCodigo } from "@/lib/calendario/agenda";
 import { enlaceValido } from "@/lib/citas";
 
 export type Responsable = { id: string; email: string };
@@ -21,9 +23,15 @@ export type TipoCita = {
   description: string;
   responsable_admin_id?: string | null;
   enlace_reunion?: string | null;
+  color?: string;
+  codigo?: string;
 };
 
-/** Cuerpo de alta/edición de un tipo (HU-SH-02: responsable y enlace de la reunión). */
+/**
+ * Cuerpo de alta/edición de un tipo (HU-SH-02: responsable y enlace; HU-UX-08: color y
+ * código). Sin color elegido no se manda: el backend rota la paleta al crear y lo conserva
+ * al editar.
+ */
 function cuerpoTipo(data: FormData): Record<string, unknown> | string {
   const enlace = String(data.get("enlace_reunion") ?? "").trim();
   if (!enlaceValido(enlace)) return "El enlace de la reunión tiene que empezar con https://.";
@@ -33,7 +41,31 @@ function cuerpoTipo(data: FormData): Record<string, unknown> | string {
     description: String(data.get("description") ?? ""),
     responsable_admin_id: String(data.get("responsable_admin_id") ?? "") || null,
     enlace_reunion: enlace,
+    ...(data.get("color") ? { color: String(data.get("color")) } : {}),
+    codigo: normalizarCodigo(String(data.get("codigo") ?? "")),
   };
+}
+
+/** Color (4 opciones de la paleta) y código corto con que el tipo se ve en el calendario. */
+function CamposAgenda({ tipo, sufijo }: { tipo?: TipoCita; sufijo: string }) {
+  return (
+    <>
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="mb-1.5 text-sm font-medium text-headline">Color</legend>
+        <SelectorDeColor name="color" defaultValue={tipo?.color} idBase={`t-color-${sufijo}`} />
+      </fieldset>
+      <Field label="Código" htmlFor={`t-cod-${sufijo}`} help="Corto, se ve en cada cita (ej. VAL)." className="w-36">
+        <Input
+          id={`t-cod-${sufijo}`}
+          name="codigo"
+          maxLength={CODIGO_MAX}
+          className="uppercase placeholder:normal-case"
+          placeholder="Del nombre"
+          defaultValue={tipo?.codigo ?? ""}
+        />
+      </Field>
+    </>
+  );
 }
 
 function CamposExtra({ responsables, tipo, sufijo }: { responsables: Responsable[]; tipo?: TipoCita; sufijo: string }) {
@@ -97,6 +129,7 @@ export function NewTypeForm({ responsables = [] }: { responsables?: Responsable[
       <Field label="Descripción" htmlFor="t-desc" className="w-72">
         <Textarea id="t-desc" name="description" rows={1} />
       </Field>
+      <CamposAgenda sufijo="nuevo" />
       <CamposExtra responsables={responsables} sufijo="nuevo" />
       <Button type="submit" variant="accent" disabled={status.loading}>
         {status.loading ? "Creando…" : "Crear tipo"}
@@ -168,7 +201,7 @@ export function EditTypeDialog({ tipo, responsables }: { tipo: TipoCita; respons
           <Pencil className="h-4 w-4" aria-hidden />
         </Button>
       </DialogTrigger>
-      <DialogContent title={`Editar ${tipo.name}`} description="Duración, responsable y enlace de la reunión.">
+      <DialogContent title={`Editar ${tipo.name}`} description="Color y código en el calendario, duración, responsable y enlace de la reunión.">
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <Field label="Nombre" htmlFor={`t-name-${tipo.id}`} required>
             <Input id={`t-name-${tipo.id}`} name="name" required defaultValue={tipo.name} />
@@ -179,6 +212,7 @@ export function EditTypeDialog({ tipo, responsables }: { tipo: TipoCita; respons
           <Field label="Descripción" htmlFor={`t-desc-${tipo.id}`}>
             <Textarea id={`t-desc-${tipo.id}`} name="description" rows={2} defaultValue={tipo.description} />
           </Field>
+          <CamposAgenda tipo={tipo} sufijo={tipo.id} />
           <CamposExtra responsables={responsables} tipo={tipo} sufijo={tipo.id} />
           <div className="flex justify-end">
             <Button type="submit" variant="accent" disabled={status.loading}>

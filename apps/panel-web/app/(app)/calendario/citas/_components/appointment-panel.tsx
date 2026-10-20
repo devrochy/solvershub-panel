@@ -4,13 +4,16 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { RadioGroup } from "@/components/ui/radio-group";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { EtiquetaDeTipo } from "@/components/domain/tipo-de-cita";
+import { type QueCrear } from "@/lib/calendario/agenda";
 import { mensajeAsistencia, puedeMarcarAsistencia } from "@/lib/citas";
 import { formatDateTime } from "@/lib/format";
 import { toast } from "@/lib/toast-store";
@@ -26,9 +29,10 @@ function toLocalInput(iso: string | undefined): string {
 }
 
 /**
- * Detalle / edición / alta de una cita o bloqueo, con historial de actividades y
- * confirmación de aviso (HU-CAL-03). Para citas permite editar campos y horario,
- * cancelar y ver el historial; para bloqueos permite editar y eliminar.
+ * Panel lateral de la Agenda (HU-CAL-03, HU-UX-08): detalle, edición y alta de una cita o
+ * un bloqueo. Al crear desde un hueco del calendario se elige «Cita» o «Bloqueo» y se crea
+ * sin salir de la vista. Para citas permite editar campos y horario, cancelar y ver el
+ * historial; para bloqueos permite editar y eliminar.
  */
 export function AppointmentPanel({
   tipos,
@@ -44,8 +48,9 @@ export function AppointmentPanel({
   /** `message`: qué pasó de verdad (incluido el aviso al cliente) para mostrarlo al cerrar. */
   onSaved: (message?: string) => void;
 }) {
-  const isBlock = event?.kind === "block";
   const isNew = !event;
+  const [queCrear, setQueCrear] = useState<QueCrear>("cita");
+  const isBlock = isNew ? queCrear === "bloqueo" : event?.kind === "block";
   const confirm = useConfirm();
   const [notify, setNotify] = useState(true);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
@@ -98,16 +103,17 @@ export function AppointmentPanel({
       end_at: new Date(String(data.get("end_at"))).toISOString(),
       reason: String(data.get("reason") ?? ""),
     };
-    const res = await fetch(`/api/pack/calendar/blocks/${blockId}`, {
-      method: "PATCH",
+    const res = await fetch(isNew ? "/api/pack/calendar/blocks" : `/api/pack/calendar/blocks/${blockId}`, {
+      method: isNew ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      setStatus({ error: "No se pudo guardar el bloqueo." });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      setStatus({ error: json.error ?? "No se pudo guardar el bloqueo." });
       return;
     }
-    onSaved();
+    onSaved(isNew ? "Bloqueo creado." : "Bloqueo guardado.");
   }
 
   async function marcarAsistencia(asistio: boolean) {
@@ -171,15 +177,33 @@ export function AppointmentPanel({
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        title={isNew ? "Nueva cita" : isBlock ? "Bloqueo" : event?.title ?? "Cita"}
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        title={isNew ? "Nuevo en la agenda" : isBlock ? "Bloqueo" : event?.title ?? "Cita"}
         description={
-          isBlock
-            ? "Franja en que el asistente no agenda (fuera de oficina)."
-            : "Cambiar el horario envía el correo de reagenda si confirmás el aviso."
+          isNew
+            ? "Elige si este hueco es una cita o un bloqueo."
+            : isBlock
+              ? "Franja en que el asistente no agenda (fuera de oficina)."
+              : "Cambiar el horario envía el correo de reagenda si confirmas el aviso."
         }
       >
+        {isNew && (
+          <RadioGroup
+            label="Qué crear"
+            name="que-crear"
+            value={queCrear}
+            onValueChange={(v) => {
+              setQueCrear(v as QueCrear);
+              setStatus({});
+            }}
+            className="mb-4 flex-row gap-6"
+            options={[
+              { value: "cita", label: "Cita", description: "Con un cliente y su tipo." },
+              { value: "bloqueo", label: "Bloqueo", description: "El asistente no agenda aquí." },
+            ]}
+          />
+        )}
         {isBlock ? (
           <form
             onSubmit={(e: FormEvent<HTMLFormElement>) => {
@@ -189,20 +213,26 @@ export function AppointmentPanel({
             className="flex flex-col gap-3"
           >
             <Field label="Motivo" htmlFor="b-reason">
-              <Input id="b-reason" name="reason" defaultValue={event?.title ?? ""} />
+              <Input id="b-reason" name="reason" placeholder="Almuerzo, vacaciones…" defaultValue={isNew ? "" : event?.title ?? ""} />
             </Field>
-            <Field label="Inicio" htmlFor="b-start" required>
-              <Input id="b-start" name="start_at" type="datetime-local" defaultValue={toLocalInput(event?.start)} required />
-            </Field>
-            <Field label="Fin" htmlFor="b-end" required>
-              <Input id="b-end" name="end_at" type="datetime-local" defaultValue={toLocalInput(event?.end)} required />
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Inicio" htmlFor="b-start" required>
+                <Input id="b-start" name="start_at" type="datetime-local" defaultValue={toLocalInput(event?.start ?? draft?.start)} required />
+              </Field>
+              <Field label="Fin" htmlFor="b-end" required>
+                <Input id="b-end" name="end_at" type="datetime-local" defaultValue={toLocalInput(event?.end ?? draft?.end)} required />
+              </Field>
+            </div>
             <div className="flex justify-between">
-              <Button type="button" variant="ghost" onClick={() => void deleteBlock()}>
-                Eliminar
-              </Button>
+              {isNew ? (
+                <span />
+              ) : (
+                <Button type="button" variant="ghost" onClick={() => void deleteBlock()}>
+                  Eliminar
+                </Button>
+              )}
               <Button type="submit" variant="accent">
-                Guardar
+                {isNew ? "Crear bloqueo" : "Guardar"}
               </Button>
             </div>
             <FormFeedback error={status.error} success={status.success} />
@@ -218,6 +248,15 @@ export function AppointmentPanel({
             <Field label="Título" htmlFor="c-title" required>
               <Input id="c-title" name="title" defaultValue={event?.title ?? ""} required />
             </Field>
+            {!isNew && event?.tipo_codigo && (
+              <EtiquetaDeTipo
+                tipo={{
+                  name: tipos.find((t) => t.id === event.appointment_type_id)?.name ?? "",
+                  color: event.tipo_color ?? "",
+                  codigo: event.tipo_codigo,
+                }}
+              />
+            )}
             <Field label="Tipo de cita" htmlFor="c-type">
               <Select id="c-type" name="appointment_type_id" defaultValue={event?.appointment_type_id ?? ""}>
                 <option value="">— Sin tipo —</option>
@@ -255,7 +294,7 @@ export function AppointmentPanel({
                 <span />
               )}
               <Button type="submit" variant="accent" disabled={status.loading}>
-                {isNew ? "Crear" : "Guardar"}
+                {isNew ? "Crear cita" : "Guardar"}
               </Button>
             </div>
             <FormFeedback error={status.error} success={status.success} />
@@ -297,7 +336,7 @@ export function AppointmentPanel({
             )}
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

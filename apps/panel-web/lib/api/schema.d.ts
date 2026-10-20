@@ -9601,6 +9601,16 @@ export interface components {
             responsable_admin_id?: string | null;
             /** Enlace Reunion */
             enlace_reunion?: string | null;
+            /**
+             * Color
+             * @default cat-1
+             */
+            color: string;
+            /**
+             * Codigo
+             * @default
+             */
+            codigo: string;
         };
         /** TypeSave */
         TypeSave: {
@@ -9623,6 +9633,10 @@ export interface components {
              * @default
              */
             enlace_reunion: string;
+            /** Color */
+            color?: ("cat-1" | "cat-2" | "cat-3" | "cat-4") | null;
+            /** Codigo */
+            codigo?: string | null;
         };
         /**
          * UsageMetric

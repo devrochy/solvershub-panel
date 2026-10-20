@@ -1,18 +1,15 @@
 import Link from "next/link";
 
 import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
-import { CancelAppointmentButton } from "@/app/(app)/calendario/_components/cancel-appointment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { Me } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
 import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
 
-export const metadata = { title: "Calendario" };
+export const metadata = { title: "Google Calendar" };
 
 const GOOGLE_AVISO: Record<string, { tone: string; texto: string }> = {
   ok: { tone: "text-status-success-fg", texto: "Google Calendar conectado." },
@@ -38,16 +35,6 @@ type Status = {
   default_duration_minutes: number;
 };
 
-type Appointment = {
-  id: string;
-  title: string;
-  attendee_email: string | null;
-  start_at: string;
-  end_at: string;
-  status: string;
-  google_event_id: string | null;
-};
-
 export default async function CalendarPage({
   searchParams,
 }: {
@@ -56,9 +43,8 @@ export default async function CalendarPage({
 }) {
   const { google, tenant } = await searchParams;
   const avisoGoogle = google ? GOOGLE_AVISO[google] : undefined;
-  const [statusRes, appointmentsRes, meRes] = await Promise.all([
+  const [statusRes, meRes] = await Promise.all([
     apiFetch<Status>("/pack/calendar/status"),
-    apiFetch<Appointment[]>("/pack/calendar/appointments"),
     apiFetch<Me>("/admin/me"),
   ]);
   const activo = meRes.ok ? meRes.data.tenant : null;
@@ -71,58 +57,6 @@ export default async function CalendarPage({
     );
   }
   const status = statusRes.data;
-  const appointments = appointmentsRes.ok ? appointmentsRes.data : [];
-
-  const columns: Column<Appointment>[] = [
-    {
-      key: "cita",
-      header: "Cita",
-      cell: (a) => (
-        <div className="flex flex-col">
-          <span className="text-headline">{a.title || "Cita"}</span>
-          {a.attendee_email && <span className="text-xs text-text-soft">{a.attendee_email}</span>}
-        </div>
-      ),
-    },
-    {
-      key: "inicio",
-      header: "Inicio",
-      cell: (a) => <span className="text-body">{formatDateTime(a.start_at)}</span>,
-    },
-    {
-      key: "fin",
-      header: "Fin",
-      cell: (a) => <span className="text-body">{formatDateTime(a.end_at)}</span>,
-    },
-    {
-      key: "estado",
-      header: "Estado",
-      cell: (a) => (
-        <Badge variant={a.status === "scheduled" ? "success" : a.status === "cancelled" ? "danger" : "neutral"}>
-          {a.status}
-        </Badge>
-      ),
-    },
-    {
-      key: "google",
-      header: "Google",
-      cell: (a) =>
-        a.google_event_id ? (
-          <Badge variant="accent">sincronizada</Badge>
-        ) : (
-          <span className="text-xs text-text-soft">solo local</span>
-        ),
-    },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (a) =>
-        a.status === "scheduled" ? (
-          <CancelAppointmentButton appointmentId={a.id} label={a.title || a.id.slice(0, 8)} />
-        ) : null,
-    },
-  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,18 +68,15 @@ export default async function CalendarPage({
 
       {negocioPedido && <CambiarNegocioAviso tenantId={negocioPedido} actual={activo?.name ?? null} />}
 
+      {/* HU-UX-08: las citas se ven en la pestaña Calendario; aquí solo queda la conexión, que
+          pasa a la ficha de conexión con HU-UX-09. */}
       <PageHeader
-        title="Calendario"
-        description="Conexión con Google Calendar, tipos de cita y agenda del negocio (habilidad Calendario)."
+        title="Google Calendar"
+        description="Conecta la agenda con Google Calendar. Las citas se ven en la pestaña Calendario."
         actions={
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/calendario/tipos">Tipos de cita</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/calendario/horario">Configurar horario</Link>
-            </Button>
-          </div>
+          <Button asChild variant="outline">
+            <Link href="/calendario/citas">Ver el calendario</Link>
+          </Button>
         }
       />
 
@@ -197,16 +128,6 @@ export default async function CalendarPage({
         </CardContent>
       </Card>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Próximas citas (30 días)</h2>
-        <DataTable
-          columns={columns}
-          rows={appointments}
-          getRowKey={(a) => a.id}
-          emptyTitle="Sin citas próximas"
-          emptyDescription="Cuando el agente agende una cita, aparecerá aquí."
-        />
-      </section>
     </div>
   );
 }

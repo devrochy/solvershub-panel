@@ -4,6 +4,7 @@ import { NAV_GROUPS } from "@/components/shell/nav";
 
 import { gruposVisibles, hojaDe, itemActivo, migasPara, pestanasPara, rutasDelMenu } from "./navegacion";
 import { cookieModoSidebar, leerModoSidebar } from "./preferencias";
+import { puedeVerRuta } from "./sesion";
 
 const TODO = Object.fromEntries(rutasDelMenu().map((r) => [hojaDe(r).section, "write"]));
 const grupos = gruposVisibles(TODO);
@@ -124,7 +125,7 @@ describe("navegación del shell (HU-DS-04)", () => {
 
   it("pestañas: las de la entrada y, con subgrupos, las del subgrupo actual", () => {
     expect(pestanasPara("/calendario/tipos", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Bloqueos", "Google Calendar",
+      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
     ]);
     const cobranza = pestanasPara("/cobranza/reglas", grupos);
     expect(cobranza.subgrupos).toEqual([
@@ -142,6 +143,44 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(pestanasPara("/calendario/citas", parcial).pestanas.map((p) => p.label)).toEqual(["Calendario", "Tipos de cita"]);
     const una = gruposVisibles({ "pack_calendar:citas": "read" });
     expect(pestanasPara("/calendario/citas", una).pestanas).toEqual([]);
+  });
+});
+
+describe("Agenda unificada (HU-UX-08)", () => {
+  const AGENDA: [string, string][] = [
+    ["/calendario/citas", "pack_calendar:citas"],
+    ["/calendario/tipos", "pack_calendar:tipos"],
+    ["/calendario/horario", "pack_calendar:configuracion"],
+    ["/calendario/bloqueos", "pack_calendar:bloqueos"],
+    ["/calendario", "pack_calendar:conexion"],
+  ];
+
+  it("Agenda abre en el Calendario y Bloqueos ya no es pestaña", () => {
+    const agenda = grupos.flatMap((g) => g.visible).find((i) => i.label === "Agenda")!;
+    expect(agenda.href).toBe("/calendario/citas");
+    expect(pestanasPara("/calendario/citas", grupos).pestanas.map((p) => p.label)).toEqual([
+      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
+    ]);
+  });
+
+  it("cada ruta de la agenda sigue protegida por su propia clave", () => {
+    for (const [ruta, clave] of AGENDA) {
+      const todas = Object.fromEntries(AGENDA.map(([, c]) => [c, "read"]));
+      expect(puedeVerRuta(ruta, { permisos: todas, esMaster: false, negocioId: "t" })).toBe(true);
+      const sinClave = { ...todas, [clave]: null };
+      expect(puedeVerRuta(ruta, { permisos: sinClave, esMaster: false, negocioId: "t" }), ruta).toBe(false);
+    }
+  });
+
+  it("en /calendario/bloqueos se ven las pestañas de Agenda y las migas la ubican", () => {
+    expect(pestanasPara("/calendario/bloqueos", grupos).pestanas.map((p) => p.label)).toEqual([
+      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
+    ]);
+    expect(migasPara("/calendario/bloqueos", grupos)).toEqual([
+      { label: "Negocio" },
+      { label: "Agenda", href: "/calendario/citas" },
+      { label: "Bloqueos" },
+    ]);
   });
 });
 
