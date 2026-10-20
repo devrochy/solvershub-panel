@@ -211,7 +211,7 @@ export function EditorDeAgente({
         minFrases={minFrases}
       />
     ),
-    memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} />,
+    memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
     publicar: (
       <PasoPublicar
         destinos={destinos}

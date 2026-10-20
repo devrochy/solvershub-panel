@@ -4289,6 +4289,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Documentos */
+        get: operations["listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get"];
+        put?: never;
+        /**
+         * Subir Documento
+         * @description Sube un documento al agente. Queda `pendiente` y el worker lo procesa.
+         */
+        post: operations["subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borrar Documento */
+        delete: operations["borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}/reprocess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reprocesar Documento */
+        post: operations["reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/platform/meta-app/embedded-signup/step": {
         parameters: {
             query?: never;
@@ -11941,6 +11996,51 @@ export interface components {
              * @default false
              */
             by_agent_truncated: boolean;
+        };
+        /** Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post */
+        Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
+            /** Archivo */
+            archivo: string;
+            /** Titulo */
+            titulo?: string | null;
+        };
+        /** DocumentoOut */
+        DocumentoOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Titulo */
+            titulo: string;
+            /** Mime */
+            mime: string;
+            /** Bytes */
+            bytes: number;
+            /** Estado */
+            estado: string;
+            /** Error Codigo */
+            error_codigo: string | null;
+            /** Paginas */
+            paginas: number | null;
+            /** Num Fragmentos */
+            num_fragmentos: number;
+            /** Pii Detectada */
+            pii_detectada: number;
+            /** Desactualizado */
+            desactualizado: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Processed At */
+            processed_at: string | null;
         };
     };
     responses: never;
@@ -20705,6 +20805,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_documentos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description El archivo supera 20 MB (`error.code = muy_grande`). */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tipo o contenido no admitido (`error.code = formato | vacio`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"];
                 };
             };
             /** @description Validation Error */

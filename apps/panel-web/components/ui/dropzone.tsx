@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ClipboardEvent, type DragEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from "react";
 import { ImagePlus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -9,25 +9,34 @@ import { cn } from "@/lib/utils";
  * Zona para adjuntar archivos (HU-QA-03): arrastrar, pegar con Ctrl+V cuando tiene el foco
  * o elegir con el botón. Filtra por `accept` (tipos MIME exactos) y tamaño; lo rechazado
  * se avisa con `onReject`. No sube nada: entrega los `File` a quien la usa.
+ *
+ * `esAdmitido` reemplaza el filtro por MIME cuando el tipo no es confiable (los navegadores mandan
+ * un `.md` sin tipo): la zona sigue ofreciendo `accept` al selector de archivos.
  */
 export function Dropzone({
   onFiles,
   onReject,
   accept,
+  esAdmitido,
   maxBytes,
   disabled,
   label = "Pega, arrastra o elige una captura",
   hint,
+  icono,
   className,
 }: {
   onFiles: (files: File[]) => void;
   onReject?: (motivo: string) => void;
   /** Tipos MIME aceptados, p. ej. `["image/png", "image/jpeg"]`. */
   accept: string[];
+  /** Filtro propio en lugar de comparar `file.type` con `accept`. */
+  esAdmitido?: (archivo: File) => boolean;
   maxBytes?: number;
   disabled?: boolean;
   label?: string;
   hint?: string;
+  /** Ícono de la zona (por defecto, el de imagen). */
+  icono?: ReactNode;
   className?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
@@ -37,7 +46,7 @@ export function Dropzone({
     if (!lista || disabled) return;
     const validos: File[] = [];
     for (const archivo of Array.from(lista)) {
-      if (!accept.includes(archivo.type)) {
+      if (!(esAdmitido ? esAdmitido(archivo) : accept.includes(archivo.type))) {
         onReject?.(`«${archivo.name || "archivo"}» no es un tipo admitido.`);
       } else if (maxBytes && archivo.size > maxBytes) {
         onReject?.(`«${archivo.name || "archivo"}» supera ${Math.round(maxBytes / 1024 / 1024)} MB.`);
@@ -84,7 +93,7 @@ export function Dropzone({
         className,
       )}
     >
-      <ImagePlus aria-hidden className="h-4 w-4 text-text-soft" />
+      {icono ?? <ImagePlus aria-hidden className="h-4 w-4 text-text-soft" />}
       <span className="flex-1 text-body">
         {label}
         {hint && <span className="block text-xs text-text-soft">{hint}</span>}
