@@ -5190,6 +5190,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/datos-de-prueba": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado Datos De Prueba
+         * @description Estado de los datos de prueba del agente.
+         */
+        get: operations["estado_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_get"];
+        put?: never;
+        /**
+         * Generar Datos De Prueba
+         * @description Genera los datos de prueba del agente según la descripción del negocio y reemplaza los anteriores.
+         */
+        post: operations["generar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_post"];
+        /**
+         * Borrar Datos De Prueba
+         * @description Retira los datos de prueba del agente; lo creado a mano no se toca.
+         */
+        delete: operations["borrar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -12171,6 +12199,99 @@ export interface components {
             created_at: string;
             /** Processed At */
             processed_at: string | null;
+        };
+        /** DatosRetirados */
+        DatosRetirados: {
+            /** Retirados */
+            retirados: number;
+        };
+        /** EstadoDatosDePrueba */
+        EstadoDatosDePrueba: {
+            /** Disponible */
+            disponible: boolean;
+            /**
+             * Motivo
+             * @description Por qué el agente no tiene datos que generar.
+             */
+            motivo?: string | null;
+            /**
+             * Falta Descripcion
+             * @description El negocio no tiene descripción propia: hay que escribirla antes.
+             */
+            falta_descripcion: boolean;
+            forma: components["schemas"]["FormaDeDatosOut"] | null;
+            lote: components["schemas"]["LoteDePrueba"] | null;
+        };
+        /** FormaDeDatosOut */
+        FormaDeDatosOut: {
+            /** Modo */
+            modo: string;
+            /** Titulo */
+            titulo: string;
+        };
+        /** LoteDePrueba */
+        LoteDePrueba: {
+            /**
+             * Lote Id
+             * Format: uuid
+             */
+            lote_id: string;
+            /** Modo */
+            modo: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla";
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Conteos
+             * @description Registros creados por tipo (`producto`, `cita`, `cliente`…).
+             */
+            conteos: {
+                [key: string]: number;
+            };
+        };
+        /** LoteGenerado */
+        LoteGenerado: {
+            /**
+             * Lote Id
+             * Format: uuid
+             */
+            lote_id: string;
+            /** Modo */
+            modo: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla";
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Conteos
+             * @description Registros creados por tipo (`producto`, `cita`, `cliente`…).
+             */
+            conteos: {
+                [key: string]: number;
+            };
+            /**
+             * Motivo Plantilla
+             * @description Por qué se usó la plantilla: el LLM falló o su respuesta no cumplió el formato.
+             */
+            motivo_plantilla?: ("proveedor" | "formato") | null;
+            /**
+             * Retirados
+             * @description Registros del lote anterior que se retiraron.
+             */
+            retirados: number;
         };
     };
     responses: never;
@@ -22792,6 +22913,105 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoDatosDePrueba"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoteGenerado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_datos_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatosRetirados"];
+                };
             };
             /** @description Validation Error */
             422: {
