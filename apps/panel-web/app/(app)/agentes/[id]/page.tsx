@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
 import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimiento";
+import { DatosDePruebaDelAgente } from "@/app/(app)/agentes/_components/datos-de-prueba";
 import {
   ConsumoDelAgente,
   ConversacionesDelAgente,
@@ -22,6 +23,7 @@ import type {
   AgentsOverview,
   AgentTaskPage,
   AgentUsage,
+  EstadoDatosDePrueba,
   KnowledgeDocument,
   Me,
 } from "@/lib/api/types";
@@ -150,6 +152,14 @@ export default async function AgentePage({
     contenido = <ConsumoDelAgente usage={res.data} nombre={agente.name} />;
   }
 
+  // Datos de prueba (HU-QA-10): solo en test (fuera, la API responde 404 y no se muestra nada) y
+  // con escritura en la sección `agents`, la misma que exige la API.
+  const datosDePrueba =
+    agente.id && agente.kind === "specialist" && meRes.ok && puedeEscribirConocimiento(meRes.data)
+      ? await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${agente.id}/datos-de-prueba`)
+      : null;
+  const puedeEditar = agente.id && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime);
+
   const conexiones = agente.connections.map((c) => ({ id: c.id, label: c.label }));
   const descripcion = [
     tipoDeAgente(agente.kind),
@@ -165,10 +175,17 @@ export default async function AgentePage({
         description: descripcion,
         breadcrumbs: [{ label: "Agentes", href: "/agentes" }, { label: agente.name }],
         actions:
-          agente.id && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime) ? (
-            <Button asChild variant="outline">
-              <Link href={`/agentes/${agente.id}/editar`}>Editar agente</Link>
-            </Button>
+          puedeEditar || datosDePrueba?.ok ? (
+            <>
+              {agente.id && datosDePrueba?.ok && (
+                <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
+              )}
+              {puedeEditar && (
+                <Button asChild variant="outline">
+                  <Link href={`/agentes/${agente.id}/editar`}>Editar agente</Link>
+                </Button>
+              )}
+            </>
           ) : undefined,
         tabs: (
           <TabLinks
