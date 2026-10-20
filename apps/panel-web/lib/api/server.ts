@@ -19,7 +19,15 @@ export const TENANT_COOKIE = "panel_tenant";
 
 export type ApiResult<T> =
   | { ok: true; status: number; data: T }
-  | { ok: false; status: number; error: string; code?: string; fields?: Record<string, string> };
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      code?: string;
+      fields?: Record<string, string>;
+      /** Estado real que la API adjunta al error (`error.details`), p. ej. los bloqueos de un 409. */
+      details?: Record<string, unknown>;
+    };
 
 type FetchOptions = {
   token?: string | null;
@@ -53,12 +61,14 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   if (res.status === 204) return { ok: true, status: 204, data: undefined as T };
 
   const json = (await res.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string; fields?: unknown }; detail?: unknown }
+    | { error?: { code?: string; message?: string; fields?: unknown; details?: unknown }; detail?: unknown }
     | T
     | null;
 
   if (!res.ok) {
-    const cuerpo = json as { error?: { code?: string; message?: string; fields?: unknown }; detail?: unknown } | null;
+    const cuerpo = json as
+      | { error?: { code?: string; message?: string; fields?: unknown; details?: unknown }; detail?: unknown }
+      | null;
     const error = cuerpo?.error;
     // 422 de FastAPI: `detail` con mensajes en inglés; se traduce a qué campos revisar.
     const message =
@@ -70,9 +80,14 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
       ...(typeof error?.code === "string" ? { code: error.code } : {}),
       // Errores por campo (HU-FWK-08): el formulario los muestra junto a cada campo.
       ...(camposDeError(error?.fields) ? { fields: camposDeError(error?.fields) } : {}),
+      ...(esObjeto(error?.details) ? { details: error.details } : {}),
     };
   }
   return { ok: true, status: res.status, data: json as T };
+}
+
+function esObjeto(valor: unknown): valor is Record<string, unknown> {
+  return !!valor && typeof valor === "object" && !Array.isArray(valor);
 }
 
 /** `fields` del error de la API como `{campo: mensaje}` de textos, o undefined. */

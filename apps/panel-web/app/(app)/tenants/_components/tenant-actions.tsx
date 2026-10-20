@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { MoreHorizontal } from "lucide-react";
 
+import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -115,6 +116,10 @@ export function TenantActions({
               </Button>
             </div>
           </form>
+
+          <Separator />
+
+          <AgentOSSection tenantId={tenant.id} />
 
           <Separator />
 

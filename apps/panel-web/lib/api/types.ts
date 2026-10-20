@@ -40,6 +40,9 @@ export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
 export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];
 export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
+export type AgentOSEstado = components["schemas"]["AgentOSEstado"];
+export type AgentOSObjetivo = components["schemas"]["AgentOSObjetivo"];
+export type AgentOSResultado = components["schemas"]["AgentOSResultado"];
 
 export type SettingsResponse = components["schemas"]["SettingsResponse"];
 export type WebChatSettings = components["schemas"]["WebChatSettings"];
