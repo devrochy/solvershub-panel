@@ -43,6 +43,20 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   );
 }
 
+/** Hora de un chat en la bandeja: la hora si es de hoy; si no, la fecha (HU-UX-15). */
+export function formatHoraChat(
+  value: string | Date | null | undefined,
+  ahora: Date = new Date(),
+): string {
+  if (!value) return "";
+  const fecha = new Date(value);
+  const deHoy = fecha.toDateString() === ahora.toDateString();
+  return new Intl.DateTimeFormat(
+    "es-CO",
+    deHoy ? { timeStyle: "short" } : { dateStyle: "short" },
+  ).format(fecha);
+}
+
 export function formatLatency(ms: number): string {
   return `${numberFmt.format(ms)} ms`;
 }

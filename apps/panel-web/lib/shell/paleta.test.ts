@@ -91,7 +91,7 @@ describe("filtro", () => {
 
 describe("resultados de la búsqueda", () => {
   it("lleva a la ficha cuando existe y a la lista cuando no", () => {
-    expect(rutaDeResultado({ id: "c1", tipo: "conversacion", titulo: "Ana", subtitulo: "" })).toBe("/conversaciones/c1");
+    expect(rutaDeResultado({ id: "c1", tipo: "conversacion", titulo: "Ana", subtitulo: "" })).toBe("/conversaciones?c=c1");
     expect(rutaDeResultado({ id: "k1", tipo: "cliente_cobranza", titulo: "Ana", subtitulo: "" })).toBe(
       "/cobranza/clientes/k1",
     );

@@ -62,7 +62,7 @@ export default async function EscalationsPage({
       align: "right",
       cell: (esc) => (
         <Button asChild variant="outline" size="sm">
-          <Link href={`/conversaciones/${esc.conversation_id}`}>Ver</Link>
+          <Link href={`/conversaciones?c=${esc.conversation_id}`}>Ver</Link>
         </Button>
       ),
     },

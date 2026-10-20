@@ -140,7 +140,7 @@ export function rutaDeResultado(item: ItemBusqueda): string | null {
   const q = encodeURIComponent(item.titulo);
   switch (item.tipo) {
     case "conversacion":
-      return `/conversaciones/${item.id}`;
+      return `/conversaciones?c=${item.id}`;
     case "cliente":
       return `/leads?q=${q}`;
     case "cliente_cobranza":

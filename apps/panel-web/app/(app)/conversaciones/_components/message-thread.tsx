@@ -1,4 +1,6 @@
-import type { ConversationDetail } from "@/lib/api/types";
+import { Wrench } from "lucide-react";
+
+import type { MessageItem } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -8,8 +10,25 @@ const SENDER_LABEL: Record<string, string> = {
   human: "Equipo",
 };
 
+/** Herramientas que usó el agente en el turno, plegadas (HU-UX-15). */
+function HerramientasDelTurno({ nombres }: { nombres: string[] }) {
+  return (
+    <details className="group text-xs text-text-soft">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-sm hover:text-headline focus-visible:outline-2">
+        <Wrench aria-hidden className="h-3 w-3" />
+        {nombres.length === 1 ? "Usó 1 herramienta" : `Usó ${nombres.length} herramientas`}
+      </summary>
+      <ul className="mt-1 flex flex-col gap-0.5 rounded-md border border-border-soft bg-surface-2 px-3 py-2 font-mono">
+        {nombres.map((nombre, i) => (
+          <li key={`${nombre}-${i}`}>{nombre}</li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 /** Hilo de mensajes: entrante a la izquierda, saliente a la derecha. */
-export function MessageThread({ messages }: { messages: ConversationDetail["messages"] }) {
+export function MessageThread({ messages }: { messages: MessageItem[] }) {
   if (messages.length === 0) {
     return <p className="text-sm text-text-soft">Sin mensajes.</p>;
   }
@@ -40,6 +59,9 @@ export function MessageThread({ messages }: { messages: ConversationDetail["mess
             >
               {message.content || <span className="italic opacity-70">(sin texto)</span>}
             </div>
+            {(message.tool_calls?.length ?? 0) > 0 && (
+              <HerramientasDelTurno nombres={message.tool_calls ?? []} />
+            )}
             {message.template_name && (
               <span className="text-xs text-text-soft">Plantilla: {message.template_name}</span>
             )}

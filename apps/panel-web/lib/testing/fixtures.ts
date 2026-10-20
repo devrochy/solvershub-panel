@@ -9,6 +9,8 @@ import type {
   AgentTaskPage,
   CollaboratorItem,
   ConnectionsResponse,
+  ConversationConnection,
+  ConversationDetail,
   ConversationPage,
   Dashboard,
   EscalationPage,
@@ -93,9 +95,16 @@ export const conversaciones: ConversationPage = {
       customer_name: "Ana Prueba",
       external_id: "573000000001",
       channel: "whatsapp",
-      status: "open",
-      bot_paused: false,
+      status: "escalated",
+      bot_paused: true,
       started_at: "2026-10-09T15:00:00Z",
+      last_message: "Quiero hablar con alguien",
+      last_message_at: "2026-10-09T15:05:00.123456Z",
+      last_message_sender: "customer",
+      connection_id: "test-conn-1",
+      connection_label: "Ventas",
+      connection_provider: "meta",
+      connection_type: "whatsapp_meta",
     },
     {
       id: "test-conv-2",
@@ -235,6 +244,54 @@ export const proveedorSuscripciones: SubscriptionProviderSettings = {
   habilitados: [],
   mensaje: "Todavía no hay un proveedor de pagos configurado.",
 };
+
+export const conversacionAbierta: ConversationDetail = {
+  ...conversaciones.items[0],
+  messages: [
+    {
+      id: "test-msg-1",
+      direction: "inbound",
+      sender_type: "customer",
+      content: "¿Tienen envío?",
+      status: "sent",
+      created_at: "2026-10-09T15:00:00.000001Z",
+    },
+    {
+      id: "test-msg-2",
+      direction: "outbound",
+      sender_type: "agent",
+      content: "Sí, a todo el país.",
+      status: "sent",
+      created_at: "2026-10-09T15:00:05.000001Z",
+      tool_calls: ["buscar_producto", "consultar_envio"],
+    },
+    {
+      id: "test-msg-3",
+      direction: "inbound",
+      sender_type: "customer",
+      content: "Quiero hablar con alguien",
+      status: "sent",
+      created_at: "2026-10-09T15:05:00.123456Z",
+    },
+  ],
+  escalation: {
+    id: "test-esc-1",
+    reason_code: "solicitud_cliente",
+    reason_label: "Solicitud del cliente",
+    summary: "Pide hablar con una persona por un envío.",
+    status: "pendiente",
+    assigned_admin_id: null,
+    assigned_admin_email: null,
+    created_at: "2026-10-09T15:05:01Z",
+  },
+  notes: [{ text: "Cliente frecuente", source: "agent", author_email: null, created_at: null }],
+  usage: { cost_usd: 0.0125, input_tokens: 1200, output_tokens: 300, turns: 1 },
+};
+
+export const conexionesDeConversaciones: ConversationConnection[] = [
+  { id: "test-conn-1", label: "Ventas", provider: "meta", type_id: "whatsapp_meta", channel: "whatsapp" },
+  { id: "test-conn-2", label: "Soporte", provider: "waweb", type_id: "whatsapp_waweb", channel: "whatsapp" },
+];
 
 export const conexiones: ConnectionsResponse = {
   items: [
@@ -415,6 +472,8 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,
   "/admin/conversations": conversaciones,
+  "/admin/conversations/connections": conexionesDeConversaciones,
+  "/admin/conversations/test-conv-1": conversacionAbierta,
   "/admin/escalations": escalaciones,
   "/admin/leads": leads,
   "/admin/collaborators": colaboradores,

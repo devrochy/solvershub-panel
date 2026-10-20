@@ -11,19 +11,30 @@ import { TemplatePicker } from "./template-picker";
 
 type Action = "message" | "toggle-bot" | "resolve";
 
-/** Acciones de la conversación: responder como humano, pausar el agente y resolver. */
+/**
+ * Acciones de la conversación: responder como humano, pausar el agente y resolver. En la
+ * bandeja (HU-UX-15) la caja de respuesta solo aparece mientras una persona atiende.
+ */
 export function ConversationActions({
   conversationId,
   botPaused,
   status,
+  showComposer = true,
 }: {
   conversationId: string;
   botPaused: boolean;
   status: string;
+  showComposer?: boolean;
 }) {
   const confirm = useConfirm();
   const [content, setContent] = useState("");
   const [paused, setPaused] = useState(botPaused);
+  // Tomar o devolver el chat cambia la pausa desde el servidor: se sigue a la prop.
+  const [pausaDelServidor, setPausaDelServidor] = useState(botPaused);
+  if (pausaDelServidor !== botPaused) {
+    setPausaDelServidor(botPaused);
+    setPaused(botPaused);
+  }
   const [enviando, setEnviando] = useState(false);
   const [accionEnCurso, setAccionEnCurso] = useState(false);
   // HU-ARCH-13: la API respondió 409 `window_expired` → se ofrece una plantilla.
@@ -102,30 +113,32 @@ export function ConversationActions({
         </Button>
       </div>
 
-      {ventanaVencida && (
+      {showComposer && ventanaVencida && (
         <TemplatePicker conversationId={conversationId} onSent={() => setVentanaVencida(false)} />
       )}
 
-      <div className="flex flex-col gap-2">
-        <Textarea
-          rows={2}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Escribe como persona del equipo…"
-          aria-label="Mensaje para el cliente"
-        />
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="accent"
-            size="sm"
-            onClick={send}
-            disabled={!content.trim() || enviando}
-          >
-            {enviando ? "Enviando…" : "Enviar mensaje"}
-          </Button>
+      {showComposer && (
+        <div className="flex flex-col gap-2">
+          <Textarea
+            rows={2}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Escribe como persona del equipo…"
+            aria-label="Mensaje para el cliente"
+          />
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="accent"
+              size="sm"
+              onClick={send}
+              disabled={!content.trim() || enviando}
+            >
+              {enviando ? "Enviando…" : "Enviar mensaje"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

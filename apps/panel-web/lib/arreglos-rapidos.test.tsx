@@ -106,7 +106,9 @@ describe("listas que paginan en el servidor", () => {
     respuestas["/admin/conversations"] = { ...conversaciones, items, total: 9 };
     await abrir(() => import("@/app/(app)/conversaciones/page"));
     expect(screen.queryByRole("button", { name: "Página siguiente" })).toBeNull();
-    expect(screen.getAllByText("WhatsApp Cloud")).toHaveLength(9);
+    // Bandeja (HU-UX-15): «canal · conexión» en cada chat, nunca el id crudo.
+    expect(screen.getAllByText(/^WhatsApp Cloud/)).toHaveLength(9);
+    expect(screen.queryByText(/whatsapp_cloud/)).toBeNull();
   });
 });
 
