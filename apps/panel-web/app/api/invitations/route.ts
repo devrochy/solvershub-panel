@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const res = await apiFetch("/admin/invitations", { method: "POST", body });
   if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json({ error: res.error, code: res.code }, { status: res.status });
   }
   return NextResponse.json({ ok: true });
 }

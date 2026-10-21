@@ -13,10 +13,14 @@ import { mensajeDeAlta } from "@/lib/colaboradores";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
+type Modo = "crear" | "invitar";
+
 /**
- * Alta de colaborador (diálogo). Si el correo ya tiene cuenta, la API no la duplica: envía
- * una invitación al negocio y lo dice en `resultado`; el aviso lo cuenta. El negocio (slug
- * con autocompletado) y el rol master son solo del master: un dueño da de alta en el suyo.
+ * Alta de colaborador (diálogo). Dos modos: «Crear cuenta» (correo + contraseña) o
+ * «Invitar» (correo + rol, sin contraseña: la persona ya tiene cuenta y acepta la
+ * invitación al negocio, ADR-0081). Si al crear el correo ya tiene cuenta, la API no la
+ * duplica: envía la invitación y lo dice en `resultado`. El negocio (slug con
+ * autocompletado) y el rol master son solo del master.
  */
 export function NewCollaboratorDialog({
   packRoles = [],
@@ -26,6 +30,7 @@ export function NewCollaboratorDialog({
   esMaster?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [modo, setModo] = useState<Modo>("crear");
   const [limite, setLimite] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const { run, pending } = useAction();
@@ -40,27 +45,36 @@ export function NewCollaboratorDialog({
       return;
     }
     setEmailError(null);
+    const role = String(data.get("role") ?? "colaborador");
+    const pack_roles = data.getAll("pack_roles").map((v) => String(v));
     const ok = await run(async () => {
-      const res = await fetch("/api/collaborators", {
+      const res = await fetch(modo === "invitar" ? "/api/invitations" : "/api/collaborators", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password: String(data.get("password") ?? ""),
-          role: String(data.get("role") ?? "colaborador"),
-          username: String(data.get("username") ?? ""),
-          tenant: String(data.get("tenant") ?? ""),
-          pack_roles: data.getAll("pack_roles").map((v) => String(v)),
-        }),
+        body: JSON.stringify(
+          modo === "invitar"
+            ? { email, role, pack_roles, tenant: String(data.get("tenant") ?? "") }
+            : {
+                email,
+                password: String(data.get("password") ?? ""),
+                role,
+                username: String(data.get("username") ?? ""),
+                tenant: String(data.get("tenant") ?? ""),
+                pack_roles,
+              },
+        ),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string; resultado?: string };
       if (!res.ok) {
         // Tope de colaboradores del plan (HU-BILL-05): no se creó ni se invitó a nadie.
         setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de colaboradores de tu plan.") : null);
-        return { ok: false, status: res.status, error: json.error ?? "No se pudo crear la cuenta." };
+        return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar." };
       }
       setLimite(null);
-      return { ok: true, success: mensajeDeAlta(json.resultado) };
+      return {
+        ok: true,
+        success: modo === "invitar" ? "Invitación enviada." : mensajeDeAlta(json.resultado),
+      };
     });
     if (ok) setOpen(false);
   }
@@ -72,30 +86,68 @@ export function NewCollaboratorDialog({
       </DialogTrigger>
       <DialogContent
         title="Nuevo colaborador"
-        description="Crea una cuenta de acceso al panel. Si el correo ya tiene cuenta, se le envía una invitación al negocio."
+        description="Crea una cuenta con contraseña o invita a quien ya tiene cuenta para que acepte entrar al negocio."
       >
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+          <div className="flex gap-1 rounded-lg bg-bg-deep p-1">
+            <Button
+              type="button"
+              variant={modo === "crear" ? "accent" : "ghost"}
+              size="sm"
+              onClick={() => setModo("crear")}
+            >
+              Nueva cuenta
+            </Button>
+            <Button
+              type="button"
+              variant={modo === "invitar" ? "accent" : "ghost"}
+              size="sm"
+              onClick={() => setModo("invitar")}
+            >
+              Invitar
+            </Button>
+          </div>
+
           <Field label="Correo" htmlFor="new-email" required error={emailError ?? undefined}>
             <Input id="new-email" name="email" type="email" required autoComplete="off" />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Contraseña" htmlFor="new-password" required>
-              <Input id="new-password" name="password" type="password" required autoComplete="new-password" />
-            </Field>
-            <Field label="Rol" htmlFor="new-role">
-              <Select id="new-role" name="role" defaultValue="colaborador">
+
+          {modo === "crear" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Contraseña" htmlFor="new-password" required>
+                <Input id="new-password" name="password" type="password" required autoComplete="new-password" />
+              </Field>
+              <Field label="Rol" htmlFor="new-role">
+                <Select id="new-role" name="role" defaultValue="colaborador">
+                  <option value="colaborador">Colaborador</option>
+                  <option value="owner">Propietario</option>
+                  {esMaster && <option value="master">Master (plataforma)</option>}
+                </Select>
+              </Field>
+            </div>
+          )}
+
+          {modo === "invitar" && (
+            <Field label="Rol" htmlFor="inv-role">
+              <Select id="inv-role" name="role" defaultValue="colaborador">
                 <option value="colaborador">Colaborador</option>
                 <option value="owner">Propietario</option>
-                {esMaster && <option value="master">Master (plataforma)</option>}
               </Select>
             </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Usuario" htmlFor="new-username" help="Opcional.">
-              <Input id="new-username" name="username" autoComplete="off" />
-            </Field>
-            {esMaster && <CampoDeNegocio id="new-tenant" help="Vacío = cuenta sin negocio." />}
-          </div>
+          )}
+
+          {modo === "crear" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Usuario" htmlFor="new-username" help="Opcional.">
+                <Input id="new-username" name="username" autoComplete="off" />
+              </Field>
+              {esMaster && <CampoDeNegocio id="new-tenant" help="Vacío = cuenta sin negocio." />}
+            </div>
+          )}
+
+          {modo === "invitar" && esMaster && (
+            <CampoDeNegocio id="inv-tenant" help="Vacío = el negocio activo del selector." />
+          )}
 
           {packRoles.length > 0 && (
             <fieldset className="flex flex-col gap-2">
@@ -125,7 +177,7 @@ export function NewCollaboratorDialog({
               <Button type="button" variant="ghost">Cancelar</Button>
             </DialogClose>
             <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Creando…" : "Crear cuenta"}
+              {pending ? (modo === "invitar" ? "Enviando…" : "Creando…") : modo === "invitar" ? "Enviar invitación" : "Crear cuenta"}
             </Button>
           </div>
         </form>
