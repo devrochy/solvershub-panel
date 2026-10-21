@@ -54,3 +54,14 @@ describe("ficha", () => {
     expect(normalizarClave("¿?")).toBe("");
   });
 });
+
+describe("línea de tiempo", () => {
+  it("enlaza cada tipo de evento a su sección", async () => {
+    const { enlaceDeEvento } = await import("./clientes");
+    expect(enlaceDeEvento("conversation", "c 1")).toBe("/conversaciones?c=c%201");
+    expect(enlaceDeEvento("order", "o1")).toBe("/comercio/pedidos");
+    expect(enlaceDeEvento("appointment", "a1")).toBe("/calendario/citas");
+    expect(enlaceDeEvento("otro", "x")).toBeNull();
+    expect(enlaceDeEvento(null, "x")).toBeNull();
+  });
+});

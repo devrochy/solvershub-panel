@@ -5283,6 +5283,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Lead Notes
+         * @description Notas del equipo sobre el cliente, de la más nueva a la más vieja (hasta 100).
+         */
+        get: operations["list_lead_notes_api_v1_admin_leads__lead_id__notes_get"];
+        put?: never;
+        /**
+         * Create Lead Note
+         * @description Nota del equipo sobre el cliente. La ve todo el equipo y el agente la tiene en cuenta como
+         *     dato (nunca como instrucción) en las siguientes conversaciones (ADR-0147).
+         */
+        post: operations["create_lead_note_api_v1_admin_leads__lead_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Lead Note
+         * @description Borra (lógico) una nota. Solo su autor, el propietario del negocio o un admin de plataforma.
+         */
+        delete: operations["delete_lead_note_api_v1_admin_leads__lead_id__notes__note_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lead Timeline
+         * @description Historia del cliente, del más reciente al más antiguo: conversaciones, escalaciones, datos
+         *     aprendidos, notas y lo que aporten los packs (pedidos, citas…). `partial` si un pack falló.
+         */
+        get: operations["lead_timeline_api_v1_admin_leads__lead_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -12458,6 +12524,57 @@ export interface components {
             datos?: {
                 [key: string]: string | number | boolean;
             };
+        };
+        /** LeadNote */
+        LeadNote: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Text */
+            text: string;
+            /** Author */
+            author: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Puede Borrar */
+            puede_borrar: boolean;
+        };
+        /** LeadNoteCreate */
+        LeadNoteCreate: {
+            /** Text */
+            text: string;
+        };
+        /** TimelineItem */
+        TimelineItem: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail?: string | null;
+            /** Link Kind */
+            link_kind?: string | null;
+            /** Link Id */
+            link_id?: string | null;
+        };
+        /** TimelineResponse */
+        TimelineResponse: {
+            /** Items */
+            items: components["schemas"]["TimelineItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Partial */
+            partial: boolean;
         };
     };
     responses: never;
@@ -23321,6 +23438,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BotState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lead_notes_api_v1_admin_leads__lead_id__notes_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadNote"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lead_note_api_v1_admin_leads__lead_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadNote"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lead_note_api_v1_admin_leads__lead_id__notes__note_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lead_timeline_api_v1_admin_leads__lead_id__timeline_get: {
+        parameters: {
+            query?: {
+                /** @description `next_cursor` de la página anterior. */
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineResponse"];
                 };
             };
             /** @description Validation Error */

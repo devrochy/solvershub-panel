@@ -132,3 +132,6 @@ export type DatosRetirados = components["schemas"]["DatosRetirados"];
 export type LeadDetail = components["schemas"]["LeadDetail"];
 export type LeadFact = components["schemas"]["LeadFact"];
 export type LeadFilter = components["schemas"]["LeadFilter"];
+export type LeadNote = components["schemas"]["LeadNote"];
+export type TimelineItem = components["schemas"]["TimelineItem"];
+export type TimelineResponse = components["schemas"]["TimelineResponse"];
