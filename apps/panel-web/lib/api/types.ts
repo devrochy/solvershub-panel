@@ -129,3 +129,6 @@ export type KnowledgeDocument = components["schemas"]["DocumentoOut"];
 export type EstadoDatosDePrueba = components["schemas"]["EstadoDatosDePrueba"];
 export type LoteGenerado = components["schemas"]["LoteGenerado"];
 export type DatosRetirados = components["schemas"]["DatosRetirados"];
+export type LeadDetail = components["schemas"]["LeadDetail"];
+export type LeadFact = components["schemas"]["LeadFact"];
+export type LeadFilter = components["schemas"]["LeadFilter"];
