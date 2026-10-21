@@ -12,6 +12,8 @@ describe("lista blanca del BFF de pruebas", () => {
     expect(rutaPermitida("GET", `attachments/${ID}`)).toBe(true);
     expect(rutaPermitida("GET", `runs/${ID}/report.md`)).toBe(true);
     expect(rutaPermitida("POST", `testers/${ID}/revoke`)).toBe(true);
+    expect(rutaPermitida("GET", "evolution")).toBe(true);
+    expect(rutaPermitida("POST", "evolution")).toBe(false);
   });
 
   it("rechaza métodos cambiados, traversal y rutas inventadas", () => {

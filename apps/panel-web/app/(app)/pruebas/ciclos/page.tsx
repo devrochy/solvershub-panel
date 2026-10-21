@@ -1,15 +1,18 @@
 import { apiFetch } from "@/lib/api/server";
-import type { Me, QaCatalogo, QaCiclo } from "@/lib/api/types";
+import type { Me, QaCatalogo, QaCiclo, QaEvolucion } from "@/lib/api/types";
 
 import { ListaDeCiclos } from "../_components/ciclos";
+import { Evolucion } from "../_components/evolucion";
 
 export const metadata = { title: "Ciclos de pruebas" };
 
-/** Pruebas › Ciclos (HU-QA-03): el abierto en vivo y los cerrados como foto fija. */
+/** Pruebas › Ciclos (HU-QA-03, HU-QA-08): el abierto en vivo, los cerrados como foto fija
+ * y la evolución por versión del catálogo. */
 export default async function CiclosPage() {
-  const [ciclos, catalogo, me] = await Promise.all([
+  const [ciclos, catalogo, evolucion, me] = await Promise.all([
     apiFetch<QaCiclo[]>("/admin/qa/cycles"),
     apiFetch<QaCatalogo>("/admin/qa/catalog?seccion=pruebas"),
+    apiFetch<QaEvolucion>("/admin/qa/evolution"),
     apiFetch<Me>("/admin/me"),
   ]);
   if (!ciclos.ok) {
@@ -23,5 +26,10 @@ export default async function CiclosPage() {
   const rol = me.ok ? me.data.role : "";
   const puedeCerrar = rol === "master" || (rol === "tester" && me.ok && me.data.qa_testers_habilitados);
   const titulos = Object.fromEntries((catalogo.ok ? catalogo.data.items : []).map((i) => [i.slug, i.titulo]));
-  return <ListaDeCiclos ciclos={ciclos.data} titulos={titulos} puedeCerrar={puedeCerrar} />;
+  return (
+    <div className="flex flex-col gap-8">
+      <ListaDeCiclos ciclos={ciclos.data} titulos={titulos} puedeCerrar={puedeCerrar} />
+      <Evolucion versiones={evolucion.ok ? evolucion.data.versiones : []} />
+    </div>
+  );
 }
