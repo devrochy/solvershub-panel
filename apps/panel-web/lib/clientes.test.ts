@@ -4,6 +4,7 @@ import {
   columnasDeSoloLectura,
   consultaClientes,
   datosDelPerfil,
+  mismoTelefono,
   etiquetaDeDato,
   filtrosDePacks,
   normalizarClave,
@@ -62,6 +63,9 @@ describe("ficha", () => {
     expect(datosDelPerfil({ telefono: "573001112233", datos }).map((x) => x.key)).toEqual(["email"]);
     expect(datosDelPerfil({ telefono: "573009999999", datos }).map((x) => x.key)).toEqual(["phone", "email"]);
     expect(datosDelPerfil({ telefono: null, datos }).map((x) => x.key)).toEqual(["phone", "email"]);
+    // Con o sin indicativo es el mismo número.
+    expect(datosDelPerfil({ telefono: "+573001112233", datos: [d("phone", "300 111 2233")] })).toEqual([]);
+    expect(mismoTelefono("123", "123")).toBe(false);
   });
 
   it("las columnas editables no se repiten como solo lectura", () => {

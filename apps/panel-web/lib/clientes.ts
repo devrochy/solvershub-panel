@@ -121,17 +121,21 @@ type ConPerfil = {
 
 const soloDigitos = (v: unknown) => String(v ?? "").replace(/\D+/g, "");
 
+/** Mismo número con o sin indicativo de país (`+57 300…` y `300…`). */
+export function mismoTelefono(a: unknown, b: unknown): boolean {
+  const x = soloDigitos(a);
+  const y = soloDigitos(b);
+  if (x.length < 7 || y.length < 7) return false;
+  return x.endsWith(y) || y.endsWith(x);
+}
+
 /**
  * Datos del perfil que se muestran en «Lo que sabemos» (ADR-0149): el nombre va en el título y el
  * teléfono del perfil solo si es distinto del teléfono del canal, para no mostrar el mismo dato dos veces.
  */
 export function datosDelPerfil<T extends ConPerfil["datos"][number]>(detalle: { telefono?: string | null; datos: T[] }): T[] {
-  const canal = soloDigitos(detalle.telefono);
   return detalle.datos.filter(
-    (d) =>
-      d.namespace === "perfil" &&
-      d.key !== "name" &&
-      !(d.key === "phone" && canal !== "" && soloDigitos(d.value) === canal),
+    (d) => d.namespace === "perfil" && d.key !== "name" && !(d.key === "phone" && mismoTelefono(d.value, detalle.telefono)),
   );
 }
 
