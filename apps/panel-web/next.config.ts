@@ -32,6 +32,10 @@ const CSP_EMBEDDED_SIGNUP = [
   "form-action 'self'",
 ].join("; ");
 
+// Solo en el catálogo (HU-CRM-01): la foto del producto es un link https que carga el dueño
+// (su tienda, un CDN). Una imagen no ejecuta código; el resto del panel sigue en 'self'.
+const CSP_FOTOS_DE_PRODUCTOS = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https:");
+
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
   output: "standalone",
@@ -62,6 +66,10 @@ const nextConfig: NextConfig = {
       {
         source: "/conexiones/whatsapp",
         headers: [{ key: "Content-Security-Policy", value: CSP_EMBEDDED_SIGNUP }],
+      },
+      {
+        source: "/comercio/productos",
+        headers: [{ key: "Content-Security-Policy", value: CSP_FOTOS_DE_PRODUCTOS }],
       },
     ];
   },
