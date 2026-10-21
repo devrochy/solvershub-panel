@@ -10,6 +10,8 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { FotoProducto } from "@/components/comercio/foto-producto";
+import { FOTO_URL_MAX, esFotoValida } from "@/lib/foto-producto";
 import { COBROS, cuerpoDelPlan } from "@/lib/suscripciones";
 
 type Product = {
@@ -18,6 +20,7 @@ type Product = {
   description: string;
   category_id: string | null;
   price: number;
+  image_url?: string | null;
   variants: { sku: string; stock: number; billing_period?: string | null; trial_days?: number | null }[];
 };
 
@@ -33,10 +36,16 @@ export function ProductDialog({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
   const variant = product?.variants[0];
+  const [foto, setFoto] = useState(product?.image_url ?? "");
+  const fotoInvalida = foto.trim() !== "" && !esFotoValida(foto);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    if (fotoInvalida) {
+      setStatus({ error: "La foto tiene que ser un link https://" });
+      return;
+    }
     setStatus({ loading: true });
     const res = await fetch("/api/pack/commerce/products", {
       method: "POST",
@@ -49,6 +58,8 @@ export function ProductDialog({
         sku: String(data.get("sku") ?? ""),
         price: Number(data.get("price") ?? 0),
         stock: Number(data.get("stock") ?? 0),
+        // "" quita la foto (HU-CRM-01).
+        image_url: foto.trim(),
         ...cuerpoDelPlan(data),
       }),
     });
@@ -63,7 +74,13 @@ export function ProductDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(abierto) => {
+        if (abierto) setFoto(product?.image_url ?? "");
+        setOpen(abierto);
+      }}
+    >
       <DialogTrigger asChild>
         {product ? (
           <Button aria-label="Editar" size="icon" title="Editar" variant="outline"><Pencil className="h-4 w-4" aria-hidden /></Button>
@@ -95,6 +112,30 @@ export function ProductDialog({
           <Field label="Descripción" htmlFor="p-desc">
             <Input id="p-desc" name="description" defaultValue={product?.description ?? ""} />
           </Field>
+          <div className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <Field
+                label="Foto (URL)"
+                htmlFor="p-foto"
+                help="Link https a la imagen. El agente la envía cuando el cliente pide este producto."
+                error={fotoInvalida ? "Tiene que ser un link https://" : undefined}
+              >
+                <Input
+                  id="p-foto"
+                  name="image_url"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://"
+                  maxLength={FOTO_URL_MAX}
+                  value={foto}
+                  onChange={(e) => setFoto(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="pt-6" aria-live="polite">
+              <FotoProducto url={foto} nombre={product?.name ?? "el producto"} size="lg" />
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="SKU" htmlFor="p-sku" help="Vacío = se genera.">
               <Input id="p-sku" name="sku" defaultValue={variant?.sku ?? ""} />
