@@ -185,4 +185,29 @@ describe("alta de colaborador", () => {
     expect(await within(dialogo).findByText(/Escribe un correo válido/)).toBeTruthy();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("invita por correo sin contraseña (HU-UI-14)", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    render(
+      <FeedbackProviders>
+        <NewCollaboratorDialog />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo colaborador" }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Invitar" }));
+    // En modo invitar no hay contraseña.
+    expect(within(dialogo).queryByLabelText(/Contraseña/)).toBeNull();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "socia@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Enviar invitación" }));
+
+    await waitFor(() => {
+      const llamada = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/invitations"));
+      expect(llamada).toBeTruthy();
+      const body = JSON.parse(String(llamada?.[1]?.body));
+      expect(body.email).toBe("socia@x.test");
+      expect(body.role).toBe("colaborador");
+      expect(body.password).toBeUndefined();
+    });
+  });
 });

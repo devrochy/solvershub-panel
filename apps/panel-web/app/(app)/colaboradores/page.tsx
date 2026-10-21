@@ -1,3 +1,4 @@
+import { InvitacionesPendientes, type InvitacionPendiente } from "@/app/(app)/colaboradores/_components/invitaciones-pendientes";
 import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new-collaborator-dialog";
 import { TablaDeColaboradores } from "@/app/(app)/colaboradores/_components/tabla-de-colaboradores";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,10 +9,11 @@ import { esMasterDePlataforma, seccionesOtorgables } from "@/lib/colaboradores";
 export const metadata = { title: "Equipo" };
 
 export default async function CollaboratorsPage() {
-  const [res, meRes, rolesRes] = await Promise.all([
+  const [res, meRes, rolesRes, invRes] = await Promise.all([
     apiFetch<CollaboratorItem[]>("/admin/collaborators"),
     apiFetch<Me>("/admin/me"),
     apiFetch<{ value: string; label: string }[]>("/admin/collaborators/pack-roles"),
+    apiFetch<InvitacionPendiente[]>("/admin/invitations/outgoing"),
   ]);
   if (!res.ok) {
     return (
@@ -34,6 +36,7 @@ export default async function CollaboratorsPage() {
         actions={<NewCollaboratorDialog packRoles={rolesRes.ok ? rolesRes.data : []} esMaster={esMaster} />}
       />
       <TablaDeColaboradores filas={res.data} secciones={secciones} esMaster={esMaster} />
+      <InvitacionesPendientes invitaciones={invRes.ok ? invRes.data : []} />
     </div>
   );
 }
