@@ -168,7 +168,7 @@ export const escalaciones: EscalationPage = {
 
 export const leads: LeadsResponse = {
   columns: [{ key: "ciudad", label: "Ciudad" }],
-  items: [{ id: "test-lead-1", cliente: "Ana Prueba", canal: "whatsapp", alta: "2026-10-09T15:00:00Z", extras: { ciudad: "Medellín" } }],
+  items: [{ id: "test-lead-1", cliente: "Ana Prueba", canal: "whatsapp", bot_paused: false, alta: "2026-10-09T15:00:00Z", extras: { ciudad: "Medellín" } }],
   total: 1,
   page: 1,
   page_size: 20,

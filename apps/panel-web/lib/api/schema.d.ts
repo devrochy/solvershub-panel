@@ -3137,6 +3137,9 @@ export interface paths {
         /**
          * Import Products Csv
          * @description Importa productos desde un CSV (columnas `name` y `price`, paridad con el clásico).
+         *
+         *     Opcionales: `description`, `sku`, `stock` e `image_url` (HU-CRM-01; una URL que no sea
+         *     https se ignora y el producto se crea sin foto).
          */
         post: operations["import_products_csv_api_v1_pack_commerce_products_import_post"];
         delete?: never;
@@ -5218,6 +5221,137 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Leads Csv
+         * @description La lista filtrada en CSV (hasta 5000 filas, las más recientes).
+         */
+        get: operations["export_leads_csv_api_v1_admin_leads_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Lead
+         * @description Ficha del cliente: datos del canal, lo que se sabe de él (con origen y fecha) y los packs.
+         */
+        get: operations["get_lead_api_v1_admin_leads__lead_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lead
+         * @description Corrige datos del perfil. Quedan como dato de una persona (`source="human"`) y el agente
+         *     los usa desde la siguiente conversación. Solo escribe `core/memory/facts.py`.
+         */
+        patch: operations["update_lead_api_v1_admin_leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/toggle-bot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Toggle Lead Bot
+         * @description Pausa o reanuda el agente para este cliente en todas sus conversaciones.
+         */
+        post: operations["toggle_lead_bot_api_v1_admin_leads__lead_id__toggle_bot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Lead Notes
+         * @description Notas del equipo sobre el cliente, de la más nueva a la más vieja (hasta 100).
+         */
+        get: operations["list_lead_notes_api_v1_admin_leads__lead_id__notes_get"];
+        put?: never;
+        /**
+         * Create Lead Note
+         * @description Nota del equipo sobre el cliente. La ve todo el equipo y el agente la tiene en cuenta como
+         *     dato (nunca como instrucción) en las siguientes conversaciones (ADR-0147).
+         */
+        post: operations["create_lead_note_api_v1_admin_leads__lead_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Lead Note
+         * @description Borra (lógico) una nota. Solo su autor, el propietario del negocio o un admin de plataforma.
+         */
+        delete: operations["delete_lead_note_api_v1_admin_leads__lead_id__notes__note_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lead Timeline
+         * @description Historia del cliente, del más reciente al más antiguo: conversaciones, escalaciones, datos
+         *     aprendidos, notas y lo que aporten los packs (pedidos, citas…). `partial` si un pack falló.
+         */
+        get: operations["lead_timeline_api_v1_admin_leads__lead_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6305,6 +6439,8 @@ export interface components {
              * @description Tipo del catálogo (p. ej. whatsapp_cloud, whatsapp_waweb, web)
              */
             connection_type?: string | null;
+            /** Customer Id */
+            customer_id?: string | null;
             /** Messages */
             messages: components["schemas"]["MessageItem"][];
             escalation?: components["schemas"]["ActiveEscalation"] | null;
@@ -7169,6 +7305,13 @@ export interface components {
             cliente: string;
             /** Canal */
             canal: string;
+            /** Telefono */
+            telefono?: string | null;
+            /**
+             * Bot Paused
+             * @default false
+             */
+            bot_paused: boolean;
             /** Alta */
             alta: string;
             /** Extras */
@@ -7180,6 +7323,8 @@ export interface components {
         LeadsResponse: {
             /** Columns */
             columns: components["schemas"]["LeadColumn"][];
+            /** Filters */
+            filters?: components["schemas"]["LeadFilter"][];
             /** Items */
             items: components["schemas"]["LeadRow"][];
             /** Total */
@@ -8446,6 +8591,8 @@ export interface components {
             category: string;
             /** Price */
             price: number;
+            /** Image Url */
+            image_url?: string | null;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
         };
@@ -8481,6 +8628,8 @@ export interface components {
             billing_period?: ("mensual" | "trimestral" | "anual" | "") | null;
             /** Trial Days */
             trial_days?: number | null;
+            /** Image Url */
+            image_url?: string | null;
         };
         /** Promise */
         Promise: {
@@ -12293,6 +12442,147 @@ export interface components {
              */
             retirados: number;
         };
+        /** LeadConnection */
+        LeadConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Channel */
+            channel: string;
+        };
+        /** LeadDetail */
+        LeadDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Cliente */
+            cliente: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Canal */
+            canal: string;
+            /** Identificador */
+            identificador: string;
+            /** Telefono */
+            telefono: string | null;
+            /** Bot Paused */
+            bot_paused: boolean;
+            /** Alta */
+            alta: string | null;
+            /** Conexiones */
+            conexiones: components["schemas"]["LeadConnection"][];
+            /** Ultima Conversacion Id */
+            ultima_conversacion_id: string | null;
+            /** Datos */
+            datos: components["schemas"]["LeadFact"][];
+            /** Extras */
+            extras: {
+                [key: string]: unknown;
+            };
+            /** Columns */
+            columns: components["schemas"]["LeadColumn"][];
+        };
+        /** LeadFact */
+        LeadFact: {
+            /** Namespace */
+            namespace: string;
+            /** Key */
+            key: string;
+            /** Value */
+            value: unknown;
+            /** Source */
+            source: string;
+            /** Data Class */
+            data_class: string;
+            /**
+             * Valid From
+             * Format: date-time
+             */
+            valid_from: string;
+        };
+        /** LeadFilter */
+        LeadFilter: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Options */
+            options: components["schemas"]["LeadFilterOption"][];
+        };
+        /** LeadFilterOption */
+        LeadFilterOption: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * LeadUpdate
+         * @description Datos del perfil a corregir. `name` también cambia el nombre visible del cliente.
+         */
+        LeadUpdate: {
+            /** Datos */
+            datos?: {
+                [key: string]: string | number | boolean;
+            };
+        };
+        /** LeadNote */
+        LeadNote: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Text */
+            text: string;
+            /** Author */
+            author: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Puede Borrar */
+            puede_borrar: boolean;
+        };
+        /** LeadNoteCreate */
+        LeadNoteCreate: {
+            /** Text */
+            text: string;
+        };
+        /** TimelineItem */
+        TimelineItem: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail?: string | null;
+            /** Link Kind */
+            link_kind?: string | null;
+            /** Link Id */
+            link_id?: string | null;
+        };
+        /** TimelineResponse */
+        TimelineResponse: {
+            /** Items */
+            items: components["schemas"]["TimelineItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Partial */
+            partial: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -13773,8 +14063,14 @@ export interface operations {
     list_leads_api_v1_admin_leads_get: {
         parameters: {
             query?: {
-                /** @description Busca por nombre o identificador. */
+                /** @description Busca por nombre, identificador o teléfono. */
                 q?: string | null;
+                /** @description Solo los clientes de este canal. */
+                channel?: string | null;
+                /** @description Solo los clientes que escribieron por esta conexión. */
+                connection_id?: string | null;
+                /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
+                filtro?: string[] | null;
                 page?: number;
                 page_size?: number;
             };
@@ -23011,6 +23307,283 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatosRetirados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_leads_csv_api_v1_admin_leads_export_csv_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                channel?: string | null;
+                connection_id?: string | null;
+                /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
+                filtro?: string[] | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lead_api_v1_admin_leads__lead_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lead_api_v1_admin_leads__lead_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    toggle_lead_bot_api_v1_admin_leads__lead_id__toggle_bot_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lead_notes_api_v1_admin_leads__lead_id__notes_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadNote"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lead_note_api_v1_admin_leads__lead_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadNote"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lead_note_api_v1_admin_leads__lead_id__notes__note_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lead_timeline_api_v1_admin_leads__lead_id__timeline_get: {
+        parameters: {
+            query?: {
+                /** @description `next_cursor` de la página anterior. */
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineResponse"];
                 };
             };
             /** @description Validation Error */

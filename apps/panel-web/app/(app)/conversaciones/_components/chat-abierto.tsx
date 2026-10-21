@@ -176,6 +176,11 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
             <ChannelIcon id={tipoDelChat(detalle)} size="sm" />
             {conexionDelChat(detalle)}
             {detalle.external_id ? ` · ${detalle.external_id}` : ""}
+            {detalle.customer_id && (
+              <Link href={`/leads?cliente=${detalle.customer_id}`} className="text-link hover:underline">
+                Ver ficha
+              </Link>
+            )}
           </span>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
