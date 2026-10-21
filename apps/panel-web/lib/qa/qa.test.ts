@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { QaEvento, QaItem } from "@/lib/api/types";
 import { estadoDePrueba, fechaDeCatalogo, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
 import { describirEvento } from "@/lib/qa/historial";
+import { leerInforme } from "@/lib/qa/informe";
 import {
   FILTROS_INICIALES,
   agrupar,
@@ -12,6 +13,7 @@ import {
   filtrar,
   primerPasoPendiente,
   siguientePendiente,
+  subsecciones,
   vecina,
 } from "@/lib/qa/lista";
 import { accionDeTecla } from "@/lib/qa/teclas";
@@ -92,6 +94,23 @@ describe("lista lateral", () => {
     expect(agrupar(mezclado, estadoDe).at(-1)?.titulo).toBe("Sin clasificar");
   });
 
+  it("agrupa por subsección (v15) y filtra por ella; sin subsección, las pruebas cuelgan del área", () => {
+    const v15 = [
+      item("a", { entorno: "panel", area: "Navegación y sesión", subseccion: "Navegación y paleta" }),
+      item("b", { entorno: "panel", area: "Navegación y sesión", subseccion: "Sesión y acceso" }),
+      item("viejo", { entorno: "panel", area: "Navegación y sesión" }),
+    ];
+    const grupos = agrupar(v15, estadoDe);
+    const area = grupos[0].areas[0];
+    expect(area.subsecciones.map((s) => [s.subseccion, s.items.length])).toEqual([
+      ["Navegación y paleta", 1],
+      ["Sesión y acceso", 1],
+      ["", 1],
+    ]);
+    expect(subsecciones(v15, "panel", "Navegación y sesión")).toEqual(["Navegación y paleta", "Sesión y acceso", ""]);
+    expect(filtrar(v15, { ...FILTROS_INICIALES, subseccion: "Sesión y acceso" }, estadoDe).map((i) => i.slug)).toEqual(["b"]);
+  });
+
   it("encuentra la siguiente pendiente y las vecinas", () => {
     expect(siguientePendiente(ITEMS, "a", estadoDe)).toBe("b");
     expect(siguientePendiente(ITEMS, "b", (s) => (s === "b" ? "sin_correr" : "ok"))).toBeNull();
@@ -111,6 +130,32 @@ describe("historial y atajos", () => {
     expect(describirEvento(ev("adjunto.agregado", { paso: 1, despues: "pantalla.png" }))).toBe("Paso 1: agregó la captura pantalla.png");
     expect(describirEvento(ev("config.estado", { antes: "pendiente", despues: "listo" }))).toBe("Pendiente → Listo");
     expect(describirEvento(ev("raro"))).toBe("Cambio registrado");
+  });
+
+  it("lee el informe agrupado por sección (formato 2) y tolera el formato 1", () => {
+    const informe = leerInforme({
+      progreso: { total: 2, terminadas: 1, ok: 1, falla: 0, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 1 },
+      secciones: [
+        {
+          entorno: "panel",
+          total: 2, ok: 1, falla: 0, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 1,
+          areas: [
+            {
+              area: "Conexiones",
+              total: 2, ok: 1, falla: 0, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 1,
+              subsecciones: [{ subseccion: "Números y plantillas", total: 2, ok: 1, falla: 0, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 1 }],
+            },
+          ],
+        },
+      ],
+      pruebas: [{ slug: "a", titulo: "A", grupo: "", hu: [], pasos: [] }],
+      sin_correr: [],
+    });
+    expect(informe?.secciones?.[0].entorno).toBe("panel");
+    expect(informe?.secciones?.[0].areas[0].subsecciones[0]).toMatchObject({ subseccion: "Números y plantillas", ok: 1, total: 2 });
+    const viejo = leerInforme({ progreso: { total: 1, terminadas: 0, ok: 0, falla: 0, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 1 }, pruebas: [], sin_correr: [] });
+    expect(viejo?.secciones).toBeUndefined();
+    expect(leerInforme({ pruebas: [] })).toBeNull();
   });
 
   it("solo dispara atajos fuera de campos y sin modificadores", () => {

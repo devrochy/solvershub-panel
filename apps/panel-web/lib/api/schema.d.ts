@@ -4776,6 +4776,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/qa/evolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Evolution
+         * @description Línea de tiempo de versiones del catálogo con el resultado por entorno, área y subsección.
+         */
+        get: operations["evolution_api_v1_admin_qa_evolution_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/qa/cycles/close": {
         parameters: {
             query?: never;
@@ -9443,6 +9463,11 @@ export interface components {
              */
             area?: string | null;
             /**
+             * Subseccion
+             * @description Pruebas: tercer nivel dentro del área (catálogo v7, HU-QA-08).
+             */
+            subseccion?: string | null;
+            /**
              * Requiere
              * @description Pruebas: slugs de la guía de datos que necesita.
              */
@@ -13084,6 +13109,94 @@ export interface components {
             bloqueo: ("sin_destinatarios" | "tope" | "envio_en_curso") | null;
             /** Expira */
             expira: string | null;
+        };
+        /** QaAreaEvo */
+        QaAreaEvo: {
+            /** Total */
+            total: number;
+            /** Ok */
+            ok: number;
+            /** Falla */
+            falla: number;
+            /** Bloqueada */
+            bloqueada: number;
+            /** Omitida */
+            omitida: number;
+            /** En Curso */
+            en_curso: number;
+            /** Sin Correr */
+            sin_correr: number;
+            /** Area */
+            area: string;
+            /** Subsecciones */
+            subsecciones: components["schemas"]["QaSubseccionEvo"][];
+        };
+        /** QaSeccionEvo */
+        QaSeccionEvo: {
+            /** Total */
+            total: number;
+            /** Ok */
+            ok: number;
+            /** Falla */
+            falla: number;
+            /** Bloqueada */
+            bloqueada: number;
+            /** Omitida */
+            omitida: number;
+            /** En Curso */
+            en_curso: number;
+            /** Sin Correr */
+            sin_correr: number;
+            /** Entorno */
+            entorno: string;
+            /** Areas */
+            areas: components["schemas"]["QaAreaEvo"][];
+        };
+        /** QaSubseccionEvo */
+        QaSubseccionEvo: {
+            /** Total */
+            total: number;
+            /** Ok */
+            ok: number;
+            /** Falla */
+            falla: number;
+            /** Bloqueada */
+            bloqueada: number;
+            /** Omitida */
+            omitida: number;
+            /** En Curso */
+            en_curso: number;
+            /** Sin Correr */
+            sin_correr: number;
+            /** Subseccion */
+            subseccion: string;
+        };
+        /** QaVersionEvo */
+        QaVersionEvo: {
+            /** Version */
+            version: number;
+            /** Fecha */
+            fecha: string;
+            /** Commit Docs */
+            commit_docs?: string | null;
+            /** Importada En */
+            importada_en?: string | null;
+            /** Total Pruebas */
+            total_pruebas: number;
+            /**
+             * Ciclo
+             * @description El ciclo más reciente que usó esta versión.
+             */
+            ciclo?: {
+                [key: string]: unknown;
+            } | null;
+            /** Secciones */
+            secciones: components["schemas"]["QaSeccionEvo"][];
+        };
+        /** QaEvolucion */
+        QaEvolucion: {
+            /** Versiones */
+            versiones: components["schemas"]["QaVersionEvo"][];
         };
     };
     responses: never;
@@ -22882,6 +22995,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QaCiclo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evolution_api_v1_admin_qa_evolution_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEvolucion"];
                 };
             };
             /** @description Validation Error */

@@ -25,6 +25,7 @@ const GUARDADOS_INICIALES: FiltrosGuardados = {
   estado: FILTROS_INICIALES.estado,
   entorno: FILTROS_INICIALES.entorno,
   area: FILTROS_INICIALES.area,
+  subseccion: FILTROS_INICIALES.subseccion,
   soloHumo: FILTROS_INICIALES.soloHumo,
 };
 let filtrosCache: FiltrosGuardados | null = null;

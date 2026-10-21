@@ -14,6 +14,16 @@ import { leerInforme } from "@/lib/qa/informe";
 import { URL_ADJUNTO } from "./api";
 import { IconoEstado } from "./icono-estado";
 
+/** Nombres de entorno del informe agrupado; coinciden con la lista lateral. */
+const ENTORNO_DE_INFORME: Record<string, string> = {
+  panel: "Panel",
+  apk: "APK",
+  whatsapp: "WhatsApp",
+  web: "Web",
+  api: "API",
+  otros: "Sin clasificar",
+};
+
 /**
  * Informe de una ejecución (HU-QA-03, D-SPEC-30-5). Si ya se envió muestra la foto congelada;
  * si sigue en curso, el avance en vivo. «Imprimir o guardar PDF» usa la hoja de impresión del
@@ -88,6 +98,46 @@ export function DetalleDeInforme({ run }: { run: QaEjecucion }) {
         <p role="status" className="text-sm text-body">
           Esta ejecución todavía no se envió. El detalle paso a paso queda congelado cuando el tester envía su informe.
         </p>
+      )}
+
+      {informe?.secciones && informe.secciones.length > 0 && (
+        <section aria-label="Resultados por sección" className="flex flex-col gap-2">
+          <h3 className="font-display text-sh-block text-headline">Resultados por sección</h3>
+          <p className="text-xs text-text-soft">Por entorno, sección y subsección: OK · Falla · Bloqueada · Sin correr.</p>
+          <div className="flex flex-col gap-3">
+            {informe.secciones.map((seccion) => (
+              <Card key={seccion.entorno} className="break-inside-avoid">
+                <CardContent className="flex flex-col gap-2 pt-4">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-medium text-headline">{ENTORNO_DE_INFORME[seccion.entorno] ?? seccion.entorno}</span>
+                    <span className="text-xs tabular-nums text-text-soft">
+                      OK {seccion.ok} · Falla {seccion.falla} · Bloqueada {seccion.bloqueada} · Sin correr {seccion.sin_correr} ·{" "}
+                      {seccion.total} pruebas
+                    </span>
+                  </div>
+                  {seccion.areas.map((area) => (
+                    <div key={area.area} className="flex flex-col gap-1 border-l-2 border-border-soft pl-3">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-sm text-body">{area.area}</span>
+                        <span className="text-xs tabular-nums text-text-soft">
+                          OK {area.ok} · Falla {area.falla} · Bloqueada {area.bloqueada} · Sin correr {area.sin_correr}
+                        </span>
+                      </div>
+                      {area.subsecciones.map((sub) => (
+                        <div key={sub.subseccion || "sin-subseccion"} className="flex items-baseline justify-between gap-2 pl-3">
+                          <span className="text-xs text-text-soft">{sub.subseccion || "Sin subsección"}</span>
+                          <span className="text-xs tabular-nums text-text-soft">
+                            OK {sub.ok} · Falla {sub.falla} · Bloqueada {sub.bloqueada} · Sin correr {sub.sin_correr}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
 
       {informe && informe.pruebas.length > 0 && (

@@ -8,16 +8,16 @@ import { Progress } from "@/components/ui/progress";
 import { SearchInput } from "@/components/ui/search-input";
 import { Select } from "@/components/ui/select";
 import type { QaItem } from "@/lib/api/types";
-import { agrupar, areas, entornos, type Filtros } from "@/lib/qa/lista";
+import { agrupar, areas, entornos, subsecciones, type Filtros } from "@/lib/qa/lista";
 import { cn } from "@/lib/utils";
 
 import { IconoEstado } from "./icono-estado";
 
 /**
  * Lista lateral de pruebas (HU-QA-03 y HU-QA-08): buscador, filtros y las pruebas agrupadas
- * por entorno (Panel, APK, WhatsApp, Web, API) y por sección, con lo que llevo terminado de
- * cada nivel. Cada prueba es un botón (la elegida con `aria-current`); con el foco en la
- * lista, ↑ y ↓ cambian de prueba e Inicio y Fin van a los extremos.
+ * por entorno (Panel, APK, WhatsApp, Web, API), por sección y por subsección, con lo que llevo
+ * terminado de cada nivel. Cada prueba es un botón (la elegida con `aria-current`); con el foco
+ * en la lista, ↑ y ↓ cambian de prueba e Inicio y Fin van a los extremos.
  */
 export function ListaDePruebas({
   items,
@@ -40,7 +40,11 @@ export function ListaDePruebas({
   const grupos = agrupar(visibles, estadoDe);
   const ordenVisible = grupos
     .filter((g) => !plegados.has(g.id))
-    .flatMap((g) => g.areas.filter((a) => !plegados.has(a.id)).flatMap((a) => a.items));
+    .flatMap((g) =>
+      g.areas
+        .filter((a) => !plegados.has(a.id))
+        .flatMap((a) => a.subsecciones.filter((s) => !plegados.has(s.id)).flatMap((s) => s.items)),
+    );
 
   function alternar(id: string) {
     setPlegados((prev) => {
@@ -69,6 +73,34 @@ export function ListaDePruebas({
   }
 
   const opcionesDeArea = areas(items, filtros.entorno);
+  const opcionesDeSubseccion = subsecciones(items, filtros.entorno, filtros.area);
+
+  function renderPrueba(item: QaItem) {
+    const activo = item.slug === seleccion;
+    return (
+      <button
+        type="button"
+        key={item.slug}
+        id={`prueba-${item.slug}`}
+        aria-current={activo ? "true" : undefined}
+        onClick={() => onElegir(item.slug)}
+        className={cn(
+          "flex items-start gap-2 rounded-md border-l-2 px-2 py-1.5 text-left text-sm",
+          activo
+            ? "border-focus bg-surface-2 text-headline"
+            : "border-transparent text-body hover:bg-hover hover:text-headline",
+        )}
+      >
+        <IconoEstado estado={estadoDe(item.slug)} className="mt-0.5" />
+        <span className="min-w-0 flex-1 leading-snug">{item.titulo}</span>
+        {item.prioridad === "P0" && (
+          <span className="shrink-0 rounded-sm bg-hover px-1 text-[11px] font-medium text-body" title="Prueba de humo">
+            P0
+          </span>
+        )}
+      </button>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -82,8 +114,8 @@ export function ListaDePruebas({
         <Select
           aria-label="Filtrar por entorno"
           value={filtros.entorno}
-          // Cambiar de entorno limpia la sección: puede no existir en el nuevo.
-          onChange={(e) => onFiltros({ ...filtros, entorno: e.target.value, area: "" })}
+          // Cambiar de entorno limpia la sección y la subsección: pueden no existir en el nuevo.
+          onChange={(e) => onFiltros({ ...filtros, entorno: e.target.value, area: "", subseccion: "" })}
         >
           <option value="">Todos los entornos</option>
           {entornos(items).map((e) => (
@@ -95,7 +127,7 @@ export function ListaDePruebas({
         <Select
           aria-label="Filtrar por sección"
           value={filtros.area}
-          onChange={(e) => onFiltros({ ...filtros, area: e.target.value })}
+          onChange={(e) => onFiltros({ ...filtros, area: e.target.value, subseccion: "" })}
         >
           <option value="">Todas las secciones</option>
           {opcionesDeArea.map((a) => (
@@ -104,9 +136,24 @@ export function ListaDePruebas({
             </option>
           ))}
         </Select>
+        {opcionesDeSubseccion.length > 0 && (
+          <Select
+            aria-label="Filtrar por subsección"
+            className="col-span-2"
+            value={filtros.subseccion}
+            onChange={(e) => onFiltros({ ...filtros, subseccion: e.target.value })}
+          >
+            <option value="">Todas las subsecciones</option>
+            {opcionesDeSubseccion.map((s) => (
+              <option key={s} value={s}>
+                {s || "Sin subsección"}
+              </option>
+            ))}
+          </Select>
+        )}
         <Select
           aria-label="Filtrar por estado"
-          className="col-span-2"
+          className={cn(opcionesDeSubseccion.length === 0 && "col-span-2")}
           value={filtros.estado}
           onChange={(e) => onFiltros({ ...filtros, estado: e.target.value as Filtros["estado"] })}
         >
@@ -166,6 +213,8 @@ export function ListaDePruebas({
               {!plegado &&
                 entorno.areas.map((area) => {
                   const areaPlegada = plegados.has(area.id);
+                  const subseccionesDeArea = area.subsecciones.filter((s) => s.subseccion !== "");
+                  const sinSubseccion = area.subsecciones.find((s) => s.subseccion === "");
                   return (
                     <div key={area.id} className="flex flex-col gap-0.5 pl-2">
                       <button
@@ -183,36 +232,34 @@ export function ListaDePruebas({
                           {area.terminadas}/{area.items.length}
                         </span>
                       </button>
-                      {!areaPlegada &&
-                        area.items.map((item) => {
-                          const activo = item.slug === seleccion;
-                          return (
-                            <button
-                              type="button"
-                              key={item.slug}
-                              id={`prueba-${item.slug}`}
-                              aria-current={activo ? "true" : undefined}
-                              onClick={() => onElegir(item.slug)}
-                              className={cn(
-                                "flex items-start gap-2 rounded-md border-l-2 px-2 py-1.5 text-left text-sm",
-                                activo
-                                  ? "border-focus bg-surface-2 text-headline"
-                                  : "border-transparent text-body hover:bg-hover hover:text-headline",
-                              )}
-                            >
-                              <IconoEstado estado={estadoDe(item.slug)} className="mt-0.5" />
-                              <span className="min-w-0 flex-1 leading-snug">{item.titulo}</span>
-                              {item.prioridad === "P0" && (
-                                <span
-                                  className="shrink-0 rounded-sm bg-hover px-1 text-[11px] font-medium text-body"
-                                  title="Prueba de humo"
+                      {!areaPlegada && (
+                        <>
+                          {sinSubseccion?.items.map((item) => renderPrueba(item))}
+                          {subseccionesDeArea.map((subseccion) => {
+                            const subPlegada = plegados.has(subseccion.id);
+                            return (
+                              <div key={subseccion.id} className="flex flex-col gap-0.5 pl-3">
+                                <button
+                                  type="button"
+                                  onClick={() => alternar(subseccion.id)}
+                                  aria-expanded={!subPlegada}
+                                  className="flex items-center gap-2 rounded-md px-2 py-1 text-left text-xs text-body hover:bg-hover"
                                 >
-                                  P0
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
+                                  <ChevronDown
+                                    aria-hidden
+                                    className={cn("h-3 w-3 shrink-0 transition-transform", subPlegada && "-rotate-90")}
+                                  />
+                                  <span className="min-w-0 flex-1 truncate">{subseccion.titulo}</span>
+                                  <span className="shrink-0 tabular-nums text-text-soft">
+                                    {subseccion.terminadas}/{subseccion.items.length}
+                                  </span>
+                                </button>
+                                {!subPlegada && subseccion.items.map((item) => renderPrueba(item))}
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                   );
                 })}

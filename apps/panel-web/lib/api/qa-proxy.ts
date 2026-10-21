@@ -29,6 +29,7 @@ export const RUTAS_QA: { metodo: Metodo; patron: RegExp }[] = [
   { metodo: "GET", patron: new RegExp(`^runs/${UUID}/report\\.md$`) },
   { metodo: "GET", patron: /^cycles$/ },
   { metodo: "POST", patron: /^cycles\/close$/ },
+  { metodo: "GET", patron: /^evolution$/ },
   { metodo: "PUT", patron: new RegExp(`^config/${SLUG}$`) },
   { metodo: "GET", patron: /^testers$/ },
   { metodo: "POST", patron: /^testers$/ },

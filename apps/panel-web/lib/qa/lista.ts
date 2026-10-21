@@ -1,6 +1,7 @@
 /**
  * Lista lateral de pruebas (SPEC-30, HU-QA-03 y HU-QA-08): filtros y agrupación por entorno
- * (Panel, APK, WhatsApp, Web, API) y, dentro, por sección. Lógica pura: la página solo la usa.
+ * (Panel, APK, WhatsApp, Web, API), dentro por sección (área) y dentro por subsección (catálogo
+ * v7). Lógica pura: la página solo la usa.
  */
 import type { QaItem } from "@/lib/api/types";
 import { esTerminada } from "@/lib/qa/estados";
@@ -10,13 +11,23 @@ export type Filtros = {
   estado: "todas" | "pendientes" | "terminadas" | "falla" | "bloqueada";
   entorno: string;
   area: string;
+  subseccion: string;
   soloHumo: boolean;
 };
 
-export const FILTROS_INICIALES: Filtros = { texto: "", estado: "todas", entorno: "", area: "", soloHumo: false };
+export const FILTROS_INICIALES: Filtros = {
+  texto: "",
+  estado: "todas",
+  entorno: "",
+  area: "",
+  subseccion: "",
+  soloHumo: false,
+};
 
 export type Grupo = { id: string; titulo: string; items: QaItem[]; terminadas: number };
-export type GrupoDeEntorno = Grupo & { entorno: string; areas: Grupo[] };
+export type GrupoDeSubseccion = Grupo & { subseccion: string };
+export type GrupoDeArea = Grupo & { area: string; subsecciones: GrupoDeSubseccion[] };
+export type GrupoDeEntorno = Grupo & { entorno: string; areas: GrupoDeArea[] };
 
 /** Entornos en el orden de la lista; las pruebas de un catálogo anterior a la v6 caen en «otros». */
 export const ENTORNOS: Record<string, string> = {
@@ -37,6 +48,11 @@ export function areaDe(item: QaItem): string {
   return item.area ?? item.grupo ?? "Sin sección";
 }
 
+/** Subsección de la prueba (catálogo v15); sin `subseccion`, la sección vacía de su área. */
+export function subseccionDe(item: QaItem): string {
+  return item.subseccion ?? "";
+}
+
 function normalizar(texto: string): string {
   return texto
     .normalize("NFD")
@@ -55,10 +71,11 @@ export function filtrar(items: QaItem[], filtros: Filtros, estadoDe: (slug: stri
     if (filtros.estado === "bloqueada" && estado !== "bloqueada") return false;
     if (filtros.entorno && entornoDe(item) !== filtros.entorno) return false;
     if (filtros.area && areaDe(item) !== filtros.area) return false;
+    if (filtros.subseccion && subseccionDe(item) !== filtros.subseccion) return false;
     if (filtros.soloHumo && item.prioridad !== "P0") return false;
     if (texto) {
       const pajar = normalizar(
-        [item.titulo, item.grupo, item.area ?? "", item.resumen ?? "", ...(item.hu ?? []), item.slug].join(" "),
+        [item.titulo, item.grupo, item.area ?? "", item.subseccion ?? "", item.resumen ?? "", ...(item.hu ?? []), item.slug].join(" "),
       );
       if (!pajar.includes(texto)) return false;
     }
@@ -68,8 +85,8 @@ export function filtrar(items: QaItem[], filtros: Filtros, estadoDe: (slug: stri
 
 /**
  * Entornos en el orden fijo de `ENTORNOS` y, dentro de cada uno, sus secciones en el orden del
- * catálogo (que las ordena como el menú del panel y las pantallas de la APK), con cuántas
- * terminé de cada nivel.
+ * catálogo (que las ordena como el menú del panel y las pantallas de la APK) y dentro de cada
+ * sección sus subsecciones, con cuántas terminé de cada nivel.
  */
 export function agrupar(items: QaItem[], estadoDe: (slug: string) => string): GrupoDeEntorno[] {
   const entornos = new Map<string, GrupoDeEntorno>();
@@ -83,15 +100,29 @@ export function agrupar(items: QaItem[], estadoDe: (slug: string) => string): Gr
     const area = areaDe(item);
     let sub = grupo.areas.find((a) => a.titulo === area);
     if (!sub) {
-      sub = { id: `${entorno}:${area}`, titulo: area, items: [], terminadas: 0 };
+      sub = { id: `${entorno}:${area}`, area, titulo: area, items: [], terminadas: 0, subsecciones: [] };
       grupo.areas.push(sub);
+    }
+    const subseccion = subseccionDe(item);
+    let tercer = sub.subsecciones.find((s) => s.subseccion === subseccion);
+    if (!tercer) {
+      tercer = {
+        id: `${entorno}:${area}:${subseccion}`,
+        subseccion,
+        titulo: subseccion || "Sin subsección",
+        items: [],
+        terminadas: 0,
+      };
+      sub.subsecciones.push(tercer);
     }
     const terminada = esTerminada(estadoDe(item.slug));
     grupo.items.push(item);
     sub.items.push(item);
+    tercer.items.push(item);
     if (terminada) {
       grupo.terminadas += 1;
       sub.terminadas += 1;
+      tercer.terminadas += 1;
     }
   }
   const orden = Object.keys(ENTORNOS);
@@ -111,9 +142,20 @@ export function areas(items: QaItem[], entorno: string): string[] {
   return [...new Set(items.filter((i) => !entorno || entornoDe(i) === entorno).map(areaDe))];
 }
 
-/** El orden en que la lista muestra las pruebas (entornos y secciones), para J/K y «siguiente». */
+/** Subsecciones de un área (o de todas), en el orden del catálogo. */
+export function subsecciones(items: QaItem[], entorno: string, area: string): string[] {
+  return [
+    ...new Set(
+      items
+        .filter((i) => (!entorno || entornoDe(i) === entorno) && (!area || areaDe(i) === area))
+        .map(subseccionDe),
+    ),
+  ];
+}
+
+/** El orden en que la lista muestra las pruebas (entornos, secciones y subsecciones), para J/K y «siguiente». */
 export function enOrdenDeLista(items: QaItem[]): QaItem[] {
-  return agrupar(items, () => "sin_correr").flatMap((e) => e.areas.flatMap((a) => a.items));
+  return agrupar(items, () => "sin_correr").flatMap((e) => e.areas.flatMap((a) => a.subsecciones.flatMap((s) => s.items)));
 }
 
 /** La siguiente prueba sin terminar después de `actual` (dando la vuelta); `null` si no queda. */
