@@ -9,6 +9,7 @@ import {
   filtrosDePacks,
   normalizarClave,
   origenDelDato,
+  segmentoDelFiltro,
   textoDeDato,
   valorDeFiltro,
 } from "./clientes";
@@ -83,5 +84,29 @@ describe("línea de tiempo", () => {
     expect(enlaceDeEvento("appointment", "a1")).toBe("/calendario/citas");
     expect(enlaceDeEvento("otro", "x")).toBeNull();
     expect(enlaceDeEvento(null, "x")).toBeNull();
+  });
+});
+
+describe("segmentoDelFiltro", () => {
+  const filtros = [
+    { key: "clasificacion", options: [{ value: "frecuente", label: "Frecuente" }, { value: "nuevo", label: "Nuevo" }] },
+    { key: "estado_lead", options: [{ value: "nuevo", label: "Nuevo" }] },
+  ];
+
+  it("toma la clasificación del filtro con su etiqueta", () => {
+    expect(segmentoDelFiltro(["estado_lead:nuevo", "clasificacion:frecuente"], filtros)).toEqual({
+      value: "frecuente",
+      label: "Frecuente",
+    });
+  });
+
+  it("el estado del lead no cuenta como segmento aunque se llame igual", () => {
+    expect(segmentoDelFiltro("estado_lead:nuevo", filtros)).toBeNull();
+  });
+
+  it("sin el filtro de clasificación (pack apagado) o con un valor desconocido no hay segmento", () => {
+    expect(segmentoDelFiltro("clasificacion:frecuente", [])).toBeNull();
+    expect(segmentoDelFiltro("clasificacion:otro", filtros)).toBeNull();
+    expect(segmentoDelFiltro(undefined, filtros)).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AgenteSwitch } from "@/app/(app)/leads/_components/agente-switch";
 import { FichaCliente } from "@/app/(app)/leads/_components/ficha-cliente";
 import { LeadsFilters } from "@/app/(app)/leads/_components/leads-filters";
+import { PromocionDelSegmento } from "@/app/(app)/leads/_components/promocion-del-segmento";
 import { ListPage } from "@/components/templates/list-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { ConversationConnection, LeadDetail, LeadsResponse } from "@/lib/api/types";
-import { consultaClientes, type FiltrosClientes } from "@/lib/clientes";
+import { consultaClientes, segmentoDelFiltro, type FiltrosClientes } from "@/lib/clientes";
 import { formatCellValue } from "@/lib/format";
 import { canalLabel } from "@/lib/labels";
 
@@ -31,6 +32,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const { items, columns, filters, page, has_more, total } = res.ok
     ? res.data
     : { items: [], columns: [], filters: [], page: 1, has_more: false, total: 0 };
+
+  // HU-CRM-06: la promoción por segmento solo existe si pack_commerce aporta el filtro de clasificación.
+  const conClasificacion = (filters ?? []).some((f) => f.key === "clasificacion");
+  const segmento = segmentoDelFiltro(sp.filtro, filters ?? []);
 
   const hrefFicha = (id?: string) => {
     const next = new URLSearchParams(qs);
@@ -75,11 +80,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           "Las personas que el agente ha atendido. Abre una para ver lo que sabemos de ella, corregirlo o pausar el agente solo para ese cliente.",
         helpSection: "leads",
         actions: (
-          <Button asChild variant="outline">
-            <a href={`/api/leads/export${csv.size ? `?${csv.toString()}` : ""}`} download>
-              Exportar CSV
-            </a>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {conClasificacion && <PromocionDelSegmento segmento={segmento} total={total} />}
+            <Button asChild variant="outline">
+              <a href={`/api/leads/export${csv.size ? `?${csv.toString()}` : ""}`} download>
+                Exportar CSV
+              </a>
+            </Button>
+          </div>
         ),
       }}
       filters={<LeadsFilters sp={sp} connections={conexiones.ok ? conexiones.data : []} filters={filters ?? []} />}

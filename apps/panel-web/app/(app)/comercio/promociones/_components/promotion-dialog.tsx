@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -82,12 +82,21 @@ export function PromotionDialog({
   categories,
   products,
   allies = null,
+  presetSegments,
+  aviso,
+  trigger,
 }: {
   promotion?: Promotion;
   categories: Option[];
   products: Option[];
   /** HU-CRM-03: `null` = aliados apagados; la promoción se guarda sin tocar su aliado. */
   allies?: Option[] | null;
+  /** HU-CRM-06: segmentos premarcados al crear la promoción desde el filtro de Clientes. */
+  presetSegments?: string[];
+  /** HU-CRM-06: aviso visible sobre el alcance real de la promoción. */
+  aviso?: string;
+  /** Disparador propio; por defecto, «Nueva promoción» o el lápiz de editar. */
+  trigger?: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -117,7 +126,7 @@ export function PromotionDialog({
   const [productId, setProductId] = useState(promotion?.product_id ?? "");
   const [allyId, setAllyId] = useState(promotion?.ally_id ?? "");
   const [includeChildren, setIncludeChildren] = useState(promotion?.include_child_categories ?? true);
-  const [segments, setSegments] = useState<string[]>(promotion?.eligible_segments ?? []);
+  const [segments, setSegments] = useState<string[]>(promotion?.eligible_segments ?? presetSegments ?? []);
   const [active, setActive] = useState(promotion?.active ?? true);
 
   const estado = estadoVigencia(active, validFrom, validTo);
@@ -208,7 +217,9 @@ export function PromotionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {promotion ? (
+        {trigger ? (
+          trigger
+        ) : promotion ? (
           <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
             <Pencil className="h-4 w-4" aria-hidden />
           </Button>
@@ -497,6 +508,11 @@ export function PromotionDialog({
               Clientes alcanzados
             </legend>
             <p className="text-xs text-text-soft">Sin selección = todos los clientes.</p>
+            {aviso && (
+              <p role="note" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+                {aviso}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {SEGMENTOS.map((s) => {
                 const activo = segments.includes(s.value);

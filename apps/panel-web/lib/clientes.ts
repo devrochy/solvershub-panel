@@ -37,6 +37,21 @@ export function valorDeFiltro(filtro: string | string[] | undefined, clave: stri
   return encontrado ? encontrado.slice(clave.length + 1) : "";
 }
 
+/**
+ * Clasificación del filtro activo para crear una promoción desde Clientes (HU-CRM-06).
+ * Una promoción solo se limita por clasificación (`eligible_segments` de pack_commerce), no por
+ * canal, conexión ni estado del lead: sin `clasificacion` en el filtro devuelve null.
+ */
+export function segmentoDelFiltro(
+  filtro: string | string[] | undefined,
+  filtros: { key: string; options: { value: string; label: string }[] }[],
+): { value: string; label: string } | null {
+  const valor = valorDeFiltro(filtro, "clasificacion");
+  if (!valor) return null;
+  const opcion = filtros.find((f) => f.key === "clasificacion")?.options.find((o) => o.value === valor);
+  return opcion ? { value: opcion.value, label: opcion.label } : null;
+}
+
 export const ORIGEN_DEL_DATO: Record<string, string> = {
   tool: "Asistente",
   agent: "Asistente",
