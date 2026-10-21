@@ -3137,6 +3137,9 @@ export interface paths {
         /**
          * Import Products Csv
          * @description Importa productos desde un CSV (columnas `name` y `price`, paridad con el clásico).
+         *
+         *     Opcionales: `description`, `sku`, `stock` e `image_url` (HU-CRM-01; una URL que no sea
+         *     https se ignora y el producto se crea sin foto).
          */
         post: operations["import_products_csv_api_v1_pack_commerce_products_import_post"];
         delete?: never;
@@ -5218,6 +5221,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Leads Csv
+         * @description La lista filtrada en CSV (hasta 5000 filas, las más recientes).
+         */
+        get: operations["export_leads_csv_api_v1_admin_leads_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Lead
+         * @description Ficha del cliente: datos del canal, lo que se sabe de él (con origen y fecha) y los packs.
+         */
+        get: operations["get_lead_api_v1_admin_leads__lead_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lead
+         * @description Corrige datos del perfil. Quedan como dato de una persona (`source="human"`) y el agente
+         *     los usa desde la siguiente conversación. Solo escribe `core/memory/facts.py`.
+         */
+        patch: operations["update_lead_api_v1_admin_leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/toggle-bot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Toggle Lead Bot
+         * @description Pausa o reanuda el agente para este cliente en todas sus conversaciones.
+         */
+        post: operations["toggle_lead_bot_api_v1_admin_leads__lead_id__toggle_bot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6305,6 +6373,8 @@ export interface components {
              * @description Tipo del catálogo (p. ej. whatsapp_cloud, whatsapp_waweb, web)
              */
             connection_type?: string | null;
+            /** Customer Id */
+            customer_id?: string | null;
             /** Messages */
             messages: components["schemas"]["MessageItem"][];
             escalation?: components["schemas"]["ActiveEscalation"] | null;
@@ -7169,6 +7239,13 @@ export interface components {
             cliente: string;
             /** Canal */
             canal: string;
+            /** Telefono */
+            telefono?: string | null;
+            /**
+             * Bot Paused
+             * @default false
+             */
+            bot_paused: boolean;
             /** Alta */
             alta: string;
             /** Extras */
@@ -7180,6 +7257,8 @@ export interface components {
         LeadsResponse: {
             /** Columns */
             columns: components["schemas"]["LeadColumn"][];
+            /** Filters */
+            filters?: components["schemas"]["LeadFilter"][];
             /** Items */
             items: components["schemas"]["LeadRow"][];
             /** Total */
@@ -8446,6 +8525,8 @@ export interface components {
             category: string;
             /** Price */
             price: number;
+            /** Image Url */
+            image_url?: string | null;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
         };
@@ -8481,6 +8562,8 @@ export interface components {
             billing_period?: ("mensual" | "trimestral" | "anual" | "") | null;
             /** Trial Days */
             trial_days?: number | null;
+            /** Image Url */
+            image_url?: string | null;
         };
         /** Promise */
         Promise: {
@@ -12293,6 +12376,96 @@ export interface components {
              */
             retirados: number;
         };
+        /** LeadConnection */
+        LeadConnection: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Channel */
+            channel: string;
+        };
+        /** LeadDetail */
+        LeadDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Cliente */
+            cliente: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Canal */
+            canal: string;
+            /** Identificador */
+            identificador: string;
+            /** Telefono */
+            telefono: string | null;
+            /** Bot Paused */
+            bot_paused: boolean;
+            /** Alta */
+            alta: string | null;
+            /** Conexiones */
+            conexiones: components["schemas"]["LeadConnection"][];
+            /** Ultima Conversacion Id */
+            ultima_conversacion_id: string | null;
+            /** Datos */
+            datos: components["schemas"]["LeadFact"][];
+            /** Extras */
+            extras: {
+                [key: string]: unknown;
+            };
+            /** Columns */
+            columns: components["schemas"]["LeadColumn"][];
+        };
+        /** LeadFact */
+        LeadFact: {
+            /** Namespace */
+            namespace: string;
+            /** Key */
+            key: string;
+            /** Value */
+            value: unknown;
+            /** Source */
+            source: string;
+            /** Data Class */
+            data_class: string;
+            /**
+             * Valid From
+             * Format: date-time
+             */
+            valid_from: string;
+        };
+        /** LeadFilter */
+        LeadFilter: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Options */
+            options: components["schemas"]["LeadFilterOption"][];
+        };
+        /** LeadFilterOption */
+        LeadFilterOption: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * LeadUpdate
+         * @description Datos del perfil a corregir. `name` también cambia el nombre visible del cliente.
+         */
+        LeadUpdate: {
+            /** Datos */
+            datos?: {
+                [key: string]: string | number | boolean;
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -13773,8 +13946,14 @@ export interface operations {
     list_leads_api_v1_admin_leads_get: {
         parameters: {
             query?: {
-                /** @description Busca por nombre o identificador. */
+                /** @description Busca por nombre, identificador o teléfono. */
                 q?: string | null;
+                /** @description Solo los clientes de este canal. */
+                channel?: string | null;
+                /** @description Solo los clientes que escribieron por esta conexión. */
+                connection_id?: string | null;
+                /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
+                filtro?: string[] | null;
                 page?: number;
                 page_size?: number;
             };
@@ -23011,6 +23190,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatosRetirados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_leads_csv_api_v1_admin_leads_export_csv_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                channel?: string | null;
+                connection_id?: string | null;
+                /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
+                filtro?: string[] | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lead_api_v1_admin_leads__lead_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lead_api_v1_admin_leads__lead_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    toggle_lead_bot_api_v1_admin_leads__lead_id__toggle_bot_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotState"];
                 };
             };
             /** @description Validation Error */
