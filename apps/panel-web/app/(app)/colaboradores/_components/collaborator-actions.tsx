@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { KeyRound, Link2, ShieldCheck, UserCheck, UserX } from "lucide-react";
 
 import { CampoDeNegocio } from "@/app/(app)/colaboradores/_components/campo-de-negocio";
+import { GrillaDePermisos } from "@/app/(app)/colaboradores/_components/grilla-de-permisos";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useConfirm } from "@/components/ui/confirm";
@@ -14,10 +15,9 @@ import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { CollaboratorItem } from "@/lib/api/types";
 import { vinculoLegible } from "@/lib/colaboradores";
-import { seccionLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
-type Action = "password" | "grant" | "revoke" | "link" | "unlink" | "toggle";
+type Action = "password" | "link" | "unlink" | "toggle";
 
 type Dialogo = "contrasena" | "permisos" | "vinculos";
 
@@ -79,37 +79,6 @@ export function CollaboratorActions({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     void run(() => post("password", { password: String(data.get("password") ?? "") }, "Contraseña cambiada."));
-  }
-
-  function onGrant(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    void run(() =>
-      post(
-        "grant",
-        {
-          section: String(data.get("section") ?? ""),
-          access: String(data.get("access") ?? "read"),
-          tenant: String(data.get("tenant") ?? ""),
-        },
-        "Permiso otorgado.",
-      ),
-    );
-  }
-
-  function onRevoke(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    void run(() =>
-      post(
-        "revoke",
-        {
-          section: String(data.get("section") ?? ""),
-          tenant: String(data.get("tenant") ?? ""),
-        },
-        "Permiso revocado.",
-      ),
-    );
   }
 
   function onLink(event: FormEvent<HTMLFormElement>) {
@@ -177,63 +146,9 @@ export function CollaboratorActions({
             <ShieldCheck className="h-4 w-4" aria-hidden />
           </IconAction>
         </DialogTrigger>
-        <DialogContent title="Permisos" description={collaborator.email} className="max-w-xl">
-          <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto pr-1">
-            <form onSubmit={onGrant} className="flex flex-col gap-3">
-              <p className="text-sm font-medium text-headline">Otorgar permiso</p>
-              <div className={esMaster ? "grid gap-3 sm:grid-cols-3" : "grid gap-3 sm:grid-cols-2"}>
-                <Field label="Sección" htmlFor={`sec-${collaborator.id}`}>
-                  <Select id={`sec-${collaborator.id}`} name="section">
-                    {sections.map((section) => (
-                      <option key={section} value={section}>
-                        {seccionLabel(section)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Acceso" htmlFor={`acc-${collaborator.id}`}>
-                  <Select id={`acc-${collaborator.id}`} name="access" defaultValue="read">
-                    <option value="read">Lectura</option>
-                    <option value="write">Escritura</option>
-                    {/* Denegación explícita por sección (contrato de fix/p0-seguridad-pruebas). */}
-                    <option value="none">Sin acceso</option>
-                  </Select>
-                </Field>
-                {esMaster && (
-                  <CampoDeNegocio id={`gten-${collaborator.id}`} help="Vacío = en todos los negocios." />
-                )}
-              </div>
-              <div>
-                <Button type="submit" variant="outline" size="sm" disabled={pending}>
-                  Otorgar
-                </Button>
-              </div>
-            </form>
-
-            <Separator />
-
-            <form onSubmit={onRevoke} className="flex flex-col gap-3">
-              <p className="text-sm font-medium text-headline">Revocar permiso</p>
-              <div className={esMaster ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
-                <Field label="Sección" htmlFor={`rsec-${collaborator.id}`}>
-                  <Select id={`rsec-${collaborator.id}`} name="section">
-                    {sections.map((section) => (
-                      <option key={section} value={section}>
-                        {seccionLabel(section)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                {esMaster && (
-                  <CampoDeNegocio id={`rten-${collaborator.id}`} help="Vacío = el permiso global." />
-                )}
-              </div>
-              <div>
-                <Button type="submit" variant="outline" size="sm" disabled={pending}>
-                  Revocar
-                </Button>
-              </div>
-            </form>
+        <DialogContent title="Permisos" description={collaborator.email} className="max-w-2xl">
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <GrillaDePermisos collaborator={collaborator} secciones={sections} esMaster={esMaster} />
           </div>
         </DialogContent>
       </Dialog>

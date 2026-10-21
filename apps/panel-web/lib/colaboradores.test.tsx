@@ -124,6 +124,47 @@ describe("tabla de colaboradores", () => {
     expect(screen.getByText("sur@test")).toBeTruthy();
     expect(screen.queryByText("socio@test")).toBeNull();
   });
+
+  it("la grilla muestra el heredado y guarda el mapa completo (HU-UI-10)", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/permissions")) {
+        return new Response(
+          JSON.stringify([
+            { section: "conversations", access: "read", heredado: true },
+            { section: "leads", access: "write", heredado: false },
+          ]),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[OPERADOR]} secciones={["conversations", "leads"]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Permisos de operador@test" }));
+
+    // El estado heredado se señala; el explícito (leads=write) no.
+    expect(await screen.findByText("heredado")).toBeTruthy();
+    expect((screen.getByRole("radio", { name: "Conversaciones: Ver" }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("radio", { name: "Clientes: Editar" }) as HTMLInputElement).checked).toBe(true);
+
+    // Cambiar Conversaciones a Editar y guardar el mapa completo.
+    fireEvent.click(screen.getByRole("radio", { name: "Conversaciones: Editar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar permisos" }));
+
+    await waitFor(() => {
+      const guardado = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(guardado).toBeTruthy();
+      const body = JSON.parse(String(guardado?.[1]?.body));
+      expect(body.action).toBe("permissions");
+      expect(body.permissions).toEqual({ conversations: "write", leads: "write" });
+    });
+    vi.unstubAllGlobals();
+  });
 });
 
 describe("alta de colaborador", () => {
