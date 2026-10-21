@@ -129,7 +129,17 @@ export type KnowledgeDocument = components["schemas"]["DocumentoOut"];
 export type EstadoDatosDePrueba = components["schemas"]["EstadoDatosDePrueba"];
 export type LoteGenerado = components["schemas"]["LoteGenerado"];
 export type DatosRetirados = components["schemas"]["DatosRetirados"];
-export type LeadDetail = components["schemas"]["LeadDetail"];
+/** Campo de un pack editable desde la ficha (ADR-0149). Local hasta que `schema.d.ts` lo traiga de develop. */
+export type LeadEditable = {
+  plugin_id: string;
+  key: string;
+  label: string;
+  tipo: "opciones" | "texto";
+  options?: { value: string; label: string }[];
+  max_length: number;
+  value?: string | null;
+};
+export type LeadDetail = components["schemas"]["LeadDetail"] & { editables?: LeadEditable[] };
 export type LeadFact = components["schemas"]["LeadFact"];
 export type LeadFilter = components["schemas"]["LeadFilter"];
 export type LeadNote = components["schemas"]["LeadNote"];

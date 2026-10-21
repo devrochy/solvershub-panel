@@ -113,3 +113,33 @@ export const TIPO_DE_EVENTO: Record<string, string> = {
   pedido: "Pedido",
   cita: "Cita",
 };
+
+type ConPerfil = {
+  telefono?: string | null;
+  datos: { namespace: string; key: string; value: unknown }[];
+};
+
+const soloDigitos = (v: unknown) => String(v ?? "").replace(/\D+/g, "");
+
+/**
+ * Datos del perfil que se muestran en «Lo que sabemos» (ADR-0149): el nombre va en el título y el
+ * teléfono del perfil solo si es distinto del teléfono del canal, para no mostrar el mismo dato dos veces.
+ */
+export function datosDelPerfil<T extends ConPerfil["datos"][number]>(detalle: { telefono?: string | null; datos: T[] }): T[] {
+  const canal = soloDigitos(detalle.telefono);
+  return detalle.datos.filter(
+    (d) =>
+      d.namespace === "perfil" &&
+      d.key !== "name" &&
+      !(d.key === "phone" && canal !== "" && soloDigitos(d.value) === canal),
+  );
+}
+
+/** Columnas de los packs que no se editan en la ficha (las editables se muestran en su sección). */
+export function columnasDeSoloLectura<C extends { key: string }>(
+  columns: C[],
+  editables: { key: string }[] | undefined,
+): C[] {
+  const editables_ = new Set((editables ?? []).map((e) => e.key));
+  return columns.filter((c) => !editables_.has(c.key));
+}

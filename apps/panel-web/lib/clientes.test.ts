@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  columnasDeSoloLectura,
   consultaClientes,
+  datosDelPerfil,
   etiquetaDeDato,
   filtrosDePacks,
   normalizarClave,
@@ -52,6 +54,20 @@ describe("ficha", () => {
   it("normaliza la clave de un dato nuevo", () => {
     expect(normalizarClave("  Dirección de Entrega ")).toBe("direccion_de_entrega");
     expect(normalizarClave("¿?")).toBe("");
+  });
+
+  it("no repite el teléfono del canal ni el nombre en lo que sabemos", () => {
+    const d = (key: string, value: unknown, namespace = "perfil") => ({ namespace, key, value });
+    const datos = [d("name", "Ana"), d("phone", "+57 300 111 2233"), d("email", "a@x.co"), d("x", 1, "pack")];
+    expect(datosDelPerfil({ telefono: "573001112233", datos }).map((x) => x.key)).toEqual(["email"]);
+    expect(datosDelPerfil({ telefono: "573009999999", datos }).map((x) => x.key)).toEqual(["phone", "email"]);
+    expect(datosDelPerfil({ telefono: null, datos }).map((x) => x.key)).toEqual(["phone", "email"]);
+  });
+
+  it("las columnas editables no se repiten como solo lectura", () => {
+    const cols = [{ key: "clasificacion" }, { key: "estado_lead" }, { key: "interes" }];
+    expect(columnasDeSoloLectura(cols, [{ key: "estado_lead" }, { key: "interes" }])).toEqual([{ key: "clasificacion" }]);
+    expect(columnasDeSoloLectura(cols, undefined)).toHaveLength(3);
   });
 });
 
