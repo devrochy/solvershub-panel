@@ -8,9 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import type { LeadDetail, LeadFact } from "@/lib/api/types";
-import { etiquetaDeDato, normalizarClave, origenDelDato, textoDeDato } from "@/lib/clientes";
+import type { LeadDetail, LeadEditable, LeadFact } from "@/lib/api/types";
+import {
+  columnasDeSoloLectura,
+  datosDelPerfil,
+  etiquetaDeDato,
+  normalizarClave,
+  origenDelDato,
+  textoDeDato,
+} from "@/lib/clientes";
 import { formatDate, formatCellValue } from "@/lib/format";
 import { canalLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
@@ -22,7 +30,8 @@ const PERFIL = "perfil";
 
 /**
  * Ficha lateral del cliente (HU-UX-16): información general, lo que el agente sabe de él con
- * su origen y fecha, y la corrección de datos. Se abre con `?cliente=<id>` en Clientes, así que
+ * su origen y fecha, y la corrección de datos. Los packs aportan campos editables, como el estado
+ * y el interés del lead de venta (ADR-0149); los datos de contacto son siempre los del perfil. Se abre con `?cliente=<id>` en Clientes, así que
  * otras pantallas (la bandeja) pueden enlazarla.
  */
 export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; closeHref: string }) {
@@ -31,8 +40,10 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
   // Al agregar o borrar una nota, la historia se vuelve a cargar desde el principio.
   const [versionHistoria, setVersionHistoria] = useState(0);
 
-  const perfil = detalle.datos.filter((d) => d.namespace === PERFIL && d.key !== "name");
+  const perfil = datosDelPerfil(detalle);
   const otros = detalle.datos.filter((d) => d.namespace !== PERFIL);
+  const columnas = columnasDeSoloLectura(detalle.columns, detalle.editables);
+  const editablesPorPack = agruparPorPack(detalle.editables ?? []);
 
   return (
     <Sheet open onOpenChange={(abierto) => !abierto && router.push(closeHref, { scroll: false })}>
@@ -63,7 +74,7 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
                 </dd>
                 <dt className="text-text-soft">Cliente desde</dt>
                 <dd className="text-body">{formatDate(detalle.alta)}</dd>
-                {detalle.columns.map((col) => (
+                {columnas.map((col) => (
                   <Fila key={col.key} etiqueta={col.label} valor={formatCellValue(detalle.extras[col.key])} />
                 ))}
               </dl>
@@ -76,6 +87,10 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
                 </Link>
               )}
             </section>
+
+            {editablesPorPack.map(([pluginId, campos]) => (
+              <EditablesDelPack key={pluginId} leadId={detalle.id} pluginId={pluginId} campos={campos} />
+            ))}
 
             <section aria-labelledby="ficha-datos" className="space-y-3">
               <div className="flex items-center justify-between">
@@ -112,6 +127,94 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function agruparPorPack(editables: LeadEditable[]): [string, LeadEditable[]][] {
+  const grupos = new Map<string, LeadEditable[]>();
+  for (const e of editables) grupos.set(e.plugin_id, [...(grupos.get(e.plugin_id) ?? []), e]);
+  return [...grupos.entries()];
+}
+
+/** Título de la sección de cada pack; uno sin título propio usa el genérico. */
+const TITULO_DEL_PACK: Record<string, string> = { pack_commerce: "Lead de venta" };
+
+/**
+ * Campos que un pack deja cambiar desde la ficha (ADR-0149): opciones cerradas o texto corto. Solo
+ * se mandan los que cambiaron; el core valida y el pack guarda.
+ */
+function EditablesDelPack({
+  leadId,
+  pluginId,
+  campos,
+}: {
+  leadId: string;
+  pluginId: string;
+  campos: LeadEditable[];
+}) {
+  const inicial = Object.fromEntries(campos.map((c) => [c.key, c.value ?? ""])) as Record<string, string>;
+  const [valores, setValores] = useState(inicial);
+  const [errores, setErrores] = useState<Record<string, string>>({});
+  const guardar = useAction();
+  const cambios = Object.fromEntries(
+    Object.entries(valores).filter(([k, v]) => v.trim() !== (inicial[k] ?? "").trim()),
+  );
+  const tituloId = `ficha-pack-${pluginId}`;
+
+  async function onGuardar(e: React.FormEvent) {
+    e.preventDefault();
+    if (Object.keys(cambios).length === 0) return;
+    setErrores({});
+    await guardar.run(async () => {
+      const res = await fetch(`/api/leads/${leadId}/pack/${encodeURIComponent(pluginId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ valores: cambios }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string; fields?: Record<string, string> };
+      if (json.fields) setErrores(json.fields);
+      return { ok: res.ok, status: res.status, error: json.error, success: "Cambios guardados." };
+    });
+  }
+
+  return (
+    <section aria-labelledby={tituloId} className="space-y-3">
+      <h3 id={tituloId} className="text-sm font-semibold text-headline">
+        {TITULO_DEL_PACK[pluginId] ?? "Seguimiento"}
+      </h3>
+      <form onSubmit={(e) => void onGuardar(e)} className="space-y-3">
+        {campos.map((c) => (
+          <Field key={c.key} label={c.label} htmlFor={`pack-${pluginId}-${c.key}`} error={errores[c.key]}>
+            {c.tipo === "opciones" ? (
+              <Select
+                id={`pack-${pluginId}-${c.key}`}
+                value={valores[c.key] ?? ""}
+                onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
+              >
+                {!inicial[c.key] && <option value="">Sin definir</option>}
+                {(c.options ?? []).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                id={`pack-${pluginId}-${c.key}`}
+                value={valores[c.key] ?? ""}
+                onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
+                maxLength={c.max_length}
+              />
+            )}
+          </Field>
+        ))}
+        <div className="flex justify-end">
+          <Button type="submit" size="sm" loading={guardar.pending} disabled={Object.keys(cambios).length === 0}>
+            Guardar
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
