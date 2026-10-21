@@ -5345,6 +5345,27 @@ export interface paths {
         patch: operations["update_lead_api_v1_admin_leads__lead_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/pack/{plugin_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lead Pack
+         * @description Cambia campos que un pack deja editar desde la ficha (p. ej. el estado del lead de venta).
+         *     El core valida claves y valores; el pack escribe en sus tablas (ADR-0149).
+         */
+        patch: operations["update_lead_pack_api_v1_admin_leads__lead_id__pack__plugin_id__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/toggle-bot": {
         parameters: {
             query?: never;
@@ -12756,6 +12777,31 @@ export interface components {
             };
             /** Columns */
             columns: components["schemas"]["LeadColumn"][];
+            /** Editables */
+            editables?: components["schemas"]["LeadEditable"][];
+        };
+        /**
+         * LeadEditable
+         * @description Un campo de un pack que se edita desde la ficha (ADR-0149).
+         */
+        LeadEditable: {
+            /** Plugin Id */
+            plugin_id: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "opciones" | "texto";
+            /** Options */
+            options?: components["schemas"]["LeadFilterOption"][];
+            /** Max Length */
+            max_length: number;
+            /** Value */
+            value?: string | null;
         };
         /** LeadFact */
         LeadFact: {
@@ -12824,6 +12870,16 @@ export interface components {
         LeadNoteCreate: {
             /** Text */
             text: string;
+        };
+        /**
+         * LeadPackUpdate
+         * @description Valores de los campos editables de un pack (las claves de `editables` de ese pack).
+         */
+        LeadPackUpdate: {
+            /** Valores */
+            valores?: {
+                [key: string]: string;
+            };
         };
         /** TimelineItem */
         TimelineItem: {
@@ -24086,6 +24142,44 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LeadUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lead_pack_api_v1_admin_leads__lead_id__pack__plugin_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+                plugin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPackUpdate"];
             };
         };
         responses: {
