@@ -27,17 +27,25 @@ export function NewCollaboratorDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [limite, setLimite] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const { run, pending } = useAction();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") ?? "").trim();
+    // Validación propia (no la nativa del navegador, que sale en inglés).
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Escribe un correo válido, por ejemplo ana@correo.com.");
+      return;
+    }
+    setEmailError(null);
     const ok = await run(async () => {
       const res = await fetch("/api/collaborators", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: String(data.get("email") ?? ""),
+          email,
           password: String(data.get("password") ?? ""),
           role: String(data.get("role") ?? "colaborador"),
           username: String(data.get("username") ?? ""),
@@ -66,8 +74,8 @@ export function NewCollaboratorDialog({
         title="Nuevo colaborador"
         description="Crea una cuenta de acceso al panel. Si el correo ya tiene cuenta, se le envía una invitación al negocio."
       >
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <Field label="Correo" htmlFor="new-email" required>
+        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+          <Field label="Correo" htmlFor="new-email" required error={emailError ?? undefined}>
             <Input id="new-email" name="email" type="email" required autoComplete="off" />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">

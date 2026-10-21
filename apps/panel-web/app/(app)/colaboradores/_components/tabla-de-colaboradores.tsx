@@ -132,7 +132,7 @@ export function TablaDeColaboradores({
         columns={columns}
         rows={visibles}
         getRowKey={(c) => c.id}
-        emptyTitle={negocio ? "Sin colaboradores en este negocio" : "Sin colaboradores"}
+        emptyTitle={negocio ? "Sin equipo en este negocio" : "Sin equipo todavía"}
         emptyDescription={
           negocio
             ? "Elige otro negocio o quita el filtro para ver todas las cuentas."
