@@ -38,9 +38,10 @@ export function PestanasDeShell() {
   const shell = useShell();
   if (!shell) return null;
   const grupos = gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster);
-  const { subgrupos, subgrupoActual, pestanas } = pestanasPara(pathname, grupos);
+  const { subgrupos, subgrupoActual, pestanas, ocultas } = pestanasPara(pathname, grupos);
   if (subgrupos.length === 0 && pestanas.length === 0) return null;
-  const actual = actualDe(pathname, pestanas);
+  // En una página oculta (Bloqueos, Aliados) ninguna pestaña queda marcada.
+  const actual = actualDe(pathname, [...pestanas, ...ocultas.map((href) => ({ href }))]);
   return (
     <div className="flex flex-col gap-2">
       {subgrupos.length > 0 && <TabLinks label="Grupos de la sección" items={subgrupos} current={subgrupoActual ?? ""} />}

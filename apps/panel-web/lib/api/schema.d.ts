@@ -3056,6 +3056,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/commerce/modulos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Commerce Modulos */
+        get: operations["commerce_modulos_api_v1_pack_commerce_modulos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/allies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Allies */
+        get: operations["list_allies_api_v1_pack_commerce_allies_get"];
+        put?: never;
+        /** Create Ally */
+        post: operations["create_ally_api_v1_pack_commerce_allies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/allies/{ally_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Ally
+         * @description Borrado lógico. Sus productos quedan «sin aliado» y sus promociones se desactivan
+         *     (conservan el aliado): quitarles el aliado las abriría a todo el catálogo.
+         */
+        delete: operations["delete_ally_api_v1_pack_commerce_allies__ally_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Ally */
+        patch: operations["update_ally_api_v1_pack_commerce_allies__ally_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/platform/tenants/{tenant_id}/aliados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Aliados Del Negocio */
+        get: operations["get_aliados_del_negocio_api_v1_pack_commerce_platform_tenants__tenant_id__aliados_get"];
+        /**
+         * Put Aliados Del Negocio
+         * @description Enciende o apaga los aliados. Apagar no borra nada: aliados y asignaciones se
+         *     conservan para cuando se vuelva a encender.
+         */
+        put: operations["put_aliados_del_negocio_api_v1_pack_commerce_platform_tenants__tenant_id__aliados_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/commerce/promotions": {
         parameters: {
             query?: never;
@@ -5524,6 +5603,67 @@ export interface components {
             /** Items */
             items: components["schemas"]["AccessAttempt"][];
         };
+        /** AliadosCambio */
+        AliadosCambio: {
+            /** Habilitado */
+            habilitado: boolean;
+        };
+        /** AliadosEstado */
+        AliadosEstado: {
+            /** Habilitado */
+            habilitado: boolean;
+            /** Por */
+            por?: string | null;
+            /** En */
+            en?: string | null;
+        };
+        /** AllyContact */
+        AllyContact: {
+            /** Contacto */
+            contacto?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Notas */
+            notas?: string | null;
+        };
+        /** AllyOut */
+        AllyOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            contact_info: components["schemas"]["AllyContact"];
+            /** Active */
+            active: boolean;
+            /** Products */
+            products: number;
+            /** Created At */
+            created_at?: string | null;
+        };
+        /** AllyPatch */
+        AllyPatch: {
+            /** Name */
+            name?: string | null;
+            contact_info?: components["schemas"]["AllyContact"] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /** AllySave */
+        AllySave: {
+            /** Name */
+            name: string;
+            contact_info?: components["schemas"]["AllyContact"];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
         /** AppointmentCancel */
         AppointmentCancel: {
             /**
@@ -5793,6 +5933,8 @@ export interface components {
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
             /** File */
             file: string;
+            /** Ally Id */
+            ally_id?: string | null;
         };
         /** Body_upload_attachment_api_v1_admin_qa_runs_me_attachments_post */
         Body_upload_attachment_api_v1_admin_qa_runs_me_attachments_post: {
@@ -7178,6 +7320,11 @@ export interface components {
         ImportResult: {
             /** Created */
             created: number;
+            /**
+             * Unknown Allies
+             * @default []
+             */
+            unknown_allies: string[];
         };
         /** Injection */
         Injection: {
@@ -7792,6 +7939,14 @@ export interface components {
             avg_latency: number;
             /** Cost */
             cost: number;
+        };
+        /**
+         * ModulosOut
+         * @description Módulos opcionales del pack encendidos en el negocio (el panel decide qué mostrar).
+         */
+        ModulosOut: {
+            /** Aliados */
+            aliados: boolean;
         };
         /** Monitoring */
         Monitoring: {
@@ -8589,6 +8744,8 @@ export interface components {
             category_id: string | null;
             /** Category */
             category: string;
+            /** Ally Id */
+            ally_id?: string | null;
             /** Price */
             price: number;
             /** Image Url */
@@ -8609,6 +8766,8 @@ export interface components {
             description: string;
             /** Category Id */
             category_id?: string | null;
+            /** Ally Id */
+            ally_id?: string | null;
             /**
              * Sku
              * @default
@@ -8711,6 +8870,8 @@ export interface components {
             product_id: string | null;
             /** Variant Id */
             variant_id?: string | null;
+            /** Ally Id */
+            ally_id?: string | null;
             /**
              * Include Child Categories
              * @default true
@@ -8752,6 +8913,8 @@ export interface components {
             product_id?: string | null;
             /** Variant Id */
             variant_id?: string | null;
+            /** Ally Id */
+            ally_id?: string | null;
             /**
              * Include Child Categories
              * @default true
@@ -18404,7 +18567,10 @@ export interface operations {
     };
     list_products_api_v1_pack_commerce_products_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description HU-CRM-03: id del aliado, o `none` para los productos sin aliado. */
+                ally_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };
@@ -18549,6 +18715,241 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commerce_modulos_api_v1_pack_commerce_modulos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModulosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_allies_api_v1_pack_commerce_allies_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllyOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ally_api_v1_pack_commerce_allies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllySave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_ally_api_v1_pack_commerce_allies__ally_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ally_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_ally_api_v1_pack_commerce_allies__ally_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ally_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllyPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_aliados_del_negocio_api_v1_pack_commerce_platform_tenants__tenant_id__aliados_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliadosEstado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_aliados_del_negocio_api_v1_pack_commerce_platform_tenants__tenant_id__aliados_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AliadosCambio"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliadosEstado"];
+                };
             };
             /** @description Validation Error */
             422: {

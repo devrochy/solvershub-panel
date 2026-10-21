@@ -19,6 +19,7 @@ type Product = {
   name: string;
   description: string;
   category_id: string | null;
+  ally_id?: string | null;
   price: number;
   image_url?: string | null;
   variants: { sku: string; stock: number; billing_period?: string | null; trial_days?: number | null }[];
@@ -28,9 +29,12 @@ type Product = {
 export function ProductDialog({
   product,
   categories,
+  allies = null,
 }: {
   product?: Product;
   categories: { id: string; name: string }[];
+  /** HU-CRM-03: `null` = aliados apagados; el producto se guarda sin tocar su aliado. */
+  allies?: { id: string; name: string }[] | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -55,6 +59,7 @@ export function ProductDialog({
         name: String(data.get("name") ?? ""),
         description: String(data.get("description") ?? ""),
         category_id: String(data.get("category_id") ?? "") || null,
+        ...(allies ? { ally_id: String(data.get("ally_id") ?? "") || null } : {}),
         sku: String(data.get("sku") ?? ""),
         price: Number(data.get("price") ?? 0),
         stock: Number(data.get("stock") ?? 0),
@@ -109,6 +114,18 @@ export function ProductDialog({
               </Select>
             </Field>
           </div>
+          {allies && (
+            <Field label="Aliado" htmlFor="p-ally" help="Proveedor del producto. Una promoción del aliado solo aplica a sus productos.">
+              <Select id="p-ally" name="ally_id" defaultValue={product?.ally_id ?? ""}>
+                <option value="">Sin aliado</option>
+                {allies.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
           <Field label="Descripción" htmlFor="p-desc">
             <Input id="p-desc" name="description" defaultValue={product?.description ?? ""} />
           </Field>

@@ -7,6 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import type { Aliado, ModulosComercio } from "@/lib/aliados";
 import { apiFetch } from "@/lib/api/server";
 import { formatDateTime } from "@/lib/format";
 
@@ -53,11 +54,16 @@ function estadoVigencia(active: boolean, from: string | null, to: string | null)
 }
 
 export default async function PromotionsPage() {
-  const [res, categoriasRes, productosRes] = await Promise.all([
+  const [res, categoriasRes, productosRes, modulosRes] = await Promise.all([
     apiFetch<Promotion[]>("/pack/commerce/promotions"),
     apiFetch<Option[]>("/pack/commerce/categories"),
     apiFetch<Option[]>("/pack/commerce/products"),
+    apiFetch<ModulosComercio>("/pack/commerce/modulos"),
   ]);
+  // HU-CRM-03: `null` = aliados apagados en el negocio.
+  const aliadosRes =
+    modulosRes.ok && modulosRes.data.aliados ? await apiFetch<Aliado[]>("/pack/commerce/allies") : null;
+  const aliados: Option[] | null = aliadosRes ? (aliadosRes.ok ? aliadosRes.data : []) : null;
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -69,6 +75,7 @@ export default async function PromotionsPage() {
   const productos = productosRes.ok ? productosRes.data : [];
   const nombreCategoria = new Map(categorias.map((c) => [c.id, c.name]));
   const nombreProducto = new Map(productos.map((p) => [p.id, p.name]));
+  const nombreAliado = new Map((aliados ?? []).map((a) => [a.id, a.name]));
 
   const columns: Column<Promotion>[] = [
     {
@@ -114,6 +121,9 @@ export default async function PromotionsPage() {
                 ? `Categoría: ${nombreCategoria.get(p.category_id) ?? "—"}`
                 : "Toda la tienda"}
           </span>
+          {p.ally_id && (
+            <span className="text-xs text-text-soft">Aliado: {nombreAliado.get(p.ally_id) ?? "eliminado"}</span>
+          )}
           {p.eligible_segments && p.eligible_segments.length > 0 && (
             <span className="text-xs text-text-soft">
               {p.eligible_segments.map((s) => SEGMENTO_LABEL[s] ?? s).join(", ")}
@@ -132,7 +142,7 @@ export default async function PromotionsPage() {
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (p) => <PromotionDialog promotion={p} categories={categorias} products={productos} />,
+      cell: (p) => <PromotionDialog promotion={p} categories={categorias} products={productos} allies={aliados} />,
     },
   ];
 
@@ -141,7 +151,7 @@ export default async function PromotionsPage() {
       <PageHeader
         title="Promociones"
         description="Descuentos por temporada, volumen o campaña que el agente puede aplicar (elige el mayor beneficio, sin acumular)."
-        actions={<PromotionDialog categories={categorias} products={productos} />}
+        actions={<PromotionDialog categories={categorias} products={productos} allies={aliados} />}
       />
       <DataTable
         columns={columns}
