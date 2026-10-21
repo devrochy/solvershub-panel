@@ -94,3 +94,22 @@ export function normalizarClave(texto: string): string {
     .replace(/^_+|_+$/g, "")
     .slice(0, 80);
 }
+
+/** Ruta del panel a la que lleva un evento de la línea de tiempo, o null. */
+export function enlaceDeEvento(linkKind?: string | null, linkId?: string | null): string | null {
+  if (!linkKind || !linkId) return null;
+  if (linkKind === "conversation") return `/conversaciones?c=${encodeURIComponent(linkId)}`;
+  if (linkKind === "order") return "/comercio/pedidos";
+  if (linkKind === "appointment") return "/calendario/citas";
+  return null;
+}
+
+export const TIPO_DE_EVENTO: Record<string, string> = {
+  conversacion: "Conversación",
+  escalacion: "Escalación",
+  dato: "Dato",
+  nota: "Nota",
+  cotizacion: "Cotización",
+  pedido: "Pedido",
+  cita: "Cita",
+};

@@ -16,6 +16,7 @@ import { canalLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
 import { AgenteSwitch } from "./agente-switch";
+import { HistoriaDelCliente, NotasDelCliente } from "./notas-y-historia";
 
 const PERFIL = "perfil";
 
@@ -27,6 +28,8 @@ const PERFIL = "perfil";
 export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; closeHref: string }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
+  // Al agregar o borrar una nota, la historia se vuelve a cargar desde el principio.
+  const [versionHistoria, setVersionHistoria] = useState(0);
 
   const perfil = detalle.datos.filter((d) => d.namespace === PERFIL && d.key !== "name");
   const otros = detalle.datos.filter((d) => d.namespace !== PERFIL);
@@ -93,6 +96,8 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
               )}
             </section>
 
+            <NotasDelCliente leadId={detalle.id} onCambio={() => setVersionHistoria((v) => v + 1)} />
+
             {otros.length > 0 && (
               <details className="text-sm">
                 <summary className="cursor-pointer text-text-soft">Datos de las habilidades ({otros.length})</summary>
@@ -101,6 +106,8 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
                 </div>
               </details>
             )}
+
+            <HistoriaDelCliente key={versionHistoria} leadId={detalle.id} />
           </div>
         )}
       </SheetContent>
