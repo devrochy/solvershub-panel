@@ -57,7 +57,7 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     first: ["Activa las que uses.", "Configura cada una con su guía."],
   },
   collaborators: {
-    question: "¿Qué son los Colaboradores?",
+    question: "¿Qué es Equipo?",
     what: "Las personas de tu equipo que entran al panel, y qué puede hacer cada una.",
     first: ["Invita a tu equipo.", "Define su rol para darle el acceso justo."],
   },

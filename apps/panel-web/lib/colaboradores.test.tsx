@@ -101,10 +101,10 @@ describe("tabla de colaboradores", () => {
         <TablaDeColaboradores filas={[YO, OTRO_DUENO, MASTER, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("button", { name: "Acciones de operador@test" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Acciones de duena@test" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Acciones de socio@test" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Acciones de master@test" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Desactivar a operador@test" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Restablecer contraseña de duena@test" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /socio@test/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /master@test/ })).toBeNull();
     expect(screen.getByText("Conversaciones: escritura")).toBeTruthy();
     expect(screen.getByText("Habilidades: sin acceso")).toBeTruthy();
     expect(screen.queryByText(/conversations:write/)).toBeNull();
@@ -118,7 +118,7 @@ describe("tabla de colaboradores", () => {
         <TablaDeColaboradores filas={[YO, OTRO_DUENO, DEL_SUR]} secciones={["conversations"]} esMaster />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("button", { name: "Acciones de socio@test" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Desactivar a socio@test" })).toBeTruthy();
     const filtro = screen.getByRole("combobox", { name: "Negocio" });
     fireEvent.change(filtro, { target: { value: "tienda-sur" } });
     expect(screen.getByText("sur@test")).toBeTruthy();
@@ -176,5 +176,13 @@ describe("alta de colaborador", () => {
     const deMaster = await crear(true);
     expect(within(deMaster).getByLabelText(/Negocio/)).toBeTruthy();
     expect(within(deMaster).getByRole("option", { name: /Master/ })).toBeTruthy();
+  });
+
+  it("rechaza un correo inválido con un error en español y no llama a la API", async () => {
+    const dialogo = await crear();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear cuenta" }));
+    expect(await within(dialogo).findByText(/Escribe un correo válido/)).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

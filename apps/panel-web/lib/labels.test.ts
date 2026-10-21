@@ -64,7 +64,7 @@ describe("labels (HU-UI-02)", () => {
   });
 
   it("etiqueta en español las claves reales que manda /admin/me", () => {
-    expect(seccionLabel("collaborators")).toBe("Colaboradores");
+    expect(seccionLabel("collaborators")).toBe("Equipo");
     expect(seccionLabel("settings")).toBe("Configuración");
     expect(seccionLabel("tenants")).toBe("Negocios");
     expect(seccionLabel("pack_commerce")).toBe("Comercio");

@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api/server";
 import type { CollaboratorItem, Me } from "@/lib/api/types";
 import { esMasterDePlataforma, seccionesOtorgables } from "@/lib/colaboradores";
 
-export const metadata = { title: "Colaboradores" };
+export const metadata = { title: "Equipo" };
 
 export default async function CollaboratorsPage() {
   const [res, meRes, rolesRes] = await Promise.all([
@@ -28,8 +28,8 @@ export default async function CollaboratorsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Colaboradores"
-        description="Cuentas con acceso al panel, sus permisos por sección y sus negocios vinculados."
+        title="Equipo"
+        description="Tu equipo: cuentas con acceso al panel, sus permisos por sección y sus negocios vinculados."
         helpSection="collaborators"
         actions={<NewCollaboratorDialog packRoles={rolesRes.ok ? rolesRes.data : []} esMaster={esMaster} />}
       />
