@@ -3137,6 +3137,9 @@ export interface paths {
         /**
          * Import Products Csv
          * @description Importa productos desde un CSV (columnas `name` y `price`, paridad con el clásico).
+         *
+         *     Opcionales: `description`, `sku`, `stock` e `image_url` (HU-CRM-01; una URL que no sea
+         *     https se ignora y el producto se crea sin foto).
          */
         post: operations["import_products_csv_api_v1_pack_commerce_products_import_post"];
         delete?: never;
@@ -8522,6 +8525,8 @@ export interface components {
             category: string;
             /** Price */
             price: number;
+            /** Image Url */
+            image_url?: string | null;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
         };
@@ -8557,6 +8562,8 @@ export interface components {
             billing_period?: ("mensual" | "trimestral" | "anual" | "") | null;
             /** Trial Days */
             trial_days?: number | null;
+            /** Image Url */
+            image_url?: string | null;
         };
         /** Promise */
         Promise: {
