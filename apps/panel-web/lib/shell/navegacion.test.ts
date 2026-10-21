@@ -36,6 +36,8 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/conexiones/produccion", "connections", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
   ["/plataforma/meta/embedded-signup", "tenants", false], ["/tenants/alta-automatica", "tenants", true],
   ["/pruebas", "qa", false],
+  // Nuevas después del menú v2.
+  ["/comercio/aliados", "pack_commerce", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -135,7 +137,7 @@ describe("navegación del shell (HU-DS-04)", () => {
     ]);
     expect(cobranza.subgrupoActual).toBe("/cobranza/monitoreo");
     expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Monitoreo IA", "Reglas de negociación"]);
-    expect(pestanasPara("/dashboard", grupos)).toEqual({ subgrupos: [], subgrupoActual: null, pestanas: [] });
+    expect(pestanasPara("/dashboard", grupos)).toEqual({ subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] });
   });
 
   it("las pestañas respetan los permisos", () => {
@@ -170,6 +172,17 @@ describe("Agenda unificada (HU-UX-08)", () => {
       const sinClave = { ...todas, [clave]: null };
       expect(puedeVerRuta(ruta, { permisos: sinClave, esMaster: false, negocioId: "t" }), ruta).toBe(false);
     }
+  });
+
+  it("en /comercio/aliados (oculta, HU-CRM-03) se ven las pestañas de Ventas sin «Aliados»", () => {
+    const ventas = pestanasPara("/comercio/aliados", grupos);
+    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Productos", "Categorías", "Promociones", "Pedidos"]);
+    expect(ventas.ocultas).toEqual(["/comercio/aliados"]);
+    expect(migasPara("/comercio/aliados", grupos)).toEqual([
+      { label: "Negocio" },
+      { label: "Ventas", href: "/comercio" },
+      { label: "Aliados" },
+    ]);
   });
 
   it("en /calendario/bloqueos se ven las pestañas de Agenda y las migas la ubican", () => {

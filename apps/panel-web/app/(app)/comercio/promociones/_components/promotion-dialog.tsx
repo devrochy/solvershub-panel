@@ -24,6 +24,7 @@ export type Promotion = {
   valid_to: string | null;
   category_id: string | null;
   product_id: string | null;
+  ally_id?: string | null;
   include_child_categories: boolean;
   eligible_segments: string[] | null;
 };
@@ -80,10 +81,13 @@ export function PromotionDialog({
   promotion,
   categories,
   products,
+  allies = null,
 }: {
   promotion?: Promotion;
   categories: Option[];
   products: Option[];
+  /** HU-CRM-03: `null` = aliados apagados; la promoción se guarda sin tocar su aliado. */
+  allies?: Option[] | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -111,6 +115,7 @@ export function PromotionDialog({
   );
   const [categoryId, setCategoryId] = useState(promotion?.category_id ?? "");
   const [productId, setProductId] = useState(promotion?.product_id ?? "");
+  const [allyId, setAllyId] = useState(promotion?.ally_id ?? "");
   const [includeChildren, setIncludeChildren] = useState(promotion?.include_child_categories ?? true);
   const [segments, setSegments] = useState<string[]>(promotion?.eligible_segments ?? []);
   const [active, setActive] = useState(promotion?.active ?? true);
@@ -176,6 +181,7 @@ export function PromotionDialog({
         valid_to: validTo || null,
         category_id: scope === "categoria" ? categoryId || null : null,
         product_id: scope === "producto" ? productId || null : null,
+        ...(allies ? { ally_id: allyId || null } : {}),
         include_child_categories: includeChildren,
         eligible_segments: segments.length > 0 ? segments : null,
         active,
@@ -462,6 +468,22 @@ export function PromotionDialog({
                 </Field>
               )}
             </div>
+            {allies && (
+              <Field
+                label="Aliado"
+                htmlFor="pr-ally"
+                help="Con aliado, aplica solo si todo el carrito es de ese aliado; un carrito mixto no la recibe."
+              >
+                <Select id="pr-ally" value={allyId} onChange={(e) => setAllyId(e.target.value)}>
+                  <option value="">Cualquier aliado</option>
+                  {allies.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
             {scope === "categoria" && (
               <label className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-body">Incluir subcategorías</span>

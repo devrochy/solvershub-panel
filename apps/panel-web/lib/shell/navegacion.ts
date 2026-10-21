@@ -108,13 +108,14 @@ export type Pestana = { href: string; label: string };
  * Pestañas de la entrada actual (HU-UX-02). Si la entrada tiene subgrupos (Cobranza:
  * Operación, Monitoreo, Seguridad), `subgrupos` lleva a la primera pestaña de cada uno
  * (`subgrupoActual` es la del subgrupo de la página) y `pestanas` son las del subgrupo actual. Cada fila solo se muestra si tiene más de una.
- * Las páginas `oculta` no salen como pestaña, aunque se esté en ellas.
+ * Las páginas `oculta` no salen como pestaña, aunque se esté en ellas: `ocultas` trae sus rutas
+ * para no marcar otra pestaña por prefijo (en `/comercio/aliados`, «Resumen» es `/comercio`).
  */
 export function pestanasPara(
   pathname: string,
   grupos: GrupoVisible[],
-): { subgrupos: Pestana[]; subgrupoActual: string | null; pestanas: Pestana[] } {
-  const vacio = { subgrupos: [], subgrupoActual: null, pestanas: [] };
+): { subgrupos: Pestana[]; subgrupoActual: string | null; pestanas: Pestana[]; ocultas: string[] } {
+  const vacio = { subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] };
   const activo = itemActivo(pathname, grupos);
   if (!activo?.tab || !activo.item.tabs) return vacio;
   const tabs = activo.item.tabs.filter((tab) => tab.ready && !tab.oculta);
@@ -131,5 +132,6 @@ export function pestanasPara(
     subgrupos,
     subgrupoActual: subgrupos.length ? (hermanas[0]?.href ?? null) : null,
     pestanas: hermanas.length > 1 ? hermanas.map((tab) => ({ href: tab.href, label: tab.label })) : [],
+    ocultas: activo.item.tabs.filter((tab) => tab.oculta).map((tab) => tab.href),
   };
 }

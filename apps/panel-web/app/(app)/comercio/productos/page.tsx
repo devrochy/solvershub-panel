@@ -1,9 +1,15 @@
+import Link from "next/link";
+
 import { CsvImportDialog } from "@/app/(app)/comercio/productos/_components/csv-import-dialog";
 import { ProductDialog } from "@/app/(app)/comercio/productos/_components/product-dialog";
 import { FotoProducto } from "@/components/comercio/foto-producto";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { Field } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { SIN_ALIADO, filtroDeAliado, nombreDelAliado, type Aliado, type ModulosComercio } from "@/lib/aliados";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
 import { formatMoney, formatNumber } from "@/lib/format";
 
@@ -25,16 +31,26 @@ type Product = {
   description: string;
   category_id: string | null;
   category: string;
+  ally_id?: string | null;
   price: number;
   image_url?: string | null;
   variants: Variant[];
 };
 type Category = { id: string; name: string; parent_id: string | null; sort_order: number; active: boolean };
 
-export default async function ProductsPage() {
-  const [productsRes, categoriesRes] = await Promise.all([
-    apiFetch<Product[]>("/pack/commerce/products"),
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ aliado?: string | string[] }>;
+}) {
+  // HU-CRM-03: aliados solo si el master los encendió en el negocio.
+  const modulos = await apiFetch<ModulosComercio>("/pack/commerce/modulos");
+  const conAliados = modulos.ok && modulos.data.aliados;
+  const filtro = conAliados ? filtroDeAliado((await searchParams).aliado) : null;
+  const [productsRes, categoriesRes, alliesRes] = await Promise.all([
+    apiFetch<Product[]>(`/pack/commerce/products${filtro ? `?ally_id=${filtro}` : ""}`),
     apiFetch<Category[]>("/pack/commerce/categories"),
+    conAliados ? apiFetch<Aliado[]>("/pack/commerce/allies") : Promise.resolve(null),
   ]);
   if (!productsRes.ok) {
     return (
@@ -44,6 +60,8 @@ export default async function ProductsPage() {
     );
   }
   const categories = categoriesRes.ok ? categoriesRes.data : [];
+  // `null` = aliados apagados: ni columna, ni filtro, ni selector.
+  const allies = conAliados ? (alliesRes?.ok ? alliesRes.data : []) : null;
   const products = productsRes.data;
   const currency = await getBusinessCurrency();
 
@@ -66,6 +84,15 @@ export default async function ProductsPage() {
       header: "Categoría",
       cell: (p) => <Badge variant="neutral">{p.category}</Badge>,
     },
+    ...(allies
+      ? [
+          {
+            key: "aliado",
+            header: "Aliado",
+            cell: (p: Product) => <span className="text-body">{nombreDelAliado(p.ally_id, allies)}</span>,
+          },
+        ]
+      : []),
     {
       key: "variantes",
       header: "Variantes",
@@ -106,6 +133,7 @@ export default async function ProductsPage() {
             })),
           }}
           categories={categories}
+          allies={allies}
         />
       ),
     },
@@ -118,11 +146,39 @@ export default async function ProductsPage() {
         description="Catálogo del negocio: precio y stock de la variante por defecto."
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <CsvImportDialog />
-            <ProductDialog categories={categories} />
+            {allies && (
+              <Button asChild variant="outline">
+                <Link href="/comercio/aliados">Aliados</Link>
+              </Button>
+            )}
+            <CsvImportDialog allies={allies} />
+            <ProductDialog categories={categories} allies={allies} />
           </div>
         }
       />
+      {allies && (
+        <form method="get" className="flex flex-wrap items-end gap-3">
+          <Field label="Aliado" htmlFor="filtro-aliado" className="w-64">
+            <Select id="filtro-aliado" name="aliado" defaultValue={filtro ?? ""}>
+              <option value="">Todos los aliados</option>
+              <option value={SIN_ALIADO}>Sin aliado</option>
+              {allies.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Button type="submit" variant="outline">
+            Filtrar
+          </Button>
+          {filtro && (
+            <Link href="/comercio/productos" className="pb-2.5 text-sm text-link hover:underline">
+              Limpiar
+            </Link>
+          )}
+        </form>
+      )}
       <DataTable
         columns={columns}
         rows={products}

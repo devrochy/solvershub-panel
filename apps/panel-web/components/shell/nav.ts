@@ -162,6 +162,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { section: "pack_commerce", label: "Categorías", href: "/comercio/categorias", icon: Tags, ready: true },
           { section: "pack_commerce", label: "Promociones", href: "/comercio/promociones", icon: BadgePercent, ready: true },
           { section: "pack_commerce", label: "Pedidos", href: "/comercio/pedidos", icon: ShoppingCart, ready: true },
+          // HU-CRM-03: los aliados son opcionales por negocio; no sale como pestaña y se entra
+          // desde Productos cuando el master los enciende.
+          { section: "pack_commerce", label: "Aliados", href: "/comercio/aliados", icon: Handshake, ready: true, oculta: true },
         ],
         { pack: "pack_commerce" },
       ),
