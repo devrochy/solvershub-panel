@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AgenteSwitch } from "@/app/(app)/leads/_components/agente-switch";
+import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { FichaCliente } from "@/app/(app)/leads/_components/ficha-cliente";
 import { LeadsFilters } from "@/app/(app)/leads/_components/leads-filters";
 import { PromocionDelSegmento } from "@/app/(app)/leads/_components/promocion-del-segmento";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { ConversationConnection, LeadDetail, LeadsResponse } from "@/lib/api/types";
+import type { ConversationConnection, LeadDetail, LeadsResponse, Me } from "@/lib/api/types";
 import { consultaClientes, segmentoDelFiltro, type FiltrosClientes } from "@/lib/clientes";
 import { formatCellValue } from "@/lib/format";
 import { canalLabel } from "@/lib/labels";
@@ -24,11 +25,15 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const qs = consultaClientes(sp);
   const csv = consultaClientes(sp, { conPagina: false });
 
-  const [res, conexiones, ficha] = await Promise.all([
+  const [res, conexiones, ficha, me] = await Promise.all([
     apiFetch<LeadsResponse>(`/admin/leads${qs.size ? `?${qs.toString()}` : ""}`),
     apiFetch<ConversationConnection[]>("/admin/conversations/connections"),
     sp.cliente ? apiFetch<LeadDetail>(`/admin/leads/${encodeURIComponent(sp.cliente)}`) : null,
+    apiFetch<Me>("/admin/me"),
   ]);
+  // HU-CRM-06 (D-SPEC-33-8): el envío a un segmento es solo del propietario o la plataforma.
+  const puedeEnviar =
+    me.ok && (me.data.role === "master" || me.data.role === "tester" || me.data.tenant?.role === "owner");
   const { items, columns, filters, page, has_more, total } = res.ok
     ? res.data
     : { items: [], columns: [], filters: [], page: 1, has_more: false, total: 0 };
@@ -81,6 +86,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         helpSection: "leads",
         actions: (
           <div className="flex flex-wrap gap-2">
+            {puedeEnviar && <EnviarPlantilla consulta={csv.toString()} />}
             {conClasificacion && <PromocionDelSegmento segmento={segmento} total={total} />}
             <Button asChild variant="outline">
               <a href={`/api/leads/export${csv.size ? `?${csv.toString()}` : ""}`} download>

@@ -35,6 +35,8 @@ type FetchOptions = {
   tenant?: string | null;
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
+  /** Cabeceras extra (p. ej. `Idempotency-Key`, HU-CRM-06). */
+  headers?: Record<string, string>;
 };
 
 export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promise<ApiResult<T>> {
@@ -50,6 +52,7 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(tenant ? { "X-Tenant-Id": tenant } : {}),
+        ...(opts.headers ?? {}),
       },
       body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
       cache: "no-store",

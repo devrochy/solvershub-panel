@@ -24,6 +24,7 @@ import { canalLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
 import { AgenteSwitch } from "./agente-switch";
+import { ConsentimientoDelCliente } from "./consentimiento";
 import { HistoriaDelCliente, NotasDelCliente } from "./notas-y-historia";
 
 const PERFIL = "perfil";
@@ -110,6 +111,8 @@ export function FichaCliente({ detalle, closeHref }: { detalle: LeadDetail; clos
                 <ListaDeDatos datos={perfil} />
               )}
             </section>
+
+            {detalle.canal === "whatsapp" && <ConsentimientoDelCliente leadId={detalle.id} />}
 
             <NotasDelCliente leadId={detalle.id} onCambio={() => setVersionHistoria((v) => v + 1)} />
 

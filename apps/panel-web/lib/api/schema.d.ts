@@ -5345,6 +5345,27 @@ export interface paths {
         patch: operations["update_lead_api_v1_admin_leads__lead_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/pack/{plugin_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lead Pack
+         * @description Cambia campos que un pack deja editar desde la ficha (p. ej. el estado del lead de venta).
+         *     El core valida claves y valores; el pack escribe en sus tablas (ADR-0149).
+         */
+        patch: operations["update_lead_pack_api_v1_admin_leads__lead_id__pack__plugin_id__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/toggle-bot": {
         parameters: {
             query?: never;
@@ -5425,6 +5446,112 @@ export interface paths {
         get: operations["lead_timeline_api_v1_admin_leads__lead_id__timeline_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/acciones/plantilla/conexiones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Conexiones Para Envio
+         * @description Conexiones de WhatsApp Cloud del negocio con sus plantillas de marketing aprobadas.
+         */
+        get: operations["conexiones_para_envio_api_v1_admin_leads_acciones_plantilla_conexiones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/acciones/plantilla/vista-previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vista Previa De Envio
+         * @description Cuántos clientes del filtro recibirían la plantilla y por qué quedan fuera los demás.
+         *     Todavía no sale nada: si hay a quién enviar, el envío queda en borrador por 10 minutos.
+         */
+        post: operations["vista_previa_de_envio_api_v1_admin_leads_acciones_plantilla_vista_previa_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/acciones/plantilla/{envio_id}/confirmar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar Envio
+         * @description Confirma el envío de la vista previa. Repetir con la misma clave no envía dos veces.
+         */
+        post: operations["confirmar_envio_api_v1_admin_leads_acciones_plantilla__envio_id__confirmar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/acciones/plantilla/{envio_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Envio
+         * @description Estado del envío: pendientes, omitidos y, de los encolados, lo que reporta Meta.
+         */
+        get: operations["ver_envio_api_v1_admin_leads_acciones_plantilla__envio_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/consentimiento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Consentimiento
+         * @description Consentimiento del cliente para recibir promociones y su historial (hasta 20).
+         */
+        get: operations["ver_consentimiento_api_v1_admin_leads__lead_id__consentimiento_get"];
+        put?: never;
+        /**
+         * Registrar Consentimiento
+         * @description Marca que el cliente aceptó (o ya no acepta) recibir promociones. Se guarda cómo se obtuvo
+         *     y quién lo marcó; nunca se edita una fila anterior (ADR-0150).
+         */
+        post: operations["registrar_consentimiento_api_v1_admin_leads__lead_id__consentimiento_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12650,6 +12777,31 @@ export interface components {
             };
             /** Columns */
             columns: components["schemas"]["LeadColumn"][];
+            /** Editables */
+            editables?: components["schemas"]["LeadEditable"][];
+        };
+        /**
+         * LeadEditable
+         * @description Un campo de un pack que se edita desde la ficha (ADR-0149).
+         */
+        LeadEditable: {
+            /** Plugin Id */
+            plugin_id: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "opciones" | "texto";
+            /** Options */
+            options?: components["schemas"]["LeadFilterOption"][];
+            /** Max Length */
+            max_length: number;
+            /** Value */
+            value?: string | null;
         };
         /** LeadFact */
         LeadFact: {
@@ -12719,6 +12871,16 @@ export interface components {
             /** Text */
             text: string;
         };
+        /**
+         * LeadPackUpdate
+         * @description Valores de los campos editables de un pack (las claves de `editables` de ese pack).
+         */
+        LeadPackUpdate: {
+            /** Valores */
+            valores?: {
+                [key: string]: string;
+            };
+        };
         /** TimelineItem */
         TimelineItem: {
             /**
@@ -12745,6 +12907,183 @@ export interface components {
             next_cursor: string | null;
             /** Partial */
             partial: boolean;
+        };
+        /** ConexionDeEnvioOut */
+        ConexionDeEnvioOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Plantillas */
+            plantillas: components["schemas"]["PlantillaDeEnvio"][];
+            /** Motivo Pausa */
+            motivo_pausa?: string | null;
+        };
+        /** ConsentimientoIn */
+        ConsentimientoIn: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "otorgado" | "revocado";
+            /**
+             * Como
+             * @enum {string}
+             */
+            como: "en_el_local" | "por_telefono" | "por_escrito" | "otro";
+            /**
+             * Evidencia
+             * @default
+             */
+            evidencia: string;
+        };
+        /** ConsentimientoItem */
+        ConsentimientoItem: {
+            /** Estado */
+            estado: string;
+            /** Origen */
+            origen: string;
+            /** Evidencia */
+            evidencia: string;
+            /** Quien */
+            quien: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ConsentimientoOut */
+        ConsentimientoOut: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "otorgado" | "revocado" | "sin_registro";
+            /** Historial */
+            historial: components["schemas"]["ConsentimientoItem"][];
+        };
+        /** EnvioOut */
+        EnvioOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Estado */
+            estado: string;
+            /** Plantilla */
+            plantilla: string;
+            /** Total */
+            total: number;
+            /** Creado Por */
+            creado_por: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Conteo */
+            conteo: {
+                [key: string]: number;
+            };
+            /** Fallas */
+            fallas: components["schemas"]["FallaOut"][];
+        };
+        /** ExcluidoOut */
+        ExcluidoOut: {
+            /** Motivo */
+            motivo: string;
+            /** Label */
+            label: string;
+            /** Total */
+            total: number;
+        };
+        /** FallaOut */
+        FallaOut: {
+            /** Cliente */
+            cliente: string;
+            /** Motivo */
+            motivo: string;
+        };
+        /** PlantillaDeEnvio */
+        PlantillaDeEnvio: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Language */
+            language: string;
+            /** Body */
+            body: string;
+            /** Variables */
+            variables: string[];
+        };
+        /** VariableIn */
+        VariableIn: {
+            /**
+             * Fuente
+             * @default fijo
+             * @enum {string}
+             */
+            fuente: "fijo" | "cliente.nombre";
+            /**
+             * Valor
+             * @default
+             */
+            valor: string;
+        };
+        /** VistaPreviaIn */
+        VistaPreviaIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
+            /** Variables */
+            variables?: {
+                [key: string]: components["schemas"]["VariableIn"];
+            };
+        };
+        /** VistaPreviaOut */
+        VistaPreviaOut: {
+            /** Envio Id */
+            envio_id: string | null;
+            /** Candidatos */
+            candidatos: number;
+            /** Elegibles */
+            elegibles: number;
+            /** Excluidos */
+            excluidos: components["schemas"]["ExcluidoOut"][];
+            /** Muestra */
+            muestra: string[];
+            /** Texto */
+            texto: string;
+            /** Costo Creditos */
+            costo_creditos: string;
+            /** Tope */
+            tope: number;
+            /** Limite Diario */
+            limite_diario: number | null;
+            /** Bloqueo */
+            bloqueo: ("sin_destinatarios" | "tope" | "envio_en_curso") | null;
+            /** Expira */
+            expira: string | null;
         };
     };
     responses: never;
@@ -23826,6 +24165,44 @@ export interface operations {
             };
         };
     };
+    update_lead_pack_api_v1_admin_leads__lead_id__pack__plugin_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+                plugin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPackUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     toggle_lead_bot_api_v1_admin_leads__lead_id__toggle_bot_post: {
         parameters: {
             query?: never;
@@ -23985,6 +24362,215 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimelineResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    conexiones_para_envio_api_v1_admin_leads_acciones_plantilla_conexiones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionDeEnvioOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vista_previa_de_envio_api_v1_admin_leads_acciones_plantilla_vista_previa_post: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                channel?: string | null;
+                connection_id?: string | null;
+                /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
+                filtro?: string[] | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VistaPreviaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirmar_envio_api_v1_admin_leads_acciones_plantilla__envio_id__confirmar_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_envio_api_v1_admin_leads_acciones_plantilla__envio_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_consentimiento_api_v1_admin_leads__lead_id__consentimiento_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentimientoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_consentimiento_api_v1_admin_leads__lead_id__consentimiento_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentimientoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentimientoOut"];
                 };
             };
             /** @description Validation Error */
