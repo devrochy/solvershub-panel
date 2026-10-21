@@ -49,7 +49,7 @@ export function CsvImportDialog() {
       </DialogTrigger>
       <DialogContent
         title="Importar productos desde CSV"
-        description="El archivo debe traer las columnas name y price (opcionales: description, sku, stock)."
+        description="El archivo debe traer las columnas name y price (opcionales: description, sku, stock e image_url con un link https)."
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field label="Archivo CSV" htmlFor="file">
