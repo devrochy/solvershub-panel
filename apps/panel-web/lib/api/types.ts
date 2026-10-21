@@ -145,3 +145,10 @@ export type LeadFilter = components["schemas"]["LeadFilter"];
 export type LeadNote = components["schemas"]["LeadNote"];
 export type TimelineItem = components["schemas"]["TimelineItem"];
 export type TimelineResponse = components["schemas"]["TimelineResponse"];
+
+// Acciones sobre un segmento de Clientes y consentimiento (HU-CRM-06, ADR-0150).
+export type ConexionDeEnvio = components["schemas"]["ConexionDeEnvioOut"];
+export type PlantillaDeEnvio = components["schemas"]["PlantillaDeEnvio"];
+export type VistaPreviaEnvio = components["schemas"]["VistaPreviaOut"];
+export type EnvioSegmento = components["schemas"]["EnvioOut"];
+export type Consentimiento = components["schemas"]["ConsentimientoOut"];

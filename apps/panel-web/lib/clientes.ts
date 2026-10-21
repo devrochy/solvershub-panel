@@ -127,6 +127,7 @@ export const TIPO_DE_EVENTO: Record<string, string> = {
   cotizacion: "Cotización",
   pedido: "Pedido",
   cita: "Cita",
+  plantilla: "Plantilla",
 };
 
 type ConPerfil = {
