@@ -10,6 +10,9 @@ const PATHS: Record<string, string> = {
   // Desvincular de un negocio: `POST /admin/collaborators/{id}/unlink` con `{tenant: <slug>}`
   // (mismo cuerpo que `link`, sin rol). Lo agrega agent-core en `fix/p0-seguridad-pruebas`.
   unlink: "unlink",
+  // Grilla de permisos (HU-UI-10): `POST /admin/collaborators/{id}/permissions` con
+  // `{permissions: {sección → none|read|write}, tenant}`.
+  permissions: "permissions",
   toggle: "toggle",
 };
 
