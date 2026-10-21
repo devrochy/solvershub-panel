@@ -1,5 +1,6 @@
 import { CsvImportDialog } from "@/app/(app)/comercio/productos/_components/csv-import-dialog";
 import { ProductDialog } from "@/app/(app)/comercio/productos/_components/product-dialog";
+import { FotoProducto } from "@/components/comercio/foto-producto";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
@@ -25,6 +26,7 @@ type Product = {
   category_id: string | null;
   category: string;
   price: number;
+  image_url?: string | null;
   variants: Variant[];
 };
 type Category = { id: string; name: string; parent_id: string | null; sort_order: number; active: boolean };
@@ -50,9 +52,12 @@ export default async function ProductsPage() {
       key: "producto",
       header: "Producto",
       cell: (p) => (
-        <div className="flex flex-col">
-          <span className="text-headline">{p.name}</span>
-          {p.description && <span className="text-xs text-text-soft">{p.description}</span>}
+        <div className="flex items-center gap-3">
+          <FotoProducto url={p.image_url} nombre={p.name} />
+          <div className="flex flex-col">
+            <span className="text-headline">{p.name}</span>
+            {p.description && <span className="text-xs text-text-soft">{p.description}</span>}
+          </div>
         </div>
       ),
     },
