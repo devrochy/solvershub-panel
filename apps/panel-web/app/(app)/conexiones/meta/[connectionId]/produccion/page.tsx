@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ChecklistProduccion } from "@/components/domain/checklist-produccion";
+import { MetaTabs } from "@/app/(app)/conexiones/meta/_components/meta-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -31,13 +32,7 @@ export default async function ProduccionDeConexionPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/conexiones/meta">← Volver</Link>
-        </Button>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/conexiones/meta/${connectionId}/numeros`}>Números</Link>
-        </Button>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/conexiones/meta/${connectionId}/plantillas`}>Plantillas</Link>
+          <Link href="/conexiones">← Conexiones</Link>
         </Button>
       </div>
 
@@ -45,6 +40,8 @@ export default async function ProduccionDeConexionPage({
         title="Producción"
         description="Lo que necesita esta conexión para atender clientes reales, revisado con sus propias credenciales."
       />
+
+      <MetaTabs connectionId={connectionId} current={`/conexiones/meta/${connectionId}/produccion`} />
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Badge variant="neutral">{data.channel}</Badge>

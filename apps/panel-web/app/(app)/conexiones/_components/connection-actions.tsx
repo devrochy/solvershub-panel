@@ -21,6 +21,8 @@ export function ConnectionActions({
   primary,
   kind = "channel_connection",
   typeId,
+  trigger = "icon",
+  triggerLabel = "Gestionar",
 }: {
   connectionId: string;
   label: string;
@@ -28,6 +30,9 @@ export function ConnectionActions({
   primary: boolean;
   kind?: "channel_connection" | "meta_connection";
   typeId?: string | null;
+  /** `button` se usa en la tarjeta de la consola; `icon` en tablas y listas densas. */
+  trigger?: "icon" | "button";
+  triggerLabel?: string;
 }) {
   const router = useRouter();
   const confirm = useConfirm();
@@ -95,9 +100,15 @@ export function ConnectionActions({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <IconAction label={`Acciones de ${label}`} tone="neutro">
-          <MoreHorizontal className="h-4 w-4" aria-hidden />
-        </IconAction>
+        {trigger === "button" ? (
+          <Button variant="outline" size="sm">
+            {triggerLabel}
+          </Button>
+        ) : (
+          <IconAction label={`Acciones de ${label}`} tone="neutro">
+            <MoreHorizontal className="h-4 w-4" aria-hidden />
+          </IconAction>
+        )}
       </DialogTrigger>
       <DialogContent title="Acciones de la conexión" description={label} className="max-w-md">
         <div className="flex flex-col gap-4">

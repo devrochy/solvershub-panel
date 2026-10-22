@@ -86,6 +86,61 @@ export function puedePausar(
   return c.pause_scope === "connection";
 }
 
+/** ¿A dónde lleva «Gestionar» según el tipo de conexión? */
+export type GestionConexion =
+  | { tipo: "enlace"; href: string; label: string }
+  | { tipo: "editar" };
+
+export function gestionDeConexion(
+  c: Pick<ConexionConsola, "meta_connection_id" | "type_id">,
+): GestionConexion | null {
+  if (c.meta_connection_id) {
+    return { tipo: "enlace", href: `/conexiones/meta/${c.meta_connection_id}`, label: "Gestionar" };
+  }
+  if (!c.type_id) return null;
+  if (c.type_id === "whatsapp_waweb") {
+    return { tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" };
+  }
+  if (c.type_id === "google_calendar") {
+    return { tipo: "enlace", href: "/calendario", label: "Gestionar" };
+  }
+  if (c.type_id === "webchat") {
+    return { tipo: "enlace", href: "/configuracion", label: "Gestionar" };
+  }
+  // Correo y demás tipos manuales: se gestionan con el formulario de credenciales.
+  return { tipo: "editar" };
+}
+
+/** Pestañas del hub de una conexión Meta (el QR no tiene WABA ni plantillas). */
+export function metaTabs(connectionId: string): { href: string; label: string }[] {
+  const base = `/conexiones/meta/${connectionId}`;
+  return [
+    { href: base, label: "Resumen" },
+    { href: `${base}/salud`, label: "Salud de Meta" },
+    { href: `${base}/numeros`, label: "Números" },
+    { href: `${base}/plantillas`, label: "Plantillas" },
+    { href: `${base}/produccion`, label: "Producción" },
+    { href: "/conexiones/requisitos", label: "Requisitos" },
+  ];
+}
+
+/** Qué hace el alta al elegir una tarjeta del catálogo. */
+export type DestinoAlta = { tipo: "formulario" } | { tipo: "navegar"; href: string };
+
+export function destinoDeAlta(type: {
+  id: string;
+  available: boolean;
+  setup_kind: string;
+  has_schema: boolean;
+}): DestinoAlta | null {
+  if (!type.available) return null;
+  if (type.setup_kind === "manual" && type.has_schema) return { tipo: "formulario" };
+  if (type.id === "whatsapp_waweb") return { tipo: "navegar", href: "/conexiones/waweb" };
+  if (type.id === "whatsapp_meta") return { tipo: "navegar", href: "/conexiones/whatsapp" };
+  if (type.id === "google_calendar") return { tipo: "navegar", href: "/calendario" };
+  return null;
+}
+
 export function resumenConsumo(u: ConexionConsola["usage_7d"]): string {
   const partes = [
     `${formatNumber(u.turns)} turnos`,
