@@ -22,7 +22,7 @@ export default async function PasarAProduccionPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/conexiones/meta">← Volver</Link>
+          <Link href={`/conexiones/meta/${connectionId}`}>← Conexión</Link>
         </Button>
       </div>
       <PageHeader

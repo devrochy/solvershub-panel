@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { destinoDeAlta } from "@/lib/conexiones";
 
 type TypeItem = {
   id: string;
@@ -70,6 +71,17 @@ export function NewConnectionDialog() {
     setForm(json);
   }
 
+  function elegir(type: TypeItem) {
+    const destino = destinoDeAlta(type);
+    if (!destino) return;
+    if (destino.tipo === "formulario") {
+      void openType(type);
+      return;
+    }
+    setOpen(false);
+    router.push(destino.href);
+  }
+
   function toggle(next: boolean) {
     setOpen(next);
     setForm(null);
@@ -125,37 +137,24 @@ export function NewConnectionDialog() {
               </p>
               <ul className="flex flex-col gap-2">
                 {group.items.map((type) => (
-                  <li
-                    key={type.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <ChannelIcon id={type.id} />
-                      <div className="flex flex-col">
-                        <span className="text-sm text-headline">{type.label}</span>
-                        {type.description && (
-                          <span className="text-xs text-text-soft">{type.description}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <li key={type.id}>
+                    <button
+                      type="button"
+                      disabled={!type.available}
+                      onClick={() => elegir(type)}
+                      className="flex w-full flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft px-3 py-2 text-left transition-colors hover:border-focus/50 hover:bg-focus/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-soft disabled:hover:bg-transparent"
+                    >
+                      <span className="flex items-center gap-3">
+                        <ChannelIcon id={type.id} />
+                        <span className="flex flex-col">
+                          <span className="text-sm text-headline">{type.label}</span>
+                          {type.description && (
+                            <span className="text-xs text-text-soft">{type.description}</span>
+                          )}
+                        </span>
+                      </span>
                       {!type.available && <Badge variant="neutral">Próximamente</Badge>}
-                      {type.available && type.id === "whatsapp_waweb" && (
-                        <Button asChild size="sm" variant="outline">
-                          <Link href="/conexiones/waweb">Vincular por QR</Link>
-                        </Button>
-                      )}
-                      {type.available && type.id !== "whatsapp_waweb" && type.setup_kind === "manual" && type.has_schema && (
-                        <Button size="sm" variant="outline" onClick={() => void openType(type)}>
-                          Configurar
-                        </Button>
-                      )}
-                      {type.available && type.id !== "whatsapp_waweb" && (type.setup_kind !== "manual" || !type.has_schema) && type.url && (
-                        <Button asChild size="sm" variant="ghost">
-                          <Link href="/conexiones/whatsapp">Abrir asistente</Link>
-                        </Button>
-                      )}
-                    </div>
+                    </button>
                   </li>
                 ))}
               </ul>

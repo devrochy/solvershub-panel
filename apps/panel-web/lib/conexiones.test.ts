@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  destinoDeAlta,
   esChatWeb,
   etiquetaRuteo,
+  gestionDeConexion,
+  metaTabs,
   puedePausar,
   resumenConsumo,
   saludDeConexion,
@@ -106,5 +109,60 @@ describe("consola de conexiones", () => {
     expect(
       resumenConsumo({ turns: 2, conversations: 1, input_tokens: 10, output_tokens: 5, cost_usd: 0.03 }),
     ).toContain("de IA");
+  });
+});
+
+describe("gestión y alta de conexiones", () => {
+  it("Gestionar lleva al hub según el tipo de conexión", () => {
+    expect(gestionDeConexion(conexion({}))).toEqual({
+      tipo: "enlace",
+      href: "/conexiones/meta/m1",
+      label: "Gestionar",
+    });
+    expect(
+      gestionDeConexion(conexion({ meta_connection_id: null, type_id: "whatsapp_waweb" })),
+    ).toEqual({ tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" });
+    expect(
+      gestionDeConexion(conexion({ meta_connection_id: null, type_id: "google_calendar" })),
+    ).toEqual({ tipo: "enlace", href: "/calendario", label: "Gestionar" });
+    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: "webchat" }))).toEqual({
+      tipo: "enlace",
+      href: "/configuracion",
+      label: "Gestionar",
+    });
+    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: "email_smtp" }))).toEqual({
+      tipo: "editar",
+    });
+    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: null }))).toBeNull();
+  });
+
+  it("el alta navega según el tipo y deja sin destino las no disponibles", () => {
+    expect(
+      destinoDeAlta({ id: "whatsapp_meta", available: true, setup_kind: "wizard", has_schema: true }),
+    ).toEqual({ tipo: "navegar", href: "/conexiones/whatsapp" });
+    expect(
+      destinoDeAlta({ id: "whatsapp_waweb", available: true, setup_kind: "wizard", has_schema: false }),
+    ).toEqual({ tipo: "navegar", href: "/conexiones/waweb" });
+    expect(
+      destinoDeAlta({ id: "email_smtp", available: true, setup_kind: "manual", has_schema: true }),
+    ).toEqual({ tipo: "formulario" });
+    expect(
+      destinoDeAlta({ id: "google_calendar", available: true, setup_kind: "wizard", has_schema: true }),
+    ).toEqual({ tipo: "navegar", href: "/calendario" });
+    expect(
+      destinoDeAlta({ id: "instagram_meta", available: false, setup_kind: "wizard", has_schema: false }),
+    ).toBeNull();
+  });
+
+  it("el hub de Meta agrupa las pestañas de gestión (sin webhook: es del negocio)", () => {
+    expect(metaTabs("m1").map((t) => t.label)).toEqual([
+      "Resumen",
+      "Salud de Meta",
+      "Números",
+      "Plantillas",
+      "Producción",
+      "Requisitos",
+    ]);
+    expect(metaTabs("m1").map((t) => t.href)).toContain("/conexiones/requisitos");
   });
 });

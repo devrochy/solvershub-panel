@@ -32,8 +32,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/calendario", "pack_calendar:conexion", false], ["/calendario/horario", "pack_calendar:configuracion", false],
   ["/calendario/tipos", "pack_calendar:tipos", false], ["/calendario/bloqueos", "pack_calendar:bloqueos", false],
   ["/calendario/citas", "pack_calendar:citas", false], ["/asistente", "connections", false],
-  ["/plantillas", "connections", false], ["/dlq", "settings", false], ["/conexiones/requisitos", "connections", false],
-  ["/conexiones/produccion", "connections", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
+  ["/dlq", "settings", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
   ["/plataforma/meta/embedded-signup", "tenants", false], ["/tenants/alta-automatica", "tenants", true],
   ["/pruebas", "qa", false],
   // Nuevas después del menú v2.
@@ -49,6 +48,19 @@ describe("menú v2 (HU-UX-02)", () => {
     expect(actuales).toHaveLength(RUTAS_ANTERIORES.length);
     expect(new Set(actuales.map(([href]) => href)).size).toBe(actuales.length);
     for (const ruta of RUTAS_ANTERIORES) expect(actuales).toContainEqual(ruta);
+  });
+
+  it("las rutas que salieron del menú siguen protegidas por connections", () => {
+    for (const ruta of ["/plantillas", "/plantillas/eventos", "/conexiones/requisitos", "/conexiones/produccion"]) {
+      expect(
+        puedeVerRuta(ruta, { permisos: { connections: "read" }, esMaster: false, negocioId: "t" }),
+        ruta,
+      ).toBe(true);
+      expect(
+        puedeVerRuta(ruta, { permisos: { connections: null }, esMaster: false, negocioId: "t" }),
+        ruta,
+      ).toBe(false);
+    }
   });
 
   it("un dueño con todos los packs ve 11 entradas en 4 grupos", () => {
@@ -103,7 +115,7 @@ describe("navegación del shell (HU-DS-04)", () => {
   it("la página activa es la más específica, y el ítem es su entrada", () => {
     expect(itemActivo("/cobranza/carteras/7", grupos)).toMatchObject({ item: { label: "Cobranza" }, tab: { label: "Carteras" } });
     expect(itemActivo("/cobranza", grupos)?.tab?.label).toBe("Resumen");
-    expect(itemActivo("/conexiones/requisitos", grupos)).toMatchObject({ item: { label: "Conexiones" }, tab: { label: "Requisitos de Meta" } });
+    expect(itemActivo("/conexiones/requisitos", grupos)).toMatchObject({ item: { label: "Conexiones" }, tab: null });
     expect(itemActivo("/dashboard", grupos)).toMatchObject({ item: { label: "Resumen" }, tab: null });
     expect(itemActivo("/no-existe", grupos)).toBeNull();
   });
