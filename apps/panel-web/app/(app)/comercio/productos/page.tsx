@@ -34,6 +34,8 @@ type Product = {
   ally_id?: string | null;
   price: number;
   image_url?: string | null;
+  image_url_externa?: string | null;
+  image_key?: string | null;
   variants: Variant[];
 };
 type Category = { id: string; name: string; parent_id: string | null; sort_order: number; active: boolean };
