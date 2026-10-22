@@ -203,7 +203,7 @@ export function PerfilForm({ me }: { me: Me }) {
       <div className="grid gap-6 md:grid-cols-[13rem_1fr]">
         <div className="flex flex-col items-center gap-3">
           <Avatar name={nombreMostrado} src={avatarSrc} size="xl" />
-          <div className="flex w-24 items-center justify-start gap-1">
+          <div className="flex w-24 items-center justify-center gap-1">
             <IconAction
               label="Cambiar foto"
               tone="editar"
