@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronUp, LogOut, UserRound } from "lucide-react";
+import { ChevronUp, LogOut, Palette, UserRound } from "lucide-react";
 
 import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import {
@@ -102,7 +102,10 @@ export function UserCard({
           Editar perfil
         </DropdownMenuLinkItem>
         <div className="flex items-center justify-between gap-3 px-2 py-1.5">
-          <span className="text-sm text-body">Tema</span>
+          <span className="flex items-center gap-2 text-sm text-body">
+            <Palette className="h-4 w-4 text-text-soft" aria-hidden />
+            Tema
+          </span>
           <ThemeSwitch
             oscuro={theme === "sh-dark"}
             onChange={(oscuro) => aplicarTema(oscuro ? "sh-dark" : "sh-light")}
