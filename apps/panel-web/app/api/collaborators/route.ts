@@ -19,3 +19,13 @@ export async function POST(request: Request) {
   }
   return NextResponse.json({ ok: true, ...(res.data ?? {}) });
 }
+
+/** BFF: listado de colaboradores. `?todos=1` (solo master) trae todas las cuentas. */
+export async function GET(request: Request) {
+  const todos = new URL(request.url).searchParams.get("todos") === "1";
+  const res = await apiFetch<unknown[]>(`/admin/collaborators${todos ? "?todos=1" : ""}`);
+  if (!res.ok) {
+    return NextResponse.json({ error: res.error }, { status: res.status });
+  }
+  return NextResponse.json(res.data);
+}

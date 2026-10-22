@@ -41,18 +41,22 @@ export function GrillaDePermisos({
   useEffect(() => {
     let activo = true;
     (async () => {
-      const query = negocio ? `?tenant=${encodeURIComponent(negocio)}` : "";
-      const res = await fetch(`/api/collaborators/${collaborator.id}/permissions${query}`);
-      const json = (await res.json().catch(() => [])) as {
-        section: string;
-        access: string;
-        heredado: boolean;
-      }[];
-      if (!activo) return;
-      const mapa: Record<string, EstadoDeSeccion> = {};
-      for (const e of json) mapa[e.section] = { access: (e.access as Acceso) ?? "none", heredado: e.heredado };
-      setEstado(mapa);
-      setCargando(false);
+      try {
+        const query = negocio ? `?tenant=${encodeURIComponent(negocio)}` : "";
+        const res = await fetch(`/api/collaborators/${collaborator.id}/permissions${query}`);
+        const json = (await res.json().catch(() => null)) as
+          | { section: string; access: string; heredado: boolean }[]
+          | { error?: string }
+          | null;
+        if (!activo) return;
+        const mapa: Record<string, EstadoDeSeccion> = {};
+        if (Array.isArray(json)) {
+          for (const e of json) mapa[e.section] = { access: (e.access as Acceso) ?? "none", heredado: e.heredado };
+        }
+        setEstado(mapa);
+      } finally {
+        if (activo) setCargando(false);
+      }
     })();
     return () => {
       activo = false;

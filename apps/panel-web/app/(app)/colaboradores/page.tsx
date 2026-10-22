@@ -26,6 +26,9 @@ export default async function CollaboratorsPage() {
   // dueño (y un tester, que aquí actúa como dueño) gestiona su negocio activo.
   const esMaster = meRes.ok && esMasterDePlataforma(meRes.data);
   const secciones = seccionesOtorgables(meRes.ok ? meRes.data.permissions : null, esMaster);
+  const total = res.data.length;
+  const activos = res.data.filter((c) => c.active).length;
+  const pendientes = invRes.ok ? invRes.data.length : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,6 +38,19 @@ export default async function CollaboratorsPage() {
         helpSection="collaborators"
         actions={<NewCollaboratorDialog packRoles={rolesRes.ok ? rolesRes.data : []} esMaster={esMaster} />}
       />
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="rounded-full border border-border-soft bg-surface-2 px-3 py-1 text-body">
+          <strong className="tabular-nums text-headline">{total}</strong> {total === 1 ? "cuenta" : "cuentas"}
+        </span>
+        <span className="rounded-full border border-status-success-border bg-status-success-bg px-3 py-1 text-status-success-fg">
+          <strong className="tabular-nums">{activos}</strong> {activos === 1 ? "activa" : "activas"}
+        </span>
+        {pendientes > 0 && (
+          <span className="rounded-full border border-status-warning-border bg-status-warning-bg px-3 py-1 text-status-warning-fg">
+            <strong className="tabular-nums">{pendientes}</strong> {pendientes === 1 ? "invitación pendiente" : "invitaciones pendientes"}
+          </span>
+        )}
+      </div>
       <TablaDeColaboradores filas={res.data} secciones={secciones} esMaster={esMaster} />
       <InvitacionesPendientes invitaciones={invRes.ok ? invRes.data : []} />
     </div>

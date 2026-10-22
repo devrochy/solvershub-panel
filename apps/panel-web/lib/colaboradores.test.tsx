@@ -6,7 +6,7 @@ import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new
 import { TablaDeColaboradores } from "@/app/(app)/colaboradores/_components/tabla-de-colaboradores";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { CollaboratorItem } from "@/lib/api/types";
-import { getToasts, resetToasts } from "@/lib/toast-store";
+import { resetToasts } from "@/lib/toast-store";
 
 import {
   filtrarPorNegocio,
@@ -31,6 +31,9 @@ function cuenta(extra: Partial<CollaboratorItem>): CollaboratorItem {
     id: "c-1",
     email: "cuenta@test",
     username: null,
+    nombre: null,
+    telefono: null,
+    avatar_url: null,
     role: "colaborador",
     active: true,
     is_self: false,
@@ -95,38 +98,45 @@ describe("reglas de Colaboradores (lógica pura)", () => {
 describe("tabla de colaboradores", () => {
   afterEach(cleanup);
 
-  it("para un dueño: sin acciones sobre el otro dueño ni las cuentas de plataforma, y permisos legibles", () => {
+  it("para un dueño: avatar, sin acciones sobre el otro dueño ni cuentas de plataforma, permisos como badge", () => {
     render(
       <FeedbackProviders>
         <TablaDeColaboradores filas={[YO, OTRO_DUENO, MASTER, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("button", { name: "Desactivar a operador@test" })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Desactivar a operador@test" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Restablecer contraseña de duena@test" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /socio@test/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /master@test/ })).toBeNull();
-    expect(screen.getByText("Conversaciones: escritura")).toBeTruthy();
-    expect(screen.getByText("Habilidades: sin acceso")).toBeTruthy();
-    expect(screen.queryByText(/conversations:write/)).toBeNull();
-    // Un solo negocio: sin filtro.
+    expect(screen.queryByRole("switch", { name: "Desactivar a socio@test" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Desactivar a master@test" })).toBeNull();
+    // Permisos como chip clicable con su conteo, no como texto plano.
+    expect(screen.getByRole("button", { name: "Permisos de operador@test" })).toBeTruthy();
+    expect(screen.getAllByText("Gestionar").length).toBeGreaterThan(0);
+    // Sin filtro por negocio (la sección es del negocio activo).
     expect(screen.queryByRole("combobox", { name: "Negocio" })).toBeNull();
   });
 
-  it("para el master: filtro por negocio cuando hay más de uno y acciones sobre todos", () => {
+  it("para el master: conmutador «Todas las cuentas» que recarga la lista", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      if (String(input).includes("?todos=1")) {
+        return new Response(JSON.stringify([MASTER, OTRO_DUENO]), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO, OTRO_DUENO, DEL_SUR]} secciones={["conversations"]} esMaster />
+        <TablaDeColaboradores filas={[OTRO_DUENO]} secciones={["conversations"]} esMaster />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("button", { name: "Desactivar a socio@test" })).toBeTruthy();
-    const filtro = screen.getByRole("combobox", { name: "Negocio" });
-    fireEvent.change(filtro, { target: { value: "tienda-sur" } });
-    expect(screen.getByText("sur@test")).toBeTruthy();
-    expect(screen.queryByText("socio@test")).toBeNull();
+    expect(screen.getByRole("checkbox", { name: "Todas las cuentas" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Todas las cuentas" }));
+    await waitFor(() => expect(screen.getByText("master@test")).toBeTruthy());
+    vi.unstubAllGlobals();
   });
 
   it("la grilla muestra el heredado y guarda el mapa completo (HU-UI-10)", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      void init;
       const url = String(input);
       if (url.includes("/permissions")) {
         return new Response(
@@ -147,12 +157,10 @@ describe("tabla de colaboradores", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Permisos de operador@test" }));
 
-    // El estado heredado se señala; el explícito (leads=write) no.
     expect(await screen.findByText("heredado")).toBeTruthy();
     expect((screen.getByRole("radio", { name: "Conversaciones: Ver" }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole("radio", { name: "Clientes: Editar" }) as HTMLInputElement).checked).toBe(true);
 
-    // Cambiar Conversaciones a Editar y guardar el mapa completo.
     fireEvent.click(screen.getByRole("radio", { name: "Conversaciones: Editar" }));
     fireEvent.click(screen.getByRole("button", { name: "Guardar permisos" }));
 
@@ -165,9 +173,34 @@ describe("tabla de colaboradores", () => {
     });
     vi.unstubAllGlobals();
   });
+
+  it("el estado se cambia con un interruptor y pide confirmación al desactivar", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      void init;
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[OPERADOR]} secciones={["conversations"]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("switch", { name: "Desactivar a operador@test" }));
+    const dialogo = await screen.findByRole("alertdialog");
+    expect(within(dialogo).getByText(/sin acceso al panel/)).toBeTruthy();
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Desactivar" }));
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(post).toBeTruthy();
+      expect(JSON.parse(String(post?.[1]?.body)).action).toBe("toggle");
+    });
+    // El interruptor refleja el nuevo estado (optimista).
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Activar a operador@test" })).toBeTruthy());
+    vi.unstubAllGlobals();
+  });
 });
 
-describe("alta de colaborador", () => {
+describe("alta de colaborador (dos pasos)", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
@@ -182,64 +215,41 @@ describe("alta de colaborador", () => {
     vi.unstubAllGlobals();
   });
 
-  async function crear(esMaster = false) {
+  function fetchPorRuta(rutas: Record<string, unknown>) {
+    fetchMock.mockImplementation(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const metodo = init?.method ?? "GET";
+      for (const [fragmento, respuesta] of Object.entries(rutas)) {
+        if (url.includes(fragmento)) return new Response(JSON.stringify(respuesta), { status: 200 });
+      }
+      if (url.includes("/api/invitations") && metodo === "POST") {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+      if (url.includes("/api/collaborators") && metodo === "POST") {
+        return new Response(JSON.stringify({ ok: true, resultado: "creado" }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+  }
+
+  async function abrirDialogo(esMaster = false) {
     render(
       <FeedbackProviders>
         <NewCollaboratorDialog esMaster={esMaster} />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Nuevo colaborador" }));
-    const dialogo = await screen.findByRole("dialog");
-    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
-    fireEvent.change(within(dialogo).getByLabelText(/^Contraseña/), { target: { value: "clave-larga-1" } });
-    return dialogo;
+    fireEvent.click(screen.getByRole("button", { name: /Nuevo colaborador/ }));
+    return await screen.findByRole("dialog");
   }
 
-  it("si el correo ya tenía cuenta, avisa que se envió la invitación y cierra", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true, resultado: "invitado" }), { status: 200 }));
-    const dialogo = await crear();
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear cuenta" }));
-    await waitFor(() =>
-      expect(getToasts()).toContainEqual(
-        expect.objectContaining({ kind: "success", message: expect.stringMatching(/se le envió una invitación/) }),
-      ),
-    );
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(refresh).toHaveBeenCalled();
-  });
-
-  it("un dueño no ve el campo de negocio ni el rol master; el master sí", async () => {
-    const dialogo = await crear(false);
-    expect(within(dialogo).queryByLabelText(/Negocio/)).toBeNull();
-    expect(within(dialogo).queryByRole("option", { name: /Master/ })).toBeNull();
-    cleanup();
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 }));
-    const deMaster = await crear(true);
-    expect(within(deMaster).getByLabelText(/Negocio/)).toBeTruthy();
-    expect(within(deMaster).getByRole("option", { name: /Master/ })).toBeTruthy();
-  });
-
-  it("rechaza un correo inválido con un error en español y no llama a la API", async () => {
-    const dialogo = await crear();
-    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@" } });
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear cuenta" }));
-    expect(await within(dialogo).findByText(/Escribe un correo válido/)).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("invita por correo sin contraseña (HU-UI-14)", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
-    render(
-      <FeedbackProviders>
-        <NewCollaboratorDialog />
-      </FeedbackProviders>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Nuevo colaborador" }));
-    const dialogo = await screen.findByRole("dialog");
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Invitar" }));
-    // En modo invitar no hay contraseña.
-    expect(within(dialogo).queryByLabelText(/Contraseña/)).toBeNull();
+  it("si el correo ya existe, ofrece invitar y envía la invitación sin contraseña", async () => {
+    fetchPorRuta({ "/existe": { existe: true } });
+    const dialogo = await abrirDialogo();
     fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "socia@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+
+    expect(await within(dialogo).findByText(/Ya existe una cuenta/)).toBeTruthy();
+    expect(within(dialogo).queryByLabelText(/Contraseña/)).toBeNull();
     fireEvent.click(within(dialogo).getByRole("button", { name: "Enviar invitación" }));
 
     await waitFor(() => {
@@ -247,8 +257,66 @@ describe("alta de colaborador", () => {
       expect(llamada).toBeTruthy();
       const body = JSON.parse(String(llamada?.[1]?.body));
       expect(body.email).toBe("socia@x.test");
-      expect(body.role).toBe("colaborador");
       expect(body.password).toBeUndefined();
     });
+  });
+
+  it("crea una cuenta nueva con nombre, usuario y teléfono", async () => {
+    fetchPorRuta({ "/existe": { existe: false }, "/username-disponible": { disponible: true } });
+    const dialogo = await abrirDialogo();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+
+    fireEvent.change(await within(dialogo).findByLabelText(/Nombre completo/), { target: { value: "Ana Pérez" } });
+    fireEvent.change(within(dialogo).getByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
+    expect(await within(dialogo).findByText("Disponible")).toBeTruthy();
+    fireEvent.change(within(dialogo).getByLabelText(/Contraseña/), { target: { value: "clave-larga-1" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear colaborador" }));
+
+    await waitFor(() => {
+      const llamada = fetchMock.mock.calls.find(
+        ([url, init]) => String(url).includes("/api/collaborators") && init?.method === "POST",
+      );
+      expect(llamada).toBeTruthy();
+      const body = JSON.parse(String(llamada?.[1]?.body));
+      expect(body.email).toBe("ana@x.test");
+      expect(body.nombre).toBe("Ana Pérez");
+      expect(body.username).toBe("ana.perez");
+      expect(body.password).toBe("clave-larga-1");
+    });
+  });
+
+  it("rechaza un correo inválido con un error en español y no llama a la API", async () => {
+    const dialogo = await abrirDialogo();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+    expect(await within(dialogo).findByText(/Escribe un correo válido/)).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("avisa cuando el usuario ya está en uso", async () => {
+    fetchPorRuta({ "/existe": { existe: false }, "/username-disponible": { disponible: false } });
+    const dialogo = await abrirDialogo();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+    fireEvent.change(await within(dialogo).findByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
+    expect(await within(dialogo).findByText(/ya está en uso/)).toBeTruthy();
+  });
+
+  it("un dueño no ve el rol Master; el master sí", async () => {
+    fetchPorRuta({ "/existe": { existe: false }, "/username-disponible": { disponible: true } });
+    const dialogo = await abrirDialogo();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+    await within(dialogo).findByRole("radiogroup");
+    expect(within(dialogo).queryByRole("radio", { name: /Master/ })).toBeNull();
+    cleanup();
+
+    fetchPorRuta({ "/existe": { existe: false }, "/username-disponible": { disponible: true } });
+    const deMaster = await abrirDialogo(true);
+    fireEvent.change(within(deMaster).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(deMaster).getByRole("button", { name: "Continuar" }));
+    await within(deMaster).findByRole("radiogroup");
+    expect(within(deMaster).getByRole("radio", { name: /Master/ })).toBeTruthy();
   });
 });
