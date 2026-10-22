@@ -11,6 +11,7 @@ import type { components } from "@/lib/api/schema";
 import { formatDateTime } from "@/lib/format";
 
 import { MensajePrueba } from "./_components/mensaje-prueba";
+import { MetaTabs } from "../_components/meta-tabs";
 
 export const metadata = { title: "Conexión de WhatsApp" };
 
@@ -63,6 +64,8 @@ export default async function ConexionMetaPage({
         description={ORIGENES[conexion.origin] ?? "Conexión de WhatsApp Business"}
       />
 
+      <MetaTabs connectionId={conexion.id} current={`/conexiones/meta/${conexion.id}`} />
+
       {alta === "1" && conexion.status === "connected" && (
         <div role="status" className="flex items-start gap-2 rounded-lg border border-status-success-border bg-status-success-bg p-4 text-sm">
           <CheckCircle2 className="mt-0.5 h-4 w-4 text-status-success-fg" aria-hidden />
@@ -86,22 +89,13 @@ export default async function ConexionMetaPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {conexion.status_reason && <p className="text-sm text-body">{conexion.status_reason}</p>}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/conexiones/meta/${conexion.id}/numeros`}>Números</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/conexiones/meta/${conexion.id}/plantillas`}>Plantillas</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/conexiones/meta">Salud de Meta</Link>
-            </Button>
-            {conexion.origin === "byok" && conexion.environment === "sandbox" && (
+          {conexion.origin === "byok" && conexion.environment === "sandbox" && (
+            <div className="flex flex-wrap items-center gap-2">
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/conexiones/meta/${conexion.id}/pasar-a-produccion`}>Pasar a producción</Link>
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

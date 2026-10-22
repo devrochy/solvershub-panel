@@ -68,16 +68,19 @@ export function DropdownMenuLinkItem({
   children,
   current = false,
   disabled = false,
+  onClick,
 }: {
   href: string;
   children: ReactNode;
   current?: boolean;
   disabled?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Menu.Item asChild disabled={disabled}>
       <Link
         href={href}
+        onClick={onClick}
         aria-current={current ? "page" : undefined}
         className={cn(
           "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",

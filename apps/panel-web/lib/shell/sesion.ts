@@ -52,15 +52,34 @@ export function itemDeRuta(pathname: string, grupos: NavGroupDef[] = NAV_GROUPS)
 }
 
 /**
+ * Rutas que ya no están en el menú (se llega desde la ficha de una conexión Meta) pero siguen
+ * necesitando su clave de RBAC. Sin esto, `puedeVerRuta` las dejaría pasar a cualquier sesión.
+ */
+const SECCION_FUERA_DEL_MENU: Record<string, string> = {
+  "/plantillas": "connections",
+};
+
+function seccionFueraDelMenu(pathname: string): string | null {
+  const match = Object.entries(SECCION_FUERA_DEL_MENU)
+    .filter(([ruta]) => pathname === ruta || pathname.startsWith(`${ruta}/`))
+    .sort(([a], [b]) => b.length - a.length)[0];
+  return match?.[1] ?? null;
+}
+
+/**
  * ¿La sesión puede ver la página de esta ruta? Misma regla que el menú (la clave `section`
  * es la del RBAC del core, ADR-0047): presencia del permiso y, si el ítem es `soloMaster`,
  * ser master. Una ruta fuera del menú siempre se puede ver: su página decide.
  */
 export function puedeVerRuta(pathname: string, sesion: SesionRenderizada, grupos: NavGroupDef[] = NAV_GROUPS): boolean {
   const item = itemDeRuta(pathname, grupos);
-  if (!item) return true;
-  if (!sesion.permisos?.[item.section]) return false;
-  return !item.soloMaster || sesion.esMaster;
+  if (item) {
+    if (!sesion.permisos?.[item.section]) return false;
+    return !item.soloMaster || sesion.esMaster;
+  }
+  const seccion = seccionFueraDelMenu(pathname);
+  if (seccion) return Boolean(sesion.permisos?.[seccion]);
+  return true;
 }
 
 /** Primera sección visible del menú: a dónde mandar a quien no puede ver la actual. */
