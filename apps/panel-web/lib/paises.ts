@@ -53,3 +53,12 @@ export const PAIS_POR_DEFECTO = "CO";
 export function indicativoNumerico(codigo: string): string {
   return PAISES.find((p) => p.codigo === codigo)?.indicativo.replace("+", "") ?? "";
 }
+
+/** Separa un teléfono guardado («+57 300…») en país e indicativo para el formulario. */
+export function parsearTelefono(valor: string | null | undefined): { indicativo: string; numero: string } {
+  const texto = (valor ?? "").trim();
+  if (!texto) return { indicativo: PAIS_POR_DEFECTO, numero: "" };
+  const pais = PAISES.find((p) => texto.startsWith(p.indicativo));
+  if (!pais) return { indicativo: PAIS_POR_DEFECTO, numero: texto.replace(/^\+\d+\s*/, "") };
+  return { indicativo: pais.codigo, numero: texto.slice(pais.indicativo.length).trim() };
+}

@@ -7,12 +7,14 @@ import { ArrowUpRight, ChevronRight, Lock, PanelLeftClose, PanelLeftOpen } from 
 
 import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-context";
 import { DEFAULT_COLLAPSED_GROUPS, NAV_GROUPS, type NavItem } from "@/components/shell/nav";
+import { UserCard } from "@/components/shell/user-card";
 import { Kbd } from "@/components/ui/kbd";
 import { Marca } from "@/components/ui/marca";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Me } from "@/lib/api/types";
 import { gruposVisibles, itemActivo } from "@/lib/shell/navegacion";
 import { esCampoEditable } from "@/lib/shell/paleta";
+import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 import { cookieModoSidebar, type ModoSidebar } from "@/lib/shell/preferencias";
 import { cn } from "@/lib/utils";
 
@@ -155,6 +157,7 @@ export function Sidebar({
   me,
   packs,
   modo: modoInicial = "auto",
+  initialTheme = DEFAULT_THEME,
   className,
   onNavigate,
 }: {
@@ -162,6 +165,8 @@ export function Sidebar({
   packs: Record<string, PackState>;
   /** Preferencia guardada; el menú móvil pasa `expandida`. */
   modo?: ModoSidebar;
+  /** Tema leído de la cookie en el servidor (para la tarjeta del usuario). */
+  initialTheme?: ThemeName;
   className?: string;
   /** El menú móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -286,9 +291,15 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Plegar o expandir (no en el cajón móvil). */}
-      {!esMovil && (
-        <div className={cn("mt-3 border-t border-border-soft px-3 pt-3", !expandidaAhora && "flex justify-center")}>
+      {/* Tarjeta del usuario fija al pie + plegar/expandir. */}
+      <div className={cn("mt-3 flex flex-col gap-2 border-t border-border-soft px-3 pt-3", !expandidaAhora && !esMovil && "items-center")}>
+        <UserCard
+          me={me}
+          initialTheme={initialTheme}
+          collapsed={!expandidaAhora && !esMovil}
+          onNavigate={onNavigate}
+        />
+        {!esMovil && (
           <button
             type="button"
             onClick={alternar}
@@ -307,8 +318,8 @@ export function Sidebar({
               </>
             )}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 }

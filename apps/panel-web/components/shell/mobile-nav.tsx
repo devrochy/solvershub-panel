@@ -5,13 +5,22 @@ import { Menu, X } from "lucide-react";
 
 import { Sidebar, type PackState } from "@/components/shell/sidebar";
 import type { Me } from "@/lib/api/types";
+import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 
 /**
  * Menú del panel en celular (< md): la barra lateral no cabe al lado del contenido,
  * así que se abre como panel deslizante desde un botón de la barra superior. Se cierra
  * al elegir una sección, con Escape o tocando fuera.
  */
-export function MobileNav({ me, packs }: { me: Me; packs: Record<string, PackState> }) {
+export function MobileNav({
+  me,
+  packs,
+  initialTheme = DEFAULT_THEME,
+}: {
+  me: Me;
+  packs: Record<string, PackState>;
+  initialTheme?: ThemeName;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -50,7 +59,13 @@ export function MobileNav({ me, packs }: { me: Me; packs: Record<string, PackSta
             onClick={() => setOpen(false)}
           />
           <div className="relative flex h-full w-72 max-w-[85vw]">
-            <Sidebar me={me} packs={packs} className="h-full w-full" onNavigate={() => setOpen(false)} />
+            <Sidebar
+              me={me}
+              packs={packs}
+              initialTheme={initialTheme}
+              className="h-full w-full"
+              onNavigate={() => setOpen(false)}
+            />
             <button
               type="button"
               aria-label="Cerrar menú"

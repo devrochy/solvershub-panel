@@ -238,6 +238,58 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /**
+         * Update Me
+         * @description Actualiza el perfil propio (nombre, teléfono y usuario único).
+         */
+        patch: operations["update_me_api_v1_admin_me_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Avatar
+         * @description Sirve la foto del usuario autenticado (mismo origen para el panel, sin CSP).
+         */
+        get: operations["get_avatar_api_v1_admin_me_avatar_get"];
+        put?: never;
+        /**
+         * Upload Avatar
+         * @description Sube (o reemplaza) la foto de perfil del usuario.
+         */
+        post: operations["upload_avatar_api_v1_admin_me_avatar_post"];
+        /**
+         * Delete Avatar
+         * @description Quita la foto de perfil del usuario.
+         */
+        delete: operations["delete_avatar_api_v1_admin_me_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Cambia la contraseña propia pidiendo la actual.
+         */
+        post: operations["change_password_api_v1_admin_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -5622,6 +5674,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/collaborators/{admin_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Collaborator Avatar
+         * @description Sirve la foto de un colaborador visible para la sesión (mismo origen para el panel).
+         */
+        get: operations["get_collaborator_avatar_api_v1_admin_collaborators__admin_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -7885,6 +7957,12 @@ export interface components {
             email: string;
             /** Username */
             username: string | null;
+            /** Nombre */
+            nombre?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
             /** Role */
             role: string;
             tenant: components["schemas"]["TenantOption"] | null;
@@ -13268,6 +13346,27 @@ export interface components {
             /** Disponible */
             disponible: boolean;
         };
+        /** PerfilUpdate */
+        PerfilUpdate: {
+            /** Nombre */
+            nombre?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Username */
+            username?: string | null;
+        };
+        /** PasswordChange */
+        PasswordChange: {
+            /** Actual */
+            actual: string;
+            /** Nueva */
+            nueva: string;
+        };
+        /** Body_upload_avatar_api_v1_admin_me_avatar_post */
+        Body_upload_avatar_api_v1_admin_me_avatar_post: {
+            /** File */
+            file: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -13793,6 +13892,169 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_me_api_v1_admin_me_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerfilUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_avatar_api_v1_admin_me_avatar_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_avatar_api_v1_admin_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_avatar_api_v1_admin_me_avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_avatar_api_v1_admin_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_password_api_v1_admin_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -24853,6 +25115,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConsentimientoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_collaborator_avatar_api_v1_admin_collaborators__admin_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
