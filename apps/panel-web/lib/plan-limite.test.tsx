@@ -232,22 +232,29 @@ describe("409 de tope del plan", () => {
   });
 
   it("Colaboradores explica el tope al invitar, no cierra el diálogo y ofrece mejorar el plan", async () => {
-    fetchMock.mockResolvedValueOnce(
-      limite("plan_limit_colaboradores", "Tu plan permite 2 colaborador(es) y ya tienes 2, contando las invitaciones pendientes."),
-    );
+    fetchMock.mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/existe")) return new Response(JSON.stringify({ existe: false }), { status: 200 });
+      if (url.includes("/username-disponible")) return new Response(JSON.stringify({ disponible: true }), { status: 200 });
+      return limite("plan_limit_colaboradores", "Tu plan permite 2 colaborador(es) y ya tienes 2, contando las invitaciones pendientes.");
+    });
     render(
       <FeedbackProviders>
         <NewCollaboratorDialog />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Nuevo colaborador" }));
+    fireEvent.click(screen.getByRole("button", { name: /Nuevo colaborador/ }));
     const dialogo = await screen.findByRole("dialog");
     fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+    fireEvent.change(await within(dialogo).findByLabelText(/Nombre completo/), { target: { value: "Ana Pérez" } });
+    fireEvent.change(within(dialogo).getByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
+    await within(dialogo).findByText("Disponible");
     fireEvent.change(within(dialogo).getByLabelText(/^Contraseña/), { target: { value: "clave-larga-1" } });
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear cuenta" }));
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear colaborador" }));
     const aviso = await within(dialogo).findByText(/permite 2 colaborador/);
     const caja = aviso.closest("[role=alert]") as HTMLElement;
-    expect(within(caja).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
+    expect(within(caja).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(RUTA_MEJORAR_PLAN);
     expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 });

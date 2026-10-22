@@ -32,7 +32,9 @@ export function PopoverContent({
         align={align}
         sideOffset={6}
         className={cn(
-          "z-50 w-72 rounded-md border border-border bg-surface p-4 text-sm text-headline shadow-elev-2 focus:outline-none",
+          // `pointer-events-auto`: dentro de un Dialog modal Radix deja el body con
+          // `pointer-events: none`; sin esto, el panel flotante se ve pero no recibe clics.
+          "pointer-events-auto z-[60] w-72 rounded-md border border-border bg-surface p-4 text-sm text-headline shadow-elev-2 focus:outline-none",
           className,
         )}
       >

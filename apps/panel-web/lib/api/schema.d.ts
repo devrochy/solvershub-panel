@@ -1873,7 +1873,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Collaborators */
+        /**
+         * List Collaborators
+         * @description Cuentas del **negocio activo**. El master puede pedir `?todos=1` para ver todas las
+         *     cuentas de la plataforma (gestión de cuentas); un owner siempre ve solo su negocio.
+         */
         get: operations["list_collaborators_api_v1_admin_collaborators_get"];
         put?: never;
         /**
@@ -1883,6 +1887,46 @@ export interface paths {
          *     (D-35, ADR-0142).
          */
         post: operations["create_collaborator_endpoint_api_v1_admin_collaborators_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/collaborators/existe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Email Existe
+         * @description ¿Ya existe una cuenta con este correo? Lo usa el alta en dos pasos (D-SPEC-34).
+         */
+        get: operations["email_existe_api_v1_admin_collaborators_existe_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/collaborators/username-disponible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Username Disponible
+         * @description ¿El `username` está libre? Validación en tiempo real del alta (D-SPEC-34).
+         */
+        get: operations["username_disponible_api_v1_admin_collaborators_username_disponible_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6453,6 +6497,16 @@ export interface components {
              */
             username: string;
             /**
+             * Nombre
+             * @default
+             */
+            nombre: string;
+            /**
+             * Telefono
+             * @default
+             */
+            telefono: string;
+            /**
              * Tenant
              * @default
              */
@@ -6474,6 +6528,12 @@ export interface components {
             email: string;
             /** Username */
             username: string | null;
+            /** Nombre */
+            nombre: string | null;
+            /** Telefono */
+            telefono: string | null;
+            /** Avatar Url */
+            avatar_url: string | null;
             /** Role */
             role: string;
             /** Active */
@@ -13198,6 +13258,16 @@ export interface components {
             /** Versiones */
             versiones: components["schemas"]["QaVersionEvo"][];
         };
+        /** ExisteResponse */
+        ExisteResponse: {
+            /** Existe */
+            existe: boolean;
+        };
+        /** UsernameDisponibleResponse */
+        UsernameDisponibleResponse: {
+            /** Disponible */
+            disponible: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -16797,7 +16867,9 @@ export interface operations {
     };
     list_collaborators_api_v1_admin_collaborators_get: {
         parameters: {
-            query?: never;
+            query?: {
+                todos?: boolean;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };
@@ -16856,6 +16928,72 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    email_existe_api_v1_admin_collaborators_existe_get: {
+        parameters: {
+            query: {
+                email: string;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExisteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    username_disponible_api_v1_admin_collaborators_username_disponible_get: {
+        parameters: {
+            query: {
+                username: string;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsernameDisponibleResponse"];
+                };
             };
             /** @description Validation Error */
             422: {

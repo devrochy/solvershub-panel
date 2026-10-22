@@ -6,15 +6,16 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 aria-busy:cursor-progress aria-busy:opacity-100",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform,filter] duration-200 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 aria-busy:cursor-progress aria-busy:opacity-100",
   {
     variants: {
       variant: {
-        default: "bg-action text-white hover:bg-primary-hover",
-        accent: "bg-cta text-white hover:opacity-95",
-        outline: "border border-control-border text-headline hover:bg-hover",
-        ghost: "text-body hover:bg-hover hover:text-headline",
-        danger: "bg-danger-strong text-white hover:bg-danger-strong/90",
+        // Hover pastel: se aclara y se desatura un poco, sin perder el contraste del texto.
+        default: "bg-action text-white hover:brightness-110 hover:saturate-[0.82] hover:shadow-elev-1",
+        accent: "bg-cta text-white hover:brightness-110 hover:saturate-[0.85] hover:shadow-elev-1",
+        outline: "border border-control-border text-headline hover:border-focus/50 hover:bg-focus/10 hover:shadow-elev-1",
+        ghost: "text-body hover:bg-focus/10 hover:text-headline",
+        danger: "bg-danger-strong text-white hover:brightness-110 hover:saturate-[0.82] hover:shadow-elev-1",
       },
       size: {
         default: "h-10 px-4 py-2",
