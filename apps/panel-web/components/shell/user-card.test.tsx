@@ -55,14 +55,14 @@ describe("tarjeta del usuario", () => {
 
     await abrirMenu();
     expect(screen.getByRole("menuitem", { name: /Editar perfil/ })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: /Cambiar a tema claro/ })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Tema oscuro" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: /Cerrar sesión/ })).toBeTruthy();
   });
 
-  it("cambia el tema desde el submenú", async () => {
+  it("cambia el tema con el interruptor del submenú", async () => {
     render(<UserCard me={ME} initialTheme="sh-dark" />);
     await abrirMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: /Cambiar a tema claro/ }));
+    fireEvent.click(screen.getByRole("switch", { name: "Tema oscuro" }));
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe("sh-light"));
   });
 

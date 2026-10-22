@@ -8,7 +8,6 @@ import { ArrowUpRight, ChevronRight, Lock, PanelLeftClose, PanelLeftOpen } from 
 import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-context";
 import { DEFAULT_COLLAPSED_GROUPS, NAV_GROUPS, type NavItem } from "@/components/shell/nav";
 import { UserCard } from "@/components/shell/user-card";
-import { Kbd } from "@/components/ui/kbd";
 import { Marca } from "@/components/ui/marca";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Me } from "@/lib/api/types";
@@ -232,9 +231,23 @@ export function Sidebar({
     >
       {/* Expandida (o cajón móvil). */}
       <div className={cn("min-h-0 flex-1 flex-col px-3", esMovil ? "flex" : verExpandida)}>
-        <Link href="/dashboard" onClick={onNavigate} className="mb-6 flex items-center gap-3 px-3">
-          <Marca pieza="wordmark" className="h-6 w-auto" />
-        </Link>
+        <div className="mb-6 flex items-center gap-2 px-3">
+          <Link href="/dashboard" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3">
+            <Marca pieza="wordmark" className="h-6 w-auto" />
+          </Link>
+          {!esMovil && (
+            <button
+              type="button"
+              onClick={alternar}
+              aria-expanded={expandidaAhora}
+              aria-label="Plegar menú"
+              title="Plegar menú ([)"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-soft transition-colors hover:bg-hover hover:text-headline"
+            >
+              <PanelLeftClose className="h-4 w-4" aria-hidden />
+            </button>
+          )}
+        </div>
 
         <nav aria-label="Secciones del panel" className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
           {visibleByGroup.map(({ group, visible }) => {
@@ -273,9 +286,19 @@ export function Sidebar({
       {/* Plegada: barra de íconos. */}
       {!esMovil && (
         <div className={cn("min-h-0 flex-1 flex-col items-center", verPlegada)}>
-          <Link href="/dashboard" aria-label="SolversHub, ir al Resumen" className="mb-5 flex h-10 w-10 items-center justify-center">
+          <Link href="/dashboard" aria-label="SolversHub, ir al Resumen" className="mb-2 flex h-10 w-10 items-center justify-center">
             <Marca pieza="isotipo" className="h-8 w-8" />
           </Link>
+          <button
+            type="button"
+            onClick={alternar}
+            aria-expanded={expandidaAhora}
+            aria-label="Expandir menú"
+            title="Expandir menú ([)"
+            className="mb-3 flex h-9 w-9 items-center justify-center rounded-md text-text-soft transition-colors hover:bg-hover hover:text-headline"
+          >
+            <PanelLeftOpen className="h-4 w-4" aria-hidden />
+          </button>
           <nav aria-label="Secciones del panel" className="flex flex-1 flex-col items-center gap-1 overflow-x-hidden overflow-y-auto">
             {visibleByGroup.map(({ group, visible }, i) => (
               <div key={group.id} className="flex flex-col items-center gap-1">
@@ -291,34 +314,14 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Tarjeta del usuario fija al pie + plegar/expandir. */}
-      <div className={cn("mt-3 flex flex-col gap-2 border-t border-border-soft px-3 pt-3", !expandidaAhora && !esMovil && "items-center")}>
+      {/* Tarjeta del usuario fija al pie. */}
+      <div className={cn("mt-3 border-t border-border-soft px-3 pt-3", !expandidaAhora && !esMovil && "flex justify-center")}>
         <UserCard
           me={me}
           initialTheme={initialTheme}
           collapsed={!expandidaAhora && !esMovil}
           onNavigate={onNavigate}
         />
-        {!esMovil && (
-          <button
-            type="button"
-            onClick={alternar}
-            aria-expanded={expandidaAhora}
-            aria-label={expandidaAhora ? "Plegar menú" : "Expandir menú"}
-            className={cn(
-              "flex items-center gap-2 rounded-md text-sm text-body transition-colors hover:bg-hover hover:text-headline",
-              expandidaAhora ? "w-full px-3 py-2" : "h-10 w-10 justify-center",
-            )}
-          >
-            {expandidaAhora ? <PanelLeftClose className="h-4 w-4" aria-hidden /> : <PanelLeftOpen className="h-4 w-4" aria-hidden />}
-            {expandidaAhora && (
-              <>
-                <span className="flex-1 text-left">Plegar menú</span>
-                <Kbd keys={["["]} />
-              </>
-            )}
-          </button>
-        )}
       </div>
     </aside>
   );

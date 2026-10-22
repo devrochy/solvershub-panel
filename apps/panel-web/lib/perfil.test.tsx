@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { PerfilForm } from "@/app/(app)/perfil/_components/perfil-form";
 import type { Me } from "@/lib/api/types";
@@ -55,16 +55,19 @@ describe("perfil propio", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
-  it("valida y cambia la contraseña", async () => {
+  it("valida y cambia la contraseña en la modal", async () => {
     render(<PerfilForm me={ME} />);
-    fireEvent.change(screen.getByLabelText(/Contraseña actual/), { target: { value: "clave-vieja" } });
-    fireEvent.change(screen.getByLabelText(/Contraseña nueva/), { target: { value: "clave-nueva-1" } });
-    fireEvent.change(screen.getByLabelText(/Repite la contraseña nueva/), { target: { value: "otra-distinta" } });
     fireEvent.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
-    expect(await screen.findByText(/no coinciden/)).toBeTruthy();
+    const dialogo = await screen.findByRole("dialog");
 
-    fireEvent.change(screen.getByLabelText(/Repite la contraseña nueva/), { target: { value: "clave-nueva-1" } });
-    fireEvent.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
+    fireEvent.change(within(dialogo).getByLabelText(/Contraseña actual/), { target: { value: "clave-vieja" } });
+    fireEvent.change(within(dialogo).getByLabelText(/Contraseña nueva/), { target: { value: "clave-nueva-1" } });
+    fireEvent.change(within(dialogo).getByLabelText(/Repite la contraseña nueva/), { target: { value: "otra-distinta" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Guardar contraseña" }));
+    expect(await within(dialogo).findByText(/no coinciden/)).toBeTruthy();
+
+    fireEvent.change(within(dialogo).getByLabelText(/Repite la contraseña nueva/), { target: { value: "clave-nueva-1" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Guardar contraseña" }));
 
     await waitFor(() => {
       const llamada = fetchMock.mock.calls.find(

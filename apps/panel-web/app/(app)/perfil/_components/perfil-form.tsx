@@ -2,25 +2,38 @@
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Trash2 } from "lucide-react";
+import { Camera, KeyRound, Trash2 } from "lucide-react";
 
 import { CampoTelefono } from "@/app/(app)/colaboradores/_components/campo-telefono";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import type { Me } from "@/lib/api/types";
+import {
+  marcarAvatarQuitado,
+  marcarAvatarSubido,
+  urlAvatarPropio,
+  useAvatarPerfil,
+} from "@/lib/avatar-version";
 import { indicativoNumerico, parsearTelefono } from "@/lib/paises";
+import { rolLabel } from "@/lib/labels";
 import { toast } from "@/lib/toast-store";
 
 /**
- * Perfil propio: foto, nombre, teléfono, usuario y contraseña. Guarda contra el BFF y refresca
- * la vista del servidor para que la tarjeta del menú y el avatar se actualicen.
+ * Perfil propio: cabecera con foto (agregar/quitar), nombre, correo, rol y negocio; datos
+ * editables; y la contraseña en una modal. La foto se refresca al instante en la tarjeta del
+ * menú y aquí (store compartido + `router.refresh`).
  */
 export function PerfilForm({ me }: { me: Me }) {
   const router = useRouter();
   const inicial = parsearTelefono(me.telefono);
+  const { version, preview } = useAvatarPerfil();
+  const avatarSrc = urlAvatarPropio(me.avatar_url, { version, preview });
 
   const [nombre, setNombre] = useState(me.nombre ?? "");
   const [indicativo, setIndicativo] = useState(inicial.indicativo);
@@ -32,11 +45,14 @@ export function PerfilForm({ me }: { me: Me }) {
   const [subiendo, setSubiendo] = useState(false);
   const fotoRef = useRef<HTMLInputElement>(null);
 
+  const [passOpen, setPassOpen] = useState(false);
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [cambiando, setCambiando] = useState(false);
   const [passError, setPassError] = useState<string | null>(null);
+
+  const nombreMostrado = me.nombre?.trim() || me.username || me.email;
 
   async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,6 +88,8 @@ export function PerfilForm({ me }: { me: Me }) {
       toast.error(json.error ?? "No se pudo subir la foto.");
       return;
     }
+    // Se ve al instante (preview) mientras el servidor refresca el resto del panel.
+    marcarAvatarSubido(URL.createObjectURL(archivo));
     toast.success("Foto actualizada.");
     router.refresh();
   }
@@ -84,6 +102,7 @@ export function PerfilForm({ me }: { me: Me }) {
       toast.error("No se pudo quitar la foto.");
       return;
     }
+    marcarAvatarQuitado();
     toast.success("Foto quitada.");
     router.refresh();
   }
@@ -115,16 +134,22 @@ export function PerfilForm({ me }: { me: Me }) {
     setActual("");
     setNueva("");
     setConfirmar("");
+    setPassOpen(false);
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-      <section className="flex flex-col gap-5 rounded-lg border border-border-soft bg-surface p-5">
-        <h2 className="font-display text-sh-block text-headline">Datos personales</h2>
-
-        <div className="flex items-center gap-4">
-          <Avatar name={me.nombre || me.username || me.email} src={me.avatar_url ? "/api/perfil/avatar" : null} size="lg" />
-          <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-6">
+      <section className="flex flex-col gap-5 rounded-xl border border-border-soft bg-surface p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2">
+            <IconAction
+              label="Cambiar foto"
+              tone="editar"
+              onClick={() => fotoRef.current?.click()}
+              disabled={subiendo}
+            >
+              <Camera className="h-4 w-4" aria-hidden />
+            </IconAction>
             <input
               ref={fotoRef}
               type="file"
@@ -132,22 +157,87 @@ export function PerfilForm({ me }: { me: Me }) {
               className="sr-only"
               onChange={(e) => void subirFoto(e)}
             />
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => fotoRef.current?.click()} loading={subiendo}>
-                <Camera aria-hidden className="h-4 w-4" />
-                Cambiar foto
-              </Button>
-              {me.avatar_url && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => void quitarFoto()} disabled={subiendo}>
-                  <Trash2 aria-hidden className="h-4 w-4" />
-                  Quitar
-                </Button>
-              )}
+            <Avatar name={nombreMostrado} src={avatarSrc} size="xl" />
+            {me.avatar_url || preview ? (
+              <IconAction label="Quitar foto" tone="eliminar" onClick={() => void quitarFoto()} disabled={subiendo}>
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </IconAction>
+            ) : (
+              <span aria-hidden className="h-8 w-8" />
+            )}
+          </div>
+          <div className="flex min-w-0 flex-col">
+            <h2 className="truncate font-display text-sh-h2 text-headline">{nombreMostrado}</h2>
+            <span className="truncate text-sm text-body">{me.email}</span>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <Badge variant={me.role === "master" ? "accent" : "neutral"}>{rolLabel(me.role)}</Badge>
+              {me.tenant && <Badge variant="neutral">{me.tenant.name}</Badge>}
             </div>
-            <span className="text-xs text-text-soft">JPG, PNG, WebP o GIF de hasta 2 MB.</span>
           </div>
         </div>
 
+        <Dialog open={passOpen} onOpenChange={setPassOpen}>
+          <DialogTrigger asChild>
+            <Button type="button" variant="outline" className="shrink-0">
+              <KeyRound aria-hidden className="h-4 w-4" />
+              Cambiar contraseña
+            </Button>
+          </DialogTrigger>
+          <DialogContent
+            title="Cambiar contraseña"
+            description="Escribe tu contraseña actual y la nueva."
+            className="max-w-md"
+          >
+            <form onSubmit={cambiarPassword} noValidate className="flex flex-col gap-4">
+              <Field label="Contraseña actual" htmlFor="perfil-actual" required>
+                <InputPassword
+                  id="perfil-actual"
+                  value={actual}
+                  onChange={(e) => setActual(e.target.value)}
+                  placeholder="Tu contraseña actual"
+                  autoComplete="current-password"
+                />
+              </Field>
+              <Field label="Contraseña nueva" htmlFor="perfil-nueva" required>
+                <InputPassword
+                  id="perfil-nueva"
+                  value={nueva}
+                  onChange={(e) => setNueva(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
+                />
+              </Field>
+              <Field
+                label="Repite la contraseña nueva"
+                htmlFor="perfil-confirmar"
+                required
+                error={passError ?? undefined}
+              >
+                <InputPassword
+                  id="perfil-confirmar"
+                  value={confirmar}
+                  onChange={(e) => setConfirmar(e.target.value)}
+                  placeholder="Repite la contraseña"
+                  autoComplete="new-password"
+                />
+              </Field>
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost">
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button type="submit" variant="accent" loading={cambiando} disabled={!actual || !nueva}>
+                  Guardar contraseña
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </section>
+
+      <section className="rounded-xl border border-border-soft bg-surface p-6">
+        <h3 className="mb-4 font-display text-sh-block text-headline">Datos personales</h3>
         <form onSubmit={guardar} className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Nombre completo" htmlFor="perfil-nombre">
@@ -189,49 +279,6 @@ export function PerfilForm({ me }: { me: Me }) {
           <div className="flex justify-end">
             <Button type="submit" variant="accent" loading={guardando}>
               Guardar cambios
-            </Button>
-          </div>
-        </form>
-      </section>
-
-      <section className="flex flex-col gap-4 self-start rounded-lg border border-border-soft bg-surface p-5">
-        <h2 className="font-display text-sh-block text-headline">Contraseña</h2>
-        <form onSubmit={cambiarPassword} noValidate className="flex flex-col gap-4">
-          <Field label="Contraseña actual" htmlFor="perfil-actual" required>
-            <InputPassword
-              id="perfil-actual"
-              value={actual}
-              onChange={(e) => setActual(e.target.value)}
-              placeholder="Tu contraseña actual"
-              autoComplete="current-password"
-            />
-          </Field>
-          <Field label="Contraseña nueva" htmlFor="perfil-nueva" required>
-            <InputPassword
-              id="perfil-nueva"
-              value={nueva}
-              onChange={(e) => setNueva(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
-              autoComplete="new-password"
-            />
-          </Field>
-          <Field
-            label="Repite la contraseña nueva"
-            htmlFor="perfil-confirmar"
-            required
-            error={passError ?? undefined}
-          >
-            <InputPassword
-              id="perfil-confirmar"
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              placeholder="Repite la contraseña"
-              autoComplete="new-password"
-            />
-          </Field>
-          <div className="flex justify-end">
-            <Button type="submit" variant="outline" loading={cambiando} disabled={!actual || !nueva}>
-              Cambiar contraseña
             </Button>
           </div>
         </form>
