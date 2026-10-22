@@ -139,71 +139,70 @@ export function PerfilForm({ me }: { me: Me }) {
 
   return (
     <section className="rounded-xl border border-border-soft bg-surface p-5 sm:p-6">
-      <div className="mb-4 flex justify-start">
-        <Dialog open={passOpen} onOpenChange={setPassOpen}>
-          <DialogTrigger asChild>
-            <Button type="button" variant="outline" size="sm">
-              <KeyRound aria-hidden className="h-4 w-4" />
-              Cambiar contraseña
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            title="Cambiar contraseña"
-            description="Escribe tu contraseña actual y la nueva."
-            className="max-w-md"
-          >
-            <form onSubmit={cambiarPassword} noValidate className="flex flex-col gap-4">
-              <Field label="Contraseña actual" htmlFor="perfil-actual" required>
-                <InputPassword
-                  id="perfil-actual"
-                  value={actual}
-                  onChange={(e) => setActual(e.target.value)}
-                  placeholder="Tu contraseña actual"
-                  autoComplete="current-password"
-                />
-              </Field>
-              <Field label="Contraseña nueva" htmlFor="perfil-nueva" required>
-                <InputPassword
-                  id="perfil-nueva"
-                  value={nueva}
-                  onChange={(e) => setNueva(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  autoComplete="new-password"
-                />
-              </Field>
-              <Field
-                label="Repite la contraseña nueva"
-                htmlFor="perfil-confirmar"
-                required
-                error={passError ?? undefined}
-              >
-                <InputPassword
-                  id="perfil-confirmar"
-                  value={confirmar}
-                  onChange={(e) => setConfirmar(e.target.value)}
-                  placeholder="Repite la contraseña"
-                  autoComplete="new-password"
-                />
-              </Field>
-              <div className="flex justify-end gap-2">
-                <DialogClose asChild>
-                  <Button type="button" variant="ghost">
-                    Cancelar
-                  </Button>
-                </DialogClose>
-                <Button type="submit" variant="accent" loading={cambiando} disabled={!actual || !nueva}>
-                  Guardar contraseña
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-[13rem_1fr]">
         <div className="flex flex-col items-center gap-3">
+          <div className="flex w-full justify-start">
+          <Dialog open={passOpen} onOpenChange={setPassOpen}>
+            <DialogTrigger asChild>
+              <Button type="button" variant="outline" size="sm">
+                <KeyRound aria-hidden className="h-4 w-4" />
+                Cambiar contraseña
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              title="Cambiar contraseña"
+              description="Escribe tu contraseña actual y la nueva."
+              className="max-w-md"
+            >
+              <form onSubmit={cambiarPassword} noValidate className="flex flex-col gap-4">
+                <Field label="Contraseña actual" htmlFor="perfil-actual" required>
+                  <InputPassword
+                    id="perfil-actual"
+                    value={actual}
+                    onChange={(e) => setActual(e.target.value)}
+                    placeholder="Tu contraseña actual"
+                    autoComplete="current-password"
+                  />
+                </Field>
+                <Field label="Contraseña nueva" htmlFor="perfil-nueva" required>
+                  <InputPassword
+                    id="perfil-nueva"
+                    value={nueva}
+                    onChange={(e) => setNueva(e.target.value)}
+                    placeholder="Mínimo 8 caracteres"
+                    autoComplete="new-password"
+                  />
+                </Field>
+                <Field
+                  label="Repite la contraseña nueva"
+                  htmlFor="perfil-confirmar"
+                  required
+                  error={passError ?? undefined}
+                >
+                  <InputPassword
+                    id="perfil-confirmar"
+                    value={confirmar}
+                    onChange={(e) => setConfirmar(e.target.value)}
+                    placeholder="Repite la contraseña"
+                    autoComplete="new-password"
+                  />
+                </Field>
+                <div className="flex justify-end gap-2">
+                  <DialogClose asChild>
+                    <Button type="button" variant="ghost">
+                      Cancelar
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" variant="accent" loading={cambiando} disabled={!actual || !nueva}>
+                    Guardar contraseña
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          </div>
           <Avatar name={nombreMostrado} src={avatarSrc} size="xl" />
-          <div className="flex w-20 items-center justify-start gap-1">
+          <div className="flex w-24 items-center justify-start gap-1">
             <IconAction
               label="Cambiar foto"
               tone="editar"
