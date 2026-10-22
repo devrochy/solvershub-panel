@@ -16,6 +16,7 @@ import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
 import type { Me, PendingInvitations, PluginSummary, SettingsResponse } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
 import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
+import { THEME_COOKIE, normalizeTheme } from "@/lib/theme";
 import { claveDeNegocio } from "@/lib/shell/sesion";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -54,6 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   );
 
   const modoSidebar = leerModoSidebar(store.get(SIDEBAR_COOKIE)?.value);
+  const theme = normalizeTheme(store.get(THEME_COOKIE)?.value);
   const atajosActivos = leerAtajosActivos(store.get(ATAJOS_COOKIE)?.value);
   const puedeEditar = puedeEditarAsistente(me.permissions);
   const esMaster = me.role === "master";
@@ -80,12 +82,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </a>
           <div className="flex min-h-screen">
             {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-            <Sidebar me={me} packs={packs} modo={modoSidebar} className="sticky top-0 hidden h-screen md:flex print:hidden" />
+            <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} className="sticky top-0 hidden h-screen md:flex print:hidden" />
             {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
             <div className="flex min-w-0 flex-1 flex-col">
               <Topbar
                 me={me}
-                menu={<MobileNav me={me} packs={packs} />}
+                menu={<MobileNav me={me} packs={packs} initialTheme={theme} />}
                 asistentePausado={asistentePausado}
                 puedeReactivar={puedeEditar}
               />
