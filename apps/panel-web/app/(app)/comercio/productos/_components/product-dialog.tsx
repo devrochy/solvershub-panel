@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -22,6 +22,8 @@ type Product = {
   ally_id?: string | null;
   price: number;
   image_url?: string | null;
+  image_url_externa?: string | null;
+  image_key?: string | null;
   variants: { sku: string; stock: number; billing_period?: string | null; trial_days?: number | null }[];
 };
 
@@ -40,7 +42,10 @@ export function ProductDialog({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
   const variant = product?.variants[0];
-  const [foto, setFoto] = useState(product?.image_url ?? "");
+  const [foto, setFoto] = useState(product?.image_url_externa ?? "");
+  const [imageKey, setImageKey] = useState(product?.image_key ?? "");
+  const [preview, setPreview] = useState(product?.image_url ?? "");
+  const [subiendo, setSubiendo] = useState(false);
   const fotoInvalida = foto.trim() !== "" && !esFotoValida(foto);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -63,8 +68,9 @@ export function ProductDialog({
         sku: String(data.get("sku") ?? ""),
         price: Number(data.get("price") ?? 0),
         stock: Number(data.get("stock") ?? 0),
-        // "" quita la foto (HU-CRM-01).
+        // "" quita el link externo (HU-CRM-01); `image_key` (HU-CRM-05) gana si está.
         image_url: foto.trim(),
+        image_key: imageKey,
         ...cuerpoDelPlan(data),
       }),
     });
@@ -78,11 +84,43 @@ export function ProductDialog({
     router.refresh();
   }
 
+  async function subirFoto(event: ChangeEvent<HTMLInputElement>) {
+    const archivo = event.target.files?.[0];
+    if (!archivo) return;
+    setSubiendo(true);
+    setStatus({});
+    const form = new FormData();
+    form.append("archivo", archivo);
+    const res = await fetch("/api/pack/commerce/products/image", { method: "POST", body: form });
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      image_key?: string;
+      image_url?: string;
+    };
+    setSubiendo(false);
+    if (!res.ok || !json.image_key) {
+      setStatus({ error: json.error ?? "No se pudo subir la foto." });
+      return;
+    }
+    setImageKey(json.image_key);
+    setPreview(json.image_url ?? "");
+  }
+
+  function quitarSubida() {
+    setImageKey("");
+    setPreview(foto);
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(abierto) => {
-        if (abierto) setFoto(product?.image_url ?? "");
+        if (abierto) {
+          const externa = product?.image_url_externa ?? "";
+          setFoto(externa);
+          setImageKey(product?.image_key ?? "");
+          setPreview(product?.image_url ?? externa);
+        }
         setOpen(abierto);
       }}
     >
@@ -129,29 +167,56 @@ export function ProductDialog({
           <Field label="Descripción" htmlFor="p-desc">
             <Input id="p-desc" name="description" defaultValue={product?.description ?? ""} />
           </Field>
-          <div className="flex items-start gap-4">
-            <div className="min-w-0 flex-1">
-              <Field
-                label="Foto (URL)"
-                htmlFor="p-foto"
-                help="Link https a la imagen. El agente la envía cuando el cliente pide este producto."
-                error={fotoInvalida ? "Tiene que ser un link https://" : undefined}
-              >
-                <Input
-                  id="p-foto"
-                  name="image_url"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://"
-                  maxLength={FOTO_URL_MAX}
-                  value={foto}
-                  onChange={(e) => setFoto(e.target.value)}
-                />
-              </Field>
+          <div className="flex flex-col gap-3">
+            <Field
+              label="Subir foto"
+              htmlFor="p-foto-file"
+              help="JPG, PNG o WebP hasta 5 MB. El agente la envía cuando el cliente pide este producto."
+            >
+              <input
+                id="p-foto-file"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => void subirFoto(e)}
+                disabled={subiendo}
+                className="block w-full text-sm text-body file:mr-3 file:rounded-md file:border-0 file:bg-action file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-primary-hover disabled:opacity-50"
+              />
+            </Field>
+            <div className="flex items-start gap-4">
+              <div className="min-w-0 flex-1">
+                <Field
+                  label="O un link (URL)"
+                  htmlFor="p-foto"
+                  help="Alternativa a la subida; se usa solo si no hay foto subida."
+                  error={fotoInvalida ? "Tiene que ser un link https://" : undefined}
+                >
+                  <Input
+                    id="p-foto"
+                    name="image_url"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://"
+                    maxLength={FOTO_URL_MAX}
+                    value={foto}
+                    onChange={(e) => {
+                      setFoto(e.target.value);
+                      if (!imageKey) setPreview(e.target.value);
+                    }}
+                  />
+                </Field>
+              </div>
+              <div className="pt-6" aria-live="polite">
+                <FotoProducto url={preview} nombre={product?.name ?? "el producto"} size="lg" />
+              </div>
             </div>
-            <div className="pt-6" aria-live="polite">
-              <FotoProducto url={foto} nombre={product?.name ?? "el producto"} size="lg" />
-            </div>
+            {imageKey && (
+              <div>
+                <Button type="button" variant="ghost" size="sm" onClick={quitarSubida}>
+                  Quitar foto subida
+                </Button>
+              </div>
+            )}
+            {subiendo && <p className="text-xs text-text-soft">Subiendo foto…</p>}
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="SKU" htmlFor="p-sku" help="Vacío = se genera.">
