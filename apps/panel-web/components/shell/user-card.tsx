@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronUp, LogOut, Moon, Sun, UserRound } from "lucide-react";
+import { ChevronUp, LogOut, UserRound } from "lucide-react";
 
 import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import {
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
+import { ThemeSwitch } from "@/components/shell/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";
@@ -101,20 +101,12 @@ export function UserCard({
           <UserRound className="h-4 w-4 text-text-soft" aria-hidden />
           Editar perfil
         </DropdownMenuLinkItem>
-        <div className="flex items-center justify-between gap-2 px-2 py-1.5" role="group" aria-label="Tema">
-          <span className="flex items-center gap-1.5 text-sm text-body">
-            <Sun className="h-4 w-4 text-text-soft" aria-hidden />
-            Claro
-          </span>
-          <Switch
-            checked={theme === "sh-dark"}
-            onCheckedChange={(v) => aplicarTema(v ? "sh-dark" : "sh-light")}
-            aria-label="Tema oscuro"
+        <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+          <span className="text-sm text-body">Tema</span>
+          <ThemeSwitch
+            oscuro={theme === "sh-dark"}
+            onChange={(oscuro) => aplicarTema(oscuro ? "sh-dark" : "sh-light")}
           />
-          <span className="flex items-center gap-1.5 text-sm text-body">
-            <Moon className="h-4 w-4 text-text-soft" aria-hidden />
-            Oscuro
-          </span>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void salir()} tone="danger" icon={<LogOut aria-hidden />}>
