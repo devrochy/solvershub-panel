@@ -20,6 +20,8 @@ const ESTADO: EstadoInstagram = {
   graph_api_version: "v21.0",
   missing_settings: [],
   plan_includes: true,
+  login_available: false,
+  login_missing: [],
 };
 
 const json = (cuerpo: unknown, status = 200) => new Response(JSON.stringify(cuerpo), { status });

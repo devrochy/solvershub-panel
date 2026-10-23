@@ -6177,6 +6177,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/instagram/login/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Instagram Login Start
+         * @description Arranca el alta con Instagram Login: el `state` es un intento de un solo uso atado al negocio y al admin.
+         */
+        post: operations["instagram_login_start_api_v1_admin_meta_instagram_login_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/instagram/login/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Instagram Login Complete
+         * @description Canjea el `code` de Instagram y conecta la cuenta que la persona autorizó. Los tokens no salen del servidor.
+         */
+        post: operations["instagram_login_complete_api_v1_admin_meta_instagram_login_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/instagram/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Instagram Accounts
+         * @description Las cuentas de Instagram del negocio con su estado (`connected` o `degraded`) y, en Instagram Login, cuándo vence
+         *     su token. Sin tokens.
+         */
+        get: operations["instagram_accounts_api_v1_admin_meta_instagram_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/instagram/accounts/{ig_user_id}/diagnostic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Instagram Diagnostic
+         * @description ¿Llegó al webhook un mensaje de un cliente a esta cuenta desde `since`? Se mira el registro de entregas del
+         *     negocio (nunca el de otro). Si no llegó, dice la causa más probable.
+         */
+        get: operations["instagram_diagnostic_api_v1_admin_meta_instagram_accounts__ig_user_id__diagnostic_get"];
+        put?: never;
+        /**
+         * Instagram Diagnostic Start
+         * @description Prueba de humo: la persona envía un mensaje directo a esta cuenta desde OTRO perfil de Instagram y el panel
+         *     consulta si llegó. Devuelve el momento (del servidor) desde el que se cuenta.
+         */
+        post: operations["instagram_diagnostic_start_api_v1_admin_meta_instagram_accounts__ig_user_id__diagnostic_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -14574,6 +14661,116 @@ export interface components {
             missing_settings: string[];
             /** Plan Includes */
             plan_includes: boolean;
+            /**
+             * Login Available
+             * @default false
+             */
+            login_available: boolean;
+            /**
+             * Login Missing
+             * @default []
+             */
+            login_missing: string[];
+        };
+        /** InstagramAccountStatusOut */
+        InstagramAccountStatusOut: {
+            /** Ig User Id */
+            ig_user_id: string;
+            /** Username */
+            username?: string | null;
+            /** Login Route */
+            login_route?: string | null;
+            /** Page Id */
+            page_id?: string | null;
+            /** Status */
+            status: string;
+            /** Status Reason */
+            status_reason?: string | null;
+            /**
+             * Subscribed Fields
+             * @default []
+             */
+            subscribed_fields: string[];
+            /** Token Expires At */
+            token_expires_at?: string | null;
+        };
+        /** InstagramAccountsOut */
+        InstagramAccountsOut: {
+            /** Accounts */
+            accounts: components["schemas"]["InstagramAccountStatusOut"][];
+        };
+        /**
+         * InstagramDiagnosticOut
+         * @description `arrived`: llegó un mensaje de un cliente a esta cuenta desde `since`. Si no, `likely_cause` es lo más probable:
+         *     `token_degraded` (reconectar), `not_subscribed` (la suscripción no confirmó `messages`) o
+         *     `access_to_messages_off` (todo parece bien: casi siempre es «Permitir acceso a los mensajes» apagado en Instagram,
+         *     que Meta nunca reporta como error).
+         */
+        InstagramDiagnosticOut: {
+            /** Arrived */
+            arrived: boolean;
+            /** Likely Cause */
+            likely_cause?: string | null;
+        };
+        /**
+         * InstagramDiagnosticStartOut
+         * @description Momento (del servidor) desde el que se espera el mensaje de prueba, y cuánto vale esperar.
+         */
+        InstagramDiagnosticStartOut: {
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /** Wait Seconds */
+            wait_seconds: number;
+        };
+        /** InstagramLoginCompleteIn */
+        InstagramLoginCompleteIn: {
+            /**
+             * Code
+             * Format: password
+             */
+            code: string;
+            /**
+             * State
+             * Format: password
+             */
+            state: string;
+        };
+        /** InstagramLoginCompleteOut */
+        InstagramLoginCompleteOut: {
+            /** Ig User Id */
+            ig_user_id: string;
+            /** Username */
+            username?: string | null;
+            /**
+             * Channel Connection Id
+             * Format: uuid
+             */
+            channel_connection_id: string;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Subscribed */
+            subscribed: boolean;
+            /**
+             * Subscribed Fields
+             * @default []
+             */
+            subscribed_fields: string[];
+        };
+        /**
+         * InstagramLoginStartOut
+         * @description Dirección de autorización de Instagram a la que el panel manda el navegador.
+         */
+        InstagramLoginStartOut: {
+            /** Url */
+            url: string;
+            /** Expires In */
+            expires_in: number;
         };
     };
     responses: never;
@@ -27174,6 +27371,171 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstagramConnectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    instagram_login_start_api_v1_admin_meta_instagram_login_start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramLoginStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    instagram_login_complete_api_v1_admin_meta_instagram_login_complete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstagramLoginCompleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramLoginCompleteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    instagram_accounts_api_v1_admin_meta_instagram_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramAccountsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    instagram_diagnostic_api_v1_admin_meta_instagram_accounts__ig_user_id__diagnostic_get: {
+        parameters: {
+            query: {
+                since: string;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ig_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramDiagnosticOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    instagram_diagnostic_start_api_v1_admin_meta_instagram_accounts__ig_user_id__diagnostic_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                ig_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramDiagnosticStartOut"];
                 };
             };
             /** @description Validation Error */
