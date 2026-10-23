@@ -108,6 +108,9 @@ export function gestionDeConexion(
   if (c.type_id === "messenger_meta") {
     return { tipo: "enlace", href: "/conexiones/messenger", label: "Gestionar" };
   }
+  if (c.type_id === "instagram_meta") {
+    return { tipo: "enlace", href: "/conexiones/instagram", label: "Gestionar" };
+  }
   if (c.meta_connection_id) {
     return { tipo: "enlace", href: `/conexiones/meta/${c.meta_connection_id}`, label: "Gestionar" };
   }
@@ -154,6 +157,7 @@ export function destinoDeAlta(type: {
   if (type.id === "whatsapp_waweb") return { tipo: "navegar", href: "/conexiones/waweb" };
   if (type.id === "whatsapp_meta") return { tipo: "navegar", href: "/conexiones/whatsapp" };
   if (type.id === "messenger_meta") return { tipo: "navegar", href: "/conexiones/messenger" };
+  if (type.id === "instagram_meta") return { tipo: "navegar", href: "/conexiones/instagram" };
   if (type.id === "google_calendar") return { tipo: "navegar", href: "/calendario" };
   return null;
 }
