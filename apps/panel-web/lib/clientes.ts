@@ -12,6 +12,10 @@ export type FiltrosClientes = {
   filtro?: string | string[];
   page?: string;
   cliente?: string;
+  /** Pestaña del agente que se abre en la ficha (`ventas`, `cobranza`, `agenda`…). */
+  agente?: string;
+  /** Abre la ficha directamente en modo edición (`1`). */
+  editar?: string;
 };
 
 /** Query de la API (`/admin/leads` y su `export.csv`) a partir de los filtros de la URL. */
@@ -162,4 +166,75 @@ export function columnasDeSoloLectura<C extends { key: string }>(
 ): C[] {
   const editables_ = new Set((editables ?? []).map((e) => e.key));
   return columns.filter((c) => !editables_.has(c.key));
+}
+
+export const CLASIFICACION: Record<string, string> = {
+  prospecto: "Prospecto",
+  cliente: "Cliente",
+  vip: "VIP",
+  inactivo: "Inactivo",
+  bloqueado: "Bloqueado",
+};
+
+export const TIPO_DOCUMENTO: Record<string, string> = {
+  cc: "Cédula de ciudadanía",
+  ce: "Cédula de extranjería",
+  nit: "NIT",
+  pasaporte: "Pasaporte",
+  otro: "Otro",
+};
+
+/** Claves que ya se muestran en la pestaña General; no se repiten en «otros datos». */
+const CLAVES_DEL_PERFIL = new Set([
+  "name", "nombre", "full_name", "apellido", "alias", "avatar_url", "foto",
+  "phone", "telefono", "contact_phone", "pais_telefono",
+  "email", "correo", "tipo_documento", "id_document", "documento", "cedula",
+  "address", "direccion", "municipio", "municipality", "ciudad", "city",
+  "departamento", "department", "estado", "pais", "country",
+  "latitud", "lat", "latitude", "longitud", "lng", "lon", "longitude",
+  "clasificacion", "clasificación",
+]);
+
+/** `true` si la clave ya es un dato del perfil (incluye alias viejos como `full_name`). */
+export function esClaveDelPerfil(clave: string): boolean {
+  return CLAVES_DEL_PERFIL.has(normalizarClave(clave));
+}
+
+export function etiquetaClasificacion(valor?: string | null, label?: string | null): string {
+  return label || (valor ? CLASIFICACION[valor] ?? valor : "Sin clasificar");
+}
+
+export function etiquetaTipoDocumento(valor?: string | null): string {
+  return valor ? TIPO_DOCUMENTO[valor] ?? valor : "—";
+}
+
+type Telefono = {
+  phone?: string | null;
+  phone_e164?: string | null;
+  phone_indicativo?: string | null;
+  phone_local?: string | null;
+};
+
+export function telefonoVisible(perfil: Telefono): string {
+  if (perfil.phone_indicativo && perfil.phone_local) {
+    return `${perfil.phone_indicativo} ${perfil.phone_local}`;
+  }
+  return perfil.phone_e164 || perfil.phone || "—";
+}
+
+type Ubicacion = {
+  address?: string | null;
+  municipio?: string | null;
+  departamento?: string | null;
+  pais?: string | null;
+};
+
+export function ubicacionVisible(perfil: Ubicacion): string {
+  const municipio = [perfil.municipio, perfil.departamento].filter(Boolean).join(", ");
+  return municipio || perfil.address || perfil.pais || "—";
+}
+
+/** Datos que el agente guardó en otros namespaces: se muestran aparte del perfil canónico. */
+export function datosFueraDelPerfil<T extends { namespace: string; key: string }>(datos: T[]): T[] {
+  return datos.filter((d) => d.namespace !== "perfil" || !CLAVES_DEL_PERFIL.has(d.key));
 }
