@@ -13,7 +13,10 @@ import { JsonSchemaForm } from "@/components/domain/json-schema-form";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
-/** Acciones de una conexión: activar/desactivar, hacer principal y eliminar. */
+import { EliminarCuentaDialog } from "./eliminar-cuenta-dialog";
+import { VerCredencialesDialog } from "./ver-credenciales-dialog";
+
+/** Acciones de una conexión: ver datos, activar/desactivar, principal y eliminar. */
 export function ConnectionActions({
   connectionId,
   label,
@@ -21,6 +24,7 @@ export function ConnectionActions({
   primary,
   kind = "channel_connection",
   typeId,
+  manual = false,
   trigger = "icon",
   triggerLabel = "Gestionar",
 }: {
@@ -30,6 +34,8 @@ export function ConnectionActions({
   primary: boolean;
   kind?: "channel_connection" | "meta_connection";
   typeId?: string | null;
+  /** La conexión se configura con formulario manual (correo, etc.). */
+  manual?: boolean;
   /** `button` se usa en la tarjeta de la consola; `icon` en tablas y listas densas. */
   trigger?: "icon" | "button";
   triggerLabel?: string;
@@ -39,6 +45,8 @@ export function ConnectionActions({
   const { run, pending } = useAction();
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [datosOpen, setDatosOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [form, setForm] = useState<
     | { schema: Record<string, unknown>; values: Record<string, unknown>; configured_secrets: string[] }
     | null
@@ -62,7 +70,7 @@ export function ConnectionActions({
     setForm(json);
   }
 
-  async function post(action: "activate" | "deactivate" | "primary" | "delete") {
+  async function post(action: "activate" | "deactivate" | "primary") {
     const res = await fetch(`/api/connections/${connectionId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -72,17 +80,7 @@ export function ConnectionActions({
     return { ok: res.ok, error: json.error };
   }
 
-  async function runAccion(action: "activate" | "deactivate" | "primary" | "delete") {
-    if (action === "delete") {
-      const aceptado = await confirm({
-        title: "Eliminar conexión",
-        description:
-          "Se eliminará la conexión y el negocio dejará de recibir mensajes por este canal. Esta acción no se puede deshacer.",
-        confirmLabel: "Eliminar",
-        destructive: true,
-      });
-      if (!aceptado) return;
-    }
+  async function runAccion(action: "activate" | "deactivate" | "primary") {
     if (action === "deactivate") {
       const aceptado = await confirm({
         title: "Desactivar conexión",
@@ -93,8 +91,7 @@ export function ConnectionActions({
       });
       if (!aceptado) return;
     }
-    const ok = await run(post.bind(null, action));
-    if (ok && action === "delete") setOpen(false);
+    await run(post.bind(null, action));
   }
 
   return (
@@ -112,7 +109,19 @@ export function ConnectionActions({
       </DialogTrigger>
       <DialogContent title="Acciones de la conexión" description={label} className="max-w-md">
         <div className="flex flex-col gap-4">
-          {kind === "channel_connection" && typeId && (
+          {manual && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOpen(false);
+                setDatosOpen(true);
+              }}
+            >
+              Ver datos
+            </Button>
+          )}
+          {manual && typeId && (
             <Button variant="outline" size="sm" onClick={() => void openEdit()}>
               Editar credenciales
             </Button>
@@ -140,14 +149,19 @@ export function ConnectionActions({
 
           <Separator />
 
-          <p className="text-sm text-status-danger-fg">Eliminar la conexión es irreversible.</p>
+          <p className="text-sm text-status-danger-fg">
+            Eliminar la cuenta archiva la conexión y revoca sus tokens.
+          </p>
           <Button
             variant="danger"
             size="sm"
-            onClick={() => void runAccion("delete")}
+            onClick={() => {
+              setOpen(false);
+              setDeleteOpen(true);
+            }}
             disabled={pending}
           >
-            Eliminar conexión
+            Eliminar cuenta
           </Button>
 
           <div className="flex justify-end">
@@ -161,11 +175,7 @@ export function ConnectionActions({
       </DialogContent>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent
-          title="Editar credenciales"
-          description={label}
-          className="max-w-xl"
-        >
+        <DialogContent title="Editar credenciales" description={label} className="max-w-xl">
           {form ? (
             <JsonSchemaForm
               resourcePath="/api/connections/manual"
@@ -185,6 +195,20 @@ export function ConnectionActions({
           )}
         </DialogContent>
       </Dialog>
+
+      <VerCredencialesDialog
+        connectionId={connectionId}
+        label={label}
+        open={datosOpen}
+        onOpenChange={setDatosOpen}
+      />
+      <EliminarCuentaDialog
+        connectionId={connectionId}
+        label={label}
+        kind={kind}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </Dialog>
   );
 }

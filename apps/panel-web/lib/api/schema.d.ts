@@ -5930,6 +5930,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connection Credentials
+         * @description Datos de registro de una conexión manual; los secretos solo indican si están cargados.
+         */
+        get: operations["connection_credentials_api_v1_admin_connections__connection_id__credentials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Connection Credentials
+         * @description Revela los secretos de una conexión manual tras confirmar la contraseña del usuario.
+         */
+        post: operations["reveal_connection_credentials_api_v1_admin_connections__connection_id__credentials_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Meta Connection Credentials
+         * @description Datos de registro de una conexión Meta; los secretos solo indican si están cargados.
+         */
+        get: operations["meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Meta Connection Credentials
+         * @description Revela los secretos propios del negocio tras confirmar la contraseña.
+         *
+         *     Nunca devuelve el App Secret ni el verify token de la **app de la plataforma**
+         *     (Embedded Signup / carga manual): esos son compartidos y no pertenecen al negocio.
+         */
+        post: operations["reveal_meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6939,6 +7022,8 @@ export interface components {
              * @enum {string}
              */
             action: "activate" | "deactivate" | "primary" | "delete";
+            /** Password */
+            password?: string | null;
         };
         /** ConnectionCategory */
         ConnectionCategory: {
@@ -8311,6 +8396,8 @@ export interface components {
              * @enum {string}
              */
             action: "activate" | "deactivate" | "delete" | "primary";
+            /** Password */
+            password?: string | null;
         };
         /** MetaCreditConnection */
         MetaCreditConnection: {
@@ -13947,6 +14034,124 @@ export interface components {
             tenant: string;
             /** Permissions */
             permissions: {
+                [key: string]: string;
+            };
+        };
+        /** CredentialField */
+        CredentialField: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value?: string | null;
+            /**
+             * Secret
+             * @default false
+             */
+            secret: boolean;
+            /**
+             * Configured
+             * @default false
+             */
+            configured: boolean;
+            /**
+             * Platform
+             * @default false
+             */
+            platform: boolean;
+        };
+        /** ConnectionCredentialsResponse */
+        ConnectionCredentialsResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "manual";
+            /** Type Id */
+            type_id: string;
+            /** Label */
+            label: string;
+            /** Fields */
+            fields: components["schemas"]["CredentialField"][];
+        };
+        /** RevealCredentialsRequest */
+        RevealCredentialsRequest: {
+            /**
+             * Password
+             * @default
+             */
+            password: string;
+        };
+        /** RevealedSecretsResponse */
+        RevealedSecretsResponse: {
+            /** Secrets */
+            secrets: {
+                [key: string]: string;
+            };
+        };
+        /** MetaCredentialField */
+        MetaCredentialField: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value?: string | null;
+            /**
+             * Secret
+             * @default false
+             */
+            secret: boolean;
+            /**
+             * Configured
+             * @default false
+             */
+            configured: boolean;
+            /**
+             * Platform
+             * @default false
+             */
+            platform: boolean;
+        };
+        /** MetaCredentialsResponse */
+        MetaCredentialsResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "meta";
+            /** Channel */
+            channel: string;
+            /** Environment */
+            environment: string;
+            /** Origin */
+            origin: string;
+            /** Fields */
+            fields: components["schemas"]["MetaCredentialField"][];
+        };
+        /** MetaRevealRequest */
+        MetaRevealRequest: {
+            /**
+             * Password
+             * @default
+             */
+            password: string;
+        };
+        /** MetaRevealedSecrets */
+        MetaRevealedSecrets: {
+            /** Secrets */
+            secrets: {
                 [key: string]: string;
             };
         };
@@ -26145,6 +26350,146 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connection_credentials_api_v1_admin_connections__connection_id__credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionCredentialsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_connection_credentials_api_v1_admin_connections__connection_id__credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevealCredentialsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealedSecretsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetaCredentialsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetaRevealRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetaRevealedSecrets"];
                 };
             };
             /** @description Validation Error */

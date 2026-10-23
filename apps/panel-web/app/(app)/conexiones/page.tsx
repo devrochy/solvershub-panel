@@ -40,18 +40,6 @@ export default async function ConnectionsPage({
         actions={consola.can_edit ? <NewConnectionDialog /> : undefined}
       />
 
-      <ConsolaConexiones consola={consola} />
-
-      {(consola.has_more || pagina > 1) && (
-        <Pagination
-          page={pagina}
-          hasMore={consola.has_more}
-          total={consola.total}
-          label="conexiones"
-          makeHref={(p) => `/conexiones?page=${p}`}
-        />
-      )}
-
       {webhookUrl && (
         <Card>
           <CardHeader>
@@ -67,6 +55,18 @@ export default async function ConnectionsPage({
             </code>
           </CardContent>
         </Card>
+      )}
+
+      <ConsolaConexiones consola={consola} />
+
+      {(consola.has_more || pagina > 1) && (
+        <Pagination
+          page={pagina}
+          hasMore={consola.has_more}
+          total={consola.total}
+          label="conexiones"
+          makeHref={(p) => `/conexiones?page=${p}`}
+        />
       )}
     </div>
   );
