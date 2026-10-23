@@ -7,10 +7,11 @@ import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-pa
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
+import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia-form";
 import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { Tabs } from "@/components/ui/tabs";
-import type { SettingsResponse, WebChatSettings } from "@/lib/api/types";
+import type { MediaSettings, SettingsResponse, WebChatSettings } from "@/lib/api/types";
 
 type Advanced = {
   versions: { id: string; version: string; is_active: boolean; created_at: string | null }[];
@@ -29,6 +30,7 @@ const ALIAS_TABS: Record<string, string> = {
   habilidades: "skills",
   avanzado: "advanced",
   "chat-web": "web-chat",
+  multimedia: "media",
   accesibilidad: "a11y",
 };
 
@@ -38,6 +40,7 @@ const TABS = [
   { id: "memory", label: "Memoria" },
   { id: "skills", label: "Habilidades" },
   { id: "web-chat", label: "Chat web" },
+  { id: "media", label: "Multimedia" },
   { id: "advanced", label: "Avanzado" },
   { id: "a11y", label: "Accesibilidad" },
 ];
@@ -48,11 +51,13 @@ export function SettingsTabs({
   settings,
   webChat,
   advanced,
+  media,
 }: {
   defaultTab?: string;
   settings: SettingsResponse;
   webChat: WebChatSettings;
   advanced: Advanced;
+  media: MediaSettings;
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
   const [tab, setTab] = useState(
@@ -66,6 +71,7 @@ export function SettingsTabs({
       {tab === "memory" && <MemoryForm memory={settings.memory} />}
       {tab === "skills" && <SkillsForm skills={settings.skills} />}
       {tab === "web-chat" && <WebChatForm webChat={webChat} />}
+      {tab === "media" && <MultimediaForm media={media} />}
       {tab === "advanced" && <AdvancedPanel advanced={advanced} />}
       {tab === "a11y" && <AccesibilidadPanel />}
     </div>

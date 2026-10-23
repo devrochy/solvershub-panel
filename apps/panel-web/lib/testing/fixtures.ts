@@ -445,6 +445,43 @@ export const chatWeb: WebChatSettings = {
   snippet: "",
 };
 
+/** `/admin/settings/media` (SPEC-04, ADR-0151): configuración para la pestaña Multimedia. */
+export const ajustesMultimedia = {
+  audio: {
+    enabled: true,
+    provider: "groq",
+    model: "whisper-large-v3-turbo",
+    has_api_key: false,
+    using_platform_key: true,
+  },
+  vision: {
+    enabled: true,
+    mode: "describir",
+    provider: "deepseek",
+    model: "deepseek-flash",
+    has_api_key: false,
+    using_platform_key: true,
+  },
+  catalog: {
+    audio: [
+      {
+        key: "groq",
+        label: "Groq · Whisper",
+        default_model: "whisper-large-v3-turbo",
+        models: [{ id: "whisper-large-v3-turbo", label: "Whisper Large v3 Turbo" }],
+      },
+    ],
+    vision: [
+      {
+        key: "deepseek",
+        label: "DeepSeek · visión",
+        default_model: "deepseek-flash",
+        models: [{ id: "deepseek-flash", label: "DeepSeek Flash" }],
+      },
+    ],
+  },
+};
+
 /** `/admin/settings/advanced` no está tipado en el OpenAPI: forma de `SettingsTabs`. */
 export const ajustesAvanzados = {
   versions: [{ id: "test-spec-1", version: "1", is_active: true, created_at: "2026-10-01T12:00:00Z" }],
@@ -562,6 +599,7 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/settings": ajustes,
   "/admin/settings/web-chat": chatWeb,
   "/admin/settings/advanced": ajustesAvanzados,
+  "/admin/settings/media": ajustesMultimedia,
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,
