@@ -3125,7 +3125,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Listar Suscripciones
+         * @description Suscripciones del negocio con cliente, plan, estado, próximo cargo y deuda (HU-SUB-08).
+         */
+        get: operations["listar_suscripciones_api_v1_pack_pack_subscriptions_suscripciones_get"];
         put?: never;
         /**
          * Crear Suscripcion Manual
@@ -3152,6 +3156,169 @@ export interface paths {
         get: operations["avisos_del_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__avisos_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/suscripciones/{subscription_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Detalle Suscripcion
+         * @description Detalle: cargos, cambio programado, historial de cambios de estado y acciones válidas.
+         */
+        get: operations["detalle_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/cargos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Cargos
+         * @description Pagos de suscripción: los cargos con su estado, vencimiento y mora (HU-SUB-20).
+         */
+        get: operations["listar_cargos_api_v1_pack_pack_subscriptions_cargos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/clientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Clientes
+         * @description Clientes con suscripción: cuántas, qué planes, lo que deben y su último período pagado (HU-SUB-19).
+         */
+        get: operations["listar_clientes_api_v1_pack_pack_subscriptions_clientes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/metricas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metricas
+         * @description MRR, altas, bajas, churn, mora por antigüedad y cohortes por plan (HU-SUB-16).
+         */
+        get: operations["metricas_api_v1_pack_pack_subscriptions_metricas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/suscripciones/{subscription_id}/pausar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pausar Suscripcion
+         * @description Suspende los cobros (pausa pedida por el negocio: `motivo_pausa = cliente`). Auditada.
+         */
+        post: operations["pausar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__pausar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/suscripciones/{subscription_id}/reanudar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reanudar Suscripcion
+         * @description Vuelve a `activa` y calcula el próximo cargo desde hoy. Auditada.
+         */
+        post: operations["reanudar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__reanudar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/suscripciones/{subscription_id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar Suscripcion
+         * @description Termina la suscripción (no se puede reanudar) y deja de generar cargos. Auditada.
+         */
+        post: operations["cancelar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/cargos/{charge_id}/reenviar-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reenviar Link De Cargo
+         * @description Reenvía al cliente el link de pago de un cargo pendiente, por WhatsApp (outbox, ADR-0107).
+         *
+         *     Reusa el link del cargo (o lo crea si falta, sin duplicar el cargo). Si el cliente no tiene
+         *     una conversación de WhatsApp no se envía nada y se devuelve el link para copiarlo.
+         */
+        post: operations["reenviar_link_de_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__reenviar_link_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -14772,6 +14939,364 @@ export interface components {
             /** Expires In */
             expires_in: number;
         };
+        /** AccionOut */
+        AccionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Estado */
+            estado: string;
+            /** Motivo Pausa */
+            motivo_pausa?: string | null;
+            /** Proximo Cargo */
+            proximo_cargo?: string | null;
+        };
+        /** CargoItem */
+        CargoItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Suscripcion Id
+             * Format: uuid
+             */
+            suscripcion_id: string;
+            cliente?: components["schemas"]["ClienteRef"] | null;
+            /** Plan */
+            plan?: string | null;
+            /** Periodo */
+            periodo: string;
+            /** Tipo */
+            tipo: string;
+            /** Monto */
+            monto: number;
+            /** Moneda */
+            moneda?: string | null;
+            /** Estado */
+            estado: string;
+            /** Fecha Vencimiento */
+            fecha_vencimiento?: string | null;
+            /** Dias Mora */
+            dias_mora?: number | null;
+            /** Link Url */
+            link_url?: string | null;
+            /** Pago Externo */
+            pago_externo?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Creado
+             * Format: date-time
+             */
+            creado: string;
+        };
+        /** ClienteConSuscripcion */
+        ClienteConSuscripcion: {
+            cliente: components["schemas"]["ClienteRef"];
+            /** Suscripciones */
+            suscripciones: number;
+            /**
+             * Vivas
+             * @description Suscripciones en prueba, activas, pausadas o vencidas (no canceladas).
+             */
+            vivas: number;
+            /** Planes */
+            planes: string[];
+            /** Deuda */
+            deuda: number;
+            /** En Mora */
+            en_mora: number;
+            /** Dias Mora */
+            dias_mora?: number | null;
+            /** Ultimo Periodo Pagado */
+            ultimo_periodo_pagado?: string | null;
+        };
+        /**
+         * ClienteRef
+         * @description El `Customer` del core al que pertenece la suscripción (sin email: el core no lo guarda).
+         */
+        ClienteRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Canal */
+            canal?: string | null;
+        };
+        /** CohorteFila */
+        CohorteFila: {
+            /** Cohorte */
+            cohorte: string;
+            /** Plan */
+            plan: string;
+            /** Altas */
+            altas: number;
+            /**
+             * Vigentes
+             * @description De esas altas, cuántas no están canceladas hoy.
+             */
+            vigentes: number;
+        };
+        /** HistorialItem */
+        HistorialItem: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Accion */
+            accion: string;
+            /** Actor */
+            actor: string;
+            /** Detalle */
+            detalle?: string | null;
+        };
+        /** Metricas */
+        Metricas: {
+            /** Moneda */
+            moneda: string;
+            /**
+             * Otras Monedas
+             * @description Suscripciones activas en otra moneda, fuera de estas cifras.
+             */
+            otras_monedas: number;
+            /**
+             * Mrr
+             * @description Ingreso recurrente mensual: activas de pago, trimestral ÷ 3 y anual ÷ 12.
+             */
+            mrr: number;
+            /**
+             * Mrr Mes Anterior
+             * @description Aproximado: suscripciones vivas al cierre del mes anterior, a su precio actual.
+             */
+            mrr_mes_anterior: number;
+            /** Activas */
+            activas: number;
+            /** En Prueba */
+            en_prueba: number;
+            /** Pausadas */
+            pausadas: number;
+            /** Vencidas */
+            vencidas: number;
+            /** Canceladas */
+            canceladas: number;
+            /** Altas Mes */
+            altas_mes: number;
+            /** Altas Mes Anterior */
+            altas_mes_anterior: number;
+            /** Bajas Mes */
+            bajas_mes: number;
+            /** Bajas Mes Anterior */
+            bajas_mes_anterior: number;
+            /**
+             * Churn Mes
+             * @description Bajas del mes ÷ suscripciones vivas al inicio del mes (0–1).
+             */
+            churn_mes?: number | null;
+            mora: components["schemas"]["MoraResumen"];
+            /** Cohortes */
+            cohortes: components["schemas"]["CohorteFila"][];
+            /**
+             * Desde
+             * Format: date
+             * @description Primer día del mes en curso (UTC).
+             */
+            desde: string;
+        };
+        /** MoraResumen */
+        MoraResumen: {
+            /** Cargos */
+            cargos: number;
+            /** Monto */
+            monto: number;
+            /** Tramos */
+            tramos: components["schemas"]["TramoDeMora"][];
+        };
+        /** MotivoBody */
+        MotivoBody: {
+            /**
+             * Motivo
+             * @description Opcional; queda en la auditoría.
+             * @default
+             */
+            motivo: string;
+        };
+        /** Page[CargoItem] */
+        Page_CargoItem_: {
+            /** Items */
+            items: components["schemas"]["CargoItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[ClienteConSuscripcion] */
+        Page_ClienteConSuscripcion_: {
+            /** Items */
+            items: components["schemas"]["ClienteConSuscripcion"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[SuscripcionItem] */
+        Page_SuscripcionItem_: {
+            /** Items */
+            items: components["schemas"]["SuscripcionItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** ReenvioOut */
+        ReenvioOut: {
+            /** Enviado */
+            enviado: boolean;
+            /** Link */
+            link?: string | null;
+            /**
+             * Motivo
+             * @description Por qué no se envió (`sin_conversacion_whatsapp`): el link igual se devuelve para copiarlo.
+             */
+            motivo?: string | null;
+        };
+        /** SuscripcionDetalle */
+        SuscripcionDetalle: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cliente: components["schemas"]["ClienteRef"];
+            /** Plan */
+            plan: string;
+            /** Variante Id */
+            variante_id?: string | null;
+            /** Estado */
+            estado: string;
+            /** Motivo Pausa */
+            motivo_pausa?: string | null;
+            /** Periodicidad */
+            periodicidad: string;
+            /** Valor Periodo */
+            valor_periodo: number;
+            /** Moneda */
+            moneda: string;
+            /** Proximo Cargo */
+            proximo_cargo?: string | null;
+            /** Trial Termina */
+            trial_termina?: string | null;
+            /** Fecha Alta */
+            fecha_alta?: string | null;
+            /**
+             * Deuda
+             * @description Suma de los cargos de período pendientes (vencidos o por vencer).
+             */
+            deuda: number;
+            /** Cargos Pendientes */
+            cargos_pendientes: number;
+            /**
+             * En Mora
+             * @description Parte de la deuda con vencimiento ya cumplido.
+             */
+            en_mora: number;
+            /**
+             * Dias Mora
+             * @description Días del cargo vencido más viejo; None si no hay mora.
+             */
+            dias_mora?: number | null;
+            /** Fecha Cancelacion */
+            fecha_cancelacion?: string | null;
+            /** Cambio Programado */
+            cambio_programado?: {
+                [key: string]: unknown;
+            } | null;
+            /** Cargos */
+            cargos: components["schemas"]["CargoItem"][];
+            /** Historial */
+            historial: components["schemas"]["HistorialItem"][];
+            /**
+             * Acciones
+             * @description Acciones válidas en el estado actual: pausar, reanudar, cancelar.
+             */
+            acciones: string[];
+        };
+        /** SuscripcionItem */
+        SuscripcionItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cliente: components["schemas"]["ClienteRef"];
+            /** Plan */
+            plan: string;
+            /** Variante Id */
+            variante_id?: string | null;
+            /** Estado */
+            estado: string;
+            /** Motivo Pausa */
+            motivo_pausa?: string | null;
+            /** Periodicidad */
+            periodicidad: string;
+            /** Valor Periodo */
+            valor_periodo: number;
+            /** Moneda */
+            moneda: string;
+            /** Proximo Cargo */
+            proximo_cargo?: string | null;
+            /** Trial Termina */
+            trial_termina?: string | null;
+            /** Fecha Alta */
+            fecha_alta?: string | null;
+            /**
+             * Deuda
+             * @description Suma de los cargos de período pendientes (vencidos o por vencer).
+             */
+            deuda: number;
+            /** Cargos Pendientes */
+            cargos_pendientes: number;
+            /**
+             * En Mora
+             * @description Parte de la deuda con vencimiento ya cumplido.
+             */
+            en_mora: number;
+            /**
+             * Dias Mora
+             * @description Días del cargo vencido más viejo; None si no hay mora.
+             */
+            dias_mora?: number | null;
+        };
+        /** TramoDeMora */
+        TramoDeMora: {
+            /** Etiqueta */
+            etiqueta: string;
+            /** Cargos */
+            cargos: number;
+            /** Monto */
+            monto: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -20855,6 +21380,50 @@ export interface operations {
             };
         };
     };
+    listar_suscripciones_api_v1_pack_pack_subscriptions_suscripciones_get: {
+        parameters: {
+            query?: {
+                estado?: ("trialing" | "activa" | "pausada" | "vencida" | "cancelada") | null;
+                /** @description Plan (variante de commerce). */
+                variante_id?: string | null;
+                periodicidad?: ("mensual" | "trimestral" | "anual") | null;
+                /** @description Solo con algún cargo vencido sin pagar. */
+                con_mora?: boolean;
+                /** @description Nombre o teléfono del cliente, o plan. */
+                q?: string | null;
+                /** @description Solo las de este cliente. */
+                cliente_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SuscripcionItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     crear_suscripcion_manual_api_v1_pack_pack_subscriptions_suscripciones_post: {
         parameters: {
             query?: never;
@@ -20910,6 +21479,292 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AvisoOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detalle_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuscripcionDetalle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_cargos_api_v1_pack_pack_subscriptions_cargos_get: {
+        parameters: {
+            query?: {
+                estado?: ("pendiente" | "pagado" | "anulado") | null;
+                tipo?: ("periodo" | "cambio_plan") | null;
+                suscripcion_id?: string | null;
+                /** @description Vencimiento desde (incluido). */
+                desde?: string | null;
+                /** @description Vencimiento hasta (incluido). */
+                hasta?: string | null;
+                /** @description Solo pendientes con vencimiento cumplido. */
+                vencidos?: boolean;
+                q?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CargoItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_clientes_api_v1_pack_pack_subscriptions_clientes_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                con_mora?: boolean;
+                /** @description Incluye a quien solo tiene suscripciones canceladas. */
+                incluir_canceladas?: boolean;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ClienteConSuscripcion_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metricas_api_v1_pack_pack_subscriptions_metricas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Metricas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pausar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__pausar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MotivoBody"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanudar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__reanudar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelar_suscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MotivoBody"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reenviar_link_de_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__reenviar_link_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReenvioOut"];
                 };
             };
             /** @description Validation Error */

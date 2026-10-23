@@ -76,6 +76,15 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     what: "Tu plan, los créditos que te quedan y lo que has usado en el período.",
     first: ["Mira tu saldo.", "Sube de plan o recarga si te estás quedando corto."],
   },
+  subscriptions: {
+    question: "¿Qué son las Suscripciones?",
+    what: "Los clientes que pagan un plan cada periodo: a quién le cobras, cuánto debe cada uno y qué pagos están pendientes.",
+    first: [
+      "Mira primero a quienes están en mora.",
+      "Abre una suscripción para pausarla, reanudarla o reenviar el link de pago.",
+      "Revisa el resumen para ver tu ingreso mensual recurrente.",
+    ],
+  },
   tools: {
     question: "¿Qué son las Herramientas?",
     what: "Diagnóstico y pruebas: probar el asistente, ver fallos y revisar requisitos de WhatsApp.",

@@ -7,6 +7,10 @@ import type {
   AgentConversationPage,
   AgentsOverview,
   AgentTaskPage,
+  AvisoDeCargo,
+  CargosSuscripcionPage,
+  CargoSuscripcion,
+  ClientesConSuscripcionPage,
   CollaboratorItem,
   ConnectionsConsole,
   ConnectionsResponse,
@@ -17,12 +21,16 @@ import type {
   EscalationPage,
   LeadsResponse,
   Me,
+  MetricasSuscripciones,
   MissingTemplates,
   PlanResponse,
   PluginSummary,
   PrimerosPasos,
   SettingsResponse,
   SubscriptionProviderSettings,
+  SuscripcionDetalle,
+  SuscripcionesPage,
+  SuscripcionItem,
   WebChatSettings,
 } from "@/lib/api/types";
 
@@ -40,6 +48,7 @@ const SECCIONES = [
   "settings",
   "plan",
   "costs",
+  "pack_subscriptions:suscripciones",
   "pack_cobranza:resumen",
   "pack_cobranza:carteras",
   "pack_cobranza:clientes",
@@ -614,6 +623,161 @@ export const estadoCalendario = {
 };
 
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
+// ---------------------------------------------------------------- suscripciones (SPEC-35)
+const ANA = { id: "test-cliente-ana", nombre: "Ana Prueba", telefono: "+573000000001", canal: "whatsapp" };
+const BETO = { id: "test-cliente-beto", nombre: null, telefono: "+573000000002", canal: "whatsapp" };
+
+export const suscripcionEnMora: SuscripcionItem = {
+  id: "test-sub-1",
+  cliente: ANA,
+  plan: "Plan Pro",
+  variante_id: "test-variante-pro",
+  estado: "activa",
+  motivo_pausa: null,
+  periodicidad: "mensual",
+  valor_periodo: 200000,
+  moneda: "COP",
+  proximo_cargo: "2026-11-15T00:00:00Z",
+  trial_termina: null,
+  fecha_alta: "2026-08-15T00:00:00Z",
+  deuda: 400000,
+  cargos_pendientes: 2,
+  en_mora: 200000,
+  dias_mora: 10,
+};
+
+export const suscripcionPausada: SuscripcionItem = {
+  ...suscripcionEnMora,
+  id: "test-sub-2",
+  cliente: BETO,
+  plan: "Plan Basic",
+  estado: "pausada",
+  motivo_pausa: "cliente",
+  valor_periodo: 50000,
+  proximo_cargo: null,
+  deuda: 0,
+  cargos_pendientes: 0,
+  en_mora: 0,
+  dias_mora: null,
+};
+
+export const suscripciones: SuscripcionesPage = {
+  items: [suscripcionEnMora, suscripcionPausada],
+  total: 2,
+  page: 1,
+  page_size: 20,
+  has_more: false,
+};
+
+const cargoVencido: CargoSuscripcion = {
+  id: "test-cargo-1",
+  suscripcion_id: "test-sub-1",
+  cliente: ANA,
+  plan: "Plan Pro",
+  periodo: "2026-10",
+  tipo: "periodo",
+  monto: 200000,
+  moneda: "COP",
+  estado: "pendiente",
+  fecha_vencimiento: "2026-10-13T00:00:00Z",
+  dias_mora: 10,
+  link_url: "https://pago.test/abc",
+  pago_externo: null,
+  creado: "2026-10-10T00:00:00Z",
+};
+
+const cargoPagado: CargoSuscripcion = {
+  ...cargoVencido,
+  id: "test-cargo-2",
+  periodo: "2026-09",
+  estado: "pagado",
+  fecha_vencimiento: "2026-09-13T00:00:00Z",
+  dias_mora: null,
+  link_url: null,
+  creado: "2026-09-10T00:00:00Z",
+};
+
+export const cargosSuscripcion: CargosSuscripcionPage = {
+  items: [cargoVencido, cargoPagado],
+  total: 2,
+  page: 1,
+  page_size: 20,
+  has_more: false,
+};
+
+export const suscripcionDetalle: SuscripcionDetalle = {
+  ...suscripcionEnMora,
+  fecha_cancelacion: null,
+  cambio_programado: { variante_id: "test-variante-basic", plan: { nombre: "Plan Basic", precio: 50000 }, desde: "2026-11-15T00:00:00Z" },
+  cargos: [cargoVencido, cargoPagado],
+  historial: [
+    { at: "2026-10-20T15:00:00Z", accion: "subs_pausada", actor: "admin:duena@test", detalle: "activa → pausada · Motivo: pidió esperar" },
+    { at: "2026-10-21T15:00:00Z", accion: "subs_reanudada", actor: "admin:duena@test", detalle: "pausada → activa" },
+  ],
+  acciones: ["pausar", "cancelar"],
+};
+
+export const avisosDelCargo: AvisoDeCargo[] = [
+  {
+    evento: "subscription.charge_reminder",
+    creado: "2026-10-16T14:00:00Z",
+    estado_evento: "entregado",
+    intentos: 1,
+    error_evento: null,
+    mensaje_estado: "delivered",
+    mensaje_error: null,
+    plantilla: null,
+    enviado: "2026-10-16T14:00:05Z",
+  },
+];
+
+export const clientesConSuscripcion: ClientesConSuscripcionPage = {
+  items: [
+    {
+      cliente: ANA,
+      suscripciones: 2,
+      vivas: 1,
+      planes: ["Plan Pro"],
+      deuda: 400000,
+      en_mora: 200000,
+      dias_mora: 10,
+      ultimo_periodo_pagado: "2026-09",
+    },
+  ],
+  total: 1,
+  page: 1,
+  page_size: 20,
+  has_more: false,
+};
+
+export const metricasSuscripciones: MetricasSuscripciones = {
+  moneda: "COP",
+  otras_monedas: 0,
+  mrr: 400000,
+  mrr_mes_anterior: 350000,
+  activas: 5,
+  en_prueba: 1,
+  pausadas: 1,
+  vencidas: 0,
+  canceladas: 2,
+  altas_mes: 3,
+  altas_mes_anterior: 2,
+  bajas_mes: 1,
+  bajas_mes_anterior: 0,
+  churn_mes: 0.1667,
+  mora: {
+    cargos: 3,
+    monto: 600000,
+    tramos: [
+      { etiqueta: "Hasta 7 días", cargos: 1, monto: 200000 },
+      { etiqueta: "8 a 30 días", cargos: 1, monto: 200000 },
+      { etiqueta: "Más de 30 días", cargos: 1, monto: 200000 },
+    ],
+  },
+  cohortes: [{ cohorte: "2026-10", plan: "Plan Pro", altas: 4, vigentes: 3 }],
+  desde: "2026-10-01",
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/me": me,
   "/admin/agents/overview": agentes,
@@ -639,4 +803,10 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,
+  "/pack/pack_subscriptions/suscripciones": suscripciones,
+  "/pack/pack_subscriptions/suscripciones/test-sub-1": suscripcionDetalle,
+  "/pack/pack_subscriptions/cargos": cargosSuscripcion,
+  "/pack/pack_subscriptions/cargos/test-cargo-1/avisos": avisosDelCargo,
+  "/pack/pack_subscriptions/clientes": clientesConSuscripcion,
+  "/pack/pack_subscriptions/metricas": metricasSuscripciones,
 };

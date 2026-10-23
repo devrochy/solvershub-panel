@@ -37,6 +37,9 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/pruebas", "qa", false],
   // Nuevas después del menú v2.
   ["/comercio/aliados", "pack_commerce", false],
+  // SPEC-35 (D-43): entrada propia «Suscripciones».
+  ["/suscripciones", "pack_subscriptions:suscripciones", false], ["/suscripciones/lista", "pack_subscriptions:suscripciones", false],
+  ["/suscripciones/clientes", "pack_subscriptions:suscripciones", false], ["/suscripciones/pagos", "pack_subscriptions:suscripciones", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -63,12 +66,12 @@ describe("menú v2 (HU-UX-02)", () => {
     }
   });
 
-  it("un dueño con todos los packs ve 11 entradas en 4 grupos", () => {
+  it("un dueño con todos los packs ve 12 entradas en 4 grupos (Suscripciones tiene la suya, D-43)", () => {
     const owner = { ...TODO, tenants: null, qa: null };
     const visibles = gruposVisibles(owner);
     expect(visibles.map((g) => g.group.label)).toEqual(["Operación", "Tu asistente", "Negocio", "Cuenta"]);
     expect(etiquetas(visibles)).toEqual([
-      "Resumen", "Conversaciones", "Clientes", "Agentes", "Conexiones", "Agenda", "Ventas", "Cobranza",
+      "Resumen", "Conversaciones", "Clientes", "Agentes", "Conexiones", "Agenda", "Ventas", "Suscripciones", "Cobranza",
       "Consumo y plan", "Equipo", "Configuración",
     ]);
   });

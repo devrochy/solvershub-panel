@@ -186,3 +186,18 @@ export type PlantillaDeEnvio = components["schemas"]["PlantillaDeEnvio"];
 export type VistaPreviaEnvio = components["schemas"]["VistaPreviaOut"];
 export type EnvioSegmento = components["schemas"]["EnvioOut"];
 export type Consentimiento = components["schemas"]["ConsentimientoOut"];
+
+// Administración de suscripciones (SPEC-35, pack_subscriptions).
+export type SuscripcionItem = components["schemas"]["SuscripcionItem"];
+export type SuscripcionDetalle = components["schemas"]["SuscripcionDetalle"];
+export type SuscripcionesPage = components["schemas"]["Page_SuscripcionItem_"];
+export type CargoSuscripcion = components["schemas"]["CargoItem"];
+export type CargosSuscripcionPage = components["schemas"]["Page_CargoItem_"];
+export type ClienteConSuscripcion = components["schemas"]["ClienteConSuscripcion"];
+export type ClientesConSuscripcionPage = components["schemas"]["Page_ClienteConSuscripcion_"];
+export type MetricasSuscripciones = components["schemas"]["Metricas"];
+export type HistorialSuscripcion = components["schemas"]["HistorialItem"];
+export type AccionSuscripcionOut = components["schemas"]["AccionOut"];
+export type ReenvioLinkOut = components["schemas"]["ReenvioOut"];
+export type AvisoDeCargo = components["schemas"]["AvisoOut"];
+export type CohorteSuscripciones = components["schemas"]["CohorteFila"];

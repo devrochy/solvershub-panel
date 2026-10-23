@@ -33,6 +33,7 @@ import {
   Link2,
   Package,
   Receipt,
+  Repeat,
   Scale,
   ScrollText,
   Shapes,
@@ -160,6 +161,18 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { section: "pack_commerce", label: "Aliados", href: "/comercio/aliados", icon: Handshake, ready: true, oculta: true },
         ],
         { pack: "pack_commerce" },
+      ),
+      // D-43 (SPEC-35): entrada propia, no pestaña de Ventas; solo aparece con la habilidad activa.
+      entrada(
+        "Suscripciones",
+        Repeat,
+        [
+          { section: "pack_subscriptions:suscripciones", label: "Resumen", href: "/suscripciones", icon: LayoutDashboard, ready: true },
+          { section: "pack_subscriptions:suscripciones", label: "Suscripciones", href: "/suscripciones/lista", icon: Repeat, ready: true },
+          { section: "pack_subscriptions:suscripciones", label: "Clientes", href: "/suscripciones/clientes", icon: Users, ready: true },
+          { section: "pack_subscriptions:suscripciones", label: "Pagos", href: "/suscripciones/pagos", icon: Banknote, ready: true },
+        ],
+        { pack: "pack_subscriptions" },
       ),
       entrada(
         "Cobranza",
