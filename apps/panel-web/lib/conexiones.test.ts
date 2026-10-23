@@ -153,6 +153,20 @@ describe("gestión y alta de conexiones", () => {
     ).toBeNull();
   });
 
+  it("Instagram se gestiona y se conecta en su propia pantalla", () => {
+    expect(gestionDeConexion(conexion({ channel: "instagram", type_id: "instagram_meta" }))).toEqual({
+      tipo: "enlace",
+      href: "/conexiones/instagram",
+      label: "Gestionar",
+    });
+    expect(
+      destinoDeAlta({ id: "instagram_meta", available: true, setup_kind: "wizard", has_schema: false }),
+    ).toEqual({ tipo: "navegar", href: "/conexiones/instagram" });
+    expect(
+      destinoDeAlta({ id: "instagram_meta", available: false, setup_kind: "wizard", has_schema: false }),
+    ).toBeNull();
+  });
+
   it("el alta navega según el tipo y deja sin destino las no disponibles", () => {
     expect(
       destinoDeAlta({ id: "whatsapp_meta", available: true, setup_kind: "wizard", has_schema: true }),
