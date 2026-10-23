@@ -51,6 +51,29 @@ export type BotPausedUpdate = components["schemas"]["BotPausedUpdate"];
 export type BotPausedState = components["schemas"]["BotPausedState"];
 export type BrainSettings = components["schemas"]["BrainSettings"];
 
+// Multimedia entrante (SPEC-04, ADR-0151). Tipos locales hasta que el backend
+// con los endpoints de media esté en `origin/develop` y se regenere el schema.
+export type MediaCatalogModel = { id: string; label: string };
+export type MediaCatalogProvider = {
+  key: string;
+  label: string;
+  default_model: string;
+  models: MediaCatalogModel[];
+};
+export type MediaAudioSettings = {
+  enabled: boolean;
+  provider: string;
+  model: string;
+  has_api_key: boolean;
+  using_platform_key: boolean;
+};
+export type MediaVisionSettings = MediaAudioSettings & { mode: string };
+export type MediaSettings = {
+  audio: MediaAudioSettings;
+  vision: MediaVisionSettings;
+  catalog: { audio: MediaCatalogProvider[]; vision: MediaCatalogProvider[] };
+};
+
 // Plantillas por evento (HU-ARCH-13, ADR-0108).
 export type MessageTemplatesSettings = components["schemas"]["MessageTemplatesSettings"];
 export type EventTemplateEntry = components["schemas"]["EventTemplateEntry"];
