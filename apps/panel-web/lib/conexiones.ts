@@ -104,6 +104,10 @@ export type GestionConexion =
 export function gestionDeConexion(
   c: Pick<ConexionConsola, "meta_connection_id" | "type_id">,
 ): GestionConexion | null {
+  // Las Páginas de Messenger comparten la cuenta de Meta, pero su hub no es el de WhatsApp (números, plantillas).
+  if (c.type_id === "messenger_meta") {
+    return { tipo: "enlace", href: "/conexiones/messenger", label: "Gestionar" };
+  }
   if (c.meta_connection_id) {
     return { tipo: "enlace", href: `/conexiones/meta/${c.meta_connection_id}`, label: "Gestionar" };
   }
@@ -149,6 +153,7 @@ export function destinoDeAlta(type: {
   if (type.setup_kind === "manual" && type.has_schema) return { tipo: "formulario" };
   if (type.id === "whatsapp_waweb") return { tipo: "navegar", href: "/conexiones/waweb" };
   if (type.id === "whatsapp_meta") return { tipo: "navegar", href: "/conexiones/whatsapp" };
+  if (type.id === "messenger_meta") return { tipo: "navegar", href: "/conexiones/messenger" };
   if (type.id === "google_calendar") return { tipo: "navegar", href: "/calendario" };
   return null;
 }

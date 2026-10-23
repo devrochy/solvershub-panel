@@ -136,6 +136,23 @@ describe("gestión y alta de conexiones", () => {
     expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: null }))).toBeNull();
   });
 
+  it("Messenger se gestiona en su propia pantalla, no en el hub de WhatsApp aunque comparta la cuenta de Meta", () => {
+    expect(gestionDeConexion(conexion({ channel: "messenger", type_id: "messenger_meta" }))).toEqual({
+      tipo: "enlace",
+      href: "/conexiones/messenger",
+      label: "Gestionar",
+    });
+  });
+
+  it("el alta de Messenger navega a su pantalla cuando el tipo está disponible", () => {
+    expect(
+      destinoDeAlta({ id: "messenger_meta", available: true, setup_kind: "wizard", has_schema: false }),
+    ).toEqual({ tipo: "navegar", href: "/conexiones/messenger" });
+    expect(
+      destinoDeAlta({ id: "messenger_meta", available: false, setup_kind: "wizard", has_schema: false }),
+    ).toBeNull();
+  });
+
   it("el alta navega según el tipo y deja sin destino las no disponibles", () => {
     expect(
       destinoDeAlta({ id: "whatsapp_meta", available: true, setup_kind: "wizard", has_schema: true }),

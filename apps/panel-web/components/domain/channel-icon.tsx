@@ -19,6 +19,8 @@ const CHANNELS: Record<string, { icon: LucideIcon; tone: string; label: string }
   whatsapp_waweb: { icon: QrCode, tone: "text-status-success-fg", label: "WhatsApp Web (QR)" },
   instagram: { icon: Camera, tone: "text-status-danger-fg", label: "Instagram" },
   messenger: { icon: Send, tone: "text-link", label: "Messenger" },
+  messenger_meta: { icon: Send, tone: "text-link", label: "Messenger" },
+  instagram_meta: { icon: Camera, tone: "text-status-danger-fg", label: "Instagram" },
   facebook: { icon: Send, tone: "text-link", label: "Facebook" },
   email: { icon: Mail, tone: "text-data-2", label: "Correo" },
   sms: { icon: MessageSquare, tone: "text-link", label: "SMS" },
