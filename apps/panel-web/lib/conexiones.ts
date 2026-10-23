@@ -9,6 +9,16 @@ export type ConexionConsola = ConnectionsConsole["items"][number];
 export type AgenteConsola = ConexionConsola["agents"][number];
 type Tono = "success" | "warning" | "danger" | "info" | "neutral";
 
+/** Campo de la vista de credenciales de una conexión (GET .../credentials). */
+export type CampoCredencial = {
+  name: string;
+  label: string;
+  value?: string | null;
+  secret: boolean;
+  configured: boolean;
+  platform?: boolean;
+};
+
 const SALUD: Record<ConexionConsola["health"], { label: string; tono: Tono }> = {
   ok: { label: "Sana", tono: "success" },
   degraded: { label: "Degradada", tono: "warning" },
@@ -116,10 +126,12 @@ export function metaTabs(connectionId: string): { href: string; label: string }[
   const base = `/conexiones/meta/${connectionId}`;
   return [
     { href: base, label: "Resumen" },
+    { href: `${base}/credenciales`, label: "Credenciales" },
     { href: `${base}/salud`, label: "Salud de Meta" },
     { href: `${base}/numeros`, label: "Números" },
     { href: `${base}/plantillas`, label: "Plantillas" },
     { href: `${base}/produccion`, label: "Producción" },
+    { href: `${base}/webhook`, label: "Webhook" },
     { href: "/conexiones/requisitos", label: "Requisitos" },
   ];
 }

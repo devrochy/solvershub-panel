@@ -157,10 +157,12 @@ describe("gestión y alta de conexiones", () => {
   it("el hub de Meta agrupa las pestañas de gestión (sin webhook: es del negocio)", () => {
     expect(metaTabs("m1").map((t) => t.label)).toEqual([
       "Resumen",
+      "Credenciales",
       "Salud de Meta",
       "Números",
       "Plantillas",
       "Producción",
+      "Webhook",
       "Requisitos",
     ]);
     expect(metaTabs("m1").map((t) => t.href)).toContain("/conexiones/requisitos");

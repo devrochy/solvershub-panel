@@ -9,7 +9,7 @@ const META_ACTIONS = new Set(["activate", "deactivate", "delete"]);
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as
-    | { action?: string; kind?: string }
+    | { action?: string; kind?: string; password?: string }
     | null;
   const action = body?.action ?? "";
   const isMeta = body?.kind === "meta_connection";
@@ -20,7 +20,10 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const path = isMeta
     ? `/admin/meta/connections/${id}/action`
     : `/admin/connections/${id}/action`;
-  const res = await apiFetch(path, { method: "POST", body: { action } });
+  const res = await apiFetch(path, {
+    method: "POST",
+    body: { action, ...(body?.password ? { password: body.password } : {}) },
+  });
   if (!res.ok) {
     return NextResponse.json({ error: res.error }, { status: res.status });
   }

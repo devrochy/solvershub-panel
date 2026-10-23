@@ -11,6 +11,7 @@ import type { components } from "@/lib/api/schema";
 import { formatDateTime } from "@/lib/format";
 
 import { MensajePrueba } from "./_components/mensaje-prueba";
+import { EliminarCuentaDialog } from "../../_components/eliminar-cuenta-dialog";
 import { MetaTabs } from "../_components/meta-tabs";
 
 export const metadata = { title: "Conexión de WhatsApp" };
@@ -109,6 +110,29 @@ export default async function ConexionMetaPage({
           ) : (
             <p className="text-sm text-status-danger-fg">No se pudo preparar la prueba: {pruebaRes.error}</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Zona de peligro</CardTitle>
+          <p className="text-xs text-text-soft">
+            Eliminar la cuenta archiva sus números y WABAs y revoca sus tokens. Podrás reconectarla
+            después.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <EliminarCuentaDialog
+            connectionId={conexion.id}
+            label={`WhatsApp${numero ? ` · ${numero}` : ""}`}
+            kind="meta_connection"
+            redirectTo="/conexiones"
+            trigger={
+              <Button variant="danger" size="sm">
+                Eliminar cuenta
+              </Button>
+            }
+          />
         </CardContent>
       </Card>
     </div>

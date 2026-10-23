@@ -5694,6 +5694,325 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Media Settings
+         * @description Proveedores de audio/visión del negocio, fallback y catálogo para el panel.
+         */
+        get: operations["get_media_settings_api_v1_admin_settings_media_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Media Audio
+         * @description Proveedor/modelo/llave de transcripción de notas de voz (BYOK opcional).
+         */
+        put: operations["save_media_audio_api_v1_admin_settings_media_audio_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/vision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Media Vision
+         * @description Proveedor/modelo/llave y modo de imagen (`describir` o `sin_descripcion`).
+         */
+        put: operations["save_media_vision_api_v1_admin_settings_media_vision_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/audio/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Media Audio
+         * @description Prueba la combinación contra el proveedor real sin guardarla.
+         */
+        post: operations["test_media_audio_api_v1_admin_settings_media_audio_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/vision/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Media Vision
+         * @description Prueba la combinación de visión con una imagen mínima, sin guardarla.
+         */
+        post: operations["test_media_vision_api_v1_admin_settings_media_vision_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/geocodificar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Geocodificar Lead
+         * @description Convierte la dirección del cliente en coordenadas y las guarda en el perfil.
+         *
+         *     El proveedor recibe solo la dirección compuesta (dirección, municipio, departamento y
+         *     país). La plataforma paga la llamada y hay topes global y por negocio (ADR-0154).
+         */
+        post: operations["geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/perfil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lead Perfil
+         * @description Corrige los datos base del cliente desde la pestaña General.
+         *
+         *     Solo acepta las claves canónicas de `core.memory.perfil`; escribe por
+         *     `core/memory/facts.py` con `source="human"` para que el agente lo use desde la
+         *     siguiente conversación y quede la procedencia en la ficha.
+         */
+        patch: operations["update_lead_perfil_api_v1_admin_leads__lead_id__perfil_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/collaborators/{admin_id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Collaborator Permissions
+         * @description Acceso efectivo por sección y si es heredado, para la grilla de permisos (D-SPEC-34-1).
+         *
+         *     Un owner/tester ve el estado en su negocio activo; el master elige el negocio con `tenant`
+         *     (vacío = alcance global).
+         */
+        get: operations["read_collaborator_permissions_api_v1_admin_collaborators__admin_id__permissions_get"];
+        put?: never;
+        /**
+         * Set Collaborator Permissions
+         * @description Aplica en bloque los permisos de un colaborador (grilla, D-SPEC-34-1).
+         */
+        post: operations["set_collaborator_permissions_api_v1_admin_collaborators__admin_id__permissions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/invitations/outgoing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Outgoing
+         * @description Invitaciones pendientes ENVIADAS por un negocio, para listarlas y revocarlas (HU-UI-14).
+         *
+         *     Un owner/tester ve las de su negocio activo; el master elige el negocio con `tenant`
+         *     (vacío = el activo del selector).
+         */
+        get: operations["list_outgoing_api_v1_admin_invitations_outgoing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/files/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Serve File */
+        get: operations["serve_file_api_v1_files__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/products/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Product Image
+         * @description Sube la foto de un producto al controlador único (HU-CRM-05) y devuelve su clave y URL.
+         *
+         *     El panel/APK la suben antes de guardar el producto; luego mandan `image_key` en el alta.
+         */
+        post: operations["upload_product_image_api_v1_pack_commerce_products_image_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connection Credentials
+         * @description Datos de registro de una conexión manual; los secretos solo indican si están cargados.
+         */
+        get: operations["connection_credentials_api_v1_admin_connections__connection_id__credentials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Connection Credentials
+         * @description Revela los secretos de una conexión manual tras confirmar la contraseña del usuario.
+         */
+        post: operations["reveal_connection_credentials_api_v1_admin_connections__connection_id__credentials_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Meta Connection Credentials
+         * @description Datos de registro de una conexión Meta; los secretos solo indican si están cargados.
+         */
+        get: operations["meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/connections/{connection_id}/credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Meta Connection Credentials
+         * @description Revela los secretos propios del negocio tras confirmar la contraseña.
+         *
+         *     Nunca devuelve el App Secret ni el verify token de la **app de la plataforma**
+         *     (Embedded Signup / carga manual): esos son compartidos y no pertenecen al negocio.
+         */
+        post: operations["reveal_meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6703,6 +7022,8 @@ export interface components {
              * @enum {string}
              */
             action: "activate" | "deactivate" | "primary" | "delete";
+            /** Password */
+            password?: string | null;
         };
         /** ConnectionCategory */
         ConnectionCategory: {
@@ -7744,6 +8065,9 @@ export interface components {
             extras: {
                 [key: string]: unknown;
             };
+            perfil: components["schemas"]["LeadPerfilOut"];
+            /** Agentes */
+            agentes: string[];
         };
         /** LeadsResponse */
         LeadsResponse: {
@@ -7751,6 +8075,8 @@ export interface components {
             columns: components["schemas"]["LeadColumn"][];
             /** Filters */
             filters?: components["schemas"]["LeadFilter"][];
+            /** Agents */
+            agents: components["schemas"]["LeadAgentOut"][];
             /** Items */
             items: components["schemas"]["LeadRow"][];
             /** Total */
@@ -8070,6 +8396,8 @@ export interface components {
              * @enum {string}
              */
             action: "activate" | "deactivate" | "delete" | "primary";
+            /** Password */
+            password?: string | null;
         };
         /** MetaCreditConnection */
         MetaCreditConnection: {
@@ -9035,6 +9363,10 @@ export interface components {
             price: number;
             /** Image Url */
             image_url?: string | null;
+            /** Image Url Externa */
+            image_url_externa?: string | null;
+            /** Image Key */
+            image_key?: string | null;
             /** Variants */
             variants: components["schemas"]["VariantOut"][];
         };
@@ -9074,6 +9406,8 @@ export interface components {
             trial_days?: number | null;
             /** Image Url */
             image_url?: string | null;
+            /** Image Key */
+            image_key?: string | null;
         };
         /** Promise */
         Promise: {
@@ -12940,8 +13274,13 @@ export interface components {
             };
             /** Columns */
             columns: components["schemas"]["LeadColumn"][];
+            perfil: components["schemas"]["LeadPerfilOut"];
+            /** Agentes */
+            agentes: components["schemas"]["LeadAgentData"][];
+            /** Campos Perfil */
+            campos_perfil: components["schemas"]["LeadCampoPerfil"][];
             /** Editables */
-            editables?: components["schemas"]["LeadEditable"][];
+            editables: components["schemas"]["LeadEditable"][];
         };
         /**
          * LeadEditable
@@ -13366,6 +13705,455 @@ export interface components {
         Body_upload_avatar_api_v1_admin_me_avatar_post: {
             /** File */
             file: string;
+        };
+        /** MediaAudioSettings */
+        MediaAudioSettings: {
+            /** Enabled */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Has Api Key */
+            has_api_key: boolean;
+            /** Using Platform Key */
+            using_platform_key: boolean;
+        };
+        /** MediaAudioUpdate */
+        MediaAudioUpdate: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
+        /** MediaCatalog */
+        MediaCatalog: {
+            /** Audio */
+            audio: components["schemas"]["MediaCatalogProvider"][];
+            /** Vision */
+            vision: components["schemas"]["MediaCatalogProvider"][];
+        };
+        /** MediaCatalogModel */
+        MediaCatalogModel: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+        };
+        /** MediaCatalogProvider */
+        MediaCatalogProvider: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Default Model */
+            default_model: string;
+            /** Models */
+            models: components["schemas"]["MediaCatalogModel"][];
+        };
+        /** MediaSettingsResponse */
+        MediaSettingsResponse: {
+            audio: components["schemas"]["MediaAudioSettings"];
+            vision: components["schemas"]["MediaVisionSettings"];
+            catalog: components["schemas"]["MediaCatalog"];
+        };
+        /** MediaTestRequest */
+        MediaTestRequest: {
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
+        /** MediaTestResponse */
+        MediaTestResponse: {
+            /** Ok */
+            ok: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+        };
+        /** MediaVisionSettings */
+        MediaVisionSettings: {
+            /** Enabled */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Has Api Key */
+            has_api_key: boolean;
+            /** Using Platform Key */
+            using_platform_key: boolean;
+            /** Mode */
+            mode: string;
+        };
+        /** MediaVisionUpdate */
+        MediaVisionUpdate: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Mode
+             * @default describir
+             * @enum {string}
+             */
+            mode: "describir" | "sin_descripcion";
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
+        /** Body_upload_product_image_api_v1_pack_commerce_products_image_post */
+        Body_upload_product_image_api_v1_pack_commerce_products_image_post: {
+            /** Archivo */
+            archivo: string;
+        };
+        /**
+         * LeadAgentData
+         * @description La data de un agente para la ficha: columnas con su valor y campos editables.
+         */
+        LeadAgentData: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Icon */
+            icon?: string | null;
+            /** Pack Id */
+            pack_id?: string | null;
+            /** Columns */
+            columns: components["schemas"]["LeadColumnValue"][];
+            /** Editables */
+            editables: components["schemas"]["LeadEditable"][];
+        };
+        /**
+         * LeadAgentOut
+         * @description Un agente del negocio y las columnas que aporta a la lista de clientes.
+         */
+        LeadAgentOut: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Icon */
+            icon?: string | null;
+            /** Pack Id */
+            pack_id?: string | null;
+            /** Columns */
+            columns: components["schemas"]["LeadColumn"][];
+        };
+        /**
+         * LeadCampoPerfil
+         * @description Metadatos de un campo editable del perfil (los comparte la ficha y la API).
+         */
+        LeadCampoPerfil: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "texto" | "email" | "telefono" | "opciones" | "numero" | "url";
+            /** Max Length */
+            max_length: number;
+            /** Options */
+            options: components["schemas"]["LeadFilterOption"][];
+            /** Group */
+            group: string;
+            /** Help */
+            help?: string | null;
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+        };
+        /** LeadColumnValue */
+        LeadColumnValue: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value?: unknown;
+        };
+        /**
+         * LeadGeocodificacion
+         * @description Resultado de geocodificar la dirección y el perfil actualizado.
+         */
+        LeadGeocodificacion: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
+            /** Direccion Normalizada */
+            direccion_normalizada?: string | null;
+            /** Precision */
+            precision?: string | null;
+            /** Proveedor */
+            proveedor: string;
+            perfil: components["schemas"]["LeadPerfilOut"];
+        };
+        /**
+         * LeadPerfilOut
+         * @description Datos base del cliente. Las claves son las canónicas de `core.memory.perfil`.
+         */
+        LeadPerfilOut: {
+            /** Name */
+            name?: string | null;
+            /** Apellido */
+            apellido?: string | null;
+            /** Alias */
+            alias?: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
+            /** Nombre Visible */
+            nombre_visible: string;
+            /** Phone */
+            phone?: string | null;
+            /** Phone E164 */
+            phone_e164?: string | null;
+            /** Phone Indicativo */
+            phone_indicativo?: string | null;
+            /** Phone Local */
+            phone_local?: string | null;
+            /** Pais Telefono */
+            pais_telefono?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Tipo Documento */
+            tipo_documento?: string | null;
+            /** Id Document */
+            id_document?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Municipio */
+            municipio?: string | null;
+            /** Departamento */
+            departamento?: string | null;
+            /** Pais */
+            pais?: string | null;
+            /** Latitud */
+            latitud?: number | null;
+            /** Longitud */
+            longitud?: number | null;
+            /** Direccion Completa */
+            direccion_completa?: string | null;
+            /** Direccion Normalizada */
+            direccion_normalizada?: string | null;
+            /** Geocodificado En */
+            geocodificado_en?: string | null;
+            /** Geocodificacion Precision */
+            geocodificacion_precision?: string | null;
+            /** Geocodificacion Proveedor */
+            geocodificacion_proveedor?: string | null;
+            /** Mapa Url */
+            mapa_url?: string | null;
+            /** Clasificacion */
+            clasificacion?: string | null;
+            /** Clasificacion Label */
+            clasificacion_label?: string | null;
+        };
+        /**
+         * LeadPerfilUpdate
+         * @description Campos canónicos del perfil que se cambian desde la pestaña General.
+         *
+         *     `otros` conserva la posibilidad de guardar un dato libre (una preferencia, por ejemplo)
+         *     sin saltarse las reglas de `facts.py`: no admite claves del sistema ni datos sensibles.
+         */
+        LeadPerfilUpdate: {
+            /** Valores */
+            valores?: {
+                [key: string]: unknown;
+            };
+            /** Otros */
+            otros?: {
+                [key: string]: string;
+            };
+        };
+        /** OutgoingItem */
+        OutgoingItem: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** Rol */
+            rol: string;
+            /** Creadaen */
+            creadaEn: string | null;
+        };
+        /** PermissionState */
+        PermissionState: {
+            /** Section */
+            section: string;
+            /** Access */
+            access: string;
+            /** Heredado */
+            heredado: boolean;
+        };
+        /** SetPermissionsRequest */
+        SetPermissionsRequest: {
+            /**
+             * Tenant
+             * @default
+             */
+            tenant: string;
+            /** Permissions */
+            permissions: {
+                [key: string]: string;
+            };
+        };
+        /** CredentialField */
+        CredentialField: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value?: string | null;
+            /**
+             * Secret
+             * @default false
+             */
+            secret: boolean;
+            /**
+             * Configured
+             * @default false
+             */
+            configured: boolean;
+            /**
+             * Platform
+             * @default false
+             */
+            platform: boolean;
+        };
+        /** ConnectionCredentialsResponse */
+        ConnectionCredentialsResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "manual";
+            /** Type Id */
+            type_id: string;
+            /** Label */
+            label: string;
+            /** Fields */
+            fields: components["schemas"]["CredentialField"][];
+        };
+        /** RevealCredentialsRequest */
+        RevealCredentialsRequest: {
+            /**
+             * Password
+             * @default
+             */
+            password: string;
+        };
+        /** RevealedSecretsResponse */
+        RevealedSecretsResponse: {
+            /** Secrets */
+            secrets: {
+                [key: string]: string;
+            };
+        };
+        /** MetaCredentialField */
+        MetaCredentialField: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value?: string | null;
+            /**
+             * Secret
+             * @default false
+             */
+            secret: boolean;
+            /**
+             * Configured
+             * @default false
+             */
+            configured: boolean;
+            /**
+             * Platform
+             * @default false
+             */
+            platform: boolean;
+        };
+        /** MetaCredentialsResponse */
+        MetaCredentialsResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "meta";
+            /** Channel */
+            channel: string;
+            /** Environment */
+            environment: string;
+            /** Origin */
+            origin: string;
+            /** Fields */
+            fields: components["schemas"]["MetaCredentialField"][];
+        };
+        /** MetaRevealRequest */
+        MetaRevealRequest: {
+            /**
+             * Password
+             * @default
+             */
+            password: string;
+        };
+        /** MetaRevealedSecrets */
+        MetaRevealedSecrets: {
+            /** Secrets */
+            secrets: {
+                [key: string]: string;
+            };
         };
     };
     responses: never;
@@ -24956,6 +25744,8 @@ export interface operations {
                 q?: string | null;
                 channel?: string | null;
                 connection_id?: string | null;
+                /** @description Solo este cliente. */
+                lead_id?: string | null;
                 /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
                 filtro?: string[] | null;
             };
@@ -25148,6 +25938,558 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_media_settings_api_v1_admin_settings_media_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaSettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_media_audio_api_v1_admin_settings_media_audio_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaAudioUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAudioSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_media_vision_api_v1_admin_settings_media_vision_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaVisionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaVisionSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_media_audio_api_v1_admin_settings_media_audio_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_media_vision_api_v1_admin_settings_media_vision_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadGeocodificacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lead_perfil_api_v1_admin_leads__lead_id__perfil_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadPerfilUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_collaborator_permissions_api_v1_admin_collaborators__admin_id__permissions_get: {
+        parameters: {
+            query?: {
+                tenant?: string;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionState"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_collaborator_permissions_api_v1_admin_collaborators__admin_id__permissions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_outgoing_api_v1_admin_invitations_outgoing_get: {
+        parameters: {
+            query?: {
+                tenant?: string;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutgoingItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    serve_file_api_v1_files__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_product_image_api_v1_pack_commerce_products_image_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_product_image_api_v1_pack_commerce_products_image_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connection_credentials_api_v1_admin_connections__connection_id__credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionCredentialsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_connection_credentials_api_v1_admin_connections__connection_id__credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevealCredentialsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealedSecretsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetaCredentialsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_meta_connection_credentials_api_v1_admin_meta_connections__connection_id__credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetaRevealRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetaRevealedSecrets"];
                 };
             };
             /** @description Validation Error */
