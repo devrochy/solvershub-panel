@@ -6013,6 +6013,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/messenger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Messenger State
+         * @description Si el alta puede completarse aquí (app de Meta configurada y plan que incluye Messenger).
+         */
+        get: operations["messenger_state_api_v1_admin_meta_messenger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/attempt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Attempt
+         * @description Abre un intento de popup de Facebook (un solo uso, vence a los 15 minutos).
+         */
+        post: operations["messenger_attempt_api_v1_admin_meta_messenger_attempt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Discover
+         * @description Canjea el `code` del popup y lista las Páginas que el usuario administra, con cuáles pueden conectarse.
+         *     Los tokens de las Páginas no salen del servidor.
+         */
+        post: operations["messenger_discover_api_v1_admin_meta_messenger_discover_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Connect
+         * @description Conecta las Páginas elegidas: reclama cada una (un solo dueño), guarda su token, crea su conexión y
+         *     suscribe y verifica el webhook. Una Página que falla no impide las demás: va en `skipped`.
+         */
+        post: operations["messenger_connect_api_v1_admin_meta_messenger_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -14154,6 +14236,132 @@ export interface components {
             secrets: {
                 [key: string]: string;
             };
+        };
+        /**
+         * AttemptOut
+         * @description Valor de un solo uso que el panel devuelve con el `code` del popup.
+         */
+        AttemptOut: {
+            /** Attempt */
+            attempt: string;
+            /** Expires In */
+            expires_in: number;
+        };
+        /** DiscoverIn */
+        DiscoverIn: {
+            /**
+             * Code
+             * Format: password
+             */
+            code: string;
+            /**
+             * Attempt
+             * Format: password
+             */
+            attempt: string;
+        };
+        /** DiscoverOut */
+        DiscoverOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Pages */
+            pages: components["schemas"]["PageOut"][];
+        };
+        /**
+         * MessengerState
+         * @description Qué puede ofrecer el alta en este entorno. `app_id` y `config_id` son públicos (los usa el SDK de
+         *     Facebook en el navegador); el App Secret nunca sale del servidor. `plan_includes`: el plan del negocio
+         *     incluye el canal.
+         */
+        MessengerState: {
+            /** Meta Configured */
+            meta_configured: boolean;
+            /** App Id */
+            app_id: string;
+            /** Config Id */
+            config_id: string;
+            /** Graph Api Version */
+            graph_api_version: string;
+            /**
+             * Missing Settings
+             * @default []
+             */
+            missing_settings: string[];
+            /** Plan Includes */
+            plan_includes: boolean;
+        };
+        /** PageOut */
+        PageOut: {
+            /** Page Id */
+            page_id: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category?: string | null;
+            /** Eligible */
+            eligible: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Already Connected
+             * @default false
+             */
+            already_connected: boolean;
+        };
+        /** SkippedPageOut */
+        SkippedPageOut: {
+            /** Page Id */
+            page_id: string;
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
+        /** ConnectIn */
+        ConnectIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Page Ids */
+            page_ids: string[];
+        };
+        /**
+         * ConnectOut
+         * @description `connected` incluye las Páginas guardadas aunque Meta no haya confirmado la suscripción
+         *     (`subscribed = false`): no reciben mensajes hasta reintentar. `skipped`: no se conectaron.
+         */
+        ConnectOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Connected */
+            connected: components["schemas"]["ConnectedPageOut"][];
+            /** Skipped */
+            skipped: components["schemas"]["SkippedPageOut"][];
+        };
+        /** ConnectedPageOut */
+        ConnectedPageOut: {
+            /** Page Id */
+            page_id: string;
+            /**
+             * Channel Connection Id
+             * Format: uuid
+             */
+            channel_connection_id: string;
+            /** Subscribed */
+            subscribed: boolean;
+            /**
+             * Subscribed Fields
+             * @default []
+             */
+            subscribed_fields: string[];
         };
     };
     responses: never;
@@ -26490,6 +26698,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaRevealedSecrets"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_state_api_v1_admin_meta_messenger_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessengerState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_attempt_api_v1_admin_meta_messenger_attempt_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttemptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_discover_api_v1_admin_meta_messenger_discover_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscoverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscoverOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_connect_api_v1_admin_meta_messenger_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectOut"];
                 };
             };
             /** @description Validation Error */
