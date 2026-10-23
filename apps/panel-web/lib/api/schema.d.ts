@@ -1898,6 +1898,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/meta/messenger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Messenger State
+         * @description Si el alta puede completarse aquí (app de Meta configurada y plan que incluye Messenger).
+         */
+        get: operations["messenger_state_api_v1_admin_meta_messenger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/attempt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Attempt
+         * @description Abre un intento de popup de Facebook (un solo uso, vence a los 15 minutos).
+         */
+        post: operations["messenger_attempt_api_v1_admin_meta_messenger_attempt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Discover
+         * @description Canjea el `code` del popup y lista las Páginas que el usuario administra, con cuáles pueden conectarse.
+         *     Los tokens de las Páginas no salen del servidor.
+         */
+        post: operations["messenger_discover_api_v1_admin_meta_messenger_discover_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/meta/messenger/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Messenger Connect
+         * @description Conecta las Páginas elegidas: reclama cada una (un solo dueño), guarda su token, crea su conexión y
+         *     suscribe y verifica el webhook. Una Página que falla no impide las demás: va en `skipped`.
+         */
+        post: operations["messenger_connect_api_v1_admin_meta_messenger_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/collaborators/pack-roles": {
         parameters: {
             query?: never;
@@ -6013,7 +6095,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/meta/messenger": {
+    "/api/v1/admin/meta/instagram": {
         parameters: {
             query?: never;
             header?: never;
@@ -6021,10 +6103,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Messenger State
-         * @description Si el alta puede completarse aquí (app de Meta configurada y plan que incluye Messenger).
+         * Instagram State
+         * @description Si el alta puede completarse aquí (app de Meta configurada y plan que incluye Instagram).
          */
-        get: operations["messenger_state_api_v1_admin_meta_messenger_get"];
+        get: operations["instagram_state_api_v1_admin_meta_instagram_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6033,7 +6115,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/meta/messenger/attempt": {
+    "/api/v1/admin/meta/instagram/attempt": {
         parameters: {
             query?: never;
             header?: never;
@@ -6043,17 +6125,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Messenger Attempt
+         * Instagram Attempt
          * @description Abre un intento de popup de Facebook (un solo uso, vence a los 15 minutos).
          */
-        post: operations["messenger_attempt_api_v1_admin_meta_messenger_attempt_post"];
+        post: operations["instagram_attempt_api_v1_admin_meta_instagram_attempt_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/meta/messenger/discover": {
+    "/api/v1/admin/meta/instagram/discover": {
         parameters: {
             query?: never;
             header?: never;
@@ -6063,18 +6145,18 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Messenger Discover
-         * @description Canjea el `code` del popup y lista las Páginas que el usuario administra, con cuáles pueden conectarse.
-         *     Los tokens de las Páginas no salen del servidor.
+         * Instagram Discover
+         * @description Canjea el `code` del popup y lista las cuentas de Instagram vinculadas a las Páginas que el usuario
+         *     administra, con cuáles pueden conectarse. Los tokens de las Páginas no salen del servidor.
          */
-        post: operations["messenger_discover_api_v1_admin_meta_messenger_discover_post"];
+        post: operations["instagram_discover_api_v1_admin_meta_instagram_discover_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/meta/messenger/connect": {
+    "/api/v1/admin/meta/instagram/connect": {
         parameters: {
             query?: never;
             header?: never;
@@ -6084,11 +6166,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Messenger Connect
-         * @description Conecta las Páginas elegidas: reclama cada una (un solo dueño), guarda su token, crea su conexión y
-         *     suscribe y verifica el webhook. Una Página que falla no impide las demás: va en `skipped`.
+         * Instagram Connect
+         * @description Conecta las cuentas elegidas: reclama cada una (un solo dueño), guarda el token de su Página vinculada,
+         *     crea su conexión y suscribe y verifica el webhook. Una cuenta que falla no impide las demás: va en `skipped`.
          */
-        post: operations["messenger_connect_api_v1_admin_meta_messenger_connect_post"];
+        post: operations["instagram_connect_api_v1_admin_meta_instagram_connect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6458,6 +6540,16 @@ export interface components {
         AsistenciaIn: {
             /** Asistio */
             asistio: boolean;
+        };
+        /**
+         * AttemptOut
+         * @description Valor de un solo uso que el panel devuelve con el `code` del popup.
+         */
+        AttemptOut: {
+            /** Attempt */
+            attempt: string;
+            /** Expires In */
+            expires_in: number;
         };
         /** AttemptRow */
         AttemptRow: {
@@ -7487,6 +7579,29 @@ export interface components {
             /** Eventos */
             eventos: components["schemas"]["SyncRow"][];
         };
+        /** DiscoverIn */
+        DiscoverIn: {
+            /**
+             * Code
+             * Format: password
+             */
+            code: string;
+            /**
+             * Attempt
+             * Format: password
+             */
+            attempt: string;
+        };
+        /** DiscoverOut */
+        DiscoverOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Pages */
+            pages: components["schemas"]["PageOut"][];
+        };
         /** DlqEntry */
         DlqEntry: {
             /** Entry Id */
@@ -8460,6 +8575,29 @@ export interface components {
              */
             has_more: boolean;
         };
+        /**
+         * MessengerState
+         * @description Qué puede ofrecer el alta en este entorno. `app_id` y `config_id` son públicos (los usa el SDK de
+         *     Facebook en el navegador); el App Secret nunca sale del servidor. `plan_includes`: el plan del negocio
+         *     incluye el canal.
+         */
+        MessengerState: {
+            /** Meta Configured */
+            meta_configured: boolean;
+            /** App Id */
+            app_id: string;
+            /** Config Id */
+            config_id: string;
+            /** Graph Api Version */
+            graph_api_version: string;
+            /**
+             * Missing Settings
+             * @default []
+             */
+            missing_settings: string[];
+            /** Plan Includes */
+            plan_includes: boolean;
+        };
         /** MetaCategoryCost */
         MetaCategoryCost: {
             /** Category */
@@ -8836,6 +8974,24 @@ export interface components {
             value: string;
             /** Label */
             label: string;
+        };
+        /** PageOut */
+        PageOut: {
+            /** Page Id */
+            page_id: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category?: string | null;
+            /** Eligible */
+            eligible: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Already Connected
+             * @default false
+             */
+            already_connected: boolean;
         };
         /** Page[ConversationSummary] */
         Page_ConversationSummary_: {
@@ -10447,6 +10603,15 @@ export interface components {
             /** Tools */
             tools: components["schemas"]["SkillBinding"][];
         };
+        /** SkippedPageOut */
+        SkippedPageOut: {
+            /** Page Id */
+            page_id: string;
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
         /** SpecPayload */
         SpecPayload: {
             /** Spec */
@@ -11955,6 +12120,49 @@ export interface components {
             name: string;
             /** Domains */
             domains: string[];
+        };
+        /** ConnectIn */
+        ConnectIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Page Ids */
+            page_ids: string[];
+        };
+        /**
+         * ConnectOut
+         * @description `connected` incluye las Páginas guardadas aunque Meta no haya confirmado la suscripción
+         *     (`subscribed = false`): no reciben mensajes hasta reintentar. `skipped`: no se conectaron.
+         */
+        ConnectOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Connected */
+            connected: components["schemas"]["ConnectedPageOut"][];
+            /** Skipped */
+            skipped: components["schemas"]["SkippedPageOut"][];
+        };
+        /** ConnectedPageOut */
+        ConnectedPageOut: {
+            /** Page Id */
+            page_id: string;
+            /**
+             * Channel Connection Id
+             * Format: uuid
+             */
+            channel_connection_id: string;
+            /** Subscribed */
+            subscribed: boolean;
+            /**
+             * Subscribed Fields
+             * @default []
+             */
+            subscribed_fields: string[];
         };
         /** DeclarativeToolsOut */
         DeclarativeToolsOut: {
@@ -14237,18 +14445,81 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** InstagramAccountOut */
+        InstagramAccountOut: {
+            /** Ig User Id */
+            ig_user_id: string;
+            /** Username */
+            username?: string | null;
+            /** Page Id */
+            page_id: string;
+            /** Page Name */
+            page_name: string;
+            /** Eligible */
+            eligible: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Already Connected
+             * @default false
+             */
+            already_connected: boolean;
+        };
         /**
-         * AttemptOut
+         * InstagramAttemptOut
          * @description Valor de un solo uso que el panel devuelve con el `code` del popup.
          */
-        AttemptOut: {
+        InstagramAttemptOut: {
             /** Attempt */
             attempt: string;
             /** Expires In */
             expires_in: number;
         };
-        /** DiscoverIn */
-        DiscoverIn: {
+        /** InstagramConnectIn */
+        InstagramConnectIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Ig User Ids */
+            ig_user_ids: string[];
+        };
+        /**
+         * InstagramConnectOut
+         * @description `connected` incluye las cuentas guardadas aunque Meta no haya confirmado la suscripción
+         *     (`subscribed = false`): no reciben mensajes hasta reintentar. `skipped`: no se conectaron.
+         */
+        InstagramConnectOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Connected */
+            connected: components["schemas"]["InstagramConnectedOut"][];
+            /** Skipped */
+            skipped: components["schemas"]["InstagramSkippedOut"][];
+        };
+        /** InstagramConnectedOut */
+        InstagramConnectedOut: {
+            /** Ig User Id */
+            ig_user_id: string;
+            /**
+             * Channel Connection Id
+             * Format: uuid
+             */
+            channel_connection_id: string;
+            /** Subscribed */
+            subscribed: boolean;
+            /**
+             * Subscribed Fields
+             * @default []
+             */
+            subscribed_fields: string[];
+        };
+        /** InstagramDiscoverIn */
+        InstagramDiscoverIn: {
             /**
              * Code
              * Format: password
@@ -14260,23 +14531,34 @@ export interface components {
              */
             attempt: string;
         };
-        /** DiscoverOut */
-        DiscoverOut: {
+        /** InstagramDiscoverOut */
+        InstagramDiscoverOut: {
             /**
              * Connection Id
              * Format: uuid
              */
             connection_id: string;
-            /** Pages */
-            pages: components["schemas"]["PageOut"][];
+            /** Accounts */
+            accounts: components["schemas"]["InstagramAccountOut"][];
+            /** Pages Without Instagram */
+            pages_without_instagram: number;
+        };
+        /** InstagramSkippedOut */
+        InstagramSkippedOut: {
+            /** Ig User Id */
+            ig_user_id: string;
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
         };
         /**
-         * MessengerState
+         * InstagramState
          * @description Qué puede ofrecer el alta en este entorno. `app_id` y `config_id` son públicos (los usa el SDK de
          *     Facebook en el navegador); el App Secret nunca sale del servidor. `plan_includes`: el plan del negocio
          *     incluye el canal.
          */
-        MessengerState: {
+        InstagramState: {
             /** Meta Configured */
             meta_configured: boolean;
             /** App Id */
@@ -14292,76 +14574,6 @@ export interface components {
             missing_settings: string[];
             /** Plan Includes */
             plan_includes: boolean;
-        };
-        /** PageOut */
-        PageOut: {
-            /** Page Id */
-            page_id: string;
-            /** Name */
-            name: string;
-            /** Category */
-            category?: string | null;
-            /** Eligible */
-            eligible: boolean;
-            /** Reason */
-            reason?: string | null;
-            /**
-             * Already Connected
-             * @default false
-             */
-            already_connected: boolean;
-        };
-        /** SkippedPageOut */
-        SkippedPageOut: {
-            /** Page Id */
-            page_id: string;
-            /** Code */
-            code: string;
-            /** Message */
-            message: string;
-        };
-        /** ConnectIn */
-        ConnectIn: {
-            /**
-             * Connection Id
-             * Format: uuid
-             */
-            connection_id: string;
-            /** Page Ids */
-            page_ids: string[];
-        };
-        /**
-         * ConnectOut
-         * @description `connected` incluye las Páginas guardadas aunque Meta no haya confirmado la suscripción
-         *     (`subscribed = false`): no reciben mensajes hasta reintentar. `skipped`: no se conectaron.
-         */
-        ConnectOut: {
-            /**
-             * Connection Id
-             * Format: uuid
-             */
-            connection_id: string;
-            /** Connected */
-            connected: components["schemas"]["ConnectedPageOut"][];
-            /** Skipped */
-            skipped: components["schemas"]["SkippedPageOut"][];
-        };
-        /** ConnectedPageOut */
-        ConnectedPageOut: {
-            /** Page Id */
-            page_id: string;
-            /**
-             * Channel Connection Id
-             * Format: uuid
-             */
-            channel_connection_id: string;
-            /** Subscribed */
-            subscribed: boolean;
-            /**
-             * Subscribed Fields
-             * @default []
-             */
-            subscribed_fields: string[];
         };
     };
     responses: never;
@@ -18079,6 +18291,138 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_state_api_v1_admin_meta_messenger_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessengerState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_attempt_api_v1_admin_meta_messenger_attempt_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttemptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_discover_api_v1_admin_meta_messenger_discover_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscoverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscoverOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messenger_connect_api_v1_admin_meta_messenger_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectOut"];
                 };
             };
             /** @description Validation Error */
@@ -26711,7 +27055,7 @@ export interface operations {
             };
         };
     };
-    messenger_state_api_v1_admin_meta_messenger_get: {
+    instagram_state_api_v1_admin_meta_instagram_get: {
         parameters: {
             query?: never;
             header?: {
@@ -26728,7 +27072,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessengerState"];
+                    "application/json": components["schemas"]["InstagramState"];
                 };
             };
             /** @description Validation Error */
@@ -26742,7 +27086,7 @@ export interface operations {
             };
         };
     };
-    messenger_attempt_api_v1_admin_meta_messenger_attempt_post: {
+    instagram_attempt_api_v1_admin_meta_instagram_attempt_post: {
         parameters: {
             query?: never;
             header?: {
@@ -26759,7 +27103,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttemptOut"];
+                    "application/json": components["schemas"]["InstagramAttemptOut"];
                 };
             };
             /** @description Validation Error */
@@ -26773,7 +27117,7 @@ export interface operations {
             };
         };
     };
-    messenger_discover_api_v1_admin_meta_messenger_discover_post: {
+    instagram_discover_api_v1_admin_meta_instagram_discover_post: {
         parameters: {
             query?: never;
             header?: {
@@ -26784,7 +27128,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DiscoverIn"];
+                "application/json": components["schemas"]["InstagramDiscoverIn"];
             };
         };
         responses: {
@@ -26794,7 +27138,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DiscoverOut"];
+                    "application/json": components["schemas"]["InstagramDiscoverOut"];
                 };
             };
             /** @description Validation Error */
@@ -26808,7 +27152,7 @@ export interface operations {
             };
         };
     };
-    messenger_connect_api_v1_admin_meta_messenger_connect_post: {
+    instagram_connect_api_v1_admin_meta_instagram_connect_post: {
         parameters: {
             query?: never;
             header?: {
@@ -26819,7 +27163,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ConnectIn"];
+                "application/json": components["schemas"]["InstagramConnectIn"];
             };
         };
         responses: {
@@ -26829,7 +27173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConnectOut"];
+                    "application/json": components["schemas"]["InstagramConnectOut"];
                 };
             };
             /** @description Validation Error */
