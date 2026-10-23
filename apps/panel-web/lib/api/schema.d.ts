@@ -5808,7 +5808,7 @@ export interface paths {
          * @description Convierte la dirección del cliente en coordenadas y las guarda en el perfil.
          *
          *     El proveedor recibe solo la dirección compuesta (dirección, municipio, departamento y
-         *     país). La plataforma paga la llamada y hay topes global y por negocio (ADR-0153).
+         *     país). La plataforma paga la llamada y hay topes global y por negocio (ADR-0154).
          */
         post: operations["geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post"];
         delete?: never;
