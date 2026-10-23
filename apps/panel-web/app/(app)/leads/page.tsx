@@ -1,24 +1,42 @@
 import Link from "next/link";
+import { Eye, Pencil, Send } from "lucide-react";
 
 import { AgenteSwitch } from "@/app/(app)/leads/_components/agente-switch";
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { FichaCliente } from "@/app/(app)/leads/_components/ficha-cliente";
 import { LeadsFilters } from "@/app/(app)/leads/_components/leads-filters";
-import { PromocionDelSegmento } from "@/app/(app)/leads/_components/promocion-del-segmento";
+import { AgentIcon } from "@/components/domain/agent-icon";
+import { ChannelIcon } from "@/components/domain/channel-icon";
 import { ListPage } from "@/components/templates/list-page";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { IconAction } from "@/components/ui/icon-action";
 import { Pagination } from "@/components/ui/pagination";
+import { Tooltip } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api/server";
-import type { ConversationConnection, LeadDetail, LeadsResponse, Me } from "@/lib/api/types";
-import { consultaClientes, segmentoDelFiltro, type FiltrosClientes } from "@/lib/clientes";
-import { formatCellValue } from "@/lib/format";
+import type { ConversationConnection, LeadAgent, LeadDetail, LeadsResponse, Me } from "@/lib/api/types";
+import {
+  consultaClientes,
+  etiquetaClasificacion,
+  telefonoVisible,
+  ubicacionVisible,
+  type FiltrosClientes,
+} from "@/lib/clientes";
 import { canalLabel } from "@/lib/labels";
 
 export const metadata = { title: "Clientes" };
 
 type LeadRow = LeadsResponse["items"][number];
+
+const TONO_CLASIFICACION: Record<string, "neutral" | "accent" | "success" | "warning" | "danger"> = {
+  prospecto: "neutral",
+  cliente: "success",
+  vip: "accent",
+  inactivo: "warning",
+  bloqueado: "danger",
+};
 
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<FiltrosClientes> }) {
   const sp = await searchParams;
@@ -34,46 +52,174 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   // HU-CRM-06 (D-SPEC-33-8): el envío a un segmento es solo del propietario o la plataforma.
   const puedeEnviar =
     me.ok && (me.data.role === "master" || me.data.role === "tester" || me.data.tenant?.role === "owner");
-  const { items, columns, filters, page, has_more, total } = res.ok
+  const { items, filters, agents, page, has_more, total } = res.ok
     ? res.data
-    : { items: [], columns: [], filters: [], page: 1, has_more: false, total: 0 };
+    : { items: [], filters: [], agents: [], page: 1, has_more: false, total: 0 };
 
-  // HU-CRM-06: la promoción por segmento solo existe si pack_commerce aporta el filtro de clasificación.
-  const conClasificacion = (filters ?? []).some((f) => f.key === "clasificacion");
-  const segmento = segmentoDelFiltro(sp.filtro, filters ?? []);
-
-  const hrefFicha = (id?: string) => {
+  const hrefFicha = (id?: string, agente?: string, editar = false) => {
     const next = new URLSearchParams(qs);
     if (id) next.set("cliente", id);
+    else next.delete("cliente");
+    if (id && agente) next.set("agente", agente);
+    else next.delete("agente");
+    if (id && editar) next.set("editar", "1");
+    else next.delete("editar");
     return `/leads${next.size ? `?${next.toString()}` : ""}`;
   };
 
+  const agentesDeLaFila = (lead: LeadRow, agentes: LeadAgent[]) => (
+    <div className="flex items-center gap-1">
+      {agentes.map((agente) => {
+        const tiene = lead.agentes.includes(agente.key);
+        const destino = agente.key === "general" ? hrefFicha(lead.id) : hrefFicha(lead.id, agente.key);
+        return (
+          <Tooltip key={agente.key} label={tiene ? agente.name : `${agente.name} · sin datos todavía`}>
+            <Link
+              href={destino}
+              scroll={false}
+              aria-label={`Abrir ${agente.name} de ${lead.perfil.nombre_visible}`}
+              className="rounded-md p-0.5 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <AgentIcon agentKey={agente.key} name={agente.name} muted={!tiene} />
+            </Link>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+
   const tableColumns: Column<LeadRow>[] = [
+    {
+      key: "avatar",
+      header: <span className="sr-only">Foto</span>,
+      className: "w-10",
+      cell: (lead) => <Avatar name={lead.perfil.nombre_visible} src={lead.perfil.avatar_url} size="sm" />,
+    },
     {
       key: "cliente",
       header: "Cliente",
       cell: (lead) => (
-        <Link href={hrefFicha(lead.id)} scroll={false} className="font-medium text-link hover:underline">
-          {lead.cliente}
-        </Link>
+        <div className="flex min-w-0 flex-col">
+          <Link
+            href={hrefFicha(lead.id)}
+            scroll={false}
+            className="truncate font-medium text-link hover:underline"
+          >
+            {lead.perfil.nombre_visible}
+          </Link>
+          {lead.perfil.alias && lead.perfil.alias !== lead.perfil.nombre_visible && (
+            <span className="truncate text-xs text-text-soft">Alias: {lead.perfil.alias}</span>
+          )}
+        </div>
       ),
     },
     {
       key: "canal",
       header: "Canal",
-      cell: (lead) => <Badge variant="neutral">{canalLabel(lead.canal)}</Badge>,
+      className: "w-14",
+      cell: (lead) => (
+        <span className="inline-flex items-center">
+          <ChannelIcon id={lead.canal} size="sm" />
+          <span className="sr-only">{canalLabel(lead.canal)}</span>
+        </span>
+      ),
     },
-    { key: "telefono", header: "Teléfono", cell: (lead) => <span className="text-body">{lead.telefono ?? "—"}</span> },
-    ...columns.map((column) => ({
-      key: column.key,
-      header: column.label,
-      cell: (lead: LeadRow) => <span className="text-body">{formatCellValue(lead.extras[column.key])}</span>,
-    })),
-    { key: "alta", header: "Alta", cell: (lead) => <span className="text-body">{lead.alta}</span> },
     {
-      key: "agente",
-      header: "Agente",
-      cell: (lead) => <AgenteSwitch leadId={lead.id} botPaused={lead.bot_paused ?? false} nombre={lead.cliente} />,
+      key: "clasificacion",
+      header: "Clasificación",
+      cell: (lead) => {
+        const etiqueta = etiquetaClasificacion(lead.perfil.clasificacion, lead.perfil.clasificacion_label);
+        const segmentoVentas = lead.extras["clasificacion"];
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <Badge variant={TONO_CLASIFICACION[lead.perfil.clasificacion ?? ""] ?? "neutral"}>{etiqueta}</Badge>
+            {segmentoVentas != null && segmentoVentas !== "" && (
+              <span className="text-xs text-text-soft">Ventas: {String(segmentoVentas)}</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "telefono",
+      header: "Teléfono",
+      cell: (lead) => <span className="text-body">{telefonoVisible(lead.perfil)}</span>,
+    },
+    {
+      key: "ubicacion",
+      header: "Ubicación",
+      cell: (lead) => {
+        const texto = ubicacionVisible(lead.perfil);
+        return lead.perfil.mapa_url ? (
+          <a
+            href={lead.perfil.mapa_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link hover:underline"
+            title="Abrir en el mapa"
+          >
+            {texto}
+          </a>
+        ) : (
+          <span className="text-body">{texto}</span>
+        );
+      },
+    },
+    {
+      key: "agentes",
+      header: "Agentes",
+      cell: (lead) => agentesDeLaFila(lead, agents),
+    },
+    {
+      key: "bot",
+      header: "Estado del bot",
+      info: "Activo: el agente responde a este cliente. Desactivado: el agente no le responde.",
+      cell: (lead) => {
+        const activo = !(lead.bot_paused ?? false);
+        return (
+          <div className="flex items-center gap-2">
+            <AgenteSwitch
+              leadId={lead.id}
+              botPaused={lead.bot_paused ?? false}
+              nombre={lead.perfil.nombre_visible}
+            />
+            <span className={activo ? "text-status-success-fg" : "text-status-danger-fg"}>
+              {activo ? "Activo" : "Desactivado"}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "acciones",
+      header: "Acciones",
+      align: "right",
+      cell: (lead) => (
+        <div className="flex items-center justify-end gap-1">
+          {puedeEnviar && lead.agentes.includes("ventas") && (
+            <EnviarPlantilla
+              consulta=""
+              cliente={{ id: lead.id, nombre: lead.perfil.nombre_visible }}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Enviar plantilla a ${lead.perfil.nombre_visible}`}
+                  title="Enviar plantilla"
+                >
+                  <Send className="h-4 w-4" aria-hidden />
+                </Button>
+              }
+            />
+          )}
+          <IconAction href={hrefFicha(lead.id)} label="Ver ficha" tone="ver">
+            <Eye className="h-4 w-4" aria-hidden />
+          </IconAction>
+          <IconAction href={hrefFicha(lead.id, "general", true)} label="Editar datos" tone="editar">
+            <Pencil className="h-4 w-4" aria-hidden />
+          </IconAction>
+        </div>
+      ),
     },
   ];
 
@@ -86,8 +232,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         helpSection: "leads",
         actions: (
           <div className="flex flex-wrap gap-2">
-            {puedeEnviar && <EnviarPlantilla consulta={csv.toString()} />}
-            {conClasificacion && <PromocionDelSegmento segmento={segmento} total={total} />}
             <Button asChild variant="outline">
               <a href={`/api/leads/export${csv.size ? `?${csv.toString()}` : ""}`} download>
                 Exportar CSV
@@ -123,7 +267,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         />
       )}
 
-      {ficha?.ok && <FichaCliente key={ficha.data.id} detalle={ficha.data} closeHref={hrefFicha()} />}
+      {ficha?.ok && (
+        <FichaCliente
+          key={`${ficha.data.id}-${sp.agente ?? "general"}-${sp.editar ?? ""}`}
+          detalle={ficha.data}
+          closeHref={hrefFicha()}
+          agenteInicial={sp.agente}
+          editarInicial={sp.editar === "1"}
+          hrefBase={hrefFicha()}
+        />
+      )}
       {ficha && !ficha.ok && (
         <p role="alert" className="text-sm text-status-danger-fg">
           No se pudo abrir la ficha: {ficha.error}

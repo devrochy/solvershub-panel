@@ -31,6 +31,12 @@ export type SubscriptionProviderSettings = components["schemas"]["SubscriptionPr
 export type EscalationItem = components["schemas"]["EscalationItem"];
 export type EscalationPage = components["schemas"]["Page_EscalationItem_"];
 export type LeadsResponse = components["schemas"]["LeadsResponse"];
+export type LeadPerfil = components["schemas"]["LeadPerfilOut"];
+export type LeadAgent = components["schemas"]["LeadAgentOut"];
+export type LeadAgentData = components["schemas"]["LeadAgentData"];
+export type LeadCampoPerfil = components["schemas"]["LeadCampoPerfil"];
+export type LeadGeocodificacion = components["schemas"]["LeadGeocodificacion"];
+export type LeadRow = components["schemas"]["LeadRow"];
 export type CostsResponse = components["schemas"]["CostsResponse"];
 export type PlanResponse = components["schemas"]["PlanResponse"];
 

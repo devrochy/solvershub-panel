@@ -20,11 +20,14 @@ export async function POST(request: Request) {
     connection_id: url.searchParams.get("connection_id") ?? undefined,
     filtro: url.searchParams.getAll("filtro"),
   };
-  const qs = consultaClientes(filtros, { conPagina: false });
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body.connection_id !== "string" || typeof body.template_id !== "string") {
     return NextResponse.json({ error: "Elige la conexión y la plantilla." }, { status: 400 });
   }
+  const leadId = typeof body.lead_id === "string" ? body.lead_id : "";
+  const qs = leadId
+    ? new URLSearchParams({ lead_id: leadId })
+    : consultaClientes(filtros, { conPagina: false });
   const res = await apiFetch<VistaPreviaEnvio>(
     `/admin/leads/acciones/plantilla/vista-previa${qs.size ? `?${qs.toString()}` : ""}`,
     {
