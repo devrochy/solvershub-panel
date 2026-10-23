@@ -60,7 +60,7 @@ export function TablaDeColaboradores({
       header: "Cuenta",
       cell: (c) => (
         <div className="flex items-center gap-3">
-          <Avatar name={c.nombre || c.email} src={c.avatar_url} size="md" />
+          <Avatar name={c.nombre || c.email} src={c.avatar_url ? `/api/avatar/${c.id}` : null} size="md" />
           <div className="flex min-w-0 flex-col">
             <span className="flex items-center gap-2 truncate font-medium text-headline">
               {c.nombre || c.email}

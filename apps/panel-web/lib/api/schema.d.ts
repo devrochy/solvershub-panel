@@ -238,6 +238,58 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /**
+         * Update Me
+         * @description Actualiza el perfil propio (nombre, teléfono y usuario único).
+         */
+        patch: operations["update_me_api_v1_admin_me_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Avatar
+         * @description Sirve la foto del usuario autenticado (mismo origen para el panel, sin CSP).
+         */
+        get: operations["get_avatar_api_v1_admin_me_avatar_get"];
+        put?: never;
+        /**
+         * Upload Avatar
+         * @description Sube (o reemplaza) la foto de perfil del usuario.
+         */
+        post: operations["upload_avatar_api_v1_admin_me_avatar_post"];
+        /**
+         * Delete Avatar
+         * @description Quita la foto de perfil del usuario.
+         */
+        delete: operations["delete_avatar_api_v1_admin_me_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Cambia la contraseña propia pidiendo la actual.
+         */
+        post: operations["change_password_api_v1_admin_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -5622,6 +5674,149 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/collaborators/{admin_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Collaborator Avatar
+         * @description Sirve la foto de un colaborador visible para la sesión (mismo origen para el panel).
+         */
+        get: operations["get_collaborator_avatar_api_v1_admin_collaborators__admin_id__avatar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Media Settings
+         * @description Proveedores de audio/visión del negocio, fallback y catálogo para el panel.
+         */
+        get: operations["get_media_settings_api_v1_admin_settings_media_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Media Audio
+         * @description Proveedor/modelo/llave de transcripción de notas de voz (BYOK opcional).
+         */
+        put: operations["save_media_audio_api_v1_admin_settings_media_audio_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/vision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Media Vision
+         * @description Proveedor/modelo/llave y modo de imagen (`describir` o `sin_descripcion`).
+         */
+        put: operations["save_media_vision_api_v1_admin_settings_media_vision_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/audio/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Media Audio
+         * @description Prueba la combinación contra el proveedor real sin guardarla.
+         */
+        post: operations["test_media_audio_api_v1_admin_settings_media_audio_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/media/vision/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Media Vision
+         * @description Prueba la combinación de visión con una imagen mínima, sin guardarla.
+         */
+        post: operations["test_media_vision_api_v1_admin_settings_media_vision_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/geocodificar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Geocodificar Lead
+         * @description Convierte la dirección del cliente en coordenadas y las guarda en el perfil.
+         *
+         *     El proveedor recibe solo la dirección compuesta (dirección, municipio, departamento y
+         *     país). La plataforma paga la llamada y hay topes global y por negocio (ADR-0153).
+         */
+        post: operations["geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/perfil": {
         parameters: {
             query?: never;
@@ -5729,29 +5924,6 @@ export interface paths {
          *     El panel/APK la suben antes de guardar el producto; luego mandan `image_key` en el alta.
          */
         post: operations["upload_product_image_api_v1_pack_commerce_products_image_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/leads/{lead_id}/geocodificar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Geocodificar Lead
-         * @description Convierte la dirección del cliente en coordenadas y las guarda en el perfil.
-         *
-         *     El proveedor recibe solo la dirección compuesta (dirección, municipio, departamento y
-         *     país). La plataforma paga la llamada y hay topes global y por negocio (ADR-0152).
-         */
-        post: operations["geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8026,6 +8198,12 @@ export interface components {
             email: string;
             /** Username */
             username: string | null;
+            /** Nombre */
+            nombre?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
             /** Role */
             role: string;
             tenant: components["schemas"]["TenantOption"] | null;
@@ -13420,6 +13598,156 @@ export interface components {
             /** Disponible */
             disponible: boolean;
         };
+        /** PerfilUpdate */
+        PerfilUpdate: {
+            /** Nombre */
+            nombre?: string | null;
+            /** Telefono */
+            telefono?: string | null;
+            /** Username */
+            username?: string | null;
+        };
+        /** PasswordChange */
+        PasswordChange: {
+            /** Actual */
+            actual: string;
+            /** Nueva */
+            nueva: string;
+        };
+        /** Body_upload_avatar_api_v1_admin_me_avatar_post */
+        Body_upload_avatar_api_v1_admin_me_avatar_post: {
+            /** File */
+            file: string;
+        };
+        /** MediaAudioSettings */
+        MediaAudioSettings: {
+            /** Enabled */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Has Api Key */
+            has_api_key: boolean;
+            /** Using Platform Key */
+            using_platform_key: boolean;
+        };
+        /** MediaAudioUpdate */
+        MediaAudioUpdate: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
+        /** MediaCatalog */
+        MediaCatalog: {
+            /** Audio */
+            audio: components["schemas"]["MediaCatalogProvider"][];
+            /** Vision */
+            vision: components["schemas"]["MediaCatalogProvider"][];
+        };
+        /** MediaCatalogModel */
+        MediaCatalogModel: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+        };
+        /** MediaCatalogProvider */
+        MediaCatalogProvider: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Default Model */
+            default_model: string;
+            /** Models */
+            models: components["schemas"]["MediaCatalogModel"][];
+        };
+        /** MediaSettingsResponse */
+        MediaSettingsResponse: {
+            audio: components["schemas"]["MediaAudioSettings"];
+            vision: components["schemas"]["MediaVisionSettings"];
+            catalog: components["schemas"]["MediaCatalog"];
+        };
+        /** MediaTestRequest */
+        MediaTestRequest: {
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
+        /** MediaTestResponse */
+        MediaTestResponse: {
+            /** Ok */
+            ok: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+        };
+        /** MediaVisionSettings */
+        MediaVisionSettings: {
+            /** Enabled */
+            enabled: boolean;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Has Api Key */
+            has_api_key: boolean;
+            /** Using Platform Key */
+            using_platform_key: boolean;
+            /** Mode */
+            mode: string;
+        };
+        /** MediaVisionUpdate */
+        MediaVisionUpdate: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Mode
+             * @default describir
+             * @enum {string}
+             */
+            mode: "describir" | "sin_descripcion";
+            /** Provider */
+            provider: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
         /** Body_upload_product_image_api_v1_pack_commerce_products_image_post */
         Body_upload_product_image_api_v1_pack_commerce_products_image_post: {
             /** Archivo */
@@ -13495,6 +13823,23 @@ export interface components {
             label: string;
             /** Value */
             value?: unknown;
+        };
+        /**
+         * LeadGeocodificacion
+         * @description Resultado de geocodificar la dirección y el perfil actualizado.
+         */
+        LeadGeocodificacion: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
+            /** Direccion Normalizada */
+            direccion_normalizada?: string | null;
+            /** Precision */
+            precision?: string | null;
+            /** Proveedor */
+            proveedor: string;
+            perfil: components["schemas"]["LeadPerfilOut"];
         };
         /**
          * LeadPerfilOut
@@ -13604,23 +13949,6 @@ export interface components {
             permissions: {
                 [key: string]: string;
             };
-        };
-        /**
-         * LeadGeocodificacion
-         * @description Resultado de geocodificar la dirección y el perfil actualizado.
-         */
-        LeadGeocodificacion: {
-            /** Latitud */
-            latitud: number;
-            /** Longitud */
-            longitud: number;
-            /** Direccion Normalizada */
-            direccion_normalizada?: string | null;
-            /** Precision */
-            precision?: string | null;
-            /** Proveedor */
-            proveedor: string;
-            perfil: components["schemas"]["LeadPerfilOut"];
         };
     };
     responses: never;
@@ -14147,6 +14475,169 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_me_api_v1_admin_me_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerfilUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_avatar_api_v1_admin_me_avatar_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_avatar_api_v1_admin_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_avatar_api_v1_admin_me_avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_avatar_api_v1_admin_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_password_api_v1_admin_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -25222,6 +25713,243 @@ export interface operations {
             };
         };
     };
+    get_collaborator_avatar_api_v1_admin_collaborators__admin_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_media_settings_api_v1_admin_settings_media_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaSettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_media_audio_api_v1_admin_settings_media_audio_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaAudioUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAudioSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_media_vision_api_v1_admin_settings_media_vision_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaVisionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaVisionSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_media_audio_api_v1_admin_settings_media_audio_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_media_vision_api_v1_admin_settings_media_vision_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadGeocodificacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_lead_perfil_api_v1_admin_leads__lead_id__perfil_patch: {
         parameters: {
             query?: never;
@@ -25417,39 +26145,6 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    geocodificar_lead_api_v1_admin_leads__lead_id__geocodificar_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                lead_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeadGeocodificacion"];
                 };
             };
             /** @description Validation Error */

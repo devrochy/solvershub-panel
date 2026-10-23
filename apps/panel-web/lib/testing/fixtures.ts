@@ -8,6 +8,7 @@ import type {
   AgentsOverview,
   AgentTaskPage,
   CollaboratorItem,
+  ConnectionsConsole,
   ConnectionsResponse,
   ConversationConnection,
   ConversationDetail,
@@ -353,6 +354,60 @@ export const conexiones: ConnectionsResponse = {
   webhook_url: "https://api.test.example/webhook/meta",
 };
 
+export const consolaConexiones: ConnectionsConsole = {
+  items: [
+    {
+      id: "test-conn-1",
+      channel: "whatsapp",
+      type_id: "whatsapp_meta",
+      label: "WhatsApp principal",
+      external_id: "test-phone-1",
+      conversational: true,
+      active: true,
+      is_primary: true,
+      created_at: "2026-10-01T12:00:00Z",
+      meta_connection_id: "test-meta-1",
+      health: "ok",
+      pause_scope: "meta_account",
+      pausable: true,
+      coordinator: null,
+      agents: [],
+      active_release: null,
+      canary_release: null,
+      usage_7d: { turns: 0, conversations: 0, input_tokens: 0, output_tokens: 0, cost_usd: null },
+    },
+    {
+      id: "test-conn-3",
+      channel: "",
+      type_id: "google_calendar",
+      label: "Google Calendar",
+      external_id: "agenda@test.example",
+      conversational: false,
+      active: true,
+      is_primary: false,
+      created_at: "2026-10-02T12:00:00Z",
+      meta_connection_id: null,
+      health: "ok",
+      pause_scope: "connection",
+      pausable: false,
+      coordinator: null,
+      agents: [],
+      active_release: null,
+      canary_release: null,
+      usage_7d: { turns: 0, conversations: 0, input_tokens: 0, output_tokens: 0, cost_usd: null },
+    },
+  ],
+  total: 2,
+  page: 1,
+  page_size: 50,
+  has_more: false,
+  runtime: "v3",
+  routing: "active",
+  consistency: null,
+  can_edit: true,
+  unassigned_agents: [],
+};
+
 export const plan: PlanResponse = {
   overview: { plan_id: "basic", plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
   usage: [
@@ -424,6 +479,43 @@ export const chatWeb: WebChatSettings = {
   allowed_origins: [],
   turnstile_configured: false,
   snippet: "",
+};
+
+/** `/admin/settings/media` (SPEC-04, ADR-0151): configuración para la pestaña Multimedia. */
+export const ajustesMultimedia = {
+  audio: {
+    enabled: true,
+    provider: "groq",
+    model: "whisper-large-v3-turbo",
+    has_api_key: false,
+    using_platform_key: true,
+  },
+  vision: {
+    enabled: true,
+    mode: "describir",
+    provider: "deepseek",
+    model: "deepseek-flash",
+    has_api_key: false,
+    using_platform_key: true,
+  },
+  catalog: {
+    audio: [
+      {
+        key: "groq",
+        label: "Groq · Whisper",
+        default_model: "whisper-large-v3-turbo",
+        models: [{ id: "whisper-large-v3-turbo", label: "Whisper Large v3 Turbo" }],
+      },
+    ],
+    vision: [
+      {
+        key: "deepseek",
+        label: "DeepSeek · visión",
+        default_model: "deepseek-flash",
+        models: [{ id: "deepseek-flash", label: "DeepSeek Flash" }],
+      },
+    ],
+  },
 };
 
 /** `/admin/settings/advanced` no está tipado en el OpenAPI: forma de `SettingsTabs`. */
@@ -538,10 +630,12 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/plugins": habilidades,
   "/admin/settings/subscription-provider": proveedorSuscripciones,
   "/admin/connections": conexiones,
+  "/admin/connections/console": consolaConexiones,
   "/admin/plan": plan,
   "/admin/settings": ajustes,
   "/admin/settings/web-chat": chatWeb,
   "/admin/settings/advanced": ajustesAvanzados,
+  "/admin/settings/media": ajustesMultimedia,
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,

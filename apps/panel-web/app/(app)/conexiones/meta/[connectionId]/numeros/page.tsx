@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AddNumberDialog } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/add-number-dialog";
 import { NumberActions } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/number-actions";
 import { RegisterNumberDialog } from "@/app/(app)/conexiones/meta/[connectionId]/numeros/_components/register-number-dialog";
+import { MetaTabs } from "@/app/(app)/conexiones/meta/_components/meta-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -93,7 +94,7 @@ export default async function NumbersPage({
   return (
     <div className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="self-start">
-        <Link href="/conexiones/meta">← Volver</Link>
+        <Link href="/conexiones">← Conexiones</Link>
       </Button>
 
       <PageHeader
@@ -110,6 +111,8 @@ export default async function NumbersPage({
           </div>
         }
       />
+
+      <MetaTabs connectionId={connectionId} current={`/conexiones/meta/${connectionId}/numeros`} />
 
       {sync_error && (
         <p role="status" className="text-sm text-status-warning-fg">

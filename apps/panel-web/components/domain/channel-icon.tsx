@@ -25,6 +25,8 @@ const CHANNELS: Record<string, { icon: LucideIcon; tone: string; label: string }
   webchat: { icon: Globe, tone: "text-data-4", label: "Chat web" },
   web: { icon: Globe, tone: "text-data-4", label: "Web" },
   calendar: { icon: Calendar, tone: "text-data-1", label: "Calendario" },
+  google_calendar: { icon: Calendar, tone: "text-data-1", label: "Google Calendar" },
+  email_smtp: { icon: Mail, tone: "text-data-2", label: "Correo (SMTP)" },
   commerce: { icon: ShoppingCart, tone: "text-status-warning-fg", label: "Comercio" },
 };
 

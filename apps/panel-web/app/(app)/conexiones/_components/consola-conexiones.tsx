@@ -1,5 +1,6 @@
+import { GestionConexion } from "@/app/(app)/conexiones/_components/gestion-conexion";
 import { PausarConexion } from "@/app/(app)/conexiones/_components/pausar-conexion";
-import { ChannelBadge } from "@/components/domain/channel-icon";
+import { ChannelBadge, ChannelIcon } from "@/components/domain/channel-icon";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionsConsole } from "@/lib/api/types";
@@ -9,7 +10,6 @@ import {
   puedePausar,
   resumenConsumo,
   saludDeConexion,
-  separarConexiones,
   TEXTO_ALCANCE_PAUSA,
   textoConfirmarPausa,
   versionDeAgente,
@@ -18,12 +18,11 @@ import {
 
 /** Consola de conexiones (HU-AOS-23, SPEC-26 §6.2 a). Recibe los datos; no hace fetch. */
 export function ConsolaConexiones({ consola }: { consola: ConnectionsConsole }) {
-  const { canales, integraciones } = separarConexiones(consola.items);
   return (
     <section aria-labelledby="consola-titulo" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="consola-titulo" className="font-display text-lg font-semibold text-headline">
-          Tus conexiones y sus agentes
+          Tus conexiones
         </h2>
         <div className="flex flex-wrap items-center gap-2 text-xs text-body">
           <span title="Reparto entre especialistas (solo lo cambia el administrador)">
@@ -55,31 +54,42 @@ export function ConsolaConexiones({ consola }: { consola: ConnectionsConsole }) 
         </p>
       )}
 
-      {canales.length === 0 ? (
-        <p className="text-sm text-text-soft">Sin canales conectados todavía.</p>
+      {consola.items.length === 0 ? (
+        <p className="text-sm text-text-soft">Sin conexiones todavía.</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {canales.map((c) => (
+          {consola.items.map((c) => (
             <li key={c.id}>
-              <TarjetaConexion conexion={c} canEdit={consola.can_edit} />
+              {c.conversational ? (
+                <TarjetaConexion conexion={c} canEdit={consola.can_edit} />
+              ) : (
+                <TarjetaIntegracion conexion={c} canEdit={consola.can_edit} />
+              )}
             </li>
           ))}
         </ul>
       )}
-
-      {integraciones.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 p-4 text-sm">
-            <span className="text-body">Integraciones (todo el negocio)</span>
-            {integraciones.map((i) => (
-              <Badge key={i.id} variant={i.active ? "success" : "neutral"}>
-                {i.label}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      )}
     </section>
+  );
+}
+
+/** Integraciones (Google Calendar, etc.): compactas, sin agentes ni consumo. */
+function TarjetaIntegracion({ conexion: c, canEdit }: { conexion: ConexionConsola; canEdit: boolean }) {
+  const salud = saludDeConexion(c.health);
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center gap-3 p-4">
+        <ChannelIcon id={c.type_id ?? c.channel} />
+        <div className="flex min-w-0 flex-col">
+          <span className="text-sm font-medium text-headline">{c.label}</span>
+          <span className="truncate font-mono text-xs text-text-soft">{c.external_id}</span>
+        </div>
+        <Badge variant={salud.tono === "neutral" ? "neutral" : salud.tono} className="ml-auto">
+          {salud.label}
+        </Badge>
+        <GestionConexion conexion={c} canEdit={canEdit} />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -141,7 +151,10 @@ function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; 
         ) : (
           <p className="text-text-soft">Sin agentes en esta conexión.</p>
         )}
-        <p className="text-xs text-body">7 días: {resumenConsumo(c.usage_7d)}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <p className="text-xs text-body">7 días: {resumenConsumo(c.usage_7d)}</p>
+          <GestionConexion conexion={c} canEdit={canEdit} />
+        </div>
       </CardContent>
     </Card>
   );
