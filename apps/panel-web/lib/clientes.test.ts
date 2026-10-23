@@ -4,13 +4,18 @@ import {
   columnasDeSoloLectura,
   consultaClientes,
   datosDelPerfil,
-  mismoTelefono,
+  datosFueraDelPerfil,
+  etiquetaClasificacion,
   etiquetaDeDato,
+  etiquetaTipoDocumento,
   filtrosDePacks,
+  mismoTelefono,
   normalizarClave,
   origenDelDato,
   segmentoDelFiltro,
+  telefonoVisible,
   textoDeDato,
+  ubicacionVisible,
   valorDeFiltro,
 } from "./clientes";
 
@@ -108,5 +113,37 @@ describe("segmentoDelFiltro", () => {
     expect(segmentoDelFiltro("clasificacion:frecuente", [])).toBeNull();
     expect(segmentoDelFiltro("clasificacion:otro", filtros)).toBeNull();
     expect(segmentoDelFiltro(undefined, filtros)).toBeNull();
+  });
+});
+
+describe("perfil base (tanda 1A)", () => {
+  it("muestra el teléfono con indicativo y la ubicación corta", () => {
+    expect(telefonoVisible({ phone_indicativo: "+57", phone_local: "3001234567" })).toBe("+57 3001234567");
+    expect(telefonoVisible({ phone_e164: "+573001234567" })).toBe("+573001234567");
+    expect(telefonoVisible({})).toBe("—");
+    expect(ubicacionVisible({ municipio: "Cali", departamento: "Valle" })).toBe("Cali, Valle");
+    expect(ubicacionVisible({ address: "Calle 1" })).toBe("Calle 1");
+    expect(ubicacionVisible({})).toBe("—");
+  });
+
+  it("traduce clasificación y tipo de documento", () => {
+    expect(etiquetaClasificacion("vip")).toBe("VIP");
+    expect(etiquetaClasificacion(null)).toBe("Sin clasificar");
+    expect(etiquetaClasificacion("otro", "Etiqueta API")).toBe("Etiqueta API");
+    expect(etiquetaTipoDocumento("cc")).toBe("Cédula de ciudadanía");
+    expect(etiquetaTipoDocumento(null)).toBe("—");
+  });
+
+  it("no repite en otros datos lo que ya muestra el perfil", () => {
+    const datos = [
+      { namespace: "perfil", key: "full_name", value: "Ana" },
+      { namespace: "perfil", key: "email", value: "a@x.co" },
+      { namespace: "perfil", key: "preferencia", value: "WhatsApp" },
+      { namespace: "ventas", key: "interes", value: "plan" },
+    ];
+    expect(datosFueraDelPerfil(datos).map((d) => `${d.namespace}:${d.key}`)).toEqual([
+      "perfil:preferencia",
+      "ventas:interes",
+    ]);
   });
 });

@@ -1,3 +1,5 @@
+import { Percent } from "lucide-react";
+
 import {
   PromotionDialog,
   PromotionToggle,
@@ -5,6 +7,7 @@ import {
   type Promotion,
 } from "@/app/(app)/comercio/promociones/_components/promotion-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Aliado, ModulosComercio } from "@/lib/aliados";
@@ -151,7 +154,22 @@ export default async function PromotionsPage() {
       <PageHeader
         title="Promociones"
         description="Descuentos por temporada, volumen o campaña que el agente puede aplicar (elige el mayor beneficio, sin acumular)."
-        actions={<PromotionDialog categories={categorias} products={productos} allies={aliados} />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <PromotionDialog
+              categories={categorias}
+              products={productos}
+              allies={aliados}
+              trigger={
+                <Button variant="outline">
+                  <Percent className="h-4 w-4" aria-hidden /> Para un segmento
+                </Button>
+              }
+              aviso="La promoción se limita a la clasificación que elijas y también aplica a los clientes que lleguen después."
+            />
+            <PromotionDialog categories={categorias} products={productos} allies={aliados} />
+          </div>
+        }
       />
       <DataTable
         columns={columns}

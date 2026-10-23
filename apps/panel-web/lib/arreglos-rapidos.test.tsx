@@ -5,9 +5,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
 import { FeedbackProviders } from "@/components/ui/providers";
-import type { PlanResponse } from "@/lib/api/types";
+import type { LeadDetail, PlanResponse } from "@/lib/api/types";
 import { violacionesGraves } from "@/lib/testing/axe";
-import { conversaciones, leads, plan } from "@/lib/testing/fixtures";
+import { conversaciones, leads, me, plan } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 import { enlaceDePago } from "./plan-limite";
@@ -121,5 +121,53 @@ describe("filtros de un agente", () => {
     // «Limpiar» vuelve a 30 días sin recargar: el Select se rehace con el valor nuevo.
     rerender(<AgentFilters {...props} dias={30} />);
     expect(periodo().value).toBe("30");
+  });
+});
+
+
+describe("ficha del cliente", () => {
+  it("se abre desde la lista sin pasar funciones al componente cliente", async () => {
+    const perfil = leads.items[0].perfil;
+    const detalle: LeadDetail = {
+      id: "test-lead-1",
+      cliente: "Ana Prueba",
+      nombre: "Ana",
+      canal: "webchat",
+      identificador: "webchat:test",
+      telefono: perfil.phone ?? null,
+      bot_paused: false,
+      alta: null,
+      conexiones: [],
+      ultima_conversacion_id: null,
+      datos: [],
+      extras: {},
+      columns: [],
+      perfil,
+      agentes: [],
+      campos_perfil: [],
+      editables: [],
+    };
+    respuestas["/admin/leads"] = leads;
+    respuestas["/admin/conversations/connections"] = [];
+    respuestas["/admin/me"] = me;
+    respuestas["/admin/leads/test-lead-1"] = detalle;
+
+    // Las notas y la línea de tiempo piden al BFF con fetch relativo; en jsdom no hay host.
+    const fetchOriginal = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (entrada: RequestInfo | URL) => {
+      const url = String(entrada);
+      if (url.includes("/timeline")) {
+        return new Response(JSON.stringify({ items: [], next_cursor: null, partial: false }), { status: 200 });
+      }
+      return new Response(JSON.stringify([]), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      await abrir(() => import("@/app/(app)/leads/page"), { cliente: "test-lead-1" });
+    } finally {
+      globalThis.fetch = fetchOriginal;
+    }
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Datos del cliente")).toBeTruthy();
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { RefreshCw, Send } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,17 @@ type Paso = "armar" | "vista" | "enviado";
  * envía exactamente esa lista. La clave de idempotencia se genera una vez por vista previa, así
  * que un doble clic o un reintento no envían dos veces.
  */
-export function EnviarPlantilla({ consulta }: { consulta: string }) {
+export function EnviarPlantilla({
+  consulta,
+  cliente,
+  trigger,
+}: {
+  consulta: string;
+  /** Si viene, la plantilla se envía solo a este cliente (tanda 2). */
+  cliente?: { id: string; nombre: string };
+  /** Disparador propio (por ejemplo el icono de la columna Acciones). */
+  trigger?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [paso, setPaso] = useState<Paso>("armar");
   const [conexiones, setConexiones] = useState<ConexionDeEnvio[] | null>(null);
@@ -95,7 +105,12 @@ export function EnviarPlantilla({ consulta }: { consulta: string }) {
     const res = await fetch(`/api/leads/acciones/plantilla${consulta ? `?${consulta}` : ""}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ connection_id: conexion.id, template_id: plantilla.id, variables }),
+      body: JSON.stringify({
+        connection_id: conexion.id,
+        template_id: plantilla.id,
+        variables,
+        lead_id: cliente?.id,
+      }),
     });
     const json = (await res.json().catch(() => ({}))) as VistaPreviaEnvio & { error?: string };
     setCargando(false);
@@ -139,13 +154,19 @@ export function EnviarPlantilla({ consulta }: { consulta: string }) {
   return (
     <Dialog open={open} onOpenChange={(abierto) => void abrir(abierto)}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Send className="h-4 w-4" aria-hidden /> Enviar plantilla
-        </Button>
+        {trigger ?? (
+          <Button variant="outline">
+            <Send className="h-4 w-4" aria-hidden /> Enviar plantilla
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent
-        title="Enviar una plantilla a este filtro"
-        description="Solo les llega a los clientes de WhatsApp del filtro que aceptaron recibir promociones. Primero ves a quién; después confirmas."
+        title={cliente ? `Enviar una plantilla a ${cliente.nombre}` : "Enviar una plantilla a este filtro"}
+        description={
+          cliente
+            ? "Solo le llega si es cliente de WhatsApp y aceptó recibir promociones. Primero ves el resumen; después confirmas."
+            : "Solo les llega a los clientes de WhatsApp del filtro que aceptaron recibir promociones. Primero ves a quién; después confirmas."
+        }
         className="max-h-[85vh] max-w-2xl overflow-y-auto"
       >
         {paso === "armar" && (
