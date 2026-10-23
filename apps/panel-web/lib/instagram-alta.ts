@@ -85,3 +85,100 @@ export function resumirConexionInstagram(r: ResultadoConexionInstagram): Resumen
     recibiendo: r.connected.some((c) => c.subscribed),
   };
 }
+
+// ------------------------------------------------------------------ Instagram Login (ruta b), cuentas y prueba de humo (4b)
+export type CuentaDeInstagram = components["schemas"]["InstagramAccountStatusOut"];
+export type DiagnosticoDeInstagram = components["schemas"]["InstagramDiagnosticOut"];
+
+/** Cómo se conectó la cuenta, para la lista: el valor crudo de la API no se muestra. */
+export function etiquetaDeRuta(ruta: string | null | undefined): string {
+  if (ruta === "ig_instagram_login") return "Instagram Login";
+  if (ruta === "ig_facebook_login") return "Facebook Login";
+  return "Conexión de Instagram";
+}
+
+/** Estado de la cuenta en la lista: etiqueta, tono y qué hacer. Una cuenta degradada pide reconectar. */
+export function estadoDeCuenta(c: Pick<CuentaDeInstagram, "status" | "status_reason">): {
+  etiqueta: string;
+  tono: "success" | "warning";
+  ayuda: string | null;
+} {
+  if (c.status === "degraded") {
+    return {
+      etiqueta: "Degradada",
+      tono: "warning",
+      ayuda: c.status_reason ?? "El acceso a la cuenta falló: reconéctala con Instagram.",
+    };
+  }
+  return { etiqueta: "Conectada", tono: "success", ayuda: null };
+}
+
+/** Días hasta que vence el acceso de una cuenta de Instagram Login, o `null` si no aplica. */
+export function diasParaVencer(vence: string | null | undefined, ahora: Date = new Date()): number | null {
+  if (!vence) return null;
+  const ms = new Date(vence).getTime() - ahora.getTime();
+  return Number.isFinite(ms) ? Math.floor(ms / 86_400_000) : null;
+}
+
+/** Aviso sobre el acceso de la cuenta (se renueva solo cada día; esto es por si el refresco falla). */
+export function avisoDeVencimiento(vence: string | null | undefined, ahora: Date = new Date()): string | null {
+  const dias = diasParaVencer(vence, ahora);
+  if (dias === null) return null;
+  if (dias < 0) return "El acceso a la cuenta venció: reconéctala con Instagram para volver a responder.";
+  if (dias <= 5) return `El acceso a la cuenta vence en ${dias === 0 ? "menos de un día" : `${dias} ${dias === 1 ? "día" : "días"}`}. Se renueva solo; si no, reconéctala.`;
+  return null;
+}
+
+/** Instagram a veces devuelve el código con un `#_` al final: no es parte del código. */
+export function limpiarCodigoDeInstagram(code: string): string {
+  return code.trim().replace(/#_$/, "");
+}
+
+/** ¿La URL de retorno trae lo que hace falta, o el usuario canceló / Instagram devolvió un error? */
+export type RetornoDeInstagram =
+  | { tipo: "listo"; code: string; state: string }
+  | { tipo: "cancelado"; motivo: string }
+  | { tipo: "invalido" };
+
+export function interpretarRetorno(params: {
+  code?: string;
+  state?: string;
+  error?: string;
+  error_reason?: string;
+  error_description?: string;
+}): RetornoDeInstagram {
+  if (params.error) {
+    const quien = params.error === "access_denied" ? "Cancelaste la autorización en Instagram." : "Instagram no autorizó la conexión.";
+    return { tipo: "cancelado", motivo: quien };
+  }
+  const code = limpiarCodigoDeInstagram(params.code ?? "");
+  const state = (params.state ?? "").trim();
+  if (!code || !state) return { tipo: "invalido" };
+  return { tipo: "listo", code, state };
+}
+
+/** Qué decirle a la persona según lo más probable cuando la prueba de humo no recibió el mensaje. */
+export function explicarDiagnostico(causa: string | null | undefined): { titulo: string; pasos: string[] } {
+  switch (causa) {
+    case "token_degraded":
+      return {
+        titulo: "El acceso a la cuenta falló",
+        pasos: ["Reconecta la cuenta con Instagram desde esta pantalla. Mientras tanto no recibe ni responde mensajes."],
+      };
+    case "not_subscribed":
+      return {
+        titulo: "Meta no confirmó que la cuenta pueda recibir mensajes",
+        pasos: ["Vuelve a conectar la cuenta. Si el problema sigue, revisa que la app tenga activos los mensajes de Instagram."],
+      };
+    default:
+      return {
+        titulo: "No llegó el mensaje de prueba",
+        pasos: [
+          "En Instagram abre Configuración → Mensajes y respuestas → Herramientas conectadas.",
+          "Activa «Permitir acceso a los mensajes». Si está apagado, Meta no entrega los mensajes y nunca lo reporta como error.",
+          "Confirma que la cuenta sea profesional (empresa o creador) y que mandaste el mensaje desde otro perfil.",
+          "Vuelve a probar.",
+        ],
+      };
+  }
+}

@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { apiFetch } from "@/lib/api/server";
 
 /**
- * BFF del alta de Instagram (HU-CHAN-04, ADR-0152): estado, intento del popup, descubrimiento de cuentas y
- * conexión. El `code` del popup y el intento viajan solo hacia la API y no se guardan aquí; los tokens de las
- * Páginas nunca llegan al navegador. Cada acción reenvía solo sus campos.
+ * BFF del alta de Instagram (HU-CHAN-04, ADR-0152): estado, intento del popup, descubrimiento de cuentas,
+ * conexión e Instagram Login. El `code`, el `state` y el intento viajan solo hacia la API y no se guardan aquí; los
+ * tokens nunca llegan al navegador. Cada acción reenvía solo sus campos.
  */
 export async function GET() {
   const res = await apiFetch("/admin/meta/instagram");
@@ -17,6 +17,9 @@ const RUTAS: Record<string, { path: string; campos: string[] }> = {
   attempt: { path: "/admin/meta/instagram/attempt", campos: [] },
   discover: { path: "/admin/meta/instagram/discover", campos: ["code", "attempt"] },
   connect: { path: "/admin/meta/instagram/connect", campos: ["connection_id", "ig_user_ids"] },
+  // Instagram Login (ruta b): `login_start` da la dirección de Instagram; `login_complete` canjea el código del retorno.
+  login_start: { path: "/admin/meta/instagram/login/start", campos: [] },
+  login_complete: { path: "/admin/meta/instagram/login/complete", campos: ["code", "state"] },
 };
 
 export async function POST(request: Request) {

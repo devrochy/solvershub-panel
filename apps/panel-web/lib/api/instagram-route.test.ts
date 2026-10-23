@@ -9,6 +9,7 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: (nombre: string) => (cookies.has(nombre) ? { value: cookies.get(nombre) } : undefined) }),
 }));
 
+import { GET as DIAG_GET, POST as DIAG_POST } from "@/app/api/meta/instagram/accounts/[igUserId]/diagnostic/route";
 import { GET, POST } from "@/app/api/meta/instagram/route";
 
 const pedir = (json: unknown) =>
@@ -69,5 +70,70 @@ describe("BFF de Instagram", () => {
     const res = await POST(pedir({ action: "attempt" }));
     expect(res.status).toBe(403);
     expect((await res.json()).error).toBe("Solo el propietario.");
+  });
+});
+
+describe("BFF de Instagram Login", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("login_start no manda cuerpo y devuelve la dirección de Instagram", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ url: "https://www.instagram.com/oauth/authorize?x=1", expires_in: 900 }), { status: 201 }));
+    const res = await POST(pedir({ action: "login_start" }));
+    expect((await res.json()).url).toMatch(/instagram\.com/);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/instagram\/login\/start$/);
+    expect(init.body).toBeUndefined();
+  });
+
+  it("login_complete reenvía solo code y state", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ig_user_id: "1" }), { status: 200 }));
+    await POST(pedir({ action: "login_complete", code: "abc", state: "xyz", tenant_id: "otro", extra: 1 }));
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/instagram\/login\/complete$/);
+    expect(JSON.parse(String(init.body))).toEqual({ code: "abc", state: "xyz" });
+  });
+});
+
+describe("BFF de la prueba de humo", () => {
+  const fetchMock = vi.fn();
+  const ctx = (igUserId: string) => ({ params: Promise.resolve({ igUserId }) });
+  const get = (since: string) => new Request(`http://panel.test/x?since=${encodeURIComponent(since)}`);
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("empieza la prueba y consulta con la fecha del servidor, con el negocio activo", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ since: "2026-10-24T12:00:00Z", wait_seconds: 90 }), { status: 200 }));
+    const inicio = await DIAG_POST(new Request("http://panel.test/x", { method: "POST" }), ctx("17841400000"));
+    expect((await inicio.json()).wait_seconds).toBe(90);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/accounts\/17841400000\/diagnostic$/);
+    expect((init.headers as Record<string, string>)["X-Tenant-Id"]).toBe("t-1");
+
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ arrived: true }), { status: 200 }));
+    await DIAG_GET(get("2026-10-24T12:00:00.123456+00:00"), ctx("17841400000"));
+    expect(fetchMock.mock.calls[1][0]).toContain("since=2026-10-24T12%3A00%3A00.123456%2B00%3A00");
+  });
+
+  it("un ID o una fecha con formato raro no llegan a la API", async () => {
+    for (const malo of ["abc", "123/../x", "12 34", "1".repeat(40), "١٢٣"]) {
+      expect((await DIAG_POST(new Request("http://panel.test/x", { method: "POST" }), ctx(malo))).status).toBe(400);
+      expect((await DIAG_GET(get("2026-10-24T12:00:00Z"), ctx(malo))).status).toBe(400);
+    }
+    for (const mala of ["", "ayer", "2026-10-24", "2026-10-24T12:00:00Z&admin=1", "../x"]) {
+      expect((await DIAG_GET(get(mala), ctx("123"))).status).toBe(400);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
