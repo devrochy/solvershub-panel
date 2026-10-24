@@ -5,6 +5,7 @@ import { AlertCircle } from "lucide-react";
 
 import { ListaDeFrases } from "@/app/(app)/agentes/[id]/editar/_components/lista-de-frases";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import {
   ALCANCES_DE_MEMORIA,
   MAX_FRASES_PROPIAS,
   frasesDistintas,
+  nombreDeSuperpoder,
+  superpoderesFueraDelEnfoque,
   textoDeCosto,
   type Errores,
   type EstadoDelEditor,
@@ -233,7 +236,8 @@ export function PasoSuperpoderes({
     const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
     cambiar({ superpoderes: { ...estado.superpoderes, [id]: { ...actual, ...cambio } } });
   }
-  if (catalogo.length === 0) {
+  const fuera = superpoderesFueraDelEnfoque(estado, catalogo);
+  if (catalogo.length === 0 && fuera.length === 0) {
     return <p className="text-sm text-body">Tu negocio no tiene habilidades con superpoderes activas todavía.</p>;
   }
   return (
@@ -243,6 +247,24 @@ export function PasoSuperpoderes({
         reconocerlo: las de la habilidad ya cuentan y puedes sumar las tuyas.
       </p>
       <ErrorDeCampo id="superpoderes-error" mensaje={errores.procedures} />
+      {fuera.length > 0 && (
+        <ul className="flex flex-col gap-3" aria-label="Superpoderes que no corresponden a este agente">
+          {fuera.map((id) => (
+            <li key={id} className="flex flex-col gap-2 rounded-md border border-status-warning-border bg-status-warning-bg p-4">
+              <p className="text-sm font-medium text-headline">{nombreDeSuperpoder(id)}</p>
+              <p className="text-sm text-body">
+                Ya no está disponible para este agente. Quítalo para poder publicar.
+              </p>
+              <ErrorDeCampo id={`poder-${id}-error`} mensaje={erroresPorPoder[id]} />
+              <div>
+                <Button type="button" variant="outline" size="sm" onClick={() => poner(id, { activo: false })}>
+                  Quitar
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       <ul className="flex flex-col gap-3">
         {catalogo.map((poder) => {
           const enEditor = estado.superpoderes[poder.id] ?? { activo: false, frases: [] };

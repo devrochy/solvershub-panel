@@ -26752,6 +26752,8 @@ export interface operations {
     list_superpowers_api_v1_admin_agent_superpowers_get: {
         parameters: {
             query?: {
+                /** @description Con el agente, solo los superpoderes de su enfoque (su plantilla). */
+                agent_id?: string | null;
                 page?: number;
                 page_size?: number;
             };

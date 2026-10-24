@@ -13,8 +13,10 @@ import {
   erroresPorSuperpoder,
   estadoDesdeBorrador,
   frasesDistintas,
+  nombreDeSuperpoder,
   pasoDelCampo,
   rangoCompatible,
+  superpoderesFueraDelEnfoque,
   textoDeCosto,
 } from "./agentes-editor";
 
@@ -214,5 +216,38 @@ describe("publicar (D-35)", () => {
     expect(document.getElementById(campo.getAttribute("aria-describedby") ?? "")?.textContent).toMatch(
       /necesita al menos 3 frases distintas/,
     );
+  });
+});
+
+describe("superpoder de otro enfoque", () => {
+  afterEach(cleanup);
+  const CITA = { ...BASE, procedures: [...BASE.procedures, { id: "pack_calendar.agendar_cita", version: "^1.0" }] };
+
+  it("detecta lo marcado que el catálogo del agente no ofrece y le pone nombre legible", () => {
+    const estado = estadoDesdeBorrador({ name: "Ventas", description: "" }, CITA, [PEDIDO]);
+    expect(superpoderesFueraDelEnfoque(estado, [PEDIDO])).toEqual(["pack_calendar.agendar_cita"]);
+    expect(nombreDeSuperpoder("pack_calendar.agendar_cita")).toBe("Agendar cita");
+  });
+
+  it("se puede quitar desde el editor y deja de ir en el contenido", () => {
+    const estado = estadoDesdeBorrador({ name: "Ventas", description: "" }, CITA, [PEDIDO]);
+    const cambiar = vi.fn();
+    render(
+      <PasoSuperpoderes
+        estado={estado}
+        cambiar={cambiar}
+        errores={{}}
+        erroresPorPoder={{ "pack_calendar.agendar_cita": "«Agendar una cita» no es parte del enfoque de este agente." }}
+        catalogo={[PEDIDO]}
+        minFrases={3}
+      />,
+    );
+    expect(screen.getByText("Agendar cita")).toBeTruthy();
+    expect(screen.getByText(/no es parte del enfoque/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
+    const { superpoderes } = cambiar.mock.calls[0][0];
+    expect(superpoderes["pack_calendar.agendar_cita"].activo).toBe(false);
+    const quitado = contenidoDesdeEstado(CITA, { ...estado, superpoderes }, [PEDIDO]);
+    expect((quitado.procedures as { id: string }[]).map((p) => p.id)).toEqual([PEDIDO.id]);
   });
 });
