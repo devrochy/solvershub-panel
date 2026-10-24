@@ -15,7 +15,7 @@ export default async function EditarAgentePage({ params }: { params: Promise<{ i
   if (!UUID.test(id)) notFound();
   const [agente, superpoderes, modelos, destinos, me] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
-    apiFetch<SuperpowerPage>("/admin/agent-superpowers?page_size=100"),
+    apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
     apiFetch<PublishTargetPage>(`/admin/agents/${id}/publish-targets?page_size=100`),
     apiFetch<Me>("/admin/me"),

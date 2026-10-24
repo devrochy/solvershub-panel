@@ -97,6 +97,24 @@ export function estadoDesdeBorrador(
   };
 }
 
+/**
+ * Superpoderes marcados que el catálogo del agente no ofrece: de otro enfoque o de una habilidad que el
+ * negocio ya no tiene. La API no los deja publicar (`superpoder_fuera_de_enfoque` o `superpoder_no_disponible`),
+ * así que el editor tiene que dejarlos quitar.
+ */
+export function superpoderesFueraDelEnfoque(estado: EstadoDelEditor, catalogo: Superpower[]): string[] {
+  const ofrecidos = new Set(catalogo.map((p) => p.id));
+  return Object.entries(estado.superpoderes)
+    .filter(([id, poder]) => poder.activo && !ofrecidos.has(id))
+    .map(([id]) => id);
+}
+
+/** Nombre legible de un superpoder que el catálogo no trae: `pack_commerce.tomar_pedido` → «Tomar pedido». */
+export function nombreDeSuperpoder(id: string): string {
+  const corto = (id.split(".")[1] ?? id).replace(/_/g, " ").trim();
+  return corto.charAt(0).toUpperCase() + corto.slice(1);
+}
+
 /** Rango compatible `^M.0` de una versión publicada (la regla del core). */
 export function rangoCompatible(version: string): string {
   const mayor = version.split(".")[0] || "1";
