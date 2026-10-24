@@ -121,6 +121,13 @@ formatters únicos en `lib/format.ts` y tema claro/oscuro con toggle.
   `/api/v1/pack/cobranza`. Queda enlace al clásico para las acciones de escritura
   (generar cobro, marcar pago, aprobar dispositivo, enviar mensaje) y el detalle de
   cartera (caja, liquidaciones, inyecciones, gastos).
+- **Suscripciones** (pack, `/suscripciones`; entrada propia, D-43 y SPEC-35) — **resumen** (ingreso
+  mensual recurrente, altas y bajas con su variación, mora por antigüedad y retención por plan),
+  **lista** con filtros y **detalle** (cobros, avisos enviados, cambios de estado; pausar, reanudar,
+  cancelar y reenviar el link de pago, cada uno con confirmación y auditoría), **clientes con
+  suscripción** (planes, lo que deben, último período pagado) y **pagos** (los cobros, con mora).
+  API en `/api/v1/pack/pack_subscriptions`. Hoy solo cubre la habilidad Suscripciones (no Cobranza,
+  HU-SUB-15) y la vista lo avisa. En Ventas › Productos, los planes llevan su insignia y un filtro.
 - **Configuración** (`/configuracion`) — pestañas **Identidad** (nombre, tono, persona,
   debounce, guardrails, escalamiento, **horario de atención**, kill-switch), **Cerebro**
   (modelos, temperatura, límites y presupuesto), **Memoria** (turnos de contexto y RAG)

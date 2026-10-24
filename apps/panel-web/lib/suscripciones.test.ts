@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cuerpoDelPlan, textoEstado } from "@/lib/suscripciones";
+import { cuerpoDelPlan, filtrarPorTipo, planDelProducto, textoEstado } from "@/lib/suscripciones";
 
 const base = {
   configurado: null,
@@ -38,5 +38,26 @@ describe("cuerpo del plan del producto", () => {
     data.set("billing_period", "mensual");
     data.set("trial_days", "30");
     expect(cuerpoDelPlan(data)).toEqual({ billing_period: "mensual", trial_days: 30 });
+  });
+});
+
+describe("productos que son plan (HU-SUB-21)", () => {
+  const camisa = { name: "Camisa", variants: [{ billing_period: null }] };
+  const pro = { name: "Plan Pro", variants: [{ billing_period: "mensual" }, { billing_period: "mensual" }] };
+  const mixto = { name: "Plan Max", variants: [{ billing_period: "mensual" }, { billing_period: "anual" }] };
+
+  it("etiqueta la recurrencia sin repetirla", () => {
+    expect(planDelProducto(camisa.variants)).toBeNull();
+    expect(planDelProducto(pro.variants)).toBe("Plan mensual");
+    expect(planDelProducto(mixto.variants)).toBe("Plan mensual · Plan anual");
+    expect(planDelProducto([{ billing_period: "semanal" }])).toBe("Plan semanal");
+  });
+
+  it("filtra por planes o por venta única", () => {
+    const todos = [camisa, pro, mixto];
+    expect(filtrarPorTipo(todos, "planes").map((p) => p.name)).toEqual(["Plan Pro", "Plan Max"]);
+    expect(filtrarPorTipo(todos, "unica").map((p) => p.name)).toEqual(["Camisa"]);
+    expect(filtrarPorTipo(todos, undefined)).toHaveLength(3);
+    expect(filtrarPorTipo(todos, "otra cosa")).toHaveLength(3);
   });
 });

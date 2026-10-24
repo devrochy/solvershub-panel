@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FotoProducto } from "@/components/comercio/foto-producto";
 import { FOTO_URL_MAX, esFotoValida } from "@/lib/foto-producto";
-import { COBROS, cuerpoDelPlan } from "@/lib/suscripciones";
+import { AYUDA_COBRO, COBROS, cuerpoDelPlan } from "@/lib/suscripciones";
 
 type Product = {
   id: string;
@@ -241,7 +241,7 @@ export function ProductDialog({
             <Field
               label="Cobro"
               htmlFor="p-cobro"
-              help="Un plan necesita la habilidad Suscripciones (cobro en línea) o Cobranza (cobro en campo)."
+              help={AYUDA_COBRO}
             >
               <Select id="p-cobro" name="billing_period" defaultValue={variant?.billing_period ?? ""}>
                 {COBROS.map((c) => (

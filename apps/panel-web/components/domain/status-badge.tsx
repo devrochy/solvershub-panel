@@ -43,6 +43,28 @@ export const PAYMENT_STATUS: StatusMap = {
   duplicado: { label: "Pago doble", variant: "danger" },
 };
 
+/**
+ * Estado de la suscripción de un cliente (`pack_subscriptions`, ADR-0106). `trialing` es la prueba
+ * del plan Free; `vencida` = un cobro quedó sin pagar pasados los días de gracia.
+ */
+export const SUBSCRIPTION_STATUS: StatusMap = {
+  activa: { label: "Activa", variant: "success" },
+  trialing: { label: "En prueba", variant: "accent" },
+  pausada: { label: "Pausada", variant: "warning" },
+  vencida: { label: "Vencida", variant: "danger" },
+  cancelada: { label: "Cancelada", variant: "neutral" },
+};
+
+/**
+ * Estado de un cobro de suscripción. No reutiliza `PAYMENT_STATUS`: el cobro solo es
+ * `pendiente`, `pagado` o `anulado` (reemplazado por otro cambio de plan); no hay «rechazado».
+ */
+export const CHARGE_STATUS: StatusMap = {
+  pendiente: { label: "Pendiente", variant: "warning" },
+  pagado: { label: "Pagado", variant: "success" },
+  anulado: { label: "Anulado", variant: "neutral" },
+};
+
 /** Estado de una conexión de Meta (`meta_connections.status`, SPEC-08). */
 export const META_CONNECTION_STATUS: StatusMap = {
   draft: { label: "Borrador", variant: "neutral" },
