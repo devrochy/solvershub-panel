@@ -3325,6 +3325,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/pack_subscriptions/cargos/{charge_id}/registrar-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar Pago Por Transferencia
+         * @description El cliente pagó el cobro por transferencia: lo marca `pagado` con la referencia (HU-SUB-26).
+         *
+         *     Reusa `registrar_pago_externo` del proveedor (no hay otro camino de pago): el cargo queda pagado
+         *     con `pago_externo.canal = transferencia`, la suscripción se reactiva si estaba vencida o pausada
+         *     por mora, el período siguiente se calcula desde el pagado y sale `subscription.charge_paid` como
+         *     con un pago por link. El pack sigue cobrando los períodos siguientes. Idempotente por
+         *     referencia; un cargo ya pagado con otra referencia es 409. Auditada con el usuario.
+         */
+        post: operations["registrar_pago_por_transferencia_api_v1_pack_pack_subscriptions_cargos__charge_id__registrar_pago_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/commerce/dashboard": {
         parameters: {
             query?: never;
@@ -12529,6 +12555,13 @@ export interface components {
              * @default manual
              */
             reason: string;
+            /**
+             * Forzar
+             * @default false
+             */
+            forzar: boolean;
+            /** Motivo Forzado */
+            motivo_forzado?: string | null;
         };
         /** ReleaseChange */
         ReleaseChange: {
@@ -15353,6 +15386,33 @@ export interface components {
             section: string;
             /** Content */
             content?: ("catalogo" | "servicios" | "cartera") | null;
+        };
+        /** PagoRegistradoOut */
+        PagoRegistradoOut: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "registrado" | "ya_registrado";
+            /**
+             * Charge Id
+             * Format: uuid
+             */
+            charge_id: string;
+            /** Periodo */
+            periodo: string;
+            /** Suscripcion Estado */
+            suscripcion_estado: string;
+            /** Proximo Cargo */
+            proximo_cargo?: string | null;
+        };
+        /** RegistrarPagoBody */
+        RegistrarPagoBody: {
+            /**
+             * Referencia
+             * @description Número del comprobante o texto que identifica la transferencia (para conciliar con el extracto).
+             */
+            referencia: string;
         };
     };
     responses: never;
@@ -21822,6 +21882,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReenvioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_pago_por_transferencia_api_v1_pack_pack_subscriptions_cargos__charge_id__registrar_pago_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrarPagoBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagoRegistradoOut"];
                 };
             };
             /** @description Validation Error */
