@@ -1003,6 +1003,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/a2a/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Graph */
+        get: operations["get_graph_api_v1_admin_a2a_graph_get"];
+        /** Put Graph */
+        put: operations["put_graph_api_v1_admin_a2a_graph_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/graph/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Graph Versions */
+        get: operations["list_graph_versions_api_v1_admin_a2a_graph_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Calls */
+        get: operations["list_calls_api_v1_admin_a2a_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/{connection_id}/agents/{instance_id}": {
         parameters: {
             query?: never;
@@ -3436,6 +3488,23 @@ export interface paths {
         };
         /** Commerce Modulos */
         get: operations["commerce_modulos_api_v1_pack_commerce_modulos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/pago-en-linea/minimo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minimo Pago En Linea */
+        get: operations["minimo_pago_en_linea_api_v1_pack_commerce_pago_en_linea_minimo_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7092,6 +7161,55 @@ export interface components {
             /** Default Duration Minutes */
             default_duration_minutes: number;
         };
+        /** Call */
+        Call: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Mode */
+            mode: string;
+            /**
+             * From Instance Id
+             * Format: uuid
+             */
+            from_instance_id: string;
+            /** To Instance Id */
+            to_instance_id: string | null;
+            /** Intent */
+            intent: string;
+            /** Depth */
+            depth: number;
+            /**
+             * Status
+             * @description Último evento de la llamada (`accepted`, `completed`, `denied`, …).
+             */
+            status: string;
+            /** Reason */
+            reason: string | null;
+            /** Tokens */
+            tokens: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+        };
         /** CashAdjustment */
         CashAdjustment: {
             /** Valor Nuevo */
@@ -8126,6 +8244,54 @@ export interface components {
              */
             tenant: string;
         };
+        /** Graph */
+        Graph: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+        };
+        /** GraphIn */
+        GraphIn: {
+            /** Links */
+            links: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** GraphOut */
+        GraphOut: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+            /** Created */
+            created: boolean;
+        };
+        /** GraphVersion */
+        GraphVersion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** GuardrailsSettings */
         GuardrailsSettings: {
             /** Guardrails Text */
@@ -8585,6 +8751,33 @@ export interface components {
             page_size: number;
             /** Has More */
             has_more: boolean;
+        };
+        /** Link */
+        Link: {
+            /**
+             * From Agent Id
+             * Format: uuid
+             */
+            from_agent_id: string;
+            /**
+             * To Agent Id
+             * Format: uuid
+             */
+            to_agent_id: string;
+            /** Modes */
+            modes: string[];
+            /** Intents */
+            intents: string[];
+            /** Max Depth */
+            max_depth: number;
+            /** Timeout Ms */
+            timeout_ms: number;
+            /** Budget Usd */
+            budget_usd: number;
+            /** Budget Tokens */
+            budget_tokens: number;
+            /** Data Classes */
+            data_classes: string[];
         };
         /** LinkRequest */
         LinkRequest: {
@@ -9081,6 +9274,33 @@ export interface components {
         ModulosOut: {
             /** Aliados */
             aliados: boolean;
+        };
+        /**
+         * MinimoPagoEnLineaOut
+         * @description Mínimo por cobro para pagar en línea (HU-SUB-25). El panel lo usa para avisar al guardar un plan.
+         */
+        MinimoPagoEnLineaOut: {
+            /**
+             * Minimo
+             * @description Monto mínimo por cobro en la moneda del negocio; `null` si no hay pasarela que lo declare.
+             */
+            minimo: number | null;
+            /**
+             * Fuente
+             * @description `negocio`: lo fijó el negocio; `pasarela`: lo declara la pasarela para su ambiente.
+             * @enum {string}
+             */
+            fuente: "negocio" | "pasarela" | "ninguna";
+            /**
+             * Moneda
+             * @default COP
+             */
+            moneda: string;
+            /**
+             * Cuentas De Transferencia
+             * @description Cuentas de transferencia configuradas (0 = el cobro bajo el mínimo no tendría cómo pagarse).
+             */
+            cuentas_de_transferencia: number;
         };
         /** Monitoring */
         Monitoring: {
@@ -17576,6 +17796,140 @@ export interface operations {
             };
         };
     };
+    get_graph_api_v1_admin_a2a_graph_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Graph"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_graph_api_v1_admin_a2a_graph_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraphIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_graph_versions_api_v1_admin_a2a_graph_versions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphVersion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calls_api_v1_admin_a2a_calls_get: {
+        parameters: {
+            query: {
+                connection_id: string;
+                limit?: number;
+                before?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Call"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete: {
         parameters: {
             query?: never;
@@ -22143,6 +22497,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModulosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    minimo_pago_en_linea_api_v1_pack_commerce_pago_en_linea_minimo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MinimoPagoEnLineaOut"];
                 };
             };
             /** @description Validation Error */
