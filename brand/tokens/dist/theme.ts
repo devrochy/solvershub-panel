@@ -5,7 +5,8 @@ export const shBrand = {
   "product": "SolversHub",
   "company": "Roshi",
   "tagline": "Centro de soluciones impulsado con IA",
-  "version": "1.4"
+  "version": "1.4",
+  "manual_version": "1.5"
 } as const;
 
 export const shColor = {
