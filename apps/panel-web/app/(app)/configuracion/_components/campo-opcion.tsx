@@ -76,11 +76,11 @@ export function CampoOpcion({
           {ayuda}
           {enlace}
         </p>
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-3">
           {posibles.map((posible) => {
             const activa = !apagadas.includes(posible.valor);
             return (
-              <label key={posible.valor} className="flex items-center gap-2.5 text-sm text-headline">
+              <label key={posible.valor} className="flex items-start gap-2.5 text-sm text-headline">
                 <Switch
                   checked={activa}
                   disabled={bloqueado}
@@ -89,7 +89,11 @@ export function CampoOpcion({
                   }
                   aria-label={`${opcion.etiqueta}: ${posible.etiqueta}`}
                 />
-                {posible.etiqueta}
+                <span className="flex flex-col">
+                  {posible.etiqueta}
+                  {/* Qué evita esta validación (la declara el pack o el core, SPEC-37). */}
+                  {posible.nota && <span className="text-xs text-text-soft">{posible.nota}</span>}
+                </span>
               </label>
             );
           })}
