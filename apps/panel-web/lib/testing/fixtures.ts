@@ -5,6 +5,8 @@
  */
 import type {
   AgentConversationPage,
+  AgentSummary,
+  Graph,
   AgentsOverview,
   AgentTaskPage,
   AvisoDeCargo,
@@ -778,9 +780,39 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   desde: "2026-10-01",
 };
 
+// Colaboración entre agentes (HU-AOS-26): dos especialistas, el Coordinador y un permiso.
+const VENTAS = "00000000-0000-4000-8000-0000000000a1";
+const AGENDA = "00000000-0000-4000-8000-0000000000a2";
+
+function agente(id: string, key: string, name: string, kind: AgentSummary["kind"] = "specialist"): AgentSummary {
+  return {
+    id, key, name, kind, contract: kind === "core" ? "kernelspec/1" : "agentspec/3", description: "",
+    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z",
+  };
+}
+
+export const agentesDelNegocio: AgentSummary[] = [
+  agente(VENTAS, "ventas", "Ventas"),
+  agente(AGENDA, "agenda", "Agenda"),
+  agente("00000000-0000-4000-8000-0000000000a0", "coordinador", "Coordinador", "core"),
+];
+
+export const grafoA2A: Graph = {
+  version: { id: "00000000-0000-4000-8000-0000000000f1", version: 1, content_hash: "a".repeat(64), created_at: "2026-10-25T12:00:00Z" },
+  links: [
+    {
+      from_agent_id: VENTAS, to_agent_id: AGENDA, modes: ["query"], intents: [], max_depth: 3, timeout_ms: 15000,
+      budget_usd: 0.02, budget_tokens: 20000, data_classes: ["public", "internal"],
+    },
+  ],
+  warnings: [],
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/me": me,
   "/admin/agents/overview": agentes,
+  "/admin/agents": agentesDelNegocio,
+  "/admin/a2a/graph": grafoA2A,
   "/admin/dashboard": dashboard,
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,

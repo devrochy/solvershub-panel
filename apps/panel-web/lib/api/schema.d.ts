@@ -1055,6 +1055,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/a2a/route-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Route Preview */
+        post: operations["route_preview_api_v1_admin_a2a_route_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/{connection_id}/agents/{instance_id}": {
         parameters: {
             query?: never;
@@ -11193,6 +11210,51 @@ export interface components {
             /** Fecha */
             fecha: string;
         };
+        /** RoutePreview */
+        RoutePreview: {
+            /**
+             * Mode
+             * @description `off`, `shadow` o `active`: si hoy el router decide en esta conexión.
+             */
+            mode: string;
+            /**
+             * Source
+             * @description `rule`, `trigger` o `default`.
+             */
+            source: string;
+            /** Agent Key */
+            agent_key: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Procedure Title */
+            procedure_title?: string | null;
+            /** Rule Id */
+            rule_id: string | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Candidates */
+            candidates: components["schemas"]["RouteCandidate"][];
+            /**
+             * Not Evaluated Rules
+             * @description Reglas por datos del cliente, etapa u horario: sin conversación no se evalúan.
+             */
+            not_evaluated_rules: string[];
+        };
+        /** RoutePreviewIn */
+        RoutePreviewIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Text */
+            text: string;
+        };
         /** Rules */
         Rules: {
             /** Max Dias Prorroga */
@@ -13078,6 +13140,23 @@ export interface components {
              * @default manual
              */
             reason: string;
+        };
+        /** RouteCandidate */
+        RouteCandidate: {
+            /** Procedure Id */
+            procedure_id: string;
+            /**
+             * Title
+             * @description Título del procedimiento (dato de la habilidad).
+             */
+            title?: string | null;
+            /**
+             * Owner
+             * @description Key del agente que declara el procedimiento.
+             */
+            owner: string;
+            /** Score */
+            score: number;
         };
         /** ConnectionAgentCreate */
         ConnectionAgentCreate: {
@@ -18141,6 +18220,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Call"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    route_preview_api_v1_admin_a2a_route_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutePreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutePreview"];
                 };
             };
             /** @description Validation Error */

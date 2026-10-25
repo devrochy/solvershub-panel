@@ -6,6 +6,7 @@ import {
   CreditCard,
   FlaskConical,
   type LucideIcon,
+  Network,
   HandCoins,
   LayoutDashboard,
   LogIn,
@@ -121,6 +122,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
     items: [
       entrada("Agentes", Bot, [
         { section: "agents", label: "Agentes", href: "/agentes", icon: Bot, ready: true },
+        // HU-AOS-26: permisos entre agentes y «Probar una frase» (escribe en `settings`, como el editor).
+        { section: "settings", label: "Colaboración", href: "/agentes/colaboracion", icon: Network, ready: true },
         { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true },
       ]),
       // Plantillas, Producción y Requisitos de Meta se gestionan desde cada conexión Meta.
