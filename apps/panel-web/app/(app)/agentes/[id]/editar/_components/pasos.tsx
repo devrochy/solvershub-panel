@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
 import { ListaDeFrases } from "@/app/(app)/agentes/[id]/editar/_components/lista-de-frases";
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,7 +24,7 @@ import {
   type Errores,
   type EstadoDelEditor,
 } from "@/lib/agentes-editor";
-import type { LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
 import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
@@ -224,6 +225,7 @@ export function PasoSuperpoderes({
   erroresPorPoder,
   catalogo,
   minFrases,
+  requisitos = [],
 }: {
   estado: EstadoDelEditor;
   cambiar: Cambiar;
@@ -231,6 +233,7 @@ export function PasoSuperpoderes({
   erroresPorPoder: Record<string, string>;
   catalogo: Superpower[];
   minFrases: number;
+  requisitos?: Requirement[];
 }) {
   function poner(id: string, cambio: Partial<{ activo: boolean; frases: string[] }>) {
     const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
@@ -247,6 +250,7 @@ export function PasoSuperpoderes({
         reconocerlo: las de la habilidad ya cuentan y puedes sumar las tuyas.
       </p>
       <ErrorDeCampo id="superpoderes-error" mensaje={errores.procedures} />
+      <AvisoDeRequisitos requisitos={requisitos} />
       {fuera.length > 0 && (
         <ul className="flex flex-col gap-3" aria-label="Superpoderes que no corresponden a este agente">
           {fuera.map((id) => (
@@ -499,6 +503,7 @@ export function PasoPublicar({
   errores,
   notas,
   setNotas,
+  requisitos = [],
 }: {
   destinos: PublishTarget[];
   destinosError: string | null;
@@ -507,9 +512,14 @@ export function PasoPublicar({
   errores: Errores;
   notas: string;
   setNotas: (notas: string) => void;
+  requisitos?: Requirement[];
 }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
+      <AvisoDeRequisitos
+        requisitos={requisitos}
+        titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"
+      />
       <p className="text-sm text-body">
         Un agente siempre se publica en al menos una conexión. Al publicar se prepara una versión nueva de cada conexión
         elegida; tus clientes no la ven hasta que la actives.

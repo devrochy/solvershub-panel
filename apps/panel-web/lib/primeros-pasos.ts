@@ -19,7 +19,7 @@ export interface CopiaDePaso {
 
 type Tipo = NonNullable<PasoPrimerosPasos["tipo"]>;
 
-const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; accion: string; href: string; unidad: [string, string] }> = {
+export const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; accion: string; href: string; unidad: [string, string] }> = {
   catalogo: {
     titulo: "Carga tu catálogo",
     descripcion: "Agrega los productos que tu asistente puede ofrecer y cotizar.",

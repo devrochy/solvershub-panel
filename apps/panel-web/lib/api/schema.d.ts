@@ -6431,6 +6431,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requirements
+         * @description Lo que falta configurar para el enfoque de este agente. Un agente que no es de una plantilla
+         *     (`general`, `coordinador`, especialistas por API) no tiene requisitos propios.
+         */
+        get: operations["list_requirements_api_v1_admin_agents__agent_id__requirements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -13369,6 +13390,8 @@ export interface components {
             missing_skills: string[];
             /** Superpowers */
             superpowers: components["schemas"]["Superpower"][];
+            /** Requirements */
+            requirements: components["schemas"]["Requirement"][];
         };
         /** EditorPublishIn */
         EditorPublishIn: {
@@ -15296,6 +15319,40 @@ export interface components {
             cargos: number;
             /** Monto */
             monto: number;
+        };
+        /** Page[Requirement] */
+        Page_Requirement_: {
+            /** Items */
+            items: components["schemas"]["Requirement"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /**
+         * Requirement
+         * @description Algo que el negocio tiene que configurar para que el agente funcione (aviso, no bloquea).
+         */
+        Requirement: {
+            /** Skill */
+            skill: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "habilidad_sin_configurar" | "sin_contenido";
+            /** Title */
+            title: string;
+            /** Explanation */
+            explanation: string;
+            /** Section */
+            section: string;
+            /** Content */
+            content?: ("catalogo" | "servicios" | "cartera") | null;
         };
     };
     responses: never;
@@ -28393,6 +28450,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstagramDiagnosticStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requirements_api_v1_admin_agents__agent_id__requirements_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Requirement_"];
                 };
             };
             /** @description Validation Error */
