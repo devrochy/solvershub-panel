@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,6 +103,9 @@ export function SelectorDePlantilla({ plantillas }: { plantillas: AgentTemplate[
                   <p className="text-sm text-body">
                     Activa la habilidad {plantilla.missing_skills.map(habilidadLabel).join(", ")} en Habilidades para usar esta plantilla.
                   </p>
+                )}
+                {plantilla.available && (
+                  <AvisoDeRequisitos requisitos={plantilla.requirements} titulo="Antes de usarlo, configura" />
                 )}
                 {existente?.key === plantilla.key && (
                   <p className="text-sm text-body">

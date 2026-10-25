@@ -26,7 +26,14 @@ import {
   type EstadoDelEditor,
   type PasoId,
 } from "@/lib/agentes-editor";
-import type { AgentDetail, EditorPublishOut, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import type {
+  AgentDetail,
+  EditorPublishOut,
+  LlmModelCatalog,
+  PublishTarget,
+  Requirement,
+  Superpower,
+} from "@/lib/api/types";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
@@ -44,6 +51,7 @@ export function EditorDeAgente({
   destinos,
   destinosError,
   puedeActivar,
+  requisitos = [],
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -51,6 +59,8 @@ export function EditorDeAgente({
   destinos: PublishTarget[];
   destinosError: string | null;
   puedeActivar: boolean;
+  /** Lo que falta configurar para este enfoque (aviso, no bloquea). */
+  requisitos?: Requirement[];
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -209,6 +219,7 @@ export function EditorDeAgente({
         erroresPorPoder={porPoder}
         catalogo={superpoderes}
         minFrases={minFrases}
+        requisitos={requisitos}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
@@ -216,6 +227,7 @@ export function EditorDeAgente({
       <PasoPublicar
         destinos={destinos}
         destinosError={destinosError}
+        requisitos={requisitos}
         elegidas={elegidas}
         alternar={(id, activo) => setElegidas((e) => (activo ? [...new Set([...e, id])] : e.filter((x) => x !== id)))}
         errores={errores}

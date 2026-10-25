@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentDetail, LlmModelCatalog, Me, PublishTargetPage, SuperpowerPage } from "@/lib/api/types";
+import type {
+  AgentDetail,
+  LlmModelCatalog,
+  Me,
+  PublishTargetPage,
+  RequirementPage,
+  SuperpowerPage,
+} from "@/lib/api/types";
 
 export const metadata = { title: "Editar agente" };
 
@@ -13,12 +20,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export default async function EditarAgentePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
     apiFetch<PublishTargetPage>(`/admin/agents/${id}/publish-targets?page_size=100`),
     apiFetch<Me>("/admin/me"),
+    apiFetch<RequirementPage>(`/admin/agents/${id}/requirements?page_size=100`),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -57,6 +65,7 @@ export default async function EditarAgentePage({ params }: { params: Promise<{ i
         destinos={destinos.ok ? destinos.data.items : []}
         destinosError={destinos.ok ? null : destinos.error}
         puedeActivar={puedeActivar}
+        requisitos={requisitos.ok ? requisitos.data.items : []}
       />
     </div>
   );
