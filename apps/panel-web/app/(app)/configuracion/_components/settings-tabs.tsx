@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
+import { BajasCard } from "@/app/(app)/configuracion/_components/bajas-card";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
@@ -11,7 +12,13 @@ import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia
 import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { Tabs } from "@/components/ui/tabs";
-import type { MediaSettings, SettingsResponse, WebChatSettings } from "@/lib/api/types";
+import type {
+  BajasSettings,
+  CatalogoConfig,
+  MediaSettings,
+  SettingsResponse,
+  WebChatSettings,
+} from "@/lib/api/types";
 
 type Advanced = {
   versions: { id: string; version: string; is_active: boolean; created_at: string | null }[];
@@ -52,12 +59,16 @@ export function SettingsTabs({
   webChat,
   advanced,
   media,
+  catalogo,
+  bajas,
 }: {
   defaultTab?: string;
   settings: SettingsResponse;
   webChat: WebChatSettings;
   advanced: Advanced;
   media: MediaSettings;
+  catalogo: CatalogoConfig | null;
+  bajas: BajasSettings | null;
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
   const [tab, setTab] = useState(
@@ -66,7 +77,12 @@ export function SettingsTabs({
   return (
     <div className="flex flex-col gap-6">
       <Tabs items={TABS} value={tab} onValueChange={setTab} />
-      {tab === "identity" && <IdentityForm identity={settings.identity} />}
+      {tab === "identity" && (
+        <>
+          <IdentityForm identity={settings.identity} catalogo={catalogo} />
+          {bajas && <BajasCard bajas={bajas} catalogo={catalogo} />}
+        </>
+      )}
       {tab === "brain" && <BrainForm brain={settings.brain} />}
       {tab === "memory" && <MemoryForm memory={settings.memory} />}
       {tab === "skills" && <SkillsForm skills={settings.skills} />}

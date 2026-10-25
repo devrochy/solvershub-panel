@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { apiFetch } from "@/lib/api/server";
 
-const TABS = new Set(["identity", "brain", "memory", "skills", "web-chat", "message-templates", "subscription-provider"]);
+const TABS = new Set(["identity", "bajas", "brain", "memory", "skills", "web-chat", "message-templates", "subscription-provider"]);
 
 /** BFF: guarda una pestaña de Configuración reenviando el Bearer del panel. */
 export async function PUT(request: Request, ctx: { params: Promise<{ tab: string }> }) {
@@ -16,7 +16,11 @@ export async function PUT(request: Request, ctx: { params: Promise<{ tab: string
   }
   const res = await apiFetch(`/admin/settings/${tab}`, { method: "PUT", body });
   if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+    // `fields`: errores por campo (422) para marcarlos junto a cada control.
+    return NextResponse.json(
+      { error: res.error, ...(res.fields ? { fields: res.fields } : {}) },
+      { status: res.status },
+    );
   }
   return NextResponse.json(res.data);
 }

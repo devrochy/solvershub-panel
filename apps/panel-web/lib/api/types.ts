@@ -53,6 +53,12 @@ export type AgentOSResultado = components["schemas"]["AgentOSResultado"];
 export type SettingsResponse = components["schemas"]["SettingsResponse"];
 export type WebChatSettings = components["schemas"]["WebChatSettings"];
 export type IdentitySettings = components["schemas"]["IdentitySettings"];
+// Catálogo de opciones de configuración (SPEC-37, ADR-0166). Alias con sufijo `Config`: el panel ya
+// tiene tipos y componentes locales llamados `Opcion` y `Catalogo`.
+export type CatalogoConfig = components["schemas"]["Catalogo"];
+export type OpcionConfig = components["schemas"]["Opcion"];
+export type ValorPosibleConfig = components["schemas"]["ValorPosible"];
+export type BajasSettings = components["schemas"]["BajasSettings"];
 export type BotPausedUpdate = components["schemas"]["BotPausedUpdate"];
 export type BotPausedState = components["schemas"]["BotPausedState"];
 export type BrainSettings = components["schemas"]["BrainSettings"];

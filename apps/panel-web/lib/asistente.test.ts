@@ -22,6 +22,11 @@ describe("cuerpoIdentidad", () => {
     expect(cuerpoIdentidad(inicial, inicial)).not.toHaveProperty("out_of_hours_default_message");
   });
 
+  it("ya no manda el tono retirado", () => {
+    const inicial = ajustes.identity;
+    expect(cuerpoIdentidad(inicial, inicial)).not.toHaveProperty("tono");
+  });
+
   it("usa la zona del negocio para el horario de atención", () => {
     const inicial = { ...ajustes.identity, timezone: "America/Lima", business_tz: "" };
     expect(cuerpoIdentidad(inicial, inicial).business_tz).toBe("America/Lima");

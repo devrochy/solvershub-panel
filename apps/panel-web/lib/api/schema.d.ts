@@ -1003,6 +1003,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/a2a/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Graph */
+        get: operations["get_graph_api_v1_admin_a2a_graph_get"];
+        /** Put Graph */
+        put: operations["put_graph_api_v1_admin_a2a_graph_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/graph/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Graph Versions */
+        get: operations["list_graph_versions_api_v1_admin_a2a_graph_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Calls */
+        get: operations["list_calls_api_v1_admin_a2a_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/{connection_id}/agents/{instance_id}": {
         parameters: {
             query?: never;
@@ -2725,6 +2777,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalog Api
+         * @description Catálogo de opciones de Identidad y comportamiento (SPEC-37, ADR-0166): qué es cada una,
+         *     qué valores acepta, qué cambia y quién la edita. Las del master solo las ve el master; la lista
+         *     de guardrails se calcula con los packs habilitados del negocio activo.
+         */
+        get: operations["get_catalog_api_api_v1_admin_settings_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/identity": {
         parameters: {
             query?: never;
@@ -2735,6 +2809,50 @@ export interface paths {
         get?: never;
         /** Save Identity */
         put: operations["save_identity_api_v1_admin_settings_identity_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/bajas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bajas */
+        get: operations["get_bajas_api_v1_admin_settings_bajas_get"];
+        /**
+         * Save Bajas
+         * @description Guarda las palabras de baja sin vacíos ni repetidos. Lista vacía = restablecer las de por
+         *     defecto (se quita la clave). Los textos son dato del dueño, nunca instrucción (invariante 7).
+         */
+        put: operations["save_bajas_api_v1_admin_settings_bajas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/whatsapp-web": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Waweb Policy */
+        get: operations["get_waweb_policy_api_v1_admin_settings_whatsapp_web_get"];
+        /**
+         * Save Waweb Policy
+         * @description Guarda la política del canal. Pasar a `allow_outbound` exige aceptar el aviso de riesgo
+         *     vigente; cada cambio deja una fila en `audit_log` con quién, antes y después.
+         */
+        put: operations["save_waweb_policy_api_v1_admin_settings_whatsapp_web_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -6919,6 +7037,29 @@ export interface components {
             /** Enviado */
             enviado?: string | null;
         };
+        /**
+         * BajasSettings
+         * @description Palabras con las que un cliente se da de baja de los envíos a segmentos (ADR-0150).
+         */
+        BajasSettings: {
+            /**
+             * Palabras
+             * @description Las guardadas por el negocio; vacío = usa las de por defecto.
+             */
+            palabras: string[];
+            /** Por Defecto */
+            por_defecto: string[];
+            /** Usa Por Defecto */
+            usa_por_defecto: boolean;
+        };
+        /** BajasUpdate */
+        BajasUpdate: {
+            /**
+             * Palabras
+             * @default []
+             */
+            palabras: string[];
+        };
         /** BillingRequest */
         BillingRequest: {
             /** Manual Status */
@@ -7092,6 +7233,55 @@ export interface components {
             /** Default Duration Minutes */
             default_duration_minutes: number;
         };
+        /** Call */
+        Call: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Mode */
+            mode: string;
+            /**
+             * From Instance Id
+             * Format: uuid
+             */
+            from_instance_id: string;
+            /** To Instance Id */
+            to_instance_id: string | null;
+            /** Intent */
+            intent: string;
+            /** Depth */
+            depth: number;
+            /**
+             * Status
+             * @description Último evento de la llamada (`accepted`, `completed`, `denied`, …).
+             */
+            status: string;
+            /** Reason */
+            reason: string | null;
+            /** Tokens */
+            tokens: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+        };
         /** CashAdjustment */
         CashAdjustment: {
             /** Valor Nuevo */
@@ -7103,6 +7293,13 @@ export interface components {
         CatalogResponse: {
             /** Categories */
             categories: components["schemas"]["ConnectionCategory"][];
+        };
+        /** Catalogo */
+        Catalogo: {
+            /** Version */
+            version: string;
+            /** Opciones */
+            opciones: components["schemas"]["Opcion"][];
         };
         /** CategoryOut */
         CategoryOut: {
@@ -8126,6 +8323,54 @@ export interface components {
              */
             tenant: string;
         };
+        /** Graph */
+        Graph: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+        };
+        /** GraphIn */
+        GraphIn: {
+            /** Links */
+            links: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** GraphOut */
+        GraphOut: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+            /** Created */
+            created: boolean;
+        };
+        /** GraphVersion */
+        GraphVersion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** GuardrailsSettings */
         GuardrailsSettings: {
             /** Guardrails Text */
@@ -8228,7 +8473,11 @@ export interface components {
              * @default false
              */
             brand_voice_warning: boolean;
-            /** Tono */
+            /**
+             * Tono
+             * @deprecated
+             * @default calido
+             */
             tono: string;
             /** Debounce Mode */
             debounce_mode: string;
@@ -8311,9 +8560,9 @@ export interface components {
             brand_voice: string;
             /**
              * Tono
-             * @default calido
+             * @deprecated
              */
-            tono: string;
+            tono?: string | null;
             /**
              * Debounce Mode
              * @default natural
@@ -8585,6 +8834,33 @@ export interface components {
             page_size: number;
             /** Has More */
             has_more: boolean;
+        };
+        /** Link */
+        Link: {
+            /**
+             * From Agent Id
+             * Format: uuid
+             */
+            from_agent_id: string;
+            /**
+             * To Agent Id
+             * Format: uuid
+             */
+            to_agent_id: string;
+            /** Modes */
+            modes: string[];
+            /** Intents */
+            intents: string[];
+            /** Max Depth */
+            max_depth: number;
+            /** Timeout Ms */
+            timeout_ms: number;
+            /** Budget Usd */
+            budget_usd: number;
+            /** Budget Tokens */
+            budget_tokens: number;
+            /** Data Classes */
+            data_classes: string[];
         };
         /** LinkRequest */
         LinkRequest: {
@@ -9134,6 +9410,60 @@ export interface components {
             numbers: components["schemas"]["PhoneNumberItem"][];
             /** Sync Error */
             sync_error?: string | null;
+        };
+        /**
+         * Opcion
+         * @description Una opción de configuración. `extra="forbid"`: un campo mal escrito falla al importar.
+         */
+        Opcion: {
+            /** Clave */
+            clave: string;
+            /**
+             * Grupo
+             * @enum {string}
+             */
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "texto" | "texto_largo" | "entero" | "decimal" | "booleano" | "elegir_una" | "elegir_varias" | "lista_de_textos" | "franjas";
+            /** Etiqueta */
+            etiqueta: string;
+            /** Explicacion */
+            explicacion: string;
+            /**
+             * Ejemplo
+             * @default
+             */
+            ejemplo: string;
+            /**
+             * Unidad
+             * @default
+             */
+            unidad: string;
+            /** Valores */
+            valores?: components["schemas"]["ValorPosible"][];
+            /** Minimo */
+            minimo?: number | null;
+            /** Maximo */
+            maximo?: number | null;
+            /** Por Defecto */
+            por_defecto?: unknown;
+            depende_de?: components["schemas"]["Dependencia"] | null;
+            /**
+             * Editable Por
+             * @default dueno
+             * @enum {string}
+             */
+            editable_por: "dueno" | "master";
+            /**
+             * Solo Lectura
+             * @default false
+             */
+            solo_lectura: boolean;
+            /** Almacen */
+            almacen: string;
         };
         /** OrderLine */
         OrderLine: {
@@ -11508,6 +11838,21 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * ValorPosible
+         * @description Un valor que el usuario puede escoger, con su etiqueta en español.
+         */
+        ValorPosible: {
+            /** Valor */
+            valor: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
         /** VariantOut */
         VariantOut: {
             /**
@@ -12475,6 +12820,23 @@ export interface components {
             secrets: components["schemas"]["ConfiguredSecret"][];
             /** Literals To Migrate */
             literals_to_migrate: string[];
+        };
+        /**
+         * Dependencia
+         * @description La opción solo tiene efecto si se cumple una condición sobre otra.
+         */
+        Dependencia: {
+            /** Clave */
+            clave: string;
+            /**
+             * Condicion
+             * @enum {string}
+             */
+            condicion: "no_vacia" | "verdadera" | "igual";
+            /** Valor */
+            valor?: string | null;
+            /** Motivo */
+            motivo: string;
         };
         /** PublishIn */
         PublishIn: {
@@ -14186,6 +14548,44 @@ export interface components {
             bloqueo: ("sin_destinatarios" | "tope" | "envio_en_curso") | null;
             /** Expira */
             expira: string | null;
+        };
+        /**
+         * WaWebPolicySettings
+         * @description Política anti-baneo del canal no oficial. Solo la ve y la edita el master.
+         */
+        WaWebPolicySettings: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /** Risk Version */
+            risk_version: string;
+        };
+        /** WaWebPolicyUpdate */
+        WaWebPolicyUpdate: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /**
+             * Acepta Riesgo
+             * @default false
+             */
+            acepta_riesgo: boolean;
+            /** Risk Version */
+            risk_version?: string | null;
         };
         /** QaAreaEvo */
         QaAreaEvo: {
@@ -17576,6 +17976,140 @@ export interface operations {
             };
         };
     };
+    get_graph_api_v1_admin_a2a_graph_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Graph"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_graph_api_v1_admin_a2a_graph_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraphIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_graph_versions_api_v1_admin_a2a_graph_versions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphVersion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calls_api_v1_admin_a2a_calls_get: {
+        parameters: {
+            query: {
+                connection_id: string;
+                limit?: number;
+                before?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Call"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete: {
         parameters: {
             query?: never;
@@ -20736,6 +21270,37 @@ export interface operations {
             };
         };
     };
+    get_catalog_api_api_v1_admin_settings_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalogo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_identity_api_v1_admin_settings_identity_put: {
         parameters: {
             query?: never;
@@ -20758,6 +21323,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdentitySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bajas_api_v1_admin_settings_bajas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_bajas_api_v1_admin_settings_bajas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BajasUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_waweb_policy_api_v1_admin_settings_whatsapp_web_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_waweb_policy_api_v1_admin_settings_whatsapp_web_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaWebPolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
                 };
             };
             /** @description Validation Error */
