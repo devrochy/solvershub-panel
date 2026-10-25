@@ -2777,6 +2777,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalog Api
+         * @description Catálogo de opciones de Identidad y comportamiento (SPEC-37, ADR-0166): qué es cada una,
+         *     qué valores acepta, qué cambia y quién la edita. Las del master solo las ve el master; la lista
+         *     de guardrails se calcula con los packs habilitados del negocio activo.
+         */
+        get: operations["get_catalog_api_api_v1_admin_settings_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/identity": {
         parameters: {
             query?: never;
@@ -2787,6 +2809,50 @@ export interface paths {
         get?: never;
         /** Save Identity */
         put: operations["save_identity_api_v1_admin_settings_identity_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/bajas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bajas */
+        get: operations["get_bajas_api_v1_admin_settings_bajas_get"];
+        /**
+         * Save Bajas
+         * @description Guarda las palabras de baja sin vacíos ni repetidos. Lista vacía = restablecer las de por
+         *     defecto (se quita la clave). Los textos son dato del dueño, nunca instrucción (invariante 7).
+         */
+        put: operations["save_bajas_api_v1_admin_settings_bajas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/whatsapp-web": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Waweb Policy */
+        get: operations["get_waweb_policy_api_v1_admin_settings_whatsapp_web_get"];
+        /**
+         * Save Waweb Policy
+         * @description Guarda la política del canal. Pasar a `allow_outbound` exige aceptar el aviso de riesgo
+         *     vigente; cada cambio deja una fila en `audit_log` con quién, antes y después.
+         */
+        put: operations["save_waweb_policy_api_v1_admin_settings_whatsapp_web_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -6988,6 +7054,29 @@ export interface components {
             /** Enviado */
             enviado?: string | null;
         };
+        /**
+         * BajasSettings
+         * @description Palabras con las que un cliente se da de baja de los envíos a segmentos (ADR-0150).
+         */
+        BajasSettings: {
+            /**
+             * Palabras
+             * @description Las guardadas por el negocio; vacío = usa las de por defecto.
+             */
+            palabras: string[];
+            /** Por Defecto */
+            por_defecto: string[];
+            /** Usa Por Defecto */
+            usa_por_defecto: boolean;
+        };
+        /** BajasUpdate */
+        BajasUpdate: {
+            /**
+             * Palabras
+             * @default []
+             */
+            palabras: string[];
+        };
         /** BillingRequest */
         BillingRequest: {
             /** Manual Status */
@@ -7221,6 +7310,13 @@ export interface components {
         CatalogResponse: {
             /** Categories */
             categories: components["schemas"]["ConnectionCategory"][];
+        };
+        /** Catalogo */
+        Catalogo: {
+            /** Version */
+            version: string;
+            /** Opciones */
+            opciones: components["schemas"]["Opcion"][];
         };
         /** CategoryOut */
         CategoryOut: {
@@ -8394,7 +8490,11 @@ export interface components {
              * @default false
              */
             brand_voice_warning: boolean;
-            /** Tono */
+            /**
+             * Tono
+             * @deprecated
+             * @default calido
+             */
             tono: string;
             /** Debounce Mode */
             debounce_mode: string;
@@ -8477,9 +8577,9 @@ export interface components {
             brand_voice: string;
             /**
              * Tono
-             * @default calido
+             * @deprecated
              */
-            tono: string;
+            tono?: string | null;
             /**
              * Debounce Mode
              * @default natural
@@ -9354,6 +9454,60 @@ export interface components {
             numbers: components["schemas"]["PhoneNumberItem"][];
             /** Sync Error */
             sync_error?: string | null;
+        };
+        /**
+         * Opcion
+         * @description Una opción de configuración. `extra="forbid"`: un campo mal escrito falla al importar.
+         */
+        Opcion: {
+            /** Clave */
+            clave: string;
+            /**
+             * Grupo
+             * @enum {string}
+             */
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "texto" | "texto_largo" | "entero" | "decimal" | "booleano" | "elegir_una" | "elegir_varias" | "lista_de_textos" | "franjas";
+            /** Etiqueta */
+            etiqueta: string;
+            /** Explicacion */
+            explicacion: string;
+            /**
+             * Ejemplo
+             * @default
+             */
+            ejemplo: string;
+            /**
+             * Unidad
+             * @default
+             */
+            unidad: string;
+            /** Valores */
+            valores?: components["schemas"]["ValorPosible"][];
+            /** Minimo */
+            minimo?: number | null;
+            /** Maximo */
+            maximo?: number | null;
+            /** Por Defecto */
+            por_defecto?: unknown;
+            depende_de?: components["schemas"]["Dependencia"] | null;
+            /**
+             * Editable Por
+             * @default dueno
+             * @enum {string}
+             */
+            editable_por: "dueno" | "master";
+            /**
+             * Solo Lectura
+             * @default false
+             */
+            solo_lectura: boolean;
+            /** Almacen */
+            almacen: string;
         };
         /** OrderLine */
         OrderLine: {
@@ -11728,6 +11882,21 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * ValorPosible
+         * @description Un valor que el usuario puede escoger, con su etiqueta en español.
+         */
+        ValorPosible: {
+            /** Valor */
+            valor: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
         /** VariantOut */
         VariantOut: {
             /**
@@ -12695,6 +12864,23 @@ export interface components {
             secrets: components["schemas"]["ConfiguredSecret"][];
             /** Literals To Migrate */
             literals_to_migrate: string[];
+        };
+        /**
+         * Dependencia
+         * @description La opción solo tiene efecto si se cumple una condición sobre otra.
+         */
+        Dependencia: {
+            /** Clave */
+            clave: string;
+            /**
+             * Condicion
+             * @enum {string}
+             */
+            condicion: "no_vacia" | "verdadera" | "igual";
+            /** Valor */
+            valor?: string | null;
+            /** Motivo */
+            motivo: string;
         };
         /** PublishIn */
         PublishIn: {
@@ -14406,6 +14592,44 @@ export interface components {
             bloqueo: ("sin_destinatarios" | "tope" | "envio_en_curso") | null;
             /** Expira */
             expira: string | null;
+        };
+        /**
+         * WaWebPolicySettings
+         * @description Política anti-baneo del canal no oficial. Solo la ve y la edita el master.
+         */
+        WaWebPolicySettings: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /** Risk Version */
+            risk_version: string;
+        };
+        /** WaWebPolicyUpdate */
+        WaWebPolicyUpdate: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /**
+             * Acepta Riesgo
+             * @default false
+             */
+            acepta_riesgo: boolean;
+            /** Risk Version */
+            risk_version?: string | null;
         };
         /** QaAreaEvo */
         QaAreaEvo: {
@@ -21090,6 +21314,37 @@ export interface operations {
             };
         };
     };
+    get_catalog_api_api_v1_admin_settings_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalogo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_identity_api_v1_admin_settings_identity_put: {
         parameters: {
             query?: never;
@@ -21112,6 +21367,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdentitySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bajas_api_v1_admin_settings_bajas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_bajas_api_v1_admin_settings_bajas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BajasUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_waweb_policy_api_v1_admin_settings_whatsapp_web_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_waweb_policy_api_v1_admin_settings_whatsapp_web_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaWebPolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
                 };
             };
             /** @description Validation Error */
