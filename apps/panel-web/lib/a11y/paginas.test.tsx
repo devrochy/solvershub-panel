@@ -39,6 +39,7 @@ type Pagina = (props: { searchParams: Promise<Record<string, string>> }) => Prom
 const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Resumen", () => import("@/app/(app)/dashboard/page")],
   ["Agentes", () => import("@/app/(app)/agentes/page")],
+  ["Agentes · Colaboración", () => import("@/app/(app)/agentes/colaboracion/page")],
   ["Conversaciones", () => import("@/app/(app)/conversaciones/page")],
   ["Escalaciones", () => import("@/app/(app)/escalaciones/page")],
   ["Leads", () => import("@/app/(app)/leads/page")],

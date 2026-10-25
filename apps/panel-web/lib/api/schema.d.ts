@@ -1055,6 +1055,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/a2a/route-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Route Preview */
+        post: operations["route_preview_api_v1_admin_a2a_route_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/{connection_id}/agents/{instance_id}": {
         parameters: {
             query?: never;
@@ -2769,6 +2786,28 @@ export interface paths {
         };
         /** Get Settings Api */
         get: operations["get_settings_api_api_v1_admin_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalog Api
+         * @description Catálogo de opciones de Identidad y comportamiento (SPEC-37, ADR-0166): qué es cada una,
+         *     qué valores acepta, qué cambia y quién la edita. Las del master solo las ve el master; la lista
+         *     de guardrails se calcula con los packs habilitados del negocio activo.
+         */
+        get: operations["get_catalog_api_api_v1_admin_settings_catalog_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7222,6 +7261,13 @@ export interface components {
             /** Categories */
             categories: components["schemas"]["ConnectionCategory"][];
         };
+        /** Catalogo */
+        Catalogo: {
+            /** Version */
+            version: string;
+            /** Opciones */
+            opciones: components["schemas"]["Opcion"][];
+        };
         /** CategoryOut */
         CategoryOut: {
             /**
@@ -8394,7 +8440,11 @@ export interface components {
              * @default false
              */
             brand_voice_warning: boolean;
-            /** Tono */
+            /**
+             * Tono
+             * @deprecated
+             * @default calido
+             */
             tono: string;
             /** Debounce Mode */
             debounce_mode: string;
@@ -8477,9 +8527,9 @@ export interface components {
             brand_voice: string;
             /**
              * Tono
-             * @default calido
+             * @deprecated
              */
-            tono: string;
+            tono?: string | null;
             /**
              * Debounce Mode
              * @default natural
@@ -9354,6 +9404,60 @@ export interface components {
             numbers: components["schemas"]["PhoneNumberItem"][];
             /** Sync Error */
             sync_error?: string | null;
+        };
+        /**
+         * Opcion
+         * @description Una opción de configuración. `extra="forbid"`: un campo mal escrito falla al importar.
+         */
+        Opcion: {
+            /** Clave */
+            clave: string;
+            /**
+             * Grupo
+             * @enum {string}
+             */
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "texto" | "texto_largo" | "entero" | "decimal" | "booleano" | "elegir_una" | "elegir_varias" | "lista_de_textos" | "franjas";
+            /** Etiqueta */
+            etiqueta: string;
+            /** Explicacion */
+            explicacion: string;
+            /**
+             * Ejemplo
+             * @default
+             */
+            ejemplo: string;
+            /**
+             * Unidad
+             * @default
+             */
+            unidad: string;
+            /** Valores */
+            valores?: components["schemas"]["ValorPosible"][];
+            /** Minimo */
+            minimo?: number | null;
+            /** Maximo */
+            maximo?: number | null;
+            /** Por Defecto */
+            por_defecto?: unknown;
+            depende_de?: components["schemas"]["Dependencia"] | null;
+            /**
+             * Editable Por
+             * @default dueno
+             * @enum {string}
+             */
+            editable_por: "dueno" | "master";
+            /**
+             * Solo Lectura
+             * @default false
+             */
+            solo_lectura: boolean;
+            /** Almacen */
+            almacen: string;
         };
         /** OrderLine */
         OrderLine: {
@@ -11039,6 +11143,51 @@ export interface components {
             /** Fecha */
             fecha: string;
         };
+        /** RoutePreview */
+        RoutePreview: {
+            /**
+             * Mode
+             * @description `off`, `shadow` o `active`: si hoy el router decide en esta conexión.
+             */
+            mode: string;
+            /**
+             * Source
+             * @description `rule`, `trigger` o `default`.
+             */
+            source: string;
+            /** Agent Key */
+            agent_key: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Procedure Title */
+            procedure_title?: string | null;
+            /** Rule Id */
+            rule_id: string | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Candidates */
+            candidates: components["schemas"]["RouteCandidate"][];
+            /**
+             * Not Evaluated Rules
+             * @description Reglas por datos del cliente, etapa u horario: sin conversación no se evalúan.
+             */
+            not_evaluated_rules: string[];
+        };
+        /** RoutePreviewIn */
+        RoutePreviewIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Text */
+            text: string;
+        };
         /** Rules */
         Rules: {
             /** Max Dias Prorroga */
@@ -11727,6 +11876,21 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * ValorPosible
+         * @description Un valor que el usuario puede escoger, con su etiqueta en español.
+         */
+        ValorPosible: {
+            /** Valor */
+            valor: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
         };
         /** VariantOut */
         VariantOut: {
@@ -12696,6 +12860,23 @@ export interface components {
             /** Literals To Migrate */
             literals_to_migrate: string[];
         };
+        /**
+         * Dependencia
+         * @description La opción solo tiene efecto si se cumple una condición sobre otra.
+         */
+        Dependencia: {
+            /** Clave */
+            clave: string;
+            /**
+             * Condicion
+             * @enum {string}
+             */
+            condicion: "no_vacia" | "verdadera" | "igual";
+            /** Valor */
+            valor?: string | null;
+            /** Motivo */
+            motivo: string;
+        };
         /** PublishIn */
         PublishIn: {
             /** Lock Version */
@@ -12892,6 +13073,23 @@ export interface components {
              * @default manual
              */
             reason: string;
+        };
+        /** RouteCandidate */
+        RouteCandidate: {
+            /** Procedure Id */
+            procedure_id: string;
+            /**
+             * Title
+             * @description Título del procedimiento (dato de la habilidad).
+             */
+            title?: string | null;
+            /**
+             * Owner
+             * @description Key del agente que declara el procedimiento.
+             */
+            owner: string;
+            /** Score */
+            score: number;
         };
         /** ConnectionAgentCreate */
         ConnectionAgentCreate: {
@@ -17930,6 +18128,41 @@ export interface operations {
             };
         };
     };
+    route_preview_api_v1_admin_a2a_route_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutePreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutePreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete: {
         parameters: {
             query?: never;
@@ -21077,6 +21310,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalog_api_api_v1_admin_settings_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalogo"];
                 };
             };
             /** @description Validation Error */

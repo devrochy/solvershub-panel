@@ -205,3 +205,10 @@ export type PagoRegistradoOut = components["schemas"]["PagoRegistradoOut"];
 export type MinimoPagoEnLineaOut = components["schemas"]["MinimoPagoEnLineaOut"];
 export type AvisoDeCargo = components["schemas"]["AvisoOut"];
 export type CohorteSuscripciones = components["schemas"]["CohorteFila"];
+
+// Colaboración entre agentes (HU-AOS-18/26).
+export type Link = components["schemas"]["Link"];
+export type Graph = components["schemas"]["Graph"];
+export type GraphOut = components["schemas"]["GraphOut"];
+export type RoutePreview = components["schemas"]["RoutePreview"];
+export type AgentSummary = components["schemas"]["AgentSummary"];
