@@ -4,6 +4,7 @@ import { Eye } from "lucide-react";
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
 import { FiltrosPagos } from "@/app/(app)/suscripciones/_components/filtros";
 import { ReenviarLink } from "@/app/(app)/suscripciones/_components/reenviar-link";
+import { RegistrarPago } from "@/app/(app)/suscripciones/_components/registrar-pago";
 import { CHARGE_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +99,10 @@ export default async function PagosDeSuscripcionesPage({ searchParams }: { searc
         return (
           <div className="flex items-center justify-end gap-1">
             {puedeEscribir && c.estado === "pendiente" && c.tipo === "periodo" && (
-              <ReenviarLink cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: c.moneda }} cliente={cliente} />
+              <>
+                <ReenviarLink cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: c.moneda }} cliente={cliente} />
+                <RegistrarPago cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: c.moneda }} cliente={cliente} />
+              </>
             )}
             <IconAction href={`/suscripciones/lista/${c.suscripcion_id}`} label={`Ver la suscripción de ${cliente}`} tone="ver">
               <Eye className="h-4 w-4" aria-hidden />

@@ -13,6 +13,8 @@ import {
   consultaSuscripciones,
   enlaceDePagina,
   mensajeDeReenvio,
+  mensajeDePagoRegistrado,
+  descripcionDeRegistroDePago,
   mesLegible,
   nombreDelCliente,
   planesDeProductos,
@@ -166,5 +168,12 @@ describe("permisos y planes", () => {
       { value: "v3", label: "Plan Max · MAX-M" },
       { value: "v2", label: "Plan Pro" },
     ]);
+  });
+
+  it("el registro del pago se explica en palabras del negocio", () => {
+    expect(mensajeDePagoRegistrado({ estado: "ya_registrado", suscripcion_estado: "activa" })).toMatch(/ya estaba registrado/);
+    expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "activa" })).toMatch(/está activa/);
+    expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "pausada" })).toBe("Pago registrado.");
+    expect(descripcionDeRegistroDePago({ periodo: "2026-10", monto: 200000, moneda: "COP" }, "Ana")).toMatch(/2026-10 de Ana/);
   });
 });

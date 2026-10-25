@@ -201,5 +201,6 @@ export type MetricasSuscripciones = components["schemas"]["Metricas"];
 export type HistorialSuscripcion = components["schemas"]["HistorialItem"];
 export type AccionSuscripcionOut = components["schemas"]["AccionOut"];
 export type ReenvioLinkOut = components["schemas"]["ReenvioOut"];
+export type PagoRegistradoOut = components["schemas"]["PagoRegistradoOut"];
 export type AvisoDeCargo = components["schemas"]["AvisoOut"];
 export type CohorteSuscripciones = components["schemas"]["CohorteFila"];

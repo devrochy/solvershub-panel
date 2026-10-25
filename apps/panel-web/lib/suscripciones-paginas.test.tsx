@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 
 import { AccionesSuscripcion } from "@/app/(app)/suscripciones/_components/acciones-suscripcion";
 import { ReenviarLink } from "@/app/(app)/suscripciones/_components/reenviar-link";
+import { RegistrarPago } from "@/app/(app)/suscripciones/_components/registrar-pago";
 import { FeedbackProviders } from "@/components/ui/providers";
 import { RESPUESTAS, suscripcionDetalle } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
@@ -96,6 +97,7 @@ describe("páginas de Suscripciones (SPEC-35)", () => {
     expect(screen.getAllByText("duena@test").length).toBe(2);
     // Solo el cobro pendiente de período se puede reenviar.
     expect(screen.getAllByRole("button", { name: /Reenviar link de pago a Ana Prueba/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /Registrar pago por transferencia de Ana Prueba/ })).toHaveLength(1);
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
@@ -106,6 +108,7 @@ describe("páginas de Suscripciones (SPEC-35)", () => {
     await pintar(await Pagina({ params: Promise.resolve({ id: "test-sub-1" }) }));
     expect(screen.queryByRole("button", { name: "Pausar" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Reenviar link/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Registrar pago/ })).toBeNull();
     expect(screen.getByText("Cobros")).toBeTruthy();
   });
 
@@ -241,5 +244,43 @@ describe("acciones con confirmación", () => {
     await waitFor(() => expect(copiar).toHaveBeenCalledWith("https://pago.test/abc"));
     expect(await screen.findByText(/no tiene una conversación de WhatsApp.*Ya quedó copiado/)).toBeTruthy();
     expect(fetchMock.mock.calls[0][0]).toBe("/api/pack/pack_subscriptions/cargos/test-cargo-1/reenviar-link");
+  });
+  it("registrar el pago pide la referencia, la envía y confirma", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true, status: 200,
+      json: async () => ({ estado: "registrado", suscripcion_estado: "activa" }),
+    });
+    render(
+      <FeedbackProviders>
+        <RegistrarPago cargo={{ id: "test-cargo-1", periodo: "2026-10", monto: 200000, moneda: "COP" }} cliente="Ana Prueba" />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Registrar pago por transferencia de Ana Prueba/ }));
+    const dialogo = await screen.findByRole("dialog");
+    const enviar = within(dialogo).getByRole("button", { name: "Registrar pago" });
+    expect((enviar as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(within(dialogo).getByLabelText(/Referencia de la transferencia/), { target: { value: "  CUS-123456 " } });
+    expect((enviar as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(enviar);
+    expect(await screen.findByText("Pago registrado. La suscripción está activa.")).toBeTruthy();
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/pack/pack_subscriptions/cargos/test-cargo-1/registrar-pago");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ referencia: "CUS-123456" });
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("un error del servidor al registrar el pago se muestra y no cierra el diálogo", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: "El cobro ya está pagado con otra referencia." }) });
+    render(
+      <FeedbackProviders>
+        <RegistrarPago cargo={{ id: "test-cargo-1", periodo: "2026-10", monto: 200000, moneda: "COP" }} cliente="Ana Prueba" />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Registrar pago por transferencia de Ana Prueba/ }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.change(within(dialogo).getByLabelText(/Referencia de la transferencia/), { target: { value: "ABC" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Registrar pago" }));
+    expect(await screen.findByText(/ya está pagado con otra referencia/)).toBeTruthy();
+    expect(screen.queryByRole("dialog")).not.toBeNull();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });
