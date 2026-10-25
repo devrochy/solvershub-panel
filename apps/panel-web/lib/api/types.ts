@@ -59,6 +59,7 @@ export type CatalogoConfig = components["schemas"]["Catalogo"];
 export type OpcionConfig = components["schemas"]["Opcion"];
 export type ValorPosibleConfig = components["schemas"]["ValorPosible"];
 export type BajasSettings = components["schemas"]["BajasSettings"];
+export type WawebPolitica = components["schemas"]["WaWebPolicySettings"];
 export type BotPausedUpdate = components["schemas"]["BotPausedUpdate"];
 export type BotPausedState = components["schemas"]["BotPausedState"];
 export type BrainSettings = components["schemas"]["BrainSettings"];

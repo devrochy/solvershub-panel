@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { apiFetch } from "@/lib/api/server";
 
-const TABS = new Set(["identity", "bajas", "brain", "memory", "skills", "web-chat", "message-templates", "subscription-provider"]);
+const TABS = new Set(["identity", "bajas", "whatsapp-web", "brain", "memory", "skills", "web-chat", "message-templates", "subscription-provider"]);
 
 /** BFF: guarda una pestaña de Configuración reenviando el Bearer del panel. */
 export async function PUT(request: Request, ctx: { params: Promise<{ tab: string }> }) {

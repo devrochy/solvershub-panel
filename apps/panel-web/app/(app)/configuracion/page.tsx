@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api/server";
 import type {
   BajasSettings,
   CatalogoConfig,
+  WawebPolitica,
   MediaSettings,
   SettingsResponse,
   WebChatSettings,
@@ -50,6 +51,10 @@ export default async function SettingsPage({
     );
   }
 
+  // La política de WhatsApp Web solo la ve el master: el catálogo solo trae sus opciones para él.
+  const esMaster = catalogoRes.ok && catalogoRes.data.opciones.some((o) => o.grupo === "whatsapp_web");
+  const wawebRes = esMaster ? await apiFetch<WawebPolitica>("/admin/settings/whatsapp-web") : null;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -65,6 +70,7 @@ export default async function SettingsPage({
         media={mediaRes.ok ? mediaRes.data : MEDIA_FALLBACK}
         catalogo={catalogoRes.ok ? catalogoRes.data : null}
         bajas={bajasRes.ok ? bajasRes.data : null}
+        waweb={wawebRes?.ok ? wawebRes.data : null}
       />
     </div>
   );

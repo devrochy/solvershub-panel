@@ -11,12 +11,14 @@ import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
 import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia-form";
 import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
+import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
 import { Tabs } from "@/components/ui/tabs";
 import type {
   BajasSettings,
   CatalogoConfig,
   MediaSettings,
   SettingsResponse,
+  WawebPolitica,
   WebChatSettings,
 } from "@/lib/api/types";
 
@@ -61,6 +63,7 @@ export function SettingsTabs({
   media,
   catalogo,
   bajas,
+  waweb,
 }: {
   defaultTab?: string;
   settings: SettingsResponse;
@@ -69,6 +72,7 @@ export function SettingsTabs({
   media: MediaSettings;
   catalogo: CatalogoConfig | null;
   bajas: BajasSettings | null;
+  waweb: WawebPolitica | null;
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
   const [tab, setTab] = useState(
@@ -81,6 +85,7 @@ export function SettingsTabs({
         <>
           <IdentityForm identity={settings.identity} catalogo={catalogo} />
           {bajas && <BajasCard bajas={bajas} catalogo={catalogo} />}
+          {waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
         </>
       )}
       {tab === "brain" && <BrainForm brain={settings.brain} />}
