@@ -67,7 +67,7 @@ describe("aviso del plan bajo el mínimo (HU-SUB-25)", () => {
 
   it("avisa cuando el precio por período queda bajo el mínimo y no bloquea", () => {
     const aviso = avisoDeMinimo({ precio: 80_000, periodo: "mensual" }, sandbox);
-    expect(aviso?.mensaje).toMatch(/80\.000.*150\.000.*no podrá tener link de pago.*transferencia/s);
+    expect(aviso?.mensaje).toMatch(/80\.000[\s\S]*150\.000[\s\S]*no podrá tener link de pago[\s\S]*transferencia/);
     expect(aviso?.sinCuentas).toBe(false);
   });
 
