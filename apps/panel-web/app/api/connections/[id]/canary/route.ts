@@ -4,14 +4,7 @@ import { porcentajeValido } from "@/lib/canary";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** BFF: estado de la prueba con una parte de los clientes (HU-AOS-32); `null` si no hay prueba. */
-export async function GET(_request: Request, ctx: Ctx) {
-  const { id } = await ctx.params;
-  if (!UUID.test(id)) return invalido();
-  return responder(await apiFetch<unknown>(`/admin/connections/${id}/canary`));
-}
-
-/** BFF: cambiar el porcentaje de la prueba (1 a 50). */
+/** BFF: cambiar el porcentaje de la prueba con una parte de los clientes (1 a 50, HU-AOS-32). */
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const cuerpo = (await request.json().catch(() => null)) as { percent?: unknown } | null;
