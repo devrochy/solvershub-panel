@@ -2951,6 +2951,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/tenants/{tenant_id}/colaboracion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Colaboracion
+         * @description Banderas de la colaboración con pila de tareas del negocio. Solo el master.
+         */
+        get: operations["get_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_get"];
+        /**
+         * Put Colaboracion
+         * @description Cambia las banderas que vengan (auditado como `agent_os_colaboracion`). 409 `no_disponible`
+         *     con un valor que este despliegue todavía no aplica.
+         */
+        put: operations["put_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/declarative-tools": {
         parameters: {
             query?: never;
@@ -16414,6 +16439,43 @@ export interface components {
              */
             vigentes: number;
         };
+        /** ColaboracionBanderas */
+        ColaboracionBanderas: {
+            /**
+             * Pila
+             * @description Pila de tareas: «off», «shadow» (calcula y anota lo que abriría) o «active» (la abre).
+             * @enum {string}
+             */
+            pila: "off" | "shadow" | "active";
+            /**
+             * Verificar Horarios
+             * @description Horarios sin respaldo: «shadow» solo cuenta; «active» rechaza y reintenta.
+             * @enum {string}
+             */
+            verificar_horarios: "shadow" | "active";
+            /**
+             * Verificar Preguntas
+             * @description Más preguntas que `composition.maxQuestions`: «shadow» solo cuenta; «active» rechaza.
+             * @enum {string}
+             */
+            verificar_preguntas: "shadow" | "active";
+            /**
+             * Disponibles
+             * @description Los valores que este despliegue ya aplica (la HU se entrega por partes).
+             */
+            disponibles?: {
+                [key: string]: string[];
+            };
+        };
+        /** ColaboracionBanderasIn */
+        ColaboracionBanderasIn: {
+            /** Pila */
+            pila?: ("off" | "shadow" | "active") | null;
+            /** Verificar Horarios */
+            verificar_horarios?: ("shadow" | "active") | null;
+            /** Verificar Preguntas */
+            verificar_preguntas?: ("shadow" | "active") | null;
+        };
         /** HistorialItem */
         HistorialItem: {
             /**
@@ -22599,6 +22661,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateBandera"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColaboracionBanderas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColaboracionBanderasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColaboracionBanderas"];
                 };
             };
             /** @description Validation Error */
