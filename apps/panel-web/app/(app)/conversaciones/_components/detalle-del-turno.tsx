@@ -203,7 +203,7 @@ function Contenido({ t }: { t: TurnDetail }) {
             {t.a2a.map((o) => (
               <li key={o.id} className="text-body">
                 {modoEntreAgentes(o.mode)} · {humanizar(o.status)} · {o.calls} {o.calls === 1 ? "llamado" : "llamados"}
-                {o.spent_usd != null ? ` · ${formatUsd(o.spent_usd)}` : ""}
+                {t.can_see_costs && o.spent_usd != null ? ` · ${formatUsd(o.spent_usd)}` : ""}
               </li>
             ))}
           </ul>
@@ -235,7 +235,8 @@ function Contenido({ t }: { t: TurnDetail }) {
             {t.cost.map((c) => (
               <li key={`${c.kind}-${c.model}`} className="flex flex-wrap justify-between gap-2 tabular-nums text-body">
                 <span>
-                  {tipoDeConsumo(c.kind)} · {c.model}
+                  {tipoDeConsumo(c.kind)}
+                  {c.model ? ` · ${c.model}` : ""}
                 </span>
                 <span>
                   {formatNumber(c.input_tokens + c.output_tokens)} tokens
