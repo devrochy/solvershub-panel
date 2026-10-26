@@ -8,6 +8,7 @@ import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { Select } from "@/components/ui/select";
 
 /** Alta de negocio (tenant) desde plataforma. */
@@ -77,7 +78,7 @@ export function NewTenantDialog() {
               <Input id="t-email" name="admin_email" type="email" autoComplete="off" />
             </Field>
             <Field label="Contraseña" htmlFor="t-pass" help="Mínimo 8 caracteres.">
-              <Input id="t-pass" name="admin_password" type="password" autoComplete="new-password" />
+              <InputPassword id="t-pass" name="admin_password" autoComplete="new-password" />
             </Field>
           </div>
 

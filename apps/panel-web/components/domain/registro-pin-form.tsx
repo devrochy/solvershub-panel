@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { parsePin } from "@/lib/meta-pin";
 import { useAction } from "@/lib/use-action";
 
@@ -73,10 +73,10 @@ export function RegistroPinForm({
         error={pinError}
         className="sm:max-w-xs"
       >
-        <Input
+        <InputPassword
+          etiqueta="PIN"
           id={id}
           name="pin"
-          type="password"
           inputMode="numeric"
           autoComplete="off"
           maxLength={6}

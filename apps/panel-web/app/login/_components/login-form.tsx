@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 
 export function LoginForm() {
   const router = useRouter();
@@ -48,10 +49,9 @@ export function LoginForm() {
       </Field>
 
       <Field label="Contraseña" htmlFor="password" required>
-        <Input
+        <InputPassword
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}
