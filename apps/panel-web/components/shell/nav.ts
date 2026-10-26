@@ -5,6 +5,7 @@ import {
   Coins,
   CreditCard,
   FlaskConical,
+  Gauge,
   type LucideIcon,
   Network,
   HandCoins,
@@ -124,6 +125,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "agents", label: "Agentes", href: "/agentes", icon: Bot, ready: true },
         // HU-AOS-26: permisos entre agentes y «Probar una frase» (escribe en `settings`, como el editor).
         { section: "settings", label: "Colaboración", href: "/agentes/colaboracion", icon: Network, ready: true },
+        // HU-AOS-29: tablero de fiabilidad (escalamiento, verificador, completitud y consistencia).
+        { section: "agents", label: "Calidad", href: "/agentes/calidad", icon: Gauge, ready: true },
         { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true },
       ]),
       // Plantillas, Producción y Requisitos de Meta se gestionan desde cada conexión Meta.
