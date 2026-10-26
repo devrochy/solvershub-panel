@@ -72,6 +72,7 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
         mediciones={mediciones}
         puedeOperar={puedeOperar}
         puedeProbar={puedeOperar && runtime === "v3"}
+        hayPrueba={prueba !== null}
       />
     </div>
   );

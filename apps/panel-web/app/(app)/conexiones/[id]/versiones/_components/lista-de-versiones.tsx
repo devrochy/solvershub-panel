@@ -58,6 +58,7 @@ export function ListaDeVersiones({
   mediciones,
   puedeOperar,
   puedeProbar,
+  hayPrueba,
 }: {
   conexionId: string;
   versiones: ReleaseSummary[];
@@ -65,12 +66,13 @@ export function ListaDeVersiones({
   puedeOperar: boolean;
   /** ¿Se ofrece «Probar con una parte»? (Agent OS v3 y permiso de operar). */
   puedeProbar: boolean;
+  /** ¿Hay una versión en prueba? (de `GET /canary`, la misma fuente que el bloque de la prueba). */
+  hayPrueba: boolean;
 }) {
   const activa = versiones.find((v) => v.active) ?? null;
   const anterior = activa
     ? versiones.find((v) => !v.active && v.number < activa.number && v.lifecycle === "promoted")
     : undefined;
-  const hayPrueba = versiones.some((v) => v.canary);
   const confirm = useConfirm();
   const { run, pending } = useAction();
 
