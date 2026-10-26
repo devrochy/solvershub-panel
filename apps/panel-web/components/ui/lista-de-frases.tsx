@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { normalizarFrase } from "@/lib/agentes-editor";
+import { completarLista, MAX_LARGO_FRASE, type Pendiente } from "@/lib/frases-pendientes";
 
 /**
  * Lista editable de frases (las que dice un cliente, las que el agente nunca dice o las palabras que
  * escalan). Se agrega con Enter o con el botón y se quita con la ✕ de cada una. Sin repetidas. Acepta
- * espacios y comas dentro de la frase.
+ * espacios y comas dentro de la frase. Con `onPendiente` avisa al formulario del texto escrito y no
+ * agregado, para que lo sume al guardar (ver `usePendientes`).
  */
 export function ListaDeFrases({
   id,
@@ -23,6 +24,7 @@ export function ListaDeFrases({
   invalido = false,
   describedBy,
   disabled = false,
+  onPendiente,
 }: {
   id: string;
   frases: string[];
@@ -35,17 +37,21 @@ export function ListaDeFrases({
   invalido?: boolean;
   describedBy?: string;
   disabled?: boolean;
+  /** Recibe el texto escrito y no agregado (y las reglas de la lista), o `null` si no hay. */
+  onPendiente?: (pendiente: Pendiente | null) => void;
 }) {
   const [nueva, setNueva] = useState("");
 
+  useEffect(() => {
+    if (!onPendiente) return;
+    onPendiente(disabled || !nueva.trim() ? null : { texto: nueva, minLargo, max, limpiar: () => setNueva("") });
+    return () => onPendiente(null);
+  }, [onPendiente, nueva, minLargo, max, disabled]);
+
   function agregar() {
-    const texto = nueva.trim();
-    if (texto.length < minLargo || frases.length >= max) return;
-    if (frases.some((f) => normalizarFrase(f) === normalizarFrase(texto))) {
-      setNueva("");
-      return;
-    }
-    onChange([...frases, texto.slice(0, 300)]);
+    const r = completarLista(frases, nueva, minLargo, max);
+    if (r.error) return;
+    if (r.frases) onChange(r.frases);
     setNueva("");
   }
 
@@ -84,7 +90,7 @@ export function ListaDeFrases({
           id={id}
           value={nueva}
           disabled={disabled}
-          maxLength={300}
+          maxLength={MAX_LARGO_FRASE}
           placeholder={placeholder}
           aria-invalid={invalido || undefined}
           aria-describedby={describedBy}
