@@ -219,3 +219,9 @@ export type Graph = components["schemas"]["Graph"];
 export type GraphOut = components["schemas"]["GraphOut"];
 export type RoutePreview = components["schemas"]["RoutePreview"];
 export type AgentSummary = components["schemas"]["AgentSummary"];
+
+// Versiones de una conexión (HU-AOS-14/21/27).
+export type ReleaseSummary = components["schemas"]["ReleaseSummary"];
+export type ReleaseDiff = components["schemas"]["ReleaseDiff"];
+export type Evaluation = components["schemas"]["Evaluation"];
+export type EvaluationRequested = components["schemas"]["EvaluationRequested"];
