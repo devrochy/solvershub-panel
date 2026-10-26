@@ -165,6 +165,15 @@ locales de carga/éxito/error en las páginas migradas.
 | `lib/labels.ts` | Estados, canales, roles, motivos de escalación y claves de permiso en español claro; **nunca** se muestra el enum crudo |
 | `components/ui/providers.tsx` | `FeedbackProviders` (ConfirmProvider + Toaster), montado en el layout de `(app)` |
 
+## Centro de notificaciones (ADR-0167)
+
+La campana vive siempre en la barra superior (sticky), a la derecha. Dos ejes visuales: el
+**icono** es de la categoría (conversaciones, ventas, cobros, agenda, sistema) y el **color**
+es de la severidad (`status-*`: info, éxito, atención, urgente); lo urgente lleva etiqueta y
+lo no leído, punto y negrita. Se abre como popover (≥ 768 px) o como hoja desde abajo (celular)
+con `sh-notif-*` (globals.css, tokens de motion, sin librería). Las preferencias del push
+(categorías y silencio) están dentro del mismo centro. Mapa de destinos en `lib/notificaciones/tipos.ts`.
+
 Destructivas confirmadas con consecuencia: eliminar conexión, desactivar
 colaborador, resolver conversación, cancelar cita/eliminar bloqueo, activar
 versión de spec.

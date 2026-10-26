@@ -219,3 +219,9 @@ export type Graph = components["schemas"]["Graph"];
 export type GraphOut = components["schemas"]["GraphOut"];
 export type RoutePreview = components["schemas"]["RoutePreview"];
 export type AgentSummary = components["schemas"]["AgentSummary"];
+
+// Centro de notificaciones (ADR-0167).
+export type NotificacionItem = components["schemas"]["NotificationItem"];
+export type NotificacionPagina = components["schemas"]["NotificationPage"];
+export type NotificacionDestino = components["schemas"]["NotificationTarget"];
+export type NotificacionPreferencias = components["schemas"]["NotificationPreferences"];

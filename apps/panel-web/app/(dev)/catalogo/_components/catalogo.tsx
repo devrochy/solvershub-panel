@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Bell, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { BarChart, LineChart, ProgressRing, Sparkline, resumenSerie, type ChartDatum, type ChartSeries } from "@/components/dataviz";
+import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -20,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { NotificacionItem } from "@/lib/api/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -119,6 +121,15 @@ function TarjetaDeGrafico({ titulo, periodo, children }: { titulo: string; perio
     </div>
   );
 }
+
+const AHORA_DE_MUESTRA = new Date("2026-10-25T15:00:00Z");
+const NOTIFICACIONES_DE_MUESTRA: NotificacionItem[] = [
+  { id: "n1", event_key: "core.escalation", category: "conversaciones", severity: "critical", title: "Nueva escalación", body: "Un cliente pidió atención humana y la conversación quedó escalada.", target: { entity: "conversacion", id: "c1", section: "escalations" }, data: {}, created_at: "2026-10-25T14:55:00Z", read: false },
+  { id: "n2", event_key: "commerce.pedido_nuevo", category: "ventas", severity: "success", title: "Pedido nuevo", body: "El asistente tomó el pedido P-1042.", target: { entity: "pedido", id: "p1", section: "pack_commerce" }, data: {}, created_at: "2026-10-25T13:00:00Z", read: false },
+  { id: "n3", event_key: "subs.pago_sin_aplicar", category: "cobros", severity: "warning", title: "Pago sin aplicar", body: "Llegó un pago que no se pudo asociar a una suscripción.", target: { entity: "cobro", id: "k1", section: "pack_subscriptions" }, data: {}, created_at: "2026-10-24T20:00:00Z", read: true },
+  { id: "n4", event_key: "calendar.cita_nueva", category: "agenda", severity: "info", title: "Cita nueva", body: "Se agendó una cita para mañana a las 9:00.", target: { entity: "cita", id: "a1", section: "pack_calendar" }, data: {}, created_at: "2026-10-23T12:00:00Z", read: true },
+  { id: "n5", event_key: "core.connection_token_expiring", category: "sistema", severity: "warning", title: "El acceso de tu conexión vence pronto", body: "Reconéctala en Conexiones antes de esa fecha.", target: { entity: "conexion", id: "x1", section: "connections" }, data: {}, created_at: "2026-10-20T12:00:00Z", read: true },
+];
 
 export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
@@ -359,6 +370,17 @@ export function Catalogo() {
           action={<Button size="sm">Conectar WhatsApp</Button>}
         />
         <Skeleton lines={3} />
+      </Seccion>
+
+      <Seccion
+        titulo="Notificaciones"
+        nota="Icono de categoría sobre el color de la severidad (info, éxito, atención, urgente); lo urgente lleva etiqueta y lo no leído, punto y negrita."
+      >
+        <ul className="flex max-w-md flex-col gap-0.5">
+          {NOTIFICACIONES_DE_MUESTRA.map((n) => (
+            <FilaNotificacion key={n.id} item={n} href="#" ahora={AHORA_DE_MUESTRA} onAbrir={() => undefined} onArchivar={() => undefined} />
+          ))}
+        </ul>
       </Seccion>
 
       <Seccion titulo="Navegación" nota="Migas y pestañas dentro de la página (las que cambian de ruta son TabLinks).">
