@@ -49,6 +49,9 @@ describe("estado de la prueba", () => {
 
   it("advertencias de costo y lentitud", () => {
     expect(advertenciasDePrueba(estado({ advertencias: ["costo", "lentitud"] }))).toHaveLength(2);
+    expect(advertenciasDePrueba(estado({ advertencias: ["costo", "lentitud"], costos_visibles: false }))).toEqual([
+      "Responde bastante más lento que la versión actual.",
+    ]);
   });
 });
 

@@ -85,9 +85,9 @@ export function estadoDePrueba(e: CanaryState): EstadoDePrueba {
   };
 }
 
-/** Avisos de costo y lentitud: no frenan la publicación. */
+/** Avisos de costo y lentitud: no frenan la publicación. El de costo solo a quien ve los costos. */
 export function advertenciasDePrueba(e: CanaryState): string[] {
-  return e.advertencias.map((a) => ADVERTENCIA[a] ?? a);
+  return e.advertencias.filter((a) => a !== "costo" || e.costos_visibles).map((a) => ADVERTENCIA[a] ?? a);
 }
 
 /** Por qué no se puede publicar todavía (`null` si se puede). */

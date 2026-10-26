@@ -116,7 +116,7 @@ export function ListaDeVersiones({
               estado={estadoDe(v, activa?.number ?? null)}
               medicion={mediciones[v.id] ?? null}
               puedeOperar={puedeOperar}
-              puedeProbar={puedeProbar}
+              puedeProbar={puedeProbar && activa !== null}
               hayPrueba={hayPrueba}
               pending={pending}
               run={run}
