@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 
 import { ListaDeVersiones } from "@/app/(app)/conexiones/[id]/versiones/_components/lista-de-versiones";
+import { PruebaConUnaParte } from "@/app/(app)/conexiones/[id]/versiones/_components/prueba-con-una-parte";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { ConnectionsConsole, Evaluation, Me, ReleaseSummary } from "@/lib/api/types";
+import type { CanaryState, ConnectionsConsole, Evaluation, Me, ReleaseSummary } from "@/lib/api/types";
 import { estadoDe, puedeOperarVersiones } from "@/lib/versiones";
 
 export const metadata = { title: "Versiones" };
@@ -14,16 +15,17 @@ const MAX_MEDICIONES = 3;
 
 /**
  * Versiones de una conexión (HU-AOS-27): la activa con «Volver a la anterior», las candidatas con
- * sus diferencias, el estado de las pruebas automáticas y «Publicar a todos» / «Detener», y el
- * historial.
+ * sus diferencias, el estado de las pruebas automáticas y «Publicar a todos» / «Probar con una
+ * parte» / «Detener», la prueba en curso con su comparación (HU-AOS-32) y el historial.
  */
 export default async function VersionesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const [releases, consola, meRes] = await Promise.all([
+  const [releases, consola, meRes, pruebaRes] = await Promise.all([
     apiFetch<ReleaseSummary[]>(`/admin/connections/${id}/releases?limit=50`),
     apiFetch<ConnectionsConsole>("/admin/connections/console?page=1&page_size=100"),
     apiFetch<Me>("/admin/me"),
+    apiFetch<CanaryState | null>(`/admin/connections/${id}/canary`),
   ]);
   if (!releases.ok) {
     if (releases.status === 404) notFound();
@@ -36,6 +38,7 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
   const conexion = consola.ok ? consola.data.items.find((c) => c.id === id) : undefined;
   const runtime = consola.ok ? consola.data.runtime : "legacy";
   const puedeOperar = meRes.ok && puedeOperarVersiones(meRes.data, runtime);
+  const prueba = pruebaRes.ok ? pruebaRes.data : null;
   const activa = releases.data.find((r) => r.active) ?? null;
   const candidatas = releases.data
     .filter((r) => estadoDe(r, activa?.number ?? null) === "candidata")
@@ -62,11 +65,13 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
           Las versiones se activan con el Agent OS de tu negocio: por ahora solo el equipo de SolversHub las gestiona.
         </p>
       )}
+      {prueba && <PruebaConUnaParte conexionId={id} prueba={prueba} puedeOperar={puedeOperar} />}
       <ListaDeVersiones
         conexionId={id}
         versiones={releases.data}
         mediciones={mediciones}
         puedeOperar={puedeOperar}
+        puedeProbar={puedeOperar && runtime === "v3"}
       />
     </div>
   );

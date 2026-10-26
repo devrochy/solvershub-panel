@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 
+import { DialogoPorcentaje } from "@/app/(app)/conexiones/[id]/versiones/_components/prueba-con-una-parte";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import type { Evaluation, ReleaseDiff, ReleaseSummary } from "@/lib/api/types";
+import { TEXTO_PROBAR } from "@/lib/canary";
 import { formatDateTime } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import {
@@ -23,8 +26,15 @@ import {
 
 type Respuesta = { error?: string; code?: string };
 
-async function enviar(url: string): Promise<{ ok: boolean; status: number; json: Respuesta & Record<string, unknown> }> {
-  const res = await fetch(url, { method: "POST" });
+async function enviar(
+  url: string,
+  body?: unknown,
+): Promise<{ ok: boolean; status: number; json: Respuesta & Record<string, unknown> }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
   return { ok: res.ok, status: res.status, json: (await res.json().catch(() => ({}))) as Respuesta };
 }
 
@@ -33,29 +43,34 @@ const TONO: Record<Estado, "success" | "info" | "neutral" | "warning"> = {
   candidata: "info",
   detenida: "warning",
   anterior: "neutral",
-  retirada: "neutral",
+  retirada: "warning",
 };
 
 /**
  * Lista de versiones de la conexión (HU-AOS-27). La activa permite volver a la anterior; cada
  * candidata muestra sus diferencias, el estado de las pruebas automáticas y las acciones. Las
- * acciones no se muestran a quien no puede usarlas (nunca un 403 por diseño).
+ * acciones no se muestran a quien no puede usarlas (nunca un 403 por diseño). Con una versión en
+ * prueba (HU-AOS-32) no se publica otra ni se vuelve atrás: primero se publica o se detiene la prueba.
  */
 export function ListaDeVersiones({
   conexionId,
   versiones,
   mediciones,
   puedeOperar,
+  puedeProbar,
 }: {
   conexionId: string;
   versiones: ReleaseSummary[];
   mediciones: Record<string, Evaluation | null>;
   puedeOperar: boolean;
+  /** ¿Se ofrece «Probar con una parte»? (Agent OS v3 y permiso de operar). */
+  puedeProbar: boolean;
 }) {
   const activa = versiones.find((v) => v.active) ?? null;
   const anterior = activa
     ? versiones.find((v) => !v.active && v.number < activa.number && v.lifecycle === "promoted")
     : undefined;
+  const hayPrueba = versiones.some((v) => v.canary);
   const confirm = useConfirm();
   const { run, pending } = useAction();
 
@@ -84,23 +99,32 @@ export function ListaDeVersiones({
   };
 
   return (
-    <ul className="flex flex-col gap-4" aria-label="Versiones de la conexión">
-      {versiones.map((v) => (
-        <li key={v.id}>
-          <TarjetaVersion
-            conexionId={conexionId}
-            version={v}
-            estado={estadoDe(v, activa?.number ?? null)}
-            medicion={mediciones[v.id] ?? null}
-            puedeOperar={puedeOperar}
-            pending={pending}
-            run={run}
-            onVolverAtras={v.active && anterior && puedeOperar ? volverAtras : undefined}
-            numeroAnterior={anterior?.number}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-4">
+      {hayPrueba && puedeOperar && (
+        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
+          Hay una versión en prueba: publícala o detén la prueba antes de publicar otra o volver a la anterior.
+        </p>
+      )}
+      <ul className="flex flex-col gap-4" aria-label="Versiones de la conexión">
+        {versiones.map((v) => (
+          <li key={v.id}>
+            <TarjetaVersion
+              conexionId={conexionId}
+              version={v}
+              estado={estadoDe(v, activa?.number ?? null)}
+              medicion={mediciones[v.id] ?? null}
+              puedeOperar={puedeOperar}
+              puedeProbar={puedeProbar}
+              hayPrueba={hayPrueba}
+              pending={pending}
+              run={run}
+              onVolverAtras={v.active && anterior && puedeOperar && !hayPrueba ? volverAtras : undefined}
+              numeroAnterior={anterior?.number}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -110,6 +134,8 @@ function TarjetaVersion({
   estado,
   medicion,
   puedeOperar,
+  puedeProbar,
+  hayPrueba,
   pending,
   run,
   onVolverAtras,
@@ -120,6 +146,8 @@ function TarjetaVersion({
   estado: Estado;
   medicion: Evaluation | null;
   puedeOperar: boolean;
+  puedeProbar: boolean;
+  hayPrueba: boolean;
   pending: boolean;
   run: ReturnType<typeof useAction>["run"];
   onVolverAtras?: () => void;
@@ -129,6 +157,7 @@ function TarjetaVersion({
   const [abierto, setAbierto] = useState(false);
   const [diff, setDiff] = useState<ReleaseDiff | null>(null);
   const [errorDiff, setErrorDiff] = useState<string | null>(null);
+  const [probando, setProbando] = useState(false);
   const esCandidata = estado === "candidata";
   const deLaPlataforma = v.origin === "platform";
   const pub = publicacion(medicion);
@@ -158,6 +187,16 @@ function TarjetaVersion({
         ? { ok: true, success: `La versión ${v.number} quedó publicada.` }
         : { ok: false, status: r.status, error: mensajeDeError(r.json.code, r.json.error) };
     });
+  };
+
+  const probar = async (percent: number) => {
+    const ok = await run(async () => {
+      const r = await enviar(`${base}/probar`, { percent });
+      return r.ok
+        ? { ok: true, success: `La versión ${v.number} quedó en prueba con el ${percent} % de las conversaciones nuevas.` }
+        : { ok: false, status: r.status, error: mensajeDeError(r.json.code, r.json.error) };
+    });
+    if (ok) setProbando(false);
   };
 
   const medir = () =>
@@ -220,9 +259,14 @@ function TarjetaVersion({
             Ver diferencias
           </Button>
         )}
-        {esCandidata && puedeOperar && pub.puede && (
+        {esCandidata && puedeOperar && pub.puede && !hayPrueba && (
           <Button variant="accent" size="sm" onClick={publicar} disabled={pending}>
             Publicar a todos
+          </Button>
+        )}
+        {esCandidata && puedeProbar && pub.puede && !hayPrueba && (
+          <Button variant="outline" size="sm" onClick={() => setProbando(true)} disabled={pending}>
+            Probar con una parte
           </Button>
         )}
         {esCandidata && puedeOperar && pub.medir && (
@@ -241,6 +285,17 @@ function TarjetaVersion({
           </Button>
         )}
       </div>
+
+      <DialogoPorcentaje
+        key={probando ? "abierto" : "cerrado"}
+        abierto={probando}
+        onCerrar={() => setProbando(false)}
+        titulo={`Probar la versión ${v.number} con una parte de los clientes`}
+        descripcion={TEXTO_PROBAR}
+        confirmar="Empezar la prueba"
+        pending={pending}
+        onConfirmar={probar}
+      />
 
       {abierto && (
         <div className="rounded-md border border-border-soft bg-bg-deep p-3 text-sm" aria-live="polite">

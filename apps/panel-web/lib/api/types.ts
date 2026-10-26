@@ -231,6 +231,11 @@ export type ReleaseSummary = components["schemas"]["ReleaseSummary"];
 export type ReleaseDiff = components["schemas"]["ReleaseDiff"];
 export type Evaluation = components["schemas"]["Evaluation"];
 export type EvaluationRequested = components["schemas"]["EvaluationRequested"];
+// Prueba con una parte de los clientes (canary, HU-AOS-32).
+export type CanaryState = components["schemas"]["CanaryState"];
+export type CanaryLane = components["schemas"]["CanaryLane"];
+export type CanarySignal = components["schemas"]["CanarySignal"];
+export type CanaryIn = components["schemas"]["CanaryIn"];
 
 // Tablero de fiabilidad (HU-AOS-29).
 export type ReliabilityResponse = components["schemas"]["ReliabilityResponse"];

@@ -22,6 +22,8 @@ export function responder<T>(res: ApiResult<T>, ok: (data: T) => unknown = (data
       { status: res.status },
     );
   }
+  // 204 sin cuerpo (p. ej. iniciar o detener la prueba, HU-AOS-32): `Response.json` no lo admite.
+  if (res.status === 204) return new NextResponse(null, { status: 204 });
   return NextResponse.json(ok(res.data), { status: res.status });
 }
 

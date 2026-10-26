@@ -7,11 +7,17 @@ import type { Evaluation, ReleaseDiff, ReleaseSummary } from "@/lib/api/types";
 
 export type Estado = "activa" | "candidata" | "detenida" | "anterior" | "retirada";
 
-/** El papel de una versión en la conexión. Las más nuevas que la activa son candidatas. */
+/**
+ * El papel de una versión en la conexión. Las más nuevas que la activa son candidatas.
+ * - `detenida`: la detuvo el dueño (`invalid`); no se puede activar.
+ * - `retirada`: el sistema la sacó de una prueba por ir peor (`canary_stopped` bloqueante,
+ *   HU-AOS-32); tampoco se puede activar.
+ * Una prueba que detuvo el dueño no bloquea: la versión vuelve a ser candidata (o anterior).
+ */
 export function estadoDe(r: ReleaseSummary, numeroActiva: number | null): Estado {
   if (r.active) return "activa";
-  if (r.detenida) return "detenida";
-  if (r.lifecycle === "invalid" || r.lifecycle === "canary_stopped") return "retirada";
+  if (r.detenida) return r.lifecycle === "canary_stopped" ? "retirada" : "detenida";
+  if (r.lifecycle === "invalid") return "detenida";
   if (numeroActiva === null || r.number > numeroActiva) return "candidata";
   return "anterior";
 }
@@ -21,7 +27,7 @@ export const ETIQUETA_ESTADO: Record<Estado, string> = {
   candidata: "Candidata",
   detenida: "Detenida",
   anterior: "Anterior",
-  retirada: "Retirada",
+  retirada: "Retirada de la prueba",
 };
 
 export interface Publicacion {
@@ -215,7 +221,27 @@ export function mensajeDeError(code: string | undefined, porDefecto?: string): s
     case "ya_detenida":
       return "Esa versión ya estaba detenida.";
     case "es_canary":
-      return "Esa versión está en prueba con una parte de los clientes.";
+      return "Esa versión está en prueba con una parte de los clientes: detén la prueba o publícala desde su bloque.";
+    case "canary_en_curso":
+      return "Hay una versión en prueba en esta conexión: publícala o detén la prueba primero.";
+    case "canary_peor":
+      return "Atiende peor que la versión actual: no se puede publicar.";
+    case "canary_sin_muestra":
+      return "Todavía no hay suficientes conversaciones para compararla con la versión actual.";
+    case "canary_senal_dura":
+      return "Varias respuestas de la versión en prueba llegaron mal al cliente: no se puede publicar.";
+    case "canary_cambiado":
+      return "La prueba cambió mientras se publicaba. Revisa su estado y vuelve a intentarlo.";
+    case "canary_no_disponible":
+      return "La prueba con una parte de los clientes todavía no está disponible.";
+    case "sin_canary":
+      return "No hay ninguna versión en prueba en esta conexión.";
+    case "porcentaje_invalido":
+      return "El porcentaje debe estar entre 1 y 50.";
+    case "requiere_v3":
+      return "La prueba con una parte de los clientes se activa con el Agent OS de tu negocio.";
+    case "sin_release_activa":
+      return "La conexión no tiene una versión activa con la cual comparar.";
     case "sin_version_anterior":
       return "No hay una versión anterior a la cual volver.";
     case "gate_abierto":
