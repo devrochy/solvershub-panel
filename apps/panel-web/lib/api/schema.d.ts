@@ -722,6 +722,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/conversations/{conversation_id}/in-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * In Progress
+         * @description «En curso» de la conversación para quien la toma (HU-AOS-28).
+         */
+        get: operations["in_progress_api_v1_admin_conversations__conversation_id__in_progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/playground": {
         parameters: {
             query?: never;
@@ -2650,6 +2670,23 @@ export interface paths {
         };
         /** Eval Runs */
         get: operations["eval_runs_api_v1_admin_evals_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/turns/{turn_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Turn Detail */
+        get: operations["turn_detail_api_v1_admin_turns__turn_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9367,6 +9404,134 @@ export interface components {
              */
             unknown_allies: string[];
         };
+        /** InProgress */
+        InProgress: {
+            /** Tasks */
+            tasks: components["schemas"]["InProgressTask"][];
+            escalation: components["schemas"]["InProgressEscalation"] | null;
+            /**
+             * Empty Reason
+             * @description Por qué `tasks` va vacío.
+             */
+            empty_reason: "sin_procedimientos" | null;
+        };
+        /** InProgressAction */
+        InProgressAction: {
+            /** Action */
+            action: string;
+            /** Ok */
+            ok: boolean;
+            /**
+             * Reason Code
+             * @description Código del fallo, si falló.
+             */
+            reason_code: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /** InProgressDatum */
+        InProgressDatum: {
+            /** Name */
+            name: string;
+            /**
+             * Label
+             * @description Rótulo humano del dato (de su habilidad); si no, el nombre.
+             */
+            label: string;
+            /**
+             * Value
+             * @description Los datos de pago van enmascarados.
+             */
+            value: unknown;
+            /** Confirmed */
+            confirmed: boolean;
+            /** Data Class */
+            data_class: string | null;
+        };
+        /** InProgressEscalation */
+        InProgressEscalation: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Reason Code
+             * @description Código del motivo (el mismo de la bandeja de escalaciones).
+             */
+            reason_code: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Status */
+            status: string;
+            /** Assigned Admin Id */
+            assigned_admin_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** InProgressMissing */
+        InProgressMissing: {
+            /**
+             * Kind
+             * @description Qué falta: un dato (del cliente, de un botón, de un contenido o de una acción), confirmar un dato, confirmar la etapa o una acción. Los clientes deben tolerar valores nuevos.
+             * @enum {string}
+             */
+            kind: "dato_cliente" | "dato_boton" | "dato_contenido" | "dato_accion" | "confirmar_dato" | "confirmar_etapa" | "accion";
+            /** Name */
+            name: string;
+            /**
+             * Label
+             * @description Rótulo humano del dato (de su habilidad); para `accion` y `confirmar_etapa`, el nombre con espacios.
+             */
+            label: string;
+        };
+        /** InProgressTask */
+        InProgressTask: {
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Procedure Id */
+            procedure_id: string;
+            /** Title */
+            title: string | null;
+            /**
+             * Status
+             * @description active | suspended, o `escalated` (en solo lectura: se cerró al escalar la escalación activa).
+             */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /**
+             * Stage
+             * @description Etapa vigente del procedimiento (id).
+             */
+            stage: string;
+            /**
+             * In Focus
+             * @description ¿Es la tarea en foco de la conversación?
+             */
+            in_focus: boolean;
+            /** Data */
+            data: components["schemas"]["InProgressDatum"][];
+            /** Missing */
+            missing: components["schemas"]["InProgressMissing"][];
+            /** Pending Confirmation */
+            pending_confirmation: boolean;
+            last_action: components["schemas"]["InProgressAction"] | null;
+            /**
+             * Missing Reason
+             * @description Por qué `missing` va vacío sin que la tarea esté completa.
+             */
+            missing_reason: "definicion_no_disponible" | null;
+        };
         /** Injection */
         Injection: {
             /** Fecha */
@@ -9823,6 +9988,11 @@ export interface components {
             error_reason?: string | null;
             /** Tool Calls */
             tool_calls?: string[];
+            /**
+             * Turn Id
+             * @description Turno del agente que lo envió; null salvo en los mensajes del agente.
+             */
+            turn_id?: string | null;
         };
         /** MessageTemplatesSettings */
         MessageTemplatesSettings: {
@@ -12626,6 +12796,96 @@ export interface components {
              * @default false
              */
             escalated: boolean;
+        };
+        /** TurnStep */
+        TurnStep: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "command" | "action" | "engine" | "escalation" | "verifier" | "guardrail" | "other";
+            /** Actor */
+            actor: string;
+            /**
+             * Name
+             * @description Nombre de la acción, el comando o el componente.
+             */
+            name: string;
+            /**
+             * Action
+             * @description execute | denied | confirmation_required | el comando | el código del paso.
+             */
+            action: string;
+            /**
+             * Input
+             * @description Solo con la sección `observability`; si no, null. Redactado: los datos personales van enmascarados (ADR-0169).
+             */
+            input: unknown;
+            /**
+             * Output
+             * @description Solo con la sección `observability`; si no, null. Redactado: los datos personales van enmascarados (ADR-0169).
+             */
+            output: unknown;
+            /**
+             * Detail Hidden
+             * @description Hay entrada o salida pero falta `observability` para verla.
+             */
+            detail_hidden: boolean;
+            /**
+             * Ok
+             * @description ¿Salió bien? Visible siempre; null si el paso no lo dice.
+             */
+            ok: boolean | null;
+            /**
+             * Error Codes
+             * @description Códigos de error, sin valores (solo los que tienen forma de código).
+             */
+            error_codes: string[];
+        };
+        /** TurnTaskEvent */
+        TurnTaskEvent: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Seq */
+            seq: number;
+            /** Type */
+            type: string;
+            /** Actor */
+            actor: string;
+            /**
+             * Data
+             * @description Los datos de pago siempre van enmascarados.
+             */
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        /** TurnVerifierCheck */
+        TurnVerifierCheck: {
+            /** Kind */
+            kind: string;
+            /**
+             * Verdict
+             * @description pass | fail | unverifiable | error
+             */
+            verdict: string;
+            /** Count */
+            count: number;
         };
         /** TypeOut */
         TypeOut: {
@@ -16942,6 +17202,215 @@ export interface components {
             /** Monto */
             monto: number;
         };
+        /** TurnA2A */
+        TurnA2A: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Mode */
+            mode: string | null;
+            /** Calls */
+            calls: number;
+            /**
+             * Spent Usd
+             * @description Solo con la sección `costs`.
+             */
+            spent_usd?: number | null;
+            /** Events */
+            events: components["schemas"]["TurnA2AEvent"][];
+        };
+        /** TurnA2AEvent */
+        TurnA2AEvent: {
+            /** Seq */
+            seq: number;
+            /** Type */
+            type: string;
+            /** Mode */
+            mode: string | null;
+            /** Intent */
+            intent: string | null;
+            /** From Instance Id */
+            from_instance_id: string | null;
+            /** To Instance Id */
+            to_instance_id: string | null;
+            /**
+             * Payload
+             * @description Solo la forma (redactado al escribir, HU-AOS-18).
+             */
+            payload?: unknown;
+            /**
+             * Result
+             * @description Solo la forma (redactado al escribir, HU-AOS-18).
+             */
+            result?: unknown;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Cost Usd
+             * @description Solo con la sección `costs`.
+             */
+            cost_usd?: number | null;
+        };
+        /** TurnAgent */
+        TurnAgent: {
+            /**
+             * Instance Id
+             * Format: uuid
+             */
+            instance_id: string;
+            /** Name */
+            name: string;
+        };
+        /** TurnCandidate */
+        TurnCandidate: {
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Owner */
+            owner: string | null;
+            /** Score */
+            score: number | null;
+        };
+        /** TurnCost */
+        TurnCost: {
+            /**
+             * Kind
+             * @description turn | agent_run | classifier | composer | embedding | eval
+             */
+            kind: string;
+            /** Model */
+            model: string | null;
+            /** Calls */
+            calls: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /**
+             * Cost Usd
+             * @description Solo con la sección `costs`.
+             */
+            cost_usd?: number | null;
+        };
+        /** TurnDecision */
+        TurnDecision: {
+            /**
+             * Outcome
+             * @description Decisión del Coordinador: routed | blocked | escalated | ignored.
+             */
+            outcome: string;
+            /** Blocked By */
+            blocked_by: string | null;
+            /** Route Source */
+            route_source: string | null;
+            /** Rule Id */
+            rule_id: string | null;
+            /**
+             * Candidates
+             * @description Procedimientos candidatos con su puntaje.
+             */
+            candidates: components["schemas"]["TurnCandidate"][];
+            /** Confidence */
+            confidence: number | null;
+            active_agent: components["schemas"]["TurnAgent"] | null;
+            /** @description Quien terminó el turno (distinto si hubo un traspaso). */
+            final_agent: components["schemas"]["TurnAgent"] | null;
+            /**
+             * Shadow Stack
+             * @description Plan de la pila de tareas en sombra (HU-AOS-20), si lo hubo.
+             */
+            shadow_stack?: unknown;
+        };
+        /** TurnDelivery */
+        TurnDelivery: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Status */
+            status: string | null;
+            /** Text */
+            text: string | null;
+            /** Template Name */
+            template_name: string | null;
+            /** Error Reason */
+            error_reason: string | null;
+        };
+        /** TurnDetail */
+        TurnDetail: {
+            /**
+             * Turn Id
+             * Format: uuid
+             */
+            turn_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Latency Ms
+             * @description Latencia del turno completo (la de la decisión si no terminó).
+             */
+            latency_ms: number | null;
+            /** Release Id */
+            release_id: string | null;
+            /** Release Number */
+            release_number: number | null;
+            /** Lane */
+            lane: ("stable" | "canary" | "pinned" | "legacy") | null;
+            /**
+             * Inbound Message Ids
+             * @description Mensajes del cliente que atendió el turno.
+             */
+            inbound_message_ids: string[];
+            decision: components["schemas"]["TurnDecision"];
+            /**
+             * Status
+             * @description Resultado final del turno (`turn_outcomes`): replied | neutral | escalated | silent | failed.
+             */
+            status: string | null;
+            /**
+             * Verifier
+             * @description Comprobaciones del verificador.
+             */
+            verifier: components["schemas"]["TurnVerifierCheck"][];
+            /** Verifier Retries */
+            verifier_retries: number;
+            /** Steps */
+            steps: components["schemas"]["TurnStep"][];
+            /** Task Events */
+            task_events: components["schemas"]["TurnTaskEvent"][];
+            /** A2A */
+            a2a: components["schemas"]["TurnA2A"][];
+            /** Delivery */
+            delivery: components["schemas"]["TurnDelivery"][];
+            /** Cost */
+            cost: components["schemas"]["TurnCost"][];
+            /**
+             * Can See Detail
+             * @description ¿Tiene la sección `observability`?
+             */
+            can_see_detail: boolean;
+            /**
+             * Can See Costs
+             * @description ¿Tiene la sección `costs`?
+             */
+            can_see_costs: boolean;
+        };
         /** Page[Requirement] */
         Page_Requirement_: {
             /** Items */
@@ -18598,6 +19067,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_TaskEventItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    in_progress_api_v1_admin_conversations__conversation_id__in_progress_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InProgress"];
                 };
             };
             /** @description Validation Error */
@@ -22290,6 +22792,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvalRunsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    turn_detail_api_v1_admin_turns__turn_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                turn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnDetail"];
                 };
             };
             /** @description Validation Error */

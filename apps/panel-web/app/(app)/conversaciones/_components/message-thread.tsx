@@ -1,4 +1,4 @@
-import { Wrench } from "lucide-react";
+import { SearchCode, Wrench } from "lucide-react";
 
 import type { MessageItem } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
@@ -27,8 +27,17 @@ function HerramientasDelTurno({ nombres }: { nombres: string[] }) {
   );
 }
 
-/** Hilo de mensajes: entrante a la izquierda, saliente a la derecha. */
-export function MessageThread({ messages }: { messages: MessageItem[] }) {
+/**
+ * Hilo de mensajes: entrante a la izquierda, saliente a la derecha. Con `onVerTurno`, cada mensaje del
+ * agente ofrece abrir el depurador de su turno (HU-AOS-28).
+ */
+export function MessageThread({
+  messages,
+  onVerTurno,
+}: {
+  messages: MessageItem[];
+  onVerTurno?: (turnId: string) => void;
+}) {
   if (messages.length === 0) {
     return <p className="text-sm text-text-soft">Sin mensajes.</p>;
   }
@@ -59,8 +68,20 @@ export function MessageThread({ messages }: { messages: MessageItem[] }) {
             >
               {message.content || <span className="italic opacity-70">(sin texto)</span>}
             </div>
-            {(message.tool_calls?.length ?? 0) > 0 && (
-              <HerramientasDelTurno nombres={message.tool_calls ?? []} />
+            {((message.tool_calls?.length ?? 0) > 0 || (onVerTurno && message.turn_id)) && (
+              <div className="flex flex-wrap items-center gap-3">
+                {(message.tool_calls?.length ?? 0) > 0 && <HerramientasDelTurno nombres={message.tool_calls ?? []} />}
+                {onVerTurno && message.turn_id && (
+                  <button
+                    type="button"
+                    onClick={() => onVerTurno(message.turn_id as string)}
+                    className="inline-flex items-center gap-1 rounded-sm text-xs text-text-soft hover:text-headline focus-visible:outline-2"
+                  >
+                    <SearchCode aria-hidden className="h-3 w-3" />
+                    Ver turno
+                  </button>
+                )}
+              </div>
             )}
             {message.template_name && (
               <span className="text-xs text-text-soft">Plantilla: {message.template_name}</span>

@@ -18,6 +18,8 @@ import { useAction } from "@/lib/use-action";
 
 import { conexionDelChat, nombreDelChat, tipoDelChat } from "./lista-de-chats";
 import { ConversationActions } from "./conversation-actions";
+import { DetalleDelTurno } from "./detalle-del-turno";
+import { EnCurso } from "./en-curso";
 import { MessageThread } from "./message-thread";
 
 async function accion(conversationId: string, action: string, body?: Record<string, unknown>) {
@@ -150,6 +152,7 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
   const atiendePersona = detalle.escalation?.status === "asignada";
   const uso = detalle.usage ?? { cost_usd: 0, input_tokens: 0, output_tokens: 0, turns: 0 };
   const tokens = uso.input_tokens + uso.output_tokens;
+  const [turnoAbierto, setTurnoAbierto] = useState<string | null>(null);
 
   // Baja al último mensaje al abrir y cuando llega uno nuevo, salvo que la persona esté
   // leyendo más arriba.
@@ -172,7 +175,7 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
         <Avatar name={nombre} size="md" />
         <div className="flex min-w-0 flex-col">
           <h2 className="truncate font-display text-sh-block text-headline">{nombre}</h2>
-          <span className="flex items-center gap-2 text-xs text-text-soft">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 break-all text-xs text-text-soft">
             <ChannelIcon id={tipoDelChat(detalle)} size="sm" />
             {conexionDelChat(detalle)}
             {detalle.external_id ? ` · ${detalle.external_id}` : ""}
@@ -197,8 +200,12 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
       </header>
 
       {detalle.escalation && (
-        <div className="border-b border-border-soft px-4 py-3">
+        // Con «En curso» puede crecer: se limita para no aplastar el hilo.
+        <div className="max-h-[45%] shrink-0 overflow-y-auto border-b border-border-soft px-4 py-3">
           <Ticket detalle={detalle} />
+          <div className="mt-3">
+            <EnCurso conversationId={detalle.id} estadoEscalacion={detalle.escalation.status} />
+          </div>
         </div>
       )}
 
@@ -212,7 +219,7 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
         aria-live="polite"
         aria-relevant="additions"
       >
-        <MessageThread messages={mensajes} />
+        <MessageThread messages={mensajes} onVerTurno={setTurnoAbierto} />
       </div>
 
       <div className="flex max-h-[45%] shrink-0 flex-col gap-5 overflow-y-auto border-t border-border-soft px-4 py-4">
@@ -227,6 +234,7 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
         />
         <NotasInternas conversationId={detalle.id} notas={detalle.notes ?? []} />
       </div>
+      <DetalleDelTurno turnId={turnoAbierto} onClose={() => setTurnoAbierto(null)} />
     </div>
   );
 }

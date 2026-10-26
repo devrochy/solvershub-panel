@@ -243,3 +243,11 @@ export type VerifierRejections = components["schemas"]["VerifierRejections"];
 export type VerifierRejection = components["schemas"]["VerifierRejection"];
 export type ReliabilityUsage = components["schemas"]["UsageResponse"];
 export type ReliabilityEvalRuns = components["schemas"]["EvalRunsResponse"];
+
+// Depurador del turno y «En curso» (HU-AOS-28).
+export type TurnDetail = components["schemas"]["TurnDetail"];
+export type TurnStep = components["schemas"]["TurnStep"];
+export type TurnTaskEvent = components["schemas"]["TurnTaskEvent"];
+export type InProgress = components["schemas"]["InProgress"];
+export type InProgressTask = components["schemas"]["InProgressTask"];
+export type InProgressMissing = components["schemas"]["InProgressMissing"];
