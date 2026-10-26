@@ -1,7 +1,10 @@
+import Link from "next/link";
+
 import { GestionConexion } from "@/app/(app)/conexiones/_components/gestion-conexion";
 import { PausarConexion } from "@/app/(app)/conexiones/_components/pausar-conexion";
 import { ChannelBadge, ChannelIcon } from "@/components/domain/channel-icon";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionsConsole } from "@/lib/api/types";
 import {
@@ -153,7 +156,15 @@ function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; 
         )}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <p className="text-xs text-body">7 días: {resumenConsumo(c.usage_7d)}</p>
-          <GestionConexion conexion={c} canEdit={canEdit} />
+          <div className="flex flex-wrap items-center gap-2">
+            {/* HU-AOS-27: versiones de la conexión (diferencias, publicar, volver atrás). */}
+            {c.conversational && (c.active_release || c.canary_release) && (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/conexiones/${c.id}/versiones`}>Versiones</Link>
+              </Button>
+            )}
+            <GestionConexion conexion={c} canEdit={canEdit} />
+          </div>
         </div>
       </CardContent>
     </Card>
