@@ -9483,7 +9483,7 @@ export interface components {
              * Grupo
              * @enum {string}
              */
-            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web";
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os";
             /**
              * Tipo
              * @enum {string}
@@ -9525,6 +9525,12 @@ export interface components {
             solo_lectura: boolean;
             /** Almacen */
             almacen: string;
+            /**
+             * Ambito
+             * @description Derivado del almacén (una sola fuente): lo del KernelSpec es de la conexión.
+             * @enum {string}
+             */
+            readonly ambito: "negocio" | "conexion";
         };
         /** OrderLine */
         OrderLine: {

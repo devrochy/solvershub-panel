@@ -30,6 +30,7 @@ const velocidad: OpcionConfig = {
   editable_por: "dueno",
   solo_lectura: false,
   almacen: "behavior_config:debounce_mode",
+  ambito: "negocio",
 };
 const puntaje: OpcionConfig = {
   ...velocidad,
