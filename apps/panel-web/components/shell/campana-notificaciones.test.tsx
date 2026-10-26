@@ -34,6 +34,7 @@ const item = (id: string, extra: Partial<NotificacionItem> = {}): NotificacionIt
 });
 
 let pagina: NotificacionPagina;
+let silenciadoHasta: string | null = null;
 let llamadas: { url: string; metodo: string; cuerpo?: unknown }[];
 
 function responder(url: string, init?: RequestInit): Response {
@@ -41,7 +42,7 @@ function responder(url: string, init?: RequestInit): Response {
   llamadas.push({ url, metodo, cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined });
   if (url.startsWith("/api/notificaciones/unread-count")) return Response.json({ unread_count: pagina.unread_count });
   if (url.startsWith("/api/notificaciones/preferences"))
-    return Response.json({ categories: ["conversaciones", "ventas", "cobros", "agenda", "sistema"], push_off_categories: ["ventas"], muted_until: null });
+    return Response.json({ categories: ["conversaciones", "ventas", "cobros", "agenda", "sistema"], push_off_categories: ["ventas"], muted_until: silenciadoHasta });
   if (url.startsWith("/api/notificaciones/read")) return Response.json({ unread_count: 0 });
   if (metodo === "DELETE") return new Response(null, { status: 204 });
   if (url.startsWith("/api/notificaciones")) return Response.json(pagina);
@@ -62,6 +63,7 @@ function montar() {
 
 beforeEach(() => {
   llamadas = [];
+  silenciadoHasta = null;
   pagina = { items: [item("a"), item("b", { severity: "info", category: "ventas", read: true })], next_cursor: null, unread_count: 1 };
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => responder(String(url), init)));
   vi.stubGlobal("ResizeObserver", ResizeObserverFalso);
@@ -142,6 +144,17 @@ describe("campana de notificaciones", () => {
     });
     fireEvent.click(within(dialogo).getByRole("button", { name: "1 hora" }));
     await waitFor(() => expect(llamadas.find((l) => l.url === "/api/notificaciones/mute")?.cuerpo).toEqual({ minutes: 60 }));
+  });
+
+  it("el texto del silencio no repite el punto final (\"a. m..\")", async () => {
+    silenciadoHasta = new Date(Date.now() + 3600_000).toISOString();
+    montar();
+    fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.click(await within(dialogo).findByRole("button", { name: "Preferencias de notificaciones" }));
+    const texto = (await within(dialogo).findByText(/^Silenciados hasta /)).textContent ?? "";
+    expect(texto.endsWith(".")).toBe(true);
+    expect(texto.endsWith("..")).toBe(false);
   });
 
   it("sin notificaciones muestra un estado vacío que orienta", async () => {
