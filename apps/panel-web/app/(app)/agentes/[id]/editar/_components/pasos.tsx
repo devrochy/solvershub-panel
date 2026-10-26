@@ -27,10 +27,13 @@ import {
 } from "@/lib/agentes-editor";
 import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
 import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
+import type { Pendiente } from "@/lib/frases-pendientes";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
+/** Enlaza una lista de frases (por su id) con el texto pendiente del editor (`usePendientes`). */
+type RegistrarPendiente = (id: string) => (pendiente: Pendiente | null) => void;
 
 const PROVEEDORES: Record<string, string> = {
   deepseek: "DeepSeek",
@@ -64,7 +67,17 @@ function Avanzado({ children, titulo = "Opciones avanzadas" }: { children: React
 }
 
 // ------------------------------------------------------------------ 1. identidad
-export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelEditor; cambiar: Cambiar; errores: Errores }) {
+export function PasoIdentidad({
+  estado,
+  cambiar,
+  errores,
+  registrarPendiente,
+}: {
+  estado: EstadoDelEditor;
+  cambiar: Cambiar;
+  errores: Errores;
+  registrarPendiente?: RegistrarPendiente;
+}) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
       <Field label="Nombre" htmlFor="agente-nombre" required error={errores.name}>
@@ -127,6 +140,7 @@ export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelE
             placeholder="Por ejemplo: te lo regalo"
             agregarLabel="Agregar frase"
             max={100}
+            onPendiente={registrarPendiente?.("agente-prohibidas")}
             invalido={Boolean(errores["persona.forbiddenPhrases"])}
             describedBy={errores["persona.forbiddenPhrases"] ? "agente-prohibidas-error" : undefined}
           />
@@ -226,6 +240,7 @@ export function PasoSuperpoderes({
   catalogo,
   minFrases,
   requisitos = [],
+  registrarPendiente,
 }: {
   estado: EstadoDelEditor;
   cambiar: Cambiar;
@@ -234,6 +249,7 @@ export function PasoSuperpoderes({
   catalogo: Superpower[];
   minFrases: number;
   requisitos?: Requirement[];
+  registrarPendiente?: RegistrarPendiente;
 }) {
   function poner(id: string, cambio: Partial<{ activo: boolean; frases: string[] }>) {
     const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
@@ -307,6 +323,7 @@ export function PasoSuperpoderes({
                       placeholder="Cómo lo pide un cliente tuyo"
                       agregarLabel="Agregar frase"
                       max={MAX_FRASES_PROPIAS}
+                      onPendiente={registrarPendiente?.(`poder-${poder.id}-frase`)}
                       invalido={Boolean(error)}
                       describedBy={error ? idError : undefined}
                     />

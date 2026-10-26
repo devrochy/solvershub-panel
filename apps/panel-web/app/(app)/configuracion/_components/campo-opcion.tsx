@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
+import { type Pendiente } from "@/lib/frases-pendientes";
 import { franjasATexto, textoAFranjas } from "@/lib/horario-atencion";
 
 type Valores = Record<string, unknown>;
@@ -25,6 +26,7 @@ export function CampoOpcion({
   error,
   ayudaExtra,
   etiquetaDe,
+  onPendiente,
 }: {
   opcion: OpcionConfig;
   valores: Valores;
@@ -34,6 +36,8 @@ export function CampoOpcion({
   ayudaExtra?: string;
   /** Etiqueta de otra opción del catálogo, para el enlace «Ir a …» cuando esta depende de ella. */
   etiquetaDe?: (clave: string) => string | undefined;
+  /** Texto escrito y no agregado de una lista de textos, para sumarlo al guardar. */
+  onPendiente?: (pendiente: Pendiente | null) => void;
 }) {
   const { clave } = opcion;
   const valor = valores[clave];
@@ -160,6 +164,7 @@ export function CampoOpcion({
             agregarLabel="Agregar"
             minLargo={2}
             max={100}
+            onPendiente={onPendiente}
             disabled={bloqueado}
             invalido={Boolean(error)}
             describedBy={error || ayuda ? `${clave}-mensaje` : undefined}

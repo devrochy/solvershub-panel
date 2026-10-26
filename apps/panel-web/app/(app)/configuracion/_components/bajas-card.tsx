@@ -9,6 +9,7 @@ import { ListaDeFrases } from "@/components/ui/lista-de-frases";
 import type { BajasSettings, CatalogoConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, indexarCatalogo } from "@/lib/catalogo-config";
 import { formatList } from "@/lib/format";
+import { usePendientes } from "@/lib/frases-pendientes";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -20,15 +21,25 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
   const [palabras, setPalabras] = useState(bajas.palabras);
   const [error, setError] = useState<string | undefined>();
   const { run, pending } = useAction();
+  const pendientes = usePendientes();
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(undefined);
+    // La palabra escrita y no agregada se suma antes de guardar; si no cabe, se avisa y no se guarda.
+    const pendiente = pendientes.completar((id) => (id === "palabras_de_baja" ? palabras : undefined));
+    if (pendiente.errores.palabras_de_baja) {
+      setError(pendiente.errores.palabras_de_baja);
+      return;
+    }
+    const completas = pendiente.listas.palabras_de_baja ?? palabras;
+    setPalabras(completas);
+    pendiente.limpiar();
     await run(async () => {
       const res = await fetch("/api/settings/bajas", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ palabras }),
+        body: JSON.stringify({ palabras: completas }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string; fields?: Record<string, string> };
       if (!res.ok) {
@@ -61,6 +72,7 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
               agregarLabel="Agregar"
               minLargo={2}
               max={50}
+              onPendiente={pendientes.registrar("palabras_de_baja")}
               invalido={Boolean(error)}
               describedBy={error || ayuda ? "palabras_de_baja-mensaje" : undefined}
             />
