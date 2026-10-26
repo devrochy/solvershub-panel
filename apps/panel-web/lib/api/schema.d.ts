@@ -1085,6 +1085,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/canary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Canary
+         * @description Prueba la versión con una parte de las conversaciones nuevas (HU-AOS-32). Mismas reglas que
+         *     publicar: dueño o master, gate aprobado si está cerrado, `aos_runtime = v3` (409 `requiere_v3`).
+         *     Si la plataforma la apagó (`CANARY_DISPONIBLE`), responde 409 `canary_no_disponible`.
+         */
+        post: operations["start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Canary
+         * @description La prueba en curso de la conexión con su muestra, la comparación por carril, el veredicto y la
+         *     señal dura; null si no hay. No escribe nada.
+         */
+        get: operations["get_canary_api_v1_admin_connections__connection_id__canary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change Canary Percent
+         * @description Cambia el porcentaje de la prueba (rige al empezar cada episodio).
+         */
+        patch: operations["change_canary_percent_api_v1_admin_connections__connection_id__canary_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Canary
+         * @description Detiene la prueba (siempre como `detenida_por_dueno`: la versión se puede volver a probar).
+         */
+        post: operations["stop_canary_api_v1_admin_connections__connection_id__canary_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote Canary
+         * @description Publica para todos la versión en prueba: exige el veredicto `listo` (o 7 días sin muestra) y
+         *     que no haya señal dura (409 `canary_peor`, `canary_sin_muestra`, `canary_senal_dura`).
+         */
+        post: operations["promote_canary_api_v1_admin_connections__connection_id__canary_promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/a2a/graph": {
         parameters: {
             query?: never;
@@ -7682,6 +7770,133 @@ export interface components {
              */
             ended_at: string;
         };
+        /** CanaryIn */
+        CanaryIn: {
+            /**
+             * Percent
+             * @description Porcentaje de las conversaciones nuevas que prueban la versión.
+             */
+            percent: number;
+            /**
+             * Forzar
+             * @description Solo master: saltar el gate de pass^k (con motivo).
+             * @default false
+             */
+            forzar: boolean;
+            /** Motivo Forzado */
+            motivo_forzado?: string | null;
+        };
+        /** CanaryLane */
+        CanaryLane: {
+            /** Conversaciones */
+            conversaciones: number;
+            /**
+             * Escalamiento
+             * @description Fracción de 0 a 1 de conversaciones que pasaron a una persona.
+             */
+            escalamiento: number | null;
+            /**
+             * Completitud
+             * @description Fracción de 0 a 1 de recorridos completados (los que empezaron en la prueba).
+             */
+            completitud: number | null;
+            /** Tareas Terminadas */
+            tareas_terminadas: number;
+            /**
+             * Costo Por Conversacion Usd
+             * @description USD por conversación; null sin datos o sin la sección `costs` (ver `costos_visibles`).
+             */
+            costo_por_conversacion_usd: number | null;
+            /** P95 Ms */
+            p95_ms: number | null;
+        };
+        /** CanaryPercentIn */
+        CanaryPercentIn: {
+            /** Percent */
+            percent: number;
+        };
+        /** CanarySignal */
+        CanarySignal: {
+            /** Activa */
+            activa: boolean;
+            /** Evaluadas */
+            evaluadas: number;
+            /** Llegaron Mal */
+            llegaron_mal: number;
+            /** Tasa */
+            tasa: number | null;
+            /** Tasa Estable */
+            tasa_estable: number | null;
+            /** Sin Resultado */
+            sin_resultado: number;
+        };
+        /** CanaryState */
+        CanaryState: {
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /** Release Number */
+            release_number: number | null;
+            /** Base Release Id */
+            base_release_id: string | null;
+            /** Base Release Number */
+            base_release_number: number | null;
+            /**
+             * Percent
+             * @description Porcentaje vigente de las conversaciones nuevas que prueban la versión.
+             */
+            percent: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Horas
+             * @description Horas desde el inicio de la prueba.
+             */
+            horas: number;
+            /**
+             * Umbral Conversaciones
+             * @description Conversaciones en la versión nueva para juntar la muestra.
+             */
+            umbral_conversaciones: number;
+            /**
+             * Umbral Horas
+             * @description Horas mínimas para juntar la muestra.
+             */
+            umbral_horas: number;
+            /** Dias Manual */
+            dias_manual: number;
+            /**
+             * Publicable Desde
+             * Format: date-time
+             * @description Desde cuándo se puede publicar a mano sin muestra.
+             */
+            publicable_desde: string;
+            /**
+             * Veredicto
+             * @enum {string}
+             */
+            veredicto: "sin_muestra" | "peor" | "listo";
+            /** Motivos */
+            motivos: ("escalamiento" | "completitud")[];
+            /** Advertencias */
+            advertencias: ("costo" | "lentitud")[];
+            /** Costos Visibles */
+            costos_visibles: boolean;
+            /** Veredicto Guardado */
+            veredicto_guardado: boolean;
+            senal_dura: components["schemas"]["CanarySignal"];
+            /** Puede Publicar */
+            puede_publicar: boolean;
+            /** Motivo No Publicar */
+            motivo_no_publicar: ("senal_dura" | "peor" | "sin_muestra") | null;
+            estable: components["schemas"]["CanaryLane"];
+            canary: components["schemas"]["CanaryLane"];
+        };
         /** CashAdjustment */
         CashAdjustment: {
             /** Valor Nuevo */
@@ -13680,7 +13895,7 @@ export interface components {
             lifecycle?: string | null;
             /**
              * Detenida
-             * @description La detuvo el dueño (no se puede activar).
+             * @description Bloqueada: la detuvo el dueño (como candidata) o el sistema la retiró de una prueba por ir peor. No se puede activar.
              * @default false
              */
             detenida: boolean;
@@ -13763,7 +13978,7 @@ export interface components {
             lifecycle?: string | null;
             /**
              * Detenida
-             * @description La detuvo el dueño (no se puede activar).
+             * @description Bloqueada: la detuvo el dueño (como candidata) o el sistema la retiró de una prueba por ir peor. No se puede activar.
              * @default false
              */
             detenida: boolean;
@@ -19175,6 +19390,174 @@ export interface operations {
                 "application/json": components["schemas"]["RollbackIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChange"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CanaryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_canary_api_v1_admin_connections__connection_id__canary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanaryState"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_canary_percent_api_v1_admin_connections__connection_id__canary_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CanaryPercentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_canary_api_v1_admin_connections__connection_id__canary_stop_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_canary_api_v1_admin_connections__connection_id__canary_promote_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

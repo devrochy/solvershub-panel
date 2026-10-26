@@ -25,6 +25,13 @@ describe("estado de cada versión", () => {
     expect(estadoDe(version(5, { detenida: true, lifecycle: "invalid" }), 3)).toBe("detenida");
     expect(estadoDe(version(1), null)).toBe("candidata");
   });
+
+  it("la prueba retirada por el sistema bloquea; la que detuvo el dueño se puede volver a probar", () => {
+    expect(estadoDe(version(4, { detenida: true, lifecycle: "canary_stopped" }), 3)).toBe("retirada");
+    expect(estadoDe(version(4, { lifecycle: "canary_stopped" }), 3)).toBe("candidata");
+    expect(estadoDe(version(2, { lifecycle: "canary_stopped" }), 3)).toBe("anterior");
+    expect(estadoDe(version(4, { lifecycle: "invalid" }), 3)).toBe("detenida");
+  });
 });
 
 describe("publicar según el gate", () => {
@@ -101,5 +108,8 @@ describe("textos y permisos", () => {
   it("los códigos de la API tienen un mensaje claro", () => {
     expect(mensajeDeError("gate_pendiente")).toMatch(/medirla/);
     expect(mensajeDeError("habilidad_retirada")).toMatch(/seguridad/);
+    expect(mensajeDeError("canary_en_curso")).toMatch(/en prueba/);
+    expect(mensajeDeError("canary_sin_muestra")).toMatch(/suficientes conversaciones/);
+    expect(mensajeDeError("porcentaje_invalido")).toMatch(/1 y 50/);
   });
 });
