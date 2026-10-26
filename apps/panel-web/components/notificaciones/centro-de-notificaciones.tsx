@@ -255,7 +255,9 @@ function Preferencias({ n, onVolver }: { n: Estado; onVolver: () => void }) {
           </h4>
           <p className="mt-1 text-sm text-text-soft">
             {silenciado && silenciadoHasta
-              ? `Silenciados hasta ${silenciadoHasta.toLocaleString("es-CO", { weekday: "short", hour: "numeric", minute: "2-digit" })}.`
+              ? `Silenciados hasta ${silenciadoHasta
+                .toLocaleString("es-CO", { weekday: "short", hour: "numeric", minute: "2-digit" })
+                .replace(/\.$/, "")}.`
               : "Pausa los avisos al celular por un tiempo. Las notificaciones siguen apareciendo aquí."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
