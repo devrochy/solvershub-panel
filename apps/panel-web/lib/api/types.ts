@@ -231,3 +231,10 @@ export type ReleaseSummary = components["schemas"]["ReleaseSummary"];
 export type ReleaseDiff = components["schemas"]["ReleaseDiff"];
 export type Evaluation = components["schemas"]["Evaluation"];
 export type EvaluationRequested = components["schemas"]["EvaluationRequested"];
+
+// Tablero de fiabilidad (HU-AOS-29).
+export type ReliabilityResponse = components["schemas"]["ReliabilityResponse"];
+export type VerifierRejections = components["schemas"]["VerifierRejections"];
+export type VerifierRejection = components["schemas"]["VerifierRejection"];
+export type ReliabilityUsage = components["schemas"]["UsageResponse"];
+export type ReliabilityEvalRuns = components["schemas"]["EvalRunsResponse"];

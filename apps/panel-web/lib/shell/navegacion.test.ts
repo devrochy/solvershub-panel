@@ -42,6 +42,8 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/suscripciones/clientes", "pack_subscriptions:suscripciones", false], ["/suscripciones/pagos", "pack_subscriptions:suscripciones", false],
   // HU-AOS-26: permisos entre agentes y «Probar una frase».
   ["/agentes/colaboracion", "settings", false],
+  // HU-AOS-29: tablero de fiabilidad.
+  ["/agentes/calidad", "agents", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
