@@ -2,12 +2,14 @@
 
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
+import { ListaDeFrases } from "@/components/ui/lista-de-frases";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
-import { formatList, parseList } from "@/lib/format";
+import { type Pendiente } from "@/lib/frases-pendientes";
 import { franjasATexto, textoAFranjas } from "@/lib/horario-atencion";
 
 type Valores = Record<string, unknown>;
@@ -24,6 +26,7 @@ export function CampoOpcion({
   error,
   ayudaExtra,
   etiquetaDe,
+  onPendiente,
 }: {
   opcion: OpcionConfig;
   valores: Valores;
@@ -33,6 +36,8 @@ export function CampoOpcion({
   ayudaExtra?: string;
   /** Etiqueta de otra opción del catálogo, para el enlace «Ir a …» cuando esta depende de ella. */
   etiquetaDe?: (clave: string) => string | undefined;
+  /** Texto escrito y no agregado de una lista de textos, para sumarlo al guardar. */
+  onPendiente?: (pendiente: Pendiente | null) => void;
 }) {
   const { clave } = opcion;
   const valor = valores[clave];
@@ -128,15 +133,15 @@ export function CampoOpcion({
       case "entero":
       case "decimal":
         return (
-          <Input
+          <InputNumero
             id={clave}
-            type="number"
             min={opcion.minimo ?? undefined}
             max={opcion.maximo ?? undefined}
-            step={opcion.tipo === "decimal" ? "any" : 1}
+            decimal={opcion.tipo === "decimal"}
+            step={opcion.tipo === "decimal" ? 0.1 : 1}
             disabled={bloqueado}
             value={Number(valor ?? 0)}
-            onChange={(e) => onChange(clave, Number(e.target.value))}
+            onValueChange={(n) => onChange(clave, n)}
           />
         );
       case "texto_largo":
@@ -151,11 +156,18 @@ export function CampoOpcion({
         );
       case "lista_de_textos":
         return (
-          <Input
+          <ListaDeFrases
             id={clave}
+            frases={Array.isArray(valor) ? (valor as string[]) : []}
+            onChange={(frases) => onChange(clave, frases)}
+            placeholder="Escribe y pulsa Enter"
+            agregarLabel="Agregar"
+            minLargo={2}
+            max={100}
+            onPendiente={onPendiente}
             disabled={bloqueado}
-            value={formatList(Array.isArray(valor) ? (valor as string[]) : [])}
-            onChange={(e) => onChange(clave, parseList(e.target.value))}
+            invalido={Boolean(error)}
+            describedBy={error || ayuda ? `${clave}-mensaje` : undefined}
           />
         );
       case "franjas":

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { CatalogoConfig, IdentitySettings } from "@/lib/api/types";
 import { ayudaFueraDeHorario, cuerpoIdentidad } from "@/lib/asistente";
 import { GRUPOS_IDENTIDAD, erroresDeRango, indexarCatalogo, opcionesDelGrupo } from "@/lib/catalogo-config";
+import { usePendientes } from "@/lib/frases-pendientes";
 import { leyendaDias } from "@/lib/horario-atencion";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
@@ -28,6 +29,7 @@ export function IdentityForm({
   const [values, setValues] = useState(identity);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const { run, pending } = useAction();
+  const pendientes = usePendientes();
 
   if (!catalogo) {
     return (
@@ -50,18 +52,23 @@ export function IdentityForm({
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const locales = erroresDeRango(catalogo!, valores);
+    // El texto escrito en una lista y no agregado se suma antes de validar y de guardar.
+    const pendiente = pendientes.completar((clave) => (Array.isArray(valores[clave]) ? (valores[clave] as string[]) : undefined));
+    const completos = { ...values, ...pendiente.listas } as IdentitySettings;
+    const locales = { ...erroresDeRango(catalogo!, completos as unknown as Record<string, unknown>), ...pendiente.errores };
     setErrores(locales);
     if (Object.keys(locales).length > 0) {
       toast.error("Revisa los campos marcados antes de guardar.");
       return;
     }
+    setValues(completos);
+    pendiente.limpiar();
     await run(async () => {
       const res = await fetch("/api/settings/identity", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         // Una sola zona en la UI: el horario de atención usa la del negocio.
-        body: JSON.stringify(cuerpoIdentidad(values, identity)),
+        body: JSON.stringify(cuerpoIdentidad(completos, identity)),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string; fields?: Record<string, string> };
       if (!res.ok) {
@@ -107,6 +114,7 @@ export function IdentityForm({
                         valores={valores}
                         onChange={cambiar}
                         error={errores[opcion.clave]}
+                        onPendiente={pendientes.registrar(opcion.clave)}
                         etiquetaDe={(clave) => indice.get(clave)?.etiqueta}
                         ayudaExtra={
                           opcion.clave === "out_of_hours_message"

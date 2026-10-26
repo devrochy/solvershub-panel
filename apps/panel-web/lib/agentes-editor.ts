@@ -126,8 +126,8 @@ function limpias(frases: string[]): string[] {
   const salida: string[] = [];
   for (const frase of frases) {
     const texto = frase.trim();
-    if (!texto || vistas.has(normalizarFrase(texto))) continue;
-    vistas.add(normalizarFrase(texto));
+    if (!texto || vistas.has(claveDeFrase(texto))) continue;
+    vistas.add(claveDeFrase(texto));
     salida.push(texto);
   }
   return salida;
@@ -177,6 +177,14 @@ export function normalizarFrase(texto: string): string {
     .split(/\s+/)
     .filter(Boolean)
     .join(" ");
+}
+
+/**
+ * Clave para decidir si dos frases son la misma: la normalizada o, si queda vacía (solo emojis o
+ * símbolos), el texto recortado en minúsculas. Así «👍» y «🙏» no se toman como repetidas.
+ */
+export function claveDeFrase(texto: string): string {
+  return normalizarFrase(texto) || texto.trim().toLowerCase();
 }
 
 /** Frases distintas de un superpoder: las de la habilidad más las propias (una copia no suma). */

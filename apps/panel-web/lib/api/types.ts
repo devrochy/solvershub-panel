@@ -225,3 +225,9 @@ export type NotificacionItem = components["schemas"]["NotificationItem"];
 export type NotificacionPagina = components["schemas"]["NotificationPage"];
 export type NotificacionDestino = components["schemas"]["NotificationTarget"];
 export type NotificacionPreferencias = components["schemas"]["NotificationPreferences"];
+
+// Versiones de una conexión (HU-AOS-14/21/27).
+export type ReleaseSummary = components["schemas"]["ReleaseSummary"];
+export type ReleaseDiff = components["schemas"]["ReleaseDiff"];
+export type Evaluation = components["schemas"]["Evaluation"];
+export type EvaluationRequested = components["schemas"]["EvaluationRequested"];
