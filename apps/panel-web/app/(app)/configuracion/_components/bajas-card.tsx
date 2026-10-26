@@ -60,7 +60,7 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
               placeholder="Por ejemplo: baja"
               agregarLabel="Agregar"
               minLargo={2}
-              max={100}
+              max={50}
               invalido={Boolean(error)}
               describedBy={error || ayuda ? "palabras_de_baja-mensaje" : undefined}
             />
