@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
+import { DetalleDelTurno } from "@/app/(app)/conversaciones/_components/detalle-del-turno";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
@@ -12,7 +14,8 @@ import { useAction } from "@/lib/use-action";
 
 /**
  * Los turnos que frenó el verificador (HU-AOS-29). Quien tiene escritura en Agentes marca un rechazo
- * como falso positivo; no se desmarca. Sin permiso de Conversaciones no hay enlace a la conversación.
+ * como falso positivo; no se desmarca. Sin permiso de Conversaciones no hay enlace a la conversación
+ * ni al depurador del turno (HU-AOS-28), que exige ese mismo permiso.
  */
 export function RechazosDelVerificador({
   rechazos,
@@ -25,6 +28,7 @@ export function RechazosDelVerificador({
 }) {
   const confirm = useConfirm();
   const { run, pending } = useAction();
+  const [turnoAbierto, setTurnoAbierto] = useState<string | null>(null);
 
   const marcar = async (r: VerifierRejection) => {
     const ok = await confirm({
@@ -48,29 +52,37 @@ export function RechazosDelVerificador({
 
   if (rechazos.length === 0) return null;
   return (
-    <ul className="flex flex-col divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
-      {rechazos.map((r) => (
-        <li key={`${r.turn_id}-${r.kind}`} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-          <span className="text-headline">{tipoDeRechazo(r.kind)}</span>
-          <span className="text-text-soft">{formatDateTime(r.created_at)}</span>
-          {verConversaciones && r.conversation_id && (
-            <Link href={`/conversaciones/${r.conversation_id}`} className="text-link hover:underline">
-              Ver conversación
-            </Link>
-          )}
-          <span className="ml-auto">
-            {r.false_positive ? (
-              <Badge variant="neutral">Falso positivo</Badge>
-            ) : (
-              puedeMarcar && (
-                <Button variant="outline" size="sm" disabled={pending} onClick={() => marcar(r)}>
-                  Marcar falso positivo
-                </Button>
-              )
+    <>
+      <ul className="flex flex-col divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
+        {rechazos.map((r) => (
+          <li key={`${r.turn_id}-${r.kind}`} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+            <span className="text-headline">{tipoDeRechazo(r.kind)}</span>
+            <span className="text-text-soft">{formatDateTime(r.created_at)}</span>
+            {verConversaciones && r.conversation_id && (
+              <Link href={`/conversaciones?c=${r.conversation_id}`} className="text-link hover:underline">
+                Ver conversación
+              </Link>
             )}
-          </span>
-        </li>
-      ))}
-    </ul>
+            {verConversaciones && (
+              <button type="button" className="text-link hover:underline" onClick={() => setTurnoAbierto(r.turn_id)}>
+                Ver turno
+              </button>
+            )}
+            <span className="ml-auto">
+              {r.false_positive ? (
+                <Badge variant="neutral">Falso positivo</Badge>
+              ) : (
+                puedeMarcar && (
+                  <Button variant="outline" size="sm" disabled={pending} onClick={() => marcar(r)}>
+                    Marcar falso positivo
+                  </Button>
+                )
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <DetalleDelTurno turnId={turnoAbierto} onClose={() => setTurnoAbierto(null)} />
+    </>
   );
 }
