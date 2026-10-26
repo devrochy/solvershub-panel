@@ -1098,7 +1098,7 @@ export interface paths {
          * Start Canary
          * @description Prueba la versión con una parte de las conversaciones nuevas (HU-AOS-32). Mismas reglas que
          *     publicar: dueño o master, gate aprobado si está cerrado, `aos_runtime = v3` (409 `requiere_v3`).
-         *     Hasta la parte 2 (la reversión automática) responde 409 `canary_no_disponible`.
+         *     Si la plataforma la apagó (`CANARY_DISPONIBLE`), responde 409 `canary_no_disponible`.
          */
         post: operations["start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post"];
         delete?: never;
