@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { CollectorPermissionsDialog } from "./collector-permissions-dialog";
 
 export type Collector = {
@@ -109,7 +110,7 @@ export function CollectorFormDialog({
           </Field>
           {!editando && (
             <Field label="Contraseña" htmlFor="password" help="Mínimo 8 caracteres.">
-              <Input id="password" name="password" type="password" minLength={8} required />
+              <InputPassword id="password" name="password" minLength={8} required />
             </Field>
           )}
           <div className="flex items-center gap-3">

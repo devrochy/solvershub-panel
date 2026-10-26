@@ -13,6 +13,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -217,9 +218,9 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
               htmlFor="llm_api_key"
               help={llm.has_api_key ? "Ya hay una llave guardada; déjala vacía para conservarla." : "Sin llave, el negocio usa la del servidor."}
             >
-              <Input
+              <InputPassword
+                etiqueta="llave"
                 id="llm_api_key"
-                type="password"
                 autoComplete="new-password"
                 value={llm.llm_api_key}
                 onChange={(e) => setLlm({ ...llm, llm_api_key: e.target.value })}

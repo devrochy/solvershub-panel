@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { WebChatSettings } from "@/lib/api/types";
@@ -92,9 +92,9 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
             htmlFor="turnstile_secret"
             help="Deja vacío para no cambiarlo. Si lo defines, el widget exige el anti-bots de Cloudflare."
           >
-            <Input
+            <InputPassword
+              etiqueta="secreto"
               id="turnstile_secret"
-              type="password"
               value={turnstile}
               onChange={(e) => setTurnstile(e.target.value)}
               autoComplete="off"

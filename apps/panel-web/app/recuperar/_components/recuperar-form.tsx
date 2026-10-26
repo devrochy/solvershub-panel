@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { codigoValido, errorDeContrasenaNueva } from "@/lib/acceso";
 
 type Etapa = "pedir" | "aplicar" | "listo";
@@ -106,10 +107,9 @@ export function RecuperarForm() {
           />
         </Field>
         <Field label="Contraseña nueva" htmlFor="clave" help="Mínimo 8 caracteres." required>
-          <Input
+          <InputPassword
             id="clave"
             name="clave"
-            type="password"
             autoComplete="new-password"
             required
             value={clave}
@@ -117,10 +117,9 @@ export function RecuperarForm() {
           />
         </Field>
         <Field label="Repite la contraseña" htmlFor="confirmacion" required>
-          <Input
+          <InputPassword
             id="confirmacion"
             name="confirmacion"
-            type="password"
             autoComplete="new-password"
             required
             value={confirmacion}
