@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CampanaNotificaciones, textoDelContador } from "@/components/shell/campana-notificaciones";
 import { ShellProvider } from "@/components/shell/shell-context";
@@ -149,6 +149,47 @@ describe("campana de notificaciones", () => {
     montar();
     fireEvent.click(screen.getByRole("button", { name: "Notificaciones" }));
     expect(await screen.findByText("Aún no hay notificaciones")).toBeTruthy();
+  });
+
+  it("cierra con animación de salida: sigue montada en data-state=closed hasta el animationend", async () => {
+    // jsdom no resuelve `animation-name` desde globals.css: se simula solo esa lectura para el
+    // popover en `closed` (la salida real es `sh-notif-sale`). El resto es el flujo real de Radix.
+    const original = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element, pseudo?: string | null) => {
+      const estilos = original(el, pseudo);
+      if (el.classList.contains("sh-notif-popover")) {
+        // Radix guarda este objeto al montar: el nombre se decide al leerlo, según el estado actual.
+        return new Proxy(estilos, {
+          get: (t, k) => {
+            if (k === "animationName") return el.getAttribute("data-state") === "closed" ? "sh-notif-sale" : "none";
+            const valor = Reflect.get(t, k) as unknown;
+            return typeof valor === "function" ? valor.bind(t) : valor;
+          },
+        });
+      }
+      return estilos;
+    });
+    try {
+      montar();
+      fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));
+      const dialogo = await screen.findByRole("dialog", { name: "Notificaciones" });
+      await within(dialogo).findAllByRole("listitem");
+      expect(dialogo.getAttribute("data-state")).toBe("open");
+
+      fireEvent.keyDown(dialogo, { key: "Escape" });
+      // Aún en pantalla, ya en estado de salida: eso es lo que la animación CSS consume.
+      expect(screen.getByRole("dialog", { name: "Notificaciones" }).getAttribute("data-state")).toBe("closed");
+
+      // Al terminar la animación de salida, Radix la desmonta.
+      const fin = new Event("animationend", { bubbles: true });
+      Object.defineProperty(fin, "animationName", { value: "sh-notif-sale" });
+      act(() => {
+        dialogo.dispatchEvent(fin);
+      });
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it("sin violaciones graves de accesibilidad (cerrada y abierta)", async () => {
