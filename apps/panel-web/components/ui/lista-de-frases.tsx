@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { normalizarFrase } from "@/lib/agentes-editor";
 
 /**
- * Lista editable de frases (las que dice un cliente, o las que el agente nunca dice). Se agrega
- * con Enter o con el botón y se quita con la ✕ de cada una. Sin repetidas.
+ * Lista editable de frases (las que dice un cliente, las que el agente nunca dice o las palabras que
+ * escalan). Se agrega con Enter o con el botón y se quita con la ✕ de cada una. Sin repetidas. Acepta
+ * espacios y comas dentro de la frase.
  */
 export function ListaDeFrases({
   id,
@@ -18,8 +19,10 @@ export function ListaDeFrases({
   placeholder,
   agregarLabel,
   max = 50,
+  minLargo = 3,
   invalido = false,
   describedBy,
+  disabled = false,
 }: {
   id: string;
   frases: string[];
@@ -27,14 +30,17 @@ export function ListaDeFrases({
   placeholder: string;
   agregarLabel: string;
   max?: number;
+  /** Largo mínimo de cada frase, sin contar espacios de los bordes. */
+  minLargo?: number;
   invalido?: boolean;
   describedBy?: string;
+  disabled?: boolean;
 }) {
   const [nueva, setNueva] = useState("");
 
   function agregar() {
     const texto = nueva.trim();
-    if (texto.length < 3 || frases.length >= max) return;
+    if (texto.length < minLargo || frases.length >= max) return;
     if (frases.some((f) => normalizarFrase(f) === normalizarFrase(texto))) {
       setNueva("");
       return;
@@ -62,8 +68,9 @@ export function ListaDeFrases({
               {frase}
               <button
                 type="button"
-                className="rounded-sm text-text-soft hover:text-headline focus-visible:outline-2"
+                className="rounded-sm text-text-soft hover:text-headline focus-visible:outline-2 disabled:opacity-50"
                 aria-label={`Quitar «${frase}»`}
+                disabled={disabled}
                 onClick={() => onChange(frases.filter((_, j) => j !== i))}
               >
                 <X aria-hidden className="h-3.5 w-3.5" />
@@ -76,6 +83,7 @@ export function ListaDeFrases({
         <Input
           id={id}
           value={nueva}
+          disabled={disabled}
           maxLength={300}
           placeholder={placeholder}
           aria-invalid={invalido || undefined}
@@ -83,7 +91,7 @@ export function ListaDeFrases({
           onChange={(e) => setNueva(e.target.value)}
           onKeyDown={alPresionar}
         />
-        <Button type="button" variant="outline" onClick={agregar} disabled={nueva.trim().length < 3 || frases.length >= max}>
+        <Button type="button" variant="outline" onClick={agregar} disabled={disabled || nueva.trim().length < minLargo || frases.length >= max}>
           {agregarLabel}
         </Button>
       </div>

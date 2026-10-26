@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
-import { ListaDeFrases } from "@/app/(app)/agentes/[id]/editar/_components/lista-de-frases";
+import { ListaDeFrases } from "@/components/ui/lista-de-frases";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -106,13 +107,12 @@ export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelE
           help="0 = sin tope. Si se pasa, el agente lo intenta de nuevo más corto."
           error={errores["persona.maxLength"]}
         >
-          <Input
+          <InputNumero
             id="agente-largo"
-            type="number"
             min={0}
             max={10000}
             value={estado.largoMaximo}
-            onChange={(e) => cambiar({ largoMaximo: Math.max(0, Math.min(10000, Number(e.target.value) || 0)) })}
+            onValueChange={(largoMaximo) => cambiar({ largoMaximo })}
             className="max-w-40"
           />
         </Field>
@@ -201,14 +201,14 @@ export function PasoModelo({
           help="Entre 0 (siempre igual) y 2 (más variado). Recomendado: 0,3."
           error={errores["model.temperature"]}
         >
-          <Input
+          <InputNumero
             id="agente-temperatura"
-            type="number"
+            decimal
             step={0.1}
             min={0}
             max={2}
             value={estado.temperatura}
-            onChange={(e) => cambiar({ temperatura: Math.max(0, Math.min(2, Number(e.target.value) || 0)) })}
+            onValueChange={(temperatura) => cambiar({ temperatura })}
             className="max-w-32"
           />
         </Field>
@@ -364,13 +364,12 @@ export function PasoMemoria({
           help="Entre 1 y 500. Más mensajes = más contexto y más costo."
           error={errores["memory.shortTermTurns"]}
         >
-          <Input
+          <InputNumero
             id="memoria-turnos"
-            type="number"
             min={1}
             max={500}
             value={estado.turnosDeMemoria}
-            onChange={(e) => cambiar({ turnosDeMemoria: Math.max(1, Math.min(500, Number(e.target.value) || 1)) })}
+            onValueChange={(turnosDeMemoria) => cambiar({ turnosDeMemoria })}
             className="max-w-32"
           />
         </Field>
@@ -440,15 +439,12 @@ function SeccionConocimiento({
               help={`Entre 1 y ${MAX_FRAGMENTOS}. Más fragmentos = más contexto y más costo por respuesta.`}
               error={errores["knowledge.topK"]}
             >
-              <Input
+              <InputNumero
                 id="conocimiento-fragmentos"
-                type="number"
                 min={1}
                 max={MAX_FRAGMENTOS}
                 value={conocimiento.fragmentos}
-                onChange={(e) =>
-                  cambiar({ fragmentos: Math.max(1, Math.min(MAX_FRAGMENTOS, Number(e.target.value) || 1)) })
-                }
+                onValueChange={(fragmentos) => cambiar({ fragmentos })}
                 className="max-w-32"
               />
             </Field>
@@ -475,14 +471,14 @@ function SeccionConocimiento({
                 help="Más alto = menos fragmentos y solo los muy parecidos a la pregunta."
                 error={errores["knowledge.minScore"]}
               >
-                <Input
+                <InputNumero
                   id="conocimiento-umbral"
-                  type="number"
+                  decimal
                   min={0}
                   max={1}
                   step={0.05}
                   value={conocimiento.umbral ?? 0}
-                  onChange={(e) => cambiar({ umbral: Math.max(0, Math.min(1, Number(e.target.value) || 0)) })}
+                  onValueChange={(umbral) => cambiar({ umbral })}
                   className="max-w-32"
                 />
               </Field>
