@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
 import { useAction } from "@/lib/use-action";
 
 type MemorySettings = { short_term_turns: number; rag_top_k: number; rag_min_score: number };
@@ -38,36 +38,34 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
             htmlFor="short_term_turns"
             help="Cuántos mensajes recientes ve el agente. 1–200."
           >
-            <Input
+            <InputNumero
               id="short_term_turns"
-              type="number"
               min={1}
               max={200}
               value={values.short_term_turns}
-              onChange={(e) => setValues({ ...values, short_term_turns: Number(e.target.value) })}
+              onValueChange={(n) => setValues((previo) => ({ ...previo, short_term_turns: n }))}
             />
           </Field>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Recall RAG (top K)" htmlFor="rag_top_k" help="0 = desactivado (1–20).">
-              <Input
+              <InputNumero
                 id="rag_top_k"
-                type="number"
                 min={0}
                 max={20}
                 value={values.rag_top_k}
-                onChange={(e) => setValues({ ...values, rag_top_k: Number(e.target.value) })}
+                onValueChange={(n) => setValues((previo) => ({ ...previo, rag_top_k: n }))}
               />
             </Field>
             <Field label="Similitud mínima (0–1)" htmlFor="rag_min_score">
-              <Input
+              <InputNumero
                 id="rag_min_score"
-                type="number"
-                step="0.05"
+                decimal
+                step={0.05}
                 min={0}
                 max={1}
                 value={values.rag_min_score}
-                onChange={(e) => setValues({ ...values, rag_min_score: Number(e.target.value) })}
+                onValueChange={(n) => setValues((previo) => ({ ...previo, rag_min_score: n }))}
               />
             </Field>
           </div>

@@ -5,10 +5,10 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { ListaDeFrases } from "@/components/ui/lista-de-frases";
 import type { BajasSettings, CatalogoConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, indexarCatalogo } from "@/lib/catalogo-config";
-import { formatList, parseList } from "@/lib/format";
+import { formatList } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -53,10 +53,16 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
             </p>
           </div>
           <Field label={opcion?.etiqueta ?? "Palabras de baja"} htmlFor="palabras_de_baja" help={ayuda} error={error}>
-            <Input
+            <ListaDeFrases
               id="palabras_de_baja"
-              value={formatList(palabras)}
-              onChange={(e) => setPalabras(parseList(e.target.value))}
+              frases={palabras}
+              onChange={setPalabras}
+              placeholder="Por ejemplo: baja"
+              agregarLabel="Agregar"
+              minLargo={2}
+              max={100}
+              invalido={Boolean(error)}
+              describedBy={error || ayuda ? "palabras_de_baja-mensaje" : undefined}
             />
           </Field>
           <div>
