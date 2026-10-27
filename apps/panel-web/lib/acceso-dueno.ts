@@ -1,5 +1,5 @@
 /**
- * Acceso del dueño al crear un negocio (agent-core ADR-0174). La API no devuelve el enlace:
+ * Acceso del dueño al crear un negocio (agent-core ADR-0175). La API no devuelve el enlace:
  * solo dice qué pasó con el correo. Esta función lo traduce a un mensaje para quien opera,
  * con el siguiente paso cuando el correo no salió.
  */

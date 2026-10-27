@@ -4,7 +4,7 @@ import { mensajeAcceso } from "./acceso-dueno";
 
 const base = { tipo: "enlace", expires_at: "2026-11-03T15:00:00Z" } as const;
 
-describe("mensajeAcceso (ADR-0174)", () => {
+describe("mensajeAcceso (ADR-0175)", () => {
   it("con enlace enviado dice cuándo vence", () => {
     const m = mensajeAcceso({ ...base, estado: "enviado" });
     expect(m.tono).toBe("ok");

@@ -2868,7 +2868,7 @@ export interface paths {
          * @description Alta de un negocio (master): tenant + asistente + acceso del dueño por correo.
          *
          *     Con `admin_email` la cuenta del dueño nace sin contraseña y le llega un enlace de un solo
-         *     uso para definirla (ADR-0174). Si el correo no sale, el negocio se crea igual y la
+         *     uso para definirla (ADR-0175). Si el correo no sale, el negocio se crea igual y la
          *     respuesta lo dice (`invitation.estado`); se reenvía con `owner-invitation/resend`.
          */
         post: operations["create_tenant_api_v1_admin_platform_tenants_post"];
@@ -2890,7 +2890,7 @@ export interface paths {
         /**
          * Reenvía el acceso al dueño del negocio
          * @description Reenvía el correo de acceso a la cuenta de la invitación `owner` pendiente del negocio
-         *     (ADR-0174). El destinatario no se recibe: es el de la invitación. Reusa el enlace mientras
+         *     (ADR-0175). El destinatario no se recibe: es el de la invitación. Reusa el enlace mientras
          *     vigente y lo renueva si venció.
          */
         post: operations["resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post"];
@@ -13673,7 +13673,7 @@ export interface components {
         };
         /**
          * TenantOwnerInvitation
-         * @description Qué pasó con el acceso del dueño (ADR-0174). Nunca lleva el enlace ni el token.
+         * @description Qué pasó con el acceso del dueño (ADR-0175). Nunca lleva el enlace ni el token.
          */
         TenantOwnerInvitation: {
             /**
