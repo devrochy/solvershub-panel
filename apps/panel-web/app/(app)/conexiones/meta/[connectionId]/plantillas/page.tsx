@@ -111,6 +111,9 @@ export default async function TemplatesPage({
             <Button asChild variant="outline" size="sm">
               <Link href="/plantillas/eventos">Plantillas por evento</Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/plantillas-opciones">Plantillas con opciones</Link>
+            </Button>
             <SyncTemplatesButton connectionId={connectionId} />
           </>
         }

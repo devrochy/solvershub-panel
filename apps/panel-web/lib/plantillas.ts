@@ -57,3 +57,24 @@ export function faltantes(variables: string[], valores: Record<string, string>):
 export function claveDePlantilla(nombre: string, idioma: string): string {
   return `${nombre}|${idioma}`;
 }
+
+/**
+ * Avisos sin plantilla de los últimos 7 días, separados por origen (SPEC-40): los de un evento se arreglan en
+ * «Plantillas por evento»; los de una plantilla con opciones, en «Plantillas con opciones». Un backend que
+ * todavía no manda el desglose (o lo manda en cero con un total) cuenta todo como evento, como antes.
+ */
+export function desglosarFaltantes(datos: {
+  total_7d: number;
+  total_eventos_7d?: number | null;
+  total_opciones_7d?: number | null;
+  recent?: { tipo?: string | null; clave?: string | null }[] | null;
+}): { eventos: number; opciones: number; clavesDeOpciones: string[] } {
+  const opciones = Math.max(0, datos.total_opciones_7d ?? 0);
+  const conDesglose = (datos.total_eventos_7d ?? 0) + opciones > 0;
+  const eventos = conDesglose ? Math.max(0, datos.total_eventos_7d ?? 0) : datos.total_7d;
+  const claves: string[] = [];
+  for (const item of datos.recent ?? []) {
+    if (item.tipo === "opcion" && item.clave && !claves.includes(item.clave)) claves.push(item.clave);
+  }
+  return { eventos, opciones: conDesglose ? opciones : 0, clavesDeOpciones: claves.slice(0, 3) };
+}

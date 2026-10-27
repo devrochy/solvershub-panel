@@ -34,7 +34,7 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
 }));
 
-type Pagina = (props: { searchParams: Promise<Record<string, string>> }) => Promise<ReactNode>;
+type Pagina = (props: { searchParams: Promise<Record<string, string>>; params: Promise<Record<string, string>> }) => Promise<ReactNode>;
 
 const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Resumen", () => import("@/app/(app)/dashboard/page")],
@@ -54,6 +54,8 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Suscripciones · Clientes", () => import("@/app/(app)/suscripciones/clientes/page")],
   ["Suscripciones · Pagos", () => import("@/app/(app)/suscripciones/pagos/page")],
   ["Agenda", () => import("@/app/(app)/calendario/page")],
+  ["Plantillas con opciones", () => import("@/app/(app)/plantillas-opciones/page")],
+  ["Plantilla con opciones · Editor", () => import("@/app/(app)/plantillas-opciones/[clave]/page")],
 ];
 
 beforeAll(() => {
@@ -80,7 +82,7 @@ afterEach(cleanup);
 describe("accesibilidad de las páginas principales", () => {
   it.each(PAGINAS)("%s no tiene violaciones graves de axe", async (_nombre, cargar) => {
     const Pagina = (await cargar()).default as Pagina;
-    const arbol = await resolverServidor(await Pagina({ searchParams: Promise.resolve({}) }));
+    const arbol = await resolverServidor(await Pagina({ searchParams: Promise.resolve({}), params: Promise.resolve({ clave: "confirmar_cita" }) }));
     const { container } = render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     expect(container.querySelector("h1"), "la página tiene su h1").not.toBeNull();

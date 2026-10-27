@@ -151,7 +151,7 @@ export const primerosPasos: PrimerosPasos = {
   ],
 };
 
-export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [] };
+export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [], total_eventos_7d: 0, total_opciones_7d: 0 };
 
 export const conversaciones: ConversationPage = {
   items: [
@@ -966,6 +966,110 @@ export const grafoA2A: Graph = {
   warnings: [],
 };
 
+// Plantillas con opciones (SPEC-40, HU-OPC-06).
+export const accionesDeOpciones = {
+  acciones: [
+    {
+      tool: "confirmar_cita",
+      descripcion: "Confirma la próxima cita del cliente y le avisa al equipo.",
+      parameters: {
+        type: "object",
+        properties: {
+          motivo: { type: "string", title: "Motivo", description: "Se guarda en la cita." },
+          aviso_minutos: { type: "integer", title: "Minutos de aviso", minimum: 0, maximum: 1440 },
+          canal: { type: "string", title: "Canal", enum: ["whatsapp", "correo"], "x-enumLabels": ["WhatsApp", "Correo"] },
+        },
+        required: ["motivo"],
+      },
+      sensible: false,
+      confirmacion_obligatoria: false,
+    },
+    {
+      tool: "crear_link_de_pago",
+      descripcion: "Crea un link de pago por el valor que indiques.",
+      parameters: {
+        type: "object",
+        properties: {
+          monto: { type: "number", title: "Monto (COP)", minimum: 1 },
+          concepto: { type: "string", title: "Concepto" },
+          cliente: {
+            type: "object",
+            title: "Datos del cliente",
+            properties: { documento: { type: "string", title: "Documento" }, ciudad: { type: "string", title: "Ciudad" } },
+          },
+        },
+        required: ["monto"],
+      },
+      sensible: true,
+      confirmacion_obligatoria: true,
+    },
+    {
+      tool: "reagendar_cita",
+      descripcion: "Reagenda la cita del cliente con parámetros que el formulario no sabe pintar.",
+      parameters: { oneOf: [{ type: "object" }, { type: "string" }] },
+      sensible: false,
+      confirmacion_obligatoria: false,
+    },
+  ],
+};
+
+export const variablesDeOpciones = {
+  variables: [
+    { ruta: "cliente.nombre", descripcion: "Nombre del cliente", origen: "conversacion" },
+    { ruta: "negocio.nombre", descripcion: "Nombre del negocio", origen: "servidor" },
+  ],
+};
+
+export const definicionDeOpciones = {
+  body: "Hola {cliente.nombre}, tu cita en {negocio.nombre} es mañana. ¿Qué quieres hacer?",
+  footer: "Responde tocando una opción",
+  variables: ["cliente.nombre", "negocio.nombre"],
+  exclusivo: true,
+  ttl_horas: 24,
+  opciones: [
+    {
+      id: "op1",
+      titulo: "Confirmar cita",
+      accion: { tool: "confirmar_cita", args_fijos: { motivo: "Confirmada desde WhatsApp" }, args_contexto: {}, confirmar: false },
+      respuesta_ok: "Listo, {ctx.cliente.nombre}: tu cita quedó confirmada.",
+      respuesta_error: "No pudimos confirmarla. Te escribe una persona del equipo.",
+      result_keys: [],
+    },
+    {
+      id: "op2",
+      titulo: "Pagar el anticipo",
+      accion: { tool: "crear_link_de_pago", args_fijos: { monto: 50000 }, args_contexto: {}, confirmar: true },
+      respuesta_ok: "Aquí está tu link de pago.",
+      respuesta_error: "No pudimos crear el link de pago.",
+      result_keys: [],
+    },
+  ],
+};
+
+export const plantillaDeOpciones = {
+  clave: "confirmar_cita",
+  nombre: "Confirmar cita",
+  estado: "published",
+  version_vigente: 2,
+  tiene_borrador_sin_publicar: false,
+  creada_en: "2026-10-20T15:00:00Z",
+  actualizada_en: "2026-10-27T10:00:00Z",
+  borrador: definicionDeOpciones,
+  definicion_vigente: definicionDeOpciones,
+  versiones: [
+    { version_n: 2, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: null, vigente: true },
+    { version_n: 1, publicada_en: "2026-10-21T09:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: null, vigente: false },
+  ],
+};
+
+export const listaDeOpciones = {
+  plantillas: [
+    { clave: "confirmar_cita", nombre: "Confirmar cita", estado: "published", version_vigente: 2, tiene_borrador_sin_publicar: false, creada_en: "2026-10-20T15:00:00Z", actualizada_en: "2026-10-27T10:00:00Z" },
+    { clave: "recordar_pago", nombre: "Recordar pago", estado: "draft", version_vigente: null, tiene_borrador_sin_publicar: true, creada_en: "2026-10-26T15:00:00Z", actualizada_en: "2026-10-26T16:00:00Z" },
+    { clave: "encuesta", nombre: "Encuesta de servicio", estado: "retired", version_vigente: 1, tiene_borrador_sin_publicar: false, creada_en: "2026-10-01T15:00:00Z", actualizada_en: "2026-10-15T16:00:00Z" },
+  ],
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/me": me,
   "/admin/agents/overview": agentes,
@@ -975,6 +1079,10 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/dashboard/agents": resumenPorAgente,
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,
+  "/plantillas-opciones": listaDeOpciones,
+  "/plantillas-opciones/catalogo-acciones": accionesDeOpciones,
+  "/plantillas-opciones/catalogo-variables": variablesDeOpciones,
+  "/plantillas-opciones/confirmar_cita": plantillaDeOpciones,
   "/admin/conversations": conversaciones,
   "/admin/conversations/connections": conexionesDeConversaciones,
   "/admin/conversations/test-conv-1": conversacionAbierta,

@@ -58,7 +58,7 @@ describe("menú v2 (HU-UX-02)", () => {
   });
 
   it("las rutas que salieron del menú siguen protegidas por connections", () => {
-    for (const ruta of ["/plantillas", "/plantillas/eventos", "/conexiones/requisitos", "/conexiones/produccion"]) {
+    for (const ruta of ["/plantillas", "/plantillas/eventos", "/plantillas-opciones", "/plantillas-opciones/confirmar_cita", "/conexiones/requisitos", "/conexiones/produccion"]) {
       expect(
         puedeVerRuta(ruta, { permisos: { connections: "read" }, esMaster: false, negocioId: "t" }),
         ruta,

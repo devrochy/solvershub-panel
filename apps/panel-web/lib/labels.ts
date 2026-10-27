@@ -261,3 +261,15 @@ export function estadoPasoLabel(estado: string | null | undefined): string {
 export function habilidadLabel(id: string): string {
   return PACK[id] ?? capitalizar(id.replace(/^pack_/, ""));
 }
+
+/** Estado de una plantilla con opciones (SPEC-40, HU-OPC-06). */
+export const ESTADO_PLANTILLA_OPCIONES: Record<string, string> = {
+  draft: "Borrador",
+  published: "Activa",
+  retired: "Retirada",
+};
+
+export function estadoPlantillaOpcionesLabel(estado: string | null | undefined): string {
+  if (!estado) return "Sin estado";
+  return ESTADO_PLANTILLA_OPCIONES[estado] ?? capitalizar(estado);
+}
