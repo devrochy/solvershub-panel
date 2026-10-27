@@ -9,6 +9,8 @@
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
+//   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
+//   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
 //   AGENT_CORE_API_URL=http://localhost:8765 npm run start -- -p 3293
@@ -42,9 +44,38 @@ if (process.env.SOLO_LECTURA === "1") {
 // SIN_CONEXIONES=1: sin conexiones de Meta (el diálogo de publicar en Meta explica cómo conectar WhatsApp).
 if (process.env.SIN_CONEXIONES === "1") respuestas["/admin/meta/health"] = { connections: [] };
 
+// MASTER=1: el admin de plataforma, en un negocio con id uuid (el BFF de plataforma lo exige) y con la lista de
+// negocios de Tenants. La bandera de plantillas con opciones por negocio vive en memoria (PUT idempotente).
+const NEGOCIO_MASTER = "0b6f6d3e-6a43-4c39-9a52-4b6c1c1e2f10";
+const banderasPlataforma = new Map();
+if (process.env.MASTER === "1") {
+  respuestas["/admin/me"] = { ...me, role: "master", permissions: { ...me.permissions, tenants: "write" }, tenant: { ...me.tenant, id: NEGOCIO_MASTER, name: "Café Aurora", role: "owner" } };
+  const fila = (id, name, slug) => ({ id, name, slug, status: "active", created_at: "2026-10-01T10:00:00Z", plan_name: "Básico", plan_status: "active", operational: true });
+  respuestas["/admin/platform/tenants"] = {
+    items: [fila(NEGOCIO_MASTER, "Café Aurora", "cafe-aurora"), fila("9d1e1a5b-7c1f-4a51-8f0e-2b7d6f1e3c02", "Ferretería Central", "ferreteria-central")],
+    page: 1,
+    has_more: false,
+    total: 2,
+  };
+}
+const ALIADOS = { habilitado: false };
+function plataforma(metodo, ruta, cuerpo) {
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|agent-os|aliados)$/.exec(ruta);
+  if (!m) return undefined;
+  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, m[2] === "aliados" ? ALIADOS : { runtime: "legacy", procedures: false, routing: "off", aos_connection_routing: true, ultimo_cambio: null }] : [200, { ok: true }];
+  const falla = process.env.PLATAFORMA;
+  if (falla === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
+  if (falla === "404") return [404, { error: { code: "not_found", message: "El negocio no existe." } }];
+  if (falla === "corte") return [502, { error: { message: "Bad gateway" } }];
+  if (falla === "corte-al-guardar" && metodo === "PUT") return [502, { error: { message: "Bad gateway" } }];
+  if (metodo === "PUT") banderasPlataforma.set(m[1], cuerpo.habilitada === true);
+  return [200, { habilitada: banderasPlataforma.get(m[1]) ?? false }];
+}
+
 // Plantillas con opciones (SPEC-40, HU-OPC-06), con estado en memoria y un lint mínimo con las reglas
 // del backend para ver los hallazgos junto a su campo. OPCIONES_BANDERA=0 apaga la función (404 por negocio).
-const bandera = process.env.OPCIONES_BANDERA !== "0";
+// Con MASTER=1 la bandera es la del negocio activo, la que mueve el interruptor de Tenants (apagada al inicio).
+const bandera = () => (process.env.MASTER === "1" ? banderasPlataforma.get(NEGOCIO_MASTER) === true : process.env.OPCIONES_BANDERA !== "0");
 const plantillasOpciones = new Map([
   ["confirmar_cita", structuredClone(plantillaDeOpciones)],
   ...listaDeOpciones.plantillas
@@ -145,7 +176,7 @@ const resumenOpciones = (p) => ({
 });
 const errorOpciones = (status, code, message, details) => [status, { error: { code, message, ...(details ? { details } : {}) } }];
 function opciones(metodo, partes, cuerpo) {
-  if (!bandera) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
+  if (!bandera()) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
   const [primero, segundo] = partes;
   if (!primero) {
     if (metodo === "GET") return [200, { plantillas: [...plantillasOpciones.values()].map(resumenOpciones) }];
@@ -197,7 +228,7 @@ function opciones(metodo, partes, cuerpo) {
     return [201, { clave: p.clave, version_n: p.version_vigente, definition_hash: "c".repeat(64), publicada_en: ahora, message_template_id: null, meta: null, hallazgos }];
   }
   if (segundo === "versiones" && partes[3] === "publicar-en-meta" && metodo === "POST") {
-    if (!bandera) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
+    if (!bandera()) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
     return publicarEnMeta(p, Number(partes[2]), cuerpo);
   }
   if (segundo === "retirar") {
@@ -242,6 +273,16 @@ createServer(async (req, res) => {
     res.statusCode = estado;
     res.end(cuerpo === null ? undefined : JSON.stringify(cuerpo));
     return;
+  }
+  if (ruta.includes("/platform/tenants/")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = plataforma(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
+      return;
+    }
   }
   const cuerpo =
     req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];

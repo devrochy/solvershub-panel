@@ -78,11 +78,12 @@ export function OpcionesDirectasSection({
   }, [url]);
 
   const listo = habilitada !== null;
+  const resuelto = listo || falla !== null;
   useEffect(() => {
-    if (!enfocar || !listo) return;
+    if (!enfocar || !resuelto) return;
     seccion.current?.scrollIntoView?.({ block: "center" });
     interruptor.current?.querySelector<HTMLElement>("[role=switch]")?.focus();
-  }, [enfocar, listo]);
+  }, [enfocar, resuelto]);
 
   async function cambiar(objetivo: boolean) {
     // El diálogo se espera antes de `pending`: sin esta guarda, dos clics seguidos abrirían dos.

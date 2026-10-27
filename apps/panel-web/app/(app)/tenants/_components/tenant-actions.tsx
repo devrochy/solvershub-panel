@@ -127,10 +127,6 @@ export function TenantActions({
 
           <Separator />
 
-          <AgentOSSection tenantId={tenant.id} />
-
-          <Separator />
-
           {esMaster && (
             <>
               <OpcionesDirectasSection
@@ -142,6 +138,10 @@ export function TenantActions({
               <Separator />
             </>
           )}
+
+          <AgentOSSection tenantId={tenant.id} />
+
+          <Separator />
 
           <AliadosSection tenantId={tenant.id} />
 
