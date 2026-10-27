@@ -84,9 +84,9 @@ export function copiaDelPaso(paso: PasoPrimerosPasos): CopiaDePaso {
       if (paso.motivo === "sin_habilidad" || !paso.tipo) {
         return {
           titulo: "Carga tu catálogo o tus servicios",
-          descripcion: "Activa la habilidad de ventas o de agenda para cargar lo que ofreces.",
-          accion: "Ver habilidades",
-          href: "/habilidades",
+          descripcion: "Crea tu primer agente: al elegir su tipo activamos lo necesario para cargar lo que ofreces.",
+          accion: "Crear mi agente",
+          href: "/agentes/nuevo",
         };
       }
       const contenido = CONTENIDO[paso.tipo];

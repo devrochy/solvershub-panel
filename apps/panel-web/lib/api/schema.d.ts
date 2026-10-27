@@ -16108,6 +16108,8 @@ export interface components {
             available: boolean;
             /** Missing Skills */
             missing_skills: string[];
+            /** Will Enable */
+            will_enable: string[];
             /** Superpowers */
             superpowers: components["schemas"]["Superpower"][];
             /** Requirements */
@@ -16150,6 +16152,8 @@ export interface components {
             draft: components["schemas"]["AgentDraft"];
             /** Warnings */
             warnings: string[];
+            /** Enabled Skills */
+            enabled_skills: string[];
         };
         /** GateBandera */
         GateBandera: {
@@ -16513,6 +16517,8 @@ export interface components {
             draft: components["schemas"]["AgentDraft"];
             /** Warnings */
             warnings: string[];
+            /** Enabled Skills */
+            enabled_skills: string[];
             /** Requirements */
             requirements: components["schemas"]["Requirement"][];
         };
