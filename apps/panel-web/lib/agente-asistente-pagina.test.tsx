@@ -53,6 +53,7 @@ const PLANTILLAS: AgentTemplatePage = {
   page: 1,
   page_size: 100,
   pages: 1,
+  has_more: false,
 } as AgentTemplatePage;
 
 beforeAll(() => {

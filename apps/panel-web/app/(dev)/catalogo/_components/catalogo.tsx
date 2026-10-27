@@ -5,6 +5,7 @@ import { Bell, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { BarChart, LineChart, ProgressRing, Sparkline, resumenSerie, type ChartDatum, type ChartSeries } from "@/components/dataviz";
 import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -35,6 +36,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Stepper } from "@/components/ui/stepper";
+import type { Requirement } from "@/lib/api/types";
+import { textoDeAvance } from "@/lib/agente-asistente";
 import { toast } from "@/lib/toast-store";
 
 type Fila = { id: string; cliente: string; estado: "al_dia" | "mora"; saldo: string };
@@ -44,6 +47,10 @@ const FILAS: Fila[] = [
   { id: "2", cliente: "Luis Prueba", estado: "mora", saldo: "$ 480.500" },
   { id: "3", cliente: "Marta Prueba", estado: "al_dia", saldo: "$ 75.000" },
 ];
+
+const REQUISITOS_EJEMPLO = [
+  { skill: "pack_commerce", kind: "sin_contenido", content: "catalogo", title: "Catálogo", explanation: "" },
+] as unknown as Requirement[];
 
 const COLUMNAS: Column<Fila>[] = [
   { key: "cliente", header: "Cliente", cell: (f) => f.cliente },
@@ -134,6 +141,7 @@ const NOTIFICACIONES_DE_MUESTRA: NotificacionItem[] = [
 export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
+  const [vende, setVende] = useState("productos");
   const [busqueda, setBusqueda] = useState("");
   const [pestana, setPestana] = useState("identidad");
   const [canales, setCanales] = useState<string[]>(CANALES.map((c) => c.key));
@@ -341,6 +349,46 @@ export function Catalogo() {
           />
         </div>
         <Dropzone accept={["image/png", "image/jpeg"]} maxBytes={5 * 1024 * 1024} hint="PNG o JPG de hasta 5 MB." onFiles={() => {}} />
+      </Seccion>
+
+      <Seccion
+        titulo="Asistente de creación de agentes"
+        nota="Un paso por pantalla, hasta 10 (SPEC-39): «Paso X de N», una pregunta con opciones, resumen antes de crear y aviso de lo que falta configurar."
+      >
+        <div className="flex max-w-2xl flex-col gap-4 rounded-lg border border-border-soft bg-surface p-5">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-text-soft">{textoDeAvance(1, 7)}</p>
+            <Progress value={2} max={7} label="Avance del asistente" valueText={textoDeAvance(1, 7)} size="sm" />
+          </div>
+          <h3 className="text-lg font-semibold text-headline">¿Qué vendes?</h3>
+          <RadioGroup
+            label="Qué vende tu negocio"
+            name="cat-asistente-vende"
+            value={vende}
+            onValueChange={setVende}
+            options={[
+              { value: "productos", label: "Productos", description: "Tomas pedidos de tu catálogo." },
+              { value: "planes", label: "Planes o suscripciones", description: "Vendes planes que se contratan y se renuevan." },
+              { value: "ambos", label: "Ambos", description: "Productos y planes en el mismo negocio." },
+            ]}
+          />
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt className="text-text-soft">Tipo</dt>
+            <dd className="text-headline">Ventas</dd>
+            <dt className="text-text-soft">¿Qué vendes?</dt>
+            <dd className="text-headline">Productos</dd>
+            <dt className="text-text-soft">Nombre</dt>
+            <dd className="text-headline">Ventas</dd>
+          </dl>
+          <AvisoDeRequisitos
+            requisitos={REQUISITOS_EJEMPLO}
+            titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"
+          />
+          <div className="flex gap-3">
+            <Button variant="outline">Atrás</Button>
+            <Button variant="accent">Crear mi agente</Button>
+          </div>
+        </div>
       </Seccion>
 
       <Seccion titulo="Tabla" nota="Densidad compacta, encabezado fijo con scroll propio, carga, vacío y error.">
