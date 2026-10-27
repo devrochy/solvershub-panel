@@ -5188,6 +5188,9 @@ export interface paths {
          * Oauth Start
          * @description Inicia el OAuth2 de Google (302 a accounts.google.com).
          *
+         *     Con `connection_id` se reconecta esa cuenta (HU-CAL-08): se sugiere su correo a Google y
+         *     el callback verifica que sea la misma cuenta antes de guardar.
+         *
          *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
          *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
          *     entra por la ruta BFF del panel (D-SPEC-24-11, ADR-0093).
@@ -7083,6 +7086,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/calendar/calendars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calendars
+         * @description Agendas del negocio con el nombre que el asistente le dice al cliente.
+         */
+        get: operations["list_calendars_api_v1_pack_calendar_calendars_get"];
+        put?: never;
+        /**
+         * Create Calendar
+         * @description Crea una agenda interna (sin cuenta de Google). Las de Google nacen al conectar la cuenta.
+         */
+        post: operations["create_calendar_api_v1_pack_calendar_calendars_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Calendar
+         * @description Edita una agenda: nombre visible, descripción, alias, color, horario, zona, orden y estado.
+         */
+        put: operations["update_calendar_api_v1_pack_calendar_calendars__calendar_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Calendar
+         * @description Elimina (suave) una agenda. No borra la cuenta de Google: eso va en Conexiones.
+         *
+         *     La principal no se elimina. Si tiene citas futuras, hay que pasar `move_to` (otra agenda)
+         *     para moverlas; si no, 409.
+         */
+        post: operations["delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -7404,6 +7474,8 @@ export interface components {
             appointment_type_id?: string | null;
             /** Customer Id */
             customer_id?: string | null;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** AppointmentOut */
         AppointmentOut: {
@@ -7443,6 +7515,8 @@ export interface components {
             customer_id?: string | null;
             /** Asignado Admin Id */
             asignado_admin_id?: string | null;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** AppointmentPatch */
         AppointmentPatch: {
@@ -7630,6 +7704,8 @@ export interface components {
              * @default
              */
             reason: string;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** BlockOut */
         BlockOut: {
@@ -7650,6 +7726,8 @@ export interface components {
             end_at: string;
             /** Reason */
             reason: string;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** BlockPatch */
         BlockPatch: {
@@ -7765,6 +7843,21 @@ export interface components {
             timezone: string;
             /** Default Duration Minutes */
             default_duration_minutes: number;
+            /**
+             * Calendars
+             * @default []
+             */
+            calendars: components["schemas"]["CalendarSummary"][];
+            /**
+             * Multi Activo
+             * @default false
+             */
+            multi_activo: boolean;
+            /**
+             * Multi Agenda Modo
+             * @default cliente_elige
+             */
+            multi_agenda_modo: string;
         };
         /** Call */
         Call: {
@@ -17634,6 +17727,150 @@ export interface components {
         UnreadCount: {
             /** Unread Count */
             unread_count: number;
+        };
+        /** CalendarDelete */
+        CalendarDelete: {
+            /** Move To */
+            move_to?: string | null;
+        };
+        /** CalendarIn */
+        CalendarIn: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Aliases
+             * @default []
+             */
+            aliases: string[];
+            /** Color */
+            color?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+        };
+        /** CalendarListOut */
+        CalendarListOut: {
+            /** Calendars */
+            calendars: components["schemas"]["CalendarOut"][];
+            /** Multi Activo */
+            multi_activo: boolean;
+            /** Multi Agenda Modo */
+            multi_agenda_modo: string;
+        };
+        /** CalendarOut */
+        CalendarOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Aliases */
+            aliases: string[];
+            /** Color */
+            color: string;
+            /** Timezone */
+            timezone: string;
+            /** Own Timezone */
+            own_timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /** Is Default */
+            is_default: boolean;
+            /** Active */
+            active: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Source */
+            source: string;
+            /** Connection Id */
+            connection_id?: string | null;
+            /**
+             * Connected
+             * @default true
+             */
+            connected: boolean;
+            /**
+             * Account Email
+             * @default
+             */
+            account_email: string;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+        };
+        /** CalendarPatch */
+        CalendarPatch: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Aliases */
+            aliases?: string[] | null;
+            /** Color */
+            color?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /**
+             * Inherit Timezone
+             * @default false
+             */
+            inherit_timezone: boolean;
+            /**
+             * Inherit Business Hours
+             * @default false
+             */
+            inherit_business_hours: boolean;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+            /**
+             * Clear Responsable
+             * @default false
+             */
+            clear_responsable: boolean;
+            /** Active */
+            active?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+            /** Is Default */
+            is_default?: boolean | null;
+        };
+        /** CalendarSummary */
+        CalendarSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Active */
+            active: boolean;
+            /** Source */
+            source: string;
+            /** Connected */
+            connected: boolean;
+            /**
+             * Account Email
+             * @default
+             */
+            account_email: string;
         };
     };
     responses: never;
@@ -28291,6 +28528,8 @@ export interface operations {
             query?: {
                 start?: string | null;
                 end?: string | null;
+                /** @description IDs de agenda separados por coma */
+                calendar_ids?: string | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -28396,6 +28635,7 @@ export interface operations {
         parameters: {
             query?: {
                 next?: string;
+                connection_id?: string | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -32144,6 +32384,144 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotificationPreferences"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calendars_api_v1_pack_calendar_calendars_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_calendar_api_v1_pack_calendar_calendars_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_calendar_api_v1_pack_calendar_calendars__calendar_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CalendarDelete"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

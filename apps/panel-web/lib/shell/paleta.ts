@@ -154,7 +154,7 @@ export function rutaDeResultado(item: ItemBusqueda): string | null {
     case "pedido":
       return "/comercio/pedidos";
     case "cita":
-      return "/calendario/citas";
+      return "/calendario";
     default:
       return null;
   }

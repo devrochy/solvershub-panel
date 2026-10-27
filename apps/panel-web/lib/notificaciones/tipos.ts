@@ -107,7 +107,7 @@ export function candidatasDeDestino(destino: NotificacionDestino): { href: strin
     case "cobro":
       return [ruta("/suscripciones/pagos")];
     case "cita":
-      return [ruta("/calendario/citas")];
+      return [ruta("/calendario")];
     case "conexion":
       return [ruta("/conexiones")];
     case "mensaje_fallido":

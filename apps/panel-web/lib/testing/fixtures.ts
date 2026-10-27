@@ -4,6 +4,7 @@
  * del OpenAPI: si el contrato cambia, el typecheck obliga a actualizarlas.
  */
 import type {
+  AgendaCalendario,
   AgentConversationPage,
   AgentSummary,
   Graph,
@@ -361,6 +362,19 @@ export const conexiones: ConnectionsResponse = {
       created_at: "2026-10-01T12:00:00Z",
       coexistence: false,
     },
+    {
+      id: "11111111-1111-4111-8111-111111111111",
+      kind: "channel",
+      type_id: "google_calendar",
+      origin: "oauth",
+      channel: "",
+      label: "Google Calendar",
+      external_id: "ana@clinica.co",
+      active: true,
+      is_primary: false,
+      created_at: "2026-10-02T12:00:00Z",
+      coexistence: false,
+    },
   ],
   webhook_url: "https://api.test.example/webhook/meta",
 };
@@ -622,7 +636,98 @@ export const estadoCalendario = {
   connection_label: "",
   timezone: "America/Bogota",
   default_duration_minutes: 60,
+  calendars: [],
+  multi_activo: false,
+  multi_agenda_modo: "cliente_elige",
 };
+
+/** Agendas del negocio (HU-CAL-08): una sola (el caso de siempre) o dos (el cliente elige). */
+export const agendaPrincipal: AgendaCalendario = {
+  id: "ag-1",
+  name: "Agenda principal",
+  description: "",
+  aliases: [],
+  color: "cat-1",
+  timezone: "America/Bogota",
+  own_timezone: null,
+  business_hours: null,
+  is_default: true,
+  active: true,
+  sort_order: 0,
+  source: "interno",
+  connection_id: null,
+  connected: true,
+  account_email: "",
+  responsable_admin_id: null,
+};
+
+export const agendaDeGoogle = {
+  ...agendaPrincipal,
+  id: "ag-2",
+  name: "Dra. Ana",
+  description: "Pediatría",
+  aliases: ["doctora"],
+  color: "cat-2",
+  is_default: false,
+  sort_order: 1,
+  source: "google",
+  connection_id: "11111111-1111-4111-8111-111111111111",
+  account_email: "ana@clinica.co",
+};
+
+export const unaAgenda = { calendars: [agendaPrincipal], multi_activo: false, multi_agenda_modo: "cliente_elige" };
+export const dosAgendas = { calendars: [agendaPrincipal, agendaDeGoogle], multi_activo: true, multi_agenda_modo: "cliente_elige" };
+
+/** `/events` de la semana en curso: dos citas (una por agenda) y un bloqueo; sirve al backend de prueba. */
+export function eventosAgenda(hoy = new Date()) {
+  const dia = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate()));
+  const a = (h: number, min = 0) => new Date(dia.getTime() + (h * 60 + min) * 60_000).toISOString();
+  const cita = (id: string, title: string, desde: string, hasta: string, cal: AgendaCalendario, tipo: (typeof tiposDeCita)[number]) => ({
+    id,
+    title,
+    start: desde,
+    end: hasta,
+    kind: "appointment",
+    status: "scheduled",
+    source: "local",
+    color: "#198754",
+    can_cancel: true,
+    attendee_email: "cliente@ejemplo.co",
+    notes: "",
+    appointment_type_id: tipo.id,
+    tipo_color: tipo.color,
+    tipo_codigo: tipo.codigo,
+    calendar_id: cal.id,
+    calendar_color: cal.color,
+  });
+  return {
+    events: [
+      cita("appt-1", "Laura Gómez", a(15), a(15, 30), agendaPrincipal, tiposDeCita[0]),
+      cita("appt-2", "Pedro Ruiz", a(16), a(16, 20), agendaDeGoogle, tiposDeCita[1]),
+      {
+        ...cita("block-1", "Almuerzo", a(17), a(18), agendaPrincipal, tiposDeCita[0]),
+        kind: "block",
+        status: "blocked",
+        appointment_type_id: "",
+        tipo_color: "",
+        tipo_codigo: "",
+      },
+    ],
+    tipos: tiposDeCita.map((t) => ({ id: t.id, name: t.name, color: t.color, codigo: t.codigo })),
+    calendars: [agendaPrincipal, agendaDeGoogle].map((c) => ({
+      id: c.id,
+      name: c.name,
+      color: c.color,
+      is_default: c.is_default,
+      active: true,
+      disponible: true,
+    })),
+    multi_activo: true,
+    timezone: "America/Bogota",
+  };
+}
+
+export const configCalendario = { plugin_id: "pack_calendar", values: { business_hours: "mon-fri:09:00-18:00", multi_agenda_modo: "cliente_elige" } };
 
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
 // ---------------------------------------------------------------- suscripciones (SPEC-35)
@@ -835,6 +940,9 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,
+  "/pack/calendar/calendars": unaAgenda,
+  "/pack/calendar/events": { ...eventosAgenda(), calendars: [], multi_activo: false },
+  "/admin/plugins/pack_calendar/config": configCalendario,
   "/pack/pack_subscriptions/suscripciones": suscripciones,
   "/pack/pack_subscriptions/suscripciones/test-sub-1": suscripcionDetalle,
   "/pack/pack_subscriptions/cargos": cargosSuscripcion,

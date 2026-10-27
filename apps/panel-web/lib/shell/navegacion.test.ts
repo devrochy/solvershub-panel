@@ -29,9 +29,9 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/cobranza/dispositivos", "pack_cobranza:dispositivos", false], ["/comercio", "pack_commerce", false],
   ["/comercio/productos", "pack_commerce", false], ["/comercio/categorias", "pack_commerce", false],
   ["/comercio/promociones", "pack_commerce", false], ["/comercio/pedidos", "pack_commerce", false],
-  ["/calendario", "pack_calendar:conexion", false], ["/calendario/horario", "pack_calendar:configuracion", false],
-  ["/calendario/tipos", "pack_calendar:tipos", false], ["/calendario/bloqueos", "pack_calendar:bloqueos", false],
-  ["/calendario/citas", "pack_calendar:citas", false], ["/asistente", "connections", false],
+  // HU-CAL-08: Agenda es una sola vista; las rutas viejas (`/calendario/citas|tipos|horario|bloqueos`)
+  // redirigen a ella y ya no son ítems del menú.
+  ["/calendario", "pack_calendar:citas", false], ["/asistente", "connections", false],
   ["/dlq", "settings", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
   ["/plataforma/meta/embedded-signup", "tenants", false], ["/tenants/alta-automatica", "tenants", true],
   ["/pruebas", "qa", false],
@@ -140,14 +140,12 @@ describe("navegación del shell (HU-DS-04)", () => {
       { label: "Cartera Norte" },
     ]);
     // En la portada de la entrada, la entrada no se enlaza a sí misma.
-    expect(migasPara("/calendario/citas", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }, { label: "Calendario" }]);
+    expect(migasPara("/calendario", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }]);
     expect(migasPara("/dashboard", grupos)).toEqual([{ label: "Operación" }, { label: "Resumen" }]);
   });
 
   it("pestañas: las de la entrada y, con subgrupos, las del subgrupo actual", () => {
-    expect(pestanasPara("/calendario/tipos", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
+    expect(pestanasPara("/calendario", grupos).pestanas).toEqual([]);
     const cobranza = pestanasPara("/cobranza/reglas", grupos);
     expect(cobranza.subgrupos).toEqual([
       { href: "/cobranza", label: "Operación" },
@@ -160,37 +158,20 @@ describe("navegación del shell (HU-DS-04)", () => {
   });
 
   it("las pestañas respetan los permisos", () => {
-    const parcial = gruposVisibles({ "pack_calendar:citas": "read", "pack_calendar:tipos": "read" });
-    expect(pestanasPara("/calendario/citas", parcial).pestanas.map((p) => p.label)).toEqual(["Calendario", "Tipos de cita"]);
-    const una = gruposVisibles({ "pack_calendar:citas": "read" });
-    expect(pestanasPara("/calendario/citas", una).pestanas).toEqual([]);
+    const parcial = gruposVisibles({ "pack_commerce": "read" });
+    expect(pestanasPara("/comercio", parcial).pestanas.length).toBeGreaterThan(0);
+    const sin = gruposVisibles({});
+    expect(pestanasPara("/comercio", sin).pestanas).toEqual([]);
   });
 });
 
-describe("Agenda unificada (HU-UX-08)", () => {
-  const AGENDA: [string, string][] = [
-    ["/calendario/citas", "pack_calendar:citas"],
-    ["/calendario/tipos", "pack_calendar:tipos"],
-    ["/calendario/horario", "pack_calendar:configuracion"],
-    ["/calendario/bloqueos", "pack_calendar:bloqueos"],
-    ["/calendario", "pack_calendar:conexion"],
-  ];
-
-  it("Agenda abre en el Calendario y Bloqueos ya no es pestaña", () => {
+describe("Agenda en una sola vista (HU-CAL-08)", () => {
+  it("Agenda es un solo ítem que abre en /calendario y se ve con el permiso de citas", () => {
     const agenda = grupos.flatMap((g) => g.visible).find((i) => i.label === "Agenda")!;
-    expect(agenda.href).toBe("/calendario/citas");
-    expect(pestanasPara("/calendario/citas", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
-  });
-
-  it("cada ruta de la agenda sigue protegida por su propia clave", () => {
-    for (const [ruta, clave] of AGENDA) {
-      const todas = Object.fromEntries(AGENDA.map(([, c]) => [c, "read"]));
-      expect(puedeVerRuta(ruta, { permisos: todas, esMaster: false, negocioId: "t" })).toBe(true);
-      const sinClave = { ...todas, [clave]: null };
-      expect(puedeVerRuta(ruta, { permisos: sinClave, esMaster: false, negocioId: "t" }), ruta).toBe(false);
-    }
+    expect(agenda.href).toBe("/calendario");
+    expect(agenda.tabs).toBeUndefined();
+    expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
+    expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": null }, esMaster: false, negocioId: "t" })).toBe(false);
   });
 
   it("en /comercio/aliados (oculta, HU-CRM-03) se ven las pestañas de Ventas sin «Aliados»", () => {
@@ -201,17 +182,6 @@ describe("Agenda unificada (HU-UX-08)", () => {
       { label: "Negocio" },
       { label: "Ventas", href: "/comercio" },
       { label: "Aliados" },
-    ]);
-  });
-
-  it("en /calendario/bloqueos se ven las pestañas de Agenda y las migas la ubican", () => {
-    expect(pestanasPara("/calendario/bloqueos", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
-    expect(migasPara("/calendario/bloqueos", grupos)).toEqual([
-      { label: "Negocio" },
-      { label: "Agenda", href: "/calendario/citas" },
-      { label: "Bloqueos" },
     ]);
   });
 });

@@ -17,12 +17,18 @@
 
 import { createServer } from "node:http";
 
-const { RESPUESTAS, ajustes } = await import("../lib/testing/fixtures.ts");
+const { RESPUESTAS, ajustes, dosAgendas, eventosAgenda } = await import("../lib/testing/fixtures.ts");
 
 const puerto = Number(process.env.PUERTO ?? 8765);
 const respuestas = { ...RESPUESTAS };
 if (process.env.BOT_PAUSADO === "1") {
   respuestas["/admin/settings"] = { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } };
+}
+
+// AGENDAS=2: el negocio tiene dos agendas (HU-CAL-08) y el calendario trae una cita de cada una.
+if (process.env.AGENDAS === "2") {
+  respuestas["/pack/calendar/calendars"] = dosAgendas;
+  respuestas["/pack/calendar/events"] = eventosAgenda();
 }
 
 // Búsqueda global de la paleta (HU-DS-05): filtra unos registros fijos por `q`.

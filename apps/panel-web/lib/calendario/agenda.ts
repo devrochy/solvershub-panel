@@ -67,7 +67,38 @@ export type EventoAgenda = {
   appointment_type_id: string;
   tipo_color?: string;
   tipo_codigo?: string;
+  /** Agenda de la cita (HU-CAL-08); vacío en negocios sin agendas. */
+  calendar_id?: string;
+  calendar_color?: string;
 };
+
+/** Agenda tal como llega en la leyenda de `/events` (HU-CAL-08). */
+export type LeyendaAgenda = {
+  id: string;
+  name: string;
+  color: string;
+  is_default?: boolean;
+  active?: boolean;
+  disponible?: boolean;
+};
+
+/** Con 4 colores, desde la 5.ª agenda se repiten: la inicial del nombre las distingue. */
+export function inicialDeAgenda(nombre: string): string {
+  return Array.from(nombre.trim().normalize("NFD").replace(/\p{M}/gu, "")).find((c) => /[\p{L}\p{N}]/u.test(c))?.toUpperCase() ?? "?";
+}
+
+/**
+ * Agendas visibles: las guardadas por el usuario que todavía existen; sin guardado (o si ya
+ * no queda ninguna) se ven todas. Una agenda nueva que el usuario no conocía se muestra.
+ */
+export function agendasVisibles(guardadas: string[] | null, todas: string[]): string[] {
+  if (!guardadas) return todas;
+  const conocidas = guardadas.filter((id) => todas.includes(id));
+  return conocidas.length ? conocidas : todas;
+}
+
+/** Cómo se colorea la grilla: por agenda si se ven varias, por tipo de cita si se ve una. */
+export type ColorPor = "tipo" | "agenda";
 
 /**
  * Evento para FullCalendar. Las citas llevan la clase de su tipo (`evt-cat-N`, sin tipo
@@ -75,12 +106,12 @@ export type EventoAgenda = {
  * bloqueos son eventos normales (los de `display: "background"` no se pueden arrastrar)
  * con la clase `evt-bloqueo`, que los pinta como fondo rayado de toda la columna.
  */
-export function aEventoDeGrilla(e: EventoAgenda): EventInput {
+export function aEventoDeGrilla(e: EventoAgenda, colorPor: ColorPor = "tipo"): EventInput {
   const base = { id: e.id, start: e.start, end: e.end, extendedProps: e };
   if (e.kind === "block") {
     return { ...base, title: e.title || "Bloqueo", classNames: ["evt-bloqueo"], display: "block" };
   }
-  const serie = serieDeColor(e.tipo_color);
+  const serie = serieDeColor(colorPor === "agenda" ? e.calendar_color : e.tipo_color);
   const clases = [serie ? `evt-cat-${serie}` : "evt-sin-tipo"];
   if (e.status === "cancelled") clases.push("evt-cancelada");
   const titulo = e.title || "Cita";
@@ -107,3 +138,13 @@ export function borradorDeSeleccion(sel: { startStr: string; endStr: string; all
 
 /** Qué se crea desde un hueco del calendario. */
 export type QueCrear = "cita" | "bloqueo";
+
+/** «a, b ,, c» → ["a","b","c"] (sin repetidos, como los guarda el backend). */
+export function aliasesDeTexto(texto: string): string[] {
+  const vistos = new Set<string>();
+  for (const parte of texto.split(",")) {
+    const alias = parte.trim();
+    if (alias) vistos.add(alias);
+  }
+  return Array.from(vistos);
+}

@@ -137,17 +137,17 @@ describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
   const TODO = { ...me.permissions };
 
   it("en una pestaña: migas grupo › entrada › pestaña y pestañas con la actual marcada", () => {
-    ruta = "/calendario/tipos";
+    ruta = "/cobranza/carteras";
     render(
       <ShellProvider permisos={TODO}>
-        <PageHeader title="Tipos de cita" />
+        <PageHeader title="Carteras" />
       </ShellProvider>,
     );
     const migas = screen.getByRole("navigation", { name: "Migas de pan" });
-    expect(within(migas).getByText("Tipos de cita").getAttribute("aria-current")).toBe("page");
-    expect(within(migas).getAllByRole("link", { name: "Agenda" })[0].getAttribute("href")).toBe("/calendario/citas");
+    expect(within(migas).getByText("Carteras").getAttribute("aria-current")).toBe("page");
+    expect(within(migas).getAllByRole("link", { name: "Cobranza" })[0].getAttribute("href")).toBe("/cobranza");
     const pestanas = screen.getByRole("navigation", { name: "Secciones" });
-    expect(within(pestanas).getByRole("link", { name: "Tipos de cita" }).getAttribute("aria-current")).toBe("page");
+    expect(within(pestanas).getByRole("link", { name: "Carteras" }).getAttribute("aria-current")).toBe("page");
     expect(within(pestanas).getAllByRole("link").length).toBeGreaterThan(1);
   });
 
@@ -164,8 +164,8 @@ describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
   });
 
   it("sin shell (catálogo, tests) no inventa migas ni pestañas", () => {
-    ruta = "/calendario/tipos";
-    render(<PageHeader title="Tipos de cita" />);
+    ruta = "/cobranza/carteras";
+    render(<PageHeader title="Carteras" />);
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 });

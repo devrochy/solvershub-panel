@@ -28,16 +28,12 @@ import {
   BarChart3,
   BellRing,
   Bot,
-  CalendarX,
-  Clock,
   Handshake,
-  Link2,
   Package,
   Receipt,
   Repeat,
   Scale,
   ScrollText,
-  Shapes,
   Smartphone,
   Tags,
   Wallet,
@@ -136,22 +132,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
     id: "negocio",
     label: "Negocio",
     items: [
-      entrada(
-        "Agenda",
-        CalendarDays,
-        [
-          { section: "pack_calendar:citas", label: "Calendario", href: "/calendario/citas", icon: CalendarDays, ready: true },
-          { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: Shapes, ready: true },
-          // Misma clave que el backend (`pack_calendar:configuracion`, «Horarios y calendario»).
-          { section: "pack_calendar:configuracion", label: "Horario", href: "/calendario/horario", icon: Clock, ready: true },
-          // Google Calendar pasa a la ficha de su conexión con HU-UX-09; hasta entonces queda aquí.
-          { section: "pack_calendar:conexion", label: "Google Calendar", href: "/calendario", icon: Link2, ready: true },
-          // HU-UX-08: los bloqueos se crean y se arrastran en el Calendario. Va al final para
-          // que la entrada nunca abra en ella si el usuario ve el Calendario.
-          { section: "pack_calendar:bloqueos", label: "Bloqueos", href: "/calendario/bloqueos", icon: CalendarX, ready: true, oculta: true },
-        ],
-        { pack: "pack_calendar" },
-      ),
+      // HU-CAL-08: Agenda es una sola vista; tipos, horario, agendas y Google se abren en su cajón
+      // de ajustes y la cuenta de Google vive en la ficha de su conexión.
+      { section: "pack_calendar:citas", label: "Agenda", href: "/calendario", icon: CalendarDays, ready: true, pack: "pack_calendar" },
       entrada(
         "Ventas",
         ShoppingCart,
