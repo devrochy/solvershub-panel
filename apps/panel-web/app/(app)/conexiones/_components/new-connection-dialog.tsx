@@ -79,6 +79,10 @@ export function NewConnectionDialog() {
       return;
     }
     setOpen(false);
+    if (destino.tipo === "externo") {
+      window.location.assign(destino.href);
+      return;
+    }
     router.push(destino.href);
   }
 

@@ -102,7 +102,7 @@ export type GestionConexion =
   | { tipo: "editar" };
 
 export function gestionDeConexion(
-  c: Pick<ConexionConsola, "meta_connection_id" | "type_id">,
+  c: Pick<ConexionConsola, "id" | "meta_connection_id" | "type_id">,
 ): GestionConexion | null {
   // Las Páginas de Messenger comparten la cuenta de Meta, pero su hub no es el de WhatsApp (números, plantillas).
   if (c.type_id === "messenger_meta") {
@@ -119,7 +119,8 @@ export function gestionDeConexion(
     return { tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" };
   }
   if (c.type_id === "google_calendar") {
-    return { tipo: "enlace", href: "/calendario", label: "Gestionar" };
+    // HU-CAL-08: la cuenta de Google tiene su propia ficha (antes era la pestaña de Agenda).
+    return { tipo: "enlace", href: `/conexiones/${c.id}`, label: "Gestionar" };
   }
   if (c.type_id === "webchat") {
     return { tipo: "enlace", href: "/configuracion", label: "Gestionar" };
@@ -144,7 +145,14 @@ export function metaTabs(connectionId: string): { href: string; label: string }[
 }
 
 /** Qué hace el alta al elegir una tarjeta del catálogo. */
-export type DestinoAlta = { tipo: "formulario" } | { tipo: "navegar"; href: string };
+export type DestinoAlta =
+  | { tipo: "formulario" }
+  | { tipo: "navegar"; href: string }
+  // Navegación dura (`<a>`/`location`): el inicio del OAuth no se pre-carga con el router (HU-CAL-07).
+  | { tipo: "externo"; href: string };
+
+/** Alta de una cuenta de Google Calendar: vuelve a la Agenda con sus agendas abiertas (HU-CAL-08). */
+export const ALTA_GOOGLE_CALENDAR = `/api/calendar/oauth?next=${encodeURIComponent("/calendario?ajustes=agendas")}`;
 
 export function destinoDeAlta(type: {
   id: string;
@@ -158,7 +166,7 @@ export function destinoDeAlta(type: {
   if (type.id === "whatsapp_meta") return { tipo: "navegar", href: "/conexiones/whatsapp" };
   if (type.id === "messenger_meta") return { tipo: "navegar", href: "/conexiones/messenger" };
   if (type.id === "instagram_meta") return { tipo: "navegar", href: "/conexiones/instagram" };
-  if (type.id === "google_calendar") return { tipo: "navegar", href: "/calendario" };
+  if (type.id === "google_calendar") return { tipo: "externo", href: ALTA_GOOGLE_CALENDAR };
   return null;
 }
 

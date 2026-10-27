@@ -124,7 +124,7 @@ describe("gestión y alta de conexiones", () => {
     ).toEqual({ tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" });
     expect(
       gestionDeConexion(conexion({ meta_connection_id: null, type_id: "google_calendar" })),
-    ).toEqual({ tipo: "enlace", href: "/calendario", label: "Gestionar" });
+    ).toEqual({ tipo: "enlace", href: "/conexiones/c1", label: "Gestionar" });
     expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: "webchat" }))).toEqual({
       tipo: "enlace",
       href: "/configuracion",
@@ -179,7 +179,10 @@ describe("gestión y alta de conexiones", () => {
     ).toEqual({ tipo: "formulario" });
     expect(
       destinoDeAlta({ id: "google_calendar", available: true, setup_kind: "wizard", has_schema: true }),
-    ).toEqual({ tipo: "navegar", href: "/calendario" });
+    ).toEqual({
+      tipo: "externo",
+      href: "/api/calendar/oauth?next=%2Fcalendario%3Fajustes%3Dagendas",
+    });
     expect(
       destinoDeAlta({ id: "instagram_meta", available: false, setup_kind: "wizard", has_schema: false }),
     ).toBeNull();
