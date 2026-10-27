@@ -14,8 +14,22 @@ function texto(t: Turno): string {
   return t.text ?? t.content ?? JSON.stringify(t);
 }
 
-/** Chat de prueba del asistente: mismo loop del runtime, sin canales. */
-export function ChatPrueba() {
+/**
+ * Chat de prueba del asistente: mismo loop del runtime, sin canales.
+ *
+ * Con `conexionId` la prueba corre por esa conexión (HU-AOS-57): así se prueba la versión activa del
+ * agente publicado ahí, como en el asistente de primer uso. `sugerencias` son frases para empezar con un
+ * toque y `alRecibirRespuesta` avisa cuando el agente contestó.
+ */
+export function ChatPrueba({
+  conexionId,
+  sugerencias,
+  alRecibirRespuesta,
+}: {
+  conexionId?: string;
+  sugerencias?: string[];
+  alRecibirRespuesta?: () => void;
+} = {}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [texto_, setTexto] = useState("");
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
@@ -24,21 +38,21 @@ export function ChatPrueba() {
   useEffect(() => {
     let activo = true;
     void (async () => {
-      const res = await fetch("/api/playground");
+      const res = await fetch(`/api/playground${conexionId ? `?connection_id=${conexionId}` : ""}`);
       const json = (await res.json().catch(() => ({}))) as { turns?: Turno[] };
       if (activo) setTurnos(json.turns ?? []);
     })();
     return () => {
       activo = false;
     };
-  }, []);
+  }, [conexionId]);
 
   useEffect(() => {
     fin.current?.scrollIntoView({ behavior: "smooth" });
   }, [turnos]);
 
-  async function enviar() {
-    const limpio = texto_.trim();
+  async function enviar(frase?: string) {
+    const limpio = (frase ?? texto_).trim();
     if (!limpio) return;
     setStatus({ loading: true });
     setTurnos((previos) => [...previos, { role: "user", text: limpio }]);
@@ -46,7 +60,7 @@ export function ChatPrueba() {
     const res = await fetch("/api/playground", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "message", text: limpio }),
+      body: JSON.stringify({ action: "message", text: limpio, ...(conexionId ? { connection_id: conexionId } : {}) }),
     });
     const json = (await res.json().catch(() => ({}))) as {
       text?: string;
@@ -64,6 +78,7 @@ export function ChatPrueba() {
       { role: "assistant", text: json.text ?? "(sin respuesta)" },
       ...(json.escalated ? [{ role: "assistant", text: "⚠️ Escalado a un humano" }] : []),
     ]);
+    if (!json.escalated) alRecibirRespuesta?.();
   }
 
   async function reiniciar() {
@@ -71,7 +86,7 @@ export function ChatPrueba() {
     const res = await fetch("/api/playground", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reset" }),
+      body: JSON.stringify({ action: "reset", ...(conexionId ? { connection_id: conexionId } : {}) }),
     });
     setStatus({ loading: false });
     if (!res.ok) {
@@ -113,6 +128,21 @@ export function ChatPrueba() {
       </Card>
 
       <div className="flex flex-col gap-3">
+        {sugerencias && sugerencias.length > 0 && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Frases para probar">
+            {sugerencias.map((frase) => (
+              <button
+                key={frase}
+                type="button"
+                disabled={status.loading}
+                onClick={() => void enviar(frase)}
+                className="min-h-11 rounded-full border border-control-border px-4 text-sm text-headline transition-colors hover:border-focus/60 hover:bg-focus/10 disabled:opacity-50"
+              >
+                {frase}
+              </button>
+            ))}
+          </div>
+        )}
         <Textarea
           aria-label="Mensaje de prueba"
           onChange={(e) => setTexto(e.target.value)}

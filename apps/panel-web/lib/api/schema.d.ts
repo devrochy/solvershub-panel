@@ -413,6 +413,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/onboarding/avanzar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Avanzar Recorrido
+         * @description Guarda el paso del asistente donde va la persona (y retoma un recorrido omitido).
+         */
+        post: operations["avanzar_recorrido_api_v1_admin_onboarding_avanzar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/omitir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Omitir Recorrido
+         * @description «Lo hago después»: el panel deja de abrir el asistente y muestra el aviso persistente.
+         */
+        post: operations["omitir_recorrido_api_v1_admin_onboarding_omitir_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/reanudar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reanudar Recorrido */
+        post: operations["reanudar_recorrido_api_v1_admin_onboarding_reanudar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/finalizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalizar Recorrido
+         * @description Da por completo el recorrido. Lo valida el servidor con el estado real: 409 `faltan_pasos`
+         *     (`details.faltan`) si no hay datos del negocio, agente publicado o una prueba con él.
+         */
+        post: operations["finalizar_recorrido_api_v1_admin_onboarding_finalizar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/dejar-listo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dejar Listo
+         * @description Deja el agente del asistente listo para probar, de una vez y sin abrirlo a clientes: prepara un
+         *     chat web cerrado, publica el agente ahí y activa su versión. Es idempotente y se puede
+         *     reintentar. Si el gate de pass^k del negocio está cerrado, la activación queda
+         *     `pendiente_de_revision` (no es un error: el agente queda publicado). Dueño o master.
+         */
+        post: operations["dejar_listo_api_v1_admin_onboarding_dejar_listo_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/dlq": {
         parameters: {
             query?: never;
@@ -7642,6 +7743,14 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** AvanzarIn */
+        AvanzarIn: {
+            /**
+             * Paso
+             * @description Paso al que llega la persona.
+             */
+            paso: number;
+        };
         /** AvisoOut */
         AvisoOut: {
             /** Evento */
@@ -9397,6 +9506,13 @@ export interface components {
             business_ranges: {
                 [key: string]: unknown;
             }[];
+            /**
+             * Business Hours Mode
+             * @description `bloquea`: fuera del horario el asistente no atiende y responde el mensaje fuera de horario (comportamiento de siempre). `informativo`: el horario es el del equipo humano del comercio, el asistente responde 24/7 y lo conoce para informarlo (HU-AOS-58).
+             * @default bloquea
+             * @enum {string}
+             */
+            business_hours_mode: "bloquea" | "informativo";
         };
         /** IdentityUpdate */
         IdentityUpdate: {
@@ -9471,6 +9587,8 @@ export interface components {
              * @default
              */
             out_of_hours_message: string;
+            /** Business Hours Mode */
+            business_hours_mode?: ("bloquea" | "informativo") | null;
             /**
              * Auto Escalate After Turns
              * @default 0
@@ -11235,6 +11353,7 @@ export interface components {
             total: number;
             /** Pasos */
             pasos: components["schemas"]["PasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
         };
         /** ProcedureCompletion */
         ProcedureCompletion: {
@@ -12176,6 +12295,56 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** RecorridoOut */
+        RecorridoOut: {
+            /**
+             * Estado
+             * @description pendiente | en_curso | omitido | completo | no_aplica (negocio anterior al corte o función apagada).
+             * @enum {string}
+             */
+            estado: "pendiente" | "en_curso" | "omitido" | "completo" | "no_aplica";
+            /**
+             * Paso
+             * @description Paso del asistente donde va (1 a `total_pasos`).
+             */
+            paso: number;
+            /** Total Pasos */
+            total_pasos: number;
+            /**
+             * Aplica
+             * @description El recorrido es del negocio (si no, el panel no muestra nada).
+             */
+            aplica: boolean;
+            /**
+             * Abrir
+             * @description El panel debe abrir el asistente solo: nunca se tocó y quien consulta es propietario del negocio.
+             */
+            abrir: boolean;
+            /**
+             * Avisar
+             * @description Aviso persistente: empezó o saltó el recorrido y no lo terminó.
+             */
+            avisar: boolean;
+            /** Omitido En */
+            omitido_en?: string | null;
+            /** Completado En */
+            completado_en?: string | null;
+            /**
+             * Agente Id
+             * @description Agente que creó el asistente.
+             */
+            agente_id?: string | null;
+            /**
+             * Conexion Id
+             * @description Conexión de pruebas donde quedó publicado.
+             */
+            conexion_id?: string | null;
+            /**
+             * Probado En
+             * @description Primera prueba con ese agente.
+             */
+            probado_en?: string | null;
+        };
         /** RegisterNumberRequest */
         RegisterNumberRequest: {
             /** Pin */
@@ -12493,6 +12662,21 @@ export interface components {
             is_active: boolean;
             /** Created At */
             created_at?: string | null;
+        };
+        /** SubPasoOut */
+        SubPasoOut: {
+            /**
+             * Clave
+             * @enum {string}
+             */
+            clave: "conexion" | "publicar" | "activar";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "hecho" | "ya_estaba" | "pendiente_de_revision";
+            /** Mensaje */
+            mensaje?: string | null;
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -12963,6 +13147,11 @@ export interface components {
         TurnIn: {
             /** Text */
             text: string;
+            /**
+             * Connection Id
+             * @description Conexión del negocio por cuya release se prueba (HU-AOS-57): el turno corre por el agente publicado ahí. Sin ella, la prueba de siempre (sin release). Sigue siendo del canal `test`.
+             */
+            connection_id?: string | null;
         };
         /** TurnOut */
         TurnOut: {
@@ -14178,6 +14367,34 @@ export interface components {
             secrets: components["schemas"]["ConfiguredSecret"][];
             /** Literals To Migrate */
             literals_to_migrate: string[];
+        };
+        /** DejarListoIn */
+        DejarListoIn: {
+            /**
+             * Agent Id
+             * Format: uuid
+             * @description Agente (borrador) que el asistente creó con `from-script`.
+             */
+            agent_id: string;
+        };
+        /** DejarListoOut */
+        DejarListoOut: {
+            /**
+             * Conexion Id
+             * Format: uuid
+             * @description Conexión de chat web (sin abrir al público) donde queda para probar.
+             */
+            conexion_id: string;
+            /** Release Id */
+            release_id?: string | null;
+            /**
+             * Listo
+             * @description El agente quedó activo y se puede probar con `POST /admin/playground/message`.
+             */
+            listo: boolean;
+            /** Pasos */
+            pasos: components["schemas"]["SubPasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
         };
         /**
          * Dependencia
@@ -18929,6 +19146,176 @@ export interface operations {
             };
         };
     };
+    avanzar_recorrido_api_v1_admin_onboarding_avanzar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvanzarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    omitir_recorrido_api_v1_admin_onboarding_omitir_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanudar_recorrido_api_v1_admin_onboarding_reanudar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finalizar_recorrido_api_v1_admin_onboarding_finalizar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dejar_listo_api_v1_admin_onboarding_dejar_listo_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DejarListoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DejarListoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_agentes`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_dlq_api_v1_admin_dlq_get: {
         parameters: {
             query?: never;
@@ -19504,7 +19891,10 @@ export interface operations {
     };
     playground_history_api_v1_admin_playground_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Historial de la prueba por esa conexión. */
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };
@@ -19570,7 +19960,10 @@ export interface operations {
     };
     playground_reset_api_v1_admin_playground_reset_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Reinicia la prueba de esa conexión. */
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };

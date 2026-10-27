@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
 import { AtajosProvider } from "@/components/shell/atajos";
 import { GuardiaDeSeccion } from "@/components/shell/guardia-de-seccion";
@@ -13,7 +14,7 @@ import { Topbar } from "@/components/shell/topbar";
 import { VigilanteDeSesion } from "@/components/shell/vigilante-de-sesion";
 import { FeedbackProviders } from "@/components/ui/providers";
 import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
-import type { Me, PendingInvitations, PluginSummary, SettingsResponse } from "@/lib/api/types";
+import type { Me, PendingInvitations, PluginSummary, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
 import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
 import { THEME_COOKIE, normalizeTheme } from "@/lib/theme";
@@ -45,6 +46,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const ajustes =
     me.tenant && me.permissions?.settings ? await apiFetch<SettingsResponse>("/admin/settings") : null;
   const asistentePausado = ajustes?.ok ? ajustes.data.identity.bot_paused : false;
+  // Asistente de primer uso (HU-SH-10): el servidor dice si hay que abrirlo (negocio nuevo, sin tocar, y quien
+  // consulta es el dueño) o si falta terminarlo (aviso permanente). Si la consulta falla, no se muestra nada.
+  const primerUso = me.tenant ? await apiFetch<PrimerosPasos>("/admin/onboarding") : null;
+  const recorrido = primerUso?.ok ? primerUso.data.recorrido : null;
+  if (recorrido?.abrir) redirect("/bienvenida");
+  const puedeTerminarPrimerUso = me.tenant?.role === "owner" || me.role === "master";
   // Packs habilitados del tenant para el gating del menú (ADR-0019). Si la
   // consulta falla, no se bloquea nada (el menú se comporta como antes).
   const packs = Object.fromEntries(
@@ -104,6 +111,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               >
                 <div className="mx-auto w-full max-w-[1200px]">
                   {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
+                  {puedeTerminarPrimerUso && <AvisoDeOnboarding recorrido={recorrido} />}
                   <PackLockBanner packs={packs} />
                   <GuardiaDeSeccion>{children}</GuardiaDeSeccion>
                 </div>

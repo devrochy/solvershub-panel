@@ -8,8 +8,12 @@ import { cn } from "@/lib/utils";
  * - `wordmark`: SOLVERSHUB en una línea (barra lateral).
  * - `logo`: isotipo simple + SOLVERSHUB (pantallas de acceso).
  * - `isotipo`: solo el símbolo, cuadrado (barra lateral plegada).
+ * - `horizontal`: isotipo a la izquierda y wordmark de dos líneas (asistente de primer uso, a 240 px o más).
+ * - `horizontal-simple`: igual, con el isotipo sin mini-iconos para anchos menores de 240 px (manual §4).
  */
-export function Marca({ pieza, className }: { pieza: "wordmark" | "logo" | "isotipo"; className?: string }) {
+export type PiezaDeMarca = "wordmark" | "logo" | "isotipo" | "horizontal" | "horizontal-simple";
+
+export function Marca({ pieza, className }: { pieza: PiezaDeMarca; className?: string }) {
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}

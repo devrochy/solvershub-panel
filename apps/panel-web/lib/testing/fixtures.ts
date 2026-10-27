@@ -87,7 +87,18 @@ export const dashboard: Dashboard = {
   billing: { plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
 };
 
+/** Recorrido de primer uso de un negocio al que no aplica (anterior al corte): sin asistente ni aviso. */
+export const RECORRIDO_NO_APLICA: PrimerosPasos["recorrido"] = {
+  estado: "no_aplica",
+  paso: 1,
+  total_pasos: 6,
+  aplica: false,
+  abrir: false,
+  avisar: false,
+};
+
 export const primerosPasos: PrimerosPasos = {
+  recorrido: RECORRIDO_NO_APLICA,
   alta_en: "2026-10-01T12:00:00Z",
   origen: "manual",
   completos: 1,
@@ -468,6 +479,7 @@ export const ajustes: SettingsResponse = {
     brand_voice: "",
     brand_voice_warning: false,
     tono: "cercano",
+    business_hours_mode: "bloquea",
     debounce_mode: "natural",
     split_style: "un_mensaje",
     currency: "COP",

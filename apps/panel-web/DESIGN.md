@@ -195,6 +195,18 @@ Un elemento que quiera aparecer en el recorrido lleva `data-tour="<id>"` (los en
 menú ya llevan su `href`). Los modales de ayuda por sección y las guías por habilidad son de
 SPEC-12, no de este recorrido.
 
+## Asistente de primer uso (HU-UX-21, SPEC-41)
+
+| Pieza | Regla |
+|---|---|
+| `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú). 6 pasos; cada uno guarda al avanzar y se retoma donde quedó. El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir` (negocio nuevo, sin tocar, dueño). «Completo» lo decide el servidor al terminar |
+| `components/domain/aviso-de-onboarding.tsx` | Aviso permanente (`role="status"`, tonos `status-warning-*`) bajo la barra superior mientras el recorrido está empezado o saltado. No se puede cerrar; solo desaparece con «completo». Lo ven el dueño y el master |
+| `_components/elegibles.tsx` | Tarjetas y fichas de un clic con `input` radio o checkbox nativos (flechas, foco y lector gratis); la selección se ve por anillo cian y marca, no solo por color. Objetivo ≥ 44 px |
+| `_components/tarjeta-del-agente.tsx` | La idea memorable: «Tu agente, armándose». Lo vacío con línea punteada, lo decidido sólido; la burbuja de voz sale de frases fijas por tono, calidez, emojis y largo (`lib/onboarding.ts`), sin modelo. En móvil se pliega arriba (`details`) |
+| Horario | Es el del equipo del comercio; el agente responde 24/7 (`business_hours_mode = informativo`). Se elige con atajos de días, días a mano y bloque de horas |
+| Logo | Horizontal con icono (`public/marca/horizontal-*`); bajo 240 px de ancho, `horizontal-simple` (manual §4). Nunca se recolorea |
+| Movimiento | Solo transiciones de selección (200 ms) y el giro de «creando»; todo se apaga con `prefers-reduced-motion` |
+
 ## Copy
 
 - Voz de interfaz, frase corta, voz activa y sentence case.
