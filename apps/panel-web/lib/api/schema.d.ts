@@ -4329,41 +4329,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/cobranza/owner-charges": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Owner Charges */
-        get: operations["list_owner_charges_api_v1_pack_cobranza_owner_charges_get"];
-        put?: never;
-        /** Create Owner Charge */
-        post: operations["create_owner_charge_api_v1_pack_cobranza_owner_charges_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/payment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register Owner Payment */
-        post: operations["register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/pack/cobranza/reports": {
         parameters: {
             query?: never;
@@ -4701,26 +4666,6 @@ export interface paths {
          * @description Aprueba el gasto: descuenta su valor de la caja de la cartera (una sola vez).
          */
         post: operations["approve_expense_api_v1_pack_cobranza_expenses__expense_id__approve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/links": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Payment Link
-         * @description Crea un link de pago para el cobro del propietario (monto = cobro calculado).
-         */
-        post: operations["create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10669,53 +10614,6 @@ export interface components {
             /** Flujo */
             flujo: boolean;
         };
-        /** OwnerCharge */
-        OwnerCharge: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /** Pagado */
-            pagado: number | null;
-            /**
-             * Vence
-             * Format: date
-             */
-            vence: string;
-            /** Estado */
-            estado: string;
-        };
-        /** OwnerChargeCreate */
-        OwnerChargeCreate: {
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /**
-             * Fecha Vencimiento
-             * Format: date
-             */
-            fecha_vencimiento: string;
-        };
-        /** OwnerCharges */
-        OwnerCharges: {
-            /** Cobros */
-            cobros: components["schemas"]["OwnerCharge"][];
-            /** Links */
-            links: components["schemas"]["PaymentLink"][];
-        };
-        /** OwnerPayment */
-        OwnerPayment: {
-            /** Monto Pagado */
-            monto_pagado: number;
-            /** Metodo Pago */
-            metodo_pago?: string | null;
-        };
         /** PackRole */
         PackRole: {
             /** Value */
@@ -10882,24 +10780,6 @@ export interface components {
             metodo_pago: string;
             /** Cuota Id */
             cuota_id?: string | null;
-        };
-        /** PaymentLink */
-        PaymentLink: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
-            /** Monto */
-            monto: number;
-            /** Estado */
-            estado: string;
-        };
-        /** PaymentLinkIn */
-        PaymentLinkIn: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
         };
         /** PendingResponse */
         PendingResponse: {
@@ -26877,107 +26757,6 @@ export interface operations {
             };
         };
     };
-    list_owner_charges_api_v1_pack_cobranza_owner_charges_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharges"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_charge_api_v1_pack_cobranza_owner_charges_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerChargeCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharge"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerPayment"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     reports_api_v1_pack_cobranza_reports_get: {
         parameters: {
             query?: never;
@@ -27812,43 +27591,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentLinkIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentLink"];
-                };
             };
             /** @description Validation Error */
             422: {
