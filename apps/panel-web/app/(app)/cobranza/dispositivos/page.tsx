@@ -18,7 +18,6 @@ type DeviceRow = {
   vinculado: string;
 };
 
-type AttemptRow = { resultado: string; motivo: string; imei: string; fecha: string };
 type SyncRow = {
   fecha: string;
   tipo: string;
@@ -32,7 +31,6 @@ type Devices = {
   pendientes: number;
   eventos_error: number;
   dispositivos: DeviceRow[];
-  intentos: AttemptRow[];
   eventos: SyncRow[];
 };
 
@@ -59,7 +57,7 @@ export default async function DispositivosPage() {
       </p>
     );
   }
-  const { pendientes, eventos_error, dispositivos, intentos, eventos } = res.data;
+  const { pendientes, eventos_error, dispositivos, eventos } = res.data;
 
   const deviceColumns: Column<DeviceRow>[] = [
     {
@@ -89,17 +87,6 @@ export default async function DispositivosPage() {
     },
   ];
 
-  const attemptColumns: Column<AttemptRow>[] = [
-    { key: "fecha", header: "Fecha", cell: (a) => <span className="text-body">{a.fecha || "—"}</span> },
-    {
-      key: "resultado",
-      header: "Resultado",
-      cell: (a) => <Badge variant={a.resultado === "ok" ? "success" : "danger"}>{a.resultado}</Badge>,
-    },
-    { key: "motivo", header: "Motivo", cell: (a) => <span className="text-body">{a.motivo || "—"}</span> },
-    { key: "imei", header: "IMEI", cell: (a) => <span className="text-body">{a.imei || "—"}</span> },
-  ];
-
   const syncColumns: Column<SyncRow>[] = [
     { key: "fecha", header: "Fecha", cell: (s) => <span className="text-body">{s.fecha || "—"}</span> },
     { key: "tipo", header: "Tipo", cell: (s) => <Badge variant="neutral">{s.tipo}</Badge> },
@@ -121,14 +108,13 @@ export default async function DispositivosPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Dispositivos"
-        description="Equipos vinculados (ADR-0057), intentos de acceso y últimos eventos de sincronización."
+        description="Equipos vinculados (ADR-0057) y últimos eventos de sincronización. Los intentos de acceso están en Alertas de acceso."
         actions={<DeviceCreateDialog carteras={carteras} gestores={gestores} />}
       />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Dispositivos" value={dispositivos.length} />
         <StatCard label="Pendientes de aprobar" value={pendientes} tone={pendientes > 0 ? "warning" : "default"} />
         <StatCard label="Eventos con error" value={eventos_error} tone={eventos_error > 0 ? "danger" : "default"} />
-        <StatCard label="Intentos (últimos 20)" value={intentos.length} />
       </div>
 
       <section className="flex flex-col gap-3">
@@ -150,17 +136,6 @@ export default async function DispositivosPage() {
           getRowKey={(s, i) => `${s.fecha}-${s.evento}-${i}`}
           emptyTitle="Sin eventos sincronizados"
           emptyDescription="Los eventos que envíe la app de campo aparecerán aquí."
-        />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Intentos de acceso</h2>
-        <DataTable
-          columns={attemptColumns}
-          rows={intentos}
-          getRowKey={(a, i) => `${a.fecha}-${a.imei}-${i}`}
-          emptyTitle="Sin intentos"
-          emptyDescription="Los intentos de vinculación o cobro aparecerán aquí."
         />
       </section>
     </div>

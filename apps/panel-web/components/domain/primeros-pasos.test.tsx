@@ -18,6 +18,7 @@ function datos(pasos: PasoPrimerosPasos[]): Datos {
     completos: pasos.filter((p) => p.estado === "completo").length,
     total: pasos.length,
     pasos,
+    recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
   };
 }
 

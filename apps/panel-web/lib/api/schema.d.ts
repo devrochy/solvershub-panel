@@ -396,6 +396,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/dashboard/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Agents */
+        get: operations["dashboard_agents_api_v1_admin_dashboard_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -407,6 +424,107 @@ export interface paths {
         get: operations["get_primeros_pasos_api_v1_admin_onboarding_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/avanzar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Avanzar Recorrido
+         * @description Guarda el paso del asistente donde va la persona (y retoma un recorrido omitido).
+         */
+        post: operations["avanzar_recorrido_api_v1_admin_onboarding_avanzar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/omitir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Omitir Recorrido
+         * @description «Lo hago después»: el panel deja de abrir el asistente y muestra el aviso persistente.
+         */
+        post: operations["omitir_recorrido_api_v1_admin_onboarding_omitir_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/reanudar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reanudar Recorrido */
+        post: operations["reanudar_recorrido_api_v1_admin_onboarding_reanudar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/finalizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalizar Recorrido
+         * @description Da por completo el recorrido. Lo valida el servidor con el estado real: 409 `faltan_pasos`
+         *     (`details.faltan`) si no hay datos del negocio, agente publicado o una prueba con él.
+         */
+        post: operations["finalizar_recorrido_api_v1_admin_onboarding_finalizar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/dejar-listo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dejar Listo
+         * @description Deja el agente del asistente listo para probar, de una vez y sin abrirlo a clientes: prepara un
+         *     chat web cerrado, publica el agente ahí y activa su versión. Es idempotente y se puede
+         *     reintentar. Si el gate de pass^k del negocio está cerrado, la activación queda
+         *     `pendiente_de_revision` (no es un error: el agente queda publicado). Dueño o master.
+         */
+        post: operations["dejar_listo_api_v1_admin_onboarding_dejar_listo_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4312,41 +4430,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/cobranza/owner-charges": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Owner Charges */
-        get: operations["list_owner_charges_api_v1_pack_cobranza_owner_charges_get"];
-        put?: never;
-        /** Create Owner Charge */
-        post: operations["create_owner_charge_api_v1_pack_cobranza_owner_charges_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/payment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register Owner Payment */
-        post: operations["register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/pack/cobranza/reports": {
         parameters: {
             query?: never;
@@ -4684,26 +4767,6 @@ export interface paths {
          * @description Aprueba el gasto: descuenta su valor de la caja de la cartera (una sola vez).
          */
         post: operations["approve_expense_api_v1_pack_cobranza_expenses__expense_id__approve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/links": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Payment Link
-         * @description Crea un link de pago para el cobro del propietario (monto = cobro calculado).
-         */
-        post: operations["create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7642,6 +7705,14 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** AvanzarIn */
+        AvanzarIn: {
+            /**
+             * Paso
+             * @description Paso al que llega la persona.
+             */
+            paso: number;
+        };
         /** AvisoOut */
         AvisoOut: {
             /** Evento */
@@ -7759,6 +7830,11 @@ export interface components {
             end_at?: string | null;
             /** Reason */
             reason?: string | null;
+        };
+        /** BloqueGeneral */
+        BloqueGeneral: {
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
@@ -9397,6 +9473,13 @@ export interface components {
             business_ranges: {
                 [key: string]: unknown;
             }[];
+            /**
+             * Business Hours Mode
+             * @description `bloquea`: fuera del horario el asistente no atiende y responde el mensaje fuera de horario (comportamiento de siempre). `informativo`: el horario es el del equipo humano del comercio, el asistente responde 24/7 y lo conoce para informarlo (HU-AOS-58).
+             * @default bloquea
+             * @enum {string}
+             */
+            business_hours_mode: "bloquea" | "informativo";
         };
         /** IdentityUpdate */
         IdentityUpdate: {
@@ -9471,6 +9554,8 @@ export interface components {
              * @default
              */
             out_of_hours_message: string;
+            /** Business Hours Mode */
+            business_hours_mode?: ("bloquea" | "informativo") | null;
             /**
              * Auto Escalate After Turns
              * @default 0
@@ -9762,6 +9847,46 @@ export interface components {
             extra?: {
                 [key: string]: unknown;
             };
+        };
+        /** KpiOut */
+        KpiOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Valor
+             * @description `null` si no hay datos suficientes.
+             */
+            valor: number | null;
+            /**
+             * Unidad
+             * @enum {string}
+             */
+            unidad: "count" | "pct" | "usd" | "money" | "ms";
+            /**
+             * Previo
+             * @description Mismo KPI en el período anterior; `null` si es una foto de hoy.
+             */
+            previo: number | null;
+            /**
+             * Delta Pct
+             * @description Variación contra el período anterior; `null` si no se puede calcular.
+             */
+            delta_pct: number | null;
+            /**
+             * Polaridad
+             * @enum {string}
+             */
+            polaridad: "up-good" | "up-bad";
+            /** Hint */
+            hint?: string | null;
+            /**
+             * Versus
+             * @description Contra qué se compara `previo` («los 7 días anteriores», «el mes anterior»).
+             */
+            versus?: string | null;
+            destino?: components["schemas"]["DestinoOut"] | null;
         };
         /** LeadColumn */
         LeadColumn: {
@@ -10346,6 +10471,20 @@ export interface components {
             /** Cost */
             cost: number;
         };
+        /** ModuloOut */
+        ModuloOut: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /**
+             * Error
+             * @description El módulo no pudo calcularse; el resto del Resumen sí.
+             */
+            error?: string | null;
+        };
         /**
          * ModulosOut
          * @description Módulos opcionales del pack encendidos en el negocio (el panel decide qué mostrar).
@@ -10593,53 +10732,6 @@ export interface components {
             /** Flujo */
             flujo: boolean;
         };
-        /** OwnerCharge */
-        OwnerCharge: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /** Pagado */
-            pagado: number | null;
-            /**
-             * Vence
-             * Format: date
-             */
-            vence: string;
-            /** Estado */
-            estado: string;
-        };
-        /** OwnerChargeCreate */
-        OwnerChargeCreate: {
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /**
-             * Fecha Vencimiento
-             * Format: date
-             */
-            fecha_vencimiento: string;
-        };
-        /** OwnerCharges */
-        OwnerCharges: {
-            /** Cobros */
-            cobros: components["schemas"]["OwnerCharge"][];
-            /** Links */
-            links: components["schemas"]["PaymentLink"][];
-        };
-        /** OwnerPayment */
-        OwnerPayment: {
-            /** Monto Pagado */
-            monto_pagado: number;
-            /** Metodo Pago */
-            metodo_pago?: string | null;
-        };
         /** PackRole */
         PackRole: {
             /** Value */
@@ -10806,24 +10898,6 @@ export interface components {
             metodo_pago: string;
             /** Cuota Id */
             cuota_id?: string | null;
-        };
-        /** PaymentLink */
-        PaymentLink: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
-            /** Monto */
-            monto: number;
-            /** Estado */
-            estado: string;
-        };
-        /** PaymentLinkIn */
-        PaymentLinkIn: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
         };
         /** PendingResponse */
         PendingResponse: {
@@ -11235,6 +11309,7 @@ export interface components {
             total: number;
             /** Pasos */
             pasos: components["schemas"]["PasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
         };
         /** ProcedureCompletion */
         ProcedureCompletion: {
@@ -12176,6 +12251,56 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** RecorridoOut */
+        RecorridoOut: {
+            /**
+             * Estado
+             * @description pendiente | en_curso | omitido | completo | no_aplica (negocio anterior al corte o función apagada).
+             * @enum {string}
+             */
+            estado: "pendiente" | "en_curso" | "omitido" | "completo" | "no_aplica";
+            /**
+             * Paso
+             * @description Paso del asistente donde va (1 a `total_pasos`).
+             */
+            paso: number;
+            /** Total Pasos */
+            total_pasos: number;
+            /**
+             * Aplica
+             * @description El recorrido es del negocio (si no, el panel no muestra nada).
+             */
+            aplica: boolean;
+            /**
+             * Abrir
+             * @description El panel debe abrir el asistente solo: nunca se tocó y quien consulta es propietario del negocio.
+             */
+            abrir: boolean;
+            /**
+             * Avisar
+             * @description Aviso persistente: empezó o saltó el recorrido y no lo terminó.
+             */
+            avisar: boolean;
+            /** Omitido En */
+            omitido_en?: string | null;
+            /** Completado En */
+            completado_en?: string | null;
+            /**
+             * Agente Id
+             * @description Agente que creó el asistente.
+             */
+            agente_id?: string | null;
+            /**
+             * Conexion Id
+             * @description Conexión de pruebas donde quedó publicado.
+             */
+            conexion_id?: string | null;
+            /**
+             * Probado En
+             * @description Primera prueba con ese agente.
+             */
+            probado_en?: string | null;
+        };
         /** RegisterNumberRequest */
         RegisterNumberRequest: {
             /** Pin */
@@ -12271,6 +12396,15 @@ export interface components {
             label: string;
             /** Items */
             items: components["schemas"]["ItemBusqueda"][];
+        };
+        /** ResumenPorAgente */
+        ResumenPorAgente: {
+            periodo: components["schemas"]["PeriodoOut"];
+            /** Runtime */
+            runtime: string;
+            general: components["schemas"]["BloqueGeneral"];
+            /** Agentes */
+            agentes: components["schemas"]["AgenteResumen"][];
         };
         /** RevokeRequest */
         RevokeRequest: {
@@ -12493,6 +12627,21 @@ export interface components {
             is_active: boolean;
             /** Created At */
             created_at?: string | null;
+        };
+        /** SubPasoOut */
+        SubPasoOut: {
+            /**
+             * Clave
+             * @enum {string}
+             */
+            clave: "conexion" | "publicar" | "activar";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "hecho" | "ya_estaba" | "pendiente_de_revision";
+            /** Mensaje */
+            mensaje?: string | null;
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -12963,6 +13112,11 @@ export interface components {
         TurnIn: {
             /** Text */
             text: string;
+            /**
+             * Connection Id
+             * @description Conexión del negocio por cuya release se prueba (HU-AOS-57): el turno corre por el agente publicado ahí. Sin ella, la prueba de siempre (sin release). Sigue siendo del canal `test`.
+             */
+            connection_id?: string | null;
         };
         /** TurnOut */
         TurnOut: {
@@ -13610,6 +13764,21 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /**
+         * DestinoOut
+         * @description A dónde lleva un KPI: una ruta lógica y sus filtros; cada cliente la traduce a su navegación.
+         */
+        DestinoOut: {
+            /**
+             * Ruta
+             * @description Ruta lógica: `conversaciones`, `agente`, `comercio.pedidos`, …
+             */
+            ruta: string;
+            /** Params */
+            params?: {
+                [key: string]: string;
+            };
+        };
         /** DocumentoLegalIn */
         DocumentoLegalIn: {
             /**
@@ -14118,6 +14287,24 @@ export interface components {
              */
             created_at: string;
         };
+        /** AgenteResumen */
+        AgenteResumen: {
+            /**
+             * Ref
+             * @description Id del agente o el literal `general`, como en `/admin/agents/{ref}`.
+             */
+            ref: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /** Modulos */
+            modulos: components["schemas"]["ModuloOut"][];
+        };
         /** ConfiguredSecret */
         ConfiguredSecret: {
             /** Name */
@@ -14178,6 +14365,34 @@ export interface components {
             secrets: components["schemas"]["ConfiguredSecret"][];
             /** Literals To Migrate */
             literals_to_migrate: string[];
+        };
+        /** DejarListoIn */
+        DejarListoIn: {
+            /**
+             * Agent Id
+             * Format: uuid
+             * @description Agente (borrador) que el asistente creó con `from-script`.
+             */
+            agent_id: string;
+        };
+        /** DejarListoOut */
+        DejarListoOut: {
+            /**
+             * Conexion Id
+             * Format: uuid
+             * @description Conexión de chat web (sin abrir al público) donde queda para probar.
+             */
+            conexion_id: string;
+            /** Release Id */
+            release_id?: string | null;
+            /**
+             * Listo
+             * @description El agente quedó activo y se puede probar con `POST /admin/playground/message`.
+             */
+            listo: boolean;
+            /** Pasos */
+            pasos: components["schemas"]["SubPasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
         };
         /**
          * Dependencia
@@ -16334,6 +16549,29 @@ export interface components {
             telefono?: string | null;
             /** Username */
             username?: string | null;
+        };
+        /** PeriodoOut */
+        PeriodoOut: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+            /**
+             * Previo Desde
+             * Format: date-time
+             */
+            previo_desde: string;
+            /**
+             * Previo Hasta
+             * Format: date-time
+             */
+            previo_hasta: string;
         };
         /** PermissionChange */
         PermissionChange: {
@@ -18898,6 +19136,37 @@ export interface operations {
             };
         };
     };
+    dashboard_agents_api_v1_admin_dashboard_agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumenPorAgente"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_primeros_pasos_api_v1_admin_onboarding_get: {
         parameters: {
             query?: never;
@@ -18917,6 +19186,176 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PrimerosPasosResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    avanzar_recorrido_api_v1_admin_onboarding_avanzar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvanzarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    omitir_recorrido_api_v1_admin_onboarding_omitir_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanudar_recorrido_api_v1_admin_onboarding_reanudar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finalizar_recorrido_api_v1_admin_onboarding_finalizar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dejar_listo_api_v1_admin_onboarding_dejar_listo_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DejarListoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DejarListoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_agentes`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -19504,7 +19943,10 @@ export interface operations {
     };
     playground_history_api_v1_admin_playground_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Historial de la prueba por esa conexión. */
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };
@@ -19570,7 +20012,10 @@ export interface operations {
     };
     playground_reset_api_v1_admin_playground_reset_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Reinicia la prueba de esa conexión. */
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
             };
@@ -26705,107 +27150,6 @@ export interface operations {
             };
         };
     };
-    list_owner_charges_api_v1_pack_cobranza_owner_charges_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharges"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_charge_api_v1_pack_cobranza_owner_charges_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerChargeCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharge"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerPayment"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     reports_api_v1_pack_cobranza_reports_get: {
         parameters: {
             query?: never;
@@ -27640,43 +27984,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentLinkIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentLink"];
-                };
             };
             /** @description Validation Error */
             422: {

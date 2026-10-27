@@ -12,6 +12,7 @@ import {
   type Cartera,
   type Gestor,
 } from "./_components/portfolio-dialog";
+import { BuscarCliente } from "./_components/buscar-cliente";
 
 export const metadata = { title: "Carteras" };
 
@@ -81,6 +82,7 @@ export default async function CarterasPage() {
           />
         }
       />
+      <BuscarCliente />
       <DataTable
         columns={columns}
         rows={res.data}
