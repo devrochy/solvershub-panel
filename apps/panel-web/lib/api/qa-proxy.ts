@@ -37,6 +37,8 @@ export const RUTAS_QA: { metodo: Metodo; patron: RegExp }[] = [
   { metodo: "GET", patron: /^datos$/ },
   { metodo: "POST", patron: /^datos$/ },
   { metodo: "POST", patron: /^datos\/contrasenas$/ },
+  { metodo: "GET", patron: /^datos\/escenarios$/ },
+  { metodo: "POST", patron: new RegExp(`^datos/escenarios/${SLUG}$`) },
 ];
 
 export function rutaPermitida(metodo: string, ruta: string): boolean {
