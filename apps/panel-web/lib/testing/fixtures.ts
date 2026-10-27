@@ -138,6 +138,7 @@ export const primerosPasos: PrimerosPasos = {
     { clave: "whatsapp", estado: "pendiente", motivo: "sin_conexion", puede_actuar: true },
     { clave: "probar_asistente", estado: "pendiente", puede_actuar: true },
   ],
+  recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
 };
 
 export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [] };
@@ -522,6 +523,7 @@ export const ajustes: SettingsResponse = {
     difficulty_score_threshold: 3,
     escalation_keywords: [],
     out_of_hours_message: "",
+    business_hours_mode: "bloquea",
     out_of_hours_default_message:
       "¡Hola! Ahora estamos fuera de nuestro horario de atención. Te respondemos apenas volvamos.",
     auto_escalate_after_turns: 0,

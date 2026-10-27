@@ -17,6 +17,7 @@ const PENDIENTE: PrimerosPasos = {
   completos: 0,
   total: 1,
   pasos: [{ clave: "whatsapp", estado: "pendiente", motivo: "sin_conexion", puede_actuar: true }],
+  recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
 };
 
 const LISTO: PrimerosPasos = {
