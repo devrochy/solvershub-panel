@@ -151,7 +151,7 @@ export const primerosPasos: PrimerosPasos = {
   ],
 };
 
-export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [] };
+export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [], total_eventos_7d: 0, total_opciones_7d: 0 };
 
 export const conversaciones: ConversationPage = {
   items: [
