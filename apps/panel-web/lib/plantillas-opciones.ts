@@ -4,6 +4,7 @@
  * backend sigue siendo quien decide, aquí solo se adelanta para que el dueño los vea mientras escribe.
  */
 import type {
+  Me,
   OpcionesAccionDelCatalogo,
   OpcionesDefinicion,
   OpcionesHallazgo,
@@ -328,4 +329,12 @@ export function claveDeIdempotencia(): string {
       ? crypto.randomUUID()
       : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
   return `prueba-${aleatorio}`.slice(0, 64);
+}
+
+/**
+ * Escribir (crear, guardar, publicar, retirar, enviar prueba) es del propietario o del master con la sección
+ * Conexiones en escritura, como el backend (`require_owner_or_master`). El resto ve la sección en solo lectura.
+ */
+export function puedeEscribirOpciones(me: Pick<Me, "role" | "tenant" | "permissions">): boolean {
+  return me.permissions?.connections === "write" && (me.role === "master" || me.tenant?.role === "owner");
 }

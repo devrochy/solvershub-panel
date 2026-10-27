@@ -21,6 +21,7 @@ import {
   mensajeDeEnvio,
   moverOpcion,
   opcionNueva,
+  puedeEscribirOpciones,
   resumenDePrueba,
   sePuedePublicar,
   sinArgumento,
@@ -213,5 +214,18 @@ describe("errores de la API", () => {
     expect(resumenDePrueba({ ...base, via: "plantilla" })).toMatch(/plantilla de Meta/);
     expect(resumenDePrueba({ ...base, via: "texto", ejecucion_directa: false, degradado: true })).toMatch(/no ejecuta nada.*degradó/);
     expect(resumenDePrueba({ ...base, via: null, ya_enviado: true })).toMatch(/ya se había enviado/);
+  });
+});
+
+describe("permisos", () => {
+  const sesion = (role: string, tenantRole: string, connections: string | undefined) =>
+    ({ role, tenant: { id: "t", name: "N", role: tenantRole, active: true }, permissions: connections ? { connections } : {} }) as Parameters<typeof puedeEscribirOpciones>[0];
+
+  it("escribe el propietario y el master con Conexiones en escritura; el resto lee", () => {
+    expect(puedeEscribirOpciones(sesion("owner", "owner", "write"))).toBe(true);
+    expect(puedeEscribirOpciones(sesion("master", "agent", "write"))).toBe(true);
+    expect(puedeEscribirOpciones(sesion("agent", "agent", "write"))).toBe(false);
+    expect(puedeEscribirOpciones(sesion("owner", "owner", "read"))).toBe(false);
+    expect(puedeEscribirOpciones(sesion("owner", "owner", undefined))).toBe(false);
   });
 });
