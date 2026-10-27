@@ -23,7 +23,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/cobranza/gestores", "pack_cobranza:gestores", false], ["/cobranza/carteras", "pack_cobranza:carteras", false],
   ["/cobranza/clientes", "pack_cobranza:clientes", false], ["/cobranza/cobros", "pack_cobranza:cobros", false],
   ["/cobranza/pagos", "pack_cobranza:cobros", false], ["/cobranza/promesas", "pack_cobranza:promesas", false],
-  ["/cobranza/propietario", "pack_cobranza:propietario", false], ["/cobranza/reportes", "pack_cobranza:reportes", false],
+  ["/cobranza/reportes", "pack_cobranza:reportes", false],
   ["/cobranza/monitoreo", "pack_cobranza:monitoreo", false], ["/cobranza/reglas", "pack_cobranza:reglas", false],
   ["/cobranza/alertas", "pack_cobranza:alertas", false], ["/cobranza/auditoria", "pack_cobranza:auditoria", false],
   ["/cobranza/dispositivos", "pack_cobranza:dispositivos", false], ["/comercio", "pack_commerce", false],
