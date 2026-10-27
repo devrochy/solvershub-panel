@@ -6117,6 +6117,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/from-script": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create From Script
+         * @description Crea el borrador de un especialista (sin publicar) desde las respuestas del guion de su
+         *     plantilla. 409 `key_taken` (con el `agent_id` existente) si el negocio ya tiene ese agente; 422
+         *     por pregunta si una respuesta no está en las opciones, sin crear nada.
+         */
+        post: operations["create_from_script_api_v1_admin_agents_from_script_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agent-superpowers": {
         parameters: {
             query?: never;
@@ -15389,6 +15411,12 @@ export interface components {
             name: string;
             /** Description */
             description: string;
+            /** Section */
+            section: string;
+            /** Tools */
+            tools: string[];
+            /** Questions */
+            questions: components["schemas"]["Question"][];
             /** Skills */
             skills: string[];
             /** Optional Skills */
@@ -15425,6 +15453,8 @@ export interface components {
             connections: components["schemas"]["PublishedConnection"][];
             /** Warnings */
             warnings: string[];
+            /** General Updated */
+            general_updated?: number | null;
         };
         /** FromTemplateIn */
         FromTemplateIn: {
@@ -15775,6 +15805,33 @@ export interface components {
             modo: string;
             /** Titulo */
             titulo: string;
+        };
+        /**
+         * FromScriptIn
+         * @description Respuestas del guion de una plantilla: `answers` es `id de la pregunta` → id de la opción
+         *     (o el texto, en la de nombre). Lo que no se contesta toma el valor por defecto del guion.
+         */
+        FromScriptIn: {
+            /** Template Key */
+            template_key: string;
+            /** Answers */
+            answers?: {
+                [key: string]: string;
+            };
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * FromScriptOut
+         * @description El borrador creado (sin publicar) y lo que le falta al negocio configurar para que funcione.
+         */
+        FromScriptOut: {
+            agent: components["schemas"]["AgentSummary"];
+            draft: components["schemas"]["AgentDraft"];
+            /** Warnings */
+            warnings: string[];
+            /** Requirements */
+            requirements: components["schemas"]["Requirement"][];
         };
         /** LoteDePrueba */
         LoteDePrueba: {
@@ -16340,6 +16397,37 @@ export interface components {
             } | null;
             /** Secciones */
             secciones: components["schemas"]["QaSeccionEvo"][];
+        };
+        /**
+         * Question
+         * @description Pregunta del guion del asistente de creación (HU-AOS-48). `type` «option» elige entre
+         *     `options` (`default` es la que se aplica sin respuesta); «text» es el nombre del agente.
+         */
+        Question: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "option" | "text";
+            /** Options */
+            options: components["schemas"]["QuestionOption"][];
+            /** Default */
+            default: string | null;
+        };
+        /** QuestionOption */
+        QuestionOption: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
         };
         /** QaEvolucion */
         QaEvolucion: {
@@ -30627,6 +30715,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FromTemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_from_script_api_v1_admin_agents_from_script_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromScriptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FromScriptOut"];
                 };
             };
             /** @description Validation Error */
