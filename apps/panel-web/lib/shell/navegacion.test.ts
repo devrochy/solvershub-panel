@@ -21,7 +21,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/habilidades", "plugins", false], ["/colaboradores", "collaborators", false], ["/configuracion", "settings", false],
   ["/costos", "costs", false], ["/plan", "plan", false], ["/cobranza", "pack_cobranza:resumen", false],
   ["/cobranza/gestores", "pack_cobranza:gestores", false], ["/cobranza/carteras", "pack_cobranza:carteras", false],
-  ["/cobranza/clientes", "pack_cobranza:clientes", false], ["/cobranza/cobros", "pack_cobranza:cobros", false],
+  ["/cobranza/clientes", "pack_cobranza:clientes", false],
   ["/cobranza/pagos", "pack_cobranza:cobros", false], ["/cobranza/promesas", "pack_cobranza:promesas", false],
   ["/cobranza/reportes", "pack_cobranza:reportes", false],
   ["/cobranza/monitoreo", "pack_cobranza:monitoreo", false], ["/cobranza/reglas", "pack_cobranza:reglas", false],
@@ -139,6 +139,20 @@ describe("navegación del shell (HU-DS-04)", () => {
       { label: "Carteras", href: "/cobranza/carteras" },
       { label: "Cartera Norte" },
     ]);
+    // Un cliente cuelga de su cartera: los padres de datos van entre la pestaña y el título.
+    expect(
+      migasPara("/cobranza/carteras/7/clientes/42", grupos, "Ana Pérez", [
+        { label: "Cartera Norte", href: "/cobranza/carteras/7" },
+        { label: "Clientes", href: "/cobranza/carteras/7/clientes" },
+      ]),
+    ).toEqual([
+      { label: "Negocio" },
+      { label: "Cobranza", href: "/cobranza" },
+      { label: "Carteras", href: "/cobranza/carteras" },
+      { label: "Cartera Norte", href: "/cobranza/carteras/7" },
+      { label: "Clientes", href: "/cobranza/carteras/7/clientes" },
+      { label: "Ana Pérez" },
+    ]);
     // En la portada de la entrada, la entrada no se enlaza a sí misma.
     expect(migasPara("/calendario", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }]);
     expect(migasPara("/dashboard", grupos)).toEqual([{ label: "Operación" }, { label: "Resumen" }]);
@@ -148,13 +162,25 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(pestanasPara("/calendario", grupos).pestanas).toEqual([]);
     const cobranza = pestanasPara("/cobranza/reglas", grupos);
     expect(cobranza.subgrupos).toEqual([
-      { href: "/cobranza", label: "Operación" },
-      { href: "/cobranza/monitoreo", label: "Monitoreo" },
-      { href: "/cobranza/alertas", label: "Seguridad" },
+      { href: "/cobranza", label: "Resumen" },
+      { href: "/cobranza/carteras", label: "Carteras" },
+      { href: "/cobranza/pagos", label: "Actividad" },
+      { href: "/cobranza/gestores", label: "Equipo" },
+      { href: "/cobranza/monitoreo", label: "Asistente" },
     ]);
     expect(cobranza.subgrupoActual).toBe("/cobranza/monitoreo");
     expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Monitoreo IA", "Reglas de negociación"]);
+    // Carteras y Resumen son áreas de una sola sección: sin segunda fila. Clientes es una página oculta.
+    expect(pestanasPara("/cobranza/carteras/7", grupos).pestanas).toEqual([]);
+    expect(pestanasPara("/cobranza/clientes", grupos)).toMatchObject({ pestanas: [], subgrupoActual: "/cobranza/carteras" });
     expect(pestanasPara("/dashboard", grupos)).toEqual({ subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] });
+  });
+
+  it("quien solo tiene Alertas de acceso sigue viéndolas en Equipo, sin 403", () => {
+    const soloAlertas = gruposVisibles({ "pack_cobranza:alertas": "read" });
+    expect(puedeVerRuta("/cobranza/alertas", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
+    expect(puedeVerRuta("/cobranza/dispositivos", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(false);
+    expect(pestanasPara("/cobranza/alertas", soloAlertas).subgrupos).toEqual([]);
   });
 
   it("las pestañas respetan los permisos", () => {

@@ -92,7 +92,7 @@ export default async function ClientesPage({
       align: "right",
       cell: (c) => (
         <div className="flex items-center justify-end gap-1">
-          <IconAction href={`/cobranza/clientes/${c.id}`} label="Ver ficha" tone="ver">
+          <IconAction href={`/cobranza/carteras/${c.cartera_id}/clientes/${c.id}`} label="Ver ficha" tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
           <ClientRowActions cliente={c} carteras={carteras} />

@@ -15,6 +15,7 @@ export function PageHeader({
   actions,
   helpSection,
   breadcrumbs,
+  migasIntermedias,
   tabs,
   className,
 }: {
@@ -25,13 +26,15 @@ export function PageHeader({
   helpSection?: string;
   /** Migas propias. Sin esta prop salen solas del menú y la ruta (HU-DS-04). */
   breadcrumbs?: Miga[];
+  /** Padres de datos entre la pestaña y el título (la cartera de un cliente). */
+  migasIntermedias?: Miga[];
   /** Pestañas propias. Sin esta prop, las de la sección del pack salen solas (HU-DS-04). */
   tabs?: ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      {breadcrumbs ? breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} /> : <MigasDeShell titulo={title} />}
+      {breadcrumbs ? breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} /> : <MigasDeShell titulo={title} intermedias={migasIntermedias} />}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">

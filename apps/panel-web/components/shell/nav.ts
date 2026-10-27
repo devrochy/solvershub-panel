@@ -30,7 +30,6 @@ import {
   Bot,
   Handshake,
   Package,
-  Receipt,
   Repeat,
   Scale,
   ScrollText,
@@ -53,7 +52,7 @@ export type NavItem = {
   ready: boolean;
   /** true = enlace al panel clásico (SSR): se marca con ↗. */
   legacy?: boolean;
-  /** Subgrupo de pestañas dentro de una entrada (Cobranza: Operación, Monitoreo, Seguridad). */
+  /** Subgrupo de pestañas dentro de una entrada (Cobranza: Resumen, Carteras, Actividad, Equipo, Asistente). */
   sub?: string;
   /**
    * true = solo para el admin de plataforma (`role === "master"`), aunque la sección esté en
@@ -166,19 +165,19 @@ export const NAV_GROUPS: NavGroupDef[] = [
         "Cobranza",
         HandCoins,
         [
-          { label: "Resumen", href: "/cobranza", section: "pack_cobranza:resumen", icon: LayoutDashboard, sub: "Operación", ready: true },
-          { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Operación", ready: true },
-          { label: "Carteras", href: "/cobranza/carteras", section: "pack_cobranza:carteras", icon: Wallet, sub: "Operación", ready: true },
-          { label: "Clientes", href: "/cobranza/clientes", section: "pack_cobranza:clientes", icon: Users, sub: "Operación", ready: true },
-          { label: "Cobros al propietario", href: "/cobranza/cobros", section: "pack_cobranza:cobros", icon: Receipt, sub: "Operación", ready: true },
-          { label: "Pagos de clientes", href: "/cobranza/pagos", section: "pack_cobranza:cobros", icon: Banknote, sub: "Operación", ready: true },
-          { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: Handshake, sub: "Operación", ready: true },
-          { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Operación", ready: true },
-          { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Monitoreo", ready: true },
-          { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Monitoreo", ready: true },
-          { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: BellRing, sub: "Seguridad", ready: true },
-          { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Seguridad", ready: true },
-          { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: Smartphone, sub: "Seguridad", ready: true },
+          { label: "Resumen", href: "/cobranza", section: "pack_cobranza:resumen", icon: LayoutDashboard, sub: "Resumen", ready: true },
+          { label: "Carteras", href: "/cobranza/carteras", section: "pack_cobranza:carteras", icon: Wallet, sub: "Carteras", ready: true },
+          // El cliente es hijo de la cartera: se llega desde su ficha y desde «Buscar cliente» en Carteras.
+          { label: "Clientes", href: "/cobranza/clientes", section: "pack_cobranza:clientes", icon: Users, sub: "Carteras", ready: true, oculta: true },
+          { label: "Pagos", href: "/cobranza/pagos", section: "pack_cobranza:cobros", icon: Banknote, sub: "Actividad", ready: true },
+          { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: Handshake, sub: "Actividad", ready: true },
+          { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Actividad", ready: true },
+          { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Equipo", ready: true },
+          { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: Smartphone, sub: "Equipo", ready: true },
+          { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: BellRing, sub: "Equipo", ready: true },
+          { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Equipo", ready: true },
+          { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Asistente", ready: true },
+          { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Asistente", ready: true },
         ],
         { pack: "pack_cobranza" },
       ),
