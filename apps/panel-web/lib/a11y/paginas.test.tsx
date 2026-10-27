@@ -53,9 +53,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Suscripciones · Lista", () => import("@/app/(app)/suscripciones/lista/page")],
   ["Suscripciones · Clientes", () => import("@/app/(app)/suscripciones/clientes/page")],
   ["Suscripciones · Pagos", () => import("@/app/(app)/suscripciones/pagos/page")],
-  ["Agenda · Calendario", () => import("@/app/(app)/calendario/citas/page")],
-  ["Agenda · Tipos de cita", () => import("@/app/(app)/calendario/tipos/page")],
-  ["Agenda · Google Calendar", () => import("@/app/(app)/calendario/page")],
+  ["Agenda", () => import("@/app/(app)/calendario/page")],
 ];
 
 beforeAll(() => {

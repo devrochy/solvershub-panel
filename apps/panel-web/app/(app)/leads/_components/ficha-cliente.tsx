@@ -41,7 +41,7 @@ const TITULO_DEL_PACK: Record<string, string> = {
 const ENLACE_DEL_AGENTE: Record<string, string> = {
   ventas: "/comercio/pedidos",
   cobranza: "/cobranza/clientes",
-  agenda: "/calendario/citas",
+  agenda: "/calendario",
 };
 
 const GRUPOS: Record<string, string> = {

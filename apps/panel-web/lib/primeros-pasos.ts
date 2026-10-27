@@ -31,7 +31,7 @@ export const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; acci
     titulo: "Define tus servicios",
     descripcion: "Crea los tipos de cita que tus clientes pueden agendar.",
     accion: "Crear servicios",
-    href: "/calendario/tipos",
+    href: "/calendario?ajustes=tipos",
     unidad: ["servicio creado", "servicios creados"],
   },
   cartera: {

@@ -251,3 +251,7 @@ export type TurnTaskEvent = components["schemas"]["TurnTaskEvent"];
 export type InProgress = components["schemas"]["InProgress"];
 export type InProgressTask = components["schemas"]["InProgressTask"];
 export type InProgressMissing = components["schemas"]["InProgressMissing"];
+
+/** Agenda del módulo de agendamiento (HU-CAL-08, ADR-0170). */
+export type AgendaCalendario = components["schemas"]["CalendarOut"];
+export type ListaDeAgendas = components["schemas"]["CalendarListOut"];

@@ -5,7 +5,7 @@ import { API_BASE, SESSION_COOKIE, TENANT_COOKIE } from "@/lib/api/server";
 import { publicUrl } from "@/lib/public-url";
 
 /** Cookies del flujo OAuth que deja la API en el start (anti-CSRF y destino). */
-const OAUTH_COOKIES = ["oauth_state", "oauth_next"];
+const OAUTH_COOKIES = ["oauth_state", "oauth_next", "oauth_conn"];
 
 /**
  * BFF: retorno del OAuth de Google del pack Calendario (HU-CAL-07, ADR-0093).

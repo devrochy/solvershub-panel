@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EtiquetaDeTipo } from "@/components/domain/tipo-de-cita";
-import { type QueCrear } from "@/lib/calendario/agenda";
+import { type LeyendaAgenda, type QueCrear } from "@/lib/calendario/agenda";
 import { mensajeAsistencia, puedeMarcarAsistencia } from "@/lib/citas";
 import { formatDateTime } from "@/lib/format";
 import { toast } from "@/lib/toast-store";
@@ -36,12 +36,18 @@ function toLocalInput(iso: string | undefined): string {
  */
 export function AppointmentPanel({
   tipos,
+  agendas = [],
+  agendaInicial,
   event,
   draft,
   onClose,
   onSaved,
 }: {
   tipos: Tipo[];
+  /** Agendas activas; con 2 o más hay que elegir una al crear (HU-CAL-08). */
+  agendas?: LeyendaAgenda[];
+  /** Agenda propuesta al crear: la única que se ve, o la principal. */
+  agendaInicial?: string;
   event: CalendarEvent | null;
   draft: { start: string; end: string } | null;
   onClose: () => void;
@@ -56,6 +62,8 @@ export function AppointmentPanel({
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
   const [activities, setActivities] = useState<Activity[]>([]);
 
+  const hayVarias = agendas.length >= 2;
+  const agendaDelEvento = agendas.find((a) => a.id === event?.calendar_id);
   const apptId = event?.id.replace("appt-", "");
   const blockId = event?.id.replace("block-", "");
 
@@ -78,6 +86,7 @@ export function AppointmentPanel({
       start_at: new Date(String(data.get("start_at"))).toISOString(),
       end_at: new Date(String(data.get("end_at"))).toISOString(),
       notify,
+      ...(isNew && data.get("calendar_id") ? { calendar_id: String(data.get("calendar_id")) } : {}),
     };
     const url = isNew ? "/api/pack/calendar/appointments" : `/api/pack/calendar/appointments/${apptId}`;
     const res = await fetch(url, {
@@ -102,6 +111,7 @@ export function AppointmentPanel({
       start_at: new Date(String(data.get("start_at"))).toISOString(),
       end_at: new Date(String(data.get("end_at"))).toISOString(),
       reason: String(data.get("reason") ?? ""),
+      ...(isNew && data.get("calendar_id") ? { calendar_id: String(data.get("calendar_id")) } : {}),
     };
     const res = await fetch(isNew ? "/api/pack/calendar/blocks" : `/api/pack/calendar/blocks/${blockId}`, {
       method: isNew ? "POST" : "PATCH",
@@ -176,6 +186,25 @@ export function AppointmentPanel({
     onSaved();
   }
 
+  const selectorAgenda = (id: string) =>
+    hayVarias ? (
+      isNew ? (
+        <Field label="Agenda" htmlFor={id} required help="Con quién es: cada agenda tiene su propia disponibilidad.">
+          <Select id={id} name="calendar_id" required defaultValue={agendaInicial ?? agendas[0]?.id}>
+            {agendas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      ) : agendaDelEvento ? (
+        <p className="text-sm text-body">
+          Agenda: <span className="text-headline">{agendaDelEvento.name}</span>
+        </p>
+      ) : null
+    ) : null;
+
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent
@@ -212,6 +241,7 @@ export function AppointmentPanel({
             }}
             className="flex flex-col gap-3"
           >
+            {selectorAgenda("b-agenda")}
             <Field label="Motivo" htmlFor="b-reason">
               <Input id="b-reason" name="reason" placeholder="Almuerzo, vacaciones…" defaultValue={isNew ? "" : event?.title ?? ""} />
             </Field>
@@ -245,6 +275,7 @@ export function AppointmentPanel({
             }}
             className="flex flex-col gap-3"
           >
+            {selectorAgenda("c-agenda")}
             <Field label="Título" htmlFor="c-title" required>
               <Input id="c-title" name="title" defaultValue={event?.title ?? ""} required />
             </Field>

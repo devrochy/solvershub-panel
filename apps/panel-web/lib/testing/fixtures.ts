@@ -622,7 +622,49 @@ export const estadoCalendario = {
   connection_label: "",
   timezone: "America/Bogota",
   default_duration_minutes: 60,
+  calendars: [],
+  multi_activo: false,
+  multi_agenda_modo: "cliente_elige",
 };
+
+/** Agendas del negocio (HU-CAL-08): una sola (el caso de siempre) o dos (el cliente elige). */
+export const agendaPrincipal = {
+  id: "ag-1",
+  name: "Agenda principal",
+  description: "",
+  aliases: [],
+  color: "cat-1",
+  timezone: "America/Bogota",
+  own_timezone: null,
+  business_hours: null,
+  is_default: true,
+  active: true,
+  sort_order: 0,
+  source: "interno",
+  connection_id: null,
+  connected: true,
+  account_email: "",
+  responsable_admin_id: null,
+};
+
+export const agendaDeGoogle = {
+  ...agendaPrincipal,
+  id: "ag-2",
+  name: "Dra. Ana",
+  description: "Pediatría",
+  aliases: ["doctora"],
+  color: "cat-2",
+  is_default: false,
+  sort_order: 1,
+  source: "google",
+  connection_id: "11111111-1111-4111-8111-111111111111",
+  account_email: "ana@clinica.co",
+};
+
+export const unaAgenda = { calendars: [agendaPrincipal], multi_activo: false, multi_agenda_modo: "cliente_elige" };
+export const dosAgendas = { calendars: [agendaPrincipal, agendaDeGoogle], multi_activo: true, multi_agenda_modo: "cliente_elige" };
+
+export const configCalendario = { plugin_id: "pack_calendar", values: { business_hours: "mon-fri:09:00-18:00", multi_agenda_modo: "cliente_elige" } };
 
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
 // ---------------------------------------------------------------- suscripciones (SPEC-35)
@@ -835,6 +877,8 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,
+  "/pack/calendar/calendars": unaAgenda,
+  "/admin/plugins/pack_calendar/config": configCalendario,
   "/pack/pack_subscriptions/suscripciones": suscripciones,
   "/pack/pack_subscriptions/suscripciones/test-sub-1": suscripcionDetalle,
   "/pack/pack_subscriptions/cargos": cargosSuscripcion,

@@ -19,6 +19,62 @@ function partir(valor: string): { inicio: string; fin: string } {
   return { inicio, fin };
 }
 
+/** Editor de los 7 días (controlado): lo usan el horario del negocio y el de cada agenda. */
+export function HorarioEditor({
+  horas,
+  onChange,
+  idBase = "h",
+}: {
+  horas: BusinessHours;
+  onChange: (horas: BusinessHours) => void;
+  idBase?: string;
+}) {
+  function setRango(dia: string, inicio: string, fin: string) {
+    onChange({ ...horas, [dia]: inicio && fin ? `${inicio}-${fin}` : "" });
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {DIAS.map(({ key, label }) => {
+        const { inicio, fin } = partir(horas[key] ?? "");
+        const cerrado = !horas[key];
+        return (
+          <div key={key} className="flex flex-wrap items-end gap-3">
+            <span className="w-24 text-sm text-headline">{label}</span>
+            <Field label="Abre" htmlFor={`${idBase}-${key}-inicio`}>
+              <Input
+                id={`${idBase}-${key}-inicio`}
+                type="time"
+                value={inicio}
+                disabled={cerrado}
+                onChange={(e) => setRango(key, e.target.value, fin || "18:00")}
+              />
+            </Field>
+            <Field label="Cierra" htmlFor={`${idBase}-${key}-fin`}>
+              <Input
+                id={`${idBase}-${key}-fin`}
+                type="time"
+                value={fin}
+                disabled={cerrado}
+                onChange={(e) => setRango(key, inicio || "08:00", e.target.value)}
+              />
+            </Field>
+            <label className="flex items-center gap-2 pb-2 text-sm text-body">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-control-border"
+                checked={cerrado}
+                onChange={(e) => onChange({ ...horas, [key]: e.target.checked ? "" : "08:00-18:00" })}
+              />
+              Cerrado
+            </label>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function BusinessHoursForm({
   pluginId,
   initialHours,
@@ -29,10 +85,6 @@ export function BusinessHoursForm({
   const router = useRouter();
   const [horas, setHoras] = useState<BusinessHours>(() => parseBusinessHours(initialHours));
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
-
-  function setRango(dia: string, inicio: string, fin: string) {
-    setHoras((prev) => ({ ...prev, [dia]: inicio && fin ? `${inicio}-${fin}` : "" }));
-  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -62,48 +114,7 @@ export function BusinessHoursForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      {DIAS.map(({ key, label }) => {
-        const { inicio, fin } = partir(horas[key] ?? "");
-        const cerrado = !horas[key];
-        return (
-          <div key={key} className="flex flex-wrap items-end gap-3">
-            <span className="w-24 text-sm text-headline">{label}</span>
-            <Field label="Abre" htmlFor={`${key}-inicio`}>
-              <Input
-                id={`${key}-inicio`}
-                type="time"
-                value={inicio}
-                disabled={cerrado}
-                onChange={(e) => setRango(key, e.target.value, fin || "18:00")}
-              />
-            </Field>
-            <Field label="Cierra" htmlFor={`${key}-fin`}>
-              <Input
-                id={`${key}-fin`}
-                type="time"
-                value={fin}
-                disabled={cerrado}
-                onChange={(e) => setRango(key, inicio || "08:00", e.target.value)}
-              />
-            </Field>
-            <label className="flex items-center gap-2 pb-2 text-sm text-body">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-control-border"
-                checked={cerrado}
-                onChange={(e) =>
-                  setHoras((prev) => ({
-                    ...prev,
-                    [key]: e.target.checked ? "" : "08:00-18:00",
-                  }))
-                }
-              />
-              Cerrado
-            </label>
-          </div>
-        );
-      })}
-
+      <HorarioEditor horas={horas} onChange={setHoras} idBase="negocio" />
       <FormFeedback error={status.error} success={status.success} />
       <div>
         <Button type="submit" variant="accent" disabled={status.loading}>

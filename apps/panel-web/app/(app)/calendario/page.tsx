@@ -1,133 +1,123 @@
+import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
+import { AvisoGoogle } from "@/components/domain/aviso-google";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api/server";
+import type { ListaDeAgendas, Me } from "@/lib/api/types";
+import type { LeyendaAgenda } from "@/lib/calendario/agenda";
+import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
 import Link from "next/link";
 
-import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
-import type { Me } from "@/lib/api/types";
-import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
+import { AgendaVista } from "./_components/agenda-vista";
+import type { DatosAjustes } from "./_components/ajustes-sheet";
+import type { Responsable } from "./_components/type-actions";
+import type { Tipo } from "./_components/types";
 
-export const metadata = { title: "Google Calendar" };
+export const metadata = { title: "Agenda" };
 
-const GOOGLE_AVISO: Record<string, { tone: string; texto: string }> = {
-  ok: { tone: "text-status-success-fg", texto: "Google Calendar conectado." },
-  cancelado: { tone: "text-status-warning-fg", texto: "Cancelaste la autorización de Google." },
-  error: { tone: "text-status-danger-fg", texto: "No se pudo completar la conexión con Google." },
-  otro_negocio: {
-    tone: "text-status-danger-fg",
-    texto:
-      "No se conectó: cambiaste de negocio mientras autorizabas en Google. Vuelve a conectar desde el negocio correcto.",
-  },
-  not_configured: {
-    tone: "text-status-warning-fg",
-    texto: "Configura las credenciales de Google del pack antes de conectar.",
-  },
-};
+type Status = { timezone: string };
+type TipoApi = Tipo & { description: string; duration_minutes: number; responsable_admin_id?: string | null; enlace_reunion?: string | null };
 
-type Status = {
-  configured: boolean;
-  connected: boolean;
-  account_email: string;
-  connection_label: string;
-  timezone: string;
-  default_duration_minutes: number;
-};
-
-export default async function CalendarPage({
+/**
+ * Agenda en una sola vista (HU-CAL-08, sobre HU-UX-08): el calendario con las citas de todas
+ * las agendas y un cajón de ajustes (tipos de cita, horario y agendas). La cuenta de Google
+ * de cada agenda se administra en la ficha de su conexión.
+ */
+export default async function AgendaPage({
   searchParams,
 }: {
   // `tenant`: la app abre `/calendario?tenant=<id>` con el negocio en el que está el dueño.
-  searchParams: Promise<{ google?: string; tenant?: string }>;
+  searchParams: Promise<{ google?: string; tenant?: string; ajustes?: string }>;
 }) {
-  const { google, tenant } = await searchParams;
-  const avisoGoogle = google ? GOOGLE_AVISO[google] : undefined;
-  const [statusRes, meRes] = await Promise.all([
+  const { google, tenant, ajustes } = await searchParams;
+  const [statusRes, meRes, tiposRes, agendasRes, colaboradoresRes, configRes] = await Promise.all([
     apiFetch<Status>("/pack/calendar/status"),
     apiFetch<Me>("/admin/me"),
+    apiFetch<TipoApi[]>("/pack/calendar/types"),
+    apiFetch<ListaDeAgendas>("/pack/calendar/calendars"),
+    apiFetch<{ id: string; email: string; active: boolean }[]>("/admin/collaborators"),
+    apiFetch<{ values: Record<string, unknown> }>("/admin/plugins/pack_calendar/config"),
   ]);
-  const activo = meRes.ok ? meRes.data.tenant : null;
+  const me = meRes.ok ? meRes.data : null;
+  const activo = me?.tenant ?? null;
   const negocioPedido = negocioPedidoDistinto(tenant, activo?.id);
-  if (!statusRes.ok) {
+
+  // `/status` pide la sección de conexión; las agendas (y la zona horaria de cada una) solo la de citas.
+  if (!agendasRes.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar Calendario: {statusRes.error}
-      </p>
+      <div className="flex flex-col gap-4">
+        <AvisoGoogle codigo={google} />
+        {agendasRes.status === 403 ? (
+          <EmptyState
+            title="Aún no tienes acceso a la Agenda"
+            description="Pídele a un propietario del negocio el permiso de Agenda."
+          />
+        ) : (
+          <p role="alert" className="text-status-danger-fg">
+            No se pudo cargar la Agenda: {agendasRes.error}
+          </p>
+        )}
+      </div>
     );
   }
-  const status = statusRes.data;
+
+  const permisos = me?.permissions ?? {};
+  const tipos = tiposRes.ok ? tiposRes.data : null;
+  const lista = agendasRes.data;
+  const leyenda: LeyendaAgenda[] = lista.calendars.map((a) => ({
+    id: a.id,
+    name: a.name,
+    color: a.color,
+    is_default: a.is_default,
+    active: a.active,
+    disponible: a.connected,
+  }));
+  const datosAjustes: DatosAjustes = {
+    tipos,
+    responsables: colaboradoresRes.ok
+      ? colaboradoresRes.data.filter((c) => c.active).map((c): Responsable => ({ id: c.id, email: c.email }))
+      : [],
+    horario: configRes.ok ? String(configRes.data.values?.business_hours ?? "") : null,
+    agendas: lista,
+    puedeEditarAgendas: permisos["pack_calendar:configuracion"] === "write",
+    otroNegocio: Boolean(negocioPedido),
+  };
+  const sinAgendas = lista.calendars.length === 0;
+  const zona = (statusRes.ok ? statusRes.data.timezone : "") || lista.calendars[0]?.timezone || "America/Bogota";
 
   return (
-    <div className="flex flex-col gap-6">
-      {avisoGoogle && (
-        <p role="status" className={avisoGoogle.tone}>
-          {avisoGoogle.texto}
-        </p>
-      )}
-
+    <div className="flex flex-col gap-4">
+      <AvisoGoogle codigo={google} />
       {negocioPedido && <CambiarNegocioAviso tenantId={negocioPedido} actual={activo?.name ?? null} />}
 
-      {/* HU-UX-08: las citas se ven en la pestaña Calendario; aquí solo queda la conexión, que
-          pasa a la ficha de conexión con HU-UX-09. */}
       <PageHeader
-        title="Google Calendar"
-        description="Conecta la agenda con Google Calendar. Las citas se ven en la pestaña Calendario."
-        actions={
-          <Button asChild variant="outline">
-            <Link href="/calendario/citas">Ver el calendario</Link>
-          </Button>
-        }
+        title="Agenda"
+        description="Elige un hueco para crear una cita o un bloqueo. Arrastra para mover y estira para cambiar la duración."
       />
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle>Estado de la conexión</CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant={status.configured ? "success" : "warning"}>
-                {status.configured ? "Configurada" : "Sin configurar"}
-              </Badge>
-              <Badge variant={status.connected ? "success" : "neutral"}>
-                {status.connected ? "Conectada" : "Sin conectar"}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4 text-sm">
-          <span className="text-body">
-            Zona horaria: <span className="text-headline">{status.timezone}</span>
-          </span>
-          <span className="text-body">
-            Duración por defecto:{" "}
-            <span className="text-headline">{status.default_duration_minutes} min</span>
-          </span>
-          {status.account_email && (
-            <span className="text-body">
-              Cuenta: <span className="text-headline">{status.account_email}</span>
-            </span>
-          )}
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+      {sinAgendas && (
+        <EmptyState
+          title="Aún no hay agendas"
+          description="Conecta una cuenta de Google Calendar o usa la agenda interna del negocio."
+          action={
             <Button asChild variant="outline" size="sm">
-              <Link href="/habilidades/pack_calendar">Configurar credenciales</Link>
+              <Link href="/calendario?ajustes=agendas">Configurar agendas</Link>
             </Button>
-            {negocioPedido ? (
-              // Con otro negocio pedido por la app, conectar guardaría la cuenta en el activo.
-              <Button variant="ghost" size="sm" disabled>
-                Conectar con Google ↗
-              </Button>
-            ) : (
-              <Button asChild variant="ghost" size="sm">
-                {/* `<a>` y no `<Link>`: el prefetch de Next llamaba al inicio del OAuth en cada
-                    carga y cada llamada renovaba el `state`, así que el retorno de Google no
-                    coincidía (HU-CAL-07). */}
-                <a href="/api/calendar/oauth?next=/calendario">Conectar con Google ↗</a>
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          }
+        />
+      )}
 
+      <AgendaVista
+        tenantId={activo?.id ?? "negocio"}
+        tipos={(tipos ?? []).filter((t) => t.active !== false)}
+        timezone={zona}
+        agendas={leyenda}
+        multiActivo={lista.multi_activo}
+        ajustes={datosAjustes}
+        seccionInicial={ajustes ?? null}
+        puedeCrear={permisos["pack_calendar:citas"] === "write"}
+      />
     </div>
   );
 }
