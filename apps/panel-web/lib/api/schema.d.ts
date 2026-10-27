@@ -4364,40 +4364,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/cobranza/owner-thread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Owner Thread */
-        get: operations["owner_thread_api_v1_pack_cobranza_owner_thread_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-thread/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Owner Message */
-        post: operations["create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/pack/cobranza/portfolios/{cartera_id}": {
         parameters: {
             query?: never;
@@ -5784,6 +5750,48 @@ export interface paths {
          * @description Contraseñas nuevas para las tres cuentas de prueba; cierra sus sesiones.
          */
         post: operations["contrasenas_nuevas_api_v1_admin_qa_datos_contrasenas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/datos/escenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Escenarios
+         * @description Escenarios de datos de prueba y lo que creó cada uno la última vez (HU-QA-13). 404 fuera de test.
+         */
+        get: operations["listar_escenarios_api_v1_admin_qa_datos_escenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/datos/escenarios/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear Escenario
+         * @description Crea un caso nuevo del escenario en el negocio de prueba del tester, sin LLM y sin borrar nada
+         *     (HU-QA-13). 404 si no existe o fuera de test; 409 sin datos preparados, con otra corrida en curso o
+         *     si el escenario no se puede crear (el motivo va en el mensaje).
+         */
+        post: operations["crear_escenario_api_v1_admin_qa_datos_escenarios__slug__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10510,53 +10518,12 @@ export interface components {
             /** Links */
             links: components["schemas"]["PaymentLink"][];
         };
-        /** OwnerMessage */
-        OwnerMessage: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Direccion */
-            direccion: string;
-            /** Tipo */
-            tipo: string;
-            /** Autor */
-            autor: string;
-            /** Contenido */
-            contenido: string;
-            /** Fecha */
-            fecha: string;
-        };
-        /** OwnerMessageCreate */
-        OwnerMessageCreate: {
-            /** Contenido */
-            contenido: string;
-            /**
-             * Direccion
-             * @default saliente
-             */
-            direccion: string;
-        };
         /** OwnerPayment */
         OwnerPayment: {
             /** Monto Pagado */
             monto_pagado: number;
             /** Metodo Pago */
             metodo_pago?: string | null;
-        };
-        /** OwnerThread */
-        OwnerThread: {
-            /** Whatsapp */
-            whatsapp: string;
-            /** Asunto */
-            asunto: string;
-            /** Estado */
-            estado: string;
-            /** Abierto */
-            abierto: boolean;
-            /** Mensajes */
-            mensajes: components["schemas"]["OwnerMessage"][];
         };
         /** PackRole */
         PackRole: {
@@ -11663,6 +11630,103 @@ export interface components {
         QaEnviarIn: {
             /** Comentario */
             comentario?: string | null;
+        };
+        /** QaEscenario */
+        QaEscenario: {
+            /**
+             * Slug
+             * @description Fijo: el catálogo de pruebas lo cita como `datos-escenario-<slug>`.
+             */
+            slug: string;
+            /** Titulo */
+            titulo: string;
+            /** Crea */
+            crea: string;
+            /** Requiere */
+            requiere: string;
+            /**
+             * Donde
+             * @description Sección del panel donde se ve.
+             */
+            donde: string;
+            /** Ruta */
+            ruta: string;
+            /**
+             * Agent Os
+             * @description Necesita el Agent OS listo en el negocio de prueba.
+             */
+            agent_os: boolean;
+            /** @description Lo que creó la última vez para este tester. */
+            ultimo?: components["schemas"]["QaEscenarioCreado"] | null;
+        };
+        /** QaEscenarioCreado */
+        QaEscenarioCreado: {
+            /**
+             * Sufijo
+             * @description Marca corta del caso: aparece en los nombres de lo creado.
+             */
+            sufijo: string;
+            /**
+             * Detalle
+             * @description Qué creó, en líneas legibles.
+             */
+            detalle: string[];
+            /** Conteos */
+            conteos?: {
+                [key: string]: number;
+            };
+            /**
+             * Ruta
+             * @description Ruta del panel donde se ve lo creado (en el negocio de prueba).
+             */
+            ruta: string;
+            /** Creado En */
+            creado_en?: string | null;
+        };
+        /** QaEscenarioResultado */
+        QaEscenarioResultado: {
+            /**
+             * Slug
+             * @description Fijo: el catálogo de pruebas lo cita como `datos-escenario-<slug>`.
+             */
+            slug: string;
+            /** Titulo */
+            titulo: string;
+            /** Crea */
+            crea: string;
+            /** Requiere */
+            requiere: string;
+            /**
+             * Donde
+             * @description Sección del panel donde se ve.
+             */
+            donde: string;
+            /** Ruta */
+            ruta: string;
+            /**
+             * Agent Os
+             * @description Necesita el Agent OS listo en el negocio de prueba.
+             */
+            agent_os: boolean;
+            /** @description Lo que creó la última vez para este tester. */
+            ultimo?: components["schemas"]["QaEscenarioCreado"] | null;
+            /**
+             * Negocio Id
+             * Format: uuid
+             * @description El negocio de prueba donde se creó (para cambiar a él y abrir la ruta).
+             */
+            negocio_id: string;
+            creado: components["schemas"]["QaEscenarioCreado"];
+        };
+        /** QaEscenarios */
+        QaEscenarios: {
+            /**
+             * Datos Listos
+             * @description El tester ya preparó sus datos: sin eso los escenarios dan 409.
+             */
+            datos_listos: boolean;
+            /** Escenarios */
+            escenarios: components["schemas"]["QaEscenario"][];
         };
         /** QaEvento */
         QaEvento: {
@@ -26448,70 +26512,6 @@ export interface operations {
             };
         };
     };
-    owner_thread_api_v1_pack_cobranza_owner_thread_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerThread"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerMessageCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     portfolio_detail_api_v1_pack_cobranza_portfolios__cartera_id__get: {
         parameters: {
             query?: never;
@@ -29472,6 +29472,105 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["QaDatos"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_escenarios_api_v1_admin_qa_datos_escenarios_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEscenarios"];
+                };
+            };
+            /** @description Solo el admin de plataforma y los testers. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Fuera de test (`QA_TESTERS_ENABLED` apagada) o el escenario no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_escenario_api_v1_admin_qa_datos_escenarios__slug__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEscenarioResultado"];
+                };
+            };
+            /** @description Solo el admin de plataforma y los testers. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Fuera de test (`QA_TESTERS_ENABLED` apagada) o el escenario no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sin datos preparados, otra corrida en curso o el escenario no se puede crear (motivo). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
