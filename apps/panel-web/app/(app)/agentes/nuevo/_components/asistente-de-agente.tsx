@@ -167,9 +167,11 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
             options={plantillas.map((p) => ({
               value: p.key,
               label: p.available ? p.name : `${p.name} (no disponible)`,
-              description: p.available
-                ? p.description
-                : `Activa la habilidad ${p.missing_skills.map(habilidadLabel).join(", ")} en Habilidades para usarlo.`,
+              description: !p.available
+                ? "No está disponible en tu servicio por ahora."
+                : p.will_enable.length > 0
+                  ? `${p.description} Al crearlo activaremos: ${p.will_enable.map(habilidadLabel).join(", ")}.`
+                  : p.description,
             }))}
           />
           {plantilla?.superpowers.length ? (
@@ -282,7 +284,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
           <p className="text-sm text-text-soft" aria-live="polite">
             {plantilla ? textoDeAvance(indice, pasos.length) : "Paso 1"}
           </p>
-          {plantilla && !plantilla.available && <Badge variant="warning">Falta una habilidad</Badge>}
+          {plantilla && !plantilla.available && <Badge variant="warning">No disponible</Badge>}
         </div>
         <Progress
           value={plantilla ? indice + 1 : 0}

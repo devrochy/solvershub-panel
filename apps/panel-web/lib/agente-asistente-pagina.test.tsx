@@ -45,6 +45,7 @@ const PLANTILLAS: AgentTemplatePage = {
       optional_skills: [],
       available: true,
       missing_skills: [],
+      will_enable: [],
       superpowers: [],
       requirements: [],
     },

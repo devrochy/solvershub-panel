@@ -71,7 +71,7 @@ export function errorDelPaso(
 ): string | undefined {
   if (paso.id === "tipo") {
     if (!plantilla) return "Elige qué quieres que haga tu agente.";
-    if (!plantilla.available) return "Para este tipo de agente falta activar una habilidad.";
+    if (!plantilla.available) return "Este tipo de agente no está disponible en tu servicio por ahora.";
     return undefined;
   }
   if (paso.id === "nombre") {

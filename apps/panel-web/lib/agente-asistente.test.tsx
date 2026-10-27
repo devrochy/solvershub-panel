@@ -59,6 +59,7 @@ function plantilla(key: string, name: string, questions: Question[], extra: Part
     optional_skills: [],
     available: true,
     missing_skills: [],
+    will_enable: [],
     superpowers: [],
     requirements: [],
     ...extra,
@@ -109,7 +110,7 @@ describe("pasos del asistente", () => {
     const [tipo, pregunta] = pasosDelAsistente(VENTAS);
     expect(errorDelPaso(tipo, { plantilla: null, respuestas: {}, nombre: "" }, null)).toMatch(/Elige/);
     const sinHabilidad = { ...VENTAS, available: false };
-    expect(errorDelPaso(tipo, elegirTipo(sinHabilidad), sinHabilidad)).toMatch(/habilidad/);
+    expect(errorDelPaso(tipo, elegirTipo(sinHabilidad), sinHabilidad)).toMatch(/no está disponible/);
     expect(errorDelPaso(tipo, elegirTipo(VENTAS), VENTAS)).toBeUndefined();
     expect(errorDelPaso(pregunta, { ...elegirTipo(VENTAS), respuestas: { que_vendes: "otra" } }, VENTAS)).toMatch(/opciones/);
   });
