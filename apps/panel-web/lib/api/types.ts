@@ -100,6 +100,21 @@ export type TenantTemplateItem = components["schemas"]["TenantTemplateItem"];
 export type MissingTemplates = components["schemas"]["MissingTemplates"];
 export type ApprovedTemplate = components["schemas"]["ApprovedTemplate"];
 
+// Plantillas con opciones que ejecutan una tool (SPEC-40, ADR-0172, HU-OPC-06).
+export type OpcionesDefinicion = components["schemas"]["Definicion"];
+export type OpcionesOpcion = components["schemas"]["OpcionDeLaPlantilla"];
+export type OpcionesAccion = components["schemas"]["Accion"];
+export type OpcionesAccionDelCatalogo = components["schemas"]["AccionDelCatalogoOut"];
+export type OpcionesVariable = components["schemas"]["OpcionesVariableOut"];
+export type OpcionesHallazgo = components["schemas"]["OpcionesHallazgoOut"];
+export type OpcionesPlantillaResumen = components["schemas"]["OpcionesPlantillaResumen"];
+export type OpcionesPlantilla = components["schemas"]["OpcionesPlantillaOut"];
+export type OpcionesVersion = components["schemas"]["OpcionesVersionOut"];
+export type OpcionesValidacion = components["schemas"]["OpcionesValidacionOut"];
+export type OpcionesVistaPrevia = components["schemas"]["VistaPreviaOpcionesOut"];
+export type OpcionesPublicada = components["schemas"]["OpcionesPublicadaOut"];
+export type OpcionesPrueba = components["schemas"]["OpcionesPruebaOut"];
+
 // Onboarding autoservicio (HU-SH-06, ADR-0124 de agent-core).
 export type PrimerosPasos = components["schemas"]["PrimerosPasosResponse"];
 export type PasoPrimerosPasos = components["schemas"]["PasoOut"];
