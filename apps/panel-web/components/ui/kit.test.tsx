@@ -98,6 +98,7 @@ describe("KpiTile", () => {
   it("escribe el delta contra qué compara", () => {
     expect(textoDelta({ value: 12, versus: "los 7 días anteriores" })).toBe("+12 % frente a los 7 días anteriores");
     expect(textoDelta({ value: -5.25, versus: "ayer" })).toBe("−5,3 % frente a ayer");
+    expect(textoDelta({ value: 4, versus: "el mes anterior" })).toBe("+4 % frente al mes anterior");
   });
 
   it("con polarity up-bad, subir se marca como desfavorable", () => {
