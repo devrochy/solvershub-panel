@@ -2865,9 +2865,35 @@ export interface paths {
         put?: never;
         /**
          * Create Tenant
-         * @description Alta de un negocio (master): tenant + asistente + cuenta admin opcional.
+         * @description Alta de un negocio (master): tenant + asistente + acceso del dueño por correo.
+         *
+         *     Con `admin_email` la cuenta del dueño nace sin contraseña y le llega un enlace de un solo
+         *     uso para definirla (ADR-0174). Si el correo no sale, el negocio se crea igual y la
+         *     respuesta lo dice (`invitation.estado`); se reenvía con `owner-invitation/resend`.
          */
         post: operations["create_tenant_api_v1_admin_platform_tenants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/owner-invitation/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reenvía el acceso al dueño del negocio
+         * @description Reenvía el correo de acceso a la cuenta de la invitación `owner` pendiente del negocio
+         *     (ADR-0174). El destinatario no se recibe: es el de la invitación. Reusa el enlace mientras
+         *     vigente y lo renueva si venció.
+         */
+        post: operations["resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13601,6 +13627,7 @@ export interface components {
             admin_email: string;
             /**
              * Admin Password
+             * @deprecated
              * @default
              */
             admin_password: string;
@@ -13616,6 +13643,7 @@ export interface components {
             slug: string;
             /** Steps */
             steps: string[];
+            invitation?: components["schemas"]["TenantOwnerInvitation"] | null;
         };
         /** TenantLink */
         TenantLink: {
@@ -13642,6 +13670,24 @@ export interface components {
             role: string;
             /** Active */
             active: boolean;
+        };
+        /**
+         * TenantOwnerInvitation
+         * @description Qué pasó con el acceso del dueño (ADR-0174). Nunca lleva el enlace ni el token.
+         */
+        TenantOwnerInvitation: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "enviado" | "sin_smtp" | "fallido" | "ya_emitida" | "ya_es_miembro";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "enlace" | "app";
+            /** Expires At */
+            expires_at?: string | null;
         };
         /** TenantPlanUpdate */
         TenantPlanUpdate: {
@@ -24579,6 +24625,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOwnerInvitation"];
                 };
             };
             /** @description Validation Error */

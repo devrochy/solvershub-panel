@@ -9,9 +9,10 @@ const PATHS: Record<string, string> = {
   activate: "activate",
   deactivate: "deactivate",
   purge: "purge",
+  resend_access: "owner-invitation/resend",
 };
 
-/** BFF: ciclo de vida y plan de un negocio (master). */
+/** BFF: ciclo de vida, plan y reenvío del acceso del dueño de un negocio (master). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as
@@ -41,5 +42,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       { status: res.status },
     );
   }
+  // El reenvío del acceso devuelve qué pasó con el correo (nunca el enlace).
+  if (action === "resend_access") return NextResponse.json({ ok: true, invitation: res.data });
   return NextResponse.json({ ok: true });
 }
