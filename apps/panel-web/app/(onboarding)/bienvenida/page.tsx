@@ -25,9 +25,16 @@ export default async function BienvenidaPage() {
   const puede = me.data.tenant.role === "owner" || me.data.role === "master";
   if (!recorrido.aplica || recorrido.estado === "completo" || !puede) redirect("/dashboard");
 
-  // Tipos de negocio cuya plantilla de agente está lista; si la lista no carga, no se bloquea ninguno.
+  // Tipos de negocio cuya plantilla de agente se puede ofrecer; si la lista no carga, no se bloquea ninguno.
+  // Elegir un tipo activa sus habilidades (`will_enable`): ya no hay que activarlas antes. Solo queda fuera un
+  // tipo que este servicio no trae.
   const listas = plantillas.ok ? new Set(plantillas.data.items.filter((p) => p.available).map((p) => p.key)) : null;
   const disponibles = listas ? TIPOS_DE_NEGOCIO.filter((t) => listas.has(t.id)).map((t) => t.id as TipoDeNegocio) : null;
+  const habilitara: Partial<Record<TipoDeNegocio, string[]>> = plantillas.ok
+    ? Object.fromEntries(
+        TIPOS_DE_NEGOCIO.map((t) => [t.id, plantillas.data.items.find((p) => p.key === t.id)?.will_enable ?? []]),
+      )
+    : {};
   const contenido = onboarding.data.pasos.find((p) => p.tipo) ?? null;
 
   return (
@@ -38,6 +45,7 @@ export default async function BienvenidaPage() {
       identidad={ajustes.data.identity}
       contenido={contenido}
       disponibles={disponibles}
+      habilitara={habilitara}
     />
   );
 }

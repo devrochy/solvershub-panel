@@ -89,6 +89,8 @@ type Props = {
   identidad: IdentitySettings;
   contenido: PasoPrimerosPasos | null;
   disponibles: TipoDeNegocio[] | null;
+  /** Habilidades que se activarán al crear el agente de cada tipo (las que el negocio aún no tiene). */
+  habilitara: Partial<Record<TipoDeNegocio, string[]>>;
 };
 
 const nunca = () => () => {};
@@ -110,6 +112,7 @@ function Asistente({
   identidad,
   contenido,
   disponibles,
+  habilitara,
   borrador,
 }: Props & { borrador: Borrador }) {
   const router = useRouter();
@@ -268,7 +271,12 @@ function Asistente({
             <h1 ref={titulo} tabIndex={-1} className="font-display text-sh-h1 text-headline outline-none">
               {pasoActual.titulo}
             </h1>
-            {pasoActual.id === "negocio" && <PasoNegocio estado={estado} onCambiar={cambiar} disponibles={disponibles ? new Set(disponibles) : null} />}
+            {pasoActual.id === "negocio" && <PasoNegocio
+                estado={estado}
+                onCambiar={cambiar}
+                disponibles={disponibles ? new Set(disponibles) : null}
+                habilitara={habilitara}
+              />}
             {pasoActual.id === "voz" && <PasoVoz estado={estado} onCambiar={cambiar} />}
             {pasoActual.id === "reglas" && <PasoReglas estado={estado} onCambiar={cambiar} />}
             {pasoActual.id === "conocimiento" && <PasoConocimiento estado={estado} contenido={contenido} />}

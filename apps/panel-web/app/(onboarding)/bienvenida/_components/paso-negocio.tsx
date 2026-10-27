@@ -5,6 +5,7 @@ import { CalendarCheck, HandCoins, Repeat, ShoppingBag } from "lucide-react";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { habilidadLabel } from "@/lib/labels";
 import {
   DESCRIPCION_MAX,
   NOMBRE_AGENTE_MAX,
@@ -29,13 +30,17 @@ export function PasoNegocio({
   estado,
   onCambiar,
   disponibles,
+  habilitara,
 }: {
   estado: EstadoDelAsistente;
   onCambiar: (cambios: Partial<EstadoDelAsistente>) => void;
-  /** Tipos cuya plantilla está lista en este negocio; si no se conoce, todos. */
+  /** Tipos que este servicio puede ofrecer; si no se conoce, todos. */
   disponibles: ReadonlySet<TipoDeNegocio> | null;
+  /** Habilidades que se activarán al crear el agente de cada tipo. */
+  habilitara: Partial<Record<TipoDeNegocio, string[]>>;
 }) {
   const tipo = TIPOS_DE_NEGOCIO.find((t) => t.id === estado.tipo);
+  const porActivar = (estado.tipo && habilitara[estado.tipo]) || [];
   return (
     <div className="flex flex-col gap-8">
       <fieldset className="flex flex-col gap-3">
@@ -52,12 +57,18 @@ export function PasoNegocio({
                 deshabilitada={!lista}
                 onElegir={() => onCambiar({ tipo: t.id, nombreDelAgente: estado.nombreDelAgente || t.nombres[0] })}
                 titulo={t.titulo}
-                ayuda={lista ? t.ayuda : "Falta activar una habilidad para este tipo."}
+                ayuda={lista ? t.ayuda : "Este tipo no está disponible en tu servicio por ahora."}
                 icono={ICONOS[t.id]}
               />
             );
           })}
         </div>
+        {porActivar.length > 0 && (
+          <p className="text-sm text-body" aria-live="polite">
+            Al terminar activaremos por ti: <span className="text-headline">{porActivar.map(habilidadLabel).join(", ")}</span>.
+            Podrás configurarla después en Habilidades.
+          </p>
+        )}
       </fieldset>
 
       {estado.tipo === "ventas" && (

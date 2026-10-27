@@ -28,7 +28,9 @@ function respuesta(cuerpo: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } }));
 }
 
-function montar(recorrido: Recorrido = PENDIENTE) {
+type Extra = Partial<React.ComponentProps<typeof RecorridoDeBienvenida>>;
+
+function montar(recorrido: Recorrido = PENDIENTE, extra: Extra = {}) {
   return render(
     <FeedbackProviders>
       <RecorridoDeBienvenida
@@ -38,6 +40,8 @@ function montar(recorrido: Recorrido = PENDIENTE) {
         identidad={{ ...ajustes.identity, assistant_name: "Sport Plus", business_description: "", business_ranges: [], escalation_keywords: [], persona_forbidden: [] }}
         contenido={null}
         disponibles={["ventas", "agenda"]}
+        habilitara={{ ventas: ["pack_commerce"], agenda: [] }}
+        {...extra}
       />
     </FeedbackProviders>,
   );
@@ -108,6 +112,24 @@ describe("asistente de primer uso", () => {
       cambios: { assistant_name: "Sofía", business_description: "Sport Plus. Vendemos ropa deportiva con envíos" },
     });
     expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 2 });
+  });
+
+  it("elegir un tipo no pide activar nada antes: avisa qué habilidad se activará al terminar", async () => {
+    montar();
+    expect(screen.queryByText(/Al terminar activaremos/)).toBeNull();
+    fireEvent.click(await screen.findByRole("radio", { name: /Vendo productos o planes/ }));
+    expect((await screen.findByText(/Al terminar activaremos/)).textContent).toMatch(/Comercio/);
+    // Un tipo cuya habilidad ya está activa no dice nada.
+    fireEvent.click(await screen.findByRole("radio", { name: /citas|agenda/i }));
+    expect(screen.queryByText(/Al terminar activaremos/)).toBeNull();
+  });
+
+  it("un tipo que el servicio no trae sale deshabilitado y sin pedir activar una habilidad", async () => {
+    montar(PENDIENTE, { disponibles: ["agenda"] });
+    const ventas = (await screen.findByRole("radio", { name: /Vendo productos o planes/ })) as HTMLInputElement;
+    expect(ventas.disabled).toBe(true);
+    expect(screen.getAllByText(/no está disponible en tu servicio/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Falta activar una habilidad/)).toBeNull();
   });
 
   it("la tarjeta del agente muestra el nombre y la voz elegidos", async () => {

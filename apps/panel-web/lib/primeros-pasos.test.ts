@@ -40,8 +40,8 @@ describe("primeros pasos (HU-SH-06)", () => {
       "/cobranza/clientes",
     );
     expect(copiaDelPaso(paso({ clave: "catalogo", motivo: "sin_habilidad" }))).toMatchObject({
-      href: "/habilidades",
-      accion: "Ver habilidades",
+      href: "/agentes/nuevo",
+      accion: "Crear mi agente",
     });
   });
 
