@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 import type {
+  HealthConnectionMeta,
   OpcionesAccionDelCatalogo,
   OpcionesDefinicion,
   OpcionesHallazgo,
@@ -45,6 +46,7 @@ import { EnviarPrueba } from "./enviar-prueba";
 import { MensajesDeCampo } from "./mensajes-de-campo";
 import { SinBandera } from "./sin-bandera";
 import { TarjetaOpcion } from "./tarjeta-opcion";
+import { VersionesYMeta } from "./meta/versiones-y-meta";
 import { TextoConChips } from "./texto-con-chips";
 import { VistaPreviaTelefono } from "./vista-previa-telefono";
 
@@ -63,11 +65,14 @@ export function EditorDePlantilla({
   inicial,
   acciones,
   variables,
+  conexiones = [],
   puedeEscribir,
 }: {
   inicial: OpcionesPlantilla;
   acciones: OpcionesAccionDelCatalogo[];
   variables: OpcionesVariable[];
+  /** Conexiones de Meta del negocio (`GET /admin/meta/health`): las que ofrece «Publicar en Meta». */
+  conexiones?: HealthConnectionMeta[];
   puedeEscribir: boolean;
 }) {
   const router = useRouter();
@@ -473,20 +478,13 @@ export function EditorDePlantilla({
             )}
           </section>
 
-          {plantilla.versiones.length > 0 && (
-            <details className="rounded-lg border border-border-soft bg-surface p-4 text-sm">
-              <summary className="cursor-pointer font-medium text-headline">Versiones publicadas ({plantilla.versiones.length})</summary>
-              <ul className="mt-3 flex flex-col gap-1.5">
-                {plantilla.versiones.map((v) => (
-                  <li key={v.version_n} className="flex flex-wrap items-center gap-2 text-body">
-                    <span className="tabular-nums">Versión {v.version_n}</span>
-                    <span className="text-xs text-text-soft">{new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(v.publicada_en))}</span>
-                    {v.vigente ? <Badge variant="success">Vigente</Badge> : v.retirada_en ? <Badge variant="neutral">Retirada</Badge> : null}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
+          <VersionesYMeta
+            plantilla={plantilla}
+            conexiones={conexiones}
+            puedeEscribir={puedeEscribir}
+            onActualizar={recargar}
+            onBanderaApagada={() => setBanderaApagada(true)}
+          />
         </div>
 
         <aside className="flex flex-col gap-3 lg:sticky lg:top-24">
@@ -497,8 +495,8 @@ export function EditorDePlantilla({
             motivoSinVista={errores ? "Corrige los errores marcados para ver cómo se verá." : undefined}
           />
           <p className="text-xs text-text-soft">
-            Por ahora se publica como mensaje interactivo: lo ven los clientes que escribieron en las últimas 24 horas. Publicarla también como plantilla
-            de Meta, para escribir fuera de ese plazo, llegará en una próxima actualización.
+            Al publicar sale como mensaje interactivo: lo ven los clientes que escribieron en las últimas 24 horas. Para escribir fuera de ese plazo,
+            publica la versión también como plantilla de Meta en «Versiones y plantilla de Meta».
           </p>
           {valida && !errores && hallazgos.length === 0 && (
             <p role="status" className="text-xs text-status-success-fg">

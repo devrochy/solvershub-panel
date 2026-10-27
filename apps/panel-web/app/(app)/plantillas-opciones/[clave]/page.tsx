@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { Me, OpcionesAccionDelCatalogo, OpcionesPlantilla, OpcionesVariable } from "@/lib/api/types";
+import type { HealthConnectionMeta, Me, OpcionesAccionDelCatalogo, OpcionesPlantilla, OpcionesVariable } from "@/lib/api/types";
 import { CLAVE_VALIDA, esBanderaApagada, puedeEscribirOpciones } from "@/lib/plantillas-opciones";
 
 import { EditorDePlantilla } from "../_components/editor";
@@ -15,11 +15,12 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
   const { clave } = await params;
   if (!CLAVE_VALIDA.test(clave)) notFound();
 
-  const [plantilla, acciones, variables, me] = await Promise.all([
+  const [plantilla, acciones, variables, me, salud] = await Promise.all([
     apiFetch<OpcionesPlantilla>(`/plantillas-opciones/${clave}`),
     apiFetch<{ acciones: OpcionesAccionDelCatalogo[] }>("/plantillas-opciones/catalogo-acciones"),
     apiFetch<{ variables: OpcionesVariable[] }>("/plantillas-opciones/catalogo-variables"),
     apiFetch<Me>("/admin/me"),
+    apiFetch<{ connections: HealthConnectionMeta[] }>("/admin/meta/health"),
   ]);
 
   const falla = [plantilla, acciones, variables].find((r) => !r.ok);
@@ -50,6 +51,8 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
       inicial={plantilla.data}
       acciones={acciones.data.acciones}
       variables={variables.data.variables}
+      // Si la salud de Meta no carga, el diálogo explica que no hay conexión lista en vez de romper la pantalla.
+      conexiones={salud.ok ? (salud.data.connections ?? []) : []}
       puedeEscribir={me.ok && puedeEscribirOpciones(me.data)}
     />
   );
