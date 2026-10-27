@@ -56,6 +56,7 @@ export function EditorDeAgente({
   destinosError,
   puedeActivar,
   requisitos = [],
+  pasoInicial = "identidad",
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -65,6 +66,8 @@ export function EditorDeAgente({
   puedeActivar: boolean;
   /** Lo que falta configurar para este enfoque (aviso, no bloquea). */
   requisitos?: Requirement[];
+  /** Paso con el que abre (el asistente de creación entra directo a publicar, HU-AOS-54). */
+  pasoInicial?: PasoId;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -75,8 +78,8 @@ export function EditorDeAgente({
   const [lock, setLock] = useState(agente.draft.lock_version);
   const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes));
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
-  const [paso, setPaso] = useState<PasoId>("identidad");
-  const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad"]));
+  const [paso, setPaso] = useState<PasoId>(pasoInicial);
+  const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad", pasoInicial]));
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
