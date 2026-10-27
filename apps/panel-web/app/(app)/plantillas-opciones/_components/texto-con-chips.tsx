@@ -42,13 +42,16 @@ export function TextoConChips({
 }) {
   const id = useId();
   const area = useRef<HTMLTextAreaElement>(null);
+  // Mientras nadie haya puesto el cursor en el texto, el dato se agrega al final.
+  const enfocado = useRef(false);
   const total = contar(value);
   const excedido = total > max;
   const conError = hallazgos.some((h) => h.severity === "error") || excedido;
 
   function insertar(texto: string) {
     const el = area.current;
-    const { valor, cursor } = insertarEn(value, texto, el?.selectionStart ?? undefined, el?.selectionEnd ?? undefined);
+    const usarCursor = enfocado.current && el;
+    const { valor, cursor } = insertarEn(value, texto, usarCursor ? el.selectionStart : undefined, usarCursor ? el.selectionEnd : undefined);
     onChange(valor);
     // El cursor queda después de lo insertado, también tras el re-render.
     requestAnimationFrame(() => {
@@ -80,6 +83,7 @@ export function TextoConChips({
         placeholder={placeholder}
         aria-invalid={conError || undefined}
         aria-describedby={`${id}-conteo ${hallazgos.length ? `${id}-mensajes` : ""} ${help ? `${id}-ayuda` : ""}`.trim()}
+        onFocus={() => (enfocado.current = true)}
         onChange={(e) => onChange(e.target.value)}
       />
       {chips.length > 0 && !disabled && (
