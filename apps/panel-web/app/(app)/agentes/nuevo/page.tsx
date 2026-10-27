@@ -4,7 +4,7 @@ import { AsistenteDeAgente } from "@/app/(app)/agentes/nuevo/_components/asisten
 import { PageHeader } from "@/components/ui/page-header";
 import { puedeEditarAgentes } from "@/lib/agentes";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentTemplatePage, Me } from "@/lib/api/types";
+import type { AgentsOverview, AgentTemplatePage, Me } from "@/lib/api/types";
 
 export const metadata = { title: "Nuevo agente" };
 
@@ -13,7 +13,7 @@ export default async function NuevoAgentePage() {
   const [plantillas, me, agentes] = await Promise.all([
     apiFetch<AgentTemplatePage>("/admin/agent-templates?page_size=100"),
     apiFetch<Me>("/admin/me"),
-    apiFetch<{ runtime: string }>("/admin/agents?page_size=1"),
+    apiFetch<AgentsOverview>("/admin/agents/overview"),
   ]);
   const runtime = agentes.ok ? agentes.data.runtime : "legacy";
   const puede = me.ok && puedeEditarAgentes(me.data, runtime);
