@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { HealthConnectionMeta, Me, OpcionesAccionDelCatalogo, OpcionesPlantilla, OpcionesVariable } from "@/lib/api/types";
+import { enlaceAlInterruptor } from "@/lib/opciones-directas-bandera";
 import { CLAVE_VALIDA, esBanderaApagada, puedeEscribirOpciones } from "@/lib/plantillas-opciones";
 
 import { EditorDePlantilla } from "../_components/editor";
@@ -23,6 +24,8 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
     apiFetch<{ connections: HealthConnectionMeta[] }>("/admin/meta/health"),
   ]);
 
+  const enlaceActivar = me.ok ? enlaceAlInterruptor(me.data) : null;
+
   const falla = [plantilla, acciones, variables].find((r) => !r.ok);
   if (falla && !falla.ok) {
     if (falla.status === 404 && falla.code === "not_found") notFound();
@@ -33,7 +36,7 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
           breadcrumbs={[{ label: "Plantillas de WhatsApp", href: "/plantillas" }, { label: "Plantillas con opciones", href: "/plantillas-opciones" }, { label: clave }]}
         />
         {esBanderaApagada(falla) ? (
-          <SinBandera />
+          <SinBandera enlaceActivar={enlaceActivar} />
         ) : (
           <Card>
             <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
@@ -54,6 +57,7 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
       // Si la salud de Meta no carga, el diálogo explica que no hay conexión lista en vez de romper la pantalla.
       conexiones={salud.ok ? (salud.data.connections ?? []) : []}
       puedeEscribir={me.ok && puedeEscribirOpciones(me.data)}
+      enlaceActivar={enlaceActivar}
     />
   );
 }

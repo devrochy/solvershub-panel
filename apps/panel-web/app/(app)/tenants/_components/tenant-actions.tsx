@@ -5,6 +5,7 @@ import { MoreHorizontal } from "lucide-react";
 
 import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
+import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
 import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -20,11 +21,17 @@ import { useAction } from "@/lib/use-action";
 export function TenantActions({
   tenant,
   plans,
+  esMaster = false,
+  abrirInicial = false,
 }: {
   tenant: PlatformTenant;
   plans: PlanResponse["plans"];
+  /** Solo el admin de plataforma ve el interruptor de plantillas con opciones (el tester no). */
+  esMaster?: boolean;
+  /** Llega por el enlace del editor de plantillas con opciones: abre el diálogo ya en el interruptor. */
+  abrirInicial?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(abrirInicial && esMaster);
   const { run: ejecutar, pending } = useAction();
   const activo = tenant.status === "active";
   const eliminable = sePuedeEliminar(tenant.status);
@@ -119,6 +126,18 @@ export function TenantActions({
           </form>
 
           <Separator />
+
+          {esMaster && (
+            <>
+              <OpcionesDirectasSection
+                tenantId={tenant.id}
+                negocio={tenant.name || tenant.slug}
+                enfocar={abrirInicial}
+              />
+
+              <Separator />
+            </>
+          )}
 
           <AgentOSSection tenantId={tenant.id} />
 

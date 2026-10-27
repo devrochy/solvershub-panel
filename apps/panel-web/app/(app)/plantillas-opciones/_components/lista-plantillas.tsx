@@ -18,10 +18,13 @@ import { SinBandera } from "./sin-bandera";
 export function ListaPlantillas({
   plantillas,
   puedeEscribir,
+  enlaceActivar,
   banner,
 }: {
   plantillas: OpcionesPlantillaResumen[];
   puedeEscribir: boolean;
+  /** Enlace al interruptor del negocio, solo para el master: se ofrece si la función no está activada. */
+  enlaceActivar?: string | null;
   /** Alerta de plantillas faltantes (servidor), encima de la tabla. */
   banner?: React.ReactNode;
 }) {
@@ -64,7 +67,7 @@ export function ListaPlantillas({
         actions={puedeEscribir && !banderaApagada ? <CrearPlantilla onBanderaApagada={() => setBanderaApagada(true)} /> : undefined}
       />
       {banderaApagada ? (
-        <SinBandera />
+        <SinBandera enlaceActivar={enlaceActivar} />
       ) : (
         <>
           {banner}

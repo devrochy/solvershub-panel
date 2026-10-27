@@ -121,10 +121,10 @@ function simular(manejador: Manejador, opciones: { hallazgos?: OpcionesHallazgo[
   return llamadas;
 }
 
-function pintar(inicial: OpcionesPlantilla = plantilla(), puedeEscribir = true) {
+function pintar(inicial: OpcionesPlantilla = plantilla(), puedeEscribir = true, enlaceActivar?: string | null) {
   return render(
     <FeedbackProviders>
-      <EditorDePlantilla inicial={inicial} acciones={ACCIONES} variables={VARIABLES} puedeEscribir={puedeEscribir} />
+      <EditorDePlantilla inicial={inicial} acciones={ACCIONES} variables={VARIABLES} puedeEscribir={puedeEscribir} enlaceActivar={enlaceActivar} />
     </FeedbackProviders>,
   );
 }
@@ -192,6 +192,16 @@ describe("editor · validación en vivo", () => {
     pintar();
     expect(await screen.findByText(/no están activadas en tu negocio/)).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("link", { name: /interruptor/ })).toBeNull();
+  });
+
+  it("al master el estado vacío le ofrece el enlace directo al interruptor de su negocio", async () => {
+    simular((l) =>
+      l.ruta === "plantillas-opciones/validar" ? error(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas.") : undefined,
+    );
+    pintar(plantilla(), true, "/tenants?q=Caf%C3%A9&abrir=t-1");
+    const enlace = await screen.findByRole("link", { name: "Ir al interruptor de este negocio" });
+    expect(enlace.getAttribute("href")).toBe("/tenants?q=Caf%C3%A9&abrir=t-1");
   });
 });
 
