@@ -7,6 +7,8 @@
 import type {
   OpcionesAccionDelCatalogo,
   OpcionesDefinicion,
+  OpcionesMetaPedido,
+  OpcionesMetaResultado,
   OpcionesPlantilla,
   OpcionesPlantillaResumen,
   OpcionesPrueba,
@@ -49,12 +51,15 @@ export const opcionesApi = {
     llamar<OpcionesPlantilla>("PUT", `/${clave(c)}/borrador`, cuerpo),
   eliminar: (c: string) => llamar<null>("DELETE", `/${clave(c)}`),
   publicar: (c: string) => llamar<OpcionesPublicada>("POST", `/${clave(c)}/publicar`, {}),
+  /** Alta, o reintento, de UNA versión como plantilla de Meta. Repetirla no duplica la plantilla (idempotente). */
+  publicarEnMeta: (c: string, version: number, cuerpo: OpcionesMetaPedido) =>
+    llamar<OpcionesMetaResultado>("POST", `/${clave(c)}/versiones/${version}/publicar-en-meta`, cuerpo),
   retirar: (c: string) => llamar<OpcionesPlantilla>("POST", `/${clave(c)}/retirar`, {}),
   enviarPrueba: (c: string, cuerpo: { conversation_id: string; clave_idempotencia: string }) =>
     llamar<OpcionesPrueba>("POST", `/${clave(c)}/enviar-prueba`, cuerpo),
   validar: (definicion: OpcionesDefinicion, senal?: AbortSignal) => llamar<OpcionesValidacion>("POST", "/validar", { definicion }, senal),
-  vistaPrevia: (definicion: OpcionesDefinicion, senal?: AbortSignal) =>
-    llamar<OpcionesVistaPrevia>("POST", "/vista-previa", { definicion }, senal),
+  vistaPrevia: (definicion: OpcionesDefinicion, senal?: AbortSignal, ejemplos?: Record<string, string>) =>
+    llamar<OpcionesVistaPrevia>("POST", "/vista-previa", ejemplos && Object.keys(ejemplos).length > 0 ? { definicion, ejemplos } : { definicion }, senal),
   catalogoAcciones: () => llamar<{ acciones: OpcionesAccionDelCatalogo[] }>("GET", "/catalogo-acciones"),
   catalogoVariables: () => llamar<{ variables: OpcionesVariable[] }>("GET", "/catalogo-variables"),
 };

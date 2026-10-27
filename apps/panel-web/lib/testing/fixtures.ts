@@ -1057,8 +1057,56 @@ export const plantillaDeOpciones = {
   borrador: definicionDeOpciones,
   definicion_vigente: definicionDeOpciones,
   versiones: [
-    { version_n: 2, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: null, vigente: true },
-    { version_n: 1, publicada_en: "2026-10-21T09:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: null, vigente: false },
+    { version_n: 2, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: null, meta: null, vigente: true },
+    { version_n: 1, publicada_en: "2026-10-21T09:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: null, meta: null, vigente: false },
+  ],
+};
+
+/** Estado de una plantilla de Meta ligada a una versión (`OpcionesMetaEstadoOut`). */
+export const metaDeVersion = (nombre: string, estado: string, extra: Record<string, unknown> = {}) => ({
+  message_template_id: "00000000-0000-4000-8000-0000000000aa",
+  nombre,
+  estado,
+  categoria: "UTILITY",
+  categoria_anterior: null,
+  motivo_rechazo: null,
+  recomendacion: null,
+  error_de_publicacion: null,
+  ...extra,
+});
+
+/** Versiones con `meta` para mostrar cada estado de Meta (la vigente es la 5). */
+export const versionesConMeta = [
+  { version_n: 5, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "e".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a5", meta: metaDeVersion("demo_estados_v5", "PENDING"), vigente: true },
+  { version_n: 4, publicada_en: "2026-10-26T10:00:00Z", retirada_en: null, definition_hash: "d".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a4", meta: metaDeVersion("demo_estados_v4", "APPROVED", { categoria: "MARKETING", categoria_anterior: "UTILITY" }), vigente: false },
+  { version_n: 3, publicada_en: "2026-10-25T10:00:00Z", retirada_en: null, definition_hash: "c".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a3", meta: metaDeVersion("demo_estados_v3", "REJECTED", { motivo_rechazo: "INVALID_FORMAT", recomendacion: "Quita los saltos de línea seguidos del cuerpo." }), vigente: false },
+  { version_n: 2, publicada_en: "2026-10-24T10:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a2", meta: metaDeVersion("demo_estados_v2", "PAUSED"), vigente: false },
+  { version_n: 1, publicada_en: "2026-10-23T09:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a1", meta: metaDeVersion("demo_estados_v1", "DRAFT", { error_de_publicacion: "network_error" }), vigente: false },
+];
+
+/** Conexiones de `GET /admin/meta/health`: una lista, una con avisos, una con error y una que no es de WhatsApp. */
+const conexionDeSalud = (id: string, extra: Record<string, unknown>) => ({
+  id,
+  channel: "whatsapp",
+  environment: "production",
+  origin: "embedded_signup",
+  status: "connected",
+  status_reason: null,
+  last_health_check_at: "2026-10-27T09:00:00Z",
+  health: {},
+  checks: [],
+  billing_manual_status: null,
+  business_id: "123456789",
+  meta_app_id: "987654321",
+  token_expires_at: "2027-01-01T00:00:00Z",
+  ...extra,
+});
+export const saludMeta = {
+  connections: [
+    conexionDeSalud("00000000-0000-4000-8000-00000000aaaa", {}),
+    conexionDeSalud("00000000-0000-4000-8000-00000000bbbb", { environment: "sandbox", origin: "byok", status: "degraded" }),
+    conexionDeSalud("00000000-0000-4000-8000-00000000cccc", { status: "error", status_reason: "Token inválido" }),
+    conexionDeSalud("00000000-0000-4000-8000-00000000dddd", { channel: "instagram" }),
   ],
 };
 
@@ -1083,6 +1131,7 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/plantillas-opciones/catalogo-acciones": accionesDeOpciones,
   "/plantillas-opciones/catalogo-variables": variablesDeOpciones,
   "/plantillas-opciones/confirmar_cita": plantillaDeOpciones,
+  "/admin/meta/health": saludMeta,
   "/admin/conversations": conversaciones,
   "/admin/conversations/connections": conexionesDeConversaciones,
   "/admin/conversations/test-conv-1": conversacionAbierta,

@@ -8,6 +8,7 @@
 //   node scripts/backend-de-prueba.mjs            # escucha en :8765
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
+//   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
 //
 // Luego, en otra terminal:
 //   AGENT_CORE_API_URL=http://localhost:8765 npm run start -- -p 3293
@@ -18,7 +19,7 @@
 
 import { createServer } from "node:http";
 
-const { RESPUESTAS, accionesDeOpciones, ajustes, dosAgendas, eventosAgenda, listaDeOpciones, me, plantillaDeOpciones, variablesDeOpciones } =
+const { RESPUESTAS, accionesDeOpciones, ajustes, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
 
 const puerto = Number(process.env.PUERTO ?? 8765);
@@ -38,6 +39,9 @@ if (process.env.SOLO_LECTURA === "1") {
   respuestas["/admin/me"] = { ...me, role: "agent", tenant: { ...me.tenant, role: "agent" } };
 }
 
+// SIN_CONEXIONES=1: sin conexiones de Meta (el diálogo de publicar en Meta explica cómo conectar WhatsApp).
+if (process.env.SIN_CONEXIONES === "1") respuestas["/admin/meta/health"] = { connections: [] };
+
 // Plantillas con opciones (SPEC-40, HU-OPC-06), con estado en memoria y un lint mínimo con las reglas
 // del backend para ver los hallazgos junto a su campo. OPCIONES_BANDERA=0 apaga la función (404 por negocio).
 const bandera = process.env.OPCIONES_BANDERA !== "0";
@@ -47,7 +51,44 @@ const plantillasOpciones = new Map([
     .filter((p) => p.clave !== "confirmar_cita")
     .map((p) => [p.clave, { ...p, borrador: p.estado === "retired" ? plantillaDeOpciones.borrador : null, definicion_vigente: null, versiones: [] }]),
 ]);
+// Una plantilla con una versión en cada estado de Meta, para ver cómo se pintan (HU-OPC-04, HU-OPC-06).
+plantillasOpciones.set("demo_estados", {
+  ...structuredClone(plantillaDeOpciones),
+  clave: "demo_estados",
+  nombre: "Demo de estados de Meta",
+  version_vigente: 5,
+  versiones: structuredClone(versionesConMeta),
+});
 const enviosOpciones = new Map();
+// Publicar en Meta (simulado, sin red): la conexión «…aaaa» publica a la primera; la «…bbbb» falla con un corte la
+// primera vez (reintentable) y publica en el reintento; «…eeee» simula un rechazo de Meta. Nada sale de esta máquina.
+const intentosMeta = new Map();
+function publicarEnMeta(p, versionN, cuerpo) {
+  const v = p.versiones.find((x) => x.version_n === versionN);
+  if (!v) return errorOpciones(404, "not_found", "No existe esa versión.");
+  if (v.retirada_en) return errorOpciones(409, "version_retirada", "Esa versión está retirada: publica una versión nueva.");
+  if (!["UTILITY", "MARKETING"].includes(cuerpo.categoria)) {
+    return [422, { detail: [{ type: "literal_error", loc: ["body", "categoria"], msg: "Input should be 'UTILITY' or 'MARKETING'", input: cuerpo.categoria }] }];
+  }
+  const nombre = `${p.clave}_v${versionN}`;
+  const clave = `${p.clave}:${versionN}`;
+  const resultado = (ok, outcome, reintentable, extra = {}) => ({
+    ok, outcome, reintentable, nombre, estado: ok ? "PENDING" : "DRAFT", categoria: cuerpo.categoria,
+    message_template_id: "00000000-0000-4000-8000-0000000000bb", meta_template_id: ok ? "1234567890" : null, motivo: null, ...extra,
+  });
+  if (cuerpo.connection_id.endsWith("bbbb") && !intentosMeta.has(clave)) {
+    intentosMeta.set(clave, true);
+    v.message_template_id = "00000000-0000-4000-8000-0000000000bb";
+    v.meta = metaDeVersion(nombre, "DRAFT", { categoria: cuerpo.categoria, error_de_publicacion: "network_error" });
+    return [200, resultado(false, "network_error", true)];
+  }
+  if (cuerpo.connection_id.endsWith("eeee")) {
+    return [200, resultado(false, "meta_rejected", false, { motivo: "Parameter 'example' is invalid." })];
+  }
+  v.message_template_id = "00000000-0000-4000-8000-0000000000bb";
+  v.meta = metaDeVersion(nombre, "PENDING", { categoria: cuerpo.categoria });
+  return [200, resultado(true, "published", false)];
+}
 const hallazgo = (path, code, severity, mensaje) => ({ path, code, severity, mensaje });
 function lintOpciones(d) {
   const h = [];
@@ -152,8 +193,12 @@ function opciones(metodo, partes, cuerpo) {
     p.definicion_vigente = structuredClone(p.borrador);
     p.estado = "published";
     p.tiene_borrador_sin_publicar = false;
-    p.versiones = [{ version_n: p.version_vigente, publicada_en: ahora, retirada_en: null, definition_hash: "c".repeat(64), message_template_id: null, vigente: true }, ...p.versiones.map((v) => ({ ...v, vigente: false }))];
-    return [201, { clave: p.clave, version_n: p.version_vigente, definition_hash: "c".repeat(64), publicada_en: ahora, message_template_id: null, hallazgos }];
+    p.versiones = [{ version_n: p.version_vigente, publicada_en: ahora, retirada_en: null, definition_hash: "c".repeat(64), message_template_id: null, meta: null, vigente: true }, ...p.versiones.map((v) => ({ ...v, vigente: false }))];
+    return [201, { clave: p.clave, version_n: p.version_vigente, definition_hash: "c".repeat(64), publicada_en: ahora, message_template_id: null, meta: null, hallazgos }];
+  }
+  if (segundo === "versiones" && partes[3] === "publicar-en-meta" && metodo === "POST") {
+    if (!bandera) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
+    return publicarEnMeta(p, Number(partes[2]), cuerpo);
   }
   if (segundo === "retirar") {
     p.estado = "retired";

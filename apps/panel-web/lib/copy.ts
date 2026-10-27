@@ -92,6 +92,7 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
       "Crea una plantilla y escribe el mensaje.",
       "Agrega las opciones y elige qué hace cada una.",
       "Mira la vista previa, publícala y envía una prueba a un cliente.",
+      "Para escribir también fuera de las 24 horas, publica la versión en Meta y espera su aprobación.",
     ],
   },
   tools: {
