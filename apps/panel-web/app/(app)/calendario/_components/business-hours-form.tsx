@@ -39,8 +39,17 @@ export function HorarioEditor({
         const { inicio, fin } = partir(horas[key] ?? "");
         const cerrado = !horas[key];
         return (
-          <div key={key} className="flex flex-wrap items-end gap-3">
-            <span className="w-24 text-sm text-headline">{label}</span>
+          <div key={key} className="grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:items-end">
+            <span className="text-sm text-headline sm:w-24 sm:pb-2">{label}</span>
+            <label className="flex items-center gap-2 justify-self-end text-sm text-body sm:order-last sm:pb-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-control-border"
+                checked={cerrado}
+                onChange={(e) => onChange({ ...horas, [key]: e.target.checked ? "" : "08:00-18:00" })}
+              />
+              Cerrado
+            </label>
             <Field label="Abre" htmlFor={`${idBase}-${key}-inicio`}>
               <Input
                 id={`${idBase}-${key}-inicio`}
@@ -59,15 +68,6 @@ export function HorarioEditor({
                 onChange={(e) => setRango(key, inicio || "08:00", e.target.value)}
               />
             </Field>
-            <label className="flex items-center gap-2 pb-2 text-sm text-body">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-control-border"
-                checked={cerrado}
-                onChange={(e) => onChange({ ...horas, [key]: e.target.checked ? "" : "08:00-18:00" })}
-              />
-              Cerrado
-            </label>
           </div>
         );
       })}

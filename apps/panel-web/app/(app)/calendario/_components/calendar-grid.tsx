@@ -77,9 +77,14 @@ export function CalendarGrid({
 
   // Cambió qué agendas se ven, el color o hay que recargar: se vuelve a pedir el rango.
   const clave = `${agendasVisibles?.join(",") ?? "*"}|${colorPor}|${recargar}`;
+  const claveCargada = useRef<string | null>(null);
   useEffect(() => {
     filtro.current = { agendasVisibles, colorPor };
-    calRef.current?.getApi().refetchEvents();
+    // La primera carga la hace FullCalendar al montar; solo se repite cuando cambia la clave.
+    if (claveCargada.current !== null && claveCargada.current !== clave) {
+      calRef.current?.getApi().refetchEvents();
+    }
+    claveCargada.current = clave;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `clave` resume las tres entradas
   }, [clave]);
 

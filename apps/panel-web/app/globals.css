@@ -308,6 +308,26 @@ body {
   font-family: var(--sh-font-display);
   font-size: 1.125rem;
 }
+/* En pantallas angostas la barra pasa a dos filas: título arriba, navegación y vistas debajo. */
+@media (max-width: 640px) {
+  .agenda-grilla .fc-header-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+    order: -1;
+    flex-basis: 100%;
+    text-align: center;
+  }
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(1),
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+    flex: 1 1 auto;
+  }
+  .agenda-grilla .fc-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
 /* Franjas de media hora más altas: una cita de 20-30 min deja leer hora, código y cliente. */
 .agenda-grilla .fc-timegrid-slot {
   height: 2.5rem;
