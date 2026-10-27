@@ -29,6 +29,7 @@ import type {
   PlanResponse,
   PluginSummary,
   PrimerosPasos,
+  ResumenPorAgente,
   SettingsResponse,
   SubscriptionProviderSettings,
   SuscripcionDetalle,
@@ -85,6 +86,46 @@ export const dashboard: Dashboard = {
     { id: "test-conv-2", customer_name: null, external_id: "573000000002", status: "resolved" },
   ],
   billing: { plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
+};
+
+export const resumenPorAgente: ResumenPorAgente = {
+  periodo: {
+    desde: "2026-10-20T00:00:00Z",
+    hasta: "2026-10-27T00:00:00Z",
+    previo_desde: "2026-10-13T00:00:00Z",
+    previo_hasta: "2026-10-20T00:00:00Z",
+  },
+  runtime: "v3",
+  general: {
+    kpis: [
+      { id: "conversaciones", label: "Conversaciones", valor: 128, unidad: "count", previo: 100, delta_pct: 28, polaridad: "up-good", hint: "Últimos 7 días", destino: { ruta: "conversaciones", params: {} } },
+      { id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } },
+      { id: "tasa_escalamiento", label: "Tasa de escalamiento", valor: null, unidad: "pct", previo: null, delta_pct: null, polaridad: "up-bad", hint: "Sin datos suficientes", destino: { ruta: "agente", params: { ref: "general", pestana: "consumo" } } },
+    ],
+  },
+  agentes: [
+    {
+      ref: "agente-ventas",
+      key: "ventas",
+      name: "Ventas",
+      kind: "specialist",
+      kpis: [
+        { id: "turnos", label: "Turnos atendidos", valor: 60, unidad: "count", previo: 40, delta_pct: 50, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "conversaciones" } } },
+        { id: "tareas_abiertas", label: "Tareas abiertas", valor: 3, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "tareas" } } },
+      ],
+      modulos: [
+        {
+          id: "pack_commerce",
+          nombre: "Ventas",
+          error: null,
+          kpis: [
+            { id: "pedidos", label: "Pedidos", valor: 14, unidad: "count", previo: 10, delta_pct: 40, polaridad: "up-good", destino: { ruta: "comercio.pedidos", params: {} } },
+            { id: "ventas_pagadas", label: "Ventas pagadas", valor: 1250000, unidad: "money", previo: 900000, delta_pct: 38.9, polaridad: "up-good", destino: { ruta: "comercio.pedidos", params: { pago: "pagado" } } },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export const primerosPasos: PrimerosPasos = {
@@ -919,6 +960,7 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/agents": agentesDelNegocio,
   "/admin/a2a/graph": grafoA2A,
   "/admin/dashboard": dashboard,
+  "/admin/dashboard/agents": resumenPorAgente,
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,
   "/admin/conversations": conversaciones,

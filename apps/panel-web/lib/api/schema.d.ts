@@ -396,6 +396,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/dashboard/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Agents */
+        get: operations["dashboard_agents_api_v1_admin_dashboard_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -7738,6 +7755,11 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** BloqueGeneral */
+        BloqueGeneral: {
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+        };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
             /** File */
@@ -9741,6 +9763,46 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** KpiOut */
+        KpiOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Valor
+             * @description `null` si no hay datos suficientes.
+             */
+            valor: number | null;
+            /**
+             * Unidad
+             * @enum {string}
+             */
+            unidad: "count" | "pct" | "usd" | "money" | "ms";
+            /**
+             * Previo
+             * @description Mismo KPI en el período anterior; `null` si es una foto de hoy.
+             */
+            previo: number | null;
+            /**
+             * Delta Pct
+             * @description Variación contra el período anterior; `null` si no se puede calcular.
+             */
+            delta_pct: number | null;
+            /**
+             * Polaridad
+             * @enum {string}
+             */
+            polaridad: "up-good" | "up-bad";
+            /** Hint */
+            hint?: string | null;
+            /**
+             * Versus
+             * @description Contra qué se compara `previo` («los 7 días anteriores», «el mes anterior»).
+             */
+            versus?: string | null;
+            destino?: components["schemas"]["DestinoOut"] | null;
+        };
         /** LeadColumn */
         LeadColumn: {
             /** Key */
@@ -10323,6 +10385,20 @@ export interface components {
             avg_latency: number;
             /** Cost */
             cost: number;
+        };
+        /** ModuloOut */
+        ModuloOut: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /**
+             * Error
+             * @description El módulo no pudo calcularse; el resto del Resumen sí.
+             */
+            error?: string | null;
         };
         /**
          * ModulosOut
@@ -12250,6 +12326,15 @@ export interface components {
             /** Items */
             items: components["schemas"]["ItemBusqueda"][];
         };
+        /** ResumenPorAgente */
+        ResumenPorAgente: {
+            periodo: components["schemas"]["PeriodoOut"];
+            /** Runtime */
+            runtime: string;
+            general: components["schemas"]["BloqueGeneral"];
+            /** Agentes */
+            agentes: components["schemas"]["AgenteResumen"][];
+        };
         /** RevokeRequest */
         RevokeRequest: {
             /** Section */
@@ -13588,6 +13673,21 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /**
+         * DestinoOut
+         * @description A dónde lleva un KPI: una ruta lógica y sus filtros; cada cliente la traduce a su navegación.
+         */
+        DestinoOut: {
+            /**
+             * Ruta
+             * @description Ruta lógica: `conversaciones`, `agente`, `comercio.pedidos`, …
+             */
+            ruta: string;
+            /** Params */
+            params?: {
+                [key: string]: string;
+            };
+        };
         /** DocumentoLegalIn */
         DocumentoLegalIn: {
             /**
@@ -14095,6 +14195,24 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AgenteResumen */
+        AgenteResumen: {
+            /**
+             * Ref
+             * @description Id del agente o el literal `general`, como en `/admin/agents/{ref}`.
+             */
+            ref: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /** Modulos */
+            modulos: components["schemas"]["ModuloOut"][];
         };
         /** ConfiguredSecret */
         ConfiguredSecret: {
@@ -16246,6 +16364,29 @@ export interface components {
             telefono?: string | null;
             /** Username */
             username?: string | null;
+        };
+        /** PeriodoOut */
+        PeriodoOut: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+            /**
+             * Previo Desde
+             * Format: date-time
+             */
+            previo_desde: string;
+            /**
+             * Previo Hasta
+             * Format: date-time
+             */
+            previo_hasta: string;
         };
         /** PermissionChange */
         PermissionChange: {
@@ -18797,6 +18938,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_agents_api_v1_admin_dashboard_agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumenPorAgente"];
                 };
             };
             /** @description Validation Error */
