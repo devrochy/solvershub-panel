@@ -8,17 +8,18 @@ vi.mock("next/navigation", () => ({
 }));
 
 import type { PasoPrimerosPasos, PrimerosPasos as Datos } from "@/lib/api/types";
+import { RECORRIDO_NO_APLICA } from "@/lib/testing/fixtures";
 
 import { PrimerosPasos } from "./primeros-pasos";
 
 function datos(pasos: PasoPrimerosPasos[]): Datos {
   return {
+    recorrido: RECORRIDO_NO_APLICA,
     alta_en: "2026-10-09T12:00:00Z",
     origen: "aprovisionamiento",
     completos: pasos.filter((p) => p.estado === "completo").length,
     total: pasos.length,
     pasos,
-    recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
   };
 }
 

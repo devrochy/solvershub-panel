@@ -88,6 +88,16 @@ export const dashboard: Dashboard = {
   billing: { plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
 };
 
+/** Recorrido de primer uso de un negocio al que no aplica (anterior al corte): sin asistente ni aviso. */
+export const RECORRIDO_NO_APLICA: PrimerosPasos["recorrido"] = {
+  estado: "no_aplica",
+  paso: 1,
+  total_pasos: 6,
+  aplica: false,
+  abrir: false,
+  avisar: false,
+};
+
 export const resumenPorAgente: ResumenPorAgente = {
   periodo: {
     desde: "2026-10-20T00:00:00Z",
@@ -129,6 +139,7 @@ export const resumenPorAgente: ResumenPorAgente = {
 };
 
 export const primerosPasos: PrimerosPasos = {
+  recorrido: RECORRIDO_NO_APLICA,
   alta_en: "2026-10-01T12:00:00Z",
   origen: "manual",
   completos: 1,
@@ -138,7 +149,6 @@ export const primerosPasos: PrimerosPasos = {
     { clave: "whatsapp", estado: "pendiente", motivo: "sin_conexion", puede_actuar: true },
     { clave: "probar_asistente", estado: "pendiente", puede_actuar: true },
   ],
-  recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
 };
 
 export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [] };
@@ -510,6 +520,7 @@ export const ajustes: SettingsResponse = {
     brand_voice: "",
     brand_voice_warning: false,
     tono: "cercano",
+    business_hours_mode: "bloquea",
     debounce_mode: "natural",
     split_style: "un_mensaje",
     currency: "COP",
@@ -523,7 +534,6 @@ export const ajustes: SettingsResponse = {
     difficulty_score_threshold: 3,
     escalation_keywords: [],
     out_of_hours_message: "",
-    business_hours_mode: "bloquea",
     out_of_hours_default_message:
       "¡Hola! Ahora estamos fuera de nuestro horario de atención. Te respondemos apenas volvamos.",
     auto_escalate_after_turns: 0,

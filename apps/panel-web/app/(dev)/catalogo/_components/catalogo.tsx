@@ -5,7 +5,13 @@ import { Bell, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { BarChart, LineChart, ProgressRing, Sparkline, resumenSerie, type ChartDatum, type ChartSeries } from "@/components/dataviz";
 import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
+import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
+import { TarjetaDelAgente } from "@/app/(onboarding)/bienvenida/_components/tarjeta-del-agente";
+import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
+import { TarjetaElegible } from "@/app/(onboarding)/bienvenida/_components/elegibles";
+import { Marca } from "@/components/ui/marca";
+import { ESTADO_INICIAL, HORARIO_INICIAL, type HorarioElegido } from "@/lib/onboarding";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -142,6 +148,8 @@ export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
   const [vende, setVende] = useState("productos");
+  const [horario, setHorario] = useState<HorarioElegido | null>(HORARIO_INICIAL);
+  const [tipoNegocio, setTipoNegocio] = useState("ventas");
   const [busqueda, setBusqueda] = useState("");
   const [pestana, setPestana] = useState("identidad");
   const [canales, setCanales] = useState<string[]>(CANALES.map((c) => c.key));
@@ -349,6 +357,39 @@ export function Catalogo() {
           />
         </div>
         <Dropzone accept={["image/png", "image/jpeg"]} maxBytes={5 * 1024 * 1024} hint="PNG o JPG de hasta 5 MB." onFiles={() => {}} />
+      </Seccion>
+
+      <Seccion
+        titulo="Asistente de primer uso"
+        nota="Pantalla completa de 6 pasos (SPEC-41): tarjetas y fichas de un clic, la tarjeta viva «Tu agente, armándose», el selector de horario y el aviso permanente mientras no se termina."
+      >
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-center gap-8">
+            <Marca pieza="horizontal" className="h-16 w-auto" />
+            <Marca pieza="horizontal-simple" className="h-9 w-auto" />
+          </div>
+          <AvisoDeOnboarding recorrido={{ estado: "omitido", paso: 3, total_pasos: 6, aplica: true, abrir: false, avisar: true }} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { id: "ventas", titulo: "Vendo productos o planes", ayuda: "Responde dudas, cotiza y toma el pedido." },
+              { id: "agenda", titulo: "Agendo citas", ayuda: "Ofrece horarios y reserva la cita." },
+            ].map((t) => (
+              <TarjetaElegible
+                key={t.id}
+                nombre="cat-tipo"
+                valor={t.id}
+                elegida={tipoNegocio === t.id}
+                onElegir={setTipoNegocio}
+                titulo={t.titulo}
+                ayuda={t.ayuda}
+              />
+            ))}
+          </div>
+          <div className="grid gap-8 lg:grid-cols-[1fr_21rem]">
+            <SelectorDeHorario valor={horario} onCambiar={setHorario} />
+            <TarjetaDelAgente estado={{ ...ESTADO_INICIAL, tipo: "ventas", nombreDelAgente: "Sofía", negocio: "Sport Plus", horario }} />
+          </div>
+        </div>
       </Seccion>
 
       <Seccion

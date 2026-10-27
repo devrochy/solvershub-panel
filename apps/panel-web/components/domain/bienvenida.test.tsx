@@ -8,16 +8,17 @@ vi.mock("next/navigation", () => ({
 }));
 
 import type { PrimerosPasos } from "@/lib/api/types";
+import { RECORRIDO_NO_APLICA } from "@/lib/testing/fixtures";
 
 import { Bienvenida } from "./bienvenida";
 
 const PENDIENTE: PrimerosPasos = {
+  recorrido: RECORRIDO_NO_APLICA,
   alta_en: "2026-10-09T12:00:00Z",
   origen: "aprovisionamiento",
   completos: 0,
   total: 1,
   pasos: [{ clave: "whatsapp", estado: "pendiente", motivo: "sin_conexion", puede_actuar: true }],
-  recorrido: { estado: "no_aplica", paso: 0, total_pasos: 0, aplica: false, abrir: false, avisar: false },
 };
 
 const LISTO: PrimerosPasos = {
