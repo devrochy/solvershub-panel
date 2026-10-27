@@ -144,7 +144,7 @@ describe("páginas de Suscripciones (SPEC-35)", () => {
     const Pagina = (await import("@/app/(app)/suscripciones/page")).default as Pagina;
     await pintar(await Pagina({}));
     expect(screen.getByText("Ingreso mensual recurrente")).toBeTruthy();
-    expect(screen.getByText(/14,3 % frente a el cierre del mes anterior/)).toBeTruthy();
+    expect(screen.getByText(/14,3 % frente al cierre del mes anterior/)).toBeTruthy();
     expect(screen.getByText("Hasta 7 días")).toBeTruthy();
     expect(screen.getByText("75 %")).toBeTruthy();
     expect(screen.getByText("octubre de 2026")).toBeTruthy();
