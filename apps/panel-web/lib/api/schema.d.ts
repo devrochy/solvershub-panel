@@ -396,6 +396,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/dashboard/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Agents */
+        get: operations["dashboard_agents_api_v1_admin_dashboard_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -4312,41 +4329,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/cobranza/owner-charges": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Owner Charges */
-        get: operations["list_owner_charges_api_v1_pack_cobranza_owner_charges_get"];
-        put?: never;
-        /** Create Owner Charge */
-        post: operations["create_owner_charge_api_v1_pack_cobranza_owner_charges_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/payment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register Owner Payment */
-        post: operations["register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/pack/cobranza/reports": {
         parameters: {
             query?: never;
@@ -4684,26 +4666,6 @@ export interface paths {
          * @description Aprueba el gasto: descuenta su valor de la caja de la cartera (una sola vez).
          */
         post: operations["approve_expense_api_v1_pack_cobranza_expenses__expense_id__approve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/links": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Payment Link
-         * @description Crea un link de pago para el cobro del propietario (monto = cobro calculado).
-         */
-        post: operations["create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6094,6 +6056,28 @@ export interface paths {
         put?: never;
         /** Create From Template */
         post: operations["create_from_template_api_v1_admin_agent_templates__template_key__agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/from-script": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create From Script
+         * @description Crea el borrador de un especialista (sin publicar) desde las respuestas del guion de su
+         *     plantilla. 409 `key_taken` (con el `agent_id` existente) si el negocio ya tiene ese agente; 422
+         *     por pregunta si una respuesta no está en las opciones, sin crear nada.
+         */
+        post: operations["create_from_script_api_v1_admin_agents_from_script_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7737,6 +7721,11 @@ export interface components {
             end_at?: string | null;
             /** Reason */
             reason?: string | null;
+        };
+        /** BloqueGeneral */
+        BloqueGeneral: {
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
@@ -9741,6 +9730,46 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** KpiOut */
+        KpiOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Valor
+             * @description `null` si no hay datos suficientes.
+             */
+            valor: number | null;
+            /**
+             * Unidad
+             * @enum {string}
+             */
+            unidad: "count" | "pct" | "usd" | "money" | "ms";
+            /**
+             * Previo
+             * @description Mismo KPI en el período anterior; `null` si es una foto de hoy.
+             */
+            previo: number | null;
+            /**
+             * Delta Pct
+             * @description Variación contra el período anterior; `null` si no se puede calcular.
+             */
+            delta_pct: number | null;
+            /**
+             * Polaridad
+             * @enum {string}
+             */
+            polaridad: "up-good" | "up-bad";
+            /** Hint */
+            hint?: string | null;
+            /**
+             * Versus
+             * @description Contra qué se compara `previo` («los 7 días anteriores», «el mes anterior»).
+             */
+            versus?: string | null;
+            destino?: components["schemas"]["DestinoOut"] | null;
+        };
         /** LeadColumn */
         LeadColumn: {
             /** Key */
@@ -10324,6 +10353,20 @@ export interface components {
             /** Cost */
             cost: number;
         };
+        /** ModuloOut */
+        ModuloOut: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /**
+             * Error
+             * @description El módulo no pudo calcularse; el resto del Resumen sí.
+             */
+            error?: string | null;
+        };
         /**
          * ModulosOut
          * @description Módulos opcionales del pack encendidos en el negocio (el panel decide qué mostrar).
@@ -10571,53 +10614,6 @@ export interface components {
             /** Flujo */
             flujo: boolean;
         };
-        /** OwnerCharge */
-        OwnerCharge: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /** Pagado */
-            pagado: number | null;
-            /**
-             * Vence
-             * Format: date
-             */
-            vence: string;
-            /** Estado */
-            estado: string;
-        };
-        /** OwnerChargeCreate */
-        OwnerChargeCreate: {
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /**
-             * Fecha Vencimiento
-             * Format: date
-             */
-            fecha_vencimiento: string;
-        };
-        /** OwnerCharges */
-        OwnerCharges: {
-            /** Cobros */
-            cobros: components["schemas"]["OwnerCharge"][];
-            /** Links */
-            links: components["schemas"]["PaymentLink"][];
-        };
-        /** OwnerPayment */
-        OwnerPayment: {
-            /** Monto Pagado */
-            monto_pagado: number;
-            /** Metodo Pago */
-            metodo_pago?: string | null;
-        };
         /** PackRole */
         PackRole: {
             /** Value */
@@ -10784,24 +10780,6 @@ export interface components {
             metodo_pago: string;
             /** Cuota Id */
             cuota_id?: string | null;
-        };
-        /** PaymentLink */
-        PaymentLink: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
-            /** Monto */
-            monto: number;
-            /** Estado */
-            estado: string;
-        };
-        /** PaymentLinkIn */
-        PaymentLinkIn: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
         };
         /** PendingResponse */
         PendingResponse: {
@@ -12250,6 +12228,15 @@ export interface components {
             /** Items */
             items: components["schemas"]["ItemBusqueda"][];
         };
+        /** ResumenPorAgente */
+        ResumenPorAgente: {
+            periodo: components["schemas"]["PeriodoOut"];
+            /** Runtime */
+            runtime: string;
+            general: components["schemas"]["BloqueGeneral"];
+            /** Agentes */
+            agentes: components["schemas"]["AgenteResumen"][];
+        };
         /** RevokeRequest */
         RevokeRequest: {
             /** Section */
@@ -13588,6 +13575,21 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /**
+         * DestinoOut
+         * @description A dónde lleva un KPI: una ruta lógica y sus filtros; cada cliente la traduce a su navegación.
+         */
+        DestinoOut: {
+            /**
+             * Ruta
+             * @description Ruta lógica: `conversaciones`, `agente`, `comercio.pedidos`, …
+             */
+            ruta: string;
+            /** Params */
+            params?: {
+                [key: string]: string;
+            };
+        };
         /** DocumentoLegalIn */
         DocumentoLegalIn: {
             /**
@@ -14095,6 +14097,24 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AgenteResumen */
+        AgenteResumen: {
+            /**
+             * Ref
+             * @description Id del agente o el literal `general`, como en `/admin/agents/{ref}`.
+             */
+            ref: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /** Modulos */
+            modulos: components["schemas"]["ModuloOut"][];
         };
         /** ConfiguredSecret */
         ConfiguredSecret: {
@@ -15271,6 +15291,12 @@ export interface components {
             name: string;
             /** Description */
             description: string;
+            /** Section */
+            section: string;
+            /** Tools */
+            tools: string[];
+            /** Questions */
+            questions: components["schemas"]["Question"][];
             /** Skills */
             skills: string[];
             /** Optional Skills */
@@ -15307,6 +15333,8 @@ export interface components {
             connections: components["schemas"]["PublishedConnection"][];
             /** Warnings */
             warnings: string[];
+            /** General Updated */
+            general_updated?: number | null;
         };
         /** FromTemplateIn */
         FromTemplateIn: {
@@ -15657,6 +15685,33 @@ export interface components {
             modo: string;
             /** Titulo */
             titulo: string;
+        };
+        /**
+         * FromScriptIn
+         * @description Respuestas del guion de una plantilla: `answers` es `id de la pregunta` → id de la opción
+         *     (o el texto, en la de nombre). Lo que no se contesta toma el valor por defecto del guion.
+         */
+        FromScriptIn: {
+            /** Template Key */
+            template_key: string;
+            /** Answers */
+            answers?: {
+                [key: string]: string;
+            };
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * FromScriptOut
+         * @description El borrador creado (sin publicar) y lo que le falta al negocio configurar para que funcione.
+         */
+        FromScriptOut: {
+            agent: components["schemas"]["AgentSummary"];
+            draft: components["schemas"]["AgentDraft"];
+            /** Warnings */
+            warnings: string[];
+            /** Requirements */
+            requirements: components["schemas"]["Requirement"][];
         };
         /** LoteDePrueba */
         LoteDePrueba: {
@@ -16223,6 +16278,37 @@ export interface components {
             /** Secciones */
             secciones: components["schemas"]["QaSeccionEvo"][];
         };
+        /**
+         * Question
+         * @description Pregunta del guion del asistente de creación (HU-AOS-48). `type` «option» elige entre
+         *     `options` (`default` es la que se aplica sin respuesta); «text» es el nombre del agente.
+         */
+        Question: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "option" | "text";
+            /** Options */
+            options: components["schemas"]["QuestionOption"][];
+            /** Default */
+            default: string | null;
+        };
+        /** QuestionOption */
+        QuestionOption: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
+        };
         /** QaEvolucion */
         QaEvolucion: {
             /** Versiones */
@@ -16246,6 +16332,29 @@ export interface components {
             telefono?: string | null;
             /** Username */
             username?: string | null;
+        };
+        /** PeriodoOut */
+        PeriodoOut: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+            /**
+             * Previo Desde
+             * Format: date-time
+             */
+            previo_desde: string;
+            /**
+             * Previo Hasta
+             * Format: date-time
+             */
+            previo_hasta: string;
         };
         /** PermissionChange */
         PermissionChange: {
@@ -18797,6 +18906,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_agents_api_v1_admin_dashboard_agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumenPorAgente"];
                 };
             };
             /** @description Validation Error */
@@ -26617,107 +26757,6 @@ export interface operations {
             };
         };
     };
-    list_owner_charges_api_v1_pack_cobranza_owner_charges_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharges"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_charge_api_v1_pack_cobranza_owner_charges_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerChargeCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharge"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerPayment"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     reports_api_v1_pack_cobranza_reports_get: {
         parameters: {
             query?: never;
@@ -27552,43 +27591,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentLinkIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentLink"];
-                };
             };
             /** @description Validation Error */
             422: {
@@ -30455,6 +30457,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FromTemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_from_script_api_v1_admin_agents_from_script_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromScriptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FromScriptOut"];
                 };
             };
             /** @description Validation Error */
