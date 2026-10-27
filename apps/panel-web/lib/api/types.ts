@@ -12,6 +12,12 @@ export type TenantPage = components["schemas"]["Page_TenantOption_"];
 export type Dashboard = components["schemas"]["DashboardResponse"];
 export type Kpi = components["schemas"]["core__api__routers__dashboard__Kpi"];
 export type RecentConversation = components["schemas"]["RecentConversation"];
+// Resumen por agente (ADR-0171): KPIs del negocio, de cada agente y de su módulo.
+export type ResumenPorAgente = components["schemas"]["ResumenPorAgente"];
+export type AgenteResumen = components["schemas"]["AgenteResumen"];
+export type ModuloResumen = components["schemas"]["ModuloOut"];
+export type KpiResumen = components["schemas"]["KpiOut"];
+export type DestinoResumen = components["schemas"]["DestinoOut"];
 export type BillingSummary = components["schemas"]["BillingSummary"];
 export type UsageMetric = components["schemas"]["UsageMetric"];
 
