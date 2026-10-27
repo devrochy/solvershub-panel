@@ -4364,40 +4364,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/cobranza/owner-thread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Owner Thread */
-        get: operations["owner_thread_api_v1_pack_cobranza_owner_thread_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-thread/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Owner Message */
-        post: operations["create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/pack/cobranza/portfolios/{cartera_id}": {
         parameters: {
             query?: never;
@@ -10510,53 +10476,12 @@ export interface components {
             /** Links */
             links: components["schemas"]["PaymentLink"][];
         };
-        /** OwnerMessage */
-        OwnerMessage: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Direccion */
-            direccion: string;
-            /** Tipo */
-            tipo: string;
-            /** Autor */
-            autor: string;
-            /** Contenido */
-            contenido: string;
-            /** Fecha */
-            fecha: string;
-        };
-        /** OwnerMessageCreate */
-        OwnerMessageCreate: {
-            /** Contenido */
-            contenido: string;
-            /**
-             * Direccion
-             * @default saliente
-             */
-            direccion: string;
-        };
         /** OwnerPayment */
         OwnerPayment: {
             /** Monto Pagado */
             monto_pagado: number;
             /** Metodo Pago */
             metodo_pago?: string | null;
-        };
-        /** OwnerThread */
-        OwnerThread: {
-            /** Whatsapp */
-            whatsapp: string;
-            /** Asunto */
-            asunto: string;
-            /** Estado */
-            estado: string;
-            /** Abierto */
-            abierto: boolean;
-            /** Mensajes */
-            mensajes: components["schemas"]["OwnerMessage"][];
         };
         /** PackRole */
         PackRole: {
@@ -26436,70 +26361,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Reports"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    owner_thread_api_v1_pack_cobranza_owner_thread_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerThread"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerMessageCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
