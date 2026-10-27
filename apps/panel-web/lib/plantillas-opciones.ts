@@ -3,6 +3,7 @@
  * editor. Los límites son los del lint del backend (`core/kernel/opciones/definicion.py`); el
  * backend sigue siendo quien decide, aquí solo se adelanta para que el dueño los vea mientras escribe.
  */
+import { camposConError, mensajeDeValidacion } from "@/lib/api/validacion";
 import type {
   Me,
   OpcionesAccionDelCatalogo,
@@ -208,6 +209,8 @@ export type ErrorDeApi = {
   code?: string;
   hallazgos: OpcionesHallazgo[];
   motivo?: string;
+  /** Campos con error de un 422 estándar de FastAPI (`detail: [{loc, msg}]`), sin repetir. */
+  campos?: string[];
 };
 
 function esObjeto(v: unknown): v is Record<string, unknown> {
@@ -225,8 +228,8 @@ function esHallazgo(v: unknown): v is OpcionesHallazgo {
 }
 
 /**
- * El error que devuelve el BFF (`{error, code?, details?}`; ver `app/api/agent-editor/respuesta.ts`) o, si
- * llega el sobre crudo de la API (`{error: {code, message, details}}`), ese. Nunca lanza.
+ * El error que devuelve el BFF (`{error, code?, details?}`; ver `app/api/agent-editor/respuesta.ts`), el sobre
+ * crudo de la API (`{error: {code, message, details}}`) o el 422 estándar de FastAPI (`{detail: [...]}`). Nunca lanza.
  */
 export function leerError(status: number, cuerpo: unknown): ErrorDeApi {
   const c = esObjeto(cuerpo) ? cuerpo : {};
@@ -237,9 +240,13 @@ export function leerError(status: number, cuerpo: unknown): ErrorDeApi {
   const detalles = esObjeto(c.details) ? c.details : sobre && esObjeto(sobre.details) ? sobre.details : null;
   const hallazgos = Array.isArray(detalles?.hallazgos) ? detalles.hallazgos.filter(esHallazgo) : [];
   const motivo = typeof detalles?.motivo === "string" ? detalles.motivo : undefined;
+  // 422 estándar de FastAPI: `detail` es una lista (sin sobre `error`); se dice en español qué campos revisar.
+  const campos = camposConError(c.detail);
+  const deValidacion = Array.isArray(c.detail) ? mensajeDeValidacion(c.detail) : "";
   return {
     status,
-    mensaje: mensaje || "No se pudo completar la acción.",
+    mensaje: mensaje || deValidacion || "No se pudo completar la acción.",
+    ...(campos.length > 0 ? { campos } : {}),
     ...(code ? { code } : {}),
     hallazgos,
     ...(motivo ? { motivo } : {}),

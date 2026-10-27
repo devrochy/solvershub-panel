@@ -114,6 +114,11 @@ export type OpcionesValidacion = components["schemas"]["OpcionesValidacionOut"];
 export type OpcionesVistaPrevia = components["schemas"]["VistaPreviaOpcionesOut"];
 export type OpcionesPublicada = components["schemas"]["OpcionesPublicadaOut"];
 export type OpcionesPrueba = components["schemas"]["OpcionesPruebaOut"];
+export type OpcionesMetaEstado = components["schemas"]["OpcionesMetaEstadoOut"];
+export type OpcionesMetaResultado = components["schemas"]["OpcionesMetaOut"];
+export type OpcionesMetaPedido = components["schemas"]["OpcionesMetaIn"];
+/** Conexión de `GET /admin/meta/health` (la que el diálogo de publicar en Meta ofrece). */
+export type HealthConnectionMeta = components["schemas"]["HealthConnection"];
 
 // Onboarding autoservicio (HU-SH-06, ADR-0124 de agent-core).
 export type PrimerosPasos = components["schemas"]["PrimerosPasosResponse"];

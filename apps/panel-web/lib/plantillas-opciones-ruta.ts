@@ -9,6 +9,8 @@ const CLAVE = /^[a-z0-9_]{1,40}$/;
 const GET_SUELTAS = new Set(["catalogo-acciones", "catalogo-variables"]);
 const POST_SUELTAS = new Set(["validar", "vista-previa"]);
 const POST_DE_CLAVE = new Set(["publicar", "retirar", "enviar-prueba"]);
+/** Número de versión: entero positivo sin ceros a la izquierda. */
+const VERSION = /^[1-9][0-9]{0,5}$/;
 
 export function rutaDeBackend(metodo: string, segmentos: readonly string[]): string | null {
   const m = metodo.toUpperCase();
@@ -23,6 +25,13 @@ export function rutaDeBackend(metodo: string, segmentos: readonly string[]): str
   if (segmentos.length === 2 && CLAVE.test(primero)) {
     if (m === "PUT" && segundo === "borrador") return `${BASE}/${primero}/borrador`;
     if (m === "POST" && POST_DE_CLAVE.has(segundo)) return `${BASE}/${primero}/${segundo}`;
+  }
+  // Publicar (o reintentar) UNA versión como plantilla de Meta (HU-OPC-04): `<clave>/versiones/<n>/publicar-en-meta`.
+  if (segmentos.length === 4 && CLAVE.test(primero)) {
+    const [, , n, accion] = segmentos;
+    if (m === "POST" && segundo === "versiones" && VERSION.test(n) && accion === "publicar-en-meta") {
+      return `${BASE}/${primero}/versiones/${n}/publicar-en-meta`;
+    }
   }
   return null;
 }
