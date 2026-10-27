@@ -3219,6 +3219,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/tenants/{tenant_id}/opciones-directas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Opciones Directas
+         * @description Bandera de las opciones directas del negocio (apagada por defecto). Solo el master.
+         */
+        get: operations["get_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_get"];
+        /**
+         * Put Opciones Directas
+         * @description Enciende o apaga las opciones directas del negocio (auditado como `opciones_directas_bandera`). Idempotente:
+         *     repetir el mismo valor deja el mismo estado. Solo el master; es por negocio y no toca ningún otro.
+         */
+        put: operations["put_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/declarative-tools": {
         parameters: {
             query?: never;
@@ -11003,6 +11028,19 @@ export interface components {
             hallazgos?: components["schemas"]["OpcionesHallazgoOut"][];
             /** Motivo */
             motivo?: string | null;
+        };
+        /** OpcionesDirectasBandera */
+        OpcionesDirectasBandera: {
+            /**
+             * Habilitada
+             * @description Si las plantillas con opciones que ejecutan una tool están encendidas para el negocio. Apagada: toda la API `/plantillas-opciones` responde 404 `opciones_directas_no_habilitadas`.
+             */
+            habilitada: boolean;
+        };
+        /** OpcionesDirectasBanderaIn */
+        OpcionesDirectasBanderaIn: {
+            /** Habilitada */
+            habilitada: boolean;
         };
         /** OpcionesEnviarPruebaIn */
         OpcionesEnviarPruebaIn: {
@@ -25222,6 +25260,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ColaboracionBanderas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesDirectasBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesDirectasBanderaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesDirectasBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
             /** @description Validation Error */
