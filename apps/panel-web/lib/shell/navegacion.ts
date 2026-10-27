@@ -85,8 +85,15 @@ export function itemActivo(
 /**
  * Migas de la página (HU-DS-04): grupo › entrada › pestaña y, si la página está más
  * adentro (un detalle), su título como último nivel. El grupo no enlaza: no es una página.
+ * `intermedias` son los padres de datos entre la pestaña y el título (una ficha de cliente
+ * cuelga de su cartera: Cobranza › Carteras › Cartera Norte › Ana Pérez).
  */
-export function migasPara(pathname: string, grupos: GrupoVisible[], tituloPagina?: string): Miga[] {
+export function migasPara(
+  pathname: string,
+  grupos: GrupoVisible[],
+  tituloPagina?: string,
+  intermedias: Miga[] = [],
+): Miga[] {
   const activo = itemActivo(pathname, grupos);
   if (!activo) return [];
   const { group, item, tab } = activo;
@@ -98,6 +105,7 @@ export function migasPara(pathname: string, grupos: GrupoVisible[], tituloPagina
     migas.push(enPortada ? { label: item.label } : { label: item.label, href: item.href });
   }
   migas.push(enDetalle ? { label: hoja.label, href: hoja.href } : { label: hoja.label });
+  if (enDetalle) migas.push(...intermedias);
   if (enDetalle && tituloPagina && tituloPagina !== hoja.label) migas.push({ label: tituloPagina });
   return migas;
 }
