@@ -11,7 +11,7 @@ export type MensajeAcceso = {
   texto: string;
 };
 
-const SIGUIENTE_PASO = "Abre «Acciones» del negocio y usa «Reenviar acceso».";
+const SIGUIENTE_PASO = "Usa «Reenviar acceso» en las «Acciones» del negocio.";
 
 function vence(expiresAt: string | null | undefined): string {
   if (!expiresAt) return "";
@@ -37,7 +37,7 @@ export function mensajeAcceso(invitation: TenantOwnerInvitation, { reenvio = fal
       return {
         tono: "aviso",
         texto: `${creado}El correo no se envió: el servidor no tiene el correo del sistema configurado. ${
-          reenvio ? "Configúralo y vuelve a intentarlo." : `Configúralo y ${SIGUIENTE_PASO.charAt(0).toLowerCase()}${SIGUIENTE_PASO.slice(1)}`
+          reenvio ? "Configúralo y vuelve a intentarlo." : "Configúralo y luego usa «Reenviar acceso» en las «Acciones» del negocio."
         }`,
       };
     case "fallido":
