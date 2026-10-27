@@ -17,8 +17,17 @@ export const metadata = { title: "Editar agente" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Editor por pasos de un agente especialista (HU-AOS-24). */
-export default async function EditarAgentePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditarAgentePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ paso?: string }>;
+}) {
   const { id } = await params;
+  const { paso } = await searchParams;
+  // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
+  const pasoInicial = paso === "publicar" ? "publicar" : undefined;
   if (!UUID.test(id)) notFound();
   const [agente, superpoderes, modelos, destinos, me, requisitos] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
@@ -66,6 +75,7 @@ export default async function EditarAgentePage({ params }: { params: Promise<{ i
         destinosError={destinos.ok ? null : destinos.error}
         puedeActivar={puedeActivar}
         requisitos={requisitos.ok ? requisitos.data.items : []}
+        pasoInicial={pasoInicial}
       />
     </div>
   );

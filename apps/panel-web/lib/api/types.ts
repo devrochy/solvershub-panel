@@ -173,6 +173,9 @@ export type LlmModelCatalog = components["schemas"]["LlmModelCatalog"];
 export type PublishTarget = components["schemas"]["PublishTarget"];
 export type PublishTargetPage = components["schemas"]["Page_PublishTarget_"];
 export type FromTemplateOut = components["schemas"]["FromTemplateOut"];
+// Asistente de creación (HU-AOS-48/54, SPEC-39).
+export type Question = components["schemas"]["Question"];
+export type FromScriptOut = components["schemas"]["FromScriptOut"];
 export type EditorPublishOut = components["schemas"]["EditorPublishOut"];
 
 // Conocimiento del agente (HU-AOS-49, pack_knowledge).
