@@ -47,6 +47,26 @@ describe("lista de plantillas con opciones", () => {
     expect(screen.queryByRole("button", { name: /Nueva plantilla/ })).toBeNull();
   });
 
+  it("con la bandera apagada, el master ve el enlace al interruptor de su negocio actual", async () => {
+    responder({ "/plantillas-opciones": BANDERA, "/admin/me": bien({ ...me, role: "master" }) });
+    await pintar(ListaPage());
+    const enlace = screen.getByRole("link", { name: "Ir al interruptor de este negocio" });
+    const url = new URL(enlace.getAttribute("href")!, "http://panel.test");
+    expect(url.pathname).toBe("/tenants");
+    expect(url.searchParams.get("abrir")).toBe(me.tenant!.id);
+    expect(url.searchParams.get("q")).toBe(me.tenant!.name);
+  });
+
+  it("con la bandera apagada, el dueño, un colaborador y el tester no ven el enlace: el mensaje no cambia", async () => {
+    for (const role of ["owner", "agent", "tester"]) {
+      responder({ "/plantillas-opciones": BANDERA, "/admin/me": bien({ ...me, role }) });
+      await pintar(ListaPage());
+      expect(screen.getByText(/Las activa el equipo de\s+SolversHub/), role).toBeTruthy();
+      expect(screen.queryByRole("link", { name: /interruptor/ }), role).toBeNull();
+      cleanup();
+    }
+  });
+
   it("otro error de la API sí se muestra como error", async () => {
     responder({ "/plantillas-opciones": { ok: false, status: 502, error: "No se pudo contactar el backend." }, "/admin/me": bien(me) });
     await pintar(ListaPage());
@@ -98,6 +118,21 @@ describe("editor de una plantilla", () => {
     await pintar(EditorPage({ params: params("confirmar_cita") }));
     expect(screen.getByText(/no están activadas en tu negocio/)).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("con la bandera apagada, el master ve el enlace también en el editor; el dueño no", async () => {
+    const rutas = {
+      "/plantillas-opciones/confirmar_cita": BANDERA,
+      "/plantillas-opciones/catalogo-acciones": BANDERA,
+      "/plantillas-opciones/catalogo-variables": BANDERA,
+    };
+    responder({ ...rutas, "/admin/me": bien({ ...me, role: "master" }) });
+    await pintar(EditorPage({ params: params("confirmar_cita") }));
+    expect(screen.getByRole("link", { name: "Ir al interruptor de este negocio" }).getAttribute("href")).toMatch(/^\/tenants\?/);
+    cleanup();
+    responder({ ...rutas, "/admin/me": bien(me) });
+    await pintar(EditorPage({ params: params("confirmar_cita") }));
+    expect(screen.queryByRole("link", { name: /interruptor/ })).toBeNull();
   });
 
   it("una plantilla que no existe es un 404, no un error en pantalla", async () => {

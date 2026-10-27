@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { PlanResponse, PlatformTenantPage } from "@/lib/api/types";
+import type { Me, PlanResponse, PlatformTenantPage } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
+import { UUID, esMasterDePlataforma } from "@/lib/opciones-directas-bandera";
 
 export const metadata = { title: "Tenants" };
 
@@ -21,18 +22,19 @@ type TenantRow = PlatformTenantPage["items"][number];
 export default async function TenantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; abrir?: string }>;
 }) {
   const sp = await searchParams;
   const qs = new URLSearchParams();
   if (sp.q) qs.set("q", sp.q);
   if (sp.page) qs.set("page", sp.page);
 
-  const [res, plansRes] = await Promise.all([
+  const [res, plansRes, me] = await Promise.all([
     apiFetch<PlatformTenantPage>(
       `/admin/platform/tenants${qs.size ? `?${qs.toString()}` : ""}`,
     ),
     apiFetch<PlanResponse>("/admin/plan"),
+    apiFetch<Me>("/admin/me"),
   ]);
   if (!res.ok) {
     return (
@@ -44,6 +46,9 @@ export default async function TenantsPage({
     );
   }
   const plans = plansRes.ok ? plansRes.data.plans : [];
+  const esMaster = me.ok && esMasterDePlataforma(me.data);
+  // Enlace del editor de plantillas con opciones: abre las acciones de ese negocio (solo master).
+  const abrir = sp.abrir && UUID.test(sp.abrir) ? sp.abrir : null;
   const { items, page, has_more, total } = res.data;
 
   const columns: Column<TenantRow>[] = [
@@ -73,7 +78,7 @@ export default async function TenantsPage({
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (t) => <TenantActions tenant={t} plans={plans} />,
+      cell: (t) => <TenantActions tenant={t} plans={plans} esMaster={esMaster} abrirInicial={t.id === abrir} />,
     },
   ];
 

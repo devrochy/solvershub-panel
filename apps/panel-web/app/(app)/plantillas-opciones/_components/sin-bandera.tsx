@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 /**
  * La función no está activada para el negocio (la API responde 404 `opciones_directas_no_habilitadas`).
  * No es un error: explica qué es, quién la activa y a dónde volver (HU-OPC-06, «bandera apagada»).
+ * Al master (`enlaceActivar`, PR 10b) le ofrece ir directo al interruptor del negocio actual; el resto
+ * lee el mismo mensaje de siempre.
  */
-export function SinBandera() {
+export function SinBandera({ enlaceActivar }: { enlaceActivar?: string | null }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 px-6 py-12 text-center">
@@ -20,9 +22,16 @@ export function SinBandera() {
           Te permiten enviar un mensaje con botones que ejecutan una acción al tocarlos, sin esperar a que el asistente responda. Las activa el equipo de
           SolversHub negocio por negocio: pídele a tu contacto de SolversHub que la habilite y vuelve a entrar aquí.
         </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/plantillas">Volver a Plantillas de WhatsApp</Link>
-        </Button>
+        <div className="flex flex-wrap justify-center gap-2">
+          {enlaceActivar && (
+            <Button asChild size="sm">
+              <Link href={enlaceActivar}>Ir al interruptor de este negocio</Link>
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <Link href="/plantillas">Volver a Plantillas de WhatsApp</Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

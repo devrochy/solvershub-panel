@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, OpcionesPlantillaResumen } from "@/lib/api/types";
+import { enlaceAlInterruptor } from "@/lib/opciones-directas-bandera";
 import { esBanderaApagada, puedeEscribirOpciones } from "@/lib/plantillas-opciones";
 
 import { ListaPlantillas } from "./_components/lista-plantillas";
@@ -18,12 +19,14 @@ export default async function PlantillasConOpcionesPage() {
     apiFetch<Me>("/admin/me"),
   ]);
 
+  const enlaceActivar = me.ok ? enlaceAlInterruptor(me.data) : null;
+
   if (!res.ok) {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Plantillas con opciones" breadcrumbs={MIGAS} />
         {esBanderaApagada(res) ? (
-          <SinBandera />
+          <SinBandera enlaceActivar={enlaceActivar} />
         ) : (
           <Card>
             <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
@@ -39,6 +42,7 @@ export default async function PlantillasConOpcionesPage() {
     <ListaPlantillas
       plantillas={res.data.plantillas}
       puedeEscribir={me.ok && puedeEscribirOpciones(me.data)}
+      enlaceActivar={enlaceActivar}
       banner={<MissingTemplatesBanner />}
     />
   );

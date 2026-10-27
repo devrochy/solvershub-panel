@@ -67,6 +67,7 @@ export function EditorDePlantilla({
   variables,
   conexiones = [],
   puedeEscribir,
+  enlaceActivar,
 }: {
   inicial: OpcionesPlantilla;
   acciones: OpcionesAccionDelCatalogo[];
@@ -74,6 +75,8 @@ export function EditorDePlantilla({
   /** Conexiones de Meta del negocio (`GET /admin/meta/health`): las que ofrece «Publicar en Meta». */
   conexiones?: HealthConnectionMeta[];
   puedeEscribir: boolean;
+  /** Enlace al interruptor del negocio, solo para el master: se ofrece si la función no está activada. */
+  enlaceActivar?: string | null;
 }) {
   const router = useRouter();
   const confirmar = useConfirm();
@@ -266,7 +269,7 @@ export function EditorDePlantilla({
     router.push("/plantillas-opciones");
   }
 
-  if (banderaApagada) return <SinBandera />;
+  if (banderaApagada) return <SinBandera enlaceActivar={enlaceActivar} />;
 
   const sinPublicar = plantilla.estado === "published" && plantilla.tiene_borrador_sin_publicar;
   const titulo = nombre.trim() || clave;
