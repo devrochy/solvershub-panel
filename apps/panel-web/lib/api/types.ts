@@ -120,6 +120,10 @@ export type OpcionesPrueba = components["schemas"]["OpcionesPruebaOut"];
 export type OpcionesMetaEstado = components["schemas"]["OpcionesMetaEstadoOut"];
 export type OpcionesMetaResultado = components["schemas"]["OpcionesMetaOut"];
 export type OpcionesMetaPedido = components["schemas"]["OpcionesMetaIn"];
+// Probar una plantilla con opciones en el playground, sin Meta (SPEC-40, ADR-0172, pista B).
+export type PlaygroundMensaje = components["schemas"]["PlaygroundMensajeOut"];
+export type PlaygroundOpcionesResultado = components["schemas"]["PlaygroundOpcionesOut"];
+export type PlaygroundToque = components["schemas"]["PlaygroundToqueOut"];
 /** Conexión de `GET /admin/meta/health` (la que el diálogo de publicar en Meta ofrece). */
 export type HealthConnectionMeta = components["schemas"]["HealthConnection"];
 

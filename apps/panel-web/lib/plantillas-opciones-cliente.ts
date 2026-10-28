@@ -23,10 +23,11 @@ export type Resultado<T> = { ok: true; status: number; data: T } | ({ ok: false 
 
 const BASE = "/api/plantillas-opciones";
 
-async function llamar<T>(metodo: "GET" | "POST" | "PUT" | "DELETE", ruta: string, cuerpo?: unknown, senal?: AbortSignal): Promise<Resultado<T>> {
+/** Llamada al BFF con el resultado ya normalizado; la usan también otros clientes de la misma API (playground). */
+export async function pedir<T>(metodo: "GET" | "POST" | "PUT" | "DELETE", url: string, cuerpo?: unknown, senal?: AbortSignal): Promise<Resultado<T>> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${ruta}`, {
+    res = await fetch(url, {
       method: metodo,
       headers: { "Content-Type": "application/json" },
       ...(cuerpo === undefined ? {} : { body: JSON.stringify(cuerpo) }),
@@ -40,6 +41,9 @@ async function llamar<T>(metodo: "GET" | "POST" | "PUT" | "DELETE", ruta: string
   if (!res.ok) return { ok: false, ...leerError(res.status, json) };
   return { ok: true, status: res.status, data: json as T };
 }
+
+const llamar = <T>(metodo: "GET" | "POST" | "PUT" | "DELETE", ruta: string, cuerpo?: unknown, senal?: AbortSignal) =>
+  pedir<T>(metodo, `${BASE}${ruta}`, cuerpo, senal);
 
 const clave = (c: string) => encodeURIComponent(c);
 

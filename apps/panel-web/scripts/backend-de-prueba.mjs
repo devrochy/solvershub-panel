@@ -10,6 +10,8 @@
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
 //   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
+//   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
+//   ejecuta una sola vez (el segundo toque es `duplicate`); OPCIONES_BANDERA=0 los apaga (404 por negocio).
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -245,6 +247,38 @@ function opciones(metodo, partes, cuerpo) {
   return errorOpciones(404, "not_found", "Ruta desconocida.");
 }
 
+// Playground (SPEC-40, pista B2): `options` guarda en memoria el envío y `tap` lo resuelve sin tool real.
+const enviosPlayground = new Map();
+function playground(metodo, ruta, cuerpo) {
+  const sub = ruta.replace(/^\/admin\/playground/, "");
+  if (sub === "" && metodo === "GET") return [200, { turns: [] }];
+  if (sub === "/reset") return [204, null];
+  if (sub === "/message") return [200, { text: "Hola, soy el asistente de prueba.", image_url: null, escalated: false }];
+  if (sub !== "/options" && sub !== "/tap") return undefined;
+  if (!bandera()) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
+  const mensaje = (content, interactive = null) => ({ id: crypto.randomUUID(), direction: "outbound", content, interactive, created_at: new Date().toISOString() });
+  if (sub === "/options") {
+    const p = plantillasOpciones.get(cuerpo.clave);
+    if (!p) return errorOpciones(404, "not_found", "No existe esa plantilla con opciones.");
+    if (p.estado !== "published") return errorOpciones(409, "no_publicada", "La plantilla no está publicada.");
+    const d = p.definicion_vigente ?? p.borrador;
+    const id = crypto.randomUUID();
+    const interactivo = vistaOpciones(d).interactivo;
+    const filas = interactivo.buttons ?? interactivo.rows;
+    filas.forEach((f, i) => (f.id = `opt:${id}:${d.opciones[i].id}`));
+    enviosPlayground.set(id, { d, usadas: new Set(), exclusivo: d.exclusivo });
+    return [200, { enviado: true, ya_enviado: false, via: "interactivo", ejecucion_directa: true, degradado: false, send_id: id, mensajes: [mensaje(interactivo.body, interactivo)] }];
+  }
+  if (!/^opt[cn]?:/.test(cuerpo.payload ?? "")) return errorOpciones(422, "payload_invalido", "No es el botón de una plantilla con opciones.");
+  const [, id, opcion] = cuerpo.payload.split(":");
+  const envio = enviosPlayground.get(id);
+  if (!envio) return [200, { outcome: "unknown_send", mensajes: [] }];
+  if (envio.usadas.size > 0 && envio.exclusivo) return [200, { outcome: "duplicate", mensajes: [] }];
+  envio.usadas.add(opcion);
+  const o = envio.d.opciones.find((x) => x.id === opcion);
+  return [200, { outcome: "ok", mensajes: [mensaje(o?.respuesta_ok ?? "Listo.")] }];
+}
+
 // Búsqueda global de la paleta (HU-DS-05): filtra unos registros fijos por `q`.
 const REGISTROS = [
   { seccion: "pack_cobranza:clientes", label: "Clientes de cobranza", id: "k1", tipo: "cliente_cobranza", titulo: "Ana Pérez", subtitulo: "CC 1.020.333" },
@@ -273,6 +307,16 @@ createServer(async (req, res) => {
     res.statusCode = estado;
     res.end(cuerpo === null ? undefined : JSON.stringify(cuerpo));
     return;
+  }
+  if (ruta === "/admin/playground" || ruta.startsWith("/admin/playground/")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = playground(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
+      return;
+    }
   }
   if (ruta.includes("/platform/tenants/")) {
     let texto = "";

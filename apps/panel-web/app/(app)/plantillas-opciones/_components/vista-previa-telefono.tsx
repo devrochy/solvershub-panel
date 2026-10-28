@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { List, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
+import { BotonDeMensaje, BurbujaDeMensaje } from "@/components/domain/mensaje-interactivo";
 import { Tabs } from "@/components/ui/tabs";
 import type { OpcionesVistaPrevia } from "@/lib/api/types";
 import { MAX_BOTONES } from "@/lib/plantillas-opciones";
@@ -23,18 +24,8 @@ function leerInteractivo(vista: OpcionesVistaPrevia): Interactivo {
   return (vista.interactivo ?? {}) as Interactivo;
 }
 
-function Burbuja({ children }: { children: React.ReactNode }) {
-  return <div className="max-w-[92%] rounded-lg rounded-tl-sm border border-border-soft bg-surface p-3 text-sm text-headline shadow-elev-1">{children}</div>;
-}
-
-function Boton({ children, icono }: { children: React.ReactNode; icono?: boolean }) {
-  return (
-    <div className="mt-1.5 flex max-w-[92%] items-center justify-center gap-1.5 rounded-lg border border-border-soft bg-surface px-3 py-2 text-center text-sm font-medium text-link shadow-elev-1">
-      {icono && <List className="h-4 w-4" aria-hidden />}
-      {children}
-    </div>
-  );
-}
+const Burbuja = BurbujaDeMensaje;
+const Boton = BotonDeMensaje;
 
 /**
  * Vista previa viva (HU-OPC-06): un teléfono con lo que verá el cliente según la vía (mensaje interactivo,
