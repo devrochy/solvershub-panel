@@ -32,15 +32,13 @@ export function agentMeta(key: string | null | undefined, name?: string | null):
   );
 }
 
-/** Icono de un agente; `muted` cuando el cliente todavía no tiene data de ese agente. */
+/** Icono de un agente. */
 export function AgentIcon({
   agentKey,
   name,
-  muted = false,
 }: {
   agentKey: string | null | undefined;
   name?: string | null;
-  muted?: boolean;
 }) {
   const meta = agentMeta(agentKey, name);
   const Icon = meta.icon;
@@ -50,7 +48,6 @@ export function AgentIcon({
       className={cn(
         "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-hover",
         meta.tone,
-        muted && "opacity-35 grayscale",
       )}
       title={meta.label}
     >

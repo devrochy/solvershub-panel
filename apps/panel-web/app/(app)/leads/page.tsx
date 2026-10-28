@@ -67,24 +67,26 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     return `/leads${next.size ? `?${next.toString()}` : ""}`;
   };
 
+  // HU-CRM-12 (ADR-0179): solo los agentes con datos reales de este cliente; General siempre (ADR-0153).
   const agentesDeLaFila = (lead: LeadRow, agentes: LeadAgent[]) => (
     <div className="flex items-center gap-1">
-      {agentes.map((agente) => {
-        const tiene = lead.agentes.includes(agente.key);
-        const destino = agente.key === "general" ? hrefFicha(lead.id) : hrefFicha(lead.id, agente.key);
-        return (
-          <Tooltip key={agente.key} label={tiene ? agente.name : `${agente.name} · sin datos todavía`}>
-            <Link
-              href={destino}
-              scroll={false}
-              aria-label={`Abrir ${agente.name} de ${lead.perfil.nombre_visible}`}
-              className="rounded-md p-0.5 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <AgentIcon agentKey={agente.key} name={agente.name} muted={!tiene} />
-            </Link>
-          </Tooltip>
-        );
-      })}
+      {agentes
+        .filter((agente) => agente.key === "general" || lead.agentes.includes(agente.key))
+        .map((agente) => {
+          const destino = agente.key === "general" ? hrefFicha(lead.id) : hrefFicha(lead.id, agente.key);
+          return (
+            <Tooltip key={agente.key} label={agente.name}>
+              <Link
+                href={destino}
+                scroll={false}
+                aria-label={`Abrir ${agente.name} de ${lead.perfil.nombre_visible}`}
+                className="rounded-md p-0.5 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              >
+                <AgentIcon agentKey={agente.key} name={agente.name} />
+              </Link>
+            </Tooltip>
+          );
+        })}
     </div>
   );
 

@@ -83,7 +83,10 @@ export function FichaCliente({
   const tabs = useMemo(
     () => [
       { id: "general", label: "General" },
-      ...detalle.agentes.map((agente) => ({ id: agente.key, label: agente.name })),
+      // HU-CRM-12: sin pestaña para un agente que no tiene columnas ni campos editables de este cliente.
+      ...detalle.agentes
+        .filter((agente) => agente.columns.length > 0 || agente.editables.length > 0)
+        .map((agente) => ({ id: agente.key, label: agente.name })),
     ],
     [detalle.agentes],
   );
