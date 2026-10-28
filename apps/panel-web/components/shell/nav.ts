@@ -136,8 +136,17 @@ export const NAV_GROUPS: NavGroupDef[] = [
     label: "Negocio",
     items: [
       // HU-CAL-08: Agenda es una sola vista; tipos, horario, agendas y Google se abren en su cajón
-      // de ajustes y la cuenta de Google vive en la ficha de su conexión.
-      { section: "pack_calendar:citas", label: "Agenda", href: "/calendario", icon: CalendarDays, ready: true, pack: "pack_calendar" },
+      // de ajustes y la cuenta de Google vive en la ficha de su conexión. HU-CRM-12 le suma la
+      // pestaña Clientes (la lista exige la sección `leads`, no la de citas).
+      entrada(
+        "Agenda",
+        CalendarDays,
+        [
+          { section: "pack_calendar:citas", label: "Citas", href: "/calendario", icon: CalendarDays, ready: true },
+          { section: "leads", label: "Clientes", href: "/calendario/clientes", icon: Users, ready: true },
+        ],
+        { pack: "pack_calendar" },
+      ),
       entrada(
         "Ventas",
         ShoppingCart,
@@ -147,6 +156,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { section: "pack_commerce", label: "Categorías", href: "/comercio/categorias", icon: Tags, ready: true },
           { section: "pack_commerce", label: "Promociones", href: "/comercio/promociones", icon: BadgePercent, ready: true },
           { section: "pack_commerce", label: "Pedidos", href: "/comercio/pedidos", icon: ShoppingCart, ready: true },
+          // HU-CRM-12: clientes con datos de Ventas; la lista exige la sección `leads`.
+          { section: "leads", label: "Clientes", href: "/comercio/clientes", icon: Users, ready: true },
           // HU-CRM-03: los aliados son opcionales por negocio; no sale como pestaña y se entra
           // desde Productos cuando el master los enciende.
           { section: "pack_commerce", label: "Aliados", href: "/comercio/aliados", icon: Handshake, ready: true, oculta: true },
