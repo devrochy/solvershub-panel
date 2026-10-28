@@ -920,6 +920,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/playground/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Playground Options
+         * @description Envía la plantilla con opciones `clave` a la conversación de prueba, con `send_options_to_conversation`: crea el
+         *     `option_sends` con sus payloads firmados y guarda el mensaje con los botones, sin Meta ni cola. Los errores son
+         *     los de `POST /plantillas-opciones/{clave}/enviar-prueba` (404 si la bandera está apagada o la clave no existe,
+         *     409 si no está publicada, 422 si falta contexto).
+         */
+        post: operations["playground_options_api_v1_admin_playground_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/playground/tap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Playground Tap
+         * @description Simula el toque de un botón de la conversación de prueba con el MISMO resolver que atiende WhatsApp: firma
+         *     por negocio y conversación, vigencia, una sola ejecución y autorización de la tool, sin LLM. Devuelve el
+         *     `outcome` y los mensajes que produjo. **Ejecuta la tool de verdad.** Un payload que no es de opciones es 422.
+         */
+        post: operations["playground_tap_api_v1_admin_playground_tap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/escalations": {
         parameters: {
             query?: never;
@@ -9347,6 +9392,11 @@ export interface components {
             by_model: components["schemas"]["ModelCost"][];
             /** By Conversation */
             by_conversation: components["schemas"]["ConversationCost"][];
+            /**
+             * By Agent
+             * @default []
+             */
+            by_agent: components["schemas"]["AgentCost"][];
         };
         /** CrearSuscripcionBody */
         CrearSuscripcionBody: {
@@ -11912,6 +11962,98 @@ export interface components {
             plan_status: string;
             /** Operational */
             operational: boolean;
+        };
+        /** PlaygroundMensajeOut */
+        PlaygroundMensajeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Direction
+             * @description `outbound` (lo que el sistema le dijo al cliente de prueba) o `inbound`.
+             */
+            direction: string;
+            /** Content */
+            content: string;
+            /**
+             * Interactive
+             * @description Botones o lista del mensaje (payload de WhatsApp) con los ids firmados que `/tap` recibe.
+             */
+            interactive?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** PlaygroundOpcionesIn */
+        PlaygroundOpcionesIn: {
+            /**
+             * Clave
+             * @description Clave de la plantilla con opciones (versión vigente publicada).
+             */
+            clave: string;
+            /**
+             * Connection Id
+             * @description Conexión por cuya release se prueba, como en `/message`. Sin ella, la de siempre.
+             */
+            connection_id?: string | null;
+        };
+        /** PlaygroundOpcionesOut */
+        PlaygroundOpcionesOut: {
+            /** Enviado */
+            enviado: boolean;
+            /**
+             * Ya Enviado
+             * @default false
+             */
+            ya_enviado: boolean;
+            /**
+             * Via
+             * @description `interactivo` (botones) o `texto`.
+             */
+            via?: ("interactivo" | "texto") | null;
+            /** Ejecucion Directa */
+            ejecucion_directa: boolean;
+            /** Degradado */
+            degradado: boolean;
+            /** Send Id */
+            send_id?: string | null;
+            /**
+             * Mensajes
+             * @description Los mensajes del envío, listos para pintar.
+             */
+            mensajes: components["schemas"]["PlaygroundMensajeOut"][];
+        };
+        /** PlaygroundToqueIn */
+        PlaygroundToqueIn: {
+            /**
+             * Payload
+             * @description `id` de un botón del mensaje (`opt:…`, `optc:…` o `optn:…`), tal cual lo devolvió `/options` o `/tap`.
+             */
+            payload: string;
+            /**
+             * Connection Id
+             * @description La misma conexión con la que se envió.
+             */
+            connection_id?: string | null;
+        };
+        /** PlaygroundToqueOut */
+        PlaygroundToqueOut: {
+            /**
+             * Outcome
+             * @description Resultado del resolver (`ok`, `tool_error`, `denied`, `confirm_requested`, `cancelled`, `expired`, `duplicate`, `bad_signature`, `unknown_send`, `foreign_conversation`, …). Un payload manipulado, de otro negocio o de otra conversación se descarta sin mensajes: `mensajes` vacío.
+             */
+            outcome: string;
+            /**
+             * Mensajes
+             * @description Lo que el toque produjo: respuesta fija o botones de confirmación.
+             */
+            mensajes: components["schemas"]["PlaygroundMensajeOut"][];
         };
         /** PluginAction */
         PluginAction: {
@@ -19618,6 +19760,28 @@ export interface components {
              */
             confirmar: boolean;
         };
+        /**
+         * AgentCost
+         * @description Consumo de un agente en 30 días (HU-AOS-35). `agent_id` null = filas sin agente (legacy o
+         *     anteriores a las versiones). `cached_pct` = leído de la caché / entrada, solo sobre filas
+         *     desde la migración 0114; null si no hay ninguna medible.
+         */
+        AgentCost: {
+            /** Agent Id */
+            agent_id: string | null;
+            /** Agent Name */
+            agent_name: string | null;
+            /** Turns */
+            turns: number;
+            /** Tokens In */
+            tokens_in: number;
+            /** Cached Tokens */
+            cached_tokens: number;
+            /** Cached Pct */
+            cached_pct: number | null;
+            /** Cost */
+            cost: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -21507,6 +21671,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    playground_options_api_v1_admin_playground_options_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundOpcionesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaygroundOpcionesOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    playground_tap_api_v1_admin_playground_tap_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundToqueIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaygroundToqueOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
         };
