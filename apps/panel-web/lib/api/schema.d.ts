@@ -2865,9 +2865,35 @@ export interface paths {
         put?: never;
         /**
          * Create Tenant
-         * @description Alta de un negocio (master): tenant + asistente + cuenta admin opcional.
+         * @description Alta de un negocio (master): tenant + asistente + acceso del dueño por correo.
+         *
+         *     Con `admin_email` la cuenta del dueño nace sin contraseña y le llega un enlace de un solo
+         *     uso para definirla (ADR-0175). Si el correo no sale, el negocio se crea igual y la
+         *     respuesta lo dice (`invitation.estado`); se reenvía con `owner-invitation/resend`.
          */
         post: operations["create_tenant_api_v1_admin_platform_tenants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/owner-invitation/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reenvía el acceso al dueño del negocio
+         * @description Reenvía el correo de acceso a la cuenta de la invitación `owner` pendiente del negocio
+         *     (ADR-0175). El destinatario no se recibe: es el de la invitación. Reusa el enlace mientras
+         *     vigente y lo renueva si venció.
+         */
+        post: operations["resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7488,6 +7514,127 @@ export interface paths {
          *     Responde 200 con el resultado (`ok`, `outcome`, `reintentable`); 404 si la versión no existe, 409 si está retirada.
          */
         post: operations["publicar_version_en_meta_api_v1_plantillas_opciones__clave__versiones__version_n__publicar_en_meta_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Devices */
+        get: operations["list_devices_api_v1_access_devices_get"];
+        put?: never;
+        /** Create Device */
+        post: operations["create_device_api_v1_access_devices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Device */
+        get: operations["get_device_api_v1_access_devices__device_row_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Device */
+        post: operations["approve_device_api_v1_access_devices__device_row_id__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/bloquear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Block Device */
+        post: operations["block_device_api_v1_access_devices__device_row_id__bloquear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/dar-de-baja": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Device */
+        post: operations["remove_device_api_v1_access_devices__device_row_id__dar_de_baja_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["list_events_api_v1_access_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Policy */
+        get: operations["get_policy_api_v1_access_policy_get"];
+        /** Update Policy */
+        put: operations["update_policy_api_v1_access_policy_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -13601,6 +13748,7 @@ export interface components {
             admin_email: string;
             /**
              * Admin Password
+             * @deprecated
              * @default
              */
             admin_password: string;
@@ -13616,6 +13764,7 @@ export interface components {
             slug: string;
             /** Steps */
             steps: string[];
+            invitation?: components["schemas"]["TenantOwnerInvitation"] | null;
         };
         /** TenantLink */
         TenantLink: {
@@ -13642,6 +13791,24 @@ export interface components {
             role: string;
             /** Active */
             active: boolean;
+        };
+        /**
+         * TenantOwnerInvitation
+         * @description Qué pasó con el acceso del dueño (ADR-0175). Nunca lleva el enlace ni el token.
+         */
+        TenantOwnerInvitation: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "enviado" | "sin_smtp" | "fallido" | "ya_emitida" | "ya_es_miembro";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "enlace" | "app";
+            /** Expires At */
+            expires_at?: string | null;
         };
         /** TenantPlanUpdate */
         TenantPlanUpdate: {
@@ -18980,6 +19147,251 @@ export interface components {
         OpcionesPublicarIn: {
             /** @description Si llega, encadena la alta de la versión en Meta; si no, solo congela la versión. */
             meta?: components["schemas"]["OpcionesMetaIn"] | null;
+        };
+        /** AccessAccountRef */
+        AccessAccountRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Email */
+            email: string;
+            /** Rol */
+            rol: ("master" | "owner" | "colaborador") | null;
+        };
+        /** AccessDeviceBlock */
+        AccessDeviceBlock: {
+            /**
+             * Esperado
+             * @default activo
+             * @enum {string}
+             */
+            esperado: "pendiente" | "activo" | "bloqueado";
+            /** Motivo */
+            motivo?: string | null;
+            /**
+             * Alcance
+             * @default cuenta
+             * @enum {string}
+             */
+            alcance: "cuenta" | "equipo";
+        };
+        /** AccessDeviceCreate */
+        AccessDeviceCreate: {
+            /**
+             * Admin Id
+             * Format: uuid
+             */
+            admin_id: string;
+            /** Device Id */
+            device_id: string;
+            /** Label */
+            label?: string | null;
+            /**
+             * Plataforma
+             * @default android
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+        };
+        /**
+         * AccessDeviceDetail
+         * @description El detalle muestra el identificador completo: hay que compararlo al aprobar.
+         */
+        AccessDeviceDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Device Label */
+            device_label: string | null;
+            /**
+             * Plataforma
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendiente" | "activo" | "bloqueado";
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "autoregistro" | "politica_abierta" | "alta_manual" | "migrado_pack";
+            /** Rol Al Registrar */
+            rol_al_registrar: ("owner" | "colaborador" | "gestor") | null;
+            /** Bloqueo Equipo */
+            bloqueo_equipo: boolean;
+            /** Legacy */
+            legacy: boolean;
+            /** Ultimo Uso At */
+            ultimo_uso_at: string | null;
+            /** Ultima Ip */
+            ultima_ip: string | null;
+            /** Aprobado At */
+            aprobado_at: string | null;
+            /** Bloqueado At */
+            bloqueado_at: string | null;
+            /** Motivo */
+            motivo: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Device Id */
+            device_id: string | null;
+        };
+        /** AccessDeviceOut */
+        AccessDeviceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Device Label */
+            device_label: string | null;
+            /**
+             * Plataforma
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendiente" | "activo" | "bloqueado";
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "autoregistro" | "politica_abierta" | "alta_manual" | "migrado_pack";
+            /** Rol Al Registrar */
+            rol_al_registrar: ("owner" | "colaborador" | "gestor") | null;
+            /** Bloqueo Equipo */
+            bloqueo_equipo: boolean;
+            /** Legacy */
+            legacy: boolean;
+            /** Ultimo Uso At */
+            ultimo_uso_at: string | null;
+            /** Ultima Ip */
+            ultima_ip: string | null;
+            /** Aprobado At */
+            aprobado_at: string | null;
+            /** Bloqueado At */
+            bloqueado_at: string | null;
+            /** Motivo */
+            motivo: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AccessDevicePage */
+        AccessDevicePage: {
+            /** Items */
+            items: components["schemas"]["AccessDeviceOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** AccessDeviceTransition */
+        AccessDeviceTransition: {
+            /**
+             * Esperado
+             * @enum {string}
+             */
+            esperado: "pendiente" | "activo" | "bloqueado";
+        };
+        /** AccessEventOut */
+        AccessEventOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "login_fallido" | "login_bloqueado" | "dispositivo_nuevo" | "dispositivo_pendiente" | "dispositivo_aprobado" | "dispositivo_bloqueado_usado" | "acceso_denegado_politica" | "dispositivo_sin_id" | "dispositivo_compartido" | "politica_cambiada" | "acceso_master" | "legado_pack";
+            /**
+             * Severidad
+             * @enum {string}
+             */
+            severidad: "info" | "aviso" | "critico";
+            /**
+             * Canal
+             * @enum {string}
+             */
+            canal: "campo" | "panel_apk" | "campo_v1";
+            /** Rol */
+            rol: ("owner" | "colaborador" | "gestor") | null;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Ip */
+            ip: string | null;
+            /** Detalle */
+            detalle: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** AccessEventPage */
+        AccessEventPage: {
+            /** Items */
+            items: components["schemas"]["AccessEventOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** AccessPolicyOut */
+        AccessPolicyOut: {
+            /**
+             * Owner
+             * @enum {string}
+             */
+            owner: "abierto" | "restringido";
+            /**
+             * Colaborador
+             * @enum {string}
+             */
+            colaborador: "abierto" | "restringido";
+            /**
+             * Gestor
+             * @enum {string}
+             */
+            gestor: "abierto" | "restringido";
+        };
+        /** AccessPolicyUpdate */
+        AccessPolicyUpdate: {
+            /** Owner */
+            owner?: ("abierto" | "restringido") | null;
+            /** Colaborador */
+            colaborador?: ("abierto" | "restringido") | null;
+            /** Gestor */
+            gestor?: ("abierto" | "restringido") | null;
+            /**
+             * Confirmar
+             * @default false
+             */
+            confirmar: boolean;
         };
     };
     responses: never;
@@ -24579,6 +24991,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOwnerInvitation"];
                 };
             };
             /** @description Validation Error */
@@ -34347,6 +34792,324 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    list_devices_api_v1_access_devices_get: {
+        parameters: {
+            query?: {
+                estado?: ("pendiente" | "activo" | "bloqueado") | null;
+                admin_id?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDevicePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_device_api_v1_access_devices_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_device_api_v1_access_devices__device_row_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_device_api_v1_access_devices__device_row_id__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_device_api_v1_access_devices__device_row_id__bloquear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Device-Id"?: string | null;
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceBlock"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_device_api_v1_access_devices__device_row_id__dar_de_baja_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_access_events_get: {
+        parameters: {
+            query?: {
+                severidad?: ("info" | "aviso" | "critico") | null;
+                tipo?: ("login_fallido" | "login_bloqueado" | "dispositivo_nuevo" | "dispositivo_pendiente" | "dispositivo_aprobado" | "dispositivo_bloqueado_usado" | "acceso_denegado_politica" | "dispositivo_sin_id" | "dispositivo_compartido" | "politica_cambiada" | "acceso_master" | "legado_pack") | null;
+                admin_id?: string | null;
+                desde?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessEventPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_policy_api_v1_access_policy_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_policy_api_v1_access_policy_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessPolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
