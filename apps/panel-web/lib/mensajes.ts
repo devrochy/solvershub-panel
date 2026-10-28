@@ -8,13 +8,14 @@ import { canalLabel, habilidadLabel } from "@/lib/labels";
 
 export type TipoDeMensaje = MensajeDelCatalogo["tipo"];
 
-export const TIPOS: readonly TipoDeMensaje[] = ["meta", "evento", "opciones", "texto_pack"];
+export const TIPOS: readonly TipoDeMensaje[] = ["meta", "evento", "opciones", "texto_pack", "guardado"];
 
 const TIPO_LABEL: Record<TipoDeMensaje, string> = {
   meta: "Plantilla de WhatsApp",
   evento: "Aviso por evento",
   opciones: "Plantilla con opciones",
   texto_pack: "Texto de habilidad",
+  guardado: "Mensaje guardado",
 };
 
 const TIPO_AYUDA: Record<TipoDeMensaje, string> = {
@@ -22,6 +23,7 @@ const TIPO_AYUDA: Record<TipoDeMensaje, string> = {
   evento: "Qué plantilla sale cuando pasa un evento (un cobro, una cita) y su texto de respaldo.",
   opciones: "Mensajes con botones que ejecutan una acción de tu asistente.",
   texto_pack: "Los textos que tus habilidades (agenda, suscripciones, comercio) le mandan al cliente.",
+  guardado: "Respuestas rápidas que guardas para reutilizar en tus conversaciones.",
 };
 
 export function tipoLabel(tipo: string): string {
@@ -79,6 +81,10 @@ const ESTADO_PROPIO: Record<string, [string, TonoDeEstado]> = {
   por_defecto: ["Texto de fábrica", "neutral"],
   personalizado: ["Personalizado", "info"],
   config_invalida: ["Configuración inválida", "danger"],
+  // mensaje guardado (`borrador` ya no choca: `draft` es de las plantillas con opciones)
+  borrador: ["Borrador", "neutral"],
+  activo: ["Activo", "success"],
+  archivado: ["Archivado", "neutral"],
 };
 
 export function estadoDeMensaje(m: Pick<MensajeDelCatalogo, "tipo" | "estado">): { etiqueta: string; tono: TonoDeEstado } {
@@ -121,6 +127,7 @@ export function enlaceAlEditor(fuente: FuenteDeMensaje): string | null {
     case "texto_pack":
       return fuente.plugin_id ? `/habilidades/${encodeURIComponent(fuente.plugin_id)}` : null;
     default:
+      // `guardado` todavía no tiene pantalla de edición en el panel: la fila queda sin enlace.
       return null;
   }
 }

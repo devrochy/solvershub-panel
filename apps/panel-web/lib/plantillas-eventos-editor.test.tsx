@@ -37,8 +37,16 @@ const entrada = (resto: Partial<MessageTemplatesSettings["mapping"][string]> = {
   variables: [] as string[],
   fallback_text: "",
   fallback_text_by_channel: {},
+  option_template: "",
   ...resto,
 });
+
+/** Lo que el editor manda: sin `option_template`, para que el servidor conserve el puente a la plantilla con opciones (D3). */
+const enviada = (resto: Partial<MessageTemplatesSettings["mapping"][string]> = {}) => {
+  const completa: Record<string, unknown> = entrada(resto);
+  delete completa.option_template;
+  return completa;
+};
 
 let cuerpos: { mapping: MessageTemplatesSettings["mapping"] }[];
 
@@ -107,7 +115,7 @@ describe("editor de avisos por evento: texto por canal", () => {
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].mapping).toEqual({
-      "appointment.reminder": entrada({
+      "appointment.reminder": enviada({
         fallback_text_by_channel: { whatsapp_waweb: "Te esperamos el {cita.fecha}", instagram_meta: "Hola {cliente.nombre}" },
       }),
     });
@@ -124,8 +132,8 @@ describe("editor de avisos por evento: texto por canal", () => {
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].mapping).toEqual({
-      "appointment.reminder": entrada({ fallback_text: "Respaldo de WhatsApp", fallback_text_by_channel: guardados }),
-      "subscription.charge_reminder": entrada({ fallback_text_by_channel: { messenger_meta: "Pagá aquí" } }),
+      "appointment.reminder": enviada({ fallback_text: "Respaldo de WhatsApp", fallback_text_by_channel: guardados }),
+      "subscription.charge_reminder": enviada({ fallback_text_by_channel: { messenger_meta: "Pagá aquí" } }),
     });
   });
 
@@ -134,7 +142,7 @@ describe("editor de avisos por evento: texto por canal", () => {
     fireEvent.change(campo("appointment.reminder", "Chat web"), { target: { value: "" } });
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
-    expect(cuerpos[0].mapping).toEqual({ "appointment.reminder": entrada({ fallback_text_by_channel: {} }) });
+    expect(cuerpos[0].mapping).toEqual({ "appointment.reminder": enviada({ fallback_text_by_channel: {} }) });
   });
 
   it("un evento sin nada escrito no viaja", async () => {
