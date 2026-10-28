@@ -12,6 +12,7 @@
 //   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
 //   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
 //   ejecuta una sola vez (el segundo toque es `duplicate`); OPCIONES_BANDERA=0 los apaga (404 por negocio).
+//   Avisos por evento (Plantillas → Por evento) y su texto por canal; el interruptor «Avisos por canal» de Tenants (MASTER=1).
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -61,9 +62,16 @@ if (process.env.MASTER === "1") {
   };
 }
 const ALIADOS = { habilitado: false };
+// Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
+const avisosPorCanal = new Map();
 function plataforma(metodo, ruta, cuerpo) {
-  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|agent-os|aliados)$/.exec(ruta);
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados)$/.exec(ruta);
   if (!m) return undefined;
+  if (m[2] === "avisos-por-canal") {
+    if (process.env.PLATAFORMA === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
+    if (metodo === "PUT") avisosPorCanal.set(m[1], cuerpo.habilitada === true);
+    return [200, { habilitada: avisosPorCanal.get(m[1]) ?? false }];
+  }
   if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, m[2] === "aliados" ? ALIADOS : { runtime: "legacy", procedures: false, routing: "off", aos_connection_routing: true, ultimo_cambio: null }] : [200, { ok: true }];
   const falla = process.env.PLATAFORMA;
   if (falla === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
@@ -296,6 +304,49 @@ function buscar(q) {
   return { resultados: [...porSeccion.values()] };
 }
 
+// Avisos por evento (HU-ARCH-13) con el texto por canal (ADR-0178 D2): estado en memoria y las validaciones de la API
+// que se ven en la pantalla (QR en cobranza, 1000 caracteres, variables del evento). Omitir el campo conserva lo guardado.
+const EVENTOS_AVISOS = {
+  "subscription.charge_created": { "cliente.nombre": "Nombre del cliente", "cargo.monto": "Monto del cargo" },
+  "subscription.charge_reminder": { "cliente.nombre": "Nombre del cliente", "cargo.monto": "Monto del cargo" },
+  "subscription.paused": { "cliente.nombre": "Nombre del cliente" },
+  "subscription.trial_ending": { "cliente.nombre": "Nombre del cliente" },
+  "appointment.confirmed": { "cliente.nombre": "Nombre del cliente", "cita.fecha": "Fecha de la cita" },
+  "appointment.reminder": { "cliente.nombre": "Nombre del cliente", "cita.fecha": "Fecha de la cita" },
+  "appointment.no_show": { "cliente.nombre": "Nombre del cliente", "cita.fecha": "Fecha de la cita" },
+};
+const COBRANZA_AVISOS = ["subscription.charge_created", "subscription.charge_reminder", "subscription.paused"];
+const TIPOS_DE_TEXTO = ["whatsapp_waweb", "webchat", "messenger_meta", "instagram_meta"];
+let mapaAvisos = { "appointment.reminder": { template: "", language: "es", variables: [], fallback_text: "Hola {cliente.nombre}", fallback_text_by_channel: { webchat: "Recordatorio: tu cita es el {cita.fecha}." } } };
+function avisosPorEvento(metodo, cuerpo) {
+  if (metodo === "PUT") {
+    const errores = [];
+    const nuevo = {};
+    for (const [evento, e] of Object.entries(cuerpo.mapping ?? {})) {
+      const previo = mapaAvisos[evento]?.fallback_text_by_channel ?? {};
+      const pedido = Object.hasOwn(e, "fallback_text_by_channel");
+      const porCanal = {};
+      for (const [tipo, texto] of Object.entries(e.fallback_text_by_channel ?? {})) {
+        if (!TIPOS_DE_TEXTO.includes(tipo)) errores.push(`Canal sin texto de respaldo: ${tipo}.`);
+        else if (tipo === "whatsapp_waweb" && COBRANZA_AVISOS.includes(evento)) errores.push("Los avisos de cobranza no salen por QR.");
+        else if (texto.length > 1000) errores.push(`El texto para ${tipo} pasa de 1000 caracteres.`);
+        else if (texto.trim()) porCanal[tipo] = texto.trim();
+      }
+      const final = pedido ? porCanal : previo;
+      if (e.template || e.fallback_text.trim() || Object.keys(final).length) {
+        nuevo[evento] = { ...e, fallback_text: e.fallback_text.trim(), ...(Object.keys(final).length ? { fallback_text_by_channel: final } : {}) };
+      }
+    }
+    if (errores.length) return [400, { error: { code: "message_templates_invalid", message: `Revisa el mapeo de plantillas. ${errores.join(" ")}` } }];
+    mapaAvisos = nuevo;
+  }
+  return [200, {
+    events: Object.entries(EVENTOS_AVISOS).map(([event, variables]) => ({ event, variables })),
+    mapping: Object.fromEntries(Object.entries(mapaAvisos).map(([k, v]) => [k, { fallback_text_by_channel: {}, ...v }])),
+    templates: [],
+  }];
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const ruta = url.pathname.replace(/^\/api\/v1/, "");
@@ -317,6 +368,14 @@ createServer(async (req, res) => {
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
+  }
+  if (ruta === "/admin/settings/message-templates") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = avisosPorEvento(req.method ?? "GET", texto ? JSON.parse(texto) : {});
+    res.statusCode = r[0];
+    res.end(JSON.stringify(r[1]));
+    return;
   }
   if (ruta.includes("/platform/tenants/")) {
     let texto = "";

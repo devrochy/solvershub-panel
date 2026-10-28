@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CANALES_DE_TEXTO,
+  admiteTextoPorCanal,
   claveDePlantilla,
   eventoLabel,
   faltantes,
   mapeoParaApi,
   rellenarCuerpo,
   rutasDesdeApi,
+  textosPorCanalParaApi,
+  variablesDelTexto,
+  variablesNoPermitidas,
 } from "./plantillas";
 
 describe("plantillas por evento (HU-ARCH-13)", () => {
@@ -41,5 +46,42 @@ describe("plantillas por evento (HU-ARCH-13)", () => {
     expect(eventoLabel("appointment.reminder")).toBe("Recordatorio de cita");
     expect(eventoLabel("otro.evento")).toBe("otro.evento");
     expect(claveDePlantilla("aviso", "es")).toBe("aviso|es");
+  });
+});
+
+describe("texto por canal de los avisos por evento (ADR-0178 D2)", () => {
+  it("el QR no admite texto en los 3 eventos de cobranza, los demás canales sí", () => {
+    for (const ev of ["subscription.charge_created", "subscription.charge_reminder", "subscription.paused"]) {
+      expect(admiteTextoPorCanal(ev, "whatsapp_waweb")).toBe(false);
+      expect(admiteTextoPorCanal(ev, "webchat")).toBe(true);
+      expect(admiteTextoPorCanal(ev, "messenger_meta")).toBe(true);
+      expect(admiteTextoPorCanal(ev, "instagram_meta")).toBe(true);
+    }
+    expect(admiteTextoPorCanal("appointment.reminder", "whatsapp_waweb")).toBe(true);
+    expect(admiteTextoPorCanal("subscription.trial_ending", "whatsapp_waweb")).toBe(true);
+  });
+
+  it("las claves de los canales son los tipos de conexión de la API", () => {
+    expect(CANALES_DE_TEXTO.map((c) => c.tipo)).toEqual(["whatsapp_waweb", "webchat", "messenger_meta", "instagram_meta"]);
+  });
+
+  it("lee las variables en los tres dialectos, sin repetir ni contar llaves vacías", () => {
+    expect(variablesDelTexto("Hola {cliente.nombre}, {{fecha}} y {cliente.nombre}. {} {{ n_1 }}")).toEqual([
+      "cliente.nombre",
+      "fecha",
+      "n_1",
+    ]);
+    expect(variablesNoPermitidas("Hola {cliente.nombre} {cargo.secreto}", ["cliente.nombre"])).toEqual(["cargo.secreto"]);
+    expect(variablesNoPermitidas("Sin variables", ["cliente.nombre"])).toEqual([]);
+  });
+
+  it("arma los textos para la API: sin vacíos, recortados y sin QR en cobranza", () => {
+    const textos = { whatsapp_waweb: " Tu cita ", webchat: "   ", messenger_meta: "Hola", otro: "no va" };
+    expect(textosPorCanalParaApi("appointment.reminder", textos)).toEqual({
+      whatsapp_waweb: "Tu cita",
+      messenger_meta: "Hola",
+    });
+    expect(textosPorCanalParaApi("subscription.paused", textos)).toEqual({ messenger_meta: "Hola" });
+    expect(textosPorCanalParaApi("subscription.paused", {})).toEqual({});
   });
 });

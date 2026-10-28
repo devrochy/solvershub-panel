@@ -15,7 +15,7 @@ export default async function PlantillasPorEventoPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Plantillas por evento"
-        description="Qué plantilla aprobada se envía en cada aviso cuando el cliente lleva más de 24 horas sin escribir. Dentro de las 24 horas se envía el texto de respaldo."
+        description="Qué plantilla aprobada se envía en cada aviso cuando el cliente lleva más de 24 horas sin escribir. Dentro de las 24 horas se envía el texto de respaldo. En QR, chat web, Messenger e Instagram puedes escribir un texto propio por canal."
       />
       <MissingTemplatesBanner />
       {res.ok ? (
