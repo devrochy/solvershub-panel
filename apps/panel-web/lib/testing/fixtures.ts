@@ -171,6 +171,7 @@ export const conversaciones: ConversationPage = {
       connection_label: "Ventas",
       connection_provider: "meta",
       connection_type: "whatsapp_meta",
+      pending_count: 2,
     },
     {
       id: "test-conv-2",
@@ -180,6 +181,7 @@ export const conversaciones: ConversationPage = {
       status: "resolved",
       bot_paused: true,
       started_at: "2026-10-08T10:30:00Z",
+      pending_count: 0,
     },
   ],
   total: 2,

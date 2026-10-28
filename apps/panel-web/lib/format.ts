@@ -61,6 +61,18 @@ export function formatLatency(ms: number): string {
   return `${numberFmt.format(ms)} ms`;
 }
 
+/** Número de la píldora de pendientes: tope `99+` como en las apps de chat. */
+export function contadorPendientes(n: number): string {
+  return n > 99 ? "99+" : String(Math.max(0, n));
+}
+
+/** Texto accesible de los mensajes que esperan respuesta. */
+export function textoPendientes(n: number): string {
+  if (n > 99) return "Más de 99 mensajes sin responder";
+  if (n === 1) return "1 mensaje sin responder";
+  return `${n} mensajes sin responder`;
+}
+
 export function formatList(value: string[]): string {
   return value.join(", ");
 }

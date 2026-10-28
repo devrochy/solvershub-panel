@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  contadorPendientes,
   formatCellValue,
   formatCop,
   formatDate,
@@ -10,6 +11,7 @@ import {
   formatMoney,
   formatNumber,
   parseList,
+  textoPendientes,
 } from "@/lib/format";
 
 describe("formatCellValue", () => {
@@ -86,5 +88,19 @@ describe("formatHoraChat (HU-UX-15)", () => {
     expect(formatHoraChat(new Date(2026, 9, 19, 9, 5), ahora)).toMatch(/9:05/);
     expect(formatHoraChat(new Date(2026, 9, 18, 9, 5), ahora)).toMatch(/18\/10\/(20)?26/);
     expect(formatHoraChat(null, ahora)).toBe("");
+  });
+});
+
+describe("pendientes de respuesta", () => {
+  it("la píldora usa el número y tope 99+", () => {
+    expect(contadorPendientes(0)).toBe("0");
+    expect(contadorPendientes(7)).toBe("7");
+    expect(contadorPendientes(100)).toBe("99+");
+  });
+
+  it("el texto accesible concuerda en singular y plural", () => {
+    expect(textoPendientes(1)).toBe("1 mensaje sin responder");
+    expect(textoPendientes(3)).toBe("3 mensajes sin responder");
+    expect(textoPendientes(100)).toBe("Más de 99 mensajes sin responder");
   });
 });
