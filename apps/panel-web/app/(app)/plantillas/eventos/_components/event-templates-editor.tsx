@@ -83,7 +83,8 @@ export function EventTemplatesEditor({ initial }: { initial: MessageTemplatesSet
   });
 
   async function save() {
-    const mapping: Record<string, EventTemplateEntry> = {};
+    // Sin `option_template`: el servidor conserva el puente a la plantilla con opciones (D3) si el campo no viaja.
+    const mapping: Record<string, Omit<EventTemplateEntry, "option_template">> = {};
     for (const ev of initial.events) {
       const e = estado[ev.event];
       const t = porClave.get(e.plantilla);
