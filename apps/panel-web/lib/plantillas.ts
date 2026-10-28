@@ -78,3 +78,71 @@ export function desglosarFaltantes(datos: {
   }
   return { eventos, opciones: conDesglose ? opciones : 0, clavesDeOpciones: claves.slice(0, 3) };
 }
+
+/**
+ * Texto de respaldo por canal de los avisos por evento (ADR-0178 D2). Las claves son el tipo de conexión (el canal
+ * solo no distingue WhatsApp Meta de QR). Solo se envían si el master enciende `avisos_por_canal` en el negocio.
+ */
+export const TEXTO_POR_CANAL_MAX = 1000;
+
+export type CanalDeTexto = { tipo: string; etiqueta: string; ayuda: string };
+
+export const CANALES_DE_TEXTO: readonly CanalDeTexto[] = [
+  {
+    tipo: "whatsapp_waweb",
+    etiqueta: "WhatsApp por QR",
+    ayuda: "Sale solo si tu conexión por QR permite escribir primero, dentro del cupo del día y sin pausa.",
+  },
+  { tipo: "webchat", etiqueta: "Chat web", ayuda: "Se guarda en la conversación y el chat lo muestra al cliente." },
+  {
+    tipo: "messenger_meta",
+    etiqueta: "Messenger",
+    ayuda: "Solo sale si el cliente escribió en las últimas 24 horas.",
+  },
+  {
+    tipo: "instagram_meta",
+    etiqueta: "Instagram",
+    ayuda: "Solo sale si el cliente escribió en las últimas 24 horas.",
+  },
+];
+
+const TIPO_QR = "whatsapp_waweb";
+
+/** Eventos de cobranza (Ley 2300): la API no les admite texto por QR porque no garantiza el horario de entrega. */
+const EVENTOS_DE_COBRANZA = new Set([
+  "subscription.charge_created",
+  "subscription.charge_reminder",
+  "subscription.paused",
+]);
+
+export function admiteTextoPorCanal(evento: string, tipo: string): boolean {
+  return !(tipo === TIPO_QR && EVENTOS_DE_COBRANZA.has(evento));
+}
+
+/** Variables que cita un texto, en cualquiera de los dialectos de la API (`{a.b}`, `{x}`, `{{n}}`), sin repetir. */
+export function variablesDelTexto(texto: string): string[] {
+  const vistas: string[] = [];
+  for (const m of texto.matchAll(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}|\{([^{}]*)\}/g)) {
+    const nombre = m[1] ?? m[2];
+    if (nombre && !vistas.includes(nombre)) vistas.push(nombre);
+  }
+  return vistas;
+}
+
+/** Variables del texto que el evento no permite (la API rechaza el guardado completo si hay alguna). */
+export function variablesNoPermitidas(texto: string, permitidas: string[]): string[] {
+  return variablesDelTexto(texto).filter((v) => !permitidas.includes(v));
+}
+
+/**
+ * Textos por canal listos para la API: sin los vacíos y sin el de QR en los eventos de cobranza.
+ * La API reemplaza los guardados del evento por lo que reciba, así que se manda el conjunto completo.
+ */
+export function textosPorCanalParaApi(evento: string, textos: Record<string, string>): Record<string, string> {
+  const salida: Record<string, string> = {};
+  for (const { tipo } of CANALES_DE_TEXTO) {
+    const texto = (textos[tipo] ?? "").trim();
+    if (texto && admiteTextoPorCanal(evento, tipo)) salida[tipo] = texto;
+  }
+  return salida;
+}

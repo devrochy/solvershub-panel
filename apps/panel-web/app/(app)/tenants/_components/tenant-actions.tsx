@@ -5,6 +5,7 @@ import { Settings2, Trash2 } from "lucide-react";
 
 import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
+import { AvisosPorCanalSection } from "@/app/(app)/tenants/_components/avisos-por-canal-section";
 import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
@@ -26,7 +27,7 @@ export function TenantActions({
   abrirInicial = false,
 }: {
   tenant: PlatformTenant;
-  /** Solo el admin de plataforma ve el interruptor de plantillas con opciones (el tester no). */
+  /** Solo el admin de plataforma ve los interruptores de plantillas con opciones y de avisos por canal (el tester no). */
   esMaster?: boolean;
   /** Llega por el enlace del editor de plantillas con opciones: abre el diálogo ya en el interruptor. */
   abrirInicial?: boolean;
@@ -140,6 +141,10 @@ export function TenantActions({
                   negocio={nombre}
                   enfocar={abrirInicial}
                 />
+
+                <Separator />
+
+                <AvisosPorCanalSection tenantId={tenant.id} negocio={nombre} />
 
                 <Separator />
               </>

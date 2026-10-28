@@ -109,6 +109,7 @@ export type OpcionesAccion = components["schemas"]["Accion"];
 export type OpcionesAccionDelCatalogo = components["schemas"]["AccionDelCatalogoOut"];
 export type OpcionesVariable = components["schemas"]["OpcionesVariableOut"];
 export type OpcionesDirectasBandera = components["schemas"]["OpcionesDirectasBandera"];
+export type AvisosPorCanalBandera = components["schemas"]["AvisosPorCanalBandera"];
 export type OpcionesHallazgo = components["schemas"]["OpcionesHallazgoOut"];
 export type OpcionesPlantillaResumen = components["schemas"]["OpcionesPlantillaResumen"];
 export type OpcionesPlantilla = components["schemas"]["OpcionesPlantillaOut"];
