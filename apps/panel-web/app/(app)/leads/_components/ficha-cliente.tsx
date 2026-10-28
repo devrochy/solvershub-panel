@@ -31,6 +31,7 @@ import { useAction } from "@/lib/use-action";
 
 import { AgenteSwitch } from "./agente-switch";
 import { ConsentimientoDelCliente } from "./consentimiento";
+import { ConsentimientoDatosDelCliente } from "./consentimiento-datos";
 import { HistoriaDelCliente, NotasDelCliente } from "./notas-y-historia";
 
 const TITULO_DEL_PACK: Record<string, string> = {
@@ -194,6 +195,8 @@ export function FichaCliente({
               )}
 
               {detalle.canal === "whatsapp" && <ConsentimientoDelCliente leadId={detalle.id} />}
+
+              <ConsentimientoDatosDelCliente leadId={detalle.id} />
 
               <NotasDelCliente leadId={detalle.id} onCambio={() => setVersionHistoria((v) => v + 1)} />
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
 import { BajasCard } from "@/app/(app)/configuracion/_components/bajas-card";
+import { AvisoDatosCard } from "@/app/(app)/configuracion/_components/aviso-datos-card";
 import { DatosClienteCard } from "@/app/(app)/configuracion/_components/datos-cliente-card";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
@@ -14,6 +15,7 @@ import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
 import { Tabs } from "@/components/ui/tabs";
+import type { AvisoDatos } from "@/lib/aviso-datos";
 import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   BajasSettings,
@@ -79,7 +81,13 @@ export function SettingsTabs({
   bajas: BajasSettings | null;
   waweb: WawebPolitica | null;
   /** Política de datos del cliente (HU-CRM-13): `politica` null = no se pudo cargar (`error`). */
-  datosCliente: { politica: PoliticaDatos | null; error?: string; puedeEditar: boolean };
+  datosCliente: {
+    politica: PoliticaDatos | null;
+    error?: string;
+    puedeEditar: boolean;
+    aviso: AvisoDatos | null;
+    avisoError?: string;
+  };
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
   const [tab, setTab] = useState(
@@ -99,11 +107,18 @@ export function SettingsTabs({
       {tab === "memory" && <MemoryForm memory={settings.memory} />}
       {tab === "skills" && <SkillsForm skills={settings.skills} />}
       {tab === "datos-cliente" && (
-        <DatosClienteCard
-          politica={datosCliente.politica}
-          error={datosCliente.error}
-          puedeEditar={datosCliente.puedeEditar}
-        />
+        <>
+          <DatosClienteCard
+            politica={datosCliente.politica}
+            error={datosCliente.error}
+            puedeEditar={datosCliente.puedeEditar}
+          />
+          <AvisoDatosCard
+            aviso={datosCliente.aviso}
+            error={datosCliente.avisoError}
+            puedeEditar={datosCliente.puedeEditar}
+          />
+        </>
       )}
       {tab === "web-chat" && <WebChatForm webChat={webChat} />}
       {tab === "media" && <MultimediaForm media={media} />}

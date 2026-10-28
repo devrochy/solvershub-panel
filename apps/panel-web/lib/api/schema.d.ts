@@ -8055,6 +8055,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/consentimiento-datos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Consentimiento Datos
+         * @description Estado del cliente frente al aviso de datos (informado, aceptó, rechazó).
+         */
+        get: operations["ver_consentimiento_datos_api_v1_admin_leads__lead_id__consentimiento_datos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/consentimiento-datos/revocar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revocar Consentimiento Datos
+         * @description El cliente pidió que no se guarden más datos suyos: se registra la revocación y se retiran del
+         *     perfil sus datos personales. Solo dueño o master. Los registros de los módulos (pedidos, citas…)
+         *     no se borran aquí: la supresión en los módulos queda pendiente (aviso en la respuesta y auditoría).
+         */
+        post: operations["revocar_consentimiento_datos_api_v1_admin_leads__lead_id__consentimiento_datos_revocar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/datos-cliente/aviso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Aviso */
+        get: operations["get_aviso_api_v1_admin_datos_cliente_aviso_get"];
+        /**
+         * Save Aviso
+         * @description Guarda el texto y el interruptor del aviso. Activarlo exige confirmar la revisión legal del texto.
+         *     El texto completo queda en la auditoría junto con su versión.
+         */
+        put: operations["save_aviso_api_v1_admin_datos_cliente_aviso_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -20740,6 +20804,89 @@ export interface components {
             creada?: string | null;
             /** Actualizada */
             actualizada?: string | null;
+        };
+        /** AvisoDatosOut */
+        AvisoDatosOut: {
+            /** Activo */
+            activo: boolean;
+            /** Texto */
+            texto: string;
+            /** Texto Propio */
+            texto_propio: string;
+            /** Es Borrador */
+            es_borrador: boolean;
+            /** Version */
+            version: string;
+        };
+        /** AvisoDatosUpdate */
+        AvisoDatosUpdate: {
+            /** Activo */
+            activo: boolean;
+            /**
+             * Texto
+             * @default
+             */
+            texto: string;
+            /**
+             * Confirmo Revision Legal
+             * @default false
+             */
+            confirmo_revision_legal: boolean;
+        };
+        /** ConsentimientoDatosItem */
+        ConsentimientoDatosItem: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "informado" | "otorgado" | "revocado";
+            /** Origen */
+            origen: string;
+            /** Quien */
+            quien: string;
+            /** Version Aviso */
+            version_aviso: string | null;
+            /** Evidencia */
+            evidencia: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * ConsentimientoDatosOut
+         * @description Estado del cliente frente al aviso de tratamiento de datos y su historial (hasta 20).
+         */
+        ConsentimientoDatosOut: {
+            /** Aviso Activo */
+            aviso_activo: boolean;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "sin_aviso" | "informado" | "otorgado" | "revocado";
+            /** Historial */
+            historial: components["schemas"]["ConsentimientoDatosItem"][];
+        };
+        /** RevocacionDatosOut */
+        RevocacionDatosOut: {
+            /** Aviso Activo */
+            aviso_activo: boolean;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "sin_aviso" | "informado" | "otorgado" | "revocado";
+            /** Historial */
+            historial: components["schemas"]["ConsentimientoDatosItem"][];
+            /** Datos Retirados */
+            datos_retirados: string[];
+            /**
+             * Supresion En Modulos Pendiente
+             * @default true
+             */
+            supresion_en_modulos_pendiente: boolean;
         };
     };
     responses: never;
@@ -38017,6 +38164,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatosRetirados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_consentimiento_datos_api_v1_admin_leads__lead_id__consentimiento_datos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentimientoDatosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revocar_consentimiento_datos_api_v1_admin_leads__lead_id__consentimiento_datos_revocar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevocacionDatosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_aviso_api_v1_admin_datos_cliente_aviso_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisoDatosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_aviso_api_v1_admin_datos_cliente_aviso_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvisoDatosUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisoDatosOut"];
                 };
             };
             /** @description Validation Error */
