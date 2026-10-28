@@ -381,6 +381,28 @@ describe("editor · enviar prueba", () => {
   });
 });
 
+describe("Probar en el playground (SPEC-40, pista B2)", () => {
+  it("con la plantilla publicada enlaza al chat de prueba con su clave, en una pestaña nueva", async () => {
+    simular(() => undefined);
+    pintar(plantilla({ estado: "published", version_vigente: 1, definicion_vigente: DEFINICION }));
+    await esperarValidacion();
+    const enlace = screen.getByRole("link", { name: /Probar en el playground/ });
+    expect(enlace.getAttribute("href")).toBe("/asistente?plantilla=confirmar_cita");
+    expect(enlace.getAttribute("target")).toBe("_blank");
+  });
+
+  it("no se ofrece sin publicar ni en solo lectura (ejecuta tools de verdad)", async () => {
+    simular(() => undefined);
+    pintar(plantilla());
+    await esperarValidacion();
+    expect(screen.queryByRole("link", { name: /Probar en el playground/ })).toBeNull();
+    cleanup();
+    pintar(plantilla({ estado: "published", version_vigente: 1 }), false);
+    await esperarValidacion();
+    expect(screen.queryByRole("link", { name: /Probar en el playground/ })).toBeNull();
+  });
+});
+
 describe("formulario de argumentos generado", () => {
   const accion = (extra: Partial<OpcionesAccion> = {}): OpcionesAccion => ({ tool: "confirmar_cita", args_fijos: {}, args_contexto: {}, confirmar: false, ...extra });
 

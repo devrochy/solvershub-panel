@@ -10,7 +10,9 @@ import { rutaDeBackend } from "@/lib/plantillas-opciones-ruta";
  * el backend; los errores salen aplanados (`{error, code, details}`) con su estado original, y en un 422/409
  * `details.hallazgos` trae los hallazgos de la definición.
  */
-type Contexto = { params: Promise<{ ruta: string[] }> };
+// Catch-all OPCIONAL (`[[...ruta]]`): sin segmentos es la lista (`GET`) y el alta (`POST`) de `/api/plantillas-opciones`;
+// con `[...ruta]` esas dos rutas daban 404 y el panel nunca llegaba al backend.
+type Contexto = { params: Promise<{ ruta?: string[] }> };
 
 function leer(texto: string): unknown {
   try {
@@ -22,7 +24,7 @@ function leer(texto: string): unknown {
 
 async function reenviar(request: Request, ctx: Contexto) {
   const { ruta } = await ctx.params;
-  const destino = rutaDeBackend(request.method, ruta);
+  const destino = rutaDeBackend(request.method, ruta ?? []);
   if (!destino) return NextResponse.json({ error: "Ruta no encontrada." }, { status: 404 });
 
   let body: unknown;

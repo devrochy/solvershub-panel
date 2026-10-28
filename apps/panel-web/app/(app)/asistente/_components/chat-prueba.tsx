@@ -7,12 +7,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
+import type { PlaygroundMensaje } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
+import {
+  avisoDeToque,
+  leerInteractivo,
+  mensajeDeErrorPlayground,
+  type AvisoDeToque,
+  type InteractivoLeido,
+} from "@/lib/playground-opciones";
+import { playgroundOpcionesApi } from "@/lib/playground-opciones-cliente";
 
-type Turno = { role?: string; text?: string; content?: string };
+import { MensajeConBotones } from "./mensaje-con-botones";
+import { ProbarPlantilla } from "./probar-plantilla";
+
+type Turno = { role?: string; text?: string; content?: string; interactivo?: InteractivoLeido };
 
 function texto(t: Turno): string {
   return t.text ?? t.content ?? JSON.stringify(t);
 }
+
+/** Mensajes de `/options` y `/tap` → turnos del chat (los que traen botones se pintan tocables). */
+function turnosDe(mensajes: PlaygroundMensaje[]): Turno[] {
+  return mensajes.map((m) => {
+    const interactivo = leerInteractivo(m.interactive);
+    return { role: "assistant", text: m.content, ...(interactivo ? { interactivo } : {}) };
+  });
+}
+
+const TONO_AVISO: Record<AvisoDeToque["tono"], string> = {
+  info: "border-status-info-border bg-status-info-bg text-status-info-fg",
+  warning: "border-status-warning-border bg-status-warning-bg text-status-warning-fg",
+  danger: "border-status-danger-border bg-status-danger-bg text-status-danger-fg",
+};
 
 /**
  * Chat de prueba del asistente: mismo loop del runtime, sin canales.
@@ -20,19 +47,28 @@ function texto(t: Turno): string {
  * Con `conexionId` la prueba corre por esa conexión (HU-AOS-57): así se prueba la versión activa del
  * agente publicado ahí, como en el asistente de primer uso. `sugerencias` son frases para empezar con un
  * toque y `alRecibirRespuesta` avisa cuando el agente contestó.
+ *
+ * Con `probarOpciones` suma «Probar plantilla con opciones» (SPEC-40, pista B2): envía una plantilla publicada a la
+ * conversación de prueba, pinta sus botones y, al tocarlos, simula el toque con el mismo resolver de WhatsApp. Los
+ * botones viven en este navegador: el historial del servidor solo trae la charla con el asistente.
  */
 export function ChatPrueba({
   conexionId,
   sugerencias,
   alRecibirRespuesta,
+  probarOpciones,
 }: {
   conexionId?: string;
   sugerencias?: string[];
   alRecibirRespuesta?: () => void;
+  /** Muestra el selector de plantillas con opciones; `plantillaInicial` es la clave que viene del editor. */
+  probarOpciones?: { plantillaInicial?: string };
 } = {}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [texto_, setTexto] = useState("");
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+  const [aviso, setAviso] = useState<AvisoDeToque | null>(null);
+  const [tocados, setTocados] = useState<ReadonlySet<string>>(new Set());
   const fin = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +117,47 @@ export function ChatPrueba({
     if (!json.escalated) alRecibirRespuesta?.();
   }
 
+  async function enviarPlantilla(clave: string, nombre: string) {
+    setStatus({ loading: true });
+    setAviso(null);
+    const res = await playgroundOpcionesApi.enviar(clave, conexionId);
+    setStatus({ loading: false });
+    if (!res.ok) {
+      setAviso({ tono: "danger", texto: mensajeDeErrorPlayground(res) });
+      return;
+    }
+    setTurnos((previos) => [...previos, ...turnosDe(res.data.mensajes)]);
+    if (res.data.ya_enviado) setAviso({ tono: "info", texto: "Esa plantilla ya estaba en el chat." });
+    else if (res.data.via === "texto") {
+      setAviso({
+        tono: "warning",
+        texto: `«${nombre}» salió como texto con las opciones numeradas, sin botones: no cabe en un mensaje interactivo. Revisa los topes en el editor.`,
+      });
+    }
+  }
+
+  async function tocar(id: string, titulo: string) {
+    setStatus({ loading: true });
+    setAviso(null);
+    setTocados((previos) => new Set(previos).add(id));
+    setTurnos((previos) => [...previos, { role: "user", text: titulo }]);
+    const res = await playgroundOpcionesApi.tocar(id, conexionId);
+    setStatus({ loading: false });
+    if (!res.ok) {
+      // El toque no llegó a ejecutarse: el botón vuelve a poder tocarse y lo que "dijo" el cliente se retira.
+      setTurnos((previos) => previos.slice(0, -1));
+      setTocados((previos) => {
+        const siguientes = new Set(previos);
+        siguientes.delete(id);
+        return siguientes;
+      });
+      setAviso({ tono: "danger", texto: mensajeDeErrorPlayground(res) });
+      return;
+    }
+    setTurnos((previos) => [...previos, ...turnosDe(res.data.mensajes)]);
+    setAviso(avisoDeToque(res.data.outcome, res.data.mensajes.length));
+  }
+
   async function reiniciar() {
     setStatus({ loading: true });
     const res = await fetch("/api/playground", {
@@ -94,10 +171,15 @@ export function ChatPrueba({
       return;
     }
     setTurnos([]);
+    setAviso(null);
+    setTocados(new Set());
   }
 
   return (
     <div className="flex flex-col gap-4">
+      {probarOpciones && (
+        <ProbarPlantilla inicial={probarOpciones.plantillaInicial} ocupado={!!status.loading} onEnviar={(c, n) => void enviarPlantilla(c, n)} />
+      )}
       <Card>
         <CardContent className="flex max-h-[60vh] min-h-72 flex-col gap-3 overflow-y-auto pt-5">
           {turnos.length === 0 ? (
@@ -111,21 +193,39 @@ export function ChatPrueba({
                 key={`${i}-${texto(t).slice(0, 12)}`}
                 className={`flex ${t.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                    t.role === "user"
-                      ? "bg-action text-white"
-                      : "border border-border-soft bg-surface text-body"
-                  }`}
-                >
-                  {texto(t)}
-                </div>
+                {t.interactivo ? (
+                  <MensajeConBotones
+                    interactivo={t.interactivo}
+                    tocados={tocados}
+                    ocupado={!!status.loading}
+                    onTocar={(id, titulo) => void tocar(id, titulo)}
+                  />
+                ) : (
+                  <div
+                    className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+                      t.role === "user"
+                        ? "bg-action text-white"
+                        : "border border-border-soft bg-surface text-body"
+                    }`}
+                  >
+                    {texto(t)}
+                  </div>
+                )}
               </div>
             ))
           )}
           <div ref={fin} />
         </CardContent>
       </Card>
+
+      {aviso && (
+        <p
+          role={aviso.tono === "info" ? "status" : "alert"}
+          className={cn("rounded-md border p-3 text-sm", TONO_AVISO[aviso.tono])}
+        >
+          {aviso.texto}
+        </p>
+      )}
 
       <div className="flex flex-col gap-3">
         {sugerencias && sugerencias.length > 0 && (

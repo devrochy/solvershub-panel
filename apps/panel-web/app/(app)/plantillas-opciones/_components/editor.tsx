@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { FlaskConical, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -302,6 +303,15 @@ export function EditorDePlantilla({
               </Button>
               {plantilla.estado === "published" && (
                 <EnviarPrueba clave={clave} version={plantilla.version_vigente} hayCambiosSinPublicar={sinPublicar || dirty} />
+              )}
+              {plantilla.estado === "published" && (
+                // Pestaña nueva: no se pierden los cambios sin guardar. Prueba la versión publicada, como «Enviar prueba».
+                <Button asChild variant="outline">
+                  <Link href={`/asistente?plantilla=${encodeURIComponent(clave)}`} target="_blank" rel="noopener">
+                    <FlaskConical className="h-4 w-4" aria-hidden />
+                    Probar en el playground
+                  </Link>
+                </Button>
               )}
               {plantilla.estado === "published" && (
                 <Button type="button" variant="ghost" loading={ocupado === "retirando"} disabled={deshabilitado} onClick={retirar}>
