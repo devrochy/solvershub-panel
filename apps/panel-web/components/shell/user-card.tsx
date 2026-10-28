@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
-import { ThemeSwitch } from "@/components/shell/theme-switch";
+import { ThemeSwitch } from "@/components/ui/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";

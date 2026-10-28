@@ -37,7 +37,7 @@ y oscuro lado a lado. Una pieza nueva del kit entra al catálogo en el mismo PR.
 
 | Nivel | Componentes (`components/ui` salvo indicación) |
 |---|---|
-| Átomos | `Button` (`loading` conserva el ancho y pone `aria-busy`), `Badge` (con tono de estado trae su ícono y el tipo no deja quitarlo), `Avatar`, `Kbd`, `Skeleton` (estático, `lines`), `Input`/`Select`/`Textarea` (`aria-invalid` pinta el borde de error), `Checkbox`, `RadioGroup`, `Switch`, `Tooltip` |
+| Átomos | `Button` (`loading` conserva el ancho y pone `aria-busy`), `Badge` (con tono de estado trae su ícono y el tipo no deja quitarlo), `Avatar`, `Kbd`, `Skeleton` (estático, `lines`), `Input`/`Select`/`Textarea` (`aria-invalid` pinta el borde de error), `InputPassword` (ojo de 44 px de ancho dentro del campo), `Checkbox`, `RadioGroup`, `Switch`, `Tooltip` |
 | Moléculas | `Field` (une ayuda o error con el control vía `aria-describedby`), `SearchInput` (atajo opcional, Escape limpia), `Breadcrumbs`, `Tabs` (contenido en la misma página) y `TabLinks` (pestañas que cambian de ruta), `DropdownMenu`, `Popover`, `KpiTile` (delta escrito + `polarity`; `StatCard` es alias deprecado), `EmptyState`, `Pagination` |
 | Organismos | `DataTable` (`density`, `maxHeight` con encabezado fijo, `loading`, `error` + `errorAction`, `caption`), `Dialog`, `Confirm`, `Sheet` (panel lateral), `PageHeader` (migas + título + acciones + pestañas) |
 | Gráficos (`components/dataviz`) | `Sparkline` (ranura de `KpiTile`; decorativa o con `label` resumen), `LineChart` (con `area`), `BarChart` (una serie o agrupadas), `ProgressRing` (consumo del plan). Geometría y formato puros en `escalas.ts` (los mismos casos en la app) |
@@ -189,7 +189,7 @@ ni `hover:scale`).
 | `components/domain/tour-guiado.tsx` + `lib/tour.ts` | Recorrido propio de 5 pasos (D-SPEC-12-1 = A, sin librerías). Diálogo sin fondo oscuro, abajo a la derecha, para que se vea lo resaltado (`data-tour` → outline cyan de 2 px, sin animación). Teclado: Tab dentro del diálogo, ← y → cambian de paso, Escape lo salta. Cada paso se anuncia (`role="status"`) y el foco vuelve a quien lo abrió. Cómo terminó queda en la cookie `panel_tour` |
 | `components/domain/bienvenida.tsx` | Primera visita: ofrece el recorrido («Empezar recorrido» / «Ahora no») mientras queden pasos |
 | `components/domain/invitaciones-pendientes.tsx` | Invitaciones que esperan respuesta, en el layout de `(app)`: aceptar deja el negocio activo; rechazar pide confirmación |
-| `components/domain/tarjeta-de-acceso.tsx` | Marco de las pantallas sin sesión: `/login`, `/invitacion` (el token llega en el fragmento `#` y se borra de la barra) y `/recuperar` |
+| `components/domain/tarjeta-de-acceso.tsx` | Marco a fondo completo de las pantallas sin sesión: logo vertical, umbral degradado, formulario de 420 px y cambio de tema al pie. `/login`, `/invitacion` (el token llega en el fragmento `#` y se borra de la barra) y `/recuperar` |
 
 Un elemento que quiera aparecer en el recorrido lleva `data-tour="<id>"` (los enlaces del
 menú ya llevan su `href`). Los modales de ayuda por sección y las guías por habilidad son de

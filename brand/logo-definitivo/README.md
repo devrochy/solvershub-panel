@@ -50,7 +50,8 @@ En el tema claro HUB pasa de cian a azul 500 porque el cian no da contraste sobr
 |---|---|
 | Portada, splash, presentación, redes | `svg/logo-vertical/…-tema-oscuro.svg` |
 | Cabecera de la landing (fondo navy) | `svg/logo-horizontal/…-tema-oscuro.svg` |
-| Barra lateral y login del panel (24–28 px de alto) | `svg/logo-horizontal-1-linea-simple/…` o `svg/wordmark-1-linea/…` |
+| Login del panel (portada de acceso a fondo completo) | `svg/logo-vertical/…-tema-oscuro.svg` |
+| Barra lateral del panel (24–28 px de alto) | `svg/logo-horizontal-1-linea-simple/…` o `svg/wordmark-1-linea/…` |
 | Documentos, propuestas, facturas (fondo claro) | `svg/logo-horizontal/…-tema-claro.svg` |
 | Firma de correo | `png/logo-horizontal-1-linea-simple/…` (180 px de ancho) |
 | Avatar de redes y WhatsApp | `svg/app-icon/solvershub-appicon-redondeado-tema-oscuro.svg` |

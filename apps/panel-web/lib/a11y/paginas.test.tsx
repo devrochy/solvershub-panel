@@ -37,6 +37,9 @@ vi.mock("next/navigation", () => ({
 type Pagina = (props: { searchParams: Promise<Record<string, string>>; params: Promise<Record<string, string>> }) => Promise<ReactNode>;
 
 const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
+  ["Iniciar sesión", () => import("@/app/login/page")],
+  ["Recuperar contraseña", () => import("@/app/recuperar/page")],
+  ["Activar cuenta", () => import("@/app/invitacion/page")],
   ["Resumen", () => import("@/app/(app)/dashboard/page")],
   ["Agentes", () => import("@/app/(app)/agentes/page")],
   ["Agentes · Colaboración", () => import("@/app/(app)/agentes/colaboracion/page")],

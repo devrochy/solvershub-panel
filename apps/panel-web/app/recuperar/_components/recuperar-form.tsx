@@ -132,7 +132,7 @@ export function RecuperarForm() {
         </Button>
         <button
           type="button"
-          className={`${enlace} self-start text-sm`}
+          className={`${enlace} self-center text-sm`}
           onClick={() => {
             setEtapa("pedir");
             setError(null);
@@ -161,7 +161,7 @@ export function RecuperarForm() {
       <Button type="submit" variant="accent" disabled={enviando}>
         {enviando ? "Enviando…" : "Enviarme un código"}
       </Button>
-      <Link href="/login" className={`${enlace} self-start text-sm`}>
+      <Link href="/login" className={`${enlace} self-center text-sm`}>
         Volver a iniciar sesión
       </Link>
     </form>
