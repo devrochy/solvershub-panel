@@ -3751,6 +3751,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/datos-cliente/politica": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Politica */
+        get: operations["get_politica_api_v1_admin_datos_cliente_politica_get"];
+        /**
+         * Save Politica
+         * @description Reemplaza los ajustes de las acciones habilitadas. Rechaza acciones o datos que el negocio
+         *     no tiene y los pisos técnicos; guarda solo lo que difiere del valor del módulo.
+         */
+        put: operations["save_politica_api_v1_admin_datos_cliente_politica_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/domain-events": {
         parameters: {
             query?: never;
@@ -8072,6 +8094,17 @@ export interface components {
              */
             confirmacion_obligatoria: boolean;
         };
+        /** AccionPoliticaOut */
+        AccionPoliticaOut: {
+            /** Id */
+            id: string;
+            /** Modulo */
+            modulo: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Campos */
+            campos: components["schemas"]["CampoPoliticaOut"][];
+        };
         /**
          * ActiveEscalation
          * @description Escalación sin resolver más reciente de la conversación (el «ticket»).
@@ -8755,6 +8788,27 @@ export interface components {
              * Format: date-time
              */
             ended_at: string;
+        };
+        /** CampoPoliticaOut */
+        CampoPoliticaOut: {
+            /** Clave */
+            clave: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /**
+             * Nivel
+             * @enum {string}
+             */
+            nivel: "requerido" | "recomendado" | "no_pedir";
+            /**
+             * Por Defecto
+             * @enum {string}
+             */
+            por_defecto: "requerido" | "recomendado" | "no_pedir";
+            /** Ajustable */
+            ajustable: boolean;
+            /** Ajustado */
+            ajustado: boolean;
         };
         /** CanaryIn */
         CanaryIn: {
@@ -12396,6 +12450,25 @@ export interface components {
              * @default
              */
             setup_guide: string;
+        };
+        /** PoliticaDatosOut */
+        PoliticaDatosOut: {
+            /** Niveles */
+            niveles: ("requerido" | "recomendado" | "no_pedir")[];
+            /** Acciones */
+            acciones: components["schemas"]["AccionPoliticaOut"][];
+        };
+        /**
+         * PoliticaDatosUpdate
+         * @description `{accion_id: {clave: nivel}}`. Lo que no viene para una acción vuelve al valor del módulo.
+         */
+        PoliticaDatosUpdate: {
+            /** Politica */
+            politica?: {
+                [key: string]: {
+                    [key: string]: "requerido" | "recomendado" | "no_pedir";
+                };
+            };
         };
         /** Portfolio */
         Portfolio: {
@@ -28132,6 +28205,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubscriptionProviderSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_politica_api_v1_admin_datos_cliente_politica_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoliticaDatosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_politica_api_v1_admin_datos_cliente_politica_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoliticaDatosUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoliticaDatosOut"];
                 };
             };
             /** @description Validation Error */
