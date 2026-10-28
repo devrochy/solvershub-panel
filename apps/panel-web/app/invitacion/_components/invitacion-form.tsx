@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   VARIABLE_DEL_TOKEN,
@@ -122,10 +122,9 @@ export function InvitacionForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <Field label="Contraseña nueva" htmlFor="clave" help="Mínimo 8 caracteres." required>
-        <Input
+        <InputPassword
           id="clave"
           name="clave"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -134,10 +133,9 @@ export function InvitacionForm({
         />
       </Field>
       <Field label="Repite la contraseña" htmlFor="confirmacion" required>
-        <Input
+        <InputPassword
           id="confirmacion"
           name="confirmacion"
-          type="password"
           autoComplete="new-password"
           required
           value={confirmacion}

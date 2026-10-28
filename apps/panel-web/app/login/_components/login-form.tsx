@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 
 export function LoginForm() {
   const router = useRouter();
@@ -41,6 +42,10 @@ export function LoginForm() {
           id="identifier"
           name="identifier"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          className="h-12 text-[15px]"
           required
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
@@ -48,11 +53,11 @@ export function LoginForm() {
       </Field>
 
       <Field label="Contraseña" htmlFor="password" required>
-        <Input
+        <InputPassword
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
+          className="h-12 text-[15px]"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -61,7 +66,13 @@ export function LoginForm() {
 
       <FormFeedback error={error} />
 
-      <Button type="submit" variant="accent" disabled={loading}>
+      <Button
+        type="submit"
+        variant="accent"
+        size="lg"
+        loading={loading}
+        className="h-12 w-full text-[15px]"
+      >
         {loading ? "Entrando…" : "Entrar"}
       </Button>
     </form>
