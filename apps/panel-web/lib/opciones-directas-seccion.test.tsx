@@ -247,11 +247,11 @@ describe("el interruptor solo lo ve el master en las acciones del negocio", () =
   async function abrir(esMaster: boolean) {
     render(
       <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} plans={[]} esMaster={esMaster} />
+        <TenantActions tenant={NEGOCIO} esMaster={esMaster} />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Acciones de cafe-aurora/ }));
-    await screen.findByText("Acciones del negocio");
+    fireEvent.click(screen.getByRole("button", { name: /Gestionar Café Aurora/ }));
+    await screen.findByText("Gestionar negocio");
   }
 
   it("el master lo ve", async () => {
@@ -269,7 +269,7 @@ describe("el interruptor solo lo ve el master en las acciones del negocio", () =
   it("con `abrirInicial` (enlace del editor) el diálogo nace abierto con el interruptor enfocado", async () => {
     render(
       <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} plans={[]} esMaster abrirInicial />
+        <TenantActions tenant={NEGOCIO} esMaster abrirInicial />
       </FeedbackProviders>,
     );
     const sw = await interruptor();
@@ -279,9 +279,9 @@ describe("el interruptor solo lo ve el master en las acciones del negocio", () =
   it("con `abrirInicial` pero sin ser master no abre nada", () => {
     render(
       <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} plans={[]} esMaster={false} abrirInicial />
+        <TenantActions tenant={NEGOCIO} esMaster={false} abrirInicial />
       </FeedbackProviders>,
     );
-    expect(screen.queryByText("Acciones del negocio")).toBeNull();
+    expect(screen.queryByText("Gestionar negocio")).toBeNull();
   });
 });

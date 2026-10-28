@@ -47,6 +47,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Habilidades", () => import("@/app/(app)/habilidades/page")],
   ["Conexiones", () => import("@/app/(app)/conexiones/page")],
   ["Plan", () => import("@/app/(app)/plan/page")],
+  ["Negocios", () => import("@/app/(app)/tenants/page")],
   ["Configuración", () => import("@/app/(app)/configuracion/page")],
   ["Cobranza", () => import("@/app/(app)/cobranza/page")],
   ["Suscripciones · Resumen", () => import("@/app/(app)/suscripciones/page")],

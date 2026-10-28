@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { NewTenantDialog } from "@/app/(app)/tenants/_components/new-tenant-dialog";
 import { TenantActions } from "@/app/(app)/tenants/_components/tenant-actions";
-import { TENANT_STATUS, StatusBadge } from "@/components/domain/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { TenantPlanBadge } from "@/app/(app)/tenants/_components/tenant-plan-badge";
+import { TenantStatusToggle } from "@/app/(app)/tenants/_components/tenant-status-toggle";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Field } from "@/components/ui/field";
@@ -15,7 +15,7 @@ import type { Me, PlanResponse, PlatformTenantPage } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 import { UUID, esMasterDePlataforma } from "@/lib/opciones-directas-bandera";
 
-export const metadata = { title: "Tenants" };
+export const metadata = { title: "Negocios" };
 
 type TenantRow = PlatformTenantPage["items"][number];
 
@@ -57,17 +57,12 @@ export default async function TenantsPage({
     {
       key: "estado",
       header: "Estado",
-      cell: (t) => <StatusBadge value={t.status} map={TENANT_STATUS} />,
+      cell: (t) => <TenantStatusToggle tenant={t} />,
     },
     {
       key: "plan",
       header: "Plan",
-      cell: (t) => (
-        <span className="flex items-center gap-2">
-          <span className="text-headline">{t.plan_name}</span>
-          <Badge variant={t.operational ? "neutral" : "danger"}>{t.plan_status}</Badge>
-        </span>
-      ),
+      cell: (t) => <TenantPlanBadge tenant={t} plans={plans} />,
     },
     {
       key: "creado",
@@ -78,15 +73,15 @@ export default async function TenantsPage({
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (t) => <TenantActions tenant={t} plans={plans} esMaster={esMaster} abrirInicial={t.id === abrir} />,
+      cell: (t) => <TenantActions tenant={t} esMaster={esMaster} abrirInicial={t.id === abrir} />,
     },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Tenants"
-        description="Gestión de plataforma: todos los negocios y su plan."
+        title="Negocios"
+        description="Todos los negocios de la plataforma, con su estado y plan."
         actions={<NewTenantDialog />}
       />
 

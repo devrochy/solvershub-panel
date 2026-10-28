@@ -28,6 +28,7 @@ import type {
   MetricasSuscripciones,
   MissingTemplates,
   PlanResponse,
+  PlatformTenantPage,
   PluginSummary,
   PrimerosPasos,
   ResumenPorAgente,
@@ -486,6 +487,35 @@ export const consolaConexiones: ConnectionsConsole = {
   consistency: null,
   can_edit: true,
   unassigned_agents: [],
+};
+
+export const negociosDePlataforma: PlatformTenantPage = {
+  items: [
+    {
+      id: "00000000-0000-4000-8000-0000000000b1",
+      name: "Negocio de prueba",
+      slug: "negocio-prueba",
+      status: "active",
+      created_at: "2026-10-01T00:00:00Z",
+      plan_name: "Básico",
+      plan_status: "active",
+      operational: true,
+    },
+    {
+      id: "00000000-0000-4000-8000-0000000000b2",
+      name: "Negocio suspendido",
+      slug: "negocio-suspendido",
+      status: "suspended",
+      created_at: "2026-09-01T00:00:00Z",
+      plan_name: "Básico",
+      plan_status: "past_due",
+      operational: false,
+    },
+  ],
+  page: 1,
+  page_size: 30,
+  has_more: false,
+  total: 2,
 };
 
 export const plan: PlanResponse = {
@@ -1180,6 +1210,7 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/admin/connections": conexiones,
   "/admin/connections/console": consolaConexiones,
   "/admin/plan": plan,
+  "/admin/platform/tenants": negociosDePlataforma,
   "/admin/settings": ajustes,
   "/admin/settings/web-chat": chatWeb,
   "/admin/settings/advanced": ajustesAvanzados,
