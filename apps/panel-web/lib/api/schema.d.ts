@@ -3315,6 +3315,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/tenants/{tenant_id}/avisos-por-canal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Avisos Por Canal
+         * @description Bandera de los avisos por evento por canal de texto del negocio (apagada por defecto). Solo el master.
+         */
+        get: operations["get_avisos_por_canal_api_v1_admin_platform_tenants__tenant_id__avisos_por_canal_get"];
+        /**
+         * Put Avisos Por Canal
+         * @description Enciende o apaga los avisos por canal de texto del negocio (auditado como `avisos_por_canal_bandera`).
+         *     Idempotente. Solo el master; es por negocio y no toca ningún otro.
+         */
+        put: operations["put_avisos_por_canal_api_v1_admin_platform_tenants__tenant_id__avisos_por_canal_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/declarative-tools": {
         parameters: {
             query?: never;
@@ -4011,6 +4036,8 @@ export interface paths {
          *
          *     Reusa el link del cargo (o lo crea si falta, sin duplicar el cargo). Si el cliente no tiene
          *     una conversación de WhatsApp no se envía nada y se devuelve el link para copiarlo.
+         *     Es un contacto de cobro: solo dentro del horario legal del negocio y si el cliente no
+         *     recibió otro aviso de cobro ese día (HU-SUB-18, Ley 2300 de 2023); si no, 409.
          */
         post: operations["reenviar_link_de_cargo_api_v1_pack_pack_subscriptions_cargos__charge_id__reenviar_link_post"];
         delete?: never;
@@ -7821,6 +7848,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/pack_subscriptions/promociones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Promociones
+         * @description Promociones de plan del negocio (sin las borradas), de la más reciente a la más antigua.
+         */
+        get: operations["listar_promociones_api_v1_pack_pack_subscriptions_promociones_get"];
+        put?: never;
+        /**
+         * Crear Promocion
+         * @description Crea una promoción. Código repetido → 409 `codigo_duplicado`; porcentaje fuera de 1–99 o períodos > 1 → 422.
+         */
+        post: operations["crear_promocion_api_v1_pack_pack_subscriptions_promociones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/promociones/{promocion_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Editar Promocion
+         * @description Reemplaza una promoción. Los canjes ya hechos conservan lo que se descontó.
+         */
+        put: operations["editar_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__put"];
+        post?: never;
+        /**
+         * Borrar Promocion
+         * @description Borra la promoción (lógico): su código deja de aplicar.
+         */
+        delete: operations["borrar_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/promociones/{promocion_id}/canjes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Canjes De Promocion
+         * @description Quién canjeó la promoción, en qué estado está cada canje y cuánto se descontó.
+         */
+        get: operations["canjes_de_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__canjes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/datos-de-prueba/{modulo}": {
         parameters: {
             query?: never;
@@ -9541,6 +9636,11 @@ export interface components {
              */
             metodo_pago: "pago_en_linea" | "transferencia";
             /**
+             * Codigo Promocion
+             * @description Código de una promoción de plan: el primer cobro sale con descuento (HU-SUB-33).
+             */
+            codigo_promocion?: string | null;
+            /**
              * Variant Id
              * @description Camino anterior: variante de commerce.
              */
@@ -9904,6 +10004,13 @@ export interface components {
              * @default
              */
             fallback_text: string;
+            /**
+             * Fallback Text By Channel
+             * @default {}
+             */
+            fallback_text_by_channel: {
+                [key: string]: string;
+            };
         };
         /** Expense */
         Expense: {
@@ -11483,6 +11590,19 @@ export interface components {
         };
         /** OpcionesDirectasBanderaIn */
         OpcionesDirectasBanderaIn: {
+            /** Habilitada */
+            habilitada: boolean;
+        };
+        /** AvisosPorCanalBandera */
+        AvisosPorCanalBandera: {
+            /**
+             * Habilitada
+             * @description Si los avisos por evento también salen como texto por QR, chat web, Messenger e Instagram (con el texto que el negocio definió para cada canal en `fallback_text_by_channel`). Apagada: solo conversaciones de WhatsApp, como siempre.
+             */
+            habilitada: boolean;
+        };
+        /** AvisosPorCanalBanderaIn */
+        AvisosPorCanalBanderaIn: {
             /** Habilitada */
             habilitada: boolean;
         };
@@ -13878,9 +13998,24 @@ export interface components {
             inscripcion?: string | null;
             /**
              * Monto
-             * @description Valor del cobro de inscripción, si lo hay.
+             * @description Valor del cobro de inscripción (neto), si lo hay.
              */
             monto?: number | null;
+            /**
+             * Monto Bruto
+             * @description Precio de lista, si hay una promoción aplicada.
+             */
+            monto_bruto?: number | null;
+            /**
+             * Descuento
+             * @description Descuento de la promoción en el primer cobro.
+             */
+            descuento?: number | null;
+            /**
+             * Promocion
+             * @description Etiqueta de la promoción aplicada.
+             */
+            promocion?: string | null;
             /** Link Pago */
             link_pago?: string | null;
             /** Instrucciones Transferencia */
@@ -20109,6 +20244,172 @@ export interface components {
             falta_descripcion: boolean;
             lote: components["schemas"]["LoteDePrueba"] | null;
         };
+        /** CanjeOut */
+        CanjeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "reservado" | "confirmado" | "agotado" | "terminado" | "liberado";
+            /**
+             * Cliente Id
+             * Format: uuid
+             */
+            cliente_id: string;
+            /**
+             * Suscripcion Id
+             * Format: uuid
+             */
+            suscripcion_id: string;
+            /**
+             * Cargo Id
+             * Format: uuid
+             */
+            cargo_id: string;
+            /** Monto Bruto */
+            monto_bruto?: number | null;
+            /** Descuento */
+            descuento?: number | null;
+            /**
+             * Monto
+             * @description Neto cobrado.
+             */
+            monto?: number | null;
+            /** Creado */
+            creado?: string | null;
+        };
+        /** Page[CanjeOut] */
+        Page_CanjeOut_: {
+            /** Items */
+            items: components["schemas"]["CanjeOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** PromocionBody */
+        PromocionBody: {
+            /**
+             * Etiqueta
+             * @description Nombre que ve el dueño (p. ej. «Lanzamiento»).
+             */
+            etiqueta: string;
+            /**
+             * Codigo
+             * @description Código que escribe el cliente (3 a 40: letras, números, - o _). Se guarda en minúsculas.
+             */
+            codigo?: string | null;
+            /**
+             * Tipo Descuento
+             * @default porcentaje
+             * @enum {string}
+             */
+            tipo_descuento: "porcentaje" | "monto";
+            /**
+             * Valor
+             * @description 1 a 99 si es porcentaje.
+             */
+            valor: number;
+            /**
+             * Periodos
+             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @default 1
+             */
+            periodos: number;
+            /**
+             * Plan Id
+             * @description Plan al que aplica; vacío = cualquier plan de pago.
+             */
+            plan_id?: string | null;
+            /** Vigente Desde */
+            vigente_desde?: string | null;
+            /** Vigente Hasta */
+            vigente_hasta?: string | null;
+            /**
+             * Max Canjes
+             * @description Tope de canjes; vacío = sin tope.
+             */
+            max_canjes?: number | null;
+            /**
+             * Activa
+             * @default true
+             */
+            activa: boolean;
+        };
+        /** PromocionOut */
+        PromocionOut: {
+            /**
+             * Etiqueta
+             * @description Nombre que ve el dueño (p. ej. «Lanzamiento»).
+             */
+            etiqueta: string;
+            /**
+             * Codigo
+             * @description Código que escribe el cliente (3 a 40: letras, números, - o _). Se guarda en minúsculas.
+             */
+            codigo?: string | null;
+            /**
+             * Tipo Descuento
+             * @default porcentaje
+             * @enum {string}
+             */
+            tipo_descuento: "porcentaje" | "monto";
+            /**
+             * Valor
+             * @description 1 a 99 si es porcentaje.
+             */
+            valor: number;
+            /**
+             * Periodos
+             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @default 1
+             */
+            periodos: number;
+            /**
+             * Plan Id
+             * @description Plan al que aplica; vacío = cualquier plan de pago.
+             */
+            plan_id?: string | null;
+            /** Vigente Desde */
+            vigente_desde?: string | null;
+            /** Vigente Hasta */
+            vigente_hasta?: string | null;
+            /**
+             * Max Canjes
+             * @description Tope de canjes; vacío = sin tope.
+             */
+            max_canjes?: number | null;
+            /**
+             * Activa
+             * @default true
+             */
+            activa: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Canjes Usados */
+            canjes_usados: number;
+            /**
+             * Canjes Restantes
+             * @description Vacío si no tiene tope.
+             */
+            canjes_restantes?: number | null;
+            /** Creada */
+            creada?: string | null;
+            /** Actualizada */
+            actualizada?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -22158,6 +22459,8 @@ export interface operations {
                 connection_id?: string | null;
                 /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
                 filtro?: string[] | null;
+                /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
+                agente?: string | null;
                 page?: number;
                 page_size?: number;
             };
@@ -26804,6 +27107,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpcionesDirectasBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_avisos_por_canal_api_v1_admin_platform_tenants__tenant_id__avisos_por_canal_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisosPorCanalBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_avisos_por_canal_api_v1_admin_platform_tenants__tenant_id__avisos_por_canal_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvisosPorCanalBanderaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisosPorCanalBandera"];
                 };
             };
             /** @description No es el admin master (tampoco el tester ni un colaborador). */
@@ -34176,6 +34587,8 @@ export interface operations {
                 connection_id?: string | null;
                 /** @description Filtro de un pack como `clave:valor` (ver `filters` de la respuesta). */
                 filtro?: string[] | null;
+                /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
+                agente?: string | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -36455,6 +36868,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -36486,6 +36900,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -36521,6 +36936,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 plan_id: string;
@@ -36558,6 +36974,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 plan_id: string;
@@ -36589,6 +37006,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 subscription_id: string;
@@ -36608,6 +37026,181 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagoConfirmadoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_promociones_api_v1_pack_pack_subscriptions_promociones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromocionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_promocion_api_v1_pack_pack_subscriptions_promociones_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromocionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromocionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                promocion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromocionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromocionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                promocion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    canjes_de_promocion_api_v1_pack_pack_subscriptions_promociones__promocion_id__canjes_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                promocion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CanjeOut_"];
                 };
             };
             /** @description Validation Error */

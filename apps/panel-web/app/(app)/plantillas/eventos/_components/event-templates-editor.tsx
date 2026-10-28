@@ -65,6 +65,8 @@ export function EventTemplatesEditor({ initial }: { initial: MessageTemplatesSet
         language: t?.language ?? "es",
         variables: t ? mapeoParaApi(t.variables, t.named, e.rutas) : [],
         fallback_text: e.respaldo,
+        // Este editor no los edita: se conservan los textos por canal que ya tenía el evento.
+        fallback_text_by_channel: (initial.mapping[ev.event] as EventTemplateEntry | undefined)?.fallback_text_by_channel ?? {},
       };
     }
     await guardar.run(async () => {
