@@ -44,6 +44,8 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/agentes/colaboracion", "settings", false],
   // HU-AOS-29: tablero de fiabilidad.
   ["/agentes/calidad", "agents", false],
+  // HU-CRM-12: lista de clientes de Ventas y de Agenda; exigen la sección `leads`, como Clientes.
+  ["/comercio/clientes", "leads", false], ["/calendario/clientes", "leads", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -154,12 +156,17 @@ describe("navegación del shell (HU-DS-04)", () => {
       { label: "Ana Pérez" },
     ]);
     // En la portada de la entrada, la entrada no se enlaza a sí misma.
-    expect(migasPara("/calendario", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }]);
+    expect(migasPara("/calendario", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }, { label: "Citas" }]);
+    expect(migasPara("/calendario/clientes", grupos)).toEqual([
+      { label: "Negocio" },
+      { label: "Agenda", href: "/calendario" },
+      { label: "Clientes" },
+    ]);
     expect(migasPara("/dashboard", grupos)).toEqual([{ label: "Operación" }, { label: "Resumen" }]);
   });
 
   it("pestañas: las de la entrada y, con subgrupos, las del subgrupo actual", () => {
-    expect(pestanasPara("/calendario", grupos).pestanas).toEqual([]);
+    expect(pestanasPara("/calendario", grupos).pestanas.map((p) => p.label)).toEqual(["Citas", "Clientes"]);
     const cobranza = pestanasPara("/cobranza/reglas", grupos);
     expect(cobranza.subgrupos).toEqual([
       { href: "/cobranza", label: "Resumen" },
@@ -192,17 +199,30 @@ describe("navegación del shell (HU-DS-04)", () => {
 });
 
 describe("Agenda en una sola vista (HU-CAL-08)", () => {
-  it("Agenda es un solo ítem que abre en /calendario y se ve con el permiso de citas", () => {
+  it("Agenda abre en /calendario, su vista es una sola y se ve con el permiso de citas", () => {
     const agenda = grupos.flatMap((g) => g.visible).find((i) => i.label === "Agenda")!;
     expect(agenda.href).toBe("/calendario");
-    expect(agenda.tabs).toBeUndefined();
+    // La única otra pestaña es Clientes (HU-CRM-12); las rutas viejas siguen sin ser pestañas.
+    expect(agenda.tabs?.map((t) => t.href)).toEqual(["/calendario", "/calendario/clientes"]);
     expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
     expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": null }, esMaster: false, negocioId: "t" })).toBe(false);
   });
 
+  it("la pestaña Clientes de Agenda y de Ventas exige `leads`, sin 403 de diseño (HU-CRM-12)", () => {
+    const conLeads = { permisos: { leads: "read" }, esMaster: false, negocioId: "t" };
+    const sinLeads = { permisos: { "pack_calendar:citas": "read", pack_commerce: "read" }, esMaster: false, negocioId: "t" };
+    for (const ruta of ["/calendario/clientes", "/comercio/clientes"]) {
+      expect(puedeVerRuta(ruta, conLeads), ruta).toBe(true);
+      expect(puedeVerRuta(ruta, sinLeads), ruta).toBe(false);
+    }
+    const sinClientes = gruposVisibles(sinLeads.permisos);
+    expect(pestanasPara("/calendario", sinClientes).pestanas).toEqual([]);
+    expect(pestanasPara("/comercio", sinClientes).pestanas.map((p) => p.label)).not.toContain("Clientes");
+  });
+
   it("en /comercio/aliados (oculta, HU-CRM-03) se ven las pestañas de Ventas sin «Aliados»", () => {
     const ventas = pestanasPara("/comercio/aliados", grupos);
-    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Productos", "Categorías", "Promociones", "Pedidos"]);
+    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Productos", "Categorías", "Promociones", "Pedidos", "Clientes"]);
     expect(ventas.ocultas).toEqual(["/comercio/aliados"]);
     expect(migasPara("/comercio/aliados", grupos)).toEqual([
       { label: "Negocio" },
