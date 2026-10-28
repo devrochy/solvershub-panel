@@ -1,10 +1,11 @@
 import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
 import { AvisoGoogle } from "@/components/domain/aviso-google";
+import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/server";
-import type { ListaDeAgendas, Me } from "@/lib/api/types";
+import type { EstadoDatosDePruebaModulo, ListaDeAgendas, Me } from "@/lib/api/types";
 import type { LeyendaAgenda } from "@/lib/calendario/agenda";
 import { negocioPedidoDistinto } from "@/lib/negocio-pedido";
 import Link from "next/link";
@@ -31,14 +32,16 @@ export default async function AgendaPage({
   searchParams: Promise<{ google?: string; tenant?: string; ajustes?: string }>;
 }) {
   const { google, tenant, ajustes } = await searchParams;
-  const [statusRes, meRes, tiposRes, agendasRes, colaboradoresRes, configRes] = await Promise.all([
-    apiFetch<Status>("/pack/calendar/status"),
-    apiFetch<Me>("/admin/me"),
-    apiFetch<TipoApi[]>("/pack/calendar/types"),
-    apiFetch<ListaDeAgendas>("/pack/calendar/calendars"),
-    apiFetch<{ id: string; email: string; active: boolean }[]>("/admin/collaborators"),
-    apiFetch<{ values: Record<string, unknown> }>("/admin/plugins/pack_calendar/config"),
-  ]);
+  const [statusRes, meRes, tiposRes, agendasRes, colaboradoresRes, configRes, datosPruebaRes] =
+    await Promise.all([
+      apiFetch<Status>("/pack/calendar/status"),
+      apiFetch<Me>("/admin/me"),
+      apiFetch<TipoApi[]>("/pack/calendar/types"),
+      apiFetch<ListaDeAgendas>("/pack/calendar/calendars"),
+      apiFetch<{ id: string; email: string; active: boolean }[]>("/admin/collaborators"),
+      apiFetch<{ values: Record<string, unknown> }>("/admin/plugins/pack_calendar/config"),
+      apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/agenda"),
+    ]);
   const me = meRes.ok ? meRes.data : null;
   const activo = me?.tenant ?? null;
   const negocioPedido = negocioPedidoDistinto(tenant, activo?.id);
@@ -95,6 +98,10 @@ export default async function AgendaPage({
         title="Agenda"
         description="Elige un hueco para crear una cita o un bloqueo. Arrastra para mover y estira para cambiar la duración."
       />
+
+      {datosPruebaRes.ok && (
+        <DatosDePruebaDelModulo modulo="agenda" estado={datosPruebaRes.data} />
+      )}
 
       {sinAgendas && (
         <EmptyState

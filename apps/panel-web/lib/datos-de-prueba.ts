@@ -14,7 +14,37 @@ const TIPOS: [string, string, string][] = [
   ["cartera", "cartera", "carteras"],
   ["cliente", "cliente", "clientes"],
   ["prestamo", "préstamo", "préstamos"],
+  ["suscripcion", "suscripción", "suscripciones"],
+  ["cargo", "cargo", "cargos"],
 ];
+
+export type ModuloDatosDePrueba = "ventas" | "agenda" | "cobranza" | "suscripciones";
+
+export const MODULOS_DE_PRUEBA: Record<
+  ModuloDatosDePrueba,
+  { titulo: string; descripcion: string; aviso: string }
+> = {
+  ventas: {
+    titulo: "Ventas",
+    descripcion: "Productos, precios y categorías para probar el catálogo.",
+    aviso: "Se generan según la descripción de tu negocio. Lo que creaste a mano no cambia.",
+  },
+  agenda: {
+    titulo: "Agenda",
+    descripcion: "Tipos de cita y citas próximas para probar la agenda.",
+    aviso: "Se generan según la descripción de tu negocio. Lo que creaste a mano no cambia.",
+  },
+  cobranza: {
+    titulo: "Cobranza",
+    descripcion: "Una cartera con clientes al día, en mora y sin préstamo.",
+    aviso: "Se generan según la descripción de tu negocio. Lo que creaste a mano no cambia.",
+  },
+  suscripciones: {
+    titulo: "Suscripciones",
+    descripcion: "Planes, clientes suscritos y cobros de ejemplo.",
+    aviso: "Se generan según la descripción de tu negocio. Lo que creaste a mano no cambia.",
+  },
+};
 
 function lista(partes: string[]): string {
   if (partes.length <= 1) return partes.join("");
@@ -48,6 +78,27 @@ export function resumenDelLote(lote: {
 export const IR_A_IDENTIDAD = "/configuracion?tab=identidad";
 
 export type Respuesta<T> = { ok: true; data: T } | { ok: false; error: string; code?: string; status: number };
+
+export async function llamarDatosDePruebaDeModulo<T>(
+  modulo: ModuloDatosDePrueba,
+  method: "GET" | "POST" | "DELETE",
+): Promise<Respuesta<T>> {
+  try {
+    const res = await fetch(`/api/modulos/${modulo}/datos-de-prueba`, { method });
+    const json = (await res.json().catch(() => null)) as (T & { error?: unknown; code?: unknown }) | null;
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: json && typeof json.error === "string" ? json.error : "No se pudo completar la acción.",
+        ...(json && typeof json.code === "string" ? { code: json.code } : {}),
+      };
+    }
+    return { ok: true, data: json as T };
+  } catch {
+    return { ok: false, error: "Sin conexión con el servidor.", status: 0 };
+  }
+}
 
 export async function llamarDatosDePrueba<T>(
   agenteId: string,
