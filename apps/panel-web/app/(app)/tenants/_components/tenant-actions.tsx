@@ -1,51 +1,53 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { Settings2, Trash2 } from "lucide-react";
 
 import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
 import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
-import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { mensajeAcceso } from "@/lib/acceso-dueno";
-import type { PlanResponse, PlatformTenant, TenantOwnerInvitation } from "@/lib/api/types";
+import type { PlatformTenant, TenantOwnerInvitation } from "@/lib/api/types";
 import { AVISO_DESACTIVAR_PRIMERO, sePuedeEliminar } from "@/lib/eliminar-negocio";
+import { estadoDelPlan } from "@/lib/estados-negocio";
+import { formatDate } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
-/** Ciclo de vida y plan de un negocio (master). */
+/** Acciones de gestión y eliminación de un negocio (master). */
 export function TenantActions({
   tenant,
-  plans,
   esMaster = false,
   abrirInicial = false,
 }: {
   tenant: PlatformTenant;
-  plans: PlanResponse["plans"];
   /** Solo el admin de plataforma ve el interruptor de plantillas con opciones (el tester no). */
   esMaster?: boolean;
   /** Llega por el enlace del editor de plantillas con opciones: abre el diálogo ya en el interruptor. */
   abrirInicial?: boolean;
 }) {
-  const [open, setOpen] = useState(abrirInicial && esMaster);
+  const [gestionarOpen, setGestionarOpen] = useState(abrirInicial && esMaster);
+  const [eliminarOpen, setEliminarOpen] = useState(false);
+  const gestionarBoton = useRef<HTMLElement>(null);
+  const eliminarBoton = useRef<HTMLElement>(null);
   const { run: ejecutar, pending } = useAction();
   const activo = tenant.status === "active";
   const eliminable = sePuedeEliminar(tenant.status);
+  const nombre = tenant.name || tenant.slug;
+  const plan = estadoDelPlan(tenant);
 
   const AVISOS: Record<string, string> = {
-    activate: "Negocio activado.",
     deactivate: "Negocio desactivado.",
-    plan: "Plan aplicado.",
     purge: "Negocio eliminado.",
   };
 
   async function run(action: string, payload: Record<string, unknown> = {}) {
-    await ejecutar(async () => {
+    return ejecutar(async () => {
       const res = await fetch(`/api/platform/tenants/${tenant.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,118 +64,115 @@ export function TenantActions({
     });
   }
 
-  function onPlan(event: FormEvent<HTMLFormElement>) {
+  async function onPurge(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    void run("plan", {
-      plan_id: String(data.get("plan_id") ?? ""),
-      extend_days: Number(data.get("extend_days") ?? 0),
-    });
-  }
-
-  function onPurge(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    void run("purge", { confirm_phrase: String(data.get("confirm_phrase") ?? "") });
+    const ok = await run("purge", { confirm_phrase: String(data.get("confirm_phrase") ?? "") });
+    if (ok) setEliminarOpen(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={`Acciones de ${tenant.slug}`}>
-          <MoreHorizontal className="h-4 w-4" aria-hidden />
-          Acciones
-        </Button>
-      </DialogTrigger>
-      <DialogContent
-        title="Acciones del negocio"
-        description={`${tenant.name || tenant.slug} · ${tenant.slug}`}
-        className="max-w-xl"
-      >
-        <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto pr-1">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm text-body">
-              Estado:{" "}
-              <span className="text-headline">{TENANT_STATUS[tenant.status]?.label ?? tenant.status}</span>
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void run(activo ? "deactivate" : "activate")}
-              disabled={pending}
-            >
-              {activo ? "Desactivar" : "Activar"}
-            </Button>
-          </div>
+    <>
+      <div className="flex justify-end gap-1">
+        <IconAction
+          ref={gestionarBoton}
+          tone="neutro"
+          label={`Gestionar ${nombre}`}
+          onClick={() => setGestionarOpen(true)}
+        >
+          <Settings2 className="h-4 w-4" aria-hidden />
+        </IconAction>
+        <IconAction
+          ref={eliminarBoton}
+          tone="eliminar"
+          label={`Eliminar ${nombre}`}
+          onClick={() => setEliminarOpen(true)}
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </IconAction>
+      </div>
 
-          <Separator />
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-headline">Acceso del dueño</p>
-              <p className="text-sm text-body">
-                Vuelve a enviar el correo con el enlace para definir la contraseña, mientras el dueño no haya entrado.
+      <Dialog open={gestionarOpen} onOpenChange={setGestionarOpen}>
+        <DialogContent
+          title="Gestionar negocio"
+          description={`${nombre} · ${tenant.slug}`}
+          className="max-w-xl"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            gestionarBoton.current?.focus();
+          }}
+        >
+          <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-1 text-sm text-body">
+              <p>
+                Plan actual: <span className="text-headline">{plan.label}</span>
+              </p>
+              <p>
+                Creado: <span className="text-headline">{formatDate(tenant.created_at)}</span>
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void run("resend_access")}
-              disabled={pending || !activo}
-            >
-              Reenviar acceso
-            </Button>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          <form onSubmit={onPlan} className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-headline">Cambiar plan</p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Plan" htmlFor={`plan-${tenant.id}`}>
-                <Select id={`plan-${tenant.id}`} name="plan_id" defaultValue={plans[0]?.id}>
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Días extra" htmlFor={`ext-${tenant.id}`} help="0 = sin extensión.">
-                <Input id={`ext-${tenant.id}`} name="extend_days" type="number" min={0} defaultValue={0} />
-              </Field>
-            </div>
-            <div>
-              <Button type="submit" variant="outline" size="sm" disabled={pending}>
-                Aplicar plan
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-headline">Acceso del dueño</p>
+                <p className="text-sm text-body">
+                  Vuelve a enviar el correo con el enlace para definir la contraseña, mientras el dueño no haya entrado.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void run("resend_access")}
+                disabled={pending || !activo}
+              >
+                Reenviar acceso
               </Button>
             </div>
-          </form>
 
-          <Separator />
+            <Separator />
 
-          {esMaster && (
-            <>
-              <OpcionesDirectasSection
-                tenantId={tenant.id}
-                negocio={tenant.name || tenant.slug}
-                enfocar={abrirInicial}
-              />
+            {esMaster && (
+              <>
+                <OpcionesDirectasSection
+                  tenantId={tenant.id}
+                  negocio={nombre}
+                  enfocar={abrirInicial}
+                />
 
-              <Separator />
-            </>
-          )}
+                <Separator />
+              </>
+            )}
 
-          <AgentOSSection tenantId={tenant.id} />
+            <AgentOSSection tenantId={tenant.id} />
 
-          <Separator />
+            <Separator />
 
-          <AliadosSection tenantId={tenant.id} />
+            <AliadosSection tenantId={tenant.id} />
 
-          <Separator />
+            <div className="flex justify-end">
+              <DialogClose asChild>
+                <Button type="button" variant="ghost" size="sm">
+                  Cerrar
+                </Button>
+              </DialogClose>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
+      <Dialog open={eliminarOpen} onOpenChange={setEliminarOpen}>
+        <DialogContent
+          title="Eliminar negocio"
+          description={`${nombre} · ${tenant.slug}. Borra todos sus datos y no se puede deshacer.`}
+          className="max-w-lg"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            eliminarBoton.current?.focus();
+          }}
+        >
           <form onSubmit={onPurge} className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-status-danger-fg">Eliminar negocio (irreversible)</p>
             {!eliminable && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
                 <p className="text-sm text-body">{AVISO_DESACTIVAR_PRIMERO}</p>
@@ -200,25 +199,22 @@ export function TenantActions({
                 name="confirm_phrase"
                 placeholder={`ELIMINAR ${tenant.slug}`}
                 autoComplete="off"
-                disabled={!eliminable}
+                disabled={!eliminable || pending}
               />
             </Field>
-            <div>
-              <Button type="submit" variant="danger" size="sm" disabled={pending || !eliminable}>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="ghost" disabled={pending}>
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" variant="danger" disabled={pending || !eliminable}>
                 Eliminar definitivamente
               </Button>
             </div>
           </form>
-
-          <div className="flex justify-end">
-            <DialogClose asChild>
-              <Button type="button" variant="ghost" size="sm">
-                Cerrar
-              </Button>
-            </DialogClose>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

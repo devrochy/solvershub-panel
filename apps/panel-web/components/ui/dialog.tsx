@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
@@ -16,16 +16,20 @@ export function DialogContent({
   description,
   children,
   className,
+  onCloseAutoFocus,
 }: {
   title: string;
   description?: string;
   children: ReactNode;
   className?: string;
+  /** Devuelve el foco a quien abrió el diálogo cuando no hay un `DialogTrigger` de Radix. */
+  onCloseAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onCloseAutoFocus"];
 }) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <DialogPrimitive.Content
+        onCloseAutoFocus={onCloseAutoFocus}
         className={cn(
           "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
           "rounded-lg border border-border bg-surface p-6 shadow-lg focus:outline-none",

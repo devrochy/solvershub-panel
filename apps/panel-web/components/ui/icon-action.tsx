@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { forwardRef, type ReactNode, type Ref } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -24,21 +24,17 @@ const TONOS: Record<ActionTone, string> = {
  * Acción por fila con icono en tono semántico. En reposo es solo el icono; al pasar el cursor
  * aparece su color más oscuro, un anillo y una leve elevación. Al pulsar se hunde.
  */
-export function IconAction({
-  tone = "neutro",
-  label,
-  children,
-  onClick,
-  href,
-  disabled,
-}: {
-  tone?: ActionTone;
-  label: string;
-  children: ReactNode;
-  onClick?: () => void;
-  href?: string;
-  disabled?: boolean;
-}) {
+export const IconAction = forwardRef<
+  HTMLElement,
+  {
+    tone?: ActionTone;
+    label: string;
+    children: ReactNode;
+    onClick?: () => void;
+    href?: string;
+    disabled?: boolean;
+  }
+>(function IconAction({ tone = "neutro", label, children, onClick, href, disabled }, ref) {
   const clases = cn(
     "inline-flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-transparent",
     "transition-[background-color,color,box-shadow,transform,filter] duration-200 ease-out",
@@ -51,13 +47,14 @@ export function IconAction({
   );
   if (href) {
     return (
-      <Link aria-label={label} className={clases} href={href} title={label}>
+      <Link ref={ref as Ref<HTMLAnchorElement>} aria-label={label} className={clases} href={href} title={label}>
         {children}
       </Link>
     );
   }
   return (
     <button
+      ref={ref as Ref<HTMLButtonElement>}
       aria-label={label}
       className={clases}
       disabled={disabled}
@@ -68,4 +65,4 @@ export function IconAction({
       {children}
     </button>
   );
-}
+});

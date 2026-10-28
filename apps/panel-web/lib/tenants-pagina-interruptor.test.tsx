@@ -58,7 +58,7 @@ describe("página de Tenants: enlace al interruptor de plantillas con opciones",
   it("el master que llega con ?abrir=<negocio> ve abierto el diálogo de ese negocio con el interruptor", async () => {
     responder("master");
     await pintar(ID);
-    expect(await screen.findByText("Acciones del negocio")).toBeTruthy();
+    expect(await screen.findByText("Gestionar negocio")).toBeTruthy();
     expect(screen.getByText("Café Aurora · cafe-aurora")).toBeTruthy();
     expect(await screen.findByRole("switch", { name: "Plantillas con opciones" })).toBeTruthy();
   });
@@ -66,19 +66,19 @@ describe("página de Tenants: enlace al interruptor de plantillas con opciones",
   it("sin ?abrir el diálogo queda cerrado", async () => {
     responder("master");
     await pintar();
-    expect(screen.queryByText("Acciones del negocio")).toBeNull();
+    expect(screen.queryByText("Gestionar negocio")).toBeNull();
   });
 
   it("un ?abrir que no es un uuid se ignora", async () => {
     responder("master");
     await pintar("../x");
-    expect(screen.queryByText("Acciones del negocio")).toBeNull();
+    expect(screen.queryByText("Gestionar negocio")).toBeNull();
   });
 
   it("el tester, aunque vea la lista, no abre nada ni ve el interruptor", async () => {
     responder("tester");
     await pintar(ID);
-    expect(screen.queryByText("Acciones del negocio")).toBeNull();
-    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByText("Gestionar negocio")).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Plantillas con opciones" })).toBeNull();
   });
 });
