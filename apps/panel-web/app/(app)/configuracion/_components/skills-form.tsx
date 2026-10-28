@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
 import { Switch } from "@/components/ui/switch";
 import { useAction } from "@/lib/use-action";
 
@@ -63,16 +63,11 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
                 </div>
                 <label className="flex items-center gap-2 text-xs text-body">
                   Límite/turno
-                  <Input
-                    type="number"
+                  <InputNumero
                     min={0}
                     className="h-9 w-20"
                     value={tool.max_calls_per_conversation ?? 0}
-                    onChange={(e) =>
-                      update(tool.name, {
-                        max_calls_per_conversation: Number(e.target.value) || null,
-                      })
-                    }
+                    onValueChange={(n) => update(tool.name, { max_calls_per_conversation: n || null })}
                     aria-label={`Límite por conversación de ${tool.name}`}
                   />
                 </label>

@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import { violacionesGraves } from "@/lib/testing/axe";
-import { RESPUESTAS, conversacionAbierta } from "@/lib/testing/fixtures";
+import { RESPUESTAS, conversacionAbierta, conversaciones } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 // Bandeja de conversaciones (HU-UX-15): la página con un chat abierto (`?c=`).
@@ -69,7 +69,11 @@ describe("bandeja de conversaciones", () => {
     expect(actual.textContent).toContain("Ana Prueba");
     expect(actual.textContent).toContain("Quiero hablar con alguien");
     expect(actual.textContent).toContain("WhatsApp · Ventas");
+    expect(within(actual).getByText("2 mensajes sin responder")).toBeTruthy();
     expect(actual.getAttribute("href")).toBe("/conversaciones?c=test-conv-1");
+
+    const otros = within(lista).getAllByRole("link").filter((enlace) => enlace !== actual);
+    expect(within(otros[0]).queryByText(/mensajes sin responder/)).toBeNull();
 
     const chat = screen.getByRole("region", { name: "Conversación" });
     expect(within(chat).getByText("Usó 2 herramientas")).toBeTruthy();
@@ -104,6 +108,19 @@ describe("bandeja de conversaciones", () => {
       expect(screen.getByRole("textbox", { name: "Mensaje para el cliente" })).toBeTruthy();
     } finally {
       respuestas["/admin/conversations/test-conv-1"] = conversacionAbierta;
+    }
+  });
+
+  it("ordena por llegada aunque el servidor mande la lista al revés", async () => {
+    respuestas["/admin/conversations"] = { ...conversaciones, items: [...conversaciones.items].reverse() };
+    try {
+      await renderBandeja({});
+      const lista = screen.getByRole("navigation", { name: "Lista de conversaciones" });
+      const enlaces = within(lista).getAllByRole("link");
+      expect(enlaces[0].textContent).toContain("Ana Prueba");
+      expect(enlaces[1].textContent).toContain("573000000002");
+    } finally {
+      respuestas["/admin/conversations"] = conversaciones;
     }
   });
 

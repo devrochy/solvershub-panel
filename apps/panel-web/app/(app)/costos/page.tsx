@@ -14,6 +14,7 @@ export const metadata = { title: "Costos LLM" };
 
 type ModelRow = CostsResponse["by_model"][number];
 type ConversationRow = CostsResponse["by_conversation"][number];
+type AgentRow = CostsResponse["by_agent"][number];
 
 export default async function CostsPage() {
   const [res, metaRes] = await Promise.all([
@@ -41,6 +42,34 @@ export default async function CostsPage() {
     { key: "costo", header: "Costo", align: "right", cell: (row) => formatUsd(row.cost) },
   ];
 
+  const agentColumns: Column<AgentRow>[] = [
+    {
+      key: "agente",
+      header: "Agente",
+      cell: (row) =>
+        row.agent_name ? (
+          <span className="text-headline">{row.agent_name}</span>
+        ) : (
+          <span className="text-text-soft">Sin agente</span>
+        ),
+    },
+    { key: "turnos", header: "Turnos", align: "right", cell: (row) => <span className="text-body">{formatNumber(row.turns)}</span> },
+    { key: "entrada", header: "Tokens entrada", align: "right", cell: (row) => <span className="text-body">{formatNumber(row.tokens_in)}</span> },
+    { key: "cacheados", header: "Leídos de caché", align: "right", cell: (row) => <span className="text-body">{formatNumber(row.cached_tokens)}</span> },
+    {
+      key: "porcentaje",
+      header: "% en caché",
+      align: "right",
+      cell: (row) =>
+        row.cached_pct === null ? (
+          <span className="text-text-soft" title="Todavía no hay consumo medido desde el 27 de octubre de 2026">—</span>
+        ) : (
+          <span className="text-body">{`${row.cached_pct.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}</span>
+        ),
+    },
+    { key: "costo", header: "Costo", align: "right", cell: (row) => formatUsd(row.cost) },
+  ];
+
   const conversationColumns: Column<ConversationRow>[] = [
     { key: "id", header: "Conversación", cell: (row) => <span className="font-mono text-xs">{row.conversation_id}</span> },
     { key: "turnos", header: "Turnos", align: "right", cell: (row) => <span className="text-body">{formatNumber(row.turns)}</span> },
@@ -50,7 +79,7 @@ export default async function CostsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Costos LLM" description="Consumo del agente por modelo y conversación."   helpSection="costs"
+      <PageHeader title="Costos LLM" description="Consumo por agente, modelo y conversación."   helpSection="costs"
         />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -58,6 +87,20 @@ export default async function CostsPage() {
         <StatCard label="Costo (30 días)" value={formatUsd(d.month)} tone="accent" />
         <StatCard label="Turnos totales" value={formatNumber(d.total_turns)} />
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-headline">Por agente (30 días)</h2>
+        <p className="text-sm text-text-soft">
+          «% en caché» es la parte de los tokens de entrada que el proveedor cobró más barata porque ya la había
+          visto. Se mide desde el 27 de octubre de 2026.
+        </p>
+        <DataTable
+          columns={agentColumns}
+          rows={d.by_agent}
+          getRowKey={(row) => row.agent_id ?? "sin-agente"}
+          emptyTitle="Sin consumo por agente"
+        />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold text-headline">Por modelo (30 días)</h2>

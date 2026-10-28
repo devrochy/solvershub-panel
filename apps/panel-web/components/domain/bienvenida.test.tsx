@@ -8,10 +8,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 import type { PrimerosPasos } from "@/lib/api/types";
+import { RECORRIDO_NO_APLICA } from "@/lib/testing/fixtures";
 
 import { Bienvenida } from "./bienvenida";
 
 const PENDIENTE: PrimerosPasos = {
+  recorrido: RECORRIDO_NO_APLICA,
   alta_en: "2026-10-09T12:00:00Z",
   origen: "aprovisionamiento",
   completos: 0,

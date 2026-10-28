@@ -26,9 +26,20 @@ import {
   type EstadoDelEditor,
   type PasoId,
 } from "@/lib/agentes-editor";
-import type { AgentDetail, EditorPublishOut, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import type {
+  AgentDetail,
+  EditorPublishOut,
+  LlmModelCatalog,
+  PublishTarget,
+  Requirement,
+  Superpower,
+} from "@/lib/api/types";
+import { usePendientes } from "@/lib/frases-pendientes";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
+
+/** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
+const ID_PROHIBIDAS = "agente-prohibidas";
 
 type Respuesta = { error?: string; code?: string; fields?: Record<string, string> };
 
@@ -44,6 +55,8 @@ export function EditorDeAgente({
   destinos,
   destinosError,
   puedeActivar,
+  requisitos = [],
+  pasoInicial = "identidad",
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -51,6 +64,10 @@ export function EditorDeAgente({
   destinos: PublishTarget[];
   destinosError: string | null;
   puedeActivar: boolean;
+  /** Lo que falta configurar para este enfoque (aviso, no bloquea). */
+  requisitos?: Requirement[];
+  /** Paso con el que abre (el asistente de creación entra directo a publicar, HU-AOS-54). */
+  pasoInicial?: PasoId;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -61,8 +78,8 @@ export function EditorDeAgente({
   const [lock, setLock] = useState(agente.draft.lock_version);
   const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes));
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
-  const [paso, setPaso] = useState<PasoId>("identidad");
-  const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad"]));
+  const [paso, setPaso] = useState<PasoId>(pasoInicial);
+  const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad", pasoInicial]));
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
@@ -71,6 +88,9 @@ export function EditorDeAgente({
   const [notas, setNotas] = useState("");
   const [publicado, setPublicado] = useState<EditorPublishOut | null>(null);
   const [activadas, setActivadas] = useState<Set<string>>(new Set());
+  const pendientes = usePendientes();
+  // Avisos de texto escrito y no agregado en una lista, por id de la lista.
+  const [avisos, setAvisos] = useState<Record<string, string>>({});
 
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
@@ -79,22 +99,49 @@ export function EditorDeAgente({
 
   function cambiar(cambio: Partial<EstadoDelEditor>) {
     setEstado((actual) => ({ ...actual, ...cambio }));
+    setAvisos({});
   }
 
-  function validar(id: PasoId): Errores {
-    return erroresDelPaso(id, estado, superpoderes, { minFrases, conexiones: elegidas });
+  function validar(id: PasoId, actual: EstadoDelEditor = estado): Errores {
+    return erroresDelPaso(id, actual, superpoderes, { minFrases, conexiones: elegidas });
+  }
+
+  /**
+   * Suma a su lista el texto escrito y no agregado (frases prohibidas y frases de superpoderes) y
+   * devuelve el estado completo; es el que hay que validar y guardar, porque `estado` aún no lo trae.
+   * Si alguna frase no cabe (muy corta o lista llena) avisa junto al campo y devuelve null.
+   */
+  function plegarPendientes(): EstadoDelEditor | null {
+    const dePoder = (id: string) => /^poder-(.+)-frase$/.exec(id)?.[1];
+    const pendiente = pendientes.completar((id) => {
+      if (id === ID_PROHIBIDAS) return estado.frasesProhibidas;
+      const poder = dePoder(id);
+      return poder ? estado.superpoderes[poder]?.frases : undefined;
+    });
+    setAvisos(pendiente.errores);
+    if (Object.keys(pendiente.errores).length > 0) return null;
+    let completo = estado;
+    for (const [id, frases] of Object.entries(pendiente.listas)) {
+      const poder = dePoder(id);
+      completo = poder
+        ? { ...completo, superpoderes: { ...completo.superpoderes, [poder]: { ...completo.superpoderes[poder], frases } } }
+        : { ...completo, frasesProhibidas: frases };
+    }
+    if (completo !== estado) setEstado(completo);
+    pendiente.limpiar();
+    return completo;
   }
 
   /** Guarda nombre, descripción y borrador si cambiaron. Devuelve el `lock_version` vigente o null. */
-  async function guardar(): Promise<number | null> {
-    if (!cambios) return lock;
+  async function guardar(actual: EstadoDelEditor = estado): Promise<number | null> {
+    if (JSON.stringify(actual) === JSON.stringify(guardado)) return lock;
     const resultado: { lock: number | null } = { lock: null };
     const ok = await guardarAccion.run(async () => {
-      if (estado.nombre !== guardado.nombre || estado.descripcion !== guardado.descripcion) {
+      if (actual.nombre !== guardado.nombre || actual.descripcion !== guardado.descripcion) {
         const res = await fetch(`/api/agent-editor/${agente.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: estado.nombre, description: estado.descripcion }),
+          body: JSON.stringify({ name: actual.nombre, description: actual.descripcion }),
         });
         if (!res.ok) {
           const json = (await res.json().catch(() => ({}))) as Respuesta;
@@ -104,7 +151,7 @@ export function EditorDeAgente({
       const res = await fetch(`/api/agent-editor/${agente.id}/draft`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: contenido, lock_version: lock }),
+        body: JSON.stringify({ content: contenidoDesdeEstado(base, actual, superpoderes), lock_version: lock }),
       });
       const json = (await res.json().catch(() => ({}))) as Respuesta & { lockVersion?: number; content?: Contenido };
       if (!res.ok) {
@@ -118,7 +165,7 @@ export function EditorDeAgente({
       resultado.lock = json.lockVersion ?? lock;
       setLock(resultado.lock);
       if (json.content) setBase(json.content);
-      setGuardado(estado);
+      setGuardado(actual);
       return { ok: true, success: "Borrador guardado." };
     });
     return ok ? resultado.lock : null;
@@ -136,21 +183,25 @@ export function EditorDeAgente({
   }
 
   async function siguiente() {
-    const propios = validar(paso);
+    const completo = plegarPendientes();
+    if (!completo) return;
+    const propios = validar(paso, completo);
     setErrores(propios);
     if (Object.keys(propios).length > 0) return;
-    if ((await guardar()) === null) return;
+    if ((await guardar(completo)) === null) return;
     const i = PASOS.findIndex((p) => p.id === paso);
     if (i < PASOS.length - 1) irA(PASOS[i + 1].id);
   }
 
   async function publicar() {
-    const todos = PASOS.reduce<Errores>((acc, p) => ({ ...acc, ...validar(p.id) }), {});
+    const completo = plegarPendientes();
+    if (!completo) return;
+    const todos = PASOS.reduce<Errores>((acc, p) => ({ ...acc, ...validar(p.id, completo) }), {});
     if (Object.keys(todos).length > 0) {
       mostrarErrores(todos);
       return;
     }
-    const vigente = await guardar();
+    const vigente = await guardar(completo);
     if (vigente === null) return;
     await publicarAccion.run(async () => {
       const res = await fetch(`/api/agent-editor/${agente.id}/publish`, {
@@ -198,17 +249,33 @@ export function EditorDeAgente({
     });
   }
 
+  const avisosPorPoder = Object.fromEntries(
+    Object.entries(avisos).flatMap(([id, aviso]) => {
+      const poder = /^poder-(.+)-frase$/.exec(id)?.[1];
+      return poder ? [[poder, aviso]] : [];
+    }),
+  );
+
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
-    identidad: <PasoIdentidad estado={estado} cambiar={cambiar} errores={errores} />,
+    identidad: (
+      <PasoIdentidad
+        estado={estado}
+        cambiar={cambiar}
+        errores={avisos[ID_PROHIBIDAS] ? { ...errores, "persona.forbiddenPhrases": avisos[ID_PROHIBIDAS] } : errores}
+        registrarPendiente={pendientes.registrar}
+      />
+    ),
     modelo: <PasoModelo estado={estado} cambiar={cambiar} errores={errores} catalogo={modelos} />,
     superpoderes: (
       <PasoSuperpoderes
         estado={estado}
         cambiar={cambiar}
         errores={errores}
-        erroresPorPoder={porPoder}
+        erroresPorPoder={{ ...porPoder, ...avisosPorPoder }}
+        registrarPendiente={pendientes.registrar}
         catalogo={superpoderes}
         minFrases={minFrases}
+        requisitos={requisitos}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
@@ -216,6 +283,7 @@ export function EditorDeAgente({
       <PasoPublicar
         destinos={destinos}
         destinosError={destinosError}
+        requisitos={requisitos}
         elegidas={elegidas}
         alternar={(id, activo) => setElegidas((e) => (activo ? [...new Set([...e, id])] : e.filter((x) => x !== id)))}
         errores={errores}
@@ -255,7 +323,14 @@ export function EditorDeAgente({
               </Button>
             )}
             {cambios && (
-              <Button variant="outline" onClick={() => void guardar()} disabled={guardarAccion.pending}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const completo = plegarPendientes();
+                  if (completo) void guardar(completo);
+                }}
+                disabled={guardarAccion.pending}
+              >
                 Guardar borrador
               </Button>
             )}

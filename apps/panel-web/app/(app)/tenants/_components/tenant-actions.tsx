@@ -5,6 +5,7 @@ import { MoreHorizontal } from "lucide-react";
 
 import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
+import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
 import { TENANT_STATUS } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -12,7 +13,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { PlanResponse, PlatformTenant } from "@/lib/api/types";
+import { mensajeAcceso } from "@/lib/acceso-dueno";
+import type { PlanResponse, PlatformTenant, TenantOwnerInvitation } from "@/lib/api/types";
 import { AVISO_DESACTIVAR_PRIMERO, sePuedeEliminar } from "@/lib/eliminar-negocio";
 import { useAction } from "@/lib/use-action";
 
@@ -20,11 +22,17 @@ import { useAction } from "@/lib/use-action";
 export function TenantActions({
   tenant,
   plans,
+  esMaster = false,
+  abrirInicial = false,
 }: {
   tenant: PlatformTenant;
   plans: PlanResponse["plans"];
+  /** Solo el admin de plataforma ve el interruptor de plantillas con opciones (el tester no). */
+  esMaster?: boolean;
+  /** Llega por el enlace del editor de plantillas con opciones: abre el diálogo ya en el interruptor. */
+  abrirInicial?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(abrirInicial && esMaster);
   const { run: ejecutar, pending } = useAction();
   const activo = tenant.status === "active";
   const eliminable = sePuedeEliminar(tenant.status);
@@ -43,8 +51,13 @@ export function TenantActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...payload }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      const json = (await res.json().catch(() => ({}))) as { error?: string; invitation?: TenantOwnerInvitation };
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo completar la acción." };
+      if (action === "resend_access" && json.invitation) {
+        const m = mensajeAcceso(json.invitation, { reenvio: true });
+        // Un correo que no salió no es un éxito: se muestra como error para que no pase de largo.
+        return m.tono === "aviso" ? { ok: false, error: m.texto } : { ok: true, success: m.texto };
+      }
       return { ok: true, success: AVISOS[action] ?? "Listo." };
     });
   }
@@ -95,6 +108,25 @@ export function TenantActions({
 
           <Separator />
 
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-headline">Acceso del dueño</p>
+              <p className="text-sm text-body">
+                Vuelve a enviar el correo con el enlace para definir la contraseña, mientras el dueño no haya entrado.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void run("resend_access")}
+              disabled={pending || !activo}
+            >
+              Reenviar acceso
+            </Button>
+          </div>
+
+          <Separator />
+
           <form onSubmit={onPlan} className="flex flex-col gap-3">
             <p className="text-sm font-medium text-headline">Cambiar plan</p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -119,6 +151,18 @@ export function TenantActions({
           </form>
 
           <Separator />
+
+          {esMaster && (
+            <>
+              <OpcionesDirectasSection
+                tenantId={tenant.id}
+                negocio={tenant.name || tenant.slug}
+                enfocar={abrirInicial}
+              />
+
+              <Separator />
+            </>
+          )}
 
           <AgentOSSection tenantId={tenant.id} />
 

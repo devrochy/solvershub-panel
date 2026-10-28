@@ -57,6 +57,8 @@ export function itemDeRuta(pathname: string, grupos: NavGroupDef[] = NAV_GROUPS)
  */
 const SECCION_FUERA_DEL_MENU: Record<string, string> = {
   "/plantillas": "connections",
+  // Plantillas con opciones (SPEC-40): se llega desde las plantillas de la conexión, como las de eventos.
+  "/plantillas-opciones": "connections",
 };
 
 function seccionFueraDelMenu(pathname: string): string | null {

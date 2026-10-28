@@ -4,12 +4,16 @@
  * del OpenAPI: si el contrato cambia, el typecheck obliga a actualizarlas.
  */
 import type {
+  AgendaCalendario,
   AgentConversationPage,
+  AgentSummary,
+  Graph,
   AgentsOverview,
   AgentTaskPage,
   AvisoDeCargo,
   CargosSuscripcionPage,
   CargoSuscripcion,
+  CatalogoDeMensajes,
   ClientesConSuscripcionPage,
   CollaboratorItem,
   ConnectionsConsole,
@@ -26,6 +30,7 @@ import type {
   PlanResponse,
   PluginSummary,
   PrimerosPasos,
+  ResumenPorAgente,
   SettingsResponse,
   SubscriptionProviderSettings,
   SuscripcionDetalle,
@@ -84,7 +89,58 @@ export const dashboard: Dashboard = {
   billing: { plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
 };
 
+/** Recorrido de primer uso de un negocio al que no aplica (anterior al corte): sin asistente ni aviso. */
+export const RECORRIDO_NO_APLICA: PrimerosPasos["recorrido"] = {
+  estado: "no_aplica",
+  paso: 1,
+  total_pasos: 6,
+  aplica: false,
+  abrir: false,
+  avisar: false,
+};
+
+export const resumenPorAgente: ResumenPorAgente = {
+  periodo: {
+    desde: "2026-10-20T00:00:00Z",
+    hasta: "2026-10-27T00:00:00Z",
+    previo_desde: "2026-10-13T00:00:00Z",
+    previo_hasta: "2026-10-20T00:00:00Z",
+  },
+  runtime: "v3",
+  general: {
+    kpis: [
+      { id: "conversaciones", label: "Conversaciones", valor: 128, unidad: "count", previo: 100, delta_pct: 28, polaridad: "up-good", hint: "Últimos 7 días", destino: { ruta: "conversaciones", params: {} } },
+      { id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } },
+      { id: "tasa_escalamiento", label: "Tasa de escalamiento", valor: null, unidad: "pct", previo: null, delta_pct: null, polaridad: "up-bad", hint: "Sin datos suficientes", destino: { ruta: "agente", params: { ref: "general", pestana: "consumo" } } },
+    ],
+  },
+  agentes: [
+    {
+      ref: "agente-ventas",
+      key: "ventas",
+      name: "Ventas",
+      kind: "specialist",
+      kpis: [
+        { id: "turnos", label: "Turnos atendidos", valor: 60, unidad: "count", previo: 40, delta_pct: 50, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "conversaciones" } } },
+        { id: "tareas_abiertas", label: "Tareas abiertas", valor: 3, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "tareas" } } },
+      ],
+      modulos: [
+        {
+          id: "pack_commerce",
+          nombre: "Ventas",
+          error: null,
+          kpis: [
+            { id: "pedidos", label: "Pedidos", valor: 14, unidad: "count", previo: 10, delta_pct: 40, polaridad: "up-good", destino: { ruta: "comercio.pedidos", params: {} } },
+            { id: "ventas_pagadas", label: "Ventas pagadas", valor: 1250000, unidad: "money", previo: 900000, delta_pct: 38.9, polaridad: "up-good", destino: { ruta: "comercio.pedidos", params: { pago: "pagado" } } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 export const primerosPasos: PrimerosPasos = {
+  recorrido: RECORRIDO_NO_APLICA,
   alta_en: "2026-10-01T12:00:00Z",
   origen: "manual",
   completos: 1,
@@ -96,7 +152,7 @@ export const primerosPasos: PrimerosPasos = {
   ],
 };
 
-export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [] };
+export const plantillasFaltantes: MissingTemplates = { total_7d: 0, recent: [], total_eventos_7d: 0, total_opciones_7d: 0 };
 
 export const conversaciones: ConversationPage = {
   items: [
@@ -115,6 +171,7 @@ export const conversaciones: ConversationPage = {
       connection_label: "Ventas",
       connection_provider: "meta",
       connection_type: "whatsapp_meta",
+      pending_count: 2,
     },
     {
       id: "test-conv-2",
@@ -124,6 +181,7 @@ export const conversaciones: ConversationPage = {
       status: "resolved",
       bot_paused: true,
       started_at: "2026-10-08T10:30:00Z",
+      pending_count: 0,
     },
   ],
   total: 2,
@@ -359,6 +417,19 @@ export const conexiones: ConnectionsResponse = {
       created_at: "2026-10-01T12:00:00Z",
       coexistence: false,
     },
+    {
+      id: "11111111-1111-4111-8111-111111111111",
+      kind: "channel",
+      type_id: "google_calendar",
+      origin: "oauth",
+      channel: "",
+      label: "Google Calendar",
+      external_id: "ana@clinica.co",
+      active: true,
+      is_primary: false,
+      created_at: "2026-10-02T12:00:00Z",
+      coexistence: false,
+    },
   ],
   webhook_url: "https://api.test.example/webhook/meta",
 };
@@ -452,8 +523,9 @@ export const ajustes: SettingsResponse = {
     brand_voice: "",
     brand_voice_warning: false,
     tono: "cercano",
-    debounce_mode: "normal",
-    split_style: "natural",
+    business_hours_mode: "bloquea",
+    debounce_mode: "natural",
+    split_style: "un_mensaje",
     currency: "COP",
     timezone: "America/Bogota",
     guardrail_max_retries: 1,
@@ -470,7 +542,7 @@ export const ajustes: SettingsResponse = {
     auto_escalate_after_turns: 0,
     persona_tone: "cercano",
     persona_warmth: 3,
-    persona_emojis: "pocos",
+    persona_emojis: "sparse",
     persona_max_length: 400,
     persona_forbidden: [],
     bot_paused: false,
@@ -620,7 +692,98 @@ export const estadoCalendario = {
   connection_label: "",
   timezone: "America/Bogota",
   default_duration_minutes: 60,
+  calendars: [],
+  multi_activo: false,
+  multi_agenda_modo: "cliente_elige",
 };
+
+/** Agendas del negocio (HU-CAL-08): una sola (el caso de siempre) o dos (el cliente elige). */
+export const agendaPrincipal: AgendaCalendario = {
+  id: "ag-1",
+  name: "Agenda principal",
+  description: "",
+  aliases: [],
+  color: "cat-1",
+  timezone: "America/Bogota",
+  own_timezone: null,
+  business_hours: null,
+  is_default: true,
+  active: true,
+  sort_order: 0,
+  source: "interno",
+  connection_id: null,
+  connected: true,
+  account_email: "",
+  responsable_admin_id: null,
+};
+
+export const agendaDeGoogle = {
+  ...agendaPrincipal,
+  id: "ag-2",
+  name: "Dra. Ana",
+  description: "Pediatría",
+  aliases: ["doctora"],
+  color: "cat-2",
+  is_default: false,
+  sort_order: 1,
+  source: "google",
+  connection_id: "11111111-1111-4111-8111-111111111111",
+  account_email: "ana@clinica.co",
+};
+
+export const unaAgenda = { calendars: [agendaPrincipal], multi_activo: false, multi_agenda_modo: "cliente_elige" };
+export const dosAgendas = { calendars: [agendaPrincipal, agendaDeGoogle], multi_activo: true, multi_agenda_modo: "cliente_elige" };
+
+/** `/events` de la semana en curso: dos citas (una por agenda) y un bloqueo; sirve al backend de prueba. */
+export function eventosAgenda(hoy = new Date()) {
+  const dia = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate()));
+  const a = (h: number, min = 0) => new Date(dia.getTime() + (h * 60 + min) * 60_000).toISOString();
+  const cita = (id: string, title: string, desde: string, hasta: string, cal: AgendaCalendario, tipo: (typeof tiposDeCita)[number]) => ({
+    id,
+    title,
+    start: desde,
+    end: hasta,
+    kind: "appointment",
+    status: "scheduled",
+    source: "local",
+    color: "#198754",
+    can_cancel: true,
+    attendee_email: "cliente@ejemplo.co",
+    notes: "",
+    appointment_type_id: tipo.id,
+    tipo_color: tipo.color,
+    tipo_codigo: tipo.codigo,
+    calendar_id: cal.id,
+    calendar_color: cal.color,
+  });
+  return {
+    events: [
+      cita("appt-1", "Laura Gómez", a(15), a(15, 30), agendaPrincipal, tiposDeCita[0]),
+      cita("appt-2", "Pedro Ruiz", a(16), a(16, 20), agendaDeGoogle, tiposDeCita[1]),
+      {
+        ...cita("block-1", "Almuerzo", a(17), a(18), agendaPrincipal, tiposDeCita[0]),
+        kind: "block",
+        status: "blocked",
+        appointment_type_id: "",
+        tipo_color: "",
+        tipo_codigo: "",
+      },
+    ],
+    tipos: tiposDeCita.map((t) => ({ id: t.id, name: t.name, color: t.color, codigo: t.codigo })),
+    calendars: [agendaPrincipal, agendaDeGoogle].map((c) => ({
+      id: c.id,
+      name: c.name,
+      color: c.color,
+      is_default: c.is_default,
+      active: true,
+      disponible: true,
+    })),
+    multi_activo: true,
+    timezone: "America/Bogota",
+  };
+}
+
+export const configCalendario = { plugin_id: "pack_calendar", values: { business_hours: "mon-fri:09:00-18:00", multi_agenda_modo: "cliente_elige" } };
 
 /** Respuesta por ruta (sin query string). Las rutas sin fixture devuelven 404. */
 // ---------------------------------------------------------------- suscripciones (SPEC-35)
@@ -757,6 +920,7 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   mrr_mes_anterior: 350000,
   activas: 5,
   en_prueba: 1,
+  pendientes_de_pago: 0,
   pausadas: 1,
   vencidas: 0,
   canceladas: 2,
@@ -778,12 +942,233 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   desde: "2026-10-01",
 };
 
+// Colaboración entre agentes (HU-AOS-26): dos especialistas, el Coordinador y un permiso.
+const VENTAS = "00000000-0000-4000-8000-0000000000a1";
+const AGENDA = "00000000-0000-4000-8000-0000000000a2";
+
+function agente(id: string, key: string, name: string, kind: AgentSummary["kind"] = "specialist"): AgentSummary {
+  return {
+    id, key, name, kind, contract: kind === "core" ? "kernelspec/1" : "agentspec/3", description: "",
+    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z",
+  };
+}
+
+export const agentesDelNegocio: AgentSummary[] = [
+  agente(VENTAS, "ventas", "Ventas"),
+  agente(AGENDA, "agenda", "Agenda"),
+  agente("00000000-0000-4000-8000-0000000000a0", "coordinador", "Coordinador", "core"),
+];
+
+export const grafoA2A: Graph = {
+  version: { id: "00000000-0000-4000-8000-0000000000f1", version: 1, content_hash: "a".repeat(64), created_at: "2026-10-25T12:00:00Z" },
+  links: [
+    {
+      from_agent_id: VENTAS, to_agent_id: AGENDA, modes: ["query"], intents: [], max_depth: 3, timeout_ms: 15000,
+      budget_usd: 0.02, budget_tokens: 20000, data_classes: ["public", "internal"],
+    },
+  ],
+  warnings: [],
+};
+
+// Plantillas con opciones (SPEC-40, HU-OPC-06).
+export const accionesDeOpciones = {
+  acciones: [
+    {
+      tool: "confirmar_cita",
+      descripcion: "Confirma la próxima cita del cliente y le avisa al equipo.",
+      parameters: {
+        type: "object",
+        properties: {
+          motivo: { type: "string", title: "Motivo", description: "Se guarda en la cita." },
+          aviso_minutos: { type: "integer", title: "Minutos de aviso", minimum: 0, maximum: 1440 },
+          canal: { type: "string", title: "Canal", enum: ["whatsapp", "correo"], "x-enumLabels": ["WhatsApp", "Correo"] },
+        },
+        required: ["motivo"],
+      },
+      sensible: false,
+      confirmacion_obligatoria: false,
+    },
+    {
+      tool: "crear_link_de_pago",
+      descripcion: "Crea un link de pago por el valor que indiques.",
+      parameters: {
+        type: "object",
+        properties: {
+          monto: { type: "number", title: "Monto (COP)", minimum: 1 },
+          concepto: { type: "string", title: "Concepto" },
+          cliente: {
+            type: "object",
+            title: "Datos del cliente",
+            properties: { documento: { type: "string", title: "Documento" }, ciudad: { type: "string", title: "Ciudad" } },
+          },
+        },
+        required: ["monto"],
+      },
+      sensible: true,
+      confirmacion_obligatoria: true,
+    },
+    {
+      tool: "reagendar_cita",
+      descripcion: "Reagenda la cita del cliente con parámetros que el formulario no sabe pintar.",
+      parameters: { oneOf: [{ type: "object" }, { type: "string" }] },
+      sensible: false,
+      confirmacion_obligatoria: false,
+    },
+  ],
+};
+
+export const variablesDeOpciones = {
+  variables: [
+    { ruta: "cliente.nombre", descripcion: "Nombre del cliente", origen: "conversacion" },
+    { ruta: "negocio.nombre", descripcion: "Nombre del negocio", origen: "servidor" },
+  ],
+};
+
+export const definicionDeOpciones = {
+  body: "Hola {cliente.nombre}, tu cita en {negocio.nombre} es mañana. ¿Qué quieres hacer?",
+  footer: "Responde tocando una opción",
+  variables: ["cliente.nombre", "negocio.nombre"],
+  exclusivo: true,
+  ttl_horas: 24,
+  opciones: [
+    {
+      id: "op1",
+      titulo: "Confirmar cita",
+      accion: { tool: "confirmar_cita", args_fijos: { motivo: "Confirmada desde WhatsApp" }, args_contexto: {}, confirmar: false },
+      respuesta_ok: "Listo, {ctx.cliente.nombre}: tu cita quedó confirmada.",
+      respuesta_error: "No pudimos confirmarla. Te escribe una persona del equipo.",
+      result_keys: [],
+    },
+    {
+      id: "op2",
+      titulo: "Pagar el anticipo",
+      accion: { tool: "crear_link_de_pago", args_fijos: { monto: 50000 }, args_contexto: {}, confirmar: true },
+      respuesta_ok: "Aquí está tu link de pago.",
+      respuesta_error: "No pudimos crear el link de pago.",
+      result_keys: [],
+    },
+  ],
+};
+
+export const plantillaDeOpciones = {
+  clave: "confirmar_cita",
+  nombre: "Confirmar cita",
+  estado: "published",
+  version_vigente: 2,
+  tiene_borrador_sin_publicar: false,
+  creada_en: "2026-10-20T15:00:00Z",
+  actualizada_en: "2026-10-27T10:00:00Z",
+  borrador: definicionDeOpciones,
+  definicion_vigente: definicionDeOpciones,
+  versiones: [
+    { version_n: 2, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: null, meta: null, vigente: true },
+    { version_n: 1, publicada_en: "2026-10-21T09:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: null, meta: null, vigente: false },
+  ],
+};
+
+/** Estado de una plantilla de Meta ligada a una versión (`OpcionesMetaEstadoOut`). */
+export const metaDeVersion = (nombre: string, estado: string, extra: Record<string, unknown> = {}) => ({
+  message_template_id: "00000000-0000-4000-8000-0000000000aa",
+  nombre,
+  estado,
+  categoria: "UTILITY",
+  categoria_anterior: null,
+  motivo_rechazo: null,
+  recomendacion: null,
+  error_de_publicacion: null,
+  ...extra,
+});
+
+/** Versiones con `meta` para mostrar cada estado de Meta (la vigente es la 5). */
+export const versionesConMeta = [
+  { version_n: 5, publicada_en: "2026-10-27T10:00:00Z", retirada_en: null, definition_hash: "e".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a5", meta: metaDeVersion("demo_estados_v5", "PENDING"), vigente: true },
+  { version_n: 4, publicada_en: "2026-10-26T10:00:00Z", retirada_en: null, definition_hash: "d".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a4", meta: metaDeVersion("demo_estados_v4", "APPROVED", { categoria: "MARKETING", categoria_anterior: "UTILITY" }), vigente: false },
+  { version_n: 3, publicada_en: "2026-10-25T10:00:00Z", retirada_en: null, definition_hash: "c".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a3", meta: metaDeVersion("demo_estados_v3", "REJECTED", { motivo_rechazo: "INVALID_FORMAT", recomendacion: "Quita los saltos de línea seguidos del cuerpo." }), vigente: false },
+  { version_n: 2, publicada_en: "2026-10-24T10:00:00Z", retirada_en: null, definition_hash: "b".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a2", meta: metaDeVersion("demo_estados_v2", "PAUSED"), vigente: false },
+  { version_n: 1, publicada_en: "2026-10-23T09:00:00Z", retirada_en: null, definition_hash: "a".repeat(64), message_template_id: "00000000-0000-4000-8000-0000000000a1", meta: metaDeVersion("demo_estados_v1", "DRAFT", { error_de_publicacion: "network_error" }), vigente: false },
+];
+
+/** Conexiones de `GET /admin/meta/health`: una lista, una con avisos, una con error y una que no es de WhatsApp. */
+const conexionDeSalud = (id: string, extra: Record<string, unknown>) => ({
+  id,
+  channel: "whatsapp",
+  environment: "production",
+  origin: "embedded_signup",
+  status: "connected",
+  status_reason: null,
+  last_health_check_at: "2026-10-27T09:00:00Z",
+  health: {},
+  checks: [],
+  billing_manual_status: null,
+  business_id: "123456789",
+  meta_app_id: "987654321",
+  token_expires_at: "2027-01-01T00:00:00Z",
+  ...extra,
+});
+export const saludMeta = {
+  connections: [
+    conexionDeSalud("00000000-0000-4000-8000-00000000aaaa", {}),
+    conexionDeSalud("00000000-0000-4000-8000-00000000bbbb", { environment: "sandbox", origin: "byok", status: "degraded" }),
+    conexionDeSalud("00000000-0000-4000-8000-00000000cccc", { status: "error", status_reason: "Token inválido" }),
+    conexionDeSalud("00000000-0000-4000-8000-00000000dddd", { channel: "instagram" }),
+  ],
+};
+
+export const listaDeOpciones = {
+  plantillas: [
+    { clave: "confirmar_cita", nombre: "Confirmar cita", estado: "published", version_vigente: 2, tiene_borrador_sin_publicar: false, creada_en: "2026-10-20T15:00:00Z", actualizada_en: "2026-10-27T10:00:00Z" },
+    { clave: "recordar_pago", nombre: "Recordar pago", estado: "draft", version_vigente: null, tiene_borrador_sin_publicar: true, creada_en: "2026-10-26T15:00:00Z", actualizada_en: "2026-10-26T16:00:00Z" },
+    { clave: "encuesta", nombre: "Encuesta de servicio", estado: "retired", version_vigente: 1, tiene_borrador_sin_publicar: false, creada_en: "2026-10-01T15:00:00Z", actualizada_en: "2026-10-15T16:00:00Z" },
+  ],
+};
+
+// Catálogo unificado de mensajes (ADR-0178, pista D0): uno de cada tipo.
+export const catalogoDeMensajes: CatalogoDeMensajes = {
+  mensajes: [
+    {
+      id: "meta:c1:cobro_nuevo:es", tipo: "meta", clave: "cobro_nuevo", nombre: "cobro_nuevo", idioma: "es", estado: "APPROVED",
+      estado_detalle: "UTILITY", canales_soportados: ["whatsapp"], variables: ["1", "2"], dialecto_variables: "meta_posicionales",
+      resumen: "Hola {{1}}, tu cobro es {{2}}", actualizado_en: "2026-10-28T10:00:00Z",
+      fuente: { editor: "meta", connection_id: "c1", message_template_id: "m1" },
+    },
+    {
+      id: "evento:subscription.charge_created", tipo: "evento", clave: "subscription.charge_created", nombre: "subscription.charge_created",
+      idioma: "es", estado: "mapeado", estado_detalle: "cobro_nuevo", canales_soportados: ["whatsapp"], variables: ["cliente.nombre", "cargo.monto"],
+      dialecto_variables: "llaves_con_ruta", resumen: "Hola {cliente.nombre}, ya está tu cobro", actualizado_en: null,
+      fuente: { editor: "evento", evento: "subscription.charge_created" },
+    },
+    {
+      id: "opciones:confirmar_cita", tipo: "opciones", clave: "confirmar_cita", nombre: "Confirmar cita", idioma: null, estado: "published",
+      estado_detalle: "APPROVED", canales_soportados: ["whatsapp"], variables: ["cliente.nombre"], dialecto_variables: "llaves_con_ruta",
+      resumen: "Hola {cliente.nombre}, ¿confirmas tu cita?", actualizado_en: "2026-10-27T09:00:00Z",
+      fuente: { editor: "opciones", clave: "confirmar_cita" },
+    },
+    {
+      id: "texto_pack:pack_calendar:email_body_confirmed", tipo: "texto_pack", clave: "email_body_confirmed",
+      nombre: "Cuerpo del correo de confirmación", idioma: null, estado: "por_defecto", estado_detalle: "Agenda", canales_soportados: ["email"],
+      variables: ["cliente", "titulo", "fecha", "hora", "negocio"], dialecto_variables: "llaves_con_ruta", resumen: "Hola {cliente}, tu cita quedó agendada",
+      actualizado_en: null, fuente: { editor: "texto_pack", plugin_id: "pack_calendar", campo: "email_body_confirmed" },
+    },
+  ],
+  omitidas: [],
+  truncado: [],
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
+  "/mensajes/catalogo": catalogoDeMensajes,
   "/admin/me": me,
   "/admin/agents/overview": agentes,
+  "/admin/agents": agentesDelNegocio,
+  "/admin/a2a/graph": grafoA2A,
   "/admin/dashboard": dashboard,
+  "/admin/dashboard/agents": resumenPorAgente,
   "/admin/onboarding": primerosPasos,
   "/admin/settings/message-templates/missing": plantillasFaltantes,
+  "/plantillas-opciones": listaDeOpciones,
+  "/plantillas-opciones/catalogo-acciones": accionesDeOpciones,
+  "/plantillas-opciones/catalogo-variables": variablesDeOpciones,
+  "/plantillas-opciones/confirmar_cita": plantillaDeOpciones,
+  "/admin/meta/health": saludMeta,
   "/admin/conversations": conversaciones,
   "/admin/conversations/connections": conexionesDeConversaciones,
   "/admin/conversations/test-conv-1": conversacionAbierta,
@@ -803,6 +1188,9 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/cobranza/summary": resumenCobranza,
   "/pack/calendar/types": tiposDeCita,
   "/pack/calendar/status": estadoCalendario,
+  "/pack/calendar/calendars": unaAgenda,
+  "/pack/calendar/events": { ...eventosAgenda(), calendars: [], multi_activo: false },
+  "/admin/plugins/pack_calendar/config": configCalendario,
   "/pack/pack_subscriptions/suscripciones": suscripciones,
   "/pack/pack_subscriptions/suscripciones/test-sub-1": suscripcionDetalle,
   "/pack/pack_subscriptions/cargos": cargosSuscripcion,

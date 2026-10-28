@@ -109,6 +109,8 @@ export const SECCION: Record<string, string> = {
   settings: "Configuración",
   tenants: "Negocios",
   qa: "Pruebas",
+  // Depurador del turno (HU-AOS-28): ver entradas y salidas de las acciones, redactadas.
+  observability: "Observabilidad",
   pack_commerce: "Comercio",
   "pack_subscriptions:suscripciones": "Suscripciones",
 };
@@ -258,4 +260,16 @@ export function estadoPasoLabel(estado: string | null | undefined): string {
 /** Nombre visible de una habilidad (`pack_commerce` → «Comercio»), para no mostrar ids. */
 export function habilidadLabel(id: string): string {
   return PACK[id] ?? capitalizar(id.replace(/^pack_/, ""));
+}
+
+/** Estado de una plantilla con opciones (SPEC-40, HU-OPC-06). */
+export const ESTADO_PLANTILLA_OPCIONES: Record<string, string> = {
+  draft: "Borrador",
+  published: "Activa",
+  retired: "Retirada",
+};
+
+export function estadoPlantillaOpcionesLabel(estado: string | null | undefined): string {
+  if (!estado) return "Sin estado";
+  return ESTADO_PLANTILLA_OPCIONES[estado] ?? capitalizar(estado);
 }

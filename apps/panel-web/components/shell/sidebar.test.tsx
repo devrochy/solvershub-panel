@@ -137,18 +137,58 @@ describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
   const TODO = { ...me.permissions };
 
   it("en una pestaña: migas grupo › entrada › pestaña y pestañas con la actual marcada", () => {
-    ruta = "/calendario/tipos";
+    ruta = "/cobranza/promesas";
     render(
       <ShellProvider permisos={TODO}>
-        <PageHeader title="Tipos de cita" />
+        <PageHeader title="Promesas" />
       </ShellProvider>,
     );
     const migas = screen.getByRole("navigation", { name: "Migas de pan" });
-    expect(within(migas).getByText("Tipos de cita").getAttribute("aria-current")).toBe("page");
-    expect(within(migas).getAllByRole("link", { name: "Agenda" })[0].getAttribute("href")).toBe("/calendario/citas");
+    expect(within(migas).getByText("Promesas").getAttribute("aria-current")).toBe("page");
+    expect(within(migas).getAllByRole("link", { name: "Cobranza" })[0].getAttribute("href")).toBe("/cobranza");
+    const areas = screen.getByRole("navigation", { name: "Grupos de la sección" });
+    expect(within(areas).getByRole("link", { name: "Actividad" }).getAttribute("aria-current")).toBe("page");
     const pestanas = screen.getByRole("navigation", { name: "Secciones" });
-    expect(within(pestanas).getByRole("link", { name: "Tipos de cita" }).getAttribute("aria-current")).toBe("page");
-    expect(within(pestanas).getAllByRole("link").length).toBeGreaterThan(1);
+    expect(within(pestanas).getByRole("link", { name: "Promesas" }).getAttribute("aria-current")).toBe("page");
+    expect(within(pestanas).getAllByRole("link").map((l) => l.textContent)).toEqual(["Promesas", "Reportes"]);
+  });
+
+  it("Carteras es un área de una sola sección: sin segunda fila de pestañas", () => {
+    ruta = "/cobranza/carteras";
+    render(
+      <ShellProvider permisos={TODO}>
+        <PageHeader title="Carteras" />
+      </ShellProvider>,
+    );
+    const areas = screen.getByRole("navigation", { name: "Grupos de la sección" });
+    expect(within(areas).getByRole("link", { name: "Carteras" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByRole("navigation", { name: "Secciones" })).toBeNull();
+  });
+
+  it("la ficha de un cliente cuelga de su cartera en las migas", () => {
+    ruta = "/cobranza/carteras/7/clientes/42";
+    render(
+      <ShellProvider permisos={TODO}>
+        <PageHeader
+          title="Ana Pérez"
+          migasIntermedias={[
+            { label: "Cartera Norte", href: "/cobranza/carteras/7" },
+            { label: "Clientes", href: "/cobranza/carteras/7/clientes" },
+          ]}
+        />
+      </ShellProvider>,
+    );
+    const migas = screen.getByRole("navigation", { name: "Migas de pan" });
+    expect(within(migas).getAllByRole("listitem").map((i) => i.textContent)).toEqual([
+      "Negocio",
+      "Cobranza",
+      "Carteras",
+      "Cartera Norte",
+      "Clientes",
+      "Ana Pérez",
+    ]);
+    expect(within(migas).getByRole("link", { name: "Cartera Norte" }).getAttribute("href")).toBe("/cobranza/carteras/7");
+    expect(within(migas).getByText("Ana Pérez").getAttribute("aria-current")).toBe("page");
   });
 
   it("en un detalle, el título es el último nivel y la sección enlaza", () => {
@@ -164,8 +204,8 @@ describe("migas y pestañas automáticas del PageHeader (HU-DS-04)", () => {
   });
 
   it("sin shell (catálogo, tests) no inventa migas ni pestañas", () => {
-    ruta = "/calendario/tipos";
-    render(<PageHeader title="Tipos de cita" />);
+    ruta = "/cobranza/carteras";
+    render(<PageHeader title="Carteras" />);
     expect(screen.queryByRole("navigation")).toBeNull();
   });
 });

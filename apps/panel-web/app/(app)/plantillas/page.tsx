@@ -26,9 +26,14 @@ export default async function PlantillasPage() {
         title="Plantillas de WhatsApp"
         description="Las plantillas viven en la WABA de cada conexión."
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/plantillas/eventos">Plantillas por evento</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/plantillas/eventos">Plantillas por evento</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/plantillas-opciones">Plantillas con opciones</Link>
+            </Button>
+          </>
         }
       />
       {connections.length === 0 ? (

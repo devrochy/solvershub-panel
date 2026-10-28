@@ -1,4 +1,5 @@
-import type { SubscriptionProviderSettings } from "@/lib/api/types";
+import type { MinimoPagoEnLineaOut, SubscriptionProviderSettings } from "@/lib/api/types";
+import { formatMoney } from "@/lib/format";
 
 /** Recurrencia del plan en el formulario de producto (HU-SUB-09): vacío = venta única. */
 export const COBROS = [
@@ -56,4 +57,50 @@ export function filtrarPorTipo<T extends { variants: { billing_period?: string |
   if (tipo === "planes") return productos.filter((p) => planDelProducto(p.variants) !== null);
   if (tipo === "unica") return productos.filter((p) => planDelProducto(p.variants) === null);
   return productos;
+}
+
+/** Cuántos períodos mensuales junta cada recurrencia: sirve para sugerir un plan más largo. */
+const MESES_DEL_PLAN: Record<string, number> = { mensual: 1, trimestral: 3, anual: 12 };
+
+export interface AlternativaDePlan {
+  value: "trimestral" | "anual";
+  label: string;
+  /** Precio por período del plan más largo, con la cuenta hecha (precio × meses ÷ meses del actual). */
+  precio: number;
+}
+
+export interface AvisoDeMinimo {
+  mensaje: string;
+  alternativas: AlternativaDePlan[];
+  /** El negocio no tiene cuentas de transferencia: el cobro sin link no tendría cómo pagarse. */
+  sinCuentas: boolean;
+}
+
+/**
+ * Aviso del plan cuyo precio por período queda bajo el mínimo de pago en línea (HU-SUB-25). No bloquea
+ * el guardado. El mínimo viene del servidor: aquí no hay ninguna cifra. Sin aviso si no es plan, si es
+ * gratis ($0), si no hay mínimo (sin pasarela) o si está apagado (0).
+ */
+export function avisoDeMinimo(
+  { precio, periodo }: { precio: number; periodo: string },
+  info: Pick<MinimoPagoEnLineaOut, "minimo" | "cuentas_de_transferencia"> | null,
+  moneda = "COP",
+): AvisoDeMinimo | null {
+  const meses = MESES_DEL_PLAN[periodo];
+  const minimo = info?.minimo;
+  if (!meses || !info || minimo == null || minimo <= 0) return null;
+  if (!Number.isFinite(precio) || precio <= 0 || precio >= minimo) return null;
+  const alternativas: AlternativaDePlan[] = [];
+  for (const [value, mesesDelPlan] of [["trimestral", 3], ["anual", 12]] as const) {
+    if (mesesDelPlan <= meses) continue;
+    const total = Math.round(precio * (mesesDelPlan / meses));
+    if (total >= minimo) alternativas.push({ value, label: COBROS.find((c) => c.value === value)?.label ?? value, precio: total });
+  }
+  return {
+    mensaje:
+      `Este plan cobra ${formatMoney(precio, moneda)} por período y el mínimo para pagar en línea es ` +
+      `${formatMoney(minimo, moneda)}. Ese cobro no podrá tener link de pago: se cobrará por transferencia.`,
+    alternativas,
+    sinCuentas: info.cuentas_de_transferencia === 0,
+  };
 }

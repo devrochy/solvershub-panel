@@ -7,6 +7,7 @@ import {
   INTERVALO_HILO_MS,
   INTERVALO_LISTA_MS,
   cursorDe,
+  ordenarPorLlegada,
   unirMensajes,
   useHiloEnVivo,
   useListaEnVivo,
@@ -163,5 +164,58 @@ describe("useListaEnVivo", () => {
     await act(() => vi.advanceTimersByTimeAsync(1));
     expect(fetchMock.mock.calls[0][0]).toBe("/api/conversations?status=open&connection_id=k1");
     expect(result.current[0].status).toBe("escalated");
+  });
+});
+
+describe("ordenarPorLlegada", () => {
+  function chat(id: string, last_message_at: string | null, started_at = "2026-10-09T14:00:00Z") {
+    return {
+      id,
+      customer_name: null,
+      external_id: null,
+      channel: "whatsapp",
+      status: "open",
+      bot_paused: false,
+      started_at,
+      last_message_at,
+    };
+  }
+
+  it("pone primero el último mensaje, y usa el inicio si no hay mensajes", () => {
+    const viejo = chat("a", "2026-10-09T15:00:00Z");
+    const nuevo = chat("b", "2026-10-09T16:00:00Z");
+    const sinMensajes = chat("c", null, "2026-10-09T17:00:00Z");
+    expect(ordenarPorLlegada([viejo, sinMensajes, nuevo]).map((c) => c.id)).toEqual(["c", "b", "a"]);
+  });
+
+  it("desempata por id descendente como el backend", () => {
+    const a = chat("a", "2026-10-09T15:00:00Z");
+    const b = chat("b", "2026-10-09T15:00:00Z");
+    expect(ordenarPorLlegada([a, b]).map((c) => c.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("useListaEnVivo · orden", () => {
+  it("ordena por llegada la respuesta del polling", async () => {
+    const base = {
+      customer_name: null,
+      external_id: null,
+      channel: "whatsapp",
+      status: "open",
+      bot_paused: false,
+    };
+    const viejo = { ...base, id: "c1", started_at: "2026-10-09T14:00:00Z", last_message_at: "2026-10-09T15:00:00Z" };
+    const nuevo = { ...base, id: "c2", started_at: "2026-10-09T14:00:00Z", last_message_at: "2026-10-09T16:00:00Z" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        respuesta({ items: [viejo, nuevo], total: 2, page: 1, page_size: 20, has_more: false }),
+      ),
+    );
+
+    const iniciales = [viejo];
+    const { result } = renderHook(() => useListaEnVivo("", iniciales));
+    await act(() => vi.advanceTimersByTimeAsync(INTERVALO_LISTA_MS));
+    expect(result.current.map((c) => c.id)).toEqual(["c2", "c1"]);
   });
 });

@@ -247,6 +247,27 @@ export function confirmacionDeReenvio(
   };
 }
 
+/** Texto del diálogo para registrar la transferencia de un cobro (HU-SUB-26). */
+export function descripcionDeRegistroDePago(
+  cargo: { periodo: string; monto: number; moneda?: string | null },
+  cliente: string,
+): string {
+  return (
+    `Marca como pagado el cobro ${cargo.periodo} de ${cliente} por ` +
+    `${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. El cliente deja de recibir recordatorios y, ` +
+    "si su suscripción estaba pausada por mora, se reactiva. Verifica antes que el dinero llegó: " +
+    "el sistema no lo comprueba."
+  );
+}
+
+/** Resultado de registrar el pago en palabras del negocio. */
+export function mensajeDePagoRegistrado(r: { estado: string; suscripcion_estado: string }): string {
+  if (r.estado === "ya_registrado") return "Este pago ya estaba registrado con esa referencia.";
+  return r.suscripcion_estado === "activa"
+    ? "Pago registrado. La suscripción está activa."
+    : "Pago registrado.";
+}
+
 /** Resultado del reenvío en palabras del negocio. */
 export function mensajeDeReenvio(r: { enviado: boolean; motivo?: string | null }): string {
   if (r.enviado) return "Listo: el link salió por WhatsApp.";

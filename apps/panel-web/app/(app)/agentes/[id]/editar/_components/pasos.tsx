@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
-import { ListaDeFrases } from "@/app/(app)/agentes/[id]/editar/_components/lista-de-frases";
+import { ListaDeFrases } from "@/components/ui/lista-de-frases";
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -23,12 +25,15 @@ import {
   type Errores,
   type EstadoDelEditor,
 } from "@/lib/agentes-editor";
-import type { LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
 import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
+import type { Pendiente } from "@/lib/frases-pendientes";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
+/** Enlaza una lista de frases (por su id) con el texto pendiente del editor (`usePendientes`). */
+type RegistrarPendiente = (id: string) => (pendiente: Pendiente | null) => void;
 
 const PROVEEDORES: Record<string, string> = {
   deepseek: "DeepSeek",
@@ -62,7 +67,17 @@ function Avanzado({ children, titulo = "Opciones avanzadas" }: { children: React
 }
 
 // ------------------------------------------------------------------ 1. identidad
-export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelEditor; cambiar: Cambiar; errores: Errores }) {
+export function PasoIdentidad({
+  estado,
+  cambiar,
+  errores,
+  registrarPendiente,
+}: {
+  estado: EstadoDelEditor;
+  cambiar: Cambiar;
+  errores: Errores;
+  registrarPendiente?: RegistrarPendiente;
+}) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
       <Field label="Nombre" htmlFor="agente-nombre" required error={errores.name}>
@@ -105,13 +120,12 @@ export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelE
           help="0 = sin tope. Si se pasa, el agente lo intenta de nuevo más corto."
           error={errores["persona.maxLength"]}
         >
-          <Input
+          <InputNumero
             id="agente-largo"
-            type="number"
             min={0}
             max={10000}
             value={estado.largoMaximo}
-            onChange={(e) => cambiar({ largoMaximo: Math.max(0, Math.min(10000, Number(e.target.value) || 0)) })}
+            onValueChange={(largoMaximo) => cambiar({ largoMaximo })}
             className="max-w-40"
           />
         </Field>
@@ -126,6 +140,7 @@ export function PasoIdentidad({ estado, cambiar, errores }: { estado: EstadoDelE
             placeholder="Por ejemplo: te lo regalo"
             agregarLabel="Agregar frase"
             max={100}
+            onPendiente={registrarPendiente?.("agente-prohibidas")}
             invalido={Boolean(errores["persona.forbiddenPhrases"])}
             describedBy={errores["persona.forbiddenPhrases"] ? "agente-prohibidas-error" : undefined}
           />
@@ -200,14 +215,14 @@ export function PasoModelo({
           help="Entre 0 (siempre igual) y 2 (más variado). Recomendado: 0,3."
           error={errores["model.temperature"]}
         >
-          <Input
+          <InputNumero
             id="agente-temperatura"
-            type="number"
+            decimal
             step={0.1}
             min={0}
             max={2}
             value={estado.temperatura}
-            onChange={(e) => cambiar({ temperatura: Math.max(0, Math.min(2, Number(e.target.value) || 0)) })}
+            onValueChange={(temperatura) => cambiar({ temperatura })}
             className="max-w-32"
           />
         </Field>
@@ -224,6 +239,8 @@ export function PasoSuperpoderes({
   erroresPorPoder,
   catalogo,
   minFrases,
+  requisitos = [],
+  registrarPendiente,
 }: {
   estado: EstadoDelEditor;
   cambiar: Cambiar;
@@ -231,6 +248,8 @@ export function PasoSuperpoderes({
   erroresPorPoder: Record<string, string>;
   catalogo: Superpower[];
   minFrases: number;
+  requisitos?: Requirement[];
+  registrarPendiente?: RegistrarPendiente;
 }) {
   function poner(id: string, cambio: Partial<{ activo: boolean; frases: string[] }>) {
     const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
@@ -247,6 +266,7 @@ export function PasoSuperpoderes({
         reconocerlo: las de la habilidad ya cuentan y puedes sumar las tuyas.
       </p>
       <ErrorDeCampo id="superpoderes-error" mensaje={errores.procedures} />
+      <AvisoDeRequisitos requisitos={requisitos} />
       {fuera.length > 0 && (
         <ul className="flex flex-col gap-3" aria-label="Superpoderes que no corresponden a este agente">
           {fuera.map((id) => (
@@ -303,6 +323,7 @@ export function PasoSuperpoderes({
                       placeholder="Cómo lo pide un cliente tuyo"
                       agregarLabel="Agregar frase"
                       max={MAX_FRASES_PROPIAS}
+                      onPendiente={registrarPendiente?.(`poder-${poder.id}-frase`)}
                       invalido={Boolean(error)}
                       describedBy={error ? idError : undefined}
                     />
@@ -360,13 +381,12 @@ export function PasoMemoria({
           help="Entre 1 y 500. Más mensajes = más contexto y más costo."
           error={errores["memory.shortTermTurns"]}
         >
-          <Input
+          <InputNumero
             id="memoria-turnos"
-            type="number"
             min={1}
             max={500}
             value={estado.turnosDeMemoria}
-            onChange={(e) => cambiar({ turnosDeMemoria: Math.max(1, Math.min(500, Number(e.target.value) || 1)) })}
+            onValueChange={(turnosDeMemoria) => cambiar({ turnosDeMemoria })}
             className="max-w-32"
           />
         </Field>
@@ -436,15 +456,12 @@ function SeccionConocimiento({
               help={`Entre 1 y ${MAX_FRAGMENTOS}. Más fragmentos = más contexto y más costo por respuesta.`}
               error={errores["knowledge.topK"]}
             >
-              <Input
+              <InputNumero
                 id="conocimiento-fragmentos"
-                type="number"
                 min={1}
                 max={MAX_FRAGMENTOS}
                 value={conocimiento.fragmentos}
-                onChange={(e) =>
-                  cambiar({ fragmentos: Math.max(1, Math.min(MAX_FRAGMENTOS, Number(e.target.value) || 1)) })
-                }
+                onValueChange={(fragmentos) => cambiar({ fragmentos })}
                 className="max-w-32"
               />
             </Field>
@@ -471,14 +488,14 @@ function SeccionConocimiento({
                 help="Más alto = menos fragmentos y solo los muy parecidos a la pregunta."
                 error={errores["knowledge.minScore"]}
               >
-                <Input
+                <InputNumero
                   id="conocimiento-umbral"
-                  type="number"
+                  decimal
                   min={0}
                   max={1}
                   step={0.05}
                   value={conocimiento.umbral ?? 0}
-                  onChange={(e) => cambiar({ umbral: Math.max(0, Math.min(1, Number(e.target.value) || 0)) })}
+                  onValueChange={(umbral) => cambiar({ umbral })}
                   className="max-w-32"
                 />
               </Field>
@@ -499,6 +516,7 @@ export function PasoPublicar({
   errores,
   notas,
   setNotas,
+  requisitos = [],
 }: {
   destinos: PublishTarget[];
   destinosError: string | null;
@@ -507,9 +525,14 @@ export function PasoPublicar({
   errores: Errores;
   notas: string;
   setNotas: (notas: string) => void;
+  requisitos?: Requirement[];
 }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
+      <AvisoDeRequisitos
+        requisitos={requisitos}
+        titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"
+      />
       <p className="text-sm text-body">
         Un agente siempre se publica en al menos una conexión. Al publicar se prepara una versión nueva de cada conexión
         elegida; tus clientes no la ven hasta que la actives.

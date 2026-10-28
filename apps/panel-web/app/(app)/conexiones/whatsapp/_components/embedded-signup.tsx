@@ -9,7 +9,7 @@ import { META_CONNECTION_STATUS, StatusBadge } from "@/components/domain/status-
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import type { components } from "@/lib/api/schema";
 import {
   CanjePendiente,
@@ -321,10 +321,10 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
             error={pinError}
             className="sm:max-w-xs"
           >
-            <Input
+            <InputPassword
+              etiqueta="PIN"
               id="es_pin"
               name="pin"
-              type="password"
               inputMode="numeric"
               autoComplete="off"
               maxLength={6}
@@ -375,7 +375,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
           </p>
           <form className="flex flex-col gap-3" onSubmit={(e) => void enviarPin(e, "number")}>
             <Field label="PIN del número" htmlFor="es_pin_registro" error={pinError} className="sm:max-w-xs">
-              <Input id="es_pin_registro" name="pin" type="password" inputMode="numeric" autoComplete="off" maxLength={6} />
+              <InputPassword etiqueta="PIN" id="es_pin_registro" name="pin" inputMode="numeric" autoComplete="off" maxLength={6} />
             </Field>
             <div>
               <Button type="submit" variant="accent" disabled={cargando !== null}>
@@ -390,7 +390,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
                 Fijamos un PIN nuevo de verificación en dos pasos y registramos el número con él.
               </p>
               <Field label="PIN nuevo" htmlFor="es_pin_nuevo" className="sm:max-w-xs">
-                <Input id="es_pin_nuevo" name="pin" type="password" inputMode="numeric" autoComplete="off" maxLength={6} />
+                <InputPassword etiqueta="PIN" id="es_pin_nuevo" name="pin" inputMode="numeric" autoComplete="off" maxLength={6} />
               </Field>
               <div>
                 <Button type="submit" variant="outline" disabled={cargando !== null}>

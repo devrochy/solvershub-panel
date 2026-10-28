@@ -4,6 +4,14 @@ import { useState, type ReactNode } from "react";
 import { Bell, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { BarChart, LineChart, ProgressRing, Sparkline, resumenSerie, type ChartDatum, type ChartSeries } from "@/components/dataviz";
+import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
+import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
+import { TarjetaDelAgente } from "@/app/(onboarding)/bienvenida/_components/tarjeta-del-agente";
+import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
+import { TarjetaElegible } from "@/app/(onboarding)/bienvenida/_components/elegibles";
+import { Marca } from "@/components/ui/marca";
+import { ESTADO_INICIAL, HORARIO_INICIAL, type HorarioElegido } from "@/lib/onboarding";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -20,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { NotificacionItem } from "@/lib/api/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -33,6 +42,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Stepper } from "@/components/ui/stepper";
+import type { Requirement } from "@/lib/api/types";
+import { textoDeAvance } from "@/lib/agente-asistente";
 import { toast } from "@/lib/toast-store";
 
 type Fila = { id: string; cliente: string; estado: "al_dia" | "mora"; saldo: string };
@@ -42,6 +53,10 @@ const FILAS: Fila[] = [
   { id: "2", cliente: "Luis Prueba", estado: "mora", saldo: "$ 480.500" },
   { id: "3", cliente: "Marta Prueba", estado: "al_dia", saldo: "$ 75.000" },
 ];
+
+const REQUISITOS_EJEMPLO = [
+  { skill: "pack_commerce", kind: "sin_contenido", content: "catalogo", title: "Catálogo", explanation: "" },
+] as unknown as Requirement[];
 
 const COLUMNAS: Column<Fila>[] = [
   { key: "cliente", header: "Cliente", cell: (f) => f.cliente },
@@ -120,9 +135,21 @@ function TarjetaDeGrafico({ titulo, periodo, children }: { titulo: string; perio
   );
 }
 
+const AHORA_DE_MUESTRA = new Date("2026-10-25T15:00:00Z");
+const NOTIFICACIONES_DE_MUESTRA: NotificacionItem[] = [
+  { id: "n1", event_key: "core.escalation", category: "conversaciones", severity: "critical", title: "Nueva escalación", body: "Un cliente pidió atención humana y la conversación quedó escalada.", target: { entity: "conversacion", id: "c1", section: "escalations" }, data: {}, created_at: "2026-10-25T14:55:00Z", read: false },
+  { id: "n2", event_key: "commerce.pedido_nuevo", category: "ventas", severity: "success", title: "Pedido nuevo", body: "El asistente tomó el pedido P-1042.", target: { entity: "pedido", id: "p1", section: "pack_commerce" }, data: {}, created_at: "2026-10-25T13:00:00Z", read: false },
+  { id: "n3", event_key: "subs.pago_sin_aplicar", category: "cobros", severity: "warning", title: "Pago sin aplicar", body: "Llegó un pago que no se pudo asociar a una suscripción.", target: { entity: "cobro", id: "k1", section: "pack_subscriptions" }, data: {}, created_at: "2026-10-24T20:00:00Z", read: true },
+  { id: "n4", event_key: "calendar.cita_nueva", category: "agenda", severity: "info", title: "Cita nueva", body: "Se agendó una cita para mañana a las 9:00.", target: { entity: "cita", id: "a1", section: "pack_calendar" }, data: {}, created_at: "2026-10-23T12:00:00Z", read: true },
+  { id: "n5", event_key: "core.connection_token_expiring", category: "sistema", severity: "warning", title: "El acceso de tu conexión vence pronto", body: "Reconéctala en Conexiones antes de esa fecha.", target: { entity: "conexion", id: "x1", section: "connections" }, data: {}, created_at: "2026-10-20T12:00:00Z", read: true },
+];
+
 export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
+  const [vende, setVende] = useState("productos");
+  const [horario, setHorario] = useState<HorarioElegido | null>(HORARIO_INICIAL);
+  const [tipoNegocio, setTipoNegocio] = useState("ventas");
   const [busqueda, setBusqueda] = useState("");
   const [pestana, setPestana] = useState("identidad");
   const [canales, setCanales] = useState<string[]>(CANALES.map((c) => c.key));
@@ -332,6 +359,79 @@ export function Catalogo() {
         <Dropzone accept={["image/png", "image/jpeg"]} maxBytes={5 * 1024 * 1024} hint="PNG o JPG de hasta 5 MB." onFiles={() => {}} />
       </Seccion>
 
+      <Seccion
+        titulo="Asistente de primer uso"
+        nota="Pantalla completa de 6 pasos (SPEC-41): tarjetas y fichas de un clic, la tarjeta viva «Tu agente, armándose», el selector de horario y el aviso permanente mientras no se termina."
+      >
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-center gap-8">
+            <Marca pieza="horizontal" className="h-16 w-auto" />
+            <Marca pieza="horizontal-simple" className="h-9 w-auto" />
+          </div>
+          <AvisoDeOnboarding recorrido={{ estado: "omitido", paso: 3, total_pasos: 6, aplica: true, abrir: false, avisar: true }} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { id: "ventas", titulo: "Vendo productos o planes", ayuda: "Responde dudas, cotiza y toma el pedido." },
+              { id: "agenda", titulo: "Agendo citas", ayuda: "Ofrece horarios y reserva la cita." },
+            ].map((t) => (
+              <TarjetaElegible
+                key={t.id}
+                nombre="cat-tipo"
+                valor={t.id}
+                elegida={tipoNegocio === t.id}
+                onElegir={setTipoNegocio}
+                titulo={t.titulo}
+                ayuda={t.ayuda}
+              />
+            ))}
+          </div>
+          <div className="grid gap-8 lg:grid-cols-[1fr_21rem]">
+            <SelectorDeHorario valor={horario} onCambiar={setHorario} />
+            <TarjetaDelAgente estado={{ ...ESTADO_INICIAL, tipo: "ventas", nombreDelAgente: "Sofía", negocio: "Sport Plus", horario }} />
+          </div>
+        </div>
+      </Seccion>
+
+      <Seccion
+        titulo="Asistente de creación de agentes"
+        nota="Un paso por pantalla, hasta 10 (SPEC-39): «Paso X de N», una pregunta con opciones, resumen antes de crear y aviso de lo que falta configurar."
+      >
+        <div className="flex max-w-2xl flex-col gap-4 rounded-lg border border-border-soft bg-surface p-5">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-text-soft">{textoDeAvance(1, 7)}</p>
+            <Progress value={2} max={7} label="Avance del asistente" valueText={textoDeAvance(1, 7)} size="sm" />
+          </div>
+          <h3 className="text-lg font-semibold text-headline">¿Qué vendes?</h3>
+          <RadioGroup
+            label="Qué vende tu negocio"
+            name="cat-asistente-vende"
+            value={vende}
+            onValueChange={setVende}
+            options={[
+              { value: "productos", label: "Productos", description: "Tomas pedidos de tu catálogo." },
+              { value: "planes", label: "Planes o suscripciones", description: "Vendes planes que se contratan y se renuevan." },
+              { value: "ambos", label: "Ambos", description: "Productos y planes en el mismo negocio." },
+            ]}
+          />
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt className="text-text-soft">Tipo</dt>
+            <dd className="text-headline">Ventas</dd>
+            <dt className="text-text-soft">¿Qué vendes?</dt>
+            <dd className="text-headline">Productos</dd>
+            <dt className="text-text-soft">Nombre</dt>
+            <dd className="text-headline">Ventas</dd>
+          </dl>
+          <AvisoDeRequisitos
+            requisitos={REQUISITOS_EJEMPLO}
+            titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"
+          />
+          <div className="flex gap-3">
+            <Button variant="outline">Atrás</Button>
+            <Button variant="accent">Crear mi agente</Button>
+          </div>
+        </div>
+      </Seccion>
+
       <Seccion titulo="Tabla" nota="Densidad compacta, encabezado fijo con scroll propio, carga, vacío y error.">
         <DataTable columns={COLUMNAS} rows={FILAS} getRowKey={(f) => f.id} density="compact" maxHeight="max-h-40" caption="Clientes de prueba" />
         <DataTable columns={COLUMNAS} rows={[]} getRowKey={(f) => f.id} loading loadingRows={2} />
@@ -359,6 +459,17 @@ export function Catalogo() {
           action={<Button size="sm">Conectar WhatsApp</Button>}
         />
         <Skeleton lines={3} />
+      </Seccion>
+
+      <Seccion
+        titulo="Notificaciones"
+        nota="Icono de categoría sobre el color de la severidad (info, éxito, atención, urgente); lo urgente lleva etiqueta y lo no leído, punto y negrita."
+      >
+        <ul className="flex max-w-md flex-col gap-0.5">
+          {NOTIFICACIONES_DE_MUESTRA.map((n) => (
+            <FilaNotificacion key={n.id} item={n} href="#" ahora={AHORA_DE_MUESTRA} onAbrir={() => undefined} onArchivar={() => undefined} />
+          ))}
+        </ul>
       </Seccion>
 
       <Seccion titulo="Navegación" nota="Migas y pestañas dentro de la página (las que cambian de ruta son TabLinks).">

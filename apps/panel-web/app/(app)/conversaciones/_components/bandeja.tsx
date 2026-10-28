@@ -48,7 +48,7 @@ export function Bandeja({
   }, [cambioDeEstado, router]);
 
   return (
-    <div className="grid h-[calc(100dvh-16rem)] min-h-[28rem] overflow-hidden rounded-lg border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
+    <div className="grid h-[calc(100dvh-16rem)] min-h-[28rem] grid-cols-1 overflow-hidden rounded-lg border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
       <nav
         aria-label="Lista de conversaciones"
         className={cn(

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { NAV_GROUPS } from "@/components/shell/nav";
 import { useShell } from "@/components/shell/shell-context";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Breadcrumbs, type Miga } from "@/components/ui/breadcrumbs";
 import { TabLinks } from "@/components/ui/tab-links";
 import { gruposVisibles, migasPara, pestanasPara } from "@/lib/shell/navegacion";
 
@@ -12,11 +12,11 @@ import { gruposVisibles, migasPara, pestanasPara } from "@/lib/shell/navegacion"
  * Migas automáticas del `PageHeader` (HU-DS-04): salen del menú (`nav.ts`) y de la ruta.
  * En un detalle, el último nivel es el título de la página. Sin shell, no muestra nada.
  */
-export function MigasDeShell({ titulo }: { titulo: string }) {
+export function MigasDeShell({ titulo, intermedias }: { titulo: string; intermedias?: Miga[] }) {
   const pathname = usePathname();
   const shell = useShell();
   if (!shell) return null;
-  const migas = migasPara(pathname, gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster), titulo);
+  const migas = migasPara(pathname, gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster), titulo, intermedias);
   return migas.length > 0 ? <Breadcrumbs items={migas} /> : null;
 }
 

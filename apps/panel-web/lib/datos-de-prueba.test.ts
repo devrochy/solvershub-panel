@@ -9,6 +9,9 @@ describe("datos de prueba por agente (HU-QA-10)", () => {
       "1 cartera, 5 clientes y 4 préstamos",
     );
     expect(conteoLegible({ tipo: 1, cita: 2 })).toBe("1 tipo de cita y 2 citas");
+    expect(conteoLegible({ producto: 2, suscripcion: 4, cargo: 4 })).toBe(
+      "2 productos, 4 suscripciones y 4 cargos",
+    );
     expect(conteoLegible({ variante: 2 })).toBe("sin registros nuevos");
   });
 

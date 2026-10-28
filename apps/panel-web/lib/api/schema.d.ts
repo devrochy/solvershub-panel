@@ -396,6 +396,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/dashboard/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Agents */
+        get: operations["dashboard_agents_api_v1_admin_dashboard_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -407,6 +424,107 @@ export interface paths {
         get: operations["get_primeros_pasos_api_v1_admin_onboarding_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/avanzar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Avanzar Recorrido
+         * @description Guarda el paso del asistente donde va la persona (y retoma un recorrido omitido).
+         */
+        post: operations["avanzar_recorrido_api_v1_admin_onboarding_avanzar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/omitir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Omitir Recorrido
+         * @description «Lo hago después»: el panel deja de abrir el asistente y muestra el aviso persistente.
+         */
+        post: operations["omitir_recorrido_api_v1_admin_onboarding_omitir_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/reanudar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reanudar Recorrido */
+        post: operations["reanudar_recorrido_api_v1_admin_onboarding_reanudar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/finalizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalizar Recorrido
+         * @description Da por completo el recorrido. Lo valida el servidor con el estado real: 409 `faltan_pasos`
+         *     (`details.faltan`) si no hay datos del negocio, agente publicado o una prueba con él.
+         */
+        post: operations["finalizar_recorrido_api_v1_admin_onboarding_finalizar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/onboarding/dejar-listo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dejar Listo
+         * @description Deja el agente del asistente listo para probar, de una vez y sin abrirlo a clientes: prepara un
+         *     chat web cerrado, publica el agente ahí y activa su versión. Es idempotente y se puede
+         *     reintentar. Si el gate de pass^k del negocio está cerrado, la activación queda
+         *     `pendiente_de_revision` (no es un error: el agente queda publicado). Dueño o master.
+         */
+        post: operations["dejar_listo_api_v1_admin_onboarding_dejar_listo_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -722,6 +840,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/conversations/{conversation_id}/in-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * In Progress
+         * @description «En curso» de la conversación para quien la toma (HU-AOS-28).
+         */
+        get: operations["in_progress_api_v1_admin_conversations__conversation_id__in_progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/playground": {
         parameters: {
             query?: never;
@@ -776,6 +914,51 @@ export interface paths {
          * @description Cierra la prueba actual y arranca una nueva desde cero.
          */
         post: operations["playground_reset_api_v1_admin_playground_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/playground/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Playground Options
+         * @description Envía la plantilla con opciones `clave` a la conversación de prueba, con `send_options_to_conversation`: crea el
+         *     `option_sends` con sus payloads firmados y guarda el mensaje con los botones, sin Meta ni cola. Los errores son
+         *     los de `POST /plantillas-opciones/{clave}/enviar-prueba` (404 si la bandera está apagada o la clave no existe,
+         *     409 si no está publicada, 422 si falta contexto).
+         */
+        post: operations["playground_options_api_v1_admin_playground_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/playground/tap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Playground Tap
+         * @description Simula el toque de un botón de la conversación de prueba con el MISMO resolver que atiende WhatsApp: firma
+         *     por negocio y conversación, vigencia, una sola ejecución y autorización de la tool, sin LLM. Devuelve el
+         *     `outcome` y los mensajes que produjo. **Ejecuta la tool de verdad.** Un payload que no es de opciones es 422.
+         */
+        post: operations["playground_tap_api_v1_admin_playground_tap_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -986,6 +1169,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate Release
+         * @description Pide medir la candidata contra la activa (HU-AOS-21 parte 4). Exige la bandera del gate del
+         *     negocio (409 `gate_abierto` si está apagada) para no gastar el tope sin gate.
+         */
+        post: operations["evaluate_release_api_v1_admin_connections__connection_id__releases__release_id__evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evaluation
+         * @description La medición de la candidata contra la activa de ahora (HU-AOS-21 parte 4).
+         */
+        get: operations["get_evaluation_api_v1_admin_connections__connection_id__releases__release_id__evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Release Diff
+         * @description Qué cambia la release frente a `against` (por defecto, la activa) de la MISMA conexión
+         *     (HU-AOS-27). 404 si alguna no es de la conexión.
+         */
+        get: operations["get_release_diff_api_v1_admin_connections__connection_id__releases__release_id__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Release
+         * @description El dueño detiene una candidata (HU-AOS-27): queda retirada y no se podrá activar.
+         */
+        post: operations["stop_release_api_v1_admin_connections__connection_id__releases__release_id__stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/{connection_id}/rollback": {
         parameters: {
             query?: never;
@@ -997,6 +1262,163 @@ export interface paths {
         put?: never;
         /** Rollback Release */
         post: operations["rollback_release_api_v1_admin_connections__connection_id__rollback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/releases/{release_id}/canary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Canary
+         * @description Prueba la versión con una parte de las conversaciones nuevas (HU-AOS-32). Mismas reglas que
+         *     publicar: dueño o master, gate aprobado si está cerrado, `aos_runtime = v3` (409 `requiere_v3`).
+         *     Si la plataforma la apagó (`CANARY_DISPONIBLE`), responde 409 `canary_no_disponible`.
+         */
+        post: operations["start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Canary
+         * @description La prueba en curso de la conexión con su muestra, la comparación por carril, el veredicto y la
+         *     señal dura; null si no hay. No escribe nada.
+         */
+        get: operations["get_canary_api_v1_admin_connections__connection_id__canary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change Canary Percent
+         * @description Cambia el porcentaje de la prueba (rige al empezar cada episodio).
+         */
+        patch: operations["change_canary_percent_api_v1_admin_connections__connection_id__canary_patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Canary
+         * @description Detiene la prueba (siempre como `detenida_por_dueno`: la versión se puede volver a probar).
+         */
+        post: operations["stop_canary_api_v1_admin_connections__connection_id__canary_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/{connection_id}/canary/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote Canary
+         * @description Publica para todos la versión en prueba: exige el veredicto `listo` (o 7 días sin muestra) y
+         *     que no haya señal dura (409 `canary_peor`, `canary_sin_muestra`, `canary_senal_dura`).
+         */
+        post: operations["promote_canary_api_v1_admin_connections__connection_id__canary_promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Graph */
+        get: operations["get_graph_api_v1_admin_a2a_graph_get"];
+        /** Put Graph */
+        put: operations["put_graph_api_v1_admin_a2a_graph_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/graph/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Graph Versions */
+        get: operations["list_graph_versions_api_v1_admin_a2a_graph_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Calls */
+        get: operations["list_calls_api_v1_admin_a2a_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/a2a/route-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Route Preview */
+        post: operations["route_preview_api_v1_admin_a2a_route_preview_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2334,6 +2756,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/reliability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reliability */
+        get: operations["reliability_api_v1_admin_reliability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reliability/verifier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verifier Rejections */
+        get: operations["verifier_rejections_api_v1_admin_reliability_verifier_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reliability/verifier/{turn_id}/false-positive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark False Positive */
+        post: operations["mark_false_positive_api_v1_admin_reliability_verifier__turn_id__false_positive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Usage */
+        get: operations["usage_api_v1_admin_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evals/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Eval Runs */
+        get: operations["eval_runs_api_v1_admin_evals_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/turns/{turn_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Turn Detail */
+        get: operations["turn_detail_api_v1_admin_turns__turn_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/plan": {
         parameters: {
             query?: never;
@@ -2386,9 +2910,35 @@ export interface paths {
         put?: never;
         /**
          * Create Tenant
-         * @description Alta de un negocio (master): tenant + asistente + cuenta admin opcional.
+         * @description Alta de un negocio (master): tenant + asistente + acceso del dueño por correo.
+         *
+         *     Con `admin_email` la cuenta del dueño nace sin contraseña y le llega un enlace de un solo
+         *     uso para definirla (ADR-0175). Si el correo no sale, el negocio se crea igual y la
+         *     respuesta lo dice (`invitation.estado`); se reenvía con `owner-invitation/resend`.
          */
         post: operations["create_tenant_api_v1_admin_platform_tenants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/owner-invitation/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reenvía el acceso al dueño del negocio
+         * @description Reenvía el correo de acceso a la cuenta de la invitación `owner` pendiente del negocio
+         *     (ADR-0175). El destinatario no se recibe: es el de la invitación. Reusa el enlace mientras
+         *     vigente y lo renueva si venció.
+         */
+        post: operations["resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2690,6 +3240,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/tenants/{tenant_id}/gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Gate
+         * @description Bandera del gate de pass^k del negocio y su tope mensual. Solo el master.
+         */
+        get: operations["get_gate_api_v1_admin_platform_tenants__tenant_id__gate_get"];
+        /**
+         * Put Gate
+         * @description Enciende o apaga el gate del negocio (auditado como `release_gate_bandera`). 409
+         *     `sin_base_de_eval` si se intenta cerrar sin la base de evaluación configurada en el entorno.
+         */
+        put: operations["put_gate_api_v1_admin_platform_tenants__tenant_id__gate_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/colaboracion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Colaboracion
+         * @description Banderas de la colaboración con pila de tareas del negocio. Solo el master.
+         */
+        get: operations["get_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_get"];
+        /**
+         * Put Colaboracion
+         * @description Cambia las banderas que vengan (auditado como `agent_os_colaboracion`). 409 `no_disponible`
+         *     con un valor que este despliegue todavía no aplica.
+         */
+        put: operations["put_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/opciones-directas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Opciones Directas
+         * @description Bandera de las opciones directas del negocio (apagada por defecto). Solo el master.
+         */
+        get: operations["get_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_get"];
+        /**
+         * Put Opciones Directas
+         * @description Enciende o apaga las opciones directas del negocio (auditado como `opciones_directas_bandera`). Idempotente:
+         *     repetir el mismo valor deja el mismo estado. Solo el master; es por negocio y no toca ningún otro.
+         */
+        put: operations["put_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/declarative-tools": {
         parameters: {
             query?: never;
@@ -2725,6 +3350,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalog Api
+         * @description Catálogo de opciones de Identidad y comportamiento (SPEC-37, ADR-0166): qué es cada una,
+         *     qué valores acepta, qué cambia y quién la edita. Las del master solo las ve el master; la lista
+         *     de guardrails se calcula con los packs habilitados del negocio activo.
+         */
+        get: operations["get_catalog_api_api_v1_admin_settings_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/identity": {
         parameters: {
             query?: never;
@@ -2735,6 +3382,50 @@ export interface paths {
         get?: never;
         /** Save Identity */
         put: operations["save_identity_api_v1_admin_settings_identity_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/bajas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bajas */
+        get: operations["get_bajas_api_v1_admin_settings_bajas_get"];
+        /**
+         * Save Bajas
+         * @description Guarda las palabras de baja sin vacíos ni repetidos. Lista vacía = restablecer las de por
+         *     defecto (se quita la clave). Los textos son dato del dueño, nunca instrucción (invariante 7).
+         */
+        put: operations["save_bajas_api_v1_admin_settings_bajas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/whatsapp-web": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Waweb Policy */
+        get: operations["get_waweb_policy_api_v1_admin_settings_whatsapp_web_get"];
+        /**
+         * Save Waweb Policy
+         * @description Guarda la política del canal. Pasar a `allow_outbound` exige aceptar el aviso de riesgo
+         *     vigente; cada cambio deja una fila en `audit_log` con quién, antes y después.
+         */
+        put: operations["save_waweb_policy_api_v1_admin_settings_whatsapp_web_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3133,7 +3824,10 @@ export interface paths {
         put?: never;
         /**
          * Crear Suscripcion Manual
-         * @description Crea (o reutiliza) la suscripción de un `Customer` a un plan.
+         * @description Inscribe a un `Customer` en un plan del catálogo (o, camino anterior, crea la suscripción de un plan libre).
+         *
+         *     Con `plan_codigo`: un plan de $0 nace activa (o en prueba); uno de pago nace `pendiente_pago` con su
+         *     cobro y su link (o las instrucciones de transferencia). Repetir la petición devuelve la misma inscripción.
          */
         post: operations["crear_suscripcion_manual_api_v1_pack_pack_subscriptions_suscripciones_post"];
         delete?: never;
@@ -3325,6 +4019,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/pack_subscriptions/cargos/{charge_id}/registrar-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar Pago Por Transferencia
+         * @description El cliente pagó el cobro por transferencia: lo marca `pagado` con la referencia (HU-SUB-26).
+         *
+         *     Reusa `registrar_pago_externo` del proveedor (no hay otro camino de pago): el cargo queda pagado
+         *     con `pago_externo.canal = transferencia`, la suscripción se reactiva si estaba vencida o pausada
+         *     por mora, el período siguiente se calcula desde el pagado y sale `subscription.charge_paid` como
+         *     con un pago por link. El pack sigue cobrando los períodos siguientes. Idempotente por
+         *     referencia; un cargo ya pagado con otra referencia es 409. Auditada con el usuario.
+         */
+        post: operations["registrar_pago_por_transferencia_api_v1_pack_pack_subscriptions_cargos__charge_id__registrar_pago_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/commerce/dashboard": {
         parameters: {
             query?: never;
@@ -3410,6 +4130,23 @@ export interface paths {
         };
         /** Commerce Modulos */
         get: operations["commerce_modulos_api_v1_pack_commerce_modulos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/pago-en-linea/minimo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minimo Pago En Linea */
+        get: operations["minimo_pago_en_linea_api_v1_pack_commerce_pago_en_linea_minimo_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3724,7 +4461,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Alerts */
+        /**
+         * List Alerts
+         * @deprecated
+         * @description Wrapper de `GET /api/v1/access/events` con la forma anterior (ADR-0174).
+         */
         get: operations["list_alerts_api_v1_pack_cobranza_alerts_get"];
         put?: never;
         post?: never;
@@ -3758,7 +4499,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Devices */
+        /**
+         * List Devices
+         * @deprecated
+         * @description Wrapper de `GET /api/v1/access/devices` con la forma anterior (ADR-0174): los equipos de los
+         *     gestores salen del core (ids del core) y los dispositivos v1 (código + API key) siguen en el pack.
+         */
         get: operations["list_devices_api_v1_pack_cobranza_devices_get"];
         put?: never;
         /**
@@ -3784,43 +4530,13 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Set Device Status */
+        /**
+         * Set Device Status
+         * @deprecated
+         * @description Wrapper de las acciones de `/api/v1/access/devices/{id}` (ADR-0174): `activo` aprueba o reactiva,
+         *     `bloqueado` bloquea la cuenta en ese equipo. El id es el de la fila del core (o el de un dispositivo v1).
+         */
         post: operations["set_device_status_api_v1_pack_cobranza_devices__device_id__status_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Owner Charges */
-        get: operations["list_owner_charges_api_v1_pack_cobranza_owner_charges_get"];
-        put?: never;
-        /** Create Owner Charge */
-        post: operations["create_owner_charge_api_v1_pack_cobranza_owner_charges_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/payment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register Owner Payment */
-        post: operations["register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3838,40 +4554,6 @@ export interface paths {
         get: operations["reports_api_v1_pack_cobranza_reports_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-thread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Owner Thread */
-        get: operations["owner_thread_api_v1_pack_cobranza_owner_thread_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-thread/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Owner Message */
-        post: operations["create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4198,26 +4880,6 @@ export interface paths {
          * @description Aprueba el gasto: descuenta su valor de la caja de la cartera (una sola vez).
          */
         post: operations["approve_expense_api_v1_pack_cobranza_expenses__expense_id__approve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/cobranza/owner-charges/{charge_id}/links": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Payment Link
-         * @description Crea un link de pago para el cobro del propietario (monto = cobro calculado).
-         */
-        post: operations["create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4701,6 +5363,9 @@ export interface paths {
         /**
          * Oauth Start
          * @description Inicia el OAuth2 de Google (302 a accounts.google.com).
+         *
+         *     Con `connection_id` se reconecta esa cuenta (HU-CAL-08): se sugiere su correo a Google y
+         *     el callback verifica que sea la misma cuenta antes de guardar.
          *
          *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
          *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
@@ -5270,6 +5935,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/qa/datos/escenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Escenarios
+         * @description Escenarios de datos de prueba y lo que creó cada uno la última vez (HU-QA-13). 404 fuera de test.
+         */
+        get: operations["listar_escenarios_api_v1_admin_qa_datos_escenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/qa/datos/escenarios/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear Escenario
+         * @description Crea un caso nuevo del escenario en el negocio de prueba del tester, sin LLM y sin borrar nada
+         *     (HU-QA-13). 404 si no existe o fuera de test; 409 sin datos preparados, con otra corrida en curso o
+         *     si el escenario no se puede crear (el motivo va en el mensaje).
+         */
+        post: operations["crear_escenario_api_v1_admin_qa_datos_escenarios__slug__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/wizard/cancel": {
         parameters: {
             query?: never;
@@ -5324,6 +6031,237 @@ export interface paths {
          *     En producción, solo el propietario del negocio o el master.
          */
         post: operations["send_test_message_api_v1_admin_meta_connections__connection_id__test_message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/catalogo-acciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Catalogo Acciones
+         * @description Las tools que el negocio puede usar como acción de una opción: elegibles (marca de su autor, pack activo,
+         *     binding explícito y habilitado, sin gobernar por un procedimiento), con su JSON Schema y si son sensibles.
+         */
+        get: operations["catalogo_acciones_api_v1_plantillas_opciones_catalogo_acciones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/catalogo-variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Catalogo Variables
+         * @description Las variables que el servidor resuelve y el dueño puede citar en el cuerpo (`{cliente.nombre}`) y en
+         *     `args_contexto`.
+         */
+        get: operations["catalogo_variables_api_v1_plantillas_opciones_catalogo_variables_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/validar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validar
+         * @description Lint de una definición sin guardar nada. Siempre 200: los hallazgos (`error` y `warning`) son el resultado.
+         */
+        post: operations["validar_api_v1_plantillas_opciones_validar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/vista-previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vista Previa
+         * @description Lo que saldría por cada vía con valores de muestra, sin enviar nada. 422 con los hallazgos si la
+         *     definición tiene errores.
+         */
+        post: operations["vista_previa_api_v1_plantillas_opciones_vista_previa_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["listar_api_v1_plantillas_opciones_get"];
+        put?: never;
+        /**
+         * Crear
+         * @description Crea un borrador. 409 `clave_repetida` si el negocio ya tiene una plantilla viva con esa clave.
+         */
+        post: operations["crear_api_v1_plantillas_opciones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obtener */
+        get: operations["obtener_api_v1_plantillas_opciones__clave__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Eliminar
+         * @description Borra (lógicamente) una plantilla que nunca se publicó o ya está retirada y libera su clave. 409 si está publicada.
+         */
+        delete: operations["eliminar_api_v1_plantillas_opciones__clave__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}/borrador": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Guardar Borrador
+         * @description Reemplaza el borrador. Las versiones publicadas no cambian. 422 `definicion_invalida` si la forma falla.
+         */
+        put: operations["guardar_borrador_api_v1_plantillas_opciones__clave__borrador_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}/publicar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publicar
+         * @description Congela el borrador como la versión siguiente (inmutable). 422 `definicion_con_errores` con los hallazgos si
+         *     falla el lint: no cambia nada. 409 `sin_cambios` si el borrador es igual a la versión vigente. Con `meta`, encadena
+         *     la alta de la versión como plantilla de Meta (`<clave>_v<n>`); si Meta falla, la versión SIGUE publicada y el
+         *     resultado va en `meta` (se reintenta en `/versiones/{n}/publicar-en-meta`). 422 si la categoría o el idioma son inválidos.
+         */
+        post: operations["publicar_api_v1_plantillas_opciones__clave__publicar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}/retirar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retirar
+         * @description Retira la plantilla publicada: deja de enviarse y sus botones en vuelo responden «ya no está disponible».
+         */
+        post: operations["retirar_api_v1_plantillas_opciones__clave__retirar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}/enviar-prueba": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enviar Prueba
+         * @description Envía la versión vigente a UNA conversación del negocio (nunca a un número libre), por la vía que
+         *     corresponda. Es un mensaje real a ese cliente: el panel debe pedir confirmación.
+         */
+        post: operations["enviar_prueba_api_v1_plantillas_opciones__clave__enviar_prueba_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mensajes/catalogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Catalogo
+         * @description Los mensajes del negocio activo en una sola lista, de solo lectura. No sincroniza con Meta (muestra lo último
+         *     guardado) y no descifra nada fuera de la lectura de configuración de los packs. 403 si no se puede leer
+         *     ninguna de las fuentes; 400 `no_tenant` si no hay un negocio seleccionado.
+         */
+        get: operations["catalogo_api_v1_mensajes_catalogo_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5563,6 +6501,28 @@ export interface paths {
         put?: never;
         /** Create From Template */
         post: operations["create_from_template_api_v1_admin_agent_templates__template_key__agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/from-script": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create From Script
+         * @description Crea el borrador de un especialista (sin publicar) desde las respuestas del guion de su
+         *     plantilla. 409 `key_taken` (con el `agent_id` existente) si el negocio ya tiene ese agente; 422
+         *     por pregunta si una respuesta no está en las opciones, sin crear nada.
+         */
+        post: operations["create_from_script_api_v1_admin_agents_from_script_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6431,6 +7391,464 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requirements
+         * @description Lo que falta configurar para el enfoque de este agente. Un agente que no es de una plantilla
+         *     (`general`, `coordinador`, especialistas por API) no tiene requisitos propios.
+         */
+        get: operations["list_requirements_api_v1_admin_agents__agent_id__requirements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["list_notifications_api_v1_me_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Unread Count */
+        get: operations["unread_count_api_v1_me_notifications_unread_count_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["mark_read_api_v1_me_notifications_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/{notification_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Archive Notification */
+        delete: operations["archive_notification_api_v1_me_notifications__notification_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_api_v1_me_notifications_preferences_get"];
+        /** Put Preferences */
+        put: operations["put_preferences_api_v1_me_notifications_preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/notifications/mute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Mute */
+        put: operations["put_mute_api_v1_me_notifications_mute_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calendars
+         * @description Agendas del negocio con el nombre que el asistente le dice al cliente.
+         */
+        get: operations["list_calendars_api_v1_pack_calendar_calendars_get"];
+        put?: never;
+        /**
+         * Create Calendar
+         * @description Crea una agenda interna (sin cuenta de Google). Las de Google nacen al conectar la cuenta.
+         */
+        post: operations["create_calendar_api_v1_pack_calendar_calendars_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Calendar
+         * @description Edita una agenda: nombre visible, descripción, alias, color, horario, zona, orden y estado.
+         */
+        put: operations["update_calendar_api_v1_pack_calendar_calendars__calendar_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Calendar
+         * @description Elimina (suave) una agenda. No borra la cuenta de Google: eso va en Conexiones.
+         *
+         *     La principal no se elimina. Si tiene citas futuras, hay que pasar `move_to` (otra agenda)
+         *     para moverlas; si no, 409.
+         */
+        post: operations["delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plantillas-opciones/{clave}/versiones/{version_n}/publicar-en-meta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publicar Version En Meta
+         * @description Alta, o reintento, de UNA versión ya publicada como plantilla de Meta. Repetirla es seguro: no duplica la
+         *     plantilla ni gasta otra creación. Nunca se edita una plantilla aprobada: una versión nueva es otra plantilla.
+         *     Responde 200 con el resultado (`ok`, `outcome`, `reintentable`); 404 si la versión no existe, 409 si está retirada.
+         */
+        post: operations["publicar_version_en_meta_api_v1_plantillas_opciones__clave__versiones__version_n__publicar_en_meta_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/device-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Device Session
+         * @description Registra (o consulta) el equipo de la APK para la cuenta que llama y dice si puede operar.
+         *
+         *     Sirve a cualquier rol del negocio, pero solo para SU propio `admin_id` (el del token): nadie registra un
+         *     equipo en nombre de otro. El equipo pendiente o bloqueado también puede llamarla (ruta exenta de la
+         *     dependencia del principal): así consulta su estado y puede cerrar sesión. Con la política abierta el
+         *     alta es automática; con la restringida queda `pendiente` hasta que un admin lo apruebe.
+         */
+        post: operations["device_session_api_v1_access_device_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Devices */
+        get: operations["list_devices_api_v1_access_devices_get"];
+        put?: never;
+        /** Create Device */
+        post: operations["create_device_api_v1_access_devices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Device */
+        get: operations["get_device_api_v1_access_devices__device_row_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Device */
+        post: operations["approve_device_api_v1_access_devices__device_row_id__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/bloquear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Block Device */
+        post: operations["block_device_api_v1_access_devices__device_row_id__bloquear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/devices/{device_row_id}/dar-de-baja": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Device */
+        post: operations["remove_device_api_v1_access_devices__device_row_id__dar_de_baja_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["list_events_api_v1_access_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Policy */
+        get: operations["get_policy_api_v1_access_policy_get"];
+        /** Update Policy */
+        put: operations["update_policy_api_v1_access_policy_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/planes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Planes
+         * @description Catálogo de planes del negocio (sin los borrados), en el orden en que se ofrecen.
+         */
+        get: operations["listar_planes_api_v1_pack_pack_subscriptions_planes_get"];
+        put?: never;
+        /**
+         * Crear Plan
+         * @description Crea un plan. Código repetido → 409 `codigo_duplicado`; prueba en un plan de pago → 422.
+         */
+        post: operations["crear_plan_api_v1_pack_pack_subscriptions_planes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/planes/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Editar Plan
+         * @description Reemplaza un plan. Las suscripciones ya inscritas conservan su snapshot (precio y nombre de cuando entraron).
+         */
+        put: operations["editar_plan_api_v1_pack_pack_subscriptions_planes__plan_id__put"];
+        post?: never;
+        /**
+         * Borrar Plan
+         * @description Borra el plan (lógico): deja de ofrecerse; las suscripciones vivas siguen cobrándose.
+         */
+        delete: operations["borrar_plan_api_v1_pack_pack_subscriptions_planes__plan_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_subscriptions/suscripciones/{subscription_id}/confirmar-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar Pago De Inscripcion
+         * @description Confirma a mano el pago por transferencia de una inscripción `pendiente_pago` (o de un cambio de plan).
+         *
+         *     Activa por el mismo camino que el webhook del pago en línea; repetir con la misma referencia responde
+         *     `ya_confirmado`. Queda auditado con el usuario.
+         */
+        post: operations["confirmar_pago_de_inscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__confirmar_pago_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/datos-de-prueba/{modulo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado Modulo
+         * @description Estado de los datos de prueba del módulo (Ventas, Agenda, Cobranza o Suscripciones).
+         */
+        get: operations["estado_modulo_api_v1_admin_datos_de_prueba__modulo__get"];
+        put?: never;
+        /**
+         * Generar Modulo
+         * @description Genera los datos del módulo según la descripción del negocio y reemplaza el lote anterior.
+         */
+        post: operations["generar_modulo_api_v1_admin_datos_de_prueba__modulo__post"];
+        /**
+         * Borrar Modulo
+         * @description Retira todos los datos de prueba del módulo; lo creado a mano no se toca.
+         */
+        delete: operations["borrar_modulo_api_v1_admin_datos_de_prueba__modulo__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6516,6 +7934,50 @@ export interface components {
             critico: boolean;
         };
         /**
+         * Accion
+         * @description La tool que ejecuta la opción. Los argumentos salen SOLO de aquí: `args_fijos` (los escribe el
+         *     dueño) y `args_contexto` (argumento → ruta de variable que arma el servidor). Nunca del texto del
+         *     cliente ni del LLM (invariante 7, ADR-0108).
+         */
+        Accion: {
+            /** Tool */
+            tool: string;
+            /** Args Fijos */
+            args_fijos?: {
+                [key: string]: unknown;
+            };
+            /** Args Contexto */
+            args_contexto?: {
+                [key: string]: string;
+            };
+            /**
+             * Confirmar
+             * @default false
+             */
+            confirmar: boolean;
+        };
+        /** AccionDelCatalogoOut */
+        AccionDelCatalogoOut: {
+            /** Tool */
+            tool: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Parameters
+             * @description JSON Schema de los argumentos: de ahí sale el formulario de `args_fijos`.
+             */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /** Sensible */
+            sensible: boolean;
+            /**
+             * Confirmacion Obligatoria
+             * @description El cliente confirmará (`optc`/`optn`) aunque la opción no lo pida.
+             */
+            confirmacion_obligatoria: boolean;
+        };
+        /**
          * ActiveEscalation
          * @description Escalación sin resolver más reciente de la conversación (el «ticket»).
          */
@@ -6593,6 +8055,52 @@ export interface components {
             spec: {
                 [key: string]: unknown;
             };
+        };
+        /** AgentChange */
+        AgentChange: {
+            /** Key */
+            key: string;
+            /** Nombre */
+            nombre: string;
+            /** Rol */
+            rol: string;
+            /**
+             * Cambio
+             * @description `nuevo`, `retirado`, `actualizado` o `por_defecto`.
+             */
+            cambio: string;
+            /** Version Antes */
+            version_antes: number | null;
+            /** Version Ahora */
+            version_ahora: number | null;
+            /** Por Defecto */
+            por_defecto?: boolean | null;
+            /**
+             * Secciones
+             * @description Claves de primer nivel del contenido que cambiaron.
+             * @default []
+             */
+            secciones: string[];
+            /**
+             * Herramientas Agregadas
+             * @default []
+             */
+            herramientas_agregadas: string[];
+            /**
+             * Herramientas Quitadas
+             * @default []
+             */
+            herramientas_quitadas: string[];
+            /**
+             * Procedimientos Agregados
+             * @default []
+             */
+            procedimientos_agregados: string[];
+            /**
+             * Procedimientos Quitados
+             * @default []
+             */
+            procedimientos_quitados: string[];
         };
         /** Alerts */
         Alerts: {
@@ -6706,6 +8214,8 @@ export interface components {
             appointment_type_id?: string | null;
             /** Customer Id */
             customer_id?: string | null;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** AppointmentOut */
         AppointmentOut: {
@@ -6745,6 +8255,8 @@ export interface components {
             customer_id?: string | null;
             /** Asignado Admin Id */
             asignado_admin_id?: string | null;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** AppointmentPatch */
         AppointmentPatch: {
@@ -6848,6 +8360,14 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** AvanzarIn */
+        AvanzarIn: {
+            /**
+             * Paso
+             * @description Paso al que llega la persona.
+             */
+            paso: number;
+        };
         /** AvisoOut */
         AvisoOut: {
             /** Evento */
@@ -6871,6 +8391,29 @@ export interface components {
             plantilla?: string | null;
             /** Enviado */
             enviado?: string | null;
+        };
+        /**
+         * BajasSettings
+         * @description Palabras con las que un cliente se da de baja de los envíos a segmentos (ADR-0150).
+         */
+        BajasSettings: {
+            /**
+             * Palabras
+             * @description Las guardadas por el negocio; vacío = usa las de por defecto.
+             */
+            palabras: string[];
+            /** Por Defecto */
+            por_defecto: string[];
+            /** Usa Por Defecto */
+            usa_por_defecto: boolean;
+        };
+        /** BajasUpdate */
+        BajasUpdate: {
+            /**
+             * Palabras
+             * @default []
+             */
+            palabras: string[];
         };
         /** BillingRequest */
         BillingRequest: {
@@ -6909,6 +8452,8 @@ export interface components {
              * @default
              */
             reason: string;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** BlockOut */
         BlockOut: {
@@ -6929,6 +8474,8 @@ export interface components {
             end_at: string;
             /** Reason */
             reason: string;
+            /** Calendar Id */
+            calendar_id?: string | null;
         };
         /** BlockPatch */
         BlockPatch: {
@@ -6938,6 +8485,11 @@ export interface components {
             end_at?: string | null;
             /** Reason */
             reason?: string | null;
+        };
+        /** BloqueGeneral */
+        BloqueGeneral: {
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
@@ -7044,6 +8596,197 @@ export interface components {
             timezone: string;
             /** Default Duration Minutes */
             default_duration_minutes: number;
+            /**
+             * Calendars
+             * @default []
+             */
+            calendars: components["schemas"]["CalendarSummary"][];
+            /**
+             * Multi Activo
+             * @default false
+             */
+            multi_activo: boolean;
+            /**
+             * Multi Agenda Modo
+             * @default cliente_elige
+             */
+            multi_agenda_modo: string;
+        };
+        /** Call */
+        Call: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Mode */
+            mode: string;
+            /**
+             * From Instance Id
+             * Format: uuid
+             */
+            from_instance_id: string;
+            /** To Instance Id */
+            to_instance_id: string | null;
+            /** Intent */
+            intent: string;
+            /** Depth */
+            depth: number;
+            /**
+             * Status
+             * @description Último evento de la llamada (`accepted`, `completed`, `denied`, …).
+             */
+            status: string;
+            /** Reason */
+            reason: string | null;
+            /** Tokens */
+            tokens: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Ended At
+             * Format: date-time
+             */
+            ended_at: string;
+        };
+        /** CanaryIn */
+        CanaryIn: {
+            /**
+             * Percent
+             * @description Porcentaje de las conversaciones nuevas que prueban la versión.
+             */
+            percent: number;
+            /**
+             * Forzar
+             * @description Solo master: saltar el gate de pass^k (con motivo).
+             * @default false
+             */
+            forzar: boolean;
+            /** Motivo Forzado */
+            motivo_forzado?: string | null;
+        };
+        /** CanaryLane */
+        CanaryLane: {
+            /** Conversaciones */
+            conversaciones: number;
+            /**
+             * Escalamiento
+             * @description Fracción de 0 a 1 de conversaciones que pasaron a una persona.
+             */
+            escalamiento: number | null;
+            /**
+             * Completitud
+             * @description Fracción de 0 a 1 de recorridos completados (los que empezaron en la prueba).
+             */
+            completitud: number | null;
+            /** Tareas Terminadas */
+            tareas_terminadas: number;
+            /**
+             * Costo Por Conversacion Usd
+             * @description USD por conversación; null sin datos o sin la sección `costs` (ver `costos_visibles`).
+             */
+            costo_por_conversacion_usd: number | null;
+            /** P95 Ms */
+            p95_ms: number | null;
+        };
+        /** CanaryPercentIn */
+        CanaryPercentIn: {
+            /** Percent */
+            percent: number;
+        };
+        /** CanarySignal */
+        CanarySignal: {
+            /** Activa */
+            activa: boolean;
+            /** Evaluadas */
+            evaluadas: number;
+            /** Llegaron Mal */
+            llegaron_mal: number;
+            /** Tasa */
+            tasa: number | null;
+            /** Tasa Estable */
+            tasa_estable: number | null;
+            /** Sin Resultado */
+            sin_resultado: number;
+        };
+        /** CanaryState */
+        CanaryState: {
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /** Release Number */
+            release_number: number | null;
+            /** Base Release Id */
+            base_release_id: string | null;
+            /** Base Release Number */
+            base_release_number: number | null;
+            /**
+             * Percent
+             * @description Porcentaje vigente de las conversaciones nuevas que prueban la versión.
+             */
+            percent: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Horas
+             * @description Horas desde el inicio de la prueba.
+             */
+            horas: number;
+            /**
+             * Umbral Conversaciones
+             * @description Conversaciones en la versión nueva para juntar la muestra.
+             */
+            umbral_conversaciones: number;
+            /**
+             * Umbral Horas
+             * @description Horas mínimas para juntar la muestra.
+             */
+            umbral_horas: number;
+            /** Dias Manual */
+            dias_manual: number;
+            /**
+             * Publicable Desde
+             * Format: date-time
+             * @description Desde cuándo se puede publicar a mano sin muestra.
+             */
+            publicable_desde: string;
+            /**
+             * Veredicto
+             * @enum {string}
+             */
+            veredicto: "sin_muestra" | "peor" | "listo";
+            /** Motivos */
+            motivos: ("escalamiento" | "completitud")[];
+            /** Advertencias */
+            advertencias: ("costo" | "lentitud")[];
+            /** Costos Visibles */
+            costos_visibles: boolean;
+            /** Veredicto Guardado */
+            veredicto_guardado: boolean;
+            senal_dura: components["schemas"]["CanarySignal"];
+            /** Puede Publicar */
+            puede_publicar: boolean;
+            /** Motivo No Publicar */
+            motivo_no_publicar: ("senal_dura" | "peor" | "sin_muestra") | null;
+            estable: components["schemas"]["CanaryLane"];
+            canary: components["schemas"]["CanaryLane"];
         };
         /** CashAdjustment */
         CashAdjustment: {
@@ -7056,6 +8799,28 @@ export interface components {
         CatalogResponse: {
             /** Categories */
             categories: components["schemas"]["ConnectionCategory"][];
+        };
+        /** Catalogo */
+        Catalogo: {
+            /** Version */
+            version: string;
+            /** Opciones */
+            opciones: components["schemas"]["Opcion"][];
+        };
+        /** CatalogoDeMensajesOut */
+        CatalogoDeMensajesOut: {
+            /** Mensajes */
+            mensajes: components["schemas"]["MensajeDelCatalogo"][];
+            /**
+             * Omitidas
+             * @description Tipos que no se listan y por qué.
+             */
+            omitidas: components["schemas"]["MensajeOmitido"][];
+            /**
+             * Truncado
+             * @description Tipos que pasaron el tope por tipo: la lista está recortada.
+             */
+            truncado: ("meta" | "evento" | "opciones" | "texto_pack")[];
         };
         /** CategoryOut */
         CategoryOut: {
@@ -7462,6 +9227,31 @@ export interface components {
             /** Items */
             items: components["schemas"]["ConnectionTypeItem"][];
         };
+        /** ConnectionConsistency */
+        ConnectionConsistency: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Connection */
+            connection: string;
+            /** Release Id */
+            release_id: string | null;
+            /** Version */
+            version: number | null;
+            /**
+             * Threshold
+             * @description Umbral de pass^4 (0 a 1).
+             */
+            threshold: number;
+            /** No Data */
+            no_data: boolean;
+            /** Below Threshold */
+            below_threshold: string[];
+            /** Procedures */
+            procedures: components["schemas"]["ProcedureConsistency"][];
+        };
         /** ConnectionItem */
         ConnectionItem: {
             /**
@@ -7617,6 +9407,11 @@ export interface components {
             /** Notes */
             notes?: components["schemas"]["ConversationNote"][];
             usage?: components["schemas"]["ConversationUsage"];
+            /**
+             * Pending Count
+             * @description Mensajes entrantes después de la última respuesta entregada.
+             */
+            pending_count?: number;
         };
         /** ConversationNote */
         ConversationNote: {
@@ -7679,6 +9474,11 @@ export interface components {
              * @description Tipo del catálogo (p. ej. whatsapp_cloud, whatsapp_waweb, web)
              */
             connection_type?: string | null;
+            /**
+             * Pending Count
+             * @description Mensajes entrantes después de la última respuesta entregada.
+             */
+            pending_count?: number;
         };
         /** ConversationUsage */
         ConversationUsage: {
@@ -7704,8 +9504,17 @@ export interface components {
             by_model: components["schemas"]["ModelCost"][];
             /** By Conversation */
             by_conversation: components["schemas"]["ConversationCost"][];
+            /**
+             * By Agent
+             * @default []
+             */
+            by_agent: components["schemas"]["AgentCost"][];
         };
-        /** CrearSuscripcionBody */
+        /**
+         * CrearSuscripcionBody
+         * @description Con `plan_codigo` se inscribe al cliente en un plan del catálogo (SPEC-43). Los campos de plan
+         *     libre (`nombre`, `precio`, ...) son el camino anterior, que se retira con commerce sin planes (PR-4).
+         */
         CrearSuscripcionBody: {
             /**
              * Customer Id
@@ -7714,15 +9523,33 @@ export interface components {
              */
             customer_id: string;
             /**
+             * Plan Codigo
+             * @description Código del plan del catálogo.
+             */
+            plan_codigo?: string | null;
+            /**
+             * Datos Alta
+             * @description Datos del cliente para el alta (nombre, email, teléfono, negocio, vertical).
+             */
+            datos_alta?: {
+                [key: string]: string;
+            } | null;
+            /**
+             * Metodo Pago
+             * @default pago_en_linea
+             * @enum {string}
+             */
+            metodo_pago: "pago_en_linea" | "transferencia";
+            /**
              * Variant Id
-             * @description Variante de commerce (si aplica).
+             * @description Camino anterior: variante de commerce.
              */
             variant_id?: string | null;
             /**
              * Nombre
-             * @description Nombre del plan.
+             * @description Camino anterior: nombre del plan.
              */
-            nombre: string;
+            nombre?: string | null;
             /**
              * Precio
              * @description Valor del período.
@@ -7814,6 +9641,43 @@ export interface components {
             estado: string;
             /** Vinculado */
             vinculado: string;
+        };
+        /**
+         * DeviceSessionIn
+         * @description Check-in del equipo de la APK (camelCase: es el contrato de la app, HU-ACC-03).
+         */
+        DeviceSessionIn: {
+            /** Deviceid */
+            deviceId: string;
+            /** Label */
+            label?: string | null;
+            /**
+             * Plataforma
+             * @default android
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+            /** Appversion */
+            appVersion?: string | null;
+        };
+        /** DeviceSessionOut */
+        DeviceSessionOut: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "activo" | "pendiente" | "bloqueado" | "none";
+            /**
+             * Politica
+             * @enum {string}
+             */
+            politica: "abierto" | "restringido" | "plataforma";
+            /** Permitido */
+            permitido: boolean;
+            /** Dispositivoid */
+            dispositivoId?: string | null;
+            /** Requierevinculacion */
+            requiereVinculacion: boolean;
         };
         /** DeviceStatusUpdate */
         DeviceStatusUpdate: {
@@ -7950,6 +9814,60 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** EvalRunsResponse */
+        EvalRunsResponse: {
+            /** Items */
+            items: components["schemas"]["ReliabilityEvalRun"][];
+        };
+        /** Evaluation */
+        Evaluation: {
+            /** Gate Cerrado */
+            gate_cerrado: boolean;
+            /** Base Release Id */
+            base_release_id: string | null;
+            /** Es La Activa */
+            es_la_activa: boolean;
+            veredicto: components["schemas"]["EvaluationVerdict"] | null;
+            medicion: components["schemas"]["EvaluationRun"] | null;
+        };
+        /** EvaluationRequested */
+        EvaluationRequested: {
+            /**
+             * Estado
+             * @description `encolada`, `en_curso`, `demasiados_intentos`, `no_encolada`, `sin_cambios`, `ya_medida`.
+             */
+            estado: string;
+        };
+        /** EvaluationRun */
+        EvaluationRun: {
+            /** Estado */
+            estado: string;
+            /** Codigo */
+            codigo: string | null;
+            /** Creado */
+            creado: string | null;
+            /** Sin Escenarios */
+            sin_escenarios: string[];
+        };
+        /** EvaluationVerdict */
+        EvaluationVerdict: {
+            /** Aprobado */
+            aprobado: boolean;
+            /** Motivo */
+            motivo: string;
+            /** K */
+            k: number | null;
+            /** Umbral */
+            umbral: number | null;
+            /** Por Procedimiento */
+            por_procedimiento: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            };
+            /** Sin Medir */
+            sin_medir: string[];
+        };
         /** EventCatalogItem */
         EventCatalogItem: {
             /** Event */
@@ -8079,6 +9997,54 @@ export interface components {
              */
             tenant: string;
         };
+        /** Graph */
+        Graph: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+        };
+        /** GraphIn */
+        GraphIn: {
+            /** Links */
+            links: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** GraphOut */
+        GraphOut: {
+            version: components["schemas"]["GraphVersion"] | null;
+            /** Links */
+            links: components["schemas"]["Link"][];
+            /**
+             * Warnings
+             * @description Ciclos de `handoff` (`ciclo_handoff:a>b`): no bloquean.
+             */
+            warnings: string[];
+            /** Created */
+            created: boolean;
+        };
+        /** GraphVersion */
+        GraphVersion: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** GuardrailsSettings */
         GuardrailsSettings: {
             /** Guardrails Text */
@@ -8181,7 +10147,11 @@ export interface components {
              * @default false
              */
             brand_voice_warning: boolean;
-            /** Tono */
+            /**
+             * Tono
+             * @deprecated
+             * @default calido
+             */
             tono: string;
             /** Debounce Mode */
             debounce_mode: string;
@@ -8247,6 +10217,13 @@ export interface components {
             business_ranges: {
                 [key: string]: unknown;
             }[];
+            /**
+             * Business Hours Mode
+             * @description `bloquea`: fuera del horario el asistente no atiende y responde el mensaje fuera de horario (comportamiento de siempre). `informativo`: el horario es el del equipo humano del comercio, el asistente responde 24/7 y lo conoce para informarlo (HU-AOS-58).
+             * @default bloquea
+             * @enum {string}
+             */
+            business_hours_mode: "bloquea" | "informativo";
         };
         /** IdentityUpdate */
         IdentityUpdate: {
@@ -8264,9 +10241,9 @@ export interface components {
             brand_voice: string;
             /**
              * Tono
-             * @default calido
+             * @deprecated
              */
-            tono: string;
+            tono?: string | null;
             /**
              * Debounce Mode
              * @default natural
@@ -8321,6 +10298,8 @@ export interface components {
              * @default
              */
             out_of_hours_message: string;
+            /** Business Hours Mode */
+            business_hours_mode?: ("bloquea" | "informativo") | null;
             /**
              * Auto Escalate After Turns
              * @default 0
@@ -8376,6 +10355,134 @@ export interface components {
              * @default []
              */
             unknown_allies: string[];
+        };
+        /** InProgress */
+        InProgress: {
+            /** Tasks */
+            tasks: components["schemas"]["InProgressTask"][];
+            escalation: components["schemas"]["InProgressEscalation"] | null;
+            /**
+             * Empty Reason
+             * @description Por qué `tasks` va vacío.
+             */
+            empty_reason: "sin_procedimientos" | null;
+        };
+        /** InProgressAction */
+        InProgressAction: {
+            /** Action */
+            action: string;
+            /** Ok */
+            ok: boolean;
+            /**
+             * Reason Code
+             * @description Código del fallo, si falló.
+             */
+            reason_code: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /** InProgressDatum */
+        InProgressDatum: {
+            /** Name */
+            name: string;
+            /**
+             * Label
+             * @description Rótulo humano del dato (de su habilidad); si no, el nombre.
+             */
+            label: string;
+            /**
+             * Value
+             * @description Los datos de pago van enmascarados.
+             */
+            value: unknown;
+            /** Confirmed */
+            confirmed: boolean;
+            /** Data Class */
+            data_class: string | null;
+        };
+        /** InProgressEscalation */
+        InProgressEscalation: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Reason Code
+             * @description Código del motivo (el mismo de la bandeja de escalaciones).
+             */
+            reason_code: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Status */
+            status: string;
+            /** Assigned Admin Id */
+            assigned_admin_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** InProgressMissing */
+        InProgressMissing: {
+            /**
+             * Kind
+             * @description Qué falta: un dato (del cliente, de un botón, de un contenido o de una acción), confirmar un dato, confirmar la etapa o una acción. Los clientes deben tolerar valores nuevos.
+             * @enum {string}
+             */
+            kind: "dato_cliente" | "dato_boton" | "dato_contenido" | "dato_accion" | "confirmar_dato" | "confirmar_etapa" | "accion";
+            /** Name */
+            name: string;
+            /**
+             * Label
+             * @description Rótulo humano del dato (de su habilidad); para `accion` y `confirmar_etapa`, el nombre con espacios.
+             */
+            label: string;
+        };
+        /** InProgressTask */
+        InProgressTask: {
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Procedure Id */
+            procedure_id: string;
+            /** Title */
+            title: string | null;
+            /**
+             * Status
+             * @description active | suspended, o `escalated` (en solo lectura: se cerró al escalar la escalación activa).
+             */
+            status: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /**
+             * Stage
+             * @description Etapa vigente del procedimiento (id).
+             */
+            stage: string;
+            /**
+             * In Focus
+             * @description ¿Es la tarea en foco de la conversación?
+             */
+            in_focus: boolean;
+            /** Data */
+            data: components["schemas"]["InProgressDatum"][];
+            /** Missing */
+            missing: components["schemas"]["InProgressMissing"][];
+            /** Pending Confirmation */
+            pending_confirmation: boolean;
+            last_action: components["schemas"]["InProgressAction"] | null;
+            /**
+             * Missing Reason
+             * @description Por qué `missing` va vacío sin que la tarea esté completa.
+             */
+            missing_reason: "definicion_no_disponible" | null;
         };
         /** Injection */
         Injection: {
@@ -8485,6 +10592,46 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** KpiOut */
+        KpiOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Valor
+             * @description `null` si no hay datos suficientes.
+             */
+            valor: number | null;
+            /**
+             * Unidad
+             * @enum {string}
+             */
+            unidad: "count" | "pct" | "usd" | "money" | "ms";
+            /**
+             * Previo
+             * @description Mismo KPI en el período anterior; `null` si es una foto de hoy.
+             */
+            previo: number | null;
+            /**
+             * Delta Pct
+             * @description Variación contra el período anterior; `null` si no se puede calcular.
+             */
+            delta_pct: number | null;
+            /**
+             * Polaridad
+             * @enum {string}
+             */
+            polaridad: "up-good" | "up-bad";
+            /** Hint */
+            hint?: string | null;
+            /**
+             * Versus
+             * @description Contra qué se compara `previo` («los 7 días anteriores», «el mes anterior»).
+             */
+            versus?: string | null;
+            destino?: components["schemas"]["DestinoOut"] | null;
+        };
         /** LeadColumn */
         LeadColumn: {
             /** Key */
@@ -8538,6 +10685,33 @@ export interface components {
             page_size: number;
             /** Has More */
             has_more: boolean;
+        };
+        /** Link */
+        Link: {
+            /**
+             * From Agent Id
+             * Format: uuid
+             */
+            from_agent_id: string;
+            /**
+             * To Agent Id
+             * Format: uuid
+             */
+            to_agent_id: string;
+            /** Modes */
+            modes: string[];
+            /** Intents */
+            intents: string[];
+            /** Max Depth */
+            max_depth: number;
+            /** Timeout Ms */
+            timeout_ms: number;
+            /** Budget Usd */
+            budget_usd: number;
+            /** Budget Tokens */
+            budget_tokens: number;
+            /** Data Classes */
+            data_classes: string[];
         };
         /** LinkRequest */
         LinkRequest: {
@@ -8757,6 +10931,15 @@ export interface components {
              */
             qa_testers_habilitados: boolean;
         };
+        /** MeasuredProcedure */
+        MeasuredProcedure: {
+            /** Procedure Id */
+            procedure_id: string;
+            /** Titulo */
+            titulo: string | null;
+            /** Motivo */
+            motivo: string;
+        };
         /** MemorySettings */
         MemorySettings: {
             /** Short Term Turns */
@@ -8797,6 +10980,11 @@ export interface components {
             error_reason?: string | null;
             /** Tool Calls */
             tool_calls?: string[];
+            /**
+             * Turn Id
+             * @description Turno del agente que lo envió; null salvo en los mensajes del agente.
+             */
+            turn_id?: string | null;
         };
         /** MessageTemplatesSettings */
         MessageTemplatesSettings: {
@@ -8960,6 +11148,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Tipo
+             * @default evento
+             * @enum {string}
+             */
+            tipo: "evento" | "opcion";
+            /** Clave */
+            clave?: string | null;
         };
         /** MissingTemplates */
         MissingTemplates: {
@@ -8967,6 +11163,16 @@ export interface components {
             total_7d: number;
             /** Recent */
             recent: components["schemas"]["MissingTemplateItem"][];
+            /**
+             * Total Eventos 7D
+             * @default 0
+             */
+            total_eventos_7d: number;
+            /**
+             * Total Opciones 7D
+             * @default 0
+             */
+            total_opciones_7d: number;
         };
         /** MobileEvent */
         MobileEvent: {
@@ -9027,6 +11233,20 @@ export interface components {
             /** Cost */
             cost: number;
         };
+        /** ModuloOut */
+        ModuloOut: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /**
+             * Error
+             * @description El módulo no pudo calcularse; el resto del Resumen sí.
+             */
+            error?: string | null;
+        };
         /**
          * ModulosOut
          * @description Módulos opcionales del pack encendidos en el negocio (el panel decide qué mostrar).
@@ -9034,6 +11254,46 @@ export interface components {
         ModulosOut: {
             /** Aliados */
             aliados: boolean;
+        };
+        /**
+         * MinimoPagoEnLineaOut
+         * @description Mínimo por cobro para pagar en línea (HU-SUB-25). El panel lo usa para avisar al guardar un plan.
+         */
+        MinimoPagoEnLineaOut: {
+            /**
+             * Minimo
+             * @description Monto mínimo por cobro en la moneda del negocio; `null` si no hay pasarela que lo declare.
+             */
+            minimo: number | null;
+            /**
+             * Fuente
+             * @description `negocio`: lo fijó el negocio; `pasarela`: lo declara la pasarela para su ambiente.
+             * @enum {string}
+             */
+            fuente: "negocio" | "pasarela" | "ninguna";
+            /**
+             * Moneda
+             * @default COP
+             */
+            moneda: string;
+            /**
+             * Cuentas De Transferencia
+             * @description Cuentas de transferencia configuradas (0 = el cobro bajo el mínimo no tendría cómo pagarse).
+             */
+            cuentas_de_transferencia: number;
+        };
+        /** MinimumSample */
+        MinimumSample: {
+            /**
+             * Turns
+             * @default 20
+             */
+            turns: number;
+            /**
+             * Tasks
+             * @default 10
+             */
+            tasks: number;
         };
         /** Monitoring */
         Monitoring: {
@@ -9088,6 +11348,379 @@ export interface components {
             /** Sync Error */
             sync_error?: string | null;
         };
+        /**
+         * Opcion
+         * @description Una opción de configuración. `extra="forbid"`: un campo mal escrito falla al importar.
+         */
+        Opcion: {
+            /** Clave */
+            clave: string;
+            /**
+             * Grupo
+             * @enum {string}
+             */
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "texto" | "texto_largo" | "entero" | "decimal" | "booleano" | "elegir_una" | "elegir_varias" | "lista_de_textos" | "franjas";
+            /** Etiqueta */
+            etiqueta: string;
+            /** Explicacion */
+            explicacion: string;
+            /**
+             * Ejemplo
+             * @default
+             */
+            ejemplo: string;
+            /**
+             * Unidad
+             * @default
+             */
+            unidad: string;
+            /** Valores */
+            valores?: components["schemas"]["ValorPosible"][];
+            /** Minimo */
+            minimo?: number | null;
+            /** Maximo */
+            maximo?: number | null;
+            /** Por Defecto */
+            por_defecto?: unknown;
+            depende_de?: components["schemas"]["Dependencia"] | null;
+            /**
+             * Editable Por
+             * @default dueno
+             * @enum {string}
+             */
+            editable_por: "dueno" | "master";
+            /**
+             * Solo Lectura
+             * @default false
+             */
+            solo_lectura: boolean;
+            /** Almacen */
+            almacen: string;
+            /**
+             * Ambito
+             * @description Derivado del almacén (una sola fuente): lo del KernelSpec es de la conexión.
+             * @enum {string}
+             */
+            readonly ambito: "negocio" | "conexion";
+        };
+        /** OpcionDeLaPlantilla */
+        OpcionDeLaPlantilla: {
+            /** Id */
+            id: string;
+            /** Titulo */
+            titulo: string;
+            accion: components["schemas"]["Accion"];
+            /** Respuesta Ok */
+            respuesta_ok: string;
+            /** Respuesta Error */
+            respuesta_error: string;
+            /** Result Keys */
+            result_keys?: string[];
+        };
+        /** OpcionesAccionesOut */
+        OpcionesAccionesOut: {
+            /** Acciones */
+            acciones: components["schemas"]["AccionDelCatalogoOut"][];
+        };
+        /** OpcionesBorradorIn */
+        OpcionesBorradorIn: {
+            /** Nombre */
+            nombre?: string | null;
+            /**
+             * Definicion
+             * @description Reemplaza el borrador. Solo se valida la forma; el lint completo corre al publicar.
+             */
+            definicion: {
+                [key: string]: unknown;
+            };
+        };
+        /** OpcionesCrearIn */
+        OpcionesCrearIn: {
+            /**
+             * Clave
+             * @description Única entre las plantillas vivas del negocio.
+             */
+            clave: string;
+            /**
+             * Nombre
+             * @default
+             */
+            nombre: string;
+            /**
+             * Definicion
+             * @description Borrador inicial (forma de `Definicion`).
+             */
+            definicion?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** OpcionesDefinicionIn */
+        OpcionesDefinicionIn: {
+            /** Definicion */
+            definicion: {
+                [key: string]: unknown;
+            };
+        };
+        /** OpcionesDetallesDeError */
+        OpcionesDetallesDeError: {
+            /** Hallazgos */
+            hallazgos?: components["schemas"]["OpcionesHallazgoOut"][];
+            /** Motivo */
+            motivo?: string | null;
+        };
+        /** OpcionesDirectasBandera */
+        OpcionesDirectasBandera: {
+            /**
+             * Habilitada
+             * @description Si las plantillas con opciones que ejecutan una tool están encendidas para el negocio. Apagada: toda la API `/plantillas-opciones` responde 404 `opciones_directas_no_habilitadas`.
+             */
+            habilitada: boolean;
+        };
+        /** OpcionesDirectasBanderaIn */
+        OpcionesDirectasBanderaIn: {
+            /** Habilitada */
+            habilitada: boolean;
+        };
+        /** OpcionesEnviarPruebaIn */
+        OpcionesEnviarPruebaIn: {
+            /**
+             * Conversation Id
+             * Format: uuid
+             * @description Una conversación de este negocio. Nunca un número libre.
+             */
+            conversation_id: string;
+            /**
+             * Clave Idempotencia
+             * @description Repetir la misma clave no duplica el envío.
+             */
+            clave_idempotencia: string;
+        };
+        /** OpcionesError */
+        OpcionesError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Fields */
+            fields?: {
+                [key: string]: string;
+            } | null;
+            details?: components["schemas"]["OpcionesDetallesDeError"] | null;
+        };
+        /**
+         * OpcionesErrorOut
+         * @description El sobre de error de la API (`{error: {code, message, details?}}`). En un 422 de esta API,
+         *     `error.details.hallazgos` trae los mismos `{path, code, severity, mensaje}` del lint.
+         */
+        OpcionesErrorOut: {
+            error: components["schemas"]["OpcionesError"];
+        };
+        /** OpcionesHallazgoOut */
+        OpcionesHallazgoOut: {
+            /**
+             * Path
+             * @description Dónde está la falla, p. ej. `opciones[1].accion.tool`.
+             */
+            path: string;
+            /** Code */
+            code: string;
+            /**
+             * Severity
+             * @description Un `error` impide publicar; un `warning` solo informa.
+             * @enum {string}
+             */
+            severity: "error" | "warning";
+            /** Mensaje */
+            mensaje: string;
+        };
+        /** OpcionesPlantillaOut */
+        OpcionesPlantillaOut: {
+            /** Clave */
+            clave: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "draft" | "published" | "retired";
+            /** Version Vigente */
+            version_vigente: number | null;
+            /** Tiene Borrador Sin Publicar */
+            tiene_borrador_sin_publicar: boolean;
+            /**
+             * Creada En
+             * Format: date-time
+             */
+            creada_en: string;
+            /**
+             * Actualizada En
+             * Format: date-time
+             */
+            actualizada_en: string;
+            borrador: components["schemas"]["Definicion"] | null;
+            definicion_vigente: components["schemas"]["Definicion"] | null;
+            /** Versiones */
+            versiones: components["schemas"]["OpcionesVersionOut"][];
+        };
+        /** OpcionesPlantillaResumen */
+        OpcionesPlantillaResumen: {
+            /** Clave */
+            clave: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "draft" | "published" | "retired";
+            /** Version Vigente */
+            version_vigente: number | null;
+            /** Tiene Borrador Sin Publicar */
+            tiene_borrador_sin_publicar: boolean;
+            /**
+             * Creada En
+             * Format: date-time
+             */
+            creada_en: string;
+            /**
+             * Actualizada En
+             * Format: date-time
+             */
+            actualizada_en: string;
+        };
+        /** OpcionesPlantillasOut */
+        OpcionesPlantillasOut: {
+            /** Plantillas */
+            plantillas: components["schemas"]["OpcionesPlantillaResumen"][];
+        };
+        /** OpcionesPruebaOut */
+        OpcionesPruebaOut: {
+            /** Enviado */
+            enviado: boolean;
+            /**
+             * Ya Enviado
+             * @description La clave de idempotencia ya había enviado este mensaje.
+             */
+            ya_enviado: boolean;
+            /** Via */
+            via: ("interactivo" | "plantilla" | "texto") | null;
+            /**
+             * Ejecucion Directa
+             * @description El cliente puede tocar una opción (interactivo o plantilla).
+             */
+            ejecucion_directa: boolean;
+            /** Degradado */
+            degradado: boolean;
+            /** Send Id */
+            send_id: string | null;
+        };
+        /** OpcionesPublicadaOut */
+        OpcionesPublicadaOut: {
+            /** Clave */
+            clave: string;
+            /** Version N */
+            version_n: number;
+            /** Definition Hash */
+            definition_hash: string;
+            /**
+             * Publicada En
+             * Format: date-time
+             */
+            publicada_en: string;
+            /**
+             * Message Template Id
+             * @description La plantilla de Meta ligada si se pidió publicar en Meta; si no, nulo.
+             */
+            message_template_id: string | null;
+            /** @description Resultado de la publicación en Meta; nulo si no se pidió. */
+            meta: components["schemas"]["OpcionesMetaOut"] | null;
+            /** Hallazgos */
+            hallazgos: components["schemas"]["OpcionesHallazgoOut"][];
+        };
+        /** OpcionesValidacionOut */
+        OpcionesValidacionOut: {
+            /**
+             * Valida
+             * @description Sin hallazgos de severidad `error`.
+             */
+            valida: boolean;
+            /** Hallazgos */
+            hallazgos: components["schemas"]["OpcionesHallazgoOut"][];
+        };
+        /** OpcionesVariableOut */
+        OpcionesVariableOut: {
+            /** Ruta */
+            ruta: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "conversacion" | "servidor";
+        };
+        /** OpcionesVariablesOut */
+        OpcionesVariablesOut: {
+            /** Variables */
+            variables: components["schemas"]["OpcionesVariableOut"][];
+        };
+        /** OpcionesVersionOut */
+        OpcionesVersionOut: {
+            /** Version N */
+            version_n: number;
+            /**
+             * Publicada En
+             * Format: date-time
+             */
+            publicada_en: string;
+            /** Retirada En */
+            retirada_en: string | null;
+            /** Definition Hash */
+            definition_hash: string;
+            /**
+             * Message Template Id
+             * @description Plantilla de Meta de esta versión; la fija la publicación a Meta.
+             */
+            message_template_id: string | null;
+            /** @description Estado de la plantilla de Meta; nulo si la versión no se publicó en Meta. */
+            meta: components["schemas"]["OpcionesMetaEstadoOut"] | null;
+            /** Vigente */
+            vigente: boolean;
+        };
+        /** Operational */
+        Operational: {
+            /** Turns */
+            turns: number;
+            /** Conversations */
+            conversations: number;
+            /** Escalated */
+            escalated: number;
+            /** Escalated Conversations */
+            escalated_conversations: number;
+            /** Failed */
+            failed: number;
+            /** Without Outcome */
+            without_outcome: number;
+            /**
+             * Escalation Rate
+             * @description Fracción de 0 a 1; null bajo la muestra mínima.
+             */
+            escalation_rate: number | null;
+            /** P95 Ms */
+            p95_ms: number | null;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /** Cost Per Conversation Usd */
+            cost_per_conversation_usd: number | null;
+            /** By Agent */
+            by_agent: components["schemas"]["AgentReliability"][];
+        };
         /** OrderLine */
         OrderLine: {
             /** Name */
@@ -9134,93 +11767,17 @@ export interface components {
             /** Status */
             status: string;
         };
-        /** OwnerCharge */
-        OwnerCharge: {
+        /** OtherChanges */
+        OtherChanges: {
             /**
-             * Id
-             * Format: uuid
+             * Ajustes
+             * @description Nombres de los ajustes del asistente que cambiaron.
              */
-            id: string;
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /** Pagado */
-            pagado: number | null;
-            /**
-             * Vence
-             * Format: date
-             */
-            vence: string;
-            /** Estado */
-            estado: string;
-        };
-        /** OwnerChargeCreate */
-        OwnerChargeCreate: {
-            /** Periodo */
-            periodo: string;
-            /** Monto */
-            monto: number;
-            /**
-             * Fecha Vencimiento
-             * Format: date
-             */
-            fecha_vencimiento: string;
-        };
-        /** OwnerCharges */
-        OwnerCharges: {
-            /** Cobros */
-            cobros: components["schemas"]["OwnerCharge"][];
-            /** Links */
-            links: components["schemas"]["PaymentLink"][];
-        };
-        /** OwnerMessage */
-        OwnerMessage: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Direccion */
-            direccion: string;
-            /** Tipo */
-            tipo: string;
-            /** Autor */
-            autor: string;
-            /** Contenido */
-            contenido: string;
-            /** Fecha */
-            fecha: string;
-        };
-        /** OwnerMessageCreate */
-        OwnerMessageCreate: {
-            /** Contenido */
-            contenido: string;
-            /**
-             * Direccion
-             * @default saliente
-             */
-            direccion: string;
-        };
-        /** OwnerPayment */
-        OwnerPayment: {
-            /** Monto Pagado */
-            monto_pagado: number;
-            /** Metodo Pago */
-            metodo_pago?: string | null;
-        };
-        /** OwnerThread */
-        OwnerThread: {
-            /** Whatsapp */
-            whatsapp: string;
-            /** Asunto */
-            asunto: string;
-            /** Estado */
-            estado: string;
-            /** Abierto */
-            abierto: boolean;
-            /** Mensajes */
-            mensajes: components["schemas"]["OwnerMessage"][];
+            ajustes: string[];
+            /** Playbooks */
+            playbooks: string[];
+            /** Flujo */
+            flujo: boolean;
         };
         /** PackRole */
         PackRole: {
@@ -9389,24 +11946,6 @@ export interface components {
             /** Cuota Id */
             cuota_id?: string | null;
         };
-        /** PaymentLink */
-        PaymentLink: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
-            /** Monto */
-            monto: number;
-            /** Estado */
-            estado: string;
-        };
-        /** PaymentLinkIn */
-        PaymentLinkIn: {
-            /** Referencia */
-            referencia: string;
-            /** Url */
-            url: string;
-        };
         /** PendingResponse */
         PendingResponse: {
             /** Items */
@@ -9557,6 +12096,98 @@ export interface components {
             plan_status: string;
             /** Operational */
             operational: boolean;
+        };
+        /** PlaygroundMensajeOut */
+        PlaygroundMensajeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Direction
+             * @description `outbound` (lo que el sistema le dijo al cliente de prueba) o `inbound`.
+             */
+            direction: string;
+            /** Content */
+            content: string;
+            /**
+             * Interactive
+             * @description Botones o lista del mensaje (payload de WhatsApp) con los ids firmados que `/tap` recibe.
+             */
+            interactive?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** PlaygroundOpcionesIn */
+        PlaygroundOpcionesIn: {
+            /**
+             * Clave
+             * @description Clave de la plantilla con opciones (versión vigente publicada).
+             */
+            clave: string;
+            /**
+             * Connection Id
+             * @description Conexión por cuya release se prueba, como en `/message`. Sin ella, la de siempre.
+             */
+            connection_id?: string | null;
+        };
+        /** PlaygroundOpcionesOut */
+        PlaygroundOpcionesOut: {
+            /** Enviado */
+            enviado: boolean;
+            /**
+             * Ya Enviado
+             * @default false
+             */
+            ya_enviado: boolean;
+            /**
+             * Via
+             * @description `interactivo` (botones) o `texto`.
+             */
+            via?: ("interactivo" | "texto") | null;
+            /** Ejecucion Directa */
+            ejecucion_directa: boolean;
+            /** Degradado */
+            degradado: boolean;
+            /** Send Id */
+            send_id?: string | null;
+            /**
+             * Mensajes
+             * @description Los mensajes del envío, listos para pintar.
+             */
+            mensajes: components["schemas"]["PlaygroundMensajeOut"][];
+        };
+        /** PlaygroundToqueIn */
+        PlaygroundToqueIn: {
+            /**
+             * Payload
+             * @description `id` de un botón del mensaje (`opt:…`, `optc:…` o `optn:…`), tal cual lo devolvió `/options` o `/tap`.
+             */
+            payload: string;
+            /**
+             * Connection Id
+             * @description La misma conexión con la que se envió.
+             */
+            connection_id?: string | null;
+        };
+        /** PlaygroundToqueOut */
+        PlaygroundToqueOut: {
+            /**
+             * Outcome
+             * @description Resultado del resolver (`ok`, `tool_error`, `denied`, `confirm_requested`, `cancelled`, `expired`, `duplicate`, `bad_signature`, `unknown_send`, `foreign_conversation`, …). Un payload manipulado, de otro negocio o de otra conversación se descarta sin mensajes: `mensajes` vacío.
+             */
+            outcome: string;
+            /**
+             * Mensajes
+             * @description Lo que el toque produjo: respuesta fija o botones de confirmación.
+             */
+            mensajes: components["schemas"]["PlaygroundMensajeOut"][];
         };
         /** PluginAction */
         PluginAction: {
@@ -9817,6 +12448,41 @@ export interface components {
             total: number;
             /** Pasos */
             pasos: components["schemas"]["PasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
+        };
+        /** ProcedureCompletion */
+        ProcedureCompletion: {
+            /** Procedure Id */
+            procedure_id: string;
+            /** Finished */
+            finished: number;
+            /** Completed */
+            completed: number;
+            /** Escalated */
+            escalated: number;
+            /**
+             * Rate
+             * @description Fracción de 0 a 1; null bajo la muestra mínima.
+             */
+            rate: number | null;
+        };
+        /** ProcedureConsistency */
+        ProcedureConsistency: {
+            /** Procedure Id */
+            procedure_id: string;
+            /**
+             * Pass K
+             * @description Fracción de escenarios estables en k = 4 (0 a 1); null sin datos.
+             */
+            pass_k: number | null;
+            /** Ok */
+            ok: boolean | null;
+            /** Scenarios */
+            scenarios: number;
+            /** Measured In Release Id */
+            measured_in_release_id: string | null;
+            /** Measured In Version */
+            measured_in_version: number | null;
         };
         /** ProcedureIssue */
         ProcedureIssue: {
@@ -10294,6 +12960,103 @@ export interface components {
             /** Comentario */
             comentario?: string | null;
         };
+        /** QaEscenario */
+        QaEscenario: {
+            /**
+             * Slug
+             * @description Fijo: el catálogo de pruebas lo cita como `datos-escenario-<slug>`.
+             */
+            slug: string;
+            /** Titulo */
+            titulo: string;
+            /** Crea */
+            crea: string;
+            /** Requiere */
+            requiere: string;
+            /**
+             * Donde
+             * @description Sección del panel donde se ve.
+             */
+            donde: string;
+            /** Ruta */
+            ruta: string;
+            /**
+             * Agent Os
+             * @description Necesita el Agent OS listo en el negocio de prueba.
+             */
+            agent_os: boolean;
+            /** @description Lo que creó la última vez para este tester. */
+            ultimo?: components["schemas"]["QaEscenarioCreado"] | null;
+        };
+        /** QaEscenarioCreado */
+        QaEscenarioCreado: {
+            /**
+             * Sufijo
+             * @description Marca corta del caso: aparece en los nombres de lo creado.
+             */
+            sufijo: string;
+            /**
+             * Detalle
+             * @description Qué creó, en líneas legibles.
+             */
+            detalle: string[];
+            /** Conteos */
+            conteos?: {
+                [key: string]: number;
+            };
+            /**
+             * Ruta
+             * @description Ruta del panel donde se ve lo creado (en el negocio de prueba).
+             */
+            ruta: string;
+            /** Creado En */
+            creado_en?: string | null;
+        };
+        /** QaEscenarioResultado */
+        QaEscenarioResultado: {
+            /**
+             * Slug
+             * @description Fijo: el catálogo de pruebas lo cita como `datos-escenario-<slug>`.
+             */
+            slug: string;
+            /** Titulo */
+            titulo: string;
+            /** Crea */
+            crea: string;
+            /** Requiere */
+            requiere: string;
+            /**
+             * Donde
+             * @description Sección del panel donde se ve.
+             */
+            donde: string;
+            /** Ruta */
+            ruta: string;
+            /**
+             * Agent Os
+             * @description Necesita el Agent OS listo en el negocio de prueba.
+             */
+            agent_os: boolean;
+            /** @description Lo que creó la última vez para este tester. */
+            ultimo?: components["schemas"]["QaEscenarioCreado"] | null;
+            /**
+             * Negocio Id
+             * Format: uuid
+             * @description El negocio de prueba donde se creó (para cambiar a él y abrir la ruta).
+             */
+            negocio_id: string;
+            creado: components["schemas"]["QaEscenarioCreado"];
+        };
+        /** QaEscenarios */
+        QaEscenarios: {
+            /**
+             * Datos Listos
+             * @description El tester ya preparó sus datos: sin eso los escenarios dan 409.
+             */
+            datos_listos: boolean;
+            /** Escenarios */
+            escenarios: components["schemas"]["QaEscenario"][];
+        };
         /** QaEvento */
         QaEvento: {
             /** Campo */
@@ -10627,6 +13390,56 @@ export interface components {
             /** Created At */
             created_at?: string | null;
         };
+        /** RecorridoOut */
+        RecorridoOut: {
+            /**
+             * Estado
+             * @description pendiente | en_curso | omitido | completo | no_aplica (negocio anterior al corte o función apagada).
+             * @enum {string}
+             */
+            estado: "pendiente" | "en_curso" | "omitido" | "completo" | "no_aplica";
+            /**
+             * Paso
+             * @description Paso del asistente donde va (1 a `total_pasos`).
+             */
+            paso: number;
+            /** Total Pasos */
+            total_pasos: number;
+            /**
+             * Aplica
+             * @description El recorrido es del negocio (si no, el panel no muestra nada).
+             */
+            aplica: boolean;
+            /**
+             * Abrir
+             * @description El panel debe abrir el asistente solo: nunca se tocó y quien consulta es propietario del negocio.
+             */
+            abrir: boolean;
+            /**
+             * Avisar
+             * @description Aviso persistente: empezó o saltó el recorrido y no lo terminó.
+             */
+            avisar: boolean;
+            /** Omitido En */
+            omitido_en?: string | null;
+            /** Completado En */
+            completado_en?: string | null;
+            /**
+             * Agente Id
+             * @description Agente que creó el asistente.
+             */
+            agente_id?: string | null;
+            /**
+             * Conexion Id
+             * @description Conexión de pruebas donde quedó publicado.
+             */
+            conexion_id?: string | null;
+            /**
+             * Probado En
+             * @description Primera prueba con ese agente.
+             */
+            probado_en?: string | null;
+        };
         /** RegisterNumberRequest */
         RegisterNumberRequest: {
             /** Pin */
@@ -10723,6 +13536,15 @@ export interface components {
             /** Items */
             items: components["schemas"]["ItemBusqueda"][];
         };
+        /** ResumenPorAgente */
+        ResumenPorAgente: {
+            periodo: components["schemas"]["PeriodoOut"];
+            /** Runtime */
+            runtime: string;
+            general: components["schemas"]["BloqueGeneral"];
+            /** Agentes */
+            agentes: components["schemas"]["AgenteResumen"][];
+        };
         /** RevokeRequest */
         RevokeRequest: {
             /** Section */
@@ -10771,6 +13593,51 @@ export interface components {
             tiempo_min: number;
             /** Fecha */
             fecha: string;
+        };
+        /** RoutePreview */
+        RoutePreview: {
+            /**
+             * Mode
+             * @description `off`, `shadow` o `active`: si hoy el router decide en esta conexión.
+             */
+            mode: string;
+            /**
+             * Source
+             * @description `rule`, `trigger` o `default`.
+             */
+            source: string;
+            /** Agent Key */
+            agent_key: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Procedure Title */
+            procedure_title?: string | null;
+            /** Rule Id */
+            rule_id: string | null;
+            /** Confidence */
+            confidence: number | null;
+            /** Candidates */
+            candidates: components["schemas"]["RouteCandidate"][];
+            /**
+             * Not Evaluated Rules
+             * @description Reglas por datos del cliente, etapa u horario: sin conversación no se evalúan.
+             */
+            not_evaluated_rules: string[];
+        };
+        /** RoutePreviewIn */
+        RoutePreviewIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Text */
+            text: string;
         };
         /** Rules */
         Rules: {
@@ -10852,6 +13719,22 @@ export interface components {
              */
             requires_confirmation: boolean;
         };
+        /** SkillChange */
+        SkillChange: {
+            /** Pack Id */
+            pack_id: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Cambio
+             * @description `agregada`, `quitada` o `nueva_version`.
+             */
+            cambio: string;
+            /** Antes */
+            antes: string | null;
+            /** Ahora */
+            ahora: string | null;
+        };
         /** SkillsUpdate */
         SkillsUpdate: {
             /** Tools */
@@ -10883,6 +13766,21 @@ export interface components {
             is_active: boolean;
             /** Created At */
             created_at?: string | null;
+        };
+        /** SubPasoOut */
+        SubPasoOut: {
+            /**
+             * Clave
+             * @enum {string}
+             */
+            clave: "conexion" | "publicar" | "activar";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "hecho" | "ya_estaba" | "pendiente_de_revision";
+            /** Mensaje */
+            mensaje?: string | null;
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -10971,6 +13869,22 @@ export interface components {
             plan: string;
             /** Estado */
             estado: string;
+            /** Numero Publico */
+            numero_publico?: string | null;
+            /**
+             * Inscripcion
+             * @description nueva | repetida | cambio_de_plan
+             */
+            inscripcion?: string | null;
+            /**
+             * Monto
+             * @description Valor del cobro de inscripción, si lo hay.
+             */
+            monto?: number | null;
+            /** Link Pago */
+            link_pago?: string | null;
+            /** Instrucciones Transferencia */
+            instrucciones_transferencia?: string | null;
         };
         /** SyncResponse */
         SyncResponse: {
@@ -11239,6 +14153,7 @@ export interface components {
             admin_email: string;
             /**
              * Admin Password
+             * @deprecated
              * @default
              */
             admin_password: string;
@@ -11254,6 +14169,7 @@ export interface components {
             slug: string;
             /** Steps */
             steps: string[];
+            invitation?: components["schemas"]["TenantOwnerInvitation"] | null;
         };
         /** TenantLink */
         TenantLink: {
@@ -11280,6 +14196,24 @@ export interface components {
             role: string;
             /** Active */
             active: boolean;
+        };
+        /**
+         * TenantOwnerInvitation
+         * @description Qué pasó con el acceso del dueño (ADR-0175). Nunca lleva el enlace ni el token.
+         */
+        TenantOwnerInvitation: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "enviado" | "sin_smtp" | "fallido" | "ya_emitida" | "ya_es_miembro";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "enlace" | "app";
+            /** Expires At */
+            expires_at?: string | null;
         };
         /** TenantPlanUpdate */
         TenantPlanUpdate: {
@@ -11353,6 +14287,11 @@ export interface components {
         TurnIn: {
             /** Text */
             text: string;
+            /**
+             * Connection Id
+             * @description Conexión del negocio por cuya release se prueba (HU-AOS-57): el turno corre por el agente publicado ahí. Sin ella, la prueba de siempre (sin release). Sigue siendo del canal `test`.
+             */
+            connection_id?: string | null;
         };
         /** TurnOut */
         TurnOut: {
@@ -11365,6 +14304,96 @@ export interface components {
              * @default false
              */
             escalated: boolean;
+        };
+        /** TurnStep */
+        TurnStep: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "command" | "action" | "engine" | "escalation" | "verifier" | "guardrail" | "other";
+            /** Actor */
+            actor: string;
+            /**
+             * Name
+             * @description Nombre de la acción, el comando o el componente.
+             */
+            name: string;
+            /**
+             * Action
+             * @description execute | denied | confirmation_required | el comando | el código del paso.
+             */
+            action: string;
+            /**
+             * Input
+             * @description Solo con la sección `observability`; si no, null. Redactado: los datos personales van enmascarados (ADR-0169).
+             */
+            input: unknown;
+            /**
+             * Output
+             * @description Solo con la sección `observability`; si no, null. Redactado: los datos personales van enmascarados (ADR-0169).
+             */
+            output: unknown;
+            /**
+             * Detail Hidden
+             * @description Hay entrada o salida pero falta `observability` para verla.
+             */
+            detail_hidden: boolean;
+            /**
+             * Ok
+             * @description ¿Salió bien? Visible siempre; null si el paso no lo dice.
+             */
+            ok: boolean | null;
+            /**
+             * Error Codes
+             * @description Códigos de error, sin valores (solo los que tienen forma de código).
+             */
+            error_codes: string[];
+        };
+        /** TurnTaskEvent */
+        TurnTaskEvent: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Seq */
+            seq: number;
+            /** Type */
+            type: string;
+            /** Actor */
+            actor: string;
+            /**
+             * Data
+             * @description Los datos de pago siempre van enmascarados.
+             */
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        /** TurnVerifierCheck */
+        TurnVerifierCheck: {
+            /** Kind */
+            kind: string;
+            /**
+             * Verdict
+             * @description pass | fail | unverifiable | error
+             */
+            verdict: string;
+            /** Count */
+            count: number;
         };
         /** TypeOut */
         TypeOut: {
@@ -11460,6 +14489,21 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * ValorPosible
+         * @description Un valor que el usuario puede escoger, con su etiqueta en español.
+         */
+        ValorPosible: {
+            /** Valor */
+            valor: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
         };
         /** VariantOut */
         VariantOut: {
@@ -11895,6 +14939,21 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /**
+         * DestinoOut
+         * @description A dónde lleva un KPI: una ruta lógica y sus filtros; cada cliente la traduce a su navegación.
+         */
+        DestinoOut: {
+            /**
+             * Ruta
+             * @description Ruta lógica: `conversaciones`, `agente`, `comercio.pedidos`, …
+             */
+            ruta: string;
+            /** Params */
+            params?: {
+                [key: string]: string;
+            };
+        };
         /** DocumentoLegalIn */
         DocumentoLegalIn: {
             /**
@@ -11963,6 +15022,41 @@ export interface components {
             documentos_faltantes: string[];
             /** En Revision */
             en_revision: number;
+        };
+        /** VerifierKind */
+        VerifierKind: {
+            /** Kind */
+            kind: string;
+            /** Rejections */
+            rejections: number;
+            /** False Positives */
+            false_positives: number;
+        };
+        /** VerifierRejection */
+        VerifierRejection: {
+            /**
+             * Turn Id
+             * Format: uuid
+             */
+            turn_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Kind */
+            kind: string;
+            /** False Positive */
+            false_positive: boolean;
+        };
+        /** VerifierRejections */
+        VerifierRejections: {
+            /** Items */
+            items: components["schemas"]["VerifierRejection"][];
         };
         /** TestMessageOut */
         TestMessageOut: {
@@ -12368,6 +15462,24 @@ export interface components {
              */
             created_at: string;
         };
+        /** AgenteResumen */
+        AgenteResumen: {
+            /**
+             * Ref
+             * @description Id del agente o el literal `general`, como en `/admin/agents/{ref}`.
+             */
+            ref: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Kpis */
+            kpis: components["schemas"]["KpiOut"][];
+            /** Modulos */
+            modulos: components["schemas"]["ModuloOut"][];
+        };
         /** ConfiguredSecret */
         ConfiguredSecret: {
             /** Name */
@@ -12428,6 +15540,72 @@ export interface components {
             secrets: components["schemas"]["ConfiguredSecret"][];
             /** Literals To Migrate */
             literals_to_migrate: string[];
+        };
+        /** Definicion */
+        Definicion: {
+            /** Body */
+            body: string;
+            /** Footer */
+            footer?: string | null;
+            /** Variables */
+            variables?: string[];
+            /**
+             * Exclusivo
+             * @default true
+             */
+            exclusivo: boolean;
+            /**
+             * Ttl Horas
+             * @default 24
+             */
+            ttl_horas: number;
+            /** Opciones */
+            opciones: components["schemas"]["OpcionDeLaPlantilla"][];
+        };
+        /** DejarListoIn */
+        DejarListoIn: {
+            /**
+             * Agent Id
+             * Format: uuid
+             * @description Agente (borrador) que el asistente creó con `from-script`.
+             */
+            agent_id: string;
+        };
+        /** DejarListoOut */
+        DejarListoOut: {
+            /**
+             * Conexion Id
+             * Format: uuid
+             * @description Conexión de chat web (sin abrir al público) donde queda para probar.
+             */
+            conexion_id: string;
+            /** Release Id */
+            release_id?: string | null;
+            /**
+             * Listo
+             * @description El agente quedó activo y se puede probar con `POST /admin/playground/message`.
+             */
+            listo: boolean;
+            /** Pasos */
+            pasos: components["schemas"]["SubPasoOut"][];
+            recorrido: components["schemas"]["RecorridoOut"];
+        };
+        /**
+         * Dependencia
+         * @description La opción solo tiene efecto si se cumple una condición sobre otra.
+         */
+        Dependencia: {
+            /** Clave */
+            clave: string;
+            /**
+             * Condicion
+             * @enum {string}
+             */
+            condicion: "no_vacia" | "verdadera" | "igual";
+            /** Valor */
+            valor?: string | null;
+            /** Motivo */
+            motivo: string;
         };
         /** PublishIn */
         PublishIn: {
@@ -12508,6 +15686,13 @@ export interface components {
              * @default manual
              */
             reason: string;
+            /**
+             * Forzar
+             * @default false
+             */
+            forzar: boolean;
+            /** Motivo Forzado */
+            motivo_forzado?: string | null;
         };
         /** ReleaseChange */
         ReleaseChange: {
@@ -12554,6 +15739,17 @@ export interface components {
             /** Last Event At */
             last_event_at: string | null;
             /**
+             * Lifecycle
+             * @description Último evento de ciclo de vida: promoted, rolled_back, invalid…
+             */
+            lifecycle?: string | null;
+            /**
+             * Detenida
+             * @description Bloqueada: la detuvo el dueño (como candidata) o el sistema la retiró de una prueba por ir peor. No se puede activar.
+             * @default false
+             */
+            detenida: boolean;
+            /**
              * Manifest
              * @description Manifiesto `release/1` sin textos: hashes y tamaños.
              */
@@ -12562,6 +15758,23 @@ export interface components {
             };
             /** Events */
             events: components["schemas"]["ReleaseEvent"][];
+        };
+        /** ReleaseDiff */
+        ReleaseDiff: {
+            /** Candidata */
+            candidata: number;
+            /** Base */
+            base: number | null;
+            /** Sin Linea Base */
+            sin_linea_base: boolean;
+            /** Agentes */
+            agentes: components["schemas"]["AgentChange"][];
+            superpoderes: components["schemas"]["SuperpowersDiff"];
+            /** Permisos */
+            permisos: components["schemas"]["PermissionChange"][];
+            otros: components["schemas"]["OtherChanges"];
+            /** Medira */
+            medira: components["schemas"]["MeasuredProcedure"][];
         };
         /** ReleaseEvent */
         ReleaseEvent: {
@@ -12608,6 +15821,75 @@ export interface components {
             last_event: string | null;
             /** Last Event At */
             last_event_at: string | null;
+            /**
+             * Lifecycle
+             * @description Último evento de ciclo de vida: promoted, rolled_back, invalid…
+             */
+            lifecycle?: string | null;
+            /**
+             * Detenida
+             * @description Bloqueada: la detuvo el dueño (como candidata) o el sistema la retiró de una prueba por ir peor. No se puede activar.
+             * @default false
+             */
+            detenida: boolean;
+        };
+        /** ReliabilityEvalRun */
+        ReliabilityEvalRun: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Origin */
+            origin: string;
+            /** K */
+            k: number;
+            /** Pass 1 */
+            pass_1: number | null;
+            /** Pass K Average */
+            pass_k_average: number | null;
+            /** Passed */
+            passed: number;
+            /** Total */
+            total: number;
+            /** Started At */
+            started_at: string | null;
+            /** Version */
+            version: number | null;
+            /** Connection Id */
+            connection_id: string | null;
+        };
+        /** ReliabilityPeriod */
+        ReliabilityPeriod: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+        };
+        /** ReliabilityResponse */
+        ReliabilityResponse: {
+            period: components["schemas"]["ReliabilityPeriod"];
+            minimum_sample?: components["schemas"]["MinimumSample"];
+            operational: components["schemas"]["Operational"];
+            /** Verifier */
+            verifier: components["schemas"]["VerifierKind"][];
+            /** Completion */
+            completion: components["schemas"]["ProcedureCompletion"][];
+            /**
+             * Consistency
+             * @description Consistencia vigente de la versión activa; no se acota al periodo, versión ni carril.
+             */
+            consistency: components["schemas"]["ConnectionConsistency"][];
+            /** Can See Costs */
+            can_see_costs: boolean;
+            /** Can See Conversations */
+            can_see_conversations: boolean;
         };
         /** RollbackIn */
         RollbackIn: {
@@ -12618,6 +15900,23 @@ export interface components {
              * @default manual
              */
             reason: string;
+        };
+        /** RouteCandidate */
+        RouteCandidate: {
+            /** Procedure Id */
+            procedure_id: string;
+            /**
+             * Title
+             * @description Título del procedimiento (dato de la habilidad).
+             */
+            title?: string | null;
+            /**
+             * Owner
+             * @description Key del agente que declara el procedimiento.
+             */
+            owner: string;
+            /** Score */
+            score: number;
         };
         /** ConnectionAgentCreate */
         ConnectionAgentCreate: {
@@ -12817,6 +16116,77 @@ export interface components {
             /** Rag Min Score */
             rag_min_score: number;
         };
+        /** MensajeDelCatalogo */
+        MensajeDelCatalogo: {
+            /**
+             * Id
+             * @description Estable y único en el catálogo (`<tipo>:<…>`).
+             */
+            id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "meta" | "evento" | "opciones" | "texto_pack";
+            /** Clave */
+            clave: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Idioma
+             * @description `meta`: idioma de la plantilla; `evento`: el del mapeo, si hay.
+             */
+            idioma: string | null;
+            /**
+             * Estado
+             * @description `meta`: el de Meta (`APPROVED`, `PENDING`…); `evento`: `sin_mapear`, `mapeado` o `plantilla_no_aprobada`; `opciones`: `draft`, `published` o `retired`; `texto_pack`: `por_defecto`, `personalizado` o `config_invalida`.
+             */
+            estado: string;
+            /**
+             * Estado Detalle
+             * @description `meta`: categoría; `evento`: plantilla mapeada; `opciones`: estado de su plantilla en Meta si se publicó allí; `texto_pack`: nombre del pack.
+             */
+            estado_detalle: string | null;
+            /**
+             * Canales Soportados
+             * @description Canales por los que sale hoy (constante por tipo hasta la pista C1).
+             */
+            canales_soportados: string[];
+            /**
+             * Variables
+             * @description Tal como las usa la fuente, sin normalizar: marcadores de Meta, rutas permitidas del evento, variables de la definición o llaves del texto.
+             */
+            variables: string[];
+            /**
+             * Dialecto Variables
+             * @enum {string}
+             */
+            dialecto_variables: "meta_posicionales" | "meta_nombradas" | "llaves_con_ruta";
+            /**
+             * Resumen
+             * @description Primeros ~160 caracteres del texto propio del negocio (nunca datos de un cliente).
+             */
+            resumen: string | null;
+            /**
+             * Actualizado En
+             * @description `meta`: la última sincronización con Meta (el estado puede estar desfasado: no se sincroniza al listar); `opciones`: la última edición. Nulo en `evento` y `texto_pack`.
+             */
+            actualizado_en: string | null;
+            fuente: components["schemas"]["FuenteDeMensaje"];
+        };
+        /** MensajeOmitido */
+        MensajeOmitido: {
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "meta" | "evento" | "opciones" | "texto_pack";
+            /**
+             * Motivo
+             * @enum {string}
+             */
+            motivo: "sin_permiso" | "bandera_apagada";
+        };
         /** UnlinkRequest */
         UnlinkRequest: {
             /** Tenant */
@@ -12958,6 +16328,26 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AgentReliability */
+        AgentReliability: {
+            /** Instance Id */
+            instance_id: string | null;
+            /** Name */
+            name: string;
+            /** Turns */
+            turns: number;
+            /** Escalated */
+            escalated: number;
+            /**
+             * Escalation Rate
+             * @description Fracción de 0 a 1; null bajo la muestra mínima.
+             */
+            escalation_rate: number | null;
+            /** P95 Ms */
+            p95_ms: number | null;
+            /** Cost Usd */
+            cost_usd: number | null;
         };
         /** AgentTask */
         AgentTask: {
@@ -13136,6 +16526,32 @@ export interface components {
              * Format: date-time
              */
             hasta: string;
+        };
+        /** UsageResponse */
+        UsageResponse: {
+            period: components["schemas"]["ReliabilityPeriod"];
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "connection" | "agent" | "a2a" | "day";
+            /** Can See Costs */
+            can_see_costs: boolean;
+            /** Items */
+            items: components["schemas"]["UsageRow"][];
+        };
+        /** UsageRow */
+        UsageRow: {
+            /** Key */
+            key: string | null;
+            /** Name */
+            name: string;
+            /** Mode */
+            mode: string | null;
+            /** Rows */
+            rows: number;
+            /** Cost Usd */
+            cost_usd: number | null;
         };
         /** UsageTotals */
         UsageTotals: {
@@ -13359,6 +16775,12 @@ export interface components {
             name: string;
             /** Description */
             description: string;
+            /** Section */
+            section: string;
+            /** Tools */
+            tools: string[];
+            /** Questions */
+            questions: components["schemas"]["Question"][];
             /** Skills */
             skills: string[];
             /** Optional Skills */
@@ -13367,8 +16789,12 @@ export interface components {
             available: boolean;
             /** Missing Skills */
             missing_skills: string[];
+            /** Will Enable */
+            will_enable: string[];
             /** Superpowers */
             superpowers: components["schemas"]["Superpower"][];
+            /** Requirements */
+            requirements: components["schemas"]["Requirement"][];
         };
         /** EditorPublishIn */
         EditorPublishIn: {
@@ -13393,6 +16819,8 @@ export interface components {
             connections: components["schemas"]["PublishedConnection"][];
             /** Warnings */
             warnings: string[];
+            /** General Updated */
+            general_updated?: number | null;
         };
         /** FromTemplateIn */
         FromTemplateIn: {
@@ -13405,6 +16833,75 @@ export interface components {
             draft: components["schemas"]["AgentDraft"];
             /** Warnings */
             warnings: string[];
+            /** Enabled Skills */
+            enabled_skills: string[];
+        };
+        /**
+         * FuenteDeMensaje
+         * @description Dónde se edita: el panel arma el enlace con estos ids. Solo vienen los del tipo (el resto es nulo).
+         */
+        FuenteDeMensaje: {
+            /**
+             * Editor
+             * @enum {string}
+             */
+            editor: "meta" | "evento" | "opciones" | "texto_pack";
+            /**
+             * Connection Id
+             * @description `meta`: la conexión de la WABA que tiene la plantilla.
+             */
+            connection_id?: string | null;
+            /**
+             * Message Template Id
+             * @description `meta`: la fila de `message_templates`.
+             */
+            message_template_id?: string | null;
+            /**
+             * Evento
+             * @description `evento`: clave del evento.
+             */
+            evento?: string | null;
+            /**
+             * Clave
+             * @description `opciones`: clave de la plantilla con opciones.
+             */
+            clave?: string | null;
+            /**
+             * Plugin Id
+             * @description `texto_pack`: el pack dueño del texto.
+             */
+            plugin_id?: string | null;
+            /**
+             * Campo
+             * @description `texto_pack`: el campo de la configuración del pack.
+             */
+            campo?: string | null;
+        };
+        /** GateBandera */
+        GateBandera: {
+            /**
+             * Cerrado
+             * @description Con el gate cerrado, una versión sin veredicto no se activa (409 `gate_pendiente`).
+             */
+            cerrado: boolean;
+            /**
+             * Tope Usd Mensual
+             * @description Tope mensual de las mediciones (USD, lo paga la plataforma); null = el del entorno.
+             */
+            tope_usd_mensual?: number | null;
+        };
+        /** GateBanderaIn */
+        GateBanderaIn: {
+            /**
+             * Cerrado
+             * @description Con el gate cerrado, una versión sin veredicto no se activa (409 `gate_pendiente`).
+             */
+            cerrado: boolean;
+            /**
+             * Tope Usd Mensual
+             * @description Tope mensual de las mediciones (USD, lo paga la plataforma); null = el del entorno.
+             */
+            tope_usd_mensual?: number | null;
         };
         /** LlmModel */
         LlmModel: {
@@ -13539,6 +17036,15 @@ export interface components {
             description: string;
             /** Phrases */
             phrases: string[];
+        };
+        /** SuperpowersDiff */
+        SuperpowersDiff: {
+            /** Habilidades */
+            habilidades: components["schemas"]["SkillChange"][];
+            /** Plugins Agregados */
+            plugins_agregados: string[];
+            /** Plugins Quitados */
+            plugins_quitados: string[];
         };
         /**
          * QaDatosAgentOS
@@ -13708,6 +17214,35 @@ export interface components {
             modo: string;
             /** Titulo */
             titulo: string;
+        };
+        /**
+         * FromScriptIn
+         * @description Respuestas del guion de una plantilla: `answers` es `id de la pregunta` → id de la opción
+         *     (o el texto, en la de nombre). Lo que no se contesta toma el valor por defecto del guion.
+         */
+        FromScriptIn: {
+            /** Template Key */
+            template_key: string;
+            /** Answers */
+            answers?: {
+                [key: string]: string;
+            };
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * FromScriptOut
+         * @description El borrador creado (sin publicar) y lo que le falta al negocio configurar para que funcione.
+         */
+        FromScriptOut: {
+            agent: components["schemas"]["AgentSummary"];
+            draft: components["schemas"]["AgentDraft"];
+            /** Warnings */
+            warnings: string[];
+            /** Enabled Skills */
+            enabled_skills: string[];
+            /** Requirements */
+            requirements: components["schemas"]["Requirement"][];
         };
         /** LoteDePrueba */
         LoteDePrueba: {
@@ -14059,6 +17594,28 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** FalsePositiveIn */
+        FalsePositiveIn: {
+            /** Kind */
+            kind: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** FalsePositiveOut */
+        FalsePositiveOut: {
+            /**
+             * Turn Id
+             * Format: uuid
+             */
+            turn_id: string;
+            /** Kind */
+            kind: string;
+            /**
+             * False Positive
+             * @default true
+             */
+            false_positive: boolean;
+        };
         /** PlantillaDeEnvio */
         PlantillaDeEnvio: {
             /**
@@ -14106,6 +17663,54 @@ export interface components {
                 [key: string]: components["schemas"]["VariableIn"];
             };
         };
+        /** VistaPreviaOpcionesIn */
+        VistaPreviaOpcionesIn: {
+            /** Definicion */
+            definicion: {
+                [key: string]: unknown;
+            };
+            /**
+             * Ejemplos
+             * @description Valor de muestra por ruta de variable; si falta se usa uno genérico.
+             */
+            ejemplos?: {
+                [key: string]: string;
+            };
+        };
+        /** VistaPreviaOpcionesOut */
+        VistaPreviaOpcionesOut: {
+            /**
+             * Interactivo
+             * @description Mensaje interactivo de WhatsApp (ventana de 24 h abierta), con ids de relleno.
+             */
+            interactivo: {
+                [key: string]: unknown;
+            };
+            /**
+             * Cabe En Whatsapp
+             * @description El interactivo cumple los topes de Meta; si no, saldría el texto de respaldo.
+             */
+            cabe_en_whatsapp: boolean;
+            /**
+             * Componentes Meta
+             * @description Componentes de la plantilla de Meta (ventana cerrada).
+             */
+            componentes_meta: {
+                [key: string]: unknown;
+            }[];
+            /** Cuerpo Meta Renderizado */
+            cuerpo_meta_renderizado: string;
+            /**
+             * Texto De Respaldo
+             * @description Canal sin botones: el cuerpo y las opciones numeradas, sin ejecución directa.
+             */
+            texto_de_respaldo: string;
+            /**
+             * Hallazgos
+             * @description Solo avisos: con errores la ruta responde 422.
+             */
+            hallazgos: components["schemas"]["OpcionesHallazgoOut"][];
+        };
         /** VistaPreviaOut */
         VistaPreviaOut: {
             /** Envio Id */
@@ -14130,6 +17735,44 @@ export interface components {
             bloqueo: ("sin_destinatarios" | "tope" | "envio_en_curso") | null;
             /** Expira */
             expira: string | null;
+        };
+        /**
+         * WaWebPolicySettings
+         * @description Política anti-baneo del canal no oficial. Solo la ve y la edita el master.
+         */
+        WaWebPolicySettings: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /** Risk Version */
+            risk_version: string;
+        };
+        /** WaWebPolicyUpdate */
+        WaWebPolicyUpdate: {
+            /** Mode */
+            mode: string;
+            /** Send Min Delay Ms */
+            send_min_delay_ms: number;
+            /** Send Max Delay Ms */
+            send_max_delay_ms: number;
+            /** Daily Outbound Cap */
+            daily_outbound_cap: number;
+            /** Warmup Enabled */
+            warmup_enabled: boolean;
+            /**
+             * Acepta Riesgo
+             * @default false
+             */
+            acepta_riesgo: boolean;
+            /** Risk Version */
+            risk_version?: string | null;
         };
         /** QaAreaEvo */
         QaAreaEvo: {
@@ -14214,6 +17857,37 @@ export interface components {
             /** Secciones */
             secciones: components["schemas"]["QaSeccionEvo"][];
         };
+        /**
+         * Question
+         * @description Pregunta del guion del asistente de creación (HU-AOS-48). `type` «option» elige entre
+         *     `options` (`default` es la que se aplica sin respuesta); «text» es el nombre del agente.
+         */
+        Question: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "option" | "text";
+            /** Options */
+            options: components["schemas"]["QuestionOption"][];
+            /** Default */
+            default: string | null;
+        };
+        /** QuestionOption */
+        QuestionOption: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Help */
+            help: string;
+        };
         /** QaEvolucion */
         QaEvolucion: {
             /** Versiones */
@@ -14237,6 +17911,45 @@ export interface components {
             telefono?: string | null;
             /** Username */
             username?: string | null;
+        };
+        /** PeriodoOut */
+        PeriodoOut: {
+            /**
+             * Desde
+             * Format: date-time
+             */
+            desde: string;
+            /**
+             * Hasta
+             * Format: date-time
+             */
+            hasta: string;
+            /**
+             * Previo Desde
+             * Format: date-time
+             */
+            previo_desde: string;
+            /**
+             * Previo Hasta
+             * Format: date-time
+             */
+            previo_hasta: string;
+        };
+        /** PermissionChange */
+        PermissionChange: {
+            /** Desde */
+            desde: string;
+            /** Hacia */
+            hacia: string;
+            /**
+             * Cambio
+             * @description `agregado`, `quitado` o `modos`.
+             */
+            cambio: string;
+            /** Modos Antes */
+            modos_antes: string[];
+            /** Modos Ahora */
+            modos_ahora: string[];
         };
         /** PasswordChange */
         PasswordChange: {
@@ -15046,6 +18759,43 @@ export interface components {
              */
             vigentes: number;
         };
+        /** ColaboracionBanderas */
+        ColaboracionBanderas: {
+            /**
+             * Pila
+             * @description Pila de tareas: «off», «shadow» (calcula y anota lo que abriría) o «active» (la abre).
+             * @enum {string}
+             */
+            pila: "off" | "shadow" | "active";
+            /**
+             * Verificar Horarios
+             * @description Horarios sin respaldo: «shadow» solo cuenta; «active» rechaza y reintenta.
+             * @enum {string}
+             */
+            verificar_horarios: "shadow" | "active";
+            /**
+             * Verificar Preguntas
+             * @description Más preguntas que `composition.maxQuestions`: «shadow» solo cuenta; «active» rechaza.
+             * @enum {string}
+             */
+            verificar_preguntas: "shadow" | "active";
+            /**
+             * Disponibles
+             * @description Los valores que este despliegue ya aplica (la HU se entrega por partes).
+             */
+            disponibles?: {
+                [key: string]: string[];
+            };
+        };
+        /** ColaboracionBanderasIn */
+        ColaboracionBanderasIn: {
+            /** Pila */
+            pila?: ("off" | "shadow" | "active") | null;
+            /** Verificar Horarios */
+            verificar_horarios?: ("shadow" | "active") | null;
+            /** Verificar Preguntas */
+            verificar_preguntas?: ("shadow" | "active") | null;
+        };
         /** HistorialItem */
         HistorialItem: {
             /**
@@ -15083,6 +18833,12 @@ export interface components {
             activas: number;
             /** En Prueba */
             en_prueba: number;
+            /**
+             * Pendientes De Pago
+             * @description Inscripciones esperando su primer pago: no son suscripciones vivas y no suman a nada.
+             * @default 0
+             */
+            pendientes_de_pago: number;
             /** Pausadas */
             pausadas: number;
             /** Vencidas */
@@ -15099,7 +18855,7 @@ export interface components {
             bajas_mes_anterior: number;
             /**
              * Churn Mes
-             * @description Bajas del mes ÷ suscripciones vivas al inicio del mes (0–1).
+             * @description Bajas del mes ÷ suscripciones vivas al inicio del mes (0 a 1).
              */
             churn_mes?: number | null;
             mora: components["schemas"]["MoraResumen"];
@@ -15297,6 +19053,1062 @@ export interface components {
             /** Monto */
             monto: number;
         };
+        /** TurnA2A */
+        TurnA2A: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Mode */
+            mode: string | null;
+            /** Calls */
+            calls: number;
+            /**
+             * Spent Usd
+             * @description Solo con la sección `costs`.
+             */
+            spent_usd?: number | null;
+            /** Events */
+            events: components["schemas"]["TurnA2AEvent"][];
+        };
+        /** TurnA2AEvent */
+        TurnA2AEvent: {
+            /** Seq */
+            seq: number;
+            /** Type */
+            type: string;
+            /** Mode */
+            mode: string | null;
+            /** Intent */
+            intent: string | null;
+            /** From Instance Id */
+            from_instance_id: string | null;
+            /** To Instance Id */
+            to_instance_id: string | null;
+            /**
+             * Payload
+             * @description Solo la forma (redactado al escribir, HU-AOS-18).
+             */
+            payload?: unknown;
+            /**
+             * Result
+             * @description Solo la forma (redactado al escribir, HU-AOS-18).
+             */
+            result?: unknown;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Cost Usd
+             * @description Solo con la sección `costs`.
+             */
+            cost_usd?: number | null;
+        };
+        /** TurnAgent */
+        TurnAgent: {
+            /**
+             * Instance Id
+             * Format: uuid
+             */
+            instance_id: string;
+            /** Name */
+            name: string;
+        };
+        /** TurnCandidate */
+        TurnCandidate: {
+            /** Procedure Id */
+            procedure_id: string | null;
+            /** Owner */
+            owner: string | null;
+            /** Score */
+            score: number | null;
+        };
+        /** TurnCost */
+        TurnCost: {
+            /**
+             * Kind
+             * @description turn | agent_run | classifier | composer | embedding | eval
+             */
+            kind: string;
+            /** Model */
+            model: string | null;
+            /** Calls */
+            calls: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /**
+             * Cost Usd
+             * @description Solo con la sección `costs`.
+             */
+            cost_usd?: number | null;
+        };
+        /** TurnDecision */
+        TurnDecision: {
+            /**
+             * Outcome
+             * @description Decisión del Coordinador: routed | blocked | escalated | ignored.
+             */
+            outcome: string;
+            /** Blocked By */
+            blocked_by: string | null;
+            /** Route Source */
+            route_source: string | null;
+            /** Rule Id */
+            rule_id: string | null;
+            /**
+             * Candidates
+             * @description Procedimientos candidatos con su puntaje.
+             */
+            candidates: components["schemas"]["TurnCandidate"][];
+            /** Confidence */
+            confidence: number | null;
+            active_agent: components["schemas"]["TurnAgent"] | null;
+            /** @description Quien terminó el turno (distinto si hubo un traspaso). */
+            final_agent: components["schemas"]["TurnAgent"] | null;
+            /**
+             * Shadow Stack
+             * @description Plan de la pila de tareas en sombra (HU-AOS-20), si lo hubo.
+             */
+            shadow_stack?: unknown;
+        };
+        /** TurnDelivery */
+        TurnDelivery: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Status */
+            status: string | null;
+            /** Text */
+            text: string | null;
+            /** Template Name */
+            template_name: string | null;
+            /** Error Reason */
+            error_reason: string | null;
+        };
+        /** TurnDetail */
+        TurnDetail: {
+            /**
+             * Turn Id
+             * Format: uuid
+             */
+            turn_id: string;
+            /** Conversation Id */
+            conversation_id: string | null;
+            /** Connection Id */
+            connection_id: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Latency Ms
+             * @description Latencia del turno completo (la de la decisión si no terminó).
+             */
+            latency_ms: number | null;
+            /** Release Id */
+            release_id: string | null;
+            /** Release Number */
+            release_number: number | null;
+            /** Lane */
+            lane: ("stable" | "canary" | "pinned" | "legacy") | null;
+            /**
+             * Inbound Message Ids
+             * @description Mensajes del cliente que atendió el turno.
+             */
+            inbound_message_ids: string[];
+            decision: components["schemas"]["TurnDecision"];
+            /**
+             * Status
+             * @description Resultado final del turno (`turn_outcomes`): replied | neutral | escalated | silent | failed.
+             */
+            status: string | null;
+            /**
+             * Verifier
+             * @description Comprobaciones del verificador.
+             */
+            verifier: components["schemas"]["TurnVerifierCheck"][];
+            /** Verifier Retries */
+            verifier_retries: number;
+            /** Steps */
+            steps: components["schemas"]["TurnStep"][];
+            /** Task Events */
+            task_events: components["schemas"]["TurnTaskEvent"][];
+            /** A2A */
+            a2a: components["schemas"]["TurnA2A"][];
+            /** Delivery */
+            delivery: components["schemas"]["TurnDelivery"][];
+            /** Cost */
+            cost: components["schemas"]["TurnCost"][];
+            /**
+             * Can See Detail
+             * @description ¿Tiene la sección `observability`?
+             */
+            can_see_detail: boolean;
+            /**
+             * Can See Costs
+             * @description ¿Tiene la sección `costs`?
+             */
+            can_see_costs: boolean;
+        };
+        /** Page[Requirement] */
+        Page_Requirement_: {
+            /** Items */
+            items: components["schemas"]["Requirement"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /**
+         * Requirement
+         * @description Algo que el negocio tiene que configurar para que el agente funcione (aviso, no bloquea).
+         */
+        Requirement: {
+            /** Skill */
+            skill: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "habilidad_sin_configurar" | "sin_contenido";
+            /** Title */
+            title: string;
+            /** Explanation */
+            explanation: string;
+            /** Section */
+            section: string;
+            /** Content */
+            content?: ("catalogo" | "servicios" | "cartera") | null;
+        };
+        /** PagoRegistradoOut */
+        PagoRegistradoOut: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "registrado" | "ya_registrado";
+            /**
+             * Charge Id
+             * Format: uuid
+             */
+            charge_id: string;
+            /** Periodo */
+            periodo: string;
+            /** Suscripcion Estado */
+            suscripcion_estado: string;
+            /** Proximo Cargo */
+            proximo_cargo?: string | null;
+        };
+        /** RegistrarPagoBody */
+        RegistrarPagoBody: {
+            /**
+             * Referencia
+             * @description Número del comprobante o texto que identifica la transferencia (para conciliar con el extracto).
+             */
+            referencia: string;
+        };
+        /** MarkReadRequest */
+        MarkReadRequest: {
+            /** Ids */
+            ids?: string[] | null;
+            /**
+             * All
+             * @default false
+             */
+            all: boolean;
+        };
+        /**
+         * MuteRequest
+         * @description `minutes` > 0 silencia el push ese tiempo; `0` o ausente lo reactiva.
+         */
+        MuteRequest: {
+            /** Minutes */
+            minutes?: number | null;
+        };
+        /** NotificationItem */
+        NotificationItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Event Key */
+            event_key: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "conversaciones" | "ventas" | "cobros" | "agenda" | "sistema";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "success" | "warning" | "critical";
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            target: components["schemas"]["NotificationTarget"] | null;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Read */
+            read: boolean;
+        };
+        /** NotificationPage */
+        NotificationPage: {
+            /** Items */
+            items: components["schemas"]["NotificationItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Unread Count */
+            unread_count: number;
+        };
+        /** NotificationPreferences */
+        NotificationPreferences: {
+            /** Categories */
+            categories: string[];
+            /** Push Off Categories */
+            push_off_categories: string[];
+            /** Muted Until */
+            muted_until: string | null;
+        };
+        /**
+         * NotificationTarget
+         * @description Destino neutro: el cliente lo traduce a su propia ruta. `section` es la sección de PERMISO
+         *     que gobierna la visibilidad (no una ruta). Un `entity` nuevo es aditivo: el cliente debe
+         *     tener un valor por defecto.
+         */
+        NotificationTarget: {
+            /**
+             * Entity
+             * @description conversacion, escalacion, lead, cliente, pedido, pago, suscripcion, cobro, cita, conexion, mensaje_fallido, cobranza
+             */
+            entity: string;
+            /** Id */
+            id: string | null;
+            /** Section */
+            section: string | null;
+        };
+        /** PreferencesUpdate */
+        PreferencesUpdate: {
+            /** Push Off Categories */
+            push_off_categories?: string[];
+        };
+        /** UnreadCount */
+        UnreadCount: {
+            /** Unread Count */
+            unread_count: number;
+        };
+        /** CalendarDelete */
+        CalendarDelete: {
+            /** Move To */
+            move_to?: string | null;
+        };
+        /** CalendarIn */
+        CalendarIn: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Aliases
+             * @default []
+             */
+            aliases: string[];
+            /** Color */
+            color?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+        };
+        /** CalendarListOut */
+        CalendarListOut: {
+            /** Calendars */
+            calendars: components["schemas"]["CalendarOut"][];
+            /** Multi Activo */
+            multi_activo: boolean;
+            /** Multi Agenda Modo */
+            multi_agenda_modo: string;
+        };
+        /** CalendarOut */
+        CalendarOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Aliases */
+            aliases: string[];
+            /** Color */
+            color: string;
+            /** Timezone */
+            timezone: string;
+            /** Own Timezone */
+            own_timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /** Is Default */
+            is_default: boolean;
+            /** Active */
+            active: boolean;
+            /** Sort Order */
+            sort_order: number;
+            /** Source */
+            source: string;
+            /** Connection Id */
+            connection_id?: string | null;
+            /**
+             * Connected
+             * @default true
+             */
+            connected: boolean;
+            /**
+             * Account Email
+             * @default
+             */
+            account_email: string;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+        };
+        /** CalendarPatch */
+        CalendarPatch: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Aliases */
+            aliases?: string[] | null;
+            /** Color */
+            color?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Business Hours */
+            business_hours?: string | null;
+            /**
+             * Inherit Timezone
+             * @default false
+             */
+            inherit_timezone: boolean;
+            /**
+             * Inherit Business Hours
+             * @default false
+             */
+            inherit_business_hours: boolean;
+            /** Responsable Admin Id */
+            responsable_admin_id?: string | null;
+            /**
+             * Clear Responsable
+             * @default false
+             */
+            clear_responsable: boolean;
+            /** Active */
+            active?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+            /** Is Default */
+            is_default?: boolean | null;
+        };
+        /** CalendarSummary */
+        CalendarSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Active */
+            active: boolean;
+            /** Source */
+            source: string;
+            /** Connected */
+            connected: boolean;
+            /**
+             * Account Email
+             * @default
+             */
+            account_email: string;
+        };
+        /**
+         * OpcionesMetaEstadoOut
+         * @description Lo que Meta dice de la plantilla de una versión. Se lee de `message_templates` (lo escriben los webhooks de
+         *     estado y de categoría), no se guarda aparte.
+         */
+        OpcionesMetaEstadoOut: {
+            /**
+             * Message Template Id
+             * Format: uuid
+             */
+            message_template_id: string;
+            /**
+             * Nombre
+             * @description `<clave>_v<n>`: cada versión es una plantilla nueva de Meta.
+             */
+            nombre: string;
+            /**
+             * Estado
+             * @description `DRAFT` (reservada, aún sin respuesta de Meta), `PENDING`, `APPROVED`, `REJECTED`, `PAUSED`…
+             */
+            estado: string;
+            /**
+             * Categoria
+             * @description La que tiene la plantilla ahora (Meta puede recategorizarla).
+             */
+            categoria: string | null;
+            /** Categoria Anterior */
+            categoria_anterior: string | null;
+            /** Motivo Rechazo */
+            motivo_rechazo: string | null;
+            /** Recomendacion */
+            recomendacion: string | null;
+            /**
+             * Error De Publicacion
+             * @description El último error al crearla en Meta; vacío si no hubo.
+             */
+            error_de_publicacion: string | null;
+        };
+        /**
+         * OpcionesMetaIn
+         * @description Publicar la versión como plantilla de Meta: en qué conexión (su WABA), con qué categoría (la elige el dueño y
+         *     cambia el costo y la aprobación) e idioma, y un valor de muestra por variable del cuerpo (Meta los revisa).
+         */
+        OpcionesMetaIn: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /**
+             * Categoria
+             * @enum {string}
+             */
+            categoria: "UTILITY" | "MARKETING";
+            /**
+             * Idioma
+             * @default es
+             */
+            idioma: string;
+            /**
+             * Ejemplos
+             * @description `ruta de variable → valor de muestra` (hasta 60 caracteres, nunca datos de un cliente).
+             */
+            ejemplos?: {
+                [key: string]: string;
+            };
+        };
+        /**
+         * OpcionesMetaOut
+         * @description Resultado de publicar una versión en Meta. Un fallo NO revierte la versión publicada: `ok` falso con `outcome`.
+         */
+        OpcionesMetaOut: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Outcome
+             * @description `published`, `already_published`, `network_error`, `rate_limited`, `in_progress`, `internal_error` (reintentables) o `meta_rejected`, `invalid_definition`, `name_taken`, `other_account`, `template_deleted`, `meta_id_taken`, `connection_not_ready`, `template_quota_full`, `version_retired`, `version_not_found`, `invalid_category`, `invalid_language`.
+             */
+            outcome: string;
+            /**
+             * Reintentable
+             * @description Repetir la misma petición puede resolverlo y no duplica la plantilla en Meta.
+             */
+            reintentable: boolean;
+            /** Nombre */
+            nombre: string | null;
+            /** Estado */
+            estado: string | null;
+            /** Categoria */
+            categoria: string | null;
+            /** Message Template Id */
+            message_template_id: string | null;
+            /** Meta Template Id */
+            meta_template_id: string | null;
+            /**
+             * Motivo
+             * @description Texto acotado del motivo (de Meta si rechazó); nunca datos de un cliente.
+             */
+            motivo: string | null;
+        };
+        /** OpcionesPublicarIn */
+        OpcionesPublicarIn: {
+            /** @description Si llega, encadena la alta de la versión en Meta; si no, solo congela la versión. */
+            meta?: components["schemas"]["OpcionesMetaIn"] | null;
+        };
+        /** AccessAccountRef */
+        AccessAccountRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Email */
+            email: string;
+            /** Rol */
+            rol: ("master" | "owner" | "colaborador") | null;
+        };
+        /** AccessDeviceBlock */
+        AccessDeviceBlock: {
+            /**
+             * Esperado
+             * @default activo
+             * @enum {string}
+             */
+            esperado: "pendiente" | "activo" | "bloqueado";
+            /** Motivo */
+            motivo?: string | null;
+            /**
+             * Alcance
+             * @default cuenta
+             * @enum {string}
+             */
+            alcance: "cuenta" | "equipo";
+        };
+        /** AccessDeviceCreate */
+        AccessDeviceCreate: {
+            /**
+             * Admin Id
+             * Format: uuid
+             */
+            admin_id: string;
+            /** Device Id */
+            device_id: string;
+            /** Label */
+            label?: string | null;
+            /**
+             * Plataforma
+             * @default android
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+        };
+        /**
+         * AccessDeviceDetail
+         * @description El detalle muestra el identificador completo: hay que compararlo al aprobar.
+         */
+        AccessDeviceDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Device Label */
+            device_label: string | null;
+            /**
+             * Plataforma
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendiente" | "activo" | "bloqueado";
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "autoregistro" | "politica_abierta" | "alta_manual" | "migrado_pack";
+            /** Rol Al Registrar */
+            rol_al_registrar: ("owner" | "colaborador" | "gestor") | null;
+            /** Bloqueo Equipo */
+            bloqueo_equipo: boolean;
+            /** Legacy */
+            legacy: boolean;
+            /** Ultimo Uso At */
+            ultimo_uso_at: string | null;
+            /** Ultima Ip */
+            ultima_ip: string | null;
+            /** Aprobado At */
+            aprobado_at: string | null;
+            /** Bloqueado At */
+            bloqueado_at: string | null;
+            /** Motivo */
+            motivo: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Device Id */
+            device_id: string | null;
+        };
+        /** AccessDeviceOut */
+        AccessDeviceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Device Label */
+            device_label: string | null;
+            /**
+             * Plataforma
+             * @enum {string}
+             */
+            plataforma: "android" | "ios";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendiente" | "activo" | "bloqueado";
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "autoregistro" | "politica_abierta" | "alta_manual" | "migrado_pack";
+            /** Rol Al Registrar */
+            rol_al_registrar: ("owner" | "colaborador" | "gestor") | null;
+            /** Bloqueo Equipo */
+            bloqueo_equipo: boolean;
+            /** Legacy */
+            legacy: boolean;
+            /** Ultimo Uso At */
+            ultimo_uso_at: string | null;
+            /** Ultima Ip */
+            ultima_ip: string | null;
+            /** Aprobado At */
+            aprobado_at: string | null;
+            /** Bloqueado At */
+            bloqueado_at: string | null;
+            /** Motivo */
+            motivo: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AccessDevicePage */
+        AccessDevicePage: {
+            /** Items */
+            items: components["schemas"]["AccessDeviceOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** AccessDeviceTransition */
+        AccessDeviceTransition: {
+            /**
+             * Esperado
+             * @enum {string}
+             */
+            esperado: "pendiente" | "activo" | "bloqueado";
+        };
+        /** AccessEventOut */
+        AccessEventOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "login_fallido" | "login_bloqueado" | "dispositivo_nuevo" | "dispositivo_pendiente" | "dispositivo_aprobado" | "dispositivo_bloqueado_usado" | "acceso_denegado_politica" | "dispositivo_sin_id" | "dispositivo_compartido" | "politica_cambiada" | "acceso_master" | "legado_pack";
+            /**
+             * Severidad
+             * @enum {string}
+             */
+            severidad: "info" | "aviso" | "critico";
+            /**
+             * Canal
+             * @enum {string}
+             */
+            canal: "campo" | "panel_apk" | "campo_v1";
+            /** Rol */
+            rol: ("owner" | "colaborador" | "gestor") | null;
+            cuenta: components["schemas"]["AccessAccountRef"] | null;
+            /** Device Id Corto */
+            device_id_corto: string | null;
+            /** Ip */
+            ip: string | null;
+            /** Detalle */
+            detalle: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** AccessEventPage */
+        AccessEventPage: {
+            /** Items */
+            items: components["schemas"]["AccessEventOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** AccessPolicyOut */
+        AccessPolicyOut: {
+            /**
+             * Owner
+             * @enum {string}
+             */
+            owner: "abierto" | "restringido";
+            /**
+             * Colaborador
+             * @enum {string}
+             */
+            colaborador: "abierto" | "restringido";
+            /**
+             * Gestor
+             * @enum {string}
+             */
+            gestor: "abierto" | "restringido";
+        };
+        /** AccessPolicyUpdate */
+        AccessPolicyUpdate: {
+            /** Owner */
+            owner?: ("abierto" | "restringido") | null;
+            /** Colaborador */
+            colaborador?: ("abierto" | "restringido") | null;
+            /** Gestor */
+            gestor?: ("abierto" | "restringido") | null;
+            /**
+             * Confirmar
+             * @default false
+             */
+            confirmar: boolean;
+        };
+        /**
+         * AgentCost
+         * @description Consumo de un agente en 30 días (HU-AOS-35). `agent_id` null = filas sin agente (legacy o
+         *     anteriores a las versiones). `cached_pct` = leído de la caché / entrada, solo sobre filas
+         *     desde la migración 0114; null si no hay ninguna medible.
+         */
+        AgentCost: {
+            /** Agent Id */
+            agent_id: string | null;
+            /** Agent Name */
+            agent_name: string | null;
+            /** Turns */
+            turns: number;
+            /** Tokens In */
+            tokens_in: number;
+            /** Cached Tokens */
+            cached_tokens: number;
+            /** Cached Pct */
+            cached_pct: number | null;
+            /** Cost */
+            cost: number;
+        };
+        /** ConfirmarPagoBody */
+        ConfirmarPagoBody: {
+            /**
+             * Referencia
+             * @description Número del comprobante o referencia del pago.
+             */
+            referencia: string;
+        };
+        /** PagoConfirmadoOut */
+        PagoConfirmadoOut: {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "confirmado" | "ya_confirmado";
+            /**
+             * Suscripcion Id
+             * Format: uuid
+             */
+            suscripcion_id: string;
+            /**
+             * Cargo Id
+             * Format: uuid
+             */
+            cargo_id: string;
+            /** Suscripcion Estado */
+            suscripcion_estado: string;
+            /** Numero Publico */
+            numero_publico?: string | null;
+        };
+        /** PlanBody */
+        PlanBody: {
+            /**
+             * Codigo
+             * @description SKU del plan, único por negocio.
+             */
+            codigo: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Descripcion
+             * @default
+             */
+            descripcion: string;
+            /** Precio */
+            precio: number;
+            /**
+             * Moneda
+             * @default COP
+             */
+            moneda: string;
+            /**
+             * Periodicidad
+             * @default mensual
+             * @enum {string}
+             */
+            periodicidad: "mensual" | "trimestral" | "anual";
+            /**
+             * Trial Dias
+             * @description Solo un plan de $0 tiene prueba (D-16).
+             * @default 0
+             */
+            trial_dias: number;
+            /**
+             * Entitlements
+             * @description Lo que incluye el plan (objeto).
+             */
+            entitlements?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Plan Plataforma
+             * @description Plan de la plataforma que vende.
+             */
+            plan_plataforma?: string | null;
+            /**
+             * Activo
+             * @default true
+             */
+            activo: boolean;
+            /**
+             * Orden
+             * @default 0
+             */
+            orden: number;
+        };
+        /** PlanOut */
+        PlanOut: {
+            /**
+             * Codigo
+             * @description SKU del plan, único por negocio.
+             */
+            codigo: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Descripcion
+             * @default
+             */
+            descripcion: string;
+            /** Precio */
+            precio: number;
+            /**
+             * Moneda
+             * @default COP
+             */
+            moneda: string;
+            /**
+             * Periodicidad
+             * @default mensual
+             * @enum {string}
+             */
+            periodicidad: "mensual" | "trimestral" | "anual";
+            /**
+             * Trial Dias
+             * @description Solo un plan de $0 tiene prueba (D-16).
+             * @default 0
+             */
+            trial_dias: number;
+            /**
+             * Entitlements
+             * @description Lo que incluye el plan (objeto).
+             */
+            entitlements?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Plan Plataforma
+             * @description Plan de la plataforma que vende.
+             */
+            plan_plataforma?: string | null;
+            /**
+             * Activo
+             * @default true
+             */
+            activo: boolean;
+            /**
+             * Orden
+             * @default 0
+             */
+            orden: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Creado */
+            creado?: string | null;
+            /** Actualizado */
+            actualizado?: string | null;
+        };
+        /** EstadoDatosDePruebaModulo */
+        EstadoDatosDePruebaModulo: {
+            /** Modulo */
+            modulo: string;
+            /** Titulo */
+            titulo: string;
+            /** Disponible */
+            disponible: boolean;
+            /**
+             * Motivo
+             * @description Por qué el módulo no tiene datos que generar.
+             */
+            motivo?: string | null;
+            /**
+             * Falta Descripcion
+             * @description El negocio no tiene descripción propia: hay que escribirla antes.
+             */
+            falta_descripcion: boolean;
+            lote: components["schemas"]["LoteDePrueba"] | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -15492,6 +20304,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15523,6 +20336,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15558,6 +20372,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15591,6 +20406,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15628,6 +20444,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15661,6 +20478,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15704,6 +20522,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15737,6 +20556,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15774,6 +20594,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -15808,6 +20629,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15839,6 +20661,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15874,6 +20697,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15905,6 +20729,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15940,6 +20765,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -15969,6 +20795,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16002,6 +20829,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16035,6 +20863,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16071,6 +20900,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16105,6 +20935,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 entidad: string;
@@ -16138,6 +20969,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16178,6 +21010,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16209,6 +21042,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16235,11 +21069,44 @@ export interface operations {
             };
         };
     };
+    dashboard_agents_api_v1_admin_dashboard_agents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumenPorAgente"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_primeros_pasos_api_v1_admin_onboarding_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16266,11 +21133,187 @@ export interface operations {
             };
         };
     };
+    avanzar_recorrido_api_v1_admin_onboarding_avanzar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvanzarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    omitir_recorrido_api_v1_admin_onboarding_omitir_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reanudar_recorrido_api_v1_admin_onboarding_reanudar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finalizar_recorrido_api_v1_admin_onboarding_finalizar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecorridoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dejar_listo_api_v1_admin_onboarding_dejar_listo_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DejarListoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DejarListoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_agentes`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_dlq_api_v1_admin_dlq_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16302,6 +21345,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 entry_id: string;
@@ -16342,6 +21386,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16373,6 +21418,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16404,6 +21450,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16440,6 +21487,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16473,6 +21521,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16508,6 +21557,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16541,6 +21591,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16576,6 +21627,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16609,6 +21661,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16640,6 +21693,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16673,6 +21727,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16704,6 +21759,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16741,6 +21797,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16777,6 +21834,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 conversation_id: string;
@@ -16806,11 +21864,49 @@ export interface operations {
             };
         };
     };
-    playground_history_api_v1_admin_playground_get: {
+    in_progress_api_v1_admin_conversations__conversation_id__in_progress_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    playground_history_api_v1_admin_playground_get: {
+        parameters: {
+            query?: {
+                /** @description Historial de la prueba por esa conexión. */
+                connection_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16842,6 +21938,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16874,9 +21971,13 @@ export interface operations {
     };
     playground_reset_api_v1_admin_playground_reset_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Reinicia la prueba de esa conexión. */
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16901,6 +22002,114 @@ export interface operations {
             };
         };
     };
+    playground_options_api_v1_admin_playground_options_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundOpcionesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaygroundOpcionesOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    playground_tap_api_v1_admin_playground_tap_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaygroundToqueIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaygroundToqueOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
     list_escalations_api_v1_admin_escalations_get: {
         parameters: {
             query?: {
@@ -16911,6 +22120,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16953,6 +22163,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -16984,6 +22195,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17015,6 +22227,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 plugin_id: string;
@@ -17057,6 +22270,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 plugin_id: string;
@@ -17090,6 +22304,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 plugin_id: string;
@@ -17134,6 +22349,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17174,6 +22390,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17205,6 +22422,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17238,6 +22456,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17285,6 +22504,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17318,6 +22538,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17355,6 +22576,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17389,6 +22611,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17422,11 +22645,163 @@ export interface operations {
             };
         };
     };
+    evaluate_release_api_v1_admin_connections__connection_id__releases__release_id__evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationRequested"];
+                };
+            };
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationRequested"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evaluation_api_v1_admin_connections__connection_id__releases__release_id__evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Evaluation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_release_diff_api_v1_admin_connections__connection_id__releases__release_id__diff_get: {
+        parameters: {
+            query?: {
+                against?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDiff"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_release_api_v1_admin_connections__connection_id__releases__release_id__stop_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rollback_release_api_v1_admin_connections__connection_id__rollback_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17459,11 +22834,359 @@ export interface operations {
             };
         };
     };
+    start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                release_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CanaryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_canary_api_v1_admin_connections__connection_id__canary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanaryState"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_canary_percent_api_v1_admin_connections__connection_id__canary_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CanaryPercentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_canary_api_v1_admin_connections__connection_id__canary_stop_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_canary_api_v1_admin_connections__connection_id__canary_promote_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChange"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_graph_api_v1_admin_a2a_graph_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Graph"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_graph_api_v1_admin_a2a_graph_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraphIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_graph_versions_api_v1_admin_a2a_graph_versions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphVersion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calls_api_v1_admin_a2a_calls_get: {
+        parameters: {
+            query: {
+                connection_id: string;
+                limit?: number;
+                before?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Call"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    route_preview_api_v1_admin_a2a_route_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutePreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutePreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_connection_agent_api_v1_admin_connections__connection_id__agents__instance_id__delete: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17496,6 +23219,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17534,6 +23258,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17567,6 +23292,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 type_id: string;
@@ -17600,6 +23326,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17633,6 +23360,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17668,6 +23396,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17699,6 +23428,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17730,6 +23460,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17761,6 +23492,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17796,6 +23528,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17827,6 +23560,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17858,6 +23592,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -17891,6 +23626,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17924,6 +23660,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17959,6 +23696,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -17992,6 +23730,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18028,6 +23767,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18064,6 +23804,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18100,6 +23841,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18133,6 +23875,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18170,6 +23913,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18201,6 +23945,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18233,6 +23978,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18264,6 +24010,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18293,6 +24040,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18322,6 +24070,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18357,6 +24106,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18390,6 +24140,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18427,6 +24178,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18460,6 +24212,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18493,6 +24246,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18528,6 +24282,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18563,6 +24318,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18594,6 +24350,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18625,6 +24382,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18658,6 +24416,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18689,6 +24448,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18722,6 +24482,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -18755,6 +24516,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18788,6 +24550,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18819,6 +24582,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18854,6 +24618,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18889,6 +24654,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18924,6 +24690,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18959,6 +24726,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -18994,6 +24762,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19031,6 +24800,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19062,6 +24832,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19093,6 +24864,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19128,6 +24900,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19163,6 +24936,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19196,6 +24970,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19227,6 +25002,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19271,6 +25047,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19304,6 +25081,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19335,6 +25113,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -19370,6 +25149,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -19405,6 +25185,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -19440,6 +25221,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -19475,6 +25257,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -19513,6 +25296,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19544,6 +25328,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19584,6 +25369,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 invitation_id: string;
@@ -19615,6 +25401,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 invitation_id: string;
@@ -19646,6 +25433,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 invitation_id: string;
@@ -19677,6 +25465,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19708,6 +25497,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19739,6 +25529,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19770,6 +25561,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19801,6 +25593,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -19829,11 +25622,236 @@ export interface operations {
             };
         };
     };
+    reliability_api_v1_admin_reliability_get: {
+        parameters: {
+            query?: {
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                release_id?: string | null;
+                lane?: ("stable" | "canary" | "pinned" | "legacy") | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReliabilityResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verifier_rejections_api_v1_admin_reliability_verifier_get: {
+        parameters: {
+            query?: {
+                kind?: string | null;
+                limit?: number;
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                release_id?: string | null;
+                lane?: ("stable" | "canary" | "pinned" | "legacy") | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifierRejections"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_false_positive_api_v1_admin_reliability_verifier__turn_id__false_positive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                turn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FalsePositiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FalsePositiveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    usage_api_v1_admin_usage_get: {
+        parameters: {
+            query?: {
+                group_by?: "connection" | "agent" | "a2a" | "day";
+                desde?: string | null;
+                hasta?: string | null;
+                connection_id?: string | null;
+                release_id?: string | null;
+                lane?: ("stable" | "canary" | "pinned" | "legacy") | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    eval_runs_api_v1_admin_evals_runs_get: {
+        parameters: {
+            query?: {
+                connection_id?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalRunsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    turn_detail_api_v1_admin_turns__turn_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                turn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_plan_api_v1_admin_plan_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19865,6 +25883,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19905,6 +25924,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19936,6 +25956,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -19966,11 +25987,45 @@ export interface operations {
             };
         };
     };
+    resend_owner_invitation_api_v1_admin_platform_tenants__tenant_id__owner_invitation_resend_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOwnerInvitation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_tenant_plan_api_v1_admin_platform_tenants__tenant_id__plan_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20006,6 +26061,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20037,6 +26093,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20068,6 +26125,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20103,6 +26161,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20134,6 +26193,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20171,6 +26231,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20204,6 +26265,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20244,6 +26306,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20277,6 +26340,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20311,6 +26375,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 vendedor_id: string;
@@ -20349,6 +26414,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20380,6 +26446,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20411,6 +26478,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20444,6 +26512,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20481,6 +26550,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -20513,11 +26583,264 @@ export interface operations {
             };
         };
     };
+    get_gate_api_v1_admin_platform_tenants__tenant_id__gate_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateBandera"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_gate_api_v1_admin_platform_tenants__tenant_id__gate_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateBanderaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateBandera"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColaboracionBanderas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_colaboracion_api_v1_admin_platform_tenants__tenant_id__colaboracion_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColaboracionBanderasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColaboracionBanderas"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesDirectasBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_opciones_directas_api_v1_admin_platform_tenants__tenant_id__opciones_directas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesDirectasBanderaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesDirectasBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_declarative_tools_api_v1_admin_settings_declarative_tools_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20549,6 +26872,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20593,6 +26917,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20619,11 +26944,44 @@ export interface operations {
             };
         };
     };
+    get_catalog_api_api_v1_admin_settings_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalogo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_identity_api_v1_admin_settings_identity_put: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20654,11 +27012,148 @@ export interface operations {
             };
         };
     };
+    get_bajas_api_v1_admin_settings_bajas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_bajas_api_v1_admin_settings_bajas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BajasUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BajasSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_waweb_policy_api_v1_admin_settings_whatsapp_web_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_waweb_policy_api_v1_admin_settings_whatsapp_web_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaWebPolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaWebPolicySettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_bot_paused_api_v1_admin_settings_bot_paused_put: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20694,6 +27189,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20729,6 +27225,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20760,6 +27257,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20795,6 +27293,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20830,6 +27329,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20865,6 +27365,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20896,6 +27397,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 version_id: string;
@@ -20929,6 +27431,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20964,6 +27467,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -20999,6 +27503,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21030,6 +27535,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21065,6 +27571,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21096,6 +27603,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21131,6 +27639,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21162,6 +27671,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21193,6 +27703,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21228,6 +27739,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21259,6 +27771,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 event_id: string;
@@ -21383,7 +27896,7 @@ export interface operations {
     listar_suscripciones_api_v1_pack_pack_subscriptions_suscripciones_get: {
         parameters: {
             query?: {
-                estado?: ("trialing" | "activa" | "pausada" | "vencida" | "cancelada") | null;
+                estado?: ("pendiente_pago" | "trialing" | "activa" | "pausada" | "vencida" | "cancelada") | null;
                 /** @description Plan (variante de commerce). */
                 variante_id?: string | null;
                 periodicidad?: ("mensual" | "trimestral" | "anual") | null;
@@ -21398,6 +27911,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21429,6 +27943,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21464,6 +27979,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 charge_id: string;
@@ -21497,6 +28013,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 subscription_id: string;
@@ -21529,7 +28046,7 @@ export interface operations {
         parameters: {
             query?: {
                 estado?: ("pendiente" | "pagado" | "anulado") | null;
-                tipo?: ("periodo" | "cambio_plan") | null;
+                tipo?: ("periodo" | "cambio_plan" | "inscripcion") | null;
                 suscripcion_id?: string | null;
                 /** @description Vencimiento desde (incluido). */
                 desde?: string | null;
@@ -21543,6 +28060,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21581,6 +28099,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21612,6 +28131,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21643,6 +28163,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 subscription_id: string;
@@ -21680,6 +28201,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 subscription_id: string;
@@ -21713,6 +28235,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 subscription_id: string;
@@ -21750,6 +28273,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 charge_id: string;
@@ -21778,11 +28302,50 @@ export interface operations {
             };
         };
     };
+    registrar_pago_por_transferencia_api_v1_pack_pack_subscriptions_cargos__charge_id__registrar_pago_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrarPagoBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagoRegistradoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     commerce_dashboard_api_v1_pack_commerce_dashboard_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21817,6 +28380,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21848,6 +28412,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21881,6 +28446,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21912,6 +28478,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -21945,6 +28512,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 category_id: string;
@@ -21976,6 +28544,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22002,11 +28571,44 @@ export interface operations {
             };
         };
     };
+    minimo_pago_en_linea_api_v1_pack_commerce_pago_en_linea_minimo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MinimoPagoEnLineaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_allies_api_v1_pack_commerce_allies_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22038,6 +28640,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22073,6 +28676,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ally_id: string;
@@ -22104,6 +28708,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ally_id: string;
@@ -22141,6 +28746,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -22174,6 +28780,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tenant_id: string;
@@ -22211,6 +28818,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22242,6 +28850,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22275,6 +28884,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 promotion_id: string;
@@ -22306,6 +28916,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22337,6 +28948,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 order_id: string;
@@ -22372,6 +28984,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22407,6 +29020,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22438,6 +29052,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22469,6 +29084,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22504,6 +29120,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22535,6 +29152,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22570,6 +29188,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22601,6 +29220,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22632,6 +29252,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 promise_id: string;
@@ -22667,6 +29288,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22698,6 +29320,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22742,6 +29365,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22773,6 +29397,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22809,6 +29434,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22840,6 +29466,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22871,6 +29498,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -22905,6 +29533,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                "X-Device-Id"?: string | null;
                 "X-Tenant-Id"?: string | null;
             };
             path: {
@@ -22936,112 +29565,12 @@ export interface operations {
             };
         };
     };
-    list_owner_charges_api_v1_pack_cobranza_owner_charges_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharges"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_charge_api_v1_pack_cobranza_owner_charges_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerChargeCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerCharge"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    register_owner_payment_api_v1_pack_cobranza_owner_charges__charge_id__payment_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerPayment"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     reports_api_v1_pack_cobranza_reports_get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -23068,75 +29597,12 @@ export interface operations {
             };
         };
     };
-    owner_thread_api_v1_pack_cobranza_owner_thread_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OwnerThread"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_owner_message_api_v1_pack_cobranza_owner_thread_messages_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OwnerMessageCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     portfolio_detail_api_v1_pack_cobranza_portfolios__cartera_id__get: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23170,6 +29636,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23207,6 +29674,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23238,6 +29706,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 collector_id: string;
@@ -23275,6 +29744,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 collector_id: string;
@@ -23309,6 +29779,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -23340,6 +29811,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -23375,6 +29847,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 client_id: string;
@@ -23408,6 +29881,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 client_id: string;
@@ -23445,6 +29919,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 client_id: string;
@@ -23476,6 +29951,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 client_id: string;
@@ -23513,6 +29989,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 loan_id: string;
@@ -23548,6 +30025,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 loan_id: string;
@@ -23583,6 +30061,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 installment_id: string;
@@ -23620,6 +30099,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 installment_id: string;
@@ -23651,6 +30131,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 credit_id: string;
@@ -23682,6 +30163,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23715,6 +30197,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23750,6 +30233,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23781,6 +30265,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23812,6 +30297,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23847,6 +30333,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23884,6 +30371,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -23921,6 +30409,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 expense_id: string;
@@ -23947,48 +30436,12 @@ export interface operations {
             };
         };
     };
-    create_payment_link_api_v1_pack_cobranza_owner_charges__charge_id__links_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-            };
-            path: {
-                charge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentLinkIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentLink"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     create_expense_api_v1_pack_cobranza_expenses_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24024,6 +30477,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 expense_id: string;
@@ -24061,6 +30515,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24094,6 +30549,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24131,6 +30587,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24164,6 +30621,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24201,6 +30659,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 note_id: string;
@@ -24232,6 +30691,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 collector_id: string;
@@ -24265,6 +30725,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 collector_id: string;
@@ -24302,6 +30763,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24335,6 +30797,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 cartera_id: string;
@@ -24371,6 +30834,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24402,6 +30866,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 change_id: string;
@@ -24439,6 +30904,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24474,6 +30940,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24505,6 +30972,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24536,6 +31004,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24569,6 +31038,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 type_id: string;
@@ -24604,6 +31074,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 type_id: string;
@@ -24638,6 +31109,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24669,6 +31141,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24704,6 +31177,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -24744,6 +31218,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24775,6 +31250,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24810,6 +31286,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 block_id: string;
@@ -24841,6 +31318,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 block_id: string;
@@ -24880,6 +31358,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24911,9 +31390,12 @@ export interface operations {
             query?: {
                 start?: string | null;
                 end?: string | null;
+                /** @description IDs de agenda separados por coma */
+                calendar_ids?: string | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -24947,6 +31429,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -24984,6 +31467,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -25016,9 +31500,11 @@ export interface operations {
         parameters: {
             query?: {
                 next?: string;
+                connection_id?: string | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25054,6 +31540,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25085,6 +31572,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -25270,6 +31758,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25305,6 +31794,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25336,6 +31826,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25373,6 +31864,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 slug: string;
@@ -25406,6 +31898,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25437,6 +31930,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25468,6 +31962,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 slug: string;
@@ -25506,6 +32001,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 slug: string;
@@ -25543,6 +32039,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25578,6 +32075,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 adjunto_id: string;
@@ -25609,6 +32107,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 adjunto_id: string;
@@ -25640,6 +32139,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25677,6 +32177,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25708,6 +32209,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 run_id: string;
@@ -25741,6 +32243,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 run_id: string;
@@ -25774,6 +32277,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25805,6 +32309,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25836,6 +32341,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25871,6 +32377,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 slug: string;
@@ -25908,6 +32415,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25939,6 +32447,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -25974,6 +32483,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 tester_id: string;
@@ -26007,6 +32517,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26038,6 +32549,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26078,6 +32590,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26104,11 +32617,113 @@ export interface operations {
             };
         };
     };
+    listar_escenarios_api_v1_admin_qa_datos_escenarios_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEscenarios"];
+                };
+            };
+            /** @description Solo el admin de plataforma y los testers. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Fuera de test (`QA_TESTERS_ENABLED` apagada) o el escenario no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_escenario_api_v1_admin_qa_datos_escenarios__slug__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QaEscenarioResultado"];
+                };
+            };
+            /** @description Solo el admin de plataforma y los testers. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Fuera de test (`QA_TESTERS_ENABLED` apagada) o el escenario no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sin datos preparados, otra corrida en curso o el escenario no se puede crear (motivo). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     wizard_cancel_api_v1_admin_meta_wizard_cancel_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26144,6 +32759,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26175,6 +32791,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -26208,6 +32825,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -26240,11 +32858,507 @@ export interface operations {
             };
         };
     };
+    catalogo_acciones_api_v1_plantillas_opciones_catalogo_acciones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesAccionesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalogo_variables_api_v1_plantillas_opciones_catalogo_variables_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesVariablesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validar_api_v1_plantillas_opciones_validar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesDefinicionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesValidacionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vista_previa_api_v1_plantillas_opciones_vista_previa_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VistaPreviaOpcionesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaOpcionesOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    listar_api_v1_plantillas_opciones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPlantillasOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_api_v1_plantillas_opciones_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesCrearIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPlantillaOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    obtener_api_v1_plantillas_opciones__clave__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPlantillaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    eliminar_api_v1_plantillas_opciones__clave__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guardar_borrador_api_v1_plantillas_opciones__clave__borrador_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesBorradorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPlantillaOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    publicar_api_v1_plantillas_opciones__clave__publicar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OpcionesPublicarIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPublicadaOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    retirar_api_v1_plantillas_opciones__clave__retirar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPlantillaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enviar_prueba_api_v1_plantillas_opciones__clave__enviar_prueba_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesEnviarPruebaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesPruebaOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    catalogo_api_v1_mensajes_catalogo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogoDeMensajesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     wizard_resume_api_v1_admin_meta_wizard_resume_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26282,6 +33396,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26313,6 +33428,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26357,6 +33473,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 installation_id: string;
@@ -26388,6 +33505,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -26423,6 +33541,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26460,6 +33579,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ref: string;
@@ -26499,6 +33619,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ref: string;
@@ -26539,6 +33660,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ref: string;
@@ -26579,6 +33701,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ref: string;
@@ -26616,6 +33739,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ref: string;
@@ -26652,6 +33776,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26686,6 +33811,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26717,6 +33843,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 template_key: string;
@@ -26749,6 +33876,42 @@ export interface operations {
             };
         };
     };
+    create_from_script_api_v1_admin_agents_from_script_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromScriptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FromScriptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_superpowers_api_v1_admin_agent_superpowers_get: {
         parameters: {
             query?: {
@@ -26759,6 +33922,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26793,6 +33957,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -26827,6 +33992,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -26860,6 +34026,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -26904,6 +34071,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -26937,6 +34105,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -26970,6 +34139,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 agent_id: string;
@@ -27009,6 +34179,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27038,6 +34209,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27071,6 +34243,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27108,6 +34281,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27146,6 +34320,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27179,6 +34354,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27212,6 +34388,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27249,6 +34426,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27285,6 +34463,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27318,6 +34497,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27357,6 +34537,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27393,6 +34574,7 @@ export interface operations {
             header: {
                 "Idempotency-Key": string;
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 envio_id: string;
@@ -27426,6 +34608,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 envio_id: string;
@@ -27459,6 +34642,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27492,6 +34676,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27529,6 +34714,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -27562,6 +34748,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27593,6 +34780,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27628,6 +34816,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27663,6 +34852,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27698,6 +34888,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27733,6 +34924,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27766,6 +34958,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 lead_id: string;
@@ -27805,6 +34998,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -27838,6 +35032,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 admin_id: string;
@@ -27875,6 +35070,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27937,6 +35133,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -27974,6 +35171,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -28007,6 +35205,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -28044,6 +35243,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -28077,6 +35277,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 connection_id: string;
@@ -28114,6 +35315,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28145,6 +35347,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28176,6 +35379,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28211,6 +35415,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28246,6 +35451,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28277,6 +35483,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28312,6 +35519,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -28345,6 +35553,7 @@ export interface operations {
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ig_user_id: string;
@@ -28378,6 +35587,7 @@ export interface operations {
             query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
             };
             path: {
                 ig_user_id: string;
@@ -28393,6 +35603,1113 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstagramDiagnosticStartOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requirements_api_v1_admin_agents__agent_id__requirements_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_Requirement_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_me_notifications_get: {
+        parameters: {
+            query?: {
+                category?: string | null;
+                unread?: boolean;
+                cursor?: string | null;
+                after?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unread_count_api_v1_me_notifications_unread_count_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_api_v1_me_notifications_read_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkReadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_notification_api_v1_me_notifications__notification_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preferences_api_v1_me_notifications_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_preferences_api_v1_me_notifications_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_mute_api_v1_me_notifications_mute_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MuteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calendars_api_v1_pack_calendar_calendars_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_calendar_api_v1_pack_calendar_calendars_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_calendar_api_v1_pack_calendar_calendars__calendar_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CalendarDelete"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publicar_version_en_meta_api_v1_plantillas_opciones__clave__versiones__version_n__publicar_en_meta_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+                version_n: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpcionesMetaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesMetaOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+        };
+    };
+    device_session_api_v1_access_device_session_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceSessionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_devices_api_v1_access_devices_get: {
+        parameters: {
+            query?: {
+                estado?: ("pendiente" | "activo" | "bloqueado") | null;
+                admin_id?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDevicePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_device_api_v1_access_devices_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_device_api_v1_access_devices__device_row_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_device_api_v1_access_devices__device_row_id__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_device_api_v1_access_devices__device_row_id__bloquear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Device-Id"?: string | null;
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceBlock"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessDeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_device_api_v1_access_devices__device_row_id__dar_de_baja_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                device_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDeviceTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_access_events_get: {
+        parameters: {
+            query?: {
+                severidad?: ("info" | "aviso" | "critico") | null;
+                tipo?: ("login_fallido" | "login_bloqueado" | "dispositivo_nuevo" | "dispositivo_pendiente" | "dispositivo_aprobado" | "dispositivo_bloqueado_usado" | "acceso_denegado_politica" | "dispositivo_sin_id" | "dispositivo_compartido" | "politica_cambiada" | "acceso_master" | "legado_pack") | null;
+                admin_id?: string | null;
+                desde?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessEventPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_policy_api_v1_access_policy_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_policy_api_v1_access_policy_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessPolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_planes_api_v1_pack_pack_subscriptions_planes_get: {
+        parameters: {
+            query?: {
+                /** @description Incluye los planes apagados. */
+                incluir_inactivos?: boolean;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_plan_api_v1_pack_pack_subscriptions_planes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_plan_api_v1_pack_pack_subscriptions_planes__plan_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_plan_api_v1_pack_pack_subscriptions_planes__plan_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirmar_pago_de_inscripcion_api_v1_pack_pack_subscriptions_suscripciones__subscription_id__confirmar_pago_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmarPagoBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagoConfirmadoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_modulo_api_v1_admin_datos_de_prueba__modulo__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                modulo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoDatosDePruebaModulo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generar_modulo_api_v1_admin_datos_de_prueba__modulo__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                modulo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoteGenerado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_modulo_api_v1_admin_datos_de_prueba__modulo__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                modulo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatosRetirados"];
                 };
             };
             /** @description Validation Error */

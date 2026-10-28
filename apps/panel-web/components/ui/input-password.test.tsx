@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
-import type { FormEvent } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { InputPassword } from "./input-password";
@@ -8,30 +7,40 @@ import { InputPassword } from "./input-password";
 afterEach(cleanup);
 
 describe("InputPassword", () => {
-  it("arranca oculto y el ojo lo muestra y lo vuelve a ocultar", () => {
-    render(<InputPassword id="clave" aria-label="Contraseña" defaultValue="secreta" />);
-    const campo = screen.getByLabelText("Contraseña") as HTMLInputElement;
+  it("arranca oculto y el ojo alterna el tipo y aria-pressed", () => {
+    render(<InputPassword id="clave" name="clave" autoComplete="new-password" />);
+    const campo = document.getElementById("clave") as HTMLInputElement;
     expect(campo.type).toBe("password");
 
-    fireEvent.click(screen.getByRole("button", { name: "Mostrar contraseña" }));
-    expect(campo.type).toBe("text");
-    expect(
-      screen.getByRole("button", { name: "Ocultar contraseña" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    const boton = screen.getByRole("button", { name: "Mostrar contraseña" });
+    expect(boton.getAttribute("aria-pressed")).toBe("false");
 
-    fireEvent.click(screen.getByRole("button", { name: "Ocultar contraseña" }));
+    fireEvent.click(boton);
+    expect(campo.type).toBe("text");
+    const ocultar = screen.getByRole("button", { name: "Ocultar contraseña" });
+    expect(ocultar.getAttribute("aria-pressed")).toBe("true");
+
+    fireEvent.click(ocultar);
     expect(campo.type).toBe("password");
   });
 
-  it("el ojo no envía el formulario", () => {
-    const enviar = vi.fn((event: FormEvent) => event.preventDefault());
+  it("conserva los atributos del campo y no envía el formulario al tocar el ojo", () => {
+    let enviado = false;
     render(
-      <form onSubmit={enviar}>
-        <InputPassword id="clave" aria-label="Contraseña" />
+      <form onSubmit={(e) => { e.preventDefault(); enviado = true; }}>
+        <InputPassword id="pin" name="pin" inputMode="numeric" maxLength={6} autoComplete="off" />
       </form>,
     );
+    const campo = document.getElementById("pin") as HTMLInputElement;
+    expect(campo.name).toBe("pin");
+    expect(campo.maxLength).toBe(6);
+    expect(campo.autocomplete).toBe("off");
+    fireEvent.click(screen.getByRole("button"));
+    expect(enviado).toBe(false);
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Mostrar contraseña" }));
-    expect(enviar).not.toHaveBeenCalled();
+  it("la etiqueta cambia el nombre accesible del botón", () => {
+    render(<InputPassword id="pin" etiqueta="PIN" />);
+    expect(screen.getByRole("button", { name: "Mostrar PIN" })).toBeTruthy();
   });
 });

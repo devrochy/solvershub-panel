@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { parsePin } from "@/lib/meta-pin";
 import { useAction } from "@/lib/use-action";
 
@@ -75,10 +75,10 @@ export function RegisterNumberDialog({
             help="Si el número ya tiene verificación en dos pasos, escribe ese PIN. Si lo dejas vacío, se usa el PIN guardado o se crea uno nuevo."
             error={pinError}
           >
-            <Input
+            <InputPassword
+              etiqueta="PIN"
               id={`pin-${phoneNumberId}`}
               name="pin"
-              type="password"
               inputMode="numeric"
               autoComplete="off"
               maxLength={6}

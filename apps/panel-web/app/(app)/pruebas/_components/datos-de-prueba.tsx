@@ -8,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
-import type { QaDatos, QaDatosAgentOS, QaDatosCuenta, QaItem, QaMisDatos } from "@/lib/api/types";
+import type { QaDatos, QaDatosAgentOS, QaDatosCuenta, QaEscenarios, QaItem, QaMisDatos } from "@/lib/api/types";
+import { esEscenario } from "@/lib/qa/escenarios";
 import { toast } from "@/lib/toast-store";
 
 import { llamarQa } from "./api";
+import { Escenarios } from "./escenarios";
 
 function copiar(texto: string, que: string) {
   void navigator.clipboard.writeText(texto).then(
@@ -27,7 +29,15 @@ function copiar(texto: string, que: string) {
  * Con los datos listos, «Actualizar mis datos» vuelve a pulsar «Preparar» (HU-QA-09): el backend
  * responde 200 sin contraseñas y pone al día el Agent OS (agentes y chat web).
  */
-export function DatosDePrueba({ inicial, guia }: { inicial: QaMisDatos; guia: QaItem[] }) {
+export function DatosDePrueba({
+  inicial,
+  guia,
+  escenarios = null,
+}: {
+  inicial: QaMisDatos;
+  guia: QaItem[];
+  escenarios?: QaEscenarios | null;
+}) {
   const router = useRouter();
   const confirmar = useConfirm();
   const [datos, setDatos] = useState<QaDatos | null>(inicial.datos ?? null);
@@ -144,7 +154,15 @@ export function DatosDePrueba({ inicial, guia }: { inicial: QaMisDatos; guia: Qa
         </CardContent>
       </Card>
 
-      <GuiaDeDatos guia={guia} />
+      {escenarios && (
+        <Escenarios
+          inicial={escenarios}
+          datosListos={datos?.estado === "listo"}
+          negocioId={datos?.estado === "listo" ? datos.negocio.id : null}
+        />
+      )}
+
+      <GuiaDeDatos guia={guia.filter((item) => !esEscenario(item.slug))} />
     </div>
   );
 }

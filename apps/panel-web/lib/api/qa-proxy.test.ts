@@ -16,6 +16,15 @@ describe("lista blanca del BFF de pruebas", () => {
     expect(rutaPermitida("POST", "evolution")).toBe(false);
   });
 
+  it("deja pasar los escenarios de datos de prueba (HU-QA-13)", () => {
+    expect(rutaPermitida("GET", "datos/escenarios")).toBe(true);
+    expect(rutaPermitida("POST", "datos/escenarios/conversacion-con-turnos")).toBe(true);
+    expect(rutaPermitida("POST", "datos/escenarios")).toBe(false);
+    expect(rutaPermitida("GET", "datos/escenarios/notificaciones")).toBe(false);
+    expect(rutaPermitida("POST", "datos/escenarios/../contrasenas")).toBe(false);
+    expect(rutaPermitida("POST", "datos/escenarios/Mensajes_Fallidos")).toBe(false);
+  });
+
   it("rechaza métodos cambiados, traversal y rutas inventadas", () => {
     expect(rutaPermitida("DELETE", "catalog")).toBe(false);
     expect(rutaPermitida("POST", "catalog/import")).toBe(false);

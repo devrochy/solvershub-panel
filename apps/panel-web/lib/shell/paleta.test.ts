@@ -73,7 +73,8 @@ describe("filtro", () => {
   it("el nombre de la sección gana sobre su grupo", () => {
     const secciones = seccionesDePaleta(TODO);
     const co = labels(filtrar(secciones, "co", (s) => [s.nombre, s.grupo]));
-    expect(co.slice(0, 2)).toEqual(["Operación › Conversaciones", "Tu asistente › Conexiones"]);
+    // «Colaboración» (HU-AOS-26) también empieza por «co» y es nombre de sección.
+    expect(co.slice(0, 3)).toEqual(["Operación › Conversaciones", "Agentes › Colaboración", "Tu asistente › Conexiones"]);
     expect(co.indexOf("Cobranza › Carteras")).toBeGreaterThan(co.indexOf("Consumo y plan › Costos"));
   });
 

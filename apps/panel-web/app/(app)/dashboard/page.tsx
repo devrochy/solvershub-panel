@@ -6,10 +6,11 @@ import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-bad
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ResumenAgentes } from "@/components/dashboard/resumen-agentes";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
-import type { Dashboard, Me, PrimerosPasos } from "@/lib/api/types";
+import type { Dashboard, Me, PrimerosPasos, ResumenPorAgente } from "@/lib/api/types";
 import { formatNumber, formatUsd } from "@/lib/format";
 import { PASOS_PLEGADOS_COOKIE, hayPasosParaActuar } from "@/lib/primeros-pasos";
 import { TOUR_COOKIE, debeOfrecerTour } from "@/lib/tour";
@@ -18,12 +19,18 @@ export const metadata = { title: "Resumen" };
 
 const DESCRIPCION = "Estado del agente, conversaciones y consumo del negocio.";
 
+/** Un colaborador con solo «Resumen» recibe el bloque vacío: ahí se muestran las cifras de siempre. */
+function tieneResumen(r: ResumenPorAgente): boolean {
+  return r.general.kpis.length > 0 || r.agentes.some((a) => a.kpis.length > 0 || a.modulos.length > 0);
+}
+
 export default async function DashboardPage() {
   // `/admin/me` ya lo pidió el layout: el fetch se memoiza en el mismo render.
-  const [meRes, res, pasosRes] = await Promise.all([
+  const [meRes, res, pasosRes, agentesRes] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<Dashboard>("/admin/dashboard"),
     apiFetch<PrimerosPasos>("/admin/onboarding"),
+    apiFetch<ResumenPorAgente>("/admin/dashboard/agents"),
   ]);
 
   if (meRes.ok && !meRes.data.tenant) {
@@ -89,21 +96,26 @@ export default async function DashboardPage() {
       )}
       <MissingTemplatesBanner />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} />
-        <StatCard label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} />
-        <StatCard
-          label="Escalaciones pendientes"
-          value={formatNumber(d.kpi.pending_escalations)}
-          tone={d.kpi.pending_escalations > 0 ? "warning" : "default"}
-        />
-        <StatCard
-          label="Costo LLM (30 días)"
-          value={formatUsd(d.kpi.cost_30d)}
-          tone="accent"
-          hint={planHint}
-        />
-      </div>
+      {/* KPIs por agente (ADR-0171). Si no cargan, el Resumen sigue con las cifras del negocio. */}
+      {agentesRes.ok && tieneResumen(agentesRes.data) ? (
+        <ResumenAgentes datos={agentesRes.data} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} />
+          <StatCard label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} />
+          <StatCard
+            label="Escalaciones pendientes"
+            value={formatNumber(d.kpi.pending_escalations)}
+            tone={d.kpi.pending_escalations > 0 ? "warning" : "default"}
+          />
+          <StatCard
+            label="Costo LLM (30 días)"
+            value={formatUsd(d.kpi.cost_30d)}
+            tone="accent"
+            hint={planHint}
+          />
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

@@ -24,7 +24,9 @@ export type KpiDelta = {
 export function textoDelta({ value, versus }: KpiDelta): string {
   const signo = value > 0 ? "+" : value < 0 ? "−" : "";
   const cifra = Math.abs(value).toLocaleString("es-CO", { maximumFractionDigits: 1 });
-  return `${signo}${cifra} % frente a ${versus}`;
+  // «frente a el mes anterior» no se dice: la contracción es «frente al mes anterior».
+  const contra = versus.startsWith("el ") ? `al ${versus.slice(3)}` : `a ${versus}`;
+  return `${signo}${cifra} % frente ${contra}`;
 }
 
 /**

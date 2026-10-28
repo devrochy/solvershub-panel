@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  agendasVisibles,
+  aliasesDeTexto,
   aEventoDeGrilla,
+  inicialDeAgenda,
   borradorDeSeleccion,
   codigoPorDefecto,
   COLORES_TIPO,
@@ -96,5 +99,41 @@ describe("zona horaria con Intl", () => {
   it("respeta el horario de verano (Madrid)", () => {
     expect(desfaseDeHoraDePared("Europe/Madrid", [2026, 6, 1, 12, 0, 0, 0])).toBe(120);
     expect(desfaseDeHoraDePared("Europe/Madrid", [2026, 0, 15, 12, 0, 0, 0])).toBe(60);
+  });
+});
+
+describe("varias agendas (HU-CAL-08)", () => {
+  it("con varias agendas visibles el color es el de la agenda; con una, el del tipo", () => {
+    const cita = { ...CITA, calendar_id: "a-1", calendar_color: "cat-3" };
+    expect(aEventoDeGrilla(cita, "agenda").classNames).toEqual(["evt-cat-3"]);
+    expect(aEventoDeGrilla(cita, "tipo").classNames).toEqual(["evt-cat-2"]);
+    // El título conserva el código del tipo en los dos casos.
+    expect(aEventoDeGrilla(cita, "agenda").title).toBe("VAL · Ana");
+  });
+
+  it("una cita sin agenda se ve neutra al colorear por agenda", () => {
+    expect(aEventoDeGrilla(CITA, "agenda").classNames).toEqual(["evt-sin-tipo"]);
+  });
+
+  it("la inicial distingue agendas con el mismo color", () => {
+    expect(inicialDeAgenda("Dra. Ana")).toBe("D");
+    expect(inicialDeAgenda("  Álvaro")).toBe("A");
+    expect(inicialDeAgenda("3ra sede")).toBe("3");
+    expect(inicialDeAgenda("···")).toBe("?");
+  });
+
+  it("agendas visibles: lo guardado que sigue existiendo, o todas", () => {
+    const todas = ["a", "b", "c"];
+    expect(agendasVisibles(null, todas)).toEqual(todas);
+    expect(agendasVisibles(["b", "z"], todas)).toEqual(["b"]);
+    expect(agendasVisibles(["z"], todas)).toEqual(todas);
+    expect(agendasVisibles([], todas)).toEqual(todas);
+  });
+});
+
+describe("alias de una agenda", () => {
+  it("separa por coma, recorta y quita repetidos", () => {
+    expect(aliasesDeTexto("doctora, sede norte ,, doctora")).toEqual(["doctora", "sede norte"]);
+    expect(aliasesDeTexto("")).toEqual([]);
   });
 });

@@ -19,7 +19,7 @@ export interface CopiaDePaso {
 
 type Tipo = NonNullable<PasoPrimerosPasos["tipo"]>;
 
-const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; accion: string; href: string; unidad: [string, string] }> = {
+export const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; accion: string; href: string; unidad: [string, string] }> = {
   catalogo: {
     titulo: "Carga tu catálogo",
     descripcion: "Agrega los productos que tu asistente puede ofrecer y cotizar.",
@@ -31,7 +31,7 @@ const CONTENIDO: Record<Tipo, { titulo: string; descripcion: string; accion: str
     titulo: "Define tus servicios",
     descripcion: "Crea los tipos de cita que tus clientes pueden agendar.",
     accion: "Crear servicios",
-    href: "/calendario/tipos",
+    href: "/calendario?ajustes=tipos",
     unidad: ["servicio creado", "servicios creados"],
   },
   cartera: {
@@ -84,9 +84,9 @@ export function copiaDelPaso(paso: PasoPrimerosPasos): CopiaDePaso {
       if (paso.motivo === "sin_habilidad" || !paso.tipo) {
         return {
           titulo: "Carga tu catálogo o tus servicios",
-          descripcion: "Activa la habilidad de ventas o de agenda para cargar lo que ofreces.",
-          accion: "Ver habilidades",
-          href: "/habilidades",
+          descripcion: "Crea tu primer agente: al elegir su tipo activamos lo necesario para cargar lo que ofreces.",
+          accion: "Crear mi agente",
+          href: "/agentes/nuevo",
         };
       }
       const contenido = CONTENIDO[paso.tipo];

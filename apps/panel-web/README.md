@@ -111,13 +111,12 @@ formatters únicos en `lib/format.ts` y tema claro/oscuro con toggle.
   credenciales con el formulario genérico, conectar por OAuth enlazado al clásico),
   **próximas citas** con cancelación y **tipos de cita** (alta/eliminar). API en
   `/api/v1/pack/calendar` (ADR-0079).
-- **Cobranza** (pack, `/cobranza`) — **resumen** (7 KPIs), **gestores**, **carteras**,
-  **cobros al propietario** (períodos + links de pago), **pagos de clientes**,
-  **promesas** (con cambio de estado) y **reglas de
-  negociación** (editable), **monitoreo IA** (actividad + últimas promesas),
-  **alertas de acceso**, **auditoría** (con filtros por entidad/operación/fecha) y
-  **dispositivos** (equipos, intentos y eventos de sync), **reportes** (consolidado por
-  cartera + liquidaciones) y **propietario** (hilo de mensajes). API en
+- **Cobranza** (pack, `/cobranza`) — cinco áreas por la jerarquía de los datos: **resumen**
+  (KPIs), **carteras** (ficha con sus clientes, préstamos y caja; búsqueda de clientes),
+  **actividad** (pagos, promesas con cambio de estado y reportes consolidados),
+  **equipo** (gestores, dispositivos con eventos de sync, alertas de acceso y auditoría con
+  filtros por entidad/operación/fecha) y **asistente** (monitoreo IA y reglas de
+  negociación, editables). API en
   `/api/v1/pack/cobranza`. Queda enlace al clásico para las acciones de escritura
   (generar cobro, marcar pago, aprobar dispositivo, enviar mensaje) y el detalle de
   cartera (caja, liquidaciones, inyecciones, gastos).

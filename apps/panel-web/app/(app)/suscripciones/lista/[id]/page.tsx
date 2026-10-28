@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AccionesSuscripcion } from "@/app/(app)/suscripciones/_components/acciones-suscripcion";
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
 import { ReenviarLink } from "@/app/(app)/suscripciones/_components/reenviar-link";
+import { RegistrarPago } from "@/app/(app)/suscripciones/_components/registrar-pago";
 import { CHARGE_STATUS, StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
 import { DetailPage } from "@/components/templates/detail-page";
 import { Badge } from "@/components/ui/badge";
@@ -107,8 +108,9 @@ export default async function SuscripcionDetallePage({ params }: { params: Promi
       align: "right",
       cell: (c) =>
         puedeEscribir && c.estado === "pendiente" && c.tipo === "periodo" ? (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-1">
             <ReenviarLink cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
+            <RegistrarPago cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
           </div>
         ) : null,
     },

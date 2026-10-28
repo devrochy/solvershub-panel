@@ -85,6 +85,16 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
       "Revisa el resumen para ver tu ingreso mensual recurrente.",
     ],
   },
+  plantillas_opciones: {
+    question: "¿Qué son las plantillas con opciones?",
+    what: "Mensajes con botones: cada opción hace algo por ti cuando el cliente la toca (confirmar una cita, pedir un link de pago…), sin esperar al asistente.",
+    first: [
+      "Crea una plantilla y escribe el mensaje.",
+      "Agrega las opciones y elige qué hace cada una.",
+      "Mira la vista previa, publícala y envía una prueba a un cliente.",
+      "Para escribir también fuera de las 24 horas, publica la versión en Meta y espera su aprobación.",
+    ],
+  },
   tools: {
     question: "¿Qué son las Herramientas?",
     what: "Diagnóstico y pruebas: probar el asistente, ver fallos y revisar requisitos de WhatsApp.",

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
+import { InputPassword } from "@/components/ui/input-password";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RegistroPinForm } from "@/components/domain/registro-pin-form";
@@ -154,7 +155,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
                 <Input id="byok_app_id" name="app_id" required />
               </Field>
               <Field label="App Secret" htmlFor="byok_app_secret">
-                <Input id="byok_app_secret" name="app_secret" required type="password" />
+                <InputPassword etiqueta="secreto" id="byok_app_secret" name="app_secret" required />
               </Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

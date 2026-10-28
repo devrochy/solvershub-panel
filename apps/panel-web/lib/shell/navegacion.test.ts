@@ -21,17 +21,17 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/habilidades", "plugins", false], ["/colaboradores", "collaborators", false], ["/configuracion", "settings", false],
   ["/costos", "costs", false], ["/plan", "plan", false], ["/cobranza", "pack_cobranza:resumen", false],
   ["/cobranza/gestores", "pack_cobranza:gestores", false], ["/cobranza/carteras", "pack_cobranza:carteras", false],
-  ["/cobranza/clientes", "pack_cobranza:clientes", false], ["/cobranza/cobros", "pack_cobranza:cobros", false],
+  ["/cobranza/clientes", "pack_cobranza:clientes", false],
   ["/cobranza/pagos", "pack_cobranza:cobros", false], ["/cobranza/promesas", "pack_cobranza:promesas", false],
-  ["/cobranza/propietario", "pack_cobranza:propietario", false], ["/cobranza/reportes", "pack_cobranza:reportes", false],
+  ["/cobranza/reportes", "pack_cobranza:reportes", false],
   ["/cobranza/monitoreo", "pack_cobranza:monitoreo", false], ["/cobranza/reglas", "pack_cobranza:reglas", false],
   ["/cobranza/alertas", "pack_cobranza:alertas", false], ["/cobranza/auditoria", "pack_cobranza:auditoria", false],
   ["/cobranza/dispositivos", "pack_cobranza:dispositivos", false], ["/comercio", "pack_commerce", false],
   ["/comercio/productos", "pack_commerce", false], ["/comercio/categorias", "pack_commerce", false],
   ["/comercio/promociones", "pack_commerce", false], ["/comercio/pedidos", "pack_commerce", false],
-  ["/calendario", "pack_calendar:conexion", false], ["/calendario/horario", "pack_calendar:configuracion", false],
-  ["/calendario/tipos", "pack_calendar:tipos", false], ["/calendario/bloqueos", "pack_calendar:bloqueos", false],
-  ["/calendario/citas", "pack_calendar:citas", false], ["/asistente", "connections", false],
+  // HU-CAL-08: Agenda es una sola vista; las rutas viejas (`/calendario/citas|tipos|horario|bloqueos`)
+  // redirigen a ella y ya no son ítems del menú.
+  ["/calendario", "pack_calendar:citas", false], ["/asistente", "connections", false], ["/mensajes", "connections", false],
   ["/dlq", "settings", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
   ["/plataforma/meta/embedded-signup", "tenants", false], ["/tenants/alta-automatica", "tenants", true],
   ["/pruebas", "qa", false],
@@ -40,6 +40,10 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   // SPEC-35 (D-43): entrada propia «Suscripciones».
   ["/suscripciones", "pack_subscriptions:suscripciones", false], ["/suscripciones/lista", "pack_subscriptions:suscripciones", false],
   ["/suscripciones/clientes", "pack_subscriptions:suscripciones", false], ["/suscripciones/pagos", "pack_subscriptions:suscripciones", false],
+  // HU-AOS-26: permisos entre agentes y «Probar una frase».
+  ["/agentes/colaboracion", "settings", false],
+  // HU-AOS-29: tablero de fiabilidad.
+  ["/agentes/calidad", "agents", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -54,7 +58,7 @@ describe("menú v2 (HU-UX-02)", () => {
   });
 
   it("las rutas que salieron del menú siguen protegidas por connections", () => {
-    for (const ruta of ["/plantillas", "/plantillas/eventos", "/conexiones/requisitos", "/conexiones/produccion"]) {
+    for (const ruta of ["/plantillas", "/plantillas/eventos", "/plantillas-opciones", "/plantillas-opciones/confirmar_cita", "/conexiones/requisitos", "/conexiones/produccion"]) {
       expect(
         puedeVerRuta(ruta, { permisos: { connections: "read" }, esMaster: false, negocioId: "t" }),
         ruta,
@@ -135,58 +139,65 @@ describe("navegación del shell (HU-DS-04)", () => {
       { label: "Carteras", href: "/cobranza/carteras" },
       { label: "Cartera Norte" },
     ]);
+    // Un cliente cuelga de su cartera: los padres de datos van entre la pestaña y el título.
+    expect(
+      migasPara("/cobranza/carteras/7/clientes/42", grupos, "Ana Pérez", [
+        { label: "Cartera Norte", href: "/cobranza/carteras/7" },
+        { label: "Clientes", href: "/cobranza/carteras/7/clientes" },
+      ]),
+    ).toEqual([
+      { label: "Negocio" },
+      { label: "Cobranza", href: "/cobranza" },
+      { label: "Carteras", href: "/cobranza/carteras" },
+      { label: "Cartera Norte", href: "/cobranza/carteras/7" },
+      { label: "Clientes", href: "/cobranza/carteras/7/clientes" },
+      { label: "Ana Pérez" },
+    ]);
     // En la portada de la entrada, la entrada no se enlaza a sí misma.
-    expect(migasPara("/calendario/citas", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }, { label: "Calendario" }]);
+    expect(migasPara("/calendario", grupos)).toEqual([{ label: "Negocio" }, { label: "Agenda" }]);
     expect(migasPara("/dashboard", grupos)).toEqual([{ label: "Operación" }, { label: "Resumen" }]);
   });
 
   it("pestañas: las de la entrada y, con subgrupos, las del subgrupo actual", () => {
-    expect(pestanasPara("/calendario/tipos", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
+    expect(pestanasPara("/calendario", grupos).pestanas).toEqual([]);
     const cobranza = pestanasPara("/cobranza/reglas", grupos);
     expect(cobranza.subgrupos).toEqual([
-      { href: "/cobranza", label: "Operación" },
-      { href: "/cobranza/monitoreo", label: "Monitoreo" },
-      { href: "/cobranza/alertas", label: "Seguridad" },
+      { href: "/cobranza", label: "Resumen" },
+      { href: "/cobranza/carteras", label: "Carteras" },
+      { href: "/cobranza/pagos", label: "Actividad" },
+      { href: "/cobranza/gestores", label: "Equipo" },
+      { href: "/cobranza/monitoreo", label: "Asistente" },
     ]);
     expect(cobranza.subgrupoActual).toBe("/cobranza/monitoreo");
     expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Monitoreo IA", "Reglas de negociación"]);
+    // Carteras y Resumen son áreas de una sola sección: sin segunda fila. Clientes es una página oculta.
+    expect(pestanasPara("/cobranza/carteras/7", grupos).pestanas).toEqual([]);
+    expect(pestanasPara("/cobranza/clientes", grupos)).toMatchObject({ pestanas: [], subgrupoActual: "/cobranza/carteras" });
     expect(pestanasPara("/dashboard", grupos)).toEqual({ subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] });
   });
 
+  it("quien solo tiene Alertas de acceso sigue viéndolas en Equipo, sin 403", () => {
+    const soloAlertas = gruposVisibles({ "pack_cobranza:alertas": "read" });
+    expect(puedeVerRuta("/cobranza/alertas", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
+    expect(puedeVerRuta("/cobranza/dispositivos", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(false);
+    expect(pestanasPara("/cobranza/alertas", soloAlertas).subgrupos).toEqual([]);
+  });
+
   it("las pestañas respetan los permisos", () => {
-    const parcial = gruposVisibles({ "pack_calendar:citas": "read", "pack_calendar:tipos": "read" });
-    expect(pestanasPara("/calendario/citas", parcial).pestanas.map((p) => p.label)).toEqual(["Calendario", "Tipos de cita"]);
-    const una = gruposVisibles({ "pack_calendar:citas": "read" });
-    expect(pestanasPara("/calendario/citas", una).pestanas).toEqual([]);
+    const parcial = gruposVisibles({ "pack_commerce": "read" });
+    expect(pestanasPara("/comercio", parcial).pestanas.length).toBeGreaterThan(0);
+    const sin = gruposVisibles({});
+    expect(pestanasPara("/comercio", sin).pestanas).toEqual([]);
   });
 });
 
-describe("Agenda unificada (HU-UX-08)", () => {
-  const AGENDA: [string, string][] = [
-    ["/calendario/citas", "pack_calendar:citas"],
-    ["/calendario/tipos", "pack_calendar:tipos"],
-    ["/calendario/horario", "pack_calendar:configuracion"],
-    ["/calendario/bloqueos", "pack_calendar:bloqueos"],
-    ["/calendario", "pack_calendar:conexion"],
-  ];
-
-  it("Agenda abre en el Calendario y Bloqueos ya no es pestaña", () => {
+describe("Agenda en una sola vista (HU-CAL-08)", () => {
+  it("Agenda es un solo ítem que abre en /calendario y se ve con el permiso de citas", () => {
     const agenda = grupos.flatMap((g) => g.visible).find((i) => i.label === "Agenda")!;
-    expect(agenda.href).toBe("/calendario/citas");
-    expect(pestanasPara("/calendario/citas", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
-  });
-
-  it("cada ruta de la agenda sigue protegida por su propia clave", () => {
-    for (const [ruta, clave] of AGENDA) {
-      const todas = Object.fromEntries(AGENDA.map(([, c]) => [c, "read"]));
-      expect(puedeVerRuta(ruta, { permisos: todas, esMaster: false, negocioId: "t" })).toBe(true);
-      const sinClave = { ...todas, [clave]: null };
-      expect(puedeVerRuta(ruta, { permisos: sinClave, esMaster: false, negocioId: "t" }), ruta).toBe(false);
-    }
+    expect(agenda.href).toBe("/calendario");
+    expect(agenda.tabs).toBeUndefined();
+    expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
+    expect(puedeVerRuta("/calendario", { permisos: { "pack_calendar:citas": null }, esMaster: false, negocioId: "t" })).toBe(false);
   });
 
   it("en /comercio/aliados (oculta, HU-CRM-03) se ven las pestañas de Ventas sin «Aliados»", () => {
@@ -197,17 +208,6 @@ describe("Agenda unificada (HU-UX-08)", () => {
       { label: "Negocio" },
       { label: "Ventas", href: "/comercio" },
       { label: "Aliados" },
-    ]);
-  });
-
-  it("en /calendario/bloqueos se ven las pestañas de Agenda y las migas la ubican", () => {
-    expect(pestanasPara("/calendario/bloqueos", grupos).pestanas.map((p) => p.label)).toEqual([
-      "Calendario", "Tipos de cita", "Horario", "Google Calendar",
-    ]);
-    expect(migasPara("/calendario/bloqueos", grupos)).toEqual([
-      { label: "Negocio" },
-      { label: "Agenda", href: "/calendario/citas" },
-      { label: "Bloqueos" },
     ]);
   });
 });

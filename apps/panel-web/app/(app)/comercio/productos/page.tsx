@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CsvImportDialog } from "@/app/(app)/comercio/productos/_components/csv-import-dialog";
 import { ProductDialog } from "@/app/(app)/comercio/productos/_components/product-dialog";
+import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
 import { FotoProducto } from "@/components/comercio/foto-producto";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { SIN_ALIADO, filtroDeAliado, nombreDelAliado, type Aliado, type ModulosComercio } from "@/lib/aliados";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
+import type { EstadoDatosDePruebaModulo, MinimoPagoEnLineaOut } from "@/lib/api/types";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { TIPOS_DE_PRODUCTO, filtrarPorTipo, planDelProducto } from "@/lib/suscripciones";
 
@@ -52,10 +54,12 @@ export default async function ProductsPage({
   const sp = await searchParams;
   const filtro = conAliados ? filtroDeAliado(sp.aliado) : null;
   const tipo = TIPOS_DE_PRODUCTO.some((t) => t.value === sp.tipo) ? sp.tipo : undefined;
-  const [productsRes, categoriesRes, alliesRes] = await Promise.all([
+  const [productsRes, categoriesRes, alliesRes, minimoRes, datosPruebaRes] = await Promise.all([
     apiFetch<Product[]>(`/pack/commerce/products${filtro ? `?ally_id=${filtro}` : ""}`),
     apiFetch<Category[]>("/pack/commerce/categories"),
     conAliados ? apiFetch<Aliado[]>("/pack/commerce/allies") : Promise.resolve(null),
+    apiFetch<MinimoPagoEnLineaOut>("/pack/commerce/pago-en-linea/minimo"),
+    apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/ventas"),
   ]);
   if (!productsRes.ok) {
     return (
@@ -69,6 +73,8 @@ export default async function ProductsPage({
   const allies = conAliados ? (alliesRes?.ok ? alliesRes.data : []) : null;
   const products = filtrarPorTipo(productsRes.data, tipo);
   const currency = await getBusinessCurrency();
+  // HU-SUB-25: si no se pudo saber el mínimo, el diálogo no avisa (mejor callar que inventar una cifra).
+  const minimo = minimoRes.ok ? minimoRes.data : null;
 
   const columns: Column<Product>[] = [
     {
@@ -142,6 +148,8 @@ export default async function ProductsPage({
           }}
           categories={categories}
           allies={allies}
+          minimo={minimo}
+          moneda={currency}
         />
       ),
     },
@@ -160,10 +168,13 @@ export default async function ProductsPage({
               </Button>
             )}
             <CsvImportDialog allies={allies} />
-            <ProductDialog categories={categories} allies={allies} />
+            <ProductDialog categories={categories} allies={allies} minimo={minimo} moneda={currency} />
           </div>
         }
       />
+      {datosPruebaRes.ok && (
+        <DatosDePruebaDelModulo modulo="ventas" estado={datosPruebaRes.data} />
+      )}
       <form method="get" className="flex flex-wrap items-end gap-3">
         <Field label="Tipo" htmlFor="filtro-tipo" className="w-56">
           <Select id="filtro-tipo" name="tipo" defaultValue={tipo ?? ""}>

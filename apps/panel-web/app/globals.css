@@ -183,6 +183,101 @@ body {
   }
 }
 
+/* Centro de notificaciones (ADR-0167): apertura y cierre animados con los tokens de motion.
+   Radix espera el `animationend` de la salida antes de desmontar. Entra con fade + un
+   desplazamiento corto (overlay 200 ms, salida más rápida); la hoja de celular sube desde abajo
+   con la curva enfática. `prefers-reduced-motion` ya lo reduce a ~0 de forma global. */
+@keyframes sh-notif-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sh-notif-sale {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+@keyframes sh-notif-sube {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes sh-notif-baja {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes sh-notif-fundido-entra {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sh-notif-fundido-sale {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes sh-notif-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.sh-notif-popover {
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.sh-notif-popover[data-state="open"] {
+  animation: sh-notif-entra var(--sh-motion-duration-base) var(--sh-motion-easing-out);
+}
+.sh-notif-popover[data-state="closed"] {
+  animation: sh-notif-sale var(--sh-motion-duration-fast) var(--sh-motion-easing-in) forwards;
+}
+.sh-notif-hoja[data-state="open"] {
+  animation: sh-notif-sube var(--sh-motion-duration-slow) var(--sh-motion-easing-emphasized);
+}
+.sh-notif-hoja[data-state="closed"] {
+  animation: sh-notif-baja var(--sh-motion-duration-base) var(--sh-motion-easing-in) forwards;
+}
+.sh-notif-overlay[data-state="open"] {
+  animation: sh-notif-fundido-entra var(--sh-motion-duration-base) var(--sh-motion-easing-out);
+}
+.sh-notif-overlay[data-state="closed"] {
+  animation: sh-notif-fundido-sale var(--sh-motion-duration-fast) var(--sh-motion-easing-in) forwards;
+}
+.sh-notif-globo {
+  animation: sh-notif-pop var(--sh-motion-duration-base) var(--sh-motion-easing-out);
+}
+.sh-notif-fila-nueva {
+  animation: sh-notif-fundido-entra var(--sh-motion-duration-base) var(--sh-motion-easing-out);
+}
+
 /* Recorrido guiado (HU-SH-06): el elemento del paso actual se resalta con el acento de datos,
    sin animación (DESIGN.md · motion sobrio). */
 [data-tour-activo="true"] {
@@ -212,6 +307,26 @@ body {
 .agenda-grilla .fc-toolbar-title {
   font-family: var(--sh-font-display);
   font-size: 1.125rem;
+}
+/* En pantallas angostas la barra pasa a dos filas: título arriba, navegación y vistas debajo. */
+@media (max-width: 640px) {
+  .agenda-grilla .fc-header-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+    order: -1;
+    flex-basis: 100%;
+    text-align: center;
+  }
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(1),
+  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+    flex: 1 1 auto;
+  }
+  .agenda-grilla .fc-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
 }
 /* Franjas de media hora más altas: una cita de 20-30 min deja leer hora, código y cliente. */
 .agenda-grilla .fc-timegrid-slot {

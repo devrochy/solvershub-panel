@@ -34,14 +34,14 @@ describe("primeros pasos (HU-SH-06)", () => {
       href: "/comercio/productos",
     });
     expect(copiaDelPaso(paso({ clave: "catalogo", tipo: "servicios", pack: "pack_calendar" })).href).toBe(
-      "/calendario/tipos",
+      "/calendario?ajustes=tipos",
     );
     expect(copiaDelPaso(paso({ clave: "catalogo", tipo: "cartera", pack: "pack_cobranza" })).href).toBe(
       "/cobranza/clientes",
     );
     expect(copiaDelPaso(paso({ clave: "catalogo", motivo: "sin_habilidad" }))).toMatchObject({
-      href: "/habilidades",
-      accion: "Ver habilidades",
+      href: "/agentes/nuevo",
+      accion: "Crear mi agente",
     });
   });
 

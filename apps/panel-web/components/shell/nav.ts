@@ -5,11 +5,14 @@ import {
   Coins,
   CreditCard,
   FlaskConical,
+  Gauge,
   type LucideIcon,
+  Network,
   HandCoins,
   LayoutDashboard,
   LogIn,
   MessageSquare,
+  MessagesSquare,
   UserRoundPlus,
   PlayCircle,
   Plug,
@@ -26,17 +29,11 @@ import {
   BarChart3,
   BellRing,
   Bot,
-  CalendarX,
-  Clock,
   Handshake,
-  Landmark,
-  Link2,
   Package,
-  Receipt,
   Repeat,
   Scale,
   ScrollText,
-  Shapes,
   Smartphone,
   Tags,
   Wallet,
@@ -56,7 +53,7 @@ export type NavItem = {
   ready: boolean;
   /** true = enlace al panel clásico (SSR): se marca con ↗. */
   legacy?: boolean;
-  /** Subgrupo de pestañas dentro de una entrada (Cobranza: Operación, Monitoreo, Seguridad). */
+  /** Subgrupo de pestañas dentro de una entrada (Cobranza: Resumen, Carteras, Actividad, Equipo, Asistente). */
   sub?: string;
   /**
    * true = solo para el admin de plataforma (`role === "master"`), aunque la sección esté en
@@ -121,7 +118,14 @@ export const NAV_GROUPS: NavGroupDef[] = [
     items: [
       entrada("Agentes", Bot, [
         { section: "agents", label: "Agentes", href: "/agentes", icon: Bot, ready: true },
+        // HU-AOS-26: permisos entre agentes y «Probar una frase» (escribe en `settings`, como el editor).
+        { section: "settings", label: "Colaboración", href: "/agentes/colaboracion", icon: Network, ready: true },
+        // HU-AOS-29: tablero de fiabilidad (escalamiento, verificador, completitud y consistencia).
+        { section: "agents", label: "Calidad", href: "/agentes/calidad", icon: Gauge, ready: true },
         { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true },
+        // ADR-0178 (pista D0): catálogo de solo lectura de los mensajes al cliente. El backend filtra cada tipo por la
+        // sección de su fuente (connections, settings, plugins); la entrada se ve con `connections`, como las plantillas.
+        { section: "connections", label: "Mensajes", href: "/mensajes", icon: MessagesSquare, ready: true },
       ]),
       // Plantillas, Producción y Requisitos de Meta se gestionan desde cada conexión Meta.
       { section: "connections", label: "Conexiones", href: "/conexiones", icon: Plug, ready: true },
@@ -131,22 +135,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
     id: "negocio",
     label: "Negocio",
     items: [
-      entrada(
-        "Agenda",
-        CalendarDays,
-        [
-          { section: "pack_calendar:citas", label: "Calendario", href: "/calendario/citas", icon: CalendarDays, ready: true },
-          { section: "pack_calendar:tipos", label: "Tipos de cita", href: "/calendario/tipos", icon: Shapes, ready: true },
-          // Misma clave que el backend (`pack_calendar:configuracion`, «Horarios y calendario»).
-          { section: "pack_calendar:configuracion", label: "Horario", href: "/calendario/horario", icon: Clock, ready: true },
-          // Google Calendar pasa a la ficha de su conexión con HU-UX-09; hasta entonces queda aquí.
-          { section: "pack_calendar:conexion", label: "Google Calendar", href: "/calendario", icon: Link2, ready: true },
-          // HU-UX-08: los bloqueos se crean y se arrastran en el Calendario. Va al final para
-          // que la entrada nunca abra en ella si el usuario ve el Calendario.
-          { section: "pack_calendar:bloqueos", label: "Bloqueos", href: "/calendario/bloqueos", icon: CalendarX, ready: true, oculta: true },
-        ],
-        { pack: "pack_calendar" },
-      ),
+      // HU-CAL-08: Agenda es una sola vista; tipos, horario, agendas y Google se abren en su cajón
+      // de ajustes y la cuenta de Google vive en la ficha de su conexión.
+      { section: "pack_calendar:citas", label: "Agenda", href: "/calendario", icon: CalendarDays, ready: true, pack: "pack_calendar" },
       entrada(
         "Ventas",
         ShoppingCart,
@@ -178,20 +169,19 @@ export const NAV_GROUPS: NavGroupDef[] = [
         "Cobranza",
         HandCoins,
         [
-          { label: "Resumen", href: "/cobranza", section: "pack_cobranza:resumen", icon: LayoutDashboard, sub: "Operación", ready: true },
-          { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Operación", ready: true },
-          { label: "Carteras", href: "/cobranza/carteras", section: "pack_cobranza:carteras", icon: Wallet, sub: "Operación", ready: true },
-          { label: "Clientes", href: "/cobranza/clientes", section: "pack_cobranza:clientes", icon: Users, sub: "Operación", ready: true },
-          { label: "Cobros al propietario", href: "/cobranza/cobros", section: "pack_cobranza:cobros", icon: Receipt, sub: "Operación", ready: true },
-          { label: "Pagos de clientes", href: "/cobranza/pagos", section: "pack_cobranza:cobros", icon: Banknote, sub: "Operación", ready: true },
-          { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: Handshake, sub: "Operación", ready: true },
-          { label: "Propietario", href: "/cobranza/propietario", section: "pack_cobranza:propietario", icon: Landmark, sub: "Operación", ready: true },
-          { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Operación", ready: true },
-          { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Monitoreo", ready: true },
-          { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Monitoreo", ready: true },
-          { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: BellRing, sub: "Seguridad", ready: true },
-          { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Seguridad", ready: true },
-          { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: Smartphone, sub: "Seguridad", ready: true },
+          { label: "Resumen", href: "/cobranza", section: "pack_cobranza:resumen", icon: LayoutDashboard, sub: "Resumen", ready: true },
+          { label: "Carteras", href: "/cobranza/carteras", section: "pack_cobranza:carteras", icon: Wallet, sub: "Carteras", ready: true },
+          // El cliente es hijo de la cartera: se llega desde su ficha y desde «Buscar cliente» en Carteras.
+          { label: "Clientes", href: "/cobranza/clientes", section: "pack_cobranza:clientes", icon: Users, sub: "Carteras", ready: true, oculta: true },
+          { label: "Pagos", href: "/cobranza/pagos", section: "pack_cobranza:cobros", icon: Banknote, sub: "Actividad", ready: true },
+          { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: Handshake, sub: "Actividad", ready: true },
+          { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Actividad", ready: true },
+          { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Equipo", ready: true },
+          { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: Smartphone, sub: "Equipo", ready: true },
+          { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: BellRing, sub: "Equipo", ready: true },
+          { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Equipo", ready: true },
+          { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Asistente", ready: true },
+          { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Asistente", ready: true },
         ],
         { pack: "pack_cobranza" },
       ),

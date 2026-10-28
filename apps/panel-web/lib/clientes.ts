@@ -119,7 +119,7 @@ export function enlaceDeEvento(linkKind?: string | null, linkId?: string | null)
   if (!linkKind || !linkId) return null;
   if (linkKind === "conversation") return `/conversaciones?c=${encodeURIComponent(linkId)}`;
   if (linkKind === "order") return "/comercio/pedidos";
-  if (linkKind === "appointment") return "/calendario/citas";
+  if (linkKind === "appointment") return "/calendario";
   return null;
 }
 
