@@ -218,6 +218,15 @@ export type KnowledgeDocument = components["schemas"]["DocumentoOut"];
 export type EstadoDatosDePrueba = components["schemas"]["EstadoDatosDePrueba"];
 export type LoteGenerado = components["schemas"]["LoteGenerado"];
 export type DatosRetirados = components["schemas"]["DatosRetirados"];
+/** Estado de los datos de prueba de un módulo (local hasta que `schema.d.ts` lo traiga de develop). */
+export type EstadoDatosDePruebaModulo = {
+  modulo: string;
+  titulo: string;
+  disponible: boolean;
+  motivo: string | null;
+  falta_descripcion: boolean;
+  lote: EstadoDatosDePrueba["lote"];
+};
 /** Campo de un pack editable desde la ficha (ADR-0149). Local hasta que `schema.d.ts` lo traiga de develop. */
 export type LeadEditable = {
   plugin_id: string;

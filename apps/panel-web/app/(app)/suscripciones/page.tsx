@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
+import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
 import { StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
 import { DashboardPage } from "@/components/templates/dashboard-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -8,6 +9,7 @@ import { KpiTile } from "@/components/ui/kpi-tile";
 import { apiFetch } from "@/lib/api/server";
 import type {
   CohorteSuscripciones,
+  EstadoDatosDePruebaModulo,
   MetricasSuscripciones,
   SubscriptionProviderSettings,
   SuscripcionItem,
@@ -33,12 +35,20 @@ function delta(actual: number, anterior: number, versus = ANTERIOR) {
 }
 
 export default async function ResumenSuscripcionesPage() {
-  const [metricas, conMora, proveedor] = await Promise.all([
+  const [metricas, conMora, proveedor, datosPrueba] = await Promise.all([
     apiFetch<MetricasSuscripciones>("/pack/pack_subscriptions/metricas"),
     apiFetch<SuscripcionesPage>("/pack/pack_subscriptions/suscripciones?con_mora=true&page_size=5"),
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
+    apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/suscripciones"),
   ]);
-  const aviso = <AvisoDeAlcance proveedor={proveedor.ok ? proveedor.data : null} />;
+  const aviso = (
+    <>
+      <AvisoDeAlcance proveedor={proveedor.ok ? proveedor.data : null} />
+      {datosPrueba.ok && (
+        <DatosDePruebaDelModulo modulo="suscripciones" estado={datosPrueba.data} />
+      )}
+    </>
+  );
   const cabecera = {
     title: "Suscripciones",
     description: "Tu ingreso recurrente, las altas y bajas del mes, la mora y cuánto se quedan los clientes.",
