@@ -1,5 +1,6 @@
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
 import { PageHeader } from "@/components/ui/page-header";
+import type { AvisoDatos } from "@/lib/aviso-datos";
 import { puedeEditarDatosCliente, type PoliticaDatos } from "@/lib/datos-cliente";
 import { apiFetch } from "@/lib/api/server";
 import type {
@@ -28,7 +29,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const tab = (await searchParams).tab;
-  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, meRes] = await Promise.all([
+  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, avisoRes, meRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
     apiFetch<WebChatSettings>("/admin/settings/web-chat"),
@@ -38,6 +39,8 @@ export default async function SettingsPage({
     apiFetch<BajasSettings>("/admin/settings/bajas"),
     // Qué datos del cliente pide cada acción del agente (HU-CRM-13).
     apiFetch<PoliticaDatos>("/admin/datos-cliente/politica"),
+    // Aviso de tratamiento de datos y consentimiento del cliente (HU-CRM-16).
+    apiFetch<AvisoDatos>("/admin/datos-cliente/aviso"),
     apiFetch<Me>("/admin/me"),
   ]);
   if ((!res.ok && res.status === 403) || (!advancedRes.ok && advancedRes.status === 403)) {
@@ -80,6 +83,8 @@ export default async function SettingsPage({
           politica: datosRes.ok ? datosRes.data : null,
           error: datosRes.ok ? undefined : datosRes.error,
           puedeEditar: meRes.ok && puedeEditarDatosCliente(meRes.data),
+          aviso: avisoRes.ok ? avisoRes.data : null,
+          avisoError: avisoRes.ok ? undefined : avisoRes.error,
         }}
       />
     </div>

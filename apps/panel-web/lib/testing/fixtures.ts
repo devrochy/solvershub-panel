@@ -3,6 +3,7 @@
  * (HU-UI-04). Datos ficticios con prefijo `test-`. Van tipadas con los tipos generados
  * del OpenAPI: si el contrato cambia, el typecheck obliga a actualizarlas.
  */
+import type { AvisoDatos } from "@/lib/aviso-datos";
 import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   AgendaCalendario,
@@ -1211,8 +1212,17 @@ export const politicaDatosCliente: PoliticaDatos = {
   ],
 };
 
+export const avisoDatos: AvisoDatos = {
+  activo: false,
+  texto: "Usamos tus datos para atenderte. Responde «acepto» si estás de acuerdo.",
+  texto_propio: "",
+  es_borrador: true,
+  version: "abc123def456",
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/datos-cliente/politica": politicaDatosCliente,
+  "/admin/datos-cliente/aviso": avisoDatos,
   "/mensajes/catalogo": catalogoDeMensajes,
   "/admin/me": me,
   "/admin/agents/overview": agentes,
