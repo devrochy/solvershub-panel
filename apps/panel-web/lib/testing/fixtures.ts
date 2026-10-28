@@ -920,6 +920,7 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   mrr_mes_anterior: 350000,
   activas: 5,
   en_prueba: 1,
+  pendientes_de_pago: 0,
   pausadas: 1,
   vencidas: 0,
   canceladas: 2,
