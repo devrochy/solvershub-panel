@@ -21,20 +21,14 @@ export type DestinoResumen = components["schemas"]["DestinoOut"];
 export type BillingSummary = components["schemas"]["BillingSummary"];
 export type UsageMetric = components["schemas"]["UsageMetric"];
 
-// `pending_count` es local hasta que el backend con la columna esté en `develop` y se
-// regeneren los tipos (mismo criterio que los tipos de media de más abajo).
-export type ConversationSummary = components["schemas"]["ConversationSummary"] & {
-  pending_count?: number;
-};
+export type ConversationSummary = components["schemas"]["ConversationSummary"];
 export type ConversationDetail = components["schemas"]["ConversationDetail"];
 export type MessageItem = components["schemas"]["MessageItem"];
 export type MessagesSince = components["schemas"]["MessagesSince"];
 export type ConversationConnection = components["schemas"]["ConversationConnection"];
 export type ActiveEscalation = components["schemas"]["ActiveEscalation"];
 export type ConversationNote = components["schemas"]["ConversationNote"];
-export type ConversationPage = Omit<components["schemas"]["Page_ConversationSummary_"], "items"> & {
-  items: ConversationSummary[];
-};
+export type ConversationPage = components["schemas"]["Page_ConversationSummary_"];
 
 export type PluginSummary = components["schemas"]["PluginSummary"];
 export type PluginConfigResponse = components["schemas"]["PluginConfigResponse"];
