@@ -6,6 +6,7 @@ import { Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Switch } from "@/components/ui/switch";
 import {
   agruparPorModulo,
   cambiosDeAccion,
@@ -62,6 +63,33 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
     setEstado(estadoInicial(politica));
   }
   const { run, pending } = useAction();
+  const [herramientas, setHerramientas] = useState(politica.herramientas_del_agente);
+  const [vistaHerramientas, setVistaHerramientas] = useState(politica.herramientas_del_agente);
+  if (vistaHerramientas !== politica.herramientas_del_agente) {
+    setVistaHerramientas(politica.herramientas_del_agente);
+    setHerramientas(politica.herramientas_del_agente);
+  }
+
+  async function cambiarHerramientas(activo: boolean) {
+    setHerramientas(activo);
+    await run(async () => {
+      const res = await fetch("/api/datos-cliente/politica", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ herramientas_del_agente: activo }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
+      if (!res.ok) {
+        setHerramientas(!activo);
+        const texto = typeof json.error === "string" ? json.error : undefined;
+        return { ok: false, status: res.status, error: mensajeDeErrorAlGuardar(res.status, texto) };
+      }
+      return {
+        ok: true,
+        success: activo ? "El agente ya puede consultar estos datos." : "El agente dejó de consultar estos datos.",
+      };
+    });
+  }
 
   const grupos = agruparPorModulo(politica.acciones);
   const sinGuardar = hayCambios(politica, estado);
@@ -91,6 +119,26 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
           pedir. Los cambios aplican a las próximas conversaciones.
         </p>
       </div>
+
+      <Card>
+        <CardContent className="flex items-start justify-between gap-4 pt-5">
+          <div className="min-w-0">
+            <p id="herramientas-titulo" className="text-sm font-medium text-headline">
+              Que el agente consulte estos datos y el historial del cliente
+            </p>
+            <p className="mt-1 max-w-xl text-sm text-text-soft">
+              El agente verá qué datos faltan antes de pedirlos, y un resumen de lo que el cliente tiene en Ventas, Agenda,
+              Suscripciones y Cobranza. Está apagado hasta que lo enciendas; el cambio aplica a las próximas conversaciones.
+            </p>
+          </div>
+          <Switch
+            checked={herramientas}
+            onCheckedChange={cambiarHerramientas}
+            disabled={!puedeEditar || pending}
+            aria-label="Que el agente consulte los datos y el historial del cliente"
+          />
+        </CardContent>
+      </Card>
 
       {grupos.length === 0 ? (
         <Card>

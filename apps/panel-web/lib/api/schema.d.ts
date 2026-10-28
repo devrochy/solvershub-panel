@@ -6317,6 +6317,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/mensajes/guardados/catalogo-opciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Catalogo Opciones
+         * @description Canales y variables que el formulario puede ofrecer, y los topes de largo.
+         */
+        get: operations["catalogo_opciones_api_v1_mensajes_guardados_catalogo_opciones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mensajes/guardados/vista-previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vista Previa
+         * @description El texto con valores de muestra, sin guardar ni enviar nada. 422 con el mismo código que al guardar si el texto
+         *     no es válido (`texto_invalido`, `variable_no_permitida`).
+         */
+        post: operations["vista_previa_api_v1_mensajes_guardados_vista_previa_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mensajes/guardados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["listar_api_v1_mensajes_guardados_get"];
+        put?: never;
+        /**
+         * Crear
+         * @description Crea un mensaje guardado. 409 `clave_repetida` si el negocio ya tiene uno vivo con esa clave; 409
+         *     `limite_de_mensajes` al pasar el tope; 422 por texto, variables, canales o estado inválidos.
+         */
+        post: operations["crear_api_v1_mensajes_guardados_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mensajes/guardados/{clave}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obtener */
+        get: operations["obtener_api_v1_mensajes_guardados__clave__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Eliminar
+         * @description Borra (lógicamente) el mensaje y libera su clave.
+         */
+        delete: operations["eliminar_api_v1_mensajes_guardados__clave__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Editar
+         * @description Cambia solo los campos que llegan; `estado: archivado` lo archiva y `activo` lo reactiva. 422 `sin_cambios` si
+         *     no llega ninguno.
+         */
+        patch: operations["editar_api_v1_mensajes_guardados__clave__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/meta/wizard/resume": {
         parameters: {
             query?: never;
@@ -8969,7 +9058,7 @@ export interface components {
              * Truncado
              * @description Tipos que pasaron el tope por tipo: la lista está recortada.
              */
-            truncado: ("meta" | "evento" | "opciones" | "texto_pack")[];
+            truncado: ("meta" | "evento" | "opciones" | "texto_pack" | "guardado")[];
         };
         /** CategoryOut */
         CategoryOut: {
@@ -10065,6 +10154,11 @@ export interface components {
             fallback_text_by_channel: {
                 [key: string]: string;
             };
+            /**
+             * Option Template
+             * @default
+             */
+            option_template: string;
         };
         /** Expense */
         Expense: {
@@ -10205,6 +10299,25 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** GuardadoError */
+        GuardadoError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * GuardadoErrorOut
+         * @description El sobre de error de la API (`{error: {code, message, details?}}`). En un 422, `details` trae los valores
+         *     válidos (`permitidas`) y, según el caso, los inválidos (`desconocidas`, `invalidos`).
+         */
+        GuardadoErrorOut: {
+            error: components["schemas"]["GuardadoError"];
         };
         /** GuardrailsSettings */
         GuardrailsSettings: {
@@ -11694,6 +11807,23 @@ export interface components {
         OpcionesErrorOut: {
             error: components["schemas"]["OpcionesError"];
         };
+        /**
+         * OpcionesGuardadoOut
+         * @description Lo que el formulario de edición ofrece: canales y variables válidos.
+         */
+        OpcionesGuardadoOut: {
+            /**
+             * Canales
+             * @description `ConnectionType.id` que se pueden elegir (más `todos`, que equivale a la lista vacía).
+             */
+            canales: string[];
+            /** Variables */
+            variables: components["schemas"]["VariablePermitidaOut"][];
+            /** Max Texto */
+            max_texto: number;
+            /** Max Titulo */
+            max_titulo: number;
+        };
         /** OpcionesHallazgoOut */
         OpcionesHallazgoOut: {
             /**
@@ -12457,10 +12587,16 @@ export interface components {
             niveles: ("requerido" | "recomendado" | "no_pedir")[];
             /** Acciones */
             acciones: components["schemas"]["AccionPoliticaOut"][];
+            /**
+             * Herramientas Del Agente
+             * @default false
+             */
+            herramientas_del_agente: boolean;
         };
         /**
          * PoliticaDatosUpdate
          * @description `{accion_id: {clave: nivel}}`. Lo que no viene para una acción vuelve al valor del módulo.
+         *     Sin `politica` (None) no se tocan los ajustes: sirve para cambiar solo la bandera.
          */
         PoliticaDatosUpdate: {
             /** Politica */
@@ -12468,7 +12604,9 @@ export interface components {
                 [key: string]: {
                     [key: string]: "requerido" | "recomendado" | "no_pedir";
                 };
-            };
+            } | null;
+            /** Herramientas Del Agente */
+            herramientas_del_agente?: boolean | null;
         };
         /** Portfolio */
         Portfolio: {
@@ -14742,6 +14880,32 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** VistaPreviaGuardadoIn */
+        VistaPreviaGuardadoIn: {
+            /** Texto */
+            texto: string;
+            /**
+             * Ejemplos
+             * @description Valor de muestra por variable; si falta se usa uno genérico.
+             */
+            ejemplos?: {
+                [key: string]: string;
+            };
+        };
+        /** VistaPreviaGuardadoOut */
+        VistaPreviaGuardadoOut: {
+            /** Texto Renderizado */
+            texto_renderizado: string;
+            /** Variables */
+            variables: string[];
+            /**
+             * Ejemplos Usados
+             * @description El valor de muestra que se usó por variable.
+             */
+            ejemplos_usados: {
+                [key: string]: string;
+            };
+        };
         /** WawebState */
         WawebState: {
             /** Status */
@@ -16335,7 +16499,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "meta" | "evento" | "opciones" | "texto_pack";
+            tipo: "meta" | "evento" | "opciones" | "texto_pack" | "guardado";
             /** Clave */
             clave: string;
             /** Nombre */
@@ -16347,7 +16511,7 @@ export interface components {
             idioma: string | null;
             /**
              * Estado
-             * @description `meta`: el de Meta (`APPROVED`, `PENDING`…); `evento`: `sin_mapear`, `mapeado` o `plantilla_no_aprobada`; `opciones`: `draft`, `published` o `retired`; `texto_pack`: `por_defecto`, `personalizado` o `config_invalida`.
+             * @description `meta`: el de Meta (`APPROVED`, `PENDING`…); `evento`: `sin_mapear`, `mapeado` o `plantilla_no_aprobada`; `opciones`: `draft`, `published` o `retired`; `texto_pack`: `por_defecto`, `personalizado` o `config_invalida`; `guardado`: `borrador`, `activo` o `archivado`.
              */
             estado: string;
             /**
@@ -16357,7 +16521,7 @@ export interface components {
             estado_detalle: string | null;
             /**
              * Canales Soportados
-             * @description Canales por los que sale hoy (constante por tipo hasta la pista C1).
+             * @description Canales por los que sale hoy (de la tabla de capacidades por canal, pista C1). `guardado`: los canales de los tipos de conexión que el mensaje declara (todos si no declara ninguno); no promete envío: nada lo envía todavía.
              */
             canales_soportados: string[];
             /**
@@ -16377,10 +16541,92 @@ export interface components {
             resumen: string | null;
             /**
              * Actualizado En
-             * @description `meta`: la última sincronización con Meta (el estado puede estar desfasado: no se sincroniza al listar); `opciones`: la última edición. Nulo en `evento` y `texto_pack`.
+             * @description `meta`: la última sincronización con Meta (el estado puede estar desfasado: no se sincroniza al listar); `opciones` y `guardado`: la última edición. Nulo en `evento` y `texto_pack`.
              */
             actualizado_en: string | null;
             fuente: components["schemas"]["FuenteDeMensaje"];
+        };
+        /** MensajeGuardadoCrearIn */
+        MensajeGuardadoCrearIn: {
+            /**
+             * Clave
+             * @description Única entre los mensajes vivos del negocio.
+             */
+            clave: string;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Texto
+             * @description Hasta 1024 caracteres; solo variables permitidas.
+             */
+            texto: string;
+            /**
+             * Canales
+             * @description `ConnectionType.id` donde puede salir. Vacío o `todos`: todos los canales.
+             */
+            canales?: string[];
+            /**
+             * Estado
+             * @default borrador
+             * @enum {string}
+             */
+            estado: "borrador" | "activo";
+        };
+        /**
+         * MensajeGuardadoEditarIn
+         * @description Solo cambian los campos que llegan. La clave no se cambia.
+         */
+        MensajeGuardadoEditarIn: {
+            /** Titulo */
+            titulo?: string | null;
+            /** Texto */
+            texto?: string | null;
+            /** Canales */
+            canales?: string[] | null;
+            /** Estado */
+            estado?: ("borrador" | "activo" | "archivado") | null;
+        };
+        /** MensajeGuardadoOut */
+        MensajeGuardadoOut: {
+            /** Clave */
+            clave: string;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Texto
+             * @description Con variables `{cliente.nombre}`; conserva los saltos de línea.
+             */
+            texto: string;
+            /**
+             * Canales
+             * @description `ConnectionType.id` donde puede salir; vacío si es para todos.
+             */
+            canales: string[];
+            /**
+             * Todos Los Canales
+             * @description `canales` vacío: vale para todos los canales que atienden conversaciones.
+             */
+            todos_los_canales: boolean;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "borrador" | "activo" | "archivado";
+            /**
+             * Variables
+             * @description Las que cita el texto, en orden y sin repetir.
+             */
+            variables: string[];
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Actualizado En
+             * Format: date-time
+             */
+            actualizado_en: string;
         };
         /** MensajeOmitido */
         MensajeOmitido: {
@@ -16388,12 +16634,17 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "meta" | "evento" | "opciones" | "texto_pack";
+            tipo: "meta" | "evento" | "opciones" | "texto_pack" | "guardado";
             /**
              * Motivo
              * @enum {string}
              */
             motivo: "sin_permiso" | "bandera_apagada";
+        };
+        /** MensajesGuardadosOut */
+        MensajesGuardadosOut: {
+            /** Mensajes */
+            mensajes: components["schemas"]["MensajeGuardadoOut"][];
         };
         /** UnlinkRequest */
         UnlinkRequest: {
@@ -17053,7 +17304,7 @@ export interface components {
              * Editor
              * @enum {string}
              */
-            editor: "meta" | "evento" | "opciones" | "texto_pack";
+            editor: "meta" | "evento" | "opciones" | "texto_pack" | "guardado";
             /**
              * Connection Id
              * @description `meta`: la conexión de la WABA que tiene la plantilla.
@@ -17071,7 +17322,7 @@ export interface components {
             evento?: string | null;
             /**
              * Clave
-             * @description `opciones`: clave de la plantilla con opciones.
+             * @description `opciones` y `guardado`: clave de la plantilla o del mensaje guardado.
              */
             clave?: string | null;
             /**
@@ -17853,6 +18104,13 @@ export interface components {
              * @default
              */
             valor: string;
+        };
+        /** VariablePermitidaOut */
+        VariablePermitidaOut: {
+            /** Ruta */
+            ruta: string;
+            /** Descripcion */
+            descripcion: string;
         };
         /** VistaPreviaIn */
         VistaPreviaIn: {
@@ -33901,6 +34159,321 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalogo_opciones_api_v1_mensajes_guardados_catalogo_opciones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesGuardadoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vista_previa_api_v1_mensajes_guardados_vista_previa_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VistaPreviaGuardadoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaGuardadoOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+        };
+    };
+    listar_api_v1_mensajes_guardados_get: {
+        parameters: {
+            query?: {
+                /** @description Filtra por estado; sin él, todos los vivos. */
+                estado?: ("borrador" | "activo" | "archivado") | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensajesGuardadosOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+        };
+    };
+    crear_api_v1_mensajes_guardados_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MensajeGuardadoCrearIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensajeGuardadoOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+        };
+    };
+    obtener_api_v1_mensajes_guardados__clave__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensajeGuardadoOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    eliminar_api_v1_mensajes_guardados__clave__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_api_v1_mensajes_guardados__clave__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MensajeGuardadoEditarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensajeGuardadoOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardadoErrorOut"];
                 };
             };
         };

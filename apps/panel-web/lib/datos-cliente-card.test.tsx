@@ -101,6 +101,29 @@ describe("DatosClienteCard", () => {
     expect(within(grupo("Nombre (Crear un pedido)")).getByRole("radio", { name: "Recomendado" })).toHaveProperty("checked", true);
   });
 
+  it("el interruptor del agente guarda solo ese cambio y se revierte si falla", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ error: "No" }), { status: 500 }));
+    montar();
+    const interruptor = screen.getByRole("switch", { name: /consulte los datos y el historial/ });
+    expect(interruptor.getAttribute("aria-checked")).toBe("false");
+
+    fireEvent.click(interruptor);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/datos-cliente/politica");
+    expect(JSON.parse(init.body)).toEqual({ herramientas_del_agente: true });
+    await waitFor(() => expect(screen.getByRole("switch", { name: /consulte los datos/ }).getAttribute("aria-checked")).toBe("false"));
+
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(politicaDatosCliente), { status: 200 }));
+    fireEvent.click(screen.getByRole("switch", { name: /consulte los datos/ }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: /consulte los datos/ }).getAttribute("aria-checked")).toBe("true"));
+  });
+
+  it("sin permiso de escritura el interruptor del agente no se puede mover", () => {
+    montar({ puedeEditar: false });
+    expect(screen.getByRole("switch", { name: /consulte los datos/ })).toHaveProperty("disabled", true);
+  });
+
   it("sin permiso de escritura se ve en solo lectura, sin botones", () => {
     montar({ puedeEditar: false });
     expect(screen.getByText(/Solo puedes ver esta configuración/)).toBeTruthy();
@@ -110,7 +133,7 @@ describe("DatosClienteCard", () => {
   });
 
   it("sin acciones muestra el estado vacío", () => {
-    montar({ politica: { niveles: politicaDatosCliente.niveles, acciones: [] } });
+    montar({ politica: { ...politicaDatosCliente, acciones: [] } });
     expect(screen.getByText("Tu negocio aún no tiene agentes que pidan datos")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Guardar/ })).toBeNull();
   });

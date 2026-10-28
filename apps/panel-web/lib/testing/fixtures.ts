@@ -1188,6 +1188,7 @@ export const catalogoDeMensajes: CatalogoDeMensajes = {
 /** `/admin/datos-cliente/politica` (HU-CRM-13): qué datos del cliente pide cada acción del agente. */
 export const politicaDatosCliente: PoliticaDatos = {
   niveles: ["requerido", "recomendado", "no_pedir"],
+  herramientas_del_agente: false,
   acciones: [
     {
       id: "ventas.crear_pedido",

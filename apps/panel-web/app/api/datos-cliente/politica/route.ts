@@ -16,13 +16,30 @@ function politicaValida(valor: unknown): valor is Record<string, Record<string, 
   );
 }
 
-/** BFF: guarda qué datos del cliente pide el agente, reenviando el Bearer y el negocio activo. */
+/** BFF: guarda qué datos del cliente pide el agente y/o si el agente puede consultarlos como herramienta,
+ * reenviando el Bearer y el negocio activo. Cada parte es opcional; debe venir al menos una. */
 export async function PUT(request: Request) {
-  const body = (await request.json().catch(() => null)) as { politica?: unknown } | null;
-  if (!body || !politicaValida(body.politica)) {
+  const body = (await request.json().catch(() => null)) as {
+    politica?: unknown;
+    herramientas_del_agente?: unknown;
+  } | null;
+  const hayPolitica = body?.politica !== undefined;
+  const hayHerramientas = body?.herramientas_del_agente !== undefined;
+  if (
+    !body ||
+    (!hayPolitica && !hayHerramientas) ||
+    (hayPolitica && !politicaValida(body.politica)) ||
+    (hayHerramientas && typeof body.herramientas_del_agente !== "boolean")
+  ) {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
-  const res = await apiFetch("/admin/datos-cliente/politica", { method: "PUT", body: { politica: body.politica } });
+  const res = await apiFetch("/admin/datos-cliente/politica", {
+    method: "PUT",
+    body: {
+      ...(hayPolitica ? { politica: body.politica } : {}),
+      ...(hayHerramientas ? { herramientas_del_agente: body.herramientas_del_agente } : {}),
+    },
+  });
   if (!res.ok) {
     return NextResponse.json(
       { error: res.error, ...(res.fields ? { fields: res.fields } : {}) },
