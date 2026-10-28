@@ -55,6 +55,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Suscripciones · Pagos", () => import("@/app/(app)/suscripciones/pagos/page")],
   ["Agenda", () => import("@/app/(app)/calendario/page")],
   ["Plantillas con opciones", () => import("@/app/(app)/plantillas-opciones/page")],
+  ["Mensajes", () => import("@/app/(app)/mensajes/page")],
   ["Plantilla con opciones · Editor", () => import("@/app/(app)/plantillas-opciones/[clave]/page")],
 ];
 

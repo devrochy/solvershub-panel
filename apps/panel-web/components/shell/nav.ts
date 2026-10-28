@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LogIn,
   MessageSquare,
+  MessagesSquare,
   UserRoundPlus,
   PlayCircle,
   Plug,
@@ -122,6 +123,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
         // HU-AOS-29: tablero de fiabilidad (escalamiento, verificador, completitud y consistencia).
         { section: "agents", label: "Calidad", href: "/agentes/calidad", icon: Gauge, ready: true },
         { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true },
+        // ADR-0178 (pista D0): catálogo de solo lectura de los mensajes al cliente. El backend filtra cada tipo por la
+        // sección de su fuente (connections, settings, plugins); la entrada se ve con `connections`, como las plantillas.
+        { section: "connections", label: "Mensajes", href: "/mensajes", icon: MessagesSquare, ready: true },
       ]),
       // Plantillas, Producción y Requisitos de Meta se gestionan desde cada conexión Meta.
       { section: "connections", label: "Conexiones", href: "/conexiones", icon: Plug, ready: true },

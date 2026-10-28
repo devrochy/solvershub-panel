@@ -31,7 +31,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/comercio/promociones", "pack_commerce", false], ["/comercio/pedidos", "pack_commerce", false],
   // HU-CAL-08: Agenda es una sola vista; las rutas viejas (`/calendario/citas|tipos|horario|bloqueos`)
   // redirigen a ella y ya no son ítems del menú.
-  ["/calendario", "pack_calendar:citas", false], ["/asistente", "connections", false],
+  ["/calendario", "pack_calendar:citas", false], ["/asistente", "connections", false], ["/mensajes", "connections", false],
   ["/dlq", "settings", false], ["/tenants", "tenants", false], ["/plataforma/meta", "tenants", false],
   ["/plataforma/meta/embedded-signup", "tenants", false], ["/tenants/alta-automatica", "tenants", true],
   ["/pruebas", "qa", false],

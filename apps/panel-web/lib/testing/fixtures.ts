@@ -13,6 +13,7 @@ import type {
   AvisoDeCargo,
   CargosSuscripcionPage,
   CargoSuscripcion,
+  CatalogoDeMensajes,
   ClientesConSuscripcionPage,
   CollaboratorItem,
   ConnectionsConsole,
@@ -1118,7 +1119,40 @@ export const listaDeOpciones = {
   ],
 };
 
+// Catálogo unificado de mensajes (ADR-0178, pista D0): uno de cada tipo.
+export const catalogoDeMensajes: CatalogoDeMensajes = {
+  mensajes: [
+    {
+      id: "meta:c1:cobro_nuevo:es", tipo: "meta", clave: "cobro_nuevo", nombre: "cobro_nuevo", idioma: "es", estado: "APPROVED",
+      estado_detalle: "UTILITY", canales_soportados: ["whatsapp"], variables: ["1", "2"], dialecto_variables: "meta_posicionales",
+      resumen: "Hola {{1}}, tu cobro es {{2}}", actualizado_en: "2026-10-28T10:00:00Z",
+      fuente: { editor: "meta", connection_id: "c1", message_template_id: "m1" },
+    },
+    {
+      id: "evento:subscription.charge_created", tipo: "evento", clave: "subscription.charge_created", nombre: "subscription.charge_created",
+      idioma: "es", estado: "mapeado", estado_detalle: "cobro_nuevo", canales_soportados: ["whatsapp"], variables: ["cliente.nombre", "cargo.monto"],
+      dialecto_variables: "llaves_con_ruta", resumen: "Hola {cliente.nombre}, ya está tu cobro", actualizado_en: null,
+      fuente: { editor: "evento", evento: "subscription.charge_created" },
+    },
+    {
+      id: "opciones:confirmar_cita", tipo: "opciones", clave: "confirmar_cita", nombre: "Confirmar cita", idioma: null, estado: "published",
+      estado_detalle: "APPROVED", canales_soportados: ["whatsapp"], variables: ["cliente.nombre"], dialecto_variables: "llaves_con_ruta",
+      resumen: "Hola {cliente.nombre}, ¿confirmas tu cita?", actualizado_en: "2026-10-27T09:00:00Z",
+      fuente: { editor: "opciones", clave: "confirmar_cita" },
+    },
+    {
+      id: "texto_pack:pack_calendar:email_body_confirmed", tipo: "texto_pack", clave: "email_body_confirmed",
+      nombre: "Cuerpo del correo de confirmación", idioma: null, estado: "por_defecto", estado_detalle: "Agenda", canales_soportados: ["email"],
+      variables: ["cliente", "titulo", "fecha", "hora", "negocio"], dialecto_variables: "llaves_con_ruta", resumen: "Hola {cliente}, tu cita quedó agendada",
+      actualizado_en: null, fuente: { editor: "texto_pack", plugin_id: "pack_calendar", campo: "email_body_confirmed" },
+    },
+  ],
+  omitidas: [],
+  truncado: [],
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
+  "/mensajes/catalogo": catalogoDeMensajes,
   "/admin/me": me,
   "/admin/agents/overview": agentes,
   "/admin/agents": agentesDelNegocio,
