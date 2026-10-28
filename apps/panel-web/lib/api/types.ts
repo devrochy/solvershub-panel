@@ -291,3 +291,9 @@ export type InProgressMissing = components["schemas"]["InProgressMissing"];
 /** Agenda del módulo de agendamiento (HU-CAL-08, ADR-0170). */
 export type AgendaCalendario = components["schemas"]["CalendarOut"];
 export type ListaDeAgendas = components["schemas"]["CalendarListOut"];
+
+// Catálogo unificado de mensajes, de solo lectura (ADR-0178, pista D0).
+export type CatalogoDeMensajes = components["schemas"]["CatalogoDeMensajesOut"];
+export type MensajeDelCatalogo = components["schemas"]["MensajeDelCatalogo"];
+export type FuenteDeMensaje = components["schemas"]["FuenteDeMensaje"];
+export type MensajeOmitido = components["schemas"]["MensajeOmitido"];
