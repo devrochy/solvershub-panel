@@ -12,6 +12,9 @@ import {
   filtrarPorTipo,
   motivoOmitido,
   nombreDeMensaje,
+  TIPOS,
+  tipoAyuda,
+  tipoLabel,
   tiposVisibles,
 } from "./mensajes";
 
@@ -29,6 +32,10 @@ describe("enlace al editor de origen", () => {
     expect(enlaceAlEditor({ editor: "meta" })).toBeNull();
     expect(enlaceAlEditor({ editor: "opciones" })).toBeNull();
     expect(enlaceAlEditor({ editor: "texto_pack" })).toBeNull();
+  });
+
+  it("un mensaje guardado aún no tiene editor en el panel: sin enlace", () => {
+    expect(enlaceAlEditor({ editor: "guardado", clave: "saludo" })).toBeNull();
   });
 
   it("codifica la clave", () => {
@@ -79,12 +86,31 @@ describe("nombres, canales y filtros", () => {
 
   it("no ofrece la pestaña de un tipo oculto y sin mensajes", () => {
     const omitidas = [{ tipo: "opciones", motivo: "bandera_apagada" }] as const;
-    expect(tiposVisibles([meta], [...omitidas])).toEqual(["meta", "evento", "texto_pack"]);
+    expect(tiposVisibles([meta], [...omitidas])).toEqual(["meta", "evento", "texto_pack", "guardado"]);
     expect(tiposVisibles([meta, opciones], [...omitidas])).toContain("opciones");
   });
 
   it("explica por qué falta un tipo", () => {
     expect(motivoOmitido({ tipo: "opciones", motivo: "bandera_apagada" })).toMatch(/desactivada/);
     expect(motivoOmitido({ tipo: "meta", motivo: "sin_permiso" })).toMatch(/rol no tiene acceso/);
+  });
+});
+
+describe("mensajes guardados (ADR-0178 D4)", () => {
+  it("tiene etiqueta, ayuda y pestaña propias", () => {
+    expect(tipoLabel("guardado")).toBe("Mensaje guardado");
+    expect(tipoAyuda("guardado")).not.toBe("");
+    expect(TIPOS).toContain("guardado");
+  });
+
+  it("traduce sus tres estados", () => {
+    expect(estadoDeMensaje({ tipo: "guardado", estado: "borrador" })).toEqual({ etiqueta: "Borrador", tono: "neutral" });
+    expect(estadoDeMensaje({ tipo: "guardado", estado: "activo" })).toEqual({ etiqueta: "Activo", tono: "success" });
+    expect(estadoDeMensaje({ tipo: "guardado", estado: "archivado" })).toEqual({ etiqueta: "Archivado", tono: "neutral" });
+  });
+
+  it("la pestaña solo se oculta si el rol no puede verla y no hay ninguno", () => {
+    expect(tiposVisibles([], [{ tipo: "guardado", motivo: "sin_permiso" }])).not.toContain("guardado");
+    expect(tiposVisibles([], [])).toContain("guardado");
   });
 });
