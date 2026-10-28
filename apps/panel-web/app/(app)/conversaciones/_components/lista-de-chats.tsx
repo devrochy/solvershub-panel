@@ -7,7 +7,7 @@ import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-bad
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ConversationSummary } from "@/lib/api/types";
-import { formatHoraChat } from "@/lib/format";
+import { contadorPendientes, formatHoraChat, textoPendientes } from "@/lib/format";
 import { CANAL, canalLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,8 @@ export function ListaDeChats({
       {chats.map((chat) => {
         const activo = chat.id === seleccion;
         const nombre = nombreDelChat(chat);
+        const pendientes = chat.pending_count ?? 0;
+        const esperando = pendientes > 0;
         return (
           <li key={chat.id} className="border-b border-border-soft last:border-b-0">
             <Link
@@ -66,7 +68,14 @@ export function ListaDeChats({
               <Avatar name={nombre} size="md" />
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-baseline gap-2">
-                  <span className="truncate text-sm font-medium text-headline">{nombre}</span>
+                  <span
+                    className={cn(
+                      "truncate text-sm font-medium text-headline",
+                      esperando && "font-semibold",
+                    )}
+                  >
+                    {nombre}
+                  </span>
                   <span
                     className="ml-auto shrink-0 text-xs tabular-nums text-text-soft"
                     suppressHydrationWarning
@@ -74,14 +83,33 @@ export function ListaDeChats({
                     {formatHoraChat(chat.last_message_at ?? chat.started_at)}
                   </span>
                 </span>
-                <span className="truncate text-sm text-body">
-                  {chat.last_message != null ? (
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-sm",
+                      esperando ? "text-headline" : "text-body",
+                    )}
+                  >
+                    {chat.last_message != null ? (
+                      <>
+                        {PREFIJO[chat.last_message_sender ?? ""] ?? ""}
+                        {chat.last_message || "(sin texto)"}
+                      </>
+                    ) : (
+                      <span className="italic text-text-soft">Sin mensajes</span>
+                    )}
+                  </span>
+                  {esperando && (
                     <>
-                      {PREFIJO[chat.last_message_sender ?? ""] ?? ""}
-                      {chat.last_message || "(sin texto)"}
+                      <span
+                        aria-hidden
+                        title={textoPendientes(pendientes)}
+                        className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cta px-1.5 text-[11px] font-semibold leading-none tabular-nums text-white"
+                      >
+                        {contadorPendientes(pendientes)}
+                      </span>
+                      <span className="sr-only">{textoPendientes(pendientes)}</span>
                     </>
-                  ) : (
-                    <span className="italic text-text-soft">Sin mensajes</span>
                   )}
                 </span>
                 <span className="flex items-center gap-2">

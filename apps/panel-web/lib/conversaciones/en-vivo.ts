@@ -111,14 +111,25 @@ export function useHiloEnVivo(conversationId: string, iniciales: MessageItem[]) 
 
 type ChatDeLista = ConversationPage["items"][number];
 
+/** Momento de actividad del chat: su último mensaje o, si no tiene, el inicio. */
+function actividadDe(chat: ChatDeLista): number {
+  const ms = Date.parse(chat.last_message_at ?? chat.started_at);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+/** Orden de la bandeja como en las apps de chat: lo último que llegó, primero. */
+export function ordenarPorLlegada(chats: ChatDeLista[]): ChatDeLista[] {
+  return [...chats].sort((a, b) => actividadDe(b) - actividadDe(a) || b.id.localeCompare(a.id));
+}
+
 /** Lista de chats que se actualiza sola (cada `INTERVALO_LISTA_MS`) con los mismos filtros. */
 export function useListaEnVivo(query: string, iniciales: ChatDeLista[]) {
-  const [chats, setChats] = useState(iniciales);
+  const [chats, setChats] = useState(() => ordenarPorLlegada(iniciales));
   // La vista del servidor se refrescó (filtros, una acción): manda la del servidor.
   const [delServidor, setDelServidor] = useState(iniciales);
   if (delServidor !== iniciales) {
     setDelServidor(iniciales);
-    setChats(iniciales);
+    setChats(ordenarPorLlegada(iniciales));
   }
 
   const consultar = useCallback(
@@ -129,7 +140,7 @@ export function useListaEnVivo(query: string, iniciales: ChatDeLista[]) {
       });
       if (!res.ok) return;
       const data = (await res.json()) as ConversationPage;
-      if (!senal.aborted) setChats(data.items);
+      if (!senal.aborted) setChats(ordenarPorLlegada(data.items));
     },
     [query],
   );
