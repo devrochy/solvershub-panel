@@ -4413,7 +4413,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Alerts */
+        /**
+         * List Alerts
+         * @deprecated
+         * @description Wrapper de `GET /api/v1/access/events` con la forma anterior (ADR-0174).
+         */
         get: operations["list_alerts_api_v1_pack_cobranza_alerts_get"];
         put?: never;
         post?: never;
@@ -4447,7 +4451,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Devices */
+        /**
+         * List Devices
+         * @deprecated
+         * @description Wrapper de `GET /api/v1/access/devices` con la forma anterior (ADR-0174): los equipos de los
+         *     gestores salen del core (ids del core) y los dispositivos v1 (código + API key) siguen en el pack.
+         */
         get: operations["list_devices_api_v1_pack_cobranza_devices_get"];
         put?: never;
         /**
@@ -4473,7 +4482,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Set Device Status */
+        /**
+         * Set Device Status
+         * @deprecated
+         * @description Wrapper de las acciones de `/api/v1/access/devices/{id}` (ADR-0174): `activo` aprueba o reactiva,
+         *     `bloqueado` bloquea la cuenta en ese equipo. El id es el de la fila del core (o el de un dispositivo v1).
+         */
         post: operations["set_device_status_api_v1_pack_cobranza_devices__device_id__status_post"];
         delete?: never;
         options?: never;
@@ -9271,6 +9285,11 @@ export interface components {
             by_model: components["schemas"]["ModelCost"][];
             /** By Conversation */
             by_conversation: components["schemas"]["ConversationCost"][];
+            /**
+             * By Agent
+             * @default []
+             */
+            by_agent: components["schemas"]["AgentCost"][];
         };
         /** CrearSuscripcionBody */
         CrearSuscripcionBody: {
@@ -19392,6 +19411,28 @@ export interface components {
              * @default false
              */
             confirmar: boolean;
+        };
+        /**
+         * AgentCost
+         * @description Consumo de un agente en 30 días (HU-AOS-35). `agent_id` null = filas sin agente (legacy o
+         *     anteriores a las versiones). `cached_pct` = leído de la caché / entrada, solo sobre filas
+         *     desde la migración 0114; null si no hay ninguna medible.
+         */
+        AgentCost: {
+            /** Agent Id */
+            agent_id: string | null;
+            /** Agent Name */
+            agent_name: string | null;
+            /** Turns */
+            turns: number;
+            /** Tokens In */
+            tokens_in: number;
+            /** Cached Tokens */
+            cached_tokens: number;
+            /** Cached Pct */
+            cached_pct: number | null;
+            /** Cost */
+            cost: number;
         };
     };
     responses: never;
