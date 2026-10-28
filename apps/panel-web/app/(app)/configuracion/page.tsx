@@ -1,9 +1,11 @@
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
 import { PageHeader } from "@/components/ui/page-header";
+import { puedeEditarDatosCliente, type PoliticaDatos } from "@/lib/datos-cliente";
 import { apiFetch } from "@/lib/api/server";
 import type {
   BajasSettings,
   CatalogoConfig,
+  Me,
   WawebPolitica,
   MediaSettings,
   SettingsResponse,
@@ -26,7 +28,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const tab = (await searchParams).tab;
-  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes] = await Promise.all([
+  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, meRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
     apiFetch<WebChatSettings>("/admin/settings/web-chat"),
@@ -34,6 +36,9 @@ export default async function SettingsPage({
     // Catálogo de opciones (SPEC-37): etiquetas, ayudas y rangos vienen del backend.
     apiFetch<CatalogoConfig>("/admin/settings/catalog"),
     apiFetch<BajasSettings>("/admin/settings/bajas"),
+    // Qué datos del cliente pide cada acción del agente (HU-CRM-13).
+    apiFetch<PoliticaDatos>("/admin/datos-cliente/politica"),
+    apiFetch<Me>("/admin/me"),
   ]);
   if ((!res.ok && res.status === 403) || (!advancedRes.ok && advancedRes.status === 403)) {
     return (
@@ -71,6 +76,11 @@ export default async function SettingsPage({
         catalogo={catalogoRes.ok ? catalogoRes.data : null}
         bajas={bajasRes.ok ? bajasRes.data : null}
         waweb={wawebRes?.ok ? wawebRes.data : null}
+        datosCliente={{
+          politica: datosRes.ok ? datosRes.data : null,
+          error: datosRes.ok ? undefined : datosRes.error,
+          puedeEditar: meRes.ok && puedeEditarDatosCliente(meRes.data),
+        }}
       />
     </div>
   );

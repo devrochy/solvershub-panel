@@ -3,6 +3,7 @@
  * (HU-UI-04). Datos ficticios con prefijo `test-`. Van tipadas con los tipos generados
  * del OpenAPI: si el contrato cambia, el typecheck obliga a actualizarlas.
  */
+import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   AgendaCalendario,
   AgentConversationPage,
@@ -1184,7 +1185,33 @@ export const catalogoDeMensajes: CatalogoDeMensajes = {
   truncado: [],
 };
 
+/** `/admin/datos-cliente/politica` (HU-CRM-13): qué datos del cliente pide cada acción del agente. */
+export const politicaDatosCliente: PoliticaDatos = {
+  niveles: ["requerido", "recomendado", "no_pedir"],
+  acciones: [
+    {
+      id: "ventas.crear_pedido",
+      modulo: "ventas",
+      etiqueta: "Crear un pedido",
+      campos: [
+        { clave: "nombre", etiqueta: "Nombre", nivel: "requerido", por_defecto: "requerido", ajustable: true, ajustado: false },
+        { clave: "direccion", etiqueta: "Dirección de entrega", nivel: "recomendado", por_defecto: "requerido", ajustable: true, ajustado: true },
+      ],
+    },
+    {
+      id: "agenda.agendar_cita",
+      modulo: "agenda",
+      etiqueta: "Agendar una cita",
+      campos: [
+        { clave: "nombre", etiqueta: "Nombre", nivel: "requerido", por_defecto: "requerido", ajustable: true, ajustado: false },
+        { clave: "correo", etiqueta: "Correo electrónico", nivel: "requerido", por_defecto: "requerido", ajustable: false, ajustado: false },
+      ],
+    },
+  ],
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
+  "/admin/datos-cliente/politica": politicaDatosCliente,
   "/mensajes/catalogo": catalogoDeMensajes,
   "/admin/me": me,
   "/admin/agents/overview": agentes,

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
 import { BajasCard } from "@/app/(app)/configuracion/_components/bajas-card";
+import { DatosClienteCard } from "@/app/(app)/configuracion/_components/datos-cliente-card";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
@@ -13,6 +14,7 @@ import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
 import { Tabs } from "@/components/ui/tabs";
+import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   BajasSettings,
   CatalogoConfig,
@@ -41,6 +43,7 @@ const ALIAS_TABS: Record<string, string> = {
   "chat-web": "web-chat",
   multimedia: "media",
   accesibilidad: "a11y",
+  "datos-del-cliente": "datos-cliente",
 };
 
 const TABS = [
@@ -48,6 +51,7 @@ const TABS = [
   { id: "brain", label: "Cerebro" },
   { id: "memory", label: "Memoria" },
   { id: "skills", label: "Habilidades" },
+  { id: "datos-cliente", label: "Datos del cliente" },
   { id: "web-chat", label: "Chat web" },
   { id: "media", label: "Multimedia" },
   { id: "advanced", label: "Avanzado" },
@@ -64,6 +68,7 @@ export function SettingsTabs({
   catalogo,
   bajas,
   waweb,
+  datosCliente,
 }: {
   defaultTab?: string;
   settings: SettingsResponse;
@@ -73,6 +78,8 @@ export function SettingsTabs({
   catalogo: CatalogoConfig | null;
   bajas: BajasSettings | null;
   waweb: WawebPolitica | null;
+  /** Política de datos del cliente (HU-CRM-13): `politica` null = no se pudo cargar (`error`). */
+  datosCliente: { politica: PoliticaDatos | null; error?: string; puedeEditar: boolean };
 }) {
   const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
   const [tab, setTab] = useState(
@@ -91,6 +98,13 @@ export function SettingsTabs({
       {tab === "brain" && <BrainForm brain={settings.brain} />}
       {tab === "memory" && <MemoryForm memory={settings.memory} />}
       {tab === "skills" && <SkillsForm skills={settings.skills} />}
+      {tab === "datos-cliente" && (
+        <DatosClienteCard
+          politica={datosCliente.politica}
+          error={datosCliente.error}
+          puedeEditar={datosCliente.puedeEditar}
+        />
+      )}
       {tab === "web-chat" && <WebChatForm webChat={webChat} />}
       {tab === "media" && <MultimediaForm media={media} />}
       {tab === "advanced" && <AdvancedPanel advanced={advanced} />}

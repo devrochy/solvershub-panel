@@ -36,7 +36,7 @@ vi.mock("next/navigation", () => ({
 
 type Pagina = (props: { searchParams: Promise<Record<string, string>>; params: Promise<Record<string, string>> }) => Promise<ReactNode>;
 
-const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
+const PAGINAS: [string, () => Promise<{ default: unknown }>, Record<string, string>?][] = [
   ["Iniciar sesión", () => import("@/app/login/page")],
   ["Recuperar contraseña", () => import("@/app/recuperar/page")],
   ["Activar cuenta", () => import("@/app/invitacion/page")],
@@ -52,6 +52,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>][] = [
   ["Plan", () => import("@/app/(app)/plan/page")],
   ["Negocios", () => import("@/app/(app)/tenants/page")],
   ["Configuración", () => import("@/app/(app)/configuracion/page")],
+  ["Configuración · Datos del cliente", () => import("@/app/(app)/configuracion/page"), { tab: "datos-cliente" }],
   ["Cobranza", () => import("@/app/(app)/cobranza/page")],
   ["Suscripciones · Resumen", () => import("@/app/(app)/suscripciones/page")],
   ["Suscripciones · Lista", () => import("@/app/(app)/suscripciones/lista/page")],
@@ -85,9 +86,9 @@ beforeAll(() => {
 afterEach(cleanup);
 
 describe("accesibilidad de las páginas principales", () => {
-  it.each(PAGINAS)("%s no tiene violaciones graves de axe", async (_nombre, cargar) => {
+  it.each(PAGINAS)("%s no tiene violaciones graves de axe", async (_nombre, cargar, consulta) => {
     const Pagina = (await cargar()).default as Pagina;
-    const arbol = await resolverServidor(await Pagina({ searchParams: Promise.resolve({}), params: Promise.resolve({ clave: "confirmar_cita" }) }));
+    const arbol = await resolverServidor(await Pagina({ searchParams: Promise.resolve(consulta ?? {}), params: Promise.resolve({ clave: "confirmar_cita" }) }));
     const { container } = render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     expect(container.querySelector("h1"), "la página tiene su h1").not.toBeNull();
