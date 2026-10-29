@@ -360,6 +360,7 @@ export const proveedorSuscripciones: SubscriptionProviderSettings = {
 
 export const conversacionAbierta: ConversationDetail = {
   ...conversaciones.items[0],
+  customer_id: "test-lead-1",
   messages: [
     {
       id: "test-msg-1",

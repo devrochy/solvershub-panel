@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import { violacionesGraves } from "@/lib/testing/axe";
-import { RESPUESTAS, conversacionAbierta, conversaciones } from "@/lib/testing/fixtures";
+import { RESPUESTAS, conversacionAbierta, conversaciones, leads } from "@/lib/testing/fixtures";
+import type { LeadDetail } from "@/lib/api/types";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 // Bandeja de conversaciones (HU-UX-15): la página con un chat abierto (`?c=`).
@@ -52,7 +53,10 @@ beforeAll(() => {
   };
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 async function renderBandeja(searchParams: Record<string, string>) {
   const { default: Pagina } = await import("@/app/(app)/conversaciones/page");
@@ -69,7 +73,8 @@ describe("bandeja de conversaciones", () => {
     expect(actual.textContent).toContain("Ana Prueba");
     expect(actual.textContent).toContain("Quiero hablar con alguien");
     expect(actual.textContent).toContain("WhatsApp · Ventas");
-    expect(within(actual).getByText("2 mensajes sin responder")).toBeTruthy();
+    // Al abrir el chat, el conteo de pendientes desaparece en este dispositivo.
+    expect(within(actual).queryByText(/mensajes sin responder/)).toBeNull();
     expect(actual.getAttribute("href")).toBe("/conversaciones?c=test-conv-1");
 
     const otros = within(lista).getAllByRole("link").filter((enlace) => enlace !== actual);
@@ -78,21 +83,111 @@ describe("bandeja de conversaciones", () => {
     const chat = screen.getByRole("region", { name: "Conversación" });
     expect(within(chat).getByText("Usó 2 herramientas")).toBeTruthy();
     expect(within(chat).getByText(/1\.500 tokens/)).toBeTruthy();
-    expect(within(chat).getByText("Cliente frecuente")).toBeTruthy();
+    // Las notas internas viven en una modal que se abre desde la cabecera.
+    fireEvent.click(within(chat).getByRole("button", { name: /Notas internas/ }));
+    expect(screen.getByText("Cliente frecuente")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
     // En el celular se vuelve a la lista.
     expect(within(chat).getByRole("link", { name: "Volver" }).getAttribute("href")).toBe("/conversaciones");
 
     // Filtro por conexión con las del negocio.
-    expect(screen.getByRole("combobox", { name: "Conexión" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Conexión/ })).toBeTruthy();
 
     expect(await violacionesGraves(container)).toEqual([]);
   }, 15_000);
 
+
+
+  it("el enlace de la ficha se queda en conversaciones y conserva el chat", async () => {
+    await renderBandeja({ c: "test-conv-1" });
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Más acciones de la conversación" }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: "mouse",
+    });
+    await screen.findByRole("menu");
+    const enlace = await screen.findByRole("menuitem", { name: /Ver ficha del cliente/ });
+    const href = enlace.getAttribute("href") ?? "";
+    expect(href.startsWith("/conversaciones?")).toBe(true);
+    expect(href).toContain("c=test-conv-1");
+    expect(href).toContain("cliente=test-lead-1");
+  });
+
+  it("abre la ficha del cliente dentro de conversaciones, sin salir a Clientes", async () => {
+    const perfil = leads.items[0].perfil;
+    const detalle: LeadDetail = {
+      id: "test-lead-1",
+      cliente: "Ana Prueba",
+      nombre: "Ana",
+      canal: "webchat",
+      identificador: "webchat:test",
+      telefono: perfil.phone ?? null,
+      bot_paused: false,
+      alta: null,
+      conexiones: [],
+      ultima_conversacion_id: "test-conv-1",
+      datos: [],
+      extras: {},
+      columns: [],
+      perfil,
+      agentes: [],
+      campos_perfil: [],
+      editables: [],
+    };
+    respuestas["/admin/leads/test-lead-1"] = detalle;
+
+    const fetchOriginal = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (entrada: RequestInfo | URL) => {
+      const url = String(entrada);
+      if (url.includes("/timeline")) {
+        return new Response(JSON.stringify({ items: [], next_cursor: null, partial: false }), {
+          status: 200,
+        });
+      }
+      if (url.includes("/consentimiento-datos")) {
+        return new Response(
+          JSON.stringify({ estado: "sin_aviso", aviso_activo: false, historial: [] }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify([]), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    try {
+      await renderBandeja({ c: "test-conv-1", cliente: "test-lead-1" });
+      const ficha = screen.getByRole("dialog");
+      expect(ficha).toBeTruthy();
+      expect(within(ficha).getByText("Información general")).toBeTruthy();
+      expect(within(ficha).getByText("Ana Prueba")).toBeTruthy();
+    } finally {
+      globalThis.fetch = fetchOriginal;
+      delete respuestas["/admin/leads/test-lead-1"];
+    }
+  });
+
+  it("sin chat abierto, cada fila con pendientes conserva su conteo", async () => {
+    const conPendiente = {
+      ...conversaciones,
+      items: [conversaciones.items[0], { ...conversaciones.items[1], pending_count: 3 }],
+    };
+    respuestas["/admin/conversations"] = conPendiente;
+    try {
+      await renderBandeja({});
+      const lista = screen.getByRole("navigation", { name: "Lista de conversaciones" });
+      const enlaces = within(lista).getAllByRole("link");
+      expect(within(enlaces[0]).getByText("2 mensajes sin responder")).toBeTruthy();
+      expect(within(enlaces[1]).getByText("3 mensajes sin responder")).toBeTruthy();
+    } finally {
+      respuestas["/admin/conversations"] = conversaciones;
+    }
+  });
+
   it("escalada sin atender: se puede tomar y no hay caja de respuesta", async () => {
     await renderBandeja({ c: "test-conv-1" });
-    expect(screen.getByRole("button", { name: "Tomar" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Devolver al agente" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tomar la conversación" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Devolver al agente" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: "Mensaje para el cliente" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Notas internas/ }));
     expect(screen.getByRole("textbox", { name: "Nota interna" })).toBeTruthy();
   });
 
@@ -104,7 +199,8 @@ describe("bandeja de conversaciones", () => {
     try {
       await renderBandeja({ c: "test-conv-1" });
       expect(screen.getByText("La atiende ana@negocio.co")).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Tomar" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Tomar la conversación" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Devolver al agente" })).toBeTruthy();
       expect(screen.getByRole("textbox", { name: "Mensaje para el cliente" })).toBeTruthy();
     } finally {
       respuestas["/admin/conversations/test-conv-1"] = conversacionAbierta;

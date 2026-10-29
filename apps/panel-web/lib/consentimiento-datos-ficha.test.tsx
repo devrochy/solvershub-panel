@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { ConsentimientoDatosDelCliente } from "@/app/(app)/leads/_components/consentimiento-datos";
+import { ConsentimientoDatosDelCliente } from "@/components/domain/cliente/consentimiento-datos";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { ConsentimientoDatos } from "@/lib/aviso-datos";
 
