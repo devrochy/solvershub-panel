@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { TENANT_COOKIE } from "@/lib/api/server";
+import { publicUrl } from "@/lib/public-url";
 
 /**
  * Olvida el negocio activo guardado en la cookie y vuelve al Resumen. Lo usa el layout
@@ -11,5 +12,5 @@ import { TENANT_COOKIE } from "@/lib/api/server";
  */
 export async function GET(request: Request) {
   (await cookies()).delete(TENANT_COOKIE);
-  return NextResponse.redirect(new URL("/dashboard", request.url));
+  return NextResponse.redirect(publicUrl(request, "/dashboard"));
 }

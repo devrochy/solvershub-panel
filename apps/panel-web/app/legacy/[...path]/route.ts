@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { API_BASE, SESSION_COOKIE, TENANT_COOKIE } from "@/lib/api/server";
+import { publicUrl } from "@/lib/public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ async function proxy(request: Request, ctx: { params: Promise<{ path: string[] }
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(publicUrl(request, "/login"));
   }
 
   const tenant = store.get(TENANT_COOKIE)?.value;
