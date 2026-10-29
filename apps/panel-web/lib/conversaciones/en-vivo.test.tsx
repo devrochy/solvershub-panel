@@ -8,9 +8,10 @@ import {
   INTERVALO_LISTA_MS,
   cursorDe,
   ordenarPorLlegada,
+  unirChats,
   unirMensajes,
+  useBandejaEnVivo,
   useHiloEnVivo,
-  useListaEnVivo,
   usePolling,
 } from "@/lib/conversaciones/en-vivo";
 
@@ -141,8 +142,10 @@ describe("useHiloEnVivo", () => {
   });
 });
 
-describe("useListaEnVivo", () => {
-  it(`repite los filtros cada ${INTERVALO_LISTA_MS} ms y reemplaza la lista`, async () => {
+const META = { page: 1, total: 1, has_more: false };
+
+describe("useBandejaEnVivo", () => {
+  it(`repite los filtros cada ${INTERVALO_LISTA_MS} ms y fusiona la primera página`, async () => {
     const chat = {
       id: "c1",
       customer_name: "Ana",
@@ -158,12 +161,66 @@ describe("useListaEnVivo", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const iniciales = [chat];
-    const { result } = renderHook(() => useListaEnVivo("status=open&connection_id=k1", iniciales));
+    const { result } = renderHook(() =>
+      useBandejaEnVivo("status=open&connection_id=k1", iniciales, META),
+    );
     await act(() => vi.advanceTimersByTimeAsync(INTERVALO_LISTA_MS - 1));
     expect(fetchMock).not.toHaveBeenCalled();
     await act(() => vi.advanceTimersByTimeAsync(1));
     expect(fetchMock.mock.calls[0][0]).toBe("/api/conversations?status=open&connection_id=k1");
-    expect(result.current[0].status).toBe("escalated");
+    expect(result.current.chats[0].status).toBe("escalated");
+  });
+
+  it("cargar más pide la página siguiente y no la pierde con el polling", async () => {
+    const base = {
+      customer_name: null,
+      external_id: null,
+      channel: "whatsapp",
+      status: "open",
+      bot_paused: false,
+      started_at: "2026-10-09T14:00:00Z",
+      last_message_at: "2026-10-09T15:00:00Z",
+    };
+    const primera = { ...base, id: "c1" };
+    const segunda = { ...base, id: "c2", last_message_at: "2026-10-09T13:00:00Z" };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("page=2")) {
+        return respuesta({ items: [segunda], total: 2, page: 2, page_size: 20, has_more: false });
+      }
+      return respuesta({ items: [primera], total: 2, page: 1, page_size: 20, has_more: true });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useBandejaEnVivo("", [primera], { page: 1, total: 2, has_more: true }),
+    );
+    await act(() => result.current.cargarMas());
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/conversations?page=2");
+    expect(result.current.chats.map((c) => c.id)).toEqual(["c1", "c2"]);
+    expect(result.current.hayMas).toBe(false);
+
+    // El polling de la página 1 actualiza, pero no borra la segunda página.
+    await act(() => vi.advanceTimersByTimeAsync(INTERVALO_LISTA_MS));
+    expect(result.current.chats.map((c) => c.id)).toEqual(["c1", "c2"]);
+  });
+});
+
+describe("unirChats", () => {
+  const chat = (id: string, last_message_at: string) => ({
+    id,
+    customer_name: null,
+    external_id: null,
+    channel: "whatsapp",
+    status: "open",
+    bot_paused: false,
+    started_at: "2026-10-09T14:00:00Z",
+    last_message_at,
+  });
+
+  it("actualiza por id, agrega nuevos y ordena por llegada", () => {
+    const actuales = [chat("a", "2026-10-09T15:00:00Z")];
+    const nuevos = [chat("a", "2026-10-09T17:00:00Z"), chat("b", "2026-10-09T16:00:00Z")];
+    expect(unirChats(actuales, nuevos).map((c) => c.id)).toEqual(["a", "b"]);
   });
 });
 
@@ -195,7 +252,7 @@ describe("ordenarPorLlegada", () => {
   });
 });
 
-describe("useListaEnVivo · orden", () => {
+describe("useBandejaEnVivo · orden", () => {
   it("ordena por llegada la respuesta del polling", async () => {
     const base = {
       customer_name: null,
@@ -214,8 +271,10 @@ describe("useListaEnVivo · orden", () => {
     );
 
     const iniciales = [viejo];
-    const { result } = renderHook(() => useListaEnVivo("", iniciales));
+    const { result } = renderHook(() =>
+      useBandejaEnVivo("", iniciales, { page: 1, total: 2, has_more: false }),
+    );
     await act(() => vi.advanceTimersByTimeAsync(INTERVALO_LISTA_MS));
-    expect(result.current.map((c) => c.id)).toEqual(["c2", "c1"]);
+    expect(result.current.chats.map((c) => c.id)).toEqual(["c2", "c1"]);
   });
 });

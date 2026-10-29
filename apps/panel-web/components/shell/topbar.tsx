@@ -19,7 +19,7 @@ export async function Topbar({
 }) {
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b border-border-soft bg-surface px-4 md:px-6 print:hidden">
+      <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border-soft bg-surface px-4 md:px-6 print:hidden">
         <div className="flex min-w-0 items-center gap-2">
           {menu}
           <TenantSwitcher current={me.tenant} count={me.tenant_count} />

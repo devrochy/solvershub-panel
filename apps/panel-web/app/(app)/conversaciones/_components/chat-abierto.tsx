@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bot, Hand } from "lucide-react";
+import { ArrowDown, ArrowLeft } from "lucide-react";
 
 import { ChannelIcon } from "@/components/domain/channel-icon";
 import { MotivoBadge } from "@/components/domain/escalacion";
 import { BinaryBadge, CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/ui/confirm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import type { ConversationDetail, ConversationNote } from "@/lib/api/types";
 import { useHiloEnVivo } from "@/lib/conversaciones/en-vivo";
@@ -17,10 +17,13 @@ import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
 import { conexionDelChat, nombreDelChat, tipoDelChat } from "./lista-de-chats";
-import { ConversationActions } from "./conversation-actions";
+import { AccionesDeCabecera, ComposerDeRespuesta } from "./conversation-actions";
 import { DetalleDelTurno } from "./detalle-del-turno";
 import { EnCurso } from "./en-curso";
 import { MessageThread } from "./message-thread";
+
+/** Mensajes que se pintan de entrada; el resto se suma al llegar al inicio del hilo. */
+const VENTANA_MENSAJES = 60;
 
 async function accion(conversationId: string, action: string, body?: Record<string, unknown>) {
   const res = await fetch(`/api/conversations/${conversationId}`, {
@@ -32,39 +35,16 @@ async function accion(conversationId: string, action: string, body?: Record<stri
   return { ok: res.ok, error: json.error, status: res.status };
 }
 
-/** El ticket del chat: motivo, resumen, quién atiende y las acciones de tomar o devolver. */
+/** Ticket de la escalación: motivo, resumen y quién la atiende. Las acciones viven en la cabecera. */
 function Ticket({ detalle }: { detalle: ConversationDetail }) {
-  const confirm = useConfirm();
-  const actuar = useAction();
   const esc = detalle.escalation;
   if (!esc) return null;
   const atendida = esc.status === "asignada";
 
-  async function tomar() {
-    await actuar.run(async () => ({
-      ...(await accion(detalle.id, "take")),
-      success: "Tomaste la conversación. El agente queda en pausa en este chat.",
-    }));
-  }
-
-  async function devolver() {
-    const aceptado = await confirm({
-      title: "Devolver al agente",
-      description:
-        "Se cierra la atención de una persona y el agente vuelve a responder en esta conversación.",
-      confirmLabel: "Devolver al agente",
-    });
-    if (!aceptado) return;
-    await actuar.run(async () => ({
-      ...(await accion(detalle.id, "return-to-bot")),
-      success: "El agente vuelve a atender esta conversación.",
-    }));
-  }
-
   return (
     <section
       aria-label="Escalación"
-      className="flex flex-col gap-2 rounded-lg border border-status-warning-border bg-status-warning-bg px-4 py-3"
+      className="flex flex-col gap-1.5 rounded-xl border border-status-warning-border bg-status-warning-bg px-4 py-3"
     >
       <div className="flex flex-wrap items-center gap-2">
         <MotivoBadge esc={{ reason: "", reason_code: esc.reason_code, reason_label: esc.reason_label }} />
@@ -73,26 +53,24 @@ function Ticket({ detalle }: { detalle: ConversationDetail }) {
             ? `La atiende ${esc.assigned_admin_email ?? "una persona del equipo"}`
             : "Esperando a una persona del equipo"}
         </span>
-        <span className="ml-auto flex gap-2">
-          {!atendida && (
-            <Button type="button" size="sm" variant="accent" onClick={() => void tomar()} disabled={actuar.pending}>
-              <Hand aria-hidden className="h-4 w-4" />
-              Tomar
-            </Button>
-          )}
-          <Button type="button" size="sm" variant="outline" onClick={() => void devolver()} disabled={actuar.pending}>
-            <Bot aria-hidden className="h-4 w-4" />
-            Devolver al agente
-          </Button>
-        </span>
       </div>
       {esc.summary && <p className="text-sm text-body">{esc.summary}</p>}
     </section>
   );
 }
 
-/** Notas internas del equipo y del agente. Nunca se envían al cliente. */
-function NotasInternas({ conversationId, notas }: { conversationId: string; notas: ConversationNote[] }) {
+/** Notas internas en una modal: solo el equipo las ve, nunca se envían al cliente. */
+function NotasInternasDialog({
+  open,
+  onOpenChange,
+  conversationId,
+  notas,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  conversationId: string;
+  notas: ConversationNote[];
+}) {
   const [texto, setTexto] = useState("");
   const guardar = useAction();
 
@@ -100,108 +78,196 @@ function NotasInternas({ conversationId, notas }: { conversationId: string; nota
     const limpio = texto.trim();
     if (!limpio) return;
     void guardar
-      .run(async () => ({ ...(await accion(conversationId, "note", { text: limpio })), success: "Nota guardada." }))
+      .run(async () => ({
+        ...(await accion(conversationId, "note", { text: limpio })),
+        success: "Nota guardada.",
+      }))
       .then((ok) => {
         if (ok) setTexto("");
       });
   }
 
   return (
-    <details>
-      <summary className="cursor-pointer list-none rounded-sm text-sm font-semibold [&::-webkit-details-marker]:hidden text-headline focus-visible:outline-2">
-        Notas internas{notas.length ? ` (${notas.length})` : ""}
-      </summary>
-      <div className="mt-3 flex flex-col gap-3">
-        {notas.length === 0 ? (
-          <p className="text-sm text-text-soft">Sin notas. Solo las ve el equipo.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {notas.map((nota, i) => (
-              <li key={i} className="rounded-md border border-border-soft bg-surface-2 px-3 py-2 text-sm">
-                <p className="text-headline">{nota.text}</p>
-                <p className="mt-1 text-xs text-text-soft">
-                  {nota.source === "human" ? (nota.author_email ?? "Equipo") : "Agente"}
-                  {nota.created_at ? ` · ${formatDateTime(nota.created_at)}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Textarea
-          rows={2}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Nota para el equipo (el cliente no la ve)…"
-          aria-label="Nota interna"
-          maxLength={2000}
-        />
-        <div className="flex justify-end">
-          <Button type="button" size="sm" variant="outline" onClick={enviar} disabled={!texto.trim() || guardar.pending}>
-            Guardar nota
-          </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        title="Notas internas"
+        description="Solo las ve el equipo; nunca se envían al cliente."
+        className="max-w-xl"
+      >
+        <div className="flex max-h-[45vh] flex-col gap-2 overflow-y-auto pr-1">
+          {notas.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border-soft px-4 py-6 text-center text-sm text-text-soft">
+              Sin notas todavía. Deja la primera para el equipo.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {notas.map((nota, i) => (
+                <li
+                  key={`${nota.created_at ?? "nota"}-${i}`}
+                  className="rounded-lg border border-border-soft bg-surface-2 px-3 py-2 text-sm"
+                >
+                  <p className="whitespace-pre-wrap break-words text-headline">{nota.text}</p>
+                  <p className="mt-1 text-xs text-text-soft">
+                    {nota.source === "human" ? (nota.author_email ?? "Equipo") : "Agente"}
+                    {nota.created_at ? ` · ${formatDateTime(nota.created_at)}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </div>
-    </details>
+        <div className="mt-4 flex flex-col gap-2">
+          <Textarea
+            rows={3}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Nota para el equipo (el cliente no la ve)…"
+            aria-label="Nota interna"
+            maxLength={2000}
+          />
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="accent"
+              size="sm"
+              onClick={enviar}
+              disabled={!texto.trim() || guardar.pending}
+            >
+              Guardar nota
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 /** Columna derecha de la bandeja: el chat elegido, con el hilo que se actualiza solo. */
-export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDetail; hrefVolver: string }) {
+export function ChatAbierto({
+  detalle,
+  query,
+  hrefVolver,
+}: {
+  detalle: ConversationDetail;
+  query: string;
+  hrefVolver: string;
+}) {
   const mensajes = useHiloEnVivo(detalle.id, detalle.messages);
   const nombre = nombreDelChat(detalle);
   const atiendePersona = detalle.escalation?.status === "asignada";
+  const puedeResponder =
+    detalle.status !== "closed" && (atiendePersona || (detalle.bot_paused && detalle.escalation == null));
   const uso = detalle.usage ?? { cost_usd: 0, input_tokens: 0, output_tokens: 0, turns: 0 };
   const tokens = uso.input_tokens + uso.output_tokens;
   const [turnoAbierto, setTurnoAbierto] = useState<string | null>(null);
+  const [notasAbiertas, setNotasAbiertas] = useState(false);
+  const notas = detalle.notes ?? [];
 
-  // Baja al último mensaje al abrir y cuando llega uno nuevo, salvo que la persona esté
-  // leyendo más arriba.
+  // La ficha del cliente se abre sobre la misma sección: conserva el chat y los filtros.
+  const qsFicha = new URLSearchParams(query);
+  qsFicha.set("c", detalle.id);
+  if (detalle.customer_id) qsFicha.set("cliente", detalle.customer_id);
+  const hrefFicha = detalle.customer_id
+    ? `/conversaciones?${qsFicha.toString()}`
+    : undefined;
+
+  // Scroll infinito del hilo: se pinta una ventana final y se amplía al llegar arriba,
+  // conservando la posición para que el texto no salte.
+  const [ventana, setVentana] = useState(VENTANA_MENSAJES);
+  const visibles = mensajes.length > ventana ? mensajes.slice(mensajes.length - ventana) : mensajes;
+  const hayAnteriores = mensajes.length > visibles.length;
+  const alturaPrevia = useRef<{ altura: number; scroll: number } | null>(null);
+  const cargandoAnteriores = useRef(false);
+
   const hiloRef = useRef<HTMLDivElement>(null);
   const alFondoRef = useRef(true);
+  const [hayNuevos, setHayNuevos] = useState(false);
+
   useEffect(() => {
     const hilo = hiloRef.current;
-    if (hilo && alFondoRef.current) hilo.scrollTop = hilo.scrollHeight;
+    if (!hilo) return;
+    if (alFondoRef.current) {
+      hilo.scrollTop = hilo.scrollHeight;
+      setHayNuevos(false);
+    } else {
+      setHayNuevos(true);
+    }
   }, [mensajes.length]);
+
+  useLayoutEffect(() => {
+    const hilo = hiloRef.current;
+    const previa = alturaPrevia.current;
+    if (!hilo || !previa) return;
+    hilo.scrollTop = hilo.scrollHeight - previa.altura + previa.scroll;
+    alturaPrevia.current = null;
+  }, [ventana]);
+
+  function cargarAnteriores() {
+    const hilo = hiloRef.current;
+    if (!hilo || !hayAnteriores || cargandoAnteriores.current) return;
+    cargandoAnteriores.current = true;
+    alturaPrevia.current = { altura: hilo.scrollHeight, scroll: hilo.scrollTop };
+    setVentana((actual) => actual + VENTANA_MENSAJES);
+    requestAnimationFrame(() => {
+      cargandoAnteriores.current = false;
+    });
+  }
+
+  function irAlFinal() {
+    const hilo = hiloRef.current;
+    if (!hilo) return;
+    hilo.scrollTo({ top: hilo.scrollHeight, behavior: "smooth" });
+    alFondoRef.current = true;
+    setHayNuevos(false);
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex flex-wrap items-center gap-3 border-b border-border-soft px-4 py-3">
-        <Button asChild variant="ghost" size="sm" className="lg:hidden">
+      <header className="flex shrink-0 flex-wrap items-start gap-3 border-b border-border-soft px-4 py-3">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 lg:hidden">
           <Link href={hrefVolver} scroll={false}>
             <ArrowLeft aria-hidden className="h-4 w-4" />
             Volver
           </Link>
         </Button>
         <Avatar name={nombre} size="md" />
-        <div className="flex min-w-0 flex-col">
-          <h2 className="truncate font-display text-sh-block text-headline">{nombre}</h2>
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2 break-all text-xs text-text-soft">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <h2 className="truncate font-display text-sh-block text-headline">{nombre}</h2>
+            <span
+              className="ml-auto shrink-0 text-xs tabular-nums text-text-soft"
+              title="Costo y tokens de la conversación"
+            >
+              {formatUsd(uso.cost_usd)} · {formatNumber(tokens)} tokens
+            </span>
+          </div>
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 break-all text-xs text-text-soft">
             <ChannelIcon id={tipoDelChat(detalle)} size="sm" />
             {conexionDelChat(detalle)}
             {detalle.external_id ? ` · ${detalle.external_id}` : ""}
-            {detalle.customer_id && (
-              <Link href={`/leads?cliente=${detalle.customer_id}`} className="text-link hover:underline">
-                Ver ficha
-              </Link>
-            )}
           </span>
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <StatusBadge value={detalle.status} map={CONVERSATION_STATUS} />
+            <BinaryBadge
+              active={!detalle.bot_paused}
+              activeLabel="Agente activo"
+              inactiveLabel="Agente pausado"
+            />
+          </div>
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <StatusBadge value={detalle.status} map={CONVERSATION_STATUS} />
-          <BinaryBadge
-            active={!detalle.bot_paused}
-            activeLabel="Agente activo"
-            inactiveLabel="Agente pausado"
-          />
-          <span className="text-xs tabular-nums text-text-soft" title="Costo y tokens de la conversación">
-            {formatUsd(uso.cost_usd)} · {formatNumber(tokens)} tokens
-          </span>
-        </div>
+        <AccionesDeCabecera
+          conversationId={detalle.id}
+          botPaused={detalle.bot_paused}
+          status={detalle.status}
+          escalation={detalle.escalation}
+          hrefFicha={hrefFicha}
+          notas={notas.length}
+          onAbrirNotas={() => setNotasAbiertas(true)}
+        />
       </header>
 
       {detalle.escalation && (
-        // Con «En curso» puede crecer: se limita para no aplastar el hilo.
-        <div className="max-h-[45%] shrink-0 overflow-y-auto border-b border-border-soft px-4 py-3">
+        <div className="max-h-[32%] shrink-0 overflow-y-auto border-b border-border-soft px-4 py-3">
           <Ticket detalle={detalle} />
           <div className="mt-3">
             <EnCurso conversationId={detalle.id} estadoEscalacion={detalle.escalation.status} />
@@ -209,31 +275,60 @@ export function ChatAbierto({ detalle, hrefVolver }: { detalle: ConversationDeta
         </div>
       )}
 
-      <div
-        ref={hiloRef}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          alFondoRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-        }}
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        <MessageThread messages={mensajes} onVerTurno={setTurnoAbierto} />
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={hiloRef}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const alFondo = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            alFondoRef.current = alFondo;
+            if (alFondo) setHayNuevos(false);
+            if (el.scrollTop < 80 && hayAnteriores) cargarAnteriores();
+          }}
+          className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          {hayAnteriores && (
+            <div className="flex justify-center pb-1">
+              <Button type="button" variant="ghost" size="sm" onClick={cargarAnteriores}>
+                Ver mensajes anteriores
+              </Button>
+            </div>
+          )}
+          <MessageThread messages={visibles} onVerTurno={setTurnoAbierto} />
+        </div>
+        {hayNuevos && (
+          <button
+            type="button"
+            onClick={irAlFinal}
+            className="absolute bottom-3 right-4 inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1.5 text-xs font-medium text-headline shadow-elev-2 transition-colors hover:bg-hover focus-visible:outline-2"
+          >
+            <ArrowDown aria-hidden className="h-3.5 w-3.5" />
+            Mensajes nuevos
+          </button>
+        )}
       </div>
 
-      <div className="flex max-h-[45%] shrink-0 flex-col gap-5 overflow-y-auto border-t border-border-soft px-4 py-4">
-        {!atiendePersona && detalle.escalation == null && detalle.bot_paused && (
-          <p className="text-sm text-text-soft">El agente está pausado en este chat y nadie lo atiende.</p>
+      <div className="shrink-0 border-t border-border-soft px-4 py-3">
+        {puedeResponder ? (
+          <ComposerDeRespuesta conversationId={detalle.id} />
+        ) : (
+          <p className="text-sm text-text-soft">
+            {detalle.status === "closed"
+              ? "Esta conversación está cerrada."
+              : detalle.escalation?.status === "pendiente"
+                ? "Toma la conversación para responder como persona."
+                : "El agente está atendiendo esta conversación. Pausa el agente para escribir como persona."}
+          </p>
         )}
-        <ConversationActions
-          conversationId={detalle.id}
-          botPaused={detalle.bot_paused}
-          status={detalle.status}
-          showComposer={atiendePersona}
-        />
-        <NotasInternas conversationId={detalle.id} notas={detalle.notes ?? []} />
       </div>
+      <NotasInternasDialog
+        open={notasAbiertas}
+        onOpenChange={setNotasAbiertas}
+        conversationId={detalle.id}
+        notas={notas}
+      />
       <DetalleDelTurno turnId={turnoAbierto} onClose={() => setTurnoAbierto(null)} />
     </div>
   );
