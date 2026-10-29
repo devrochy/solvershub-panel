@@ -3,7 +3,7 @@
 - **Estado:** aceptado
 - **Fecha:** 2026-10-11
 - **Ámbito:** `apps/panel-web` (shell del panel: `components/shell/`, `lib/shell/`, `components/ui/page-header.tsx`).
-- **Origen:** SPEC-29 de `solvershub-docs` (D-32: D-SPEC-29-4), HU-DS-04 y HU-DS-05 (paleta y atajos, sección 6). Se apoya en HU-UI-03 (skip link, error, carga).
+- **Origen:** SPEC-29 de `solvershub-docs` (D-32: D-SPEC-29-4), HU-DS-04 y HU-DS-05 (paleta y atajos, sección 6). Se apoya en HU-UI-03 (skip link, error, carga). Enmienda 2026-10-29: título de la página en la topbar (§7).
 
 ## Contexto
 
@@ -87,6 +87,23 @@ atajos de una tecla (WCAG 2.1.4) son de HU-DS-05 (sección 6).
   como se ven en el menú.
 - **Preferencia:** cookie `panel_atajos=apagados` (un año, `samesite=lax`), leída en el
   servidor. Es personal y de este navegador: no va en la configuración del negocio.
+
+### 7. Título de la página en la topbar al hacer scroll (2026-10-29)
+
+- El `h1` del `PageHeader` se publica en un contexto del shell
+  (`components/shell/titulo-de-pagina.tsx`) y la topbar lo repite cuando empieza a ocultarse
+  por arriba del contenedor de scroll (`main#contenido`).
+- Se mide con un listener pasivo de scroll + `requestAnimationFrame` (un cálculo por frame),
+  no con `IntersectionObserver`: hace falta disparar cuando el `h1` **empieza** a salir, no
+  cuando termina. Histéresis de 8 px para no parpadear en el umbral.
+- Entrada desde abajo (`translate-y-2 → 0` + opacidad) con los tokens de motion del kit:
+  200 ms `ease-sh-out` al aparecer, 150 ms `ease-sh-in` al retirarse; `prefers-reduced-motion`
+  ya lo neutraliza globalmente.
+- El `h1` real no se mueve ni se duplica: el texto de la barra es `aria-hidden`. En celular
+  el título reemplaza al nombre del negocio mientras está visible; en escritorio conviven
+  separados por una línea.
+- La lista del selector de negocios sigue desplazable (`overscroll-contain` y alto máximo
+  relativo al viewport), para que siga siendo usable con muchos negocios.
 
 ## Consecuencias
 
