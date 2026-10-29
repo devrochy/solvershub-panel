@@ -8119,6 +8119,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/importar-datos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado Importacion
+         * @description Si el agente importa datos, su plantilla (columnas y topes) y lo ya importado.
+         */
+        get: operations["estado_importacion_api_v1_admin_agents__agent_id__importar_datos_get"];
+        put?: never;
+        /**
+         * Importar Datos
+         * @description Importa el archivo. Con errores en alguna fila responde 422 `archivo_con_errores` salvo `solo_validas`.
+         *     Las filas cuya clave ya existe se omiten (idempotente).
+         */
+        post: operations["importar_datos_api_v1_admin_agents__agent_id__importar_datos_post"];
+        /**
+         * Borrar Importacion
+         * @description Retira solo lo que se importó para este agente; lo generado y lo creado a mano no se tocan.
+         */
+        delete: operations["borrar_importacion_api_v1_admin_agents__agent_id__importar_datos_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/plantilla.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plantilla Importacion
+         * @description La plantilla CSV del agente: cabeceras y filas de ejemplo (UTF-8 con BOM, para Excel).
+         */
+        get: operations["plantilla_importacion_api_v1_admin_agents__agent_id__importar_datos_plantilla_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/validar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validar Importacion
+         * @description Vista previa del archivo: errores por fila y cuántas filas se crearían o ya existen. No escribe.
+         */
+        post: operations["validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -20887,6 +20956,147 @@ export interface components {
              * @default true
              */
             supresion_en_modulos_pendiente: boolean;
+        };
+        /** Body_importar_datos_api_v1_admin_agents__agent_id__importar_datos_post */
+        Body_importar_datos_api_v1_admin_agents__agent_id__importar_datos_post: {
+            /** Archivo */
+            archivo: string;
+            /**
+             * Solo Validas
+             * @default false
+             */
+            solo_validas: boolean;
+        };
+        /** Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post */
+        Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post: {
+            /** Archivo */
+            archivo: string;
+        };
+        /** ColumnaOut */
+        ColumnaOut: {
+            /** Nombre */
+            nombre: string;
+            /** Descripcion */
+            descripcion: string;
+            /** Obligatoria */
+            obligatoria: boolean;
+        };
+        /** ErrorDeFila */
+        ErrorDeFila: {
+            /**
+             * Fila
+             * @description Número de fila en el archivo (la cabecera es la 1).
+             */
+            fila: number;
+            /** Columna */
+            columna: string | null;
+            /** Mensaje */
+            mensaje: string;
+        };
+        /** EstadoImportacion */
+        EstadoImportacion: {
+            /** Disponible */
+            disponible: boolean;
+            /**
+             * Motivo
+             * @description Por qué el agente no importa datos.
+             */
+            motivo?: string | null;
+            plantilla: components["schemas"]["PlantillaImportacionOut"] | null;
+            importado: components["schemas"]["LoteImportado"] | null;
+        };
+        /** ImportacionHecha */
+        ImportacionHecha: {
+            /**
+             * Lote Id
+             * Format: uuid
+             */
+            lote_id: string;
+            /** Plantilla */
+            plantilla: string;
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /** Creadas */
+            creadas: number;
+            /** Existentes */
+            existentes: number;
+            /** Con Errores */
+            con_errores: number;
+            /** Conteos */
+            conteos: {
+                [key: string]: number;
+            };
+        };
+        /** LoteImportado */
+        LoteImportado: {
+            /** Lotes */
+            lotes: number;
+            /**
+             * Creado En
+             * Format: date-time
+             */
+            creado_en: string;
+            /**
+             * Conteos
+             * @description Registros importados por tipo (`producto`, `cliente`, `cuota`…).
+             */
+            conteos: {
+                [key: string]: number;
+            };
+        };
+        /** PlantillaImportacionOut */
+        PlantillaImportacionOut: {
+            /** Id */
+            id: string;
+            /** Titulo */
+            titulo: string;
+            /** Ayuda */
+            ayuda: string;
+            /** Columna Clave */
+            columna_clave: string;
+            /** Columnas */
+            columnas: components["schemas"]["ColumnaOut"][];
+            /** Tope Filas */
+            tope_filas: number;
+            /** Tope Bytes */
+            tope_bytes: number;
+        };
+        /** VistaPreviaImportacion */
+        VistaPreviaImportacion: {
+            /** Total Filas */
+            total_filas: number;
+            /**
+             * Nuevas
+             * @description Filas que se crearían.
+             */
+            nuevas: number;
+            /**
+             * Existentes
+             * @description Filas cuya clave ya existe: se omiten.
+             */
+            existentes: number;
+            /** Con Errores */
+            con_errores: number;
+            /**
+             * Errores
+             * @description Hasta 50; el total está en `errores_total`.
+             */
+            errores: components["schemas"]["ErrorDeFila"][];
+            /** Errores Total */
+            errores_total: number;
+            /**
+             * Columnas Ignoradas
+             * @description Cabeceras del archivo que no son de la plantilla.
+             */
+            columnas_ignoradas: string[];
+            /**
+             * Columnas Faltantes
+             * @description Columnas obligatorias que el archivo no trae.
+             */
+            columnas_faltantes: string[];
         };
     };
     responses: never;
@@ -38300,6 +38510,184 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AvisoDatosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_importacion_api_v1_admin_agents__agent_id__importar_datos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoImportacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    importar_datos_api_v1_admin_agents__agent_id__importar_datos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_importar_datos_api_v1_admin_agents__agent_id__importar_datos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportacionHecha"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_importacion_api_v1_admin_agents__agent_id__importar_datos_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatosRetirados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plantilla_importacion_api_v1_admin_agents__agent_id__importar_datos_plantilla_csv_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaImportacion"];
                 };
             };
             /** @description Validation Error */

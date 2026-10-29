@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
 import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimiento";
 import { DatosDePruebaDelAgente } from "@/app/(app)/agentes/_components/datos-de-prueba";
+import { ImportarDatosDelAgente } from "@/app/(app)/agentes/_components/importar-datos";
 import {
   ConsumoDelAgente,
   ConversacionesDelAgente,
@@ -24,6 +25,7 @@ import type {
   AgentTaskPage,
   AgentUsage,
   EstadoDatosDePrueba,
+  EstadoImportacion,
   KnowledgeDocument,
   Me,
 } from "@/lib/api/types";
@@ -158,6 +160,10 @@ export default async function AgentePage({
     agente.id && agente.kind === "specialist" && meRes.ok && puedeEscribirConocimiento(meRes.data)
       ? await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${agente.id}/datos-de-prueba`)
       : null;
+  // Importar datos existentes (HU-QA-12): mismo criterio; la API exige además escritura en la sección del pack.
+  const importacion = datosDePrueba?.ok
+    ? await apiFetch<EstadoImportacion>(`/admin/agents/${agente.id}/importar-datos`)
+    : null;
   const puedeEditar = agente.id && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime);
 
   const conexiones = agente.connections.map((c) => ({ id: c.id, label: c.label }));
@@ -177,6 +183,9 @@ export default async function AgentePage({
         actions:
           puedeEditar || datosDePrueba?.ok ? (
             <>
+              {agente.id && importacion?.ok && (
+                <ImportarDatosDelAgente agenteId={agente.id} nombre={agente.name} estado={importacion.data} />
+              )}
               {agente.id && datosDePrueba?.ok && (
                 <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
               )}
