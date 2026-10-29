@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { SectionHelpButton } from "@/app/(app)/_components/section-help-button";
 import { MigasDeShell, PestanasDeShell } from "@/components/shell/navegacion-de-pagina";
+import { TituloDePagina } from "@/components/shell/titulo-de-pagina";
 import { Breadcrumbs, type Miga } from "@/components/ui/breadcrumbs";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-display text-sh-h1 tracking-tight text-headline">{title}</h1>
+            <TituloDePagina title={title} />
             {helpSection && <SectionHelpButton section={helpSection} />}
           </div>
           {description && <p className="mt-1 max-w-2xl text-sm text-body">{description}</p>}
