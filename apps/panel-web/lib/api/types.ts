@@ -213,6 +213,10 @@ export type KnowledgeDocument = components["schemas"]["DocumentoOut"];
 export type EstadoDatosDePrueba = components["schemas"]["EstadoDatosDePrueba"];
 export type LoteGenerado = components["schemas"]["LoteGenerado"];
 export type DatosRetirados = components["schemas"]["DatosRetirados"];
+// Importar datos existentes por agente (HU-QA-12, solo en test).
+export type EstadoImportacion = components["schemas"]["EstadoImportacion"];
+export type VistaPreviaImportacion = components["schemas"]["VistaPreviaImportacion"];
+export type ImportacionHecha = components["schemas"]["ImportacionHecha"];
 /** Estado de los datos de prueba de un módulo (local hasta que `schema.d.ts` lo traiga de develop). */
 export type EstadoDatosDePruebaModulo = {
   modulo: string;
