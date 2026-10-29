@@ -147,3 +147,8 @@ describe("perfil base (tanda 1A)", () => {
     ]);
   });
 });
+
+
+it("la clasificación nuevo se muestra como Nuevo", () => {
+  expect(etiquetaClasificacion("nuevo")).toBe("Nuevo");
+});

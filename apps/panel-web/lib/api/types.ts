@@ -42,6 +42,8 @@ export type LeadAgent = components["schemas"]["LeadAgentOut"];
 export type LeadAgentData = components["schemas"]["LeadAgentData"];
 export type LeadCampoPerfil = components["schemas"]["LeadCampoPerfil"];
 export type LeadGeocodificacion = components["schemas"]["LeadGeocodificacion"];
+
+export type LeadGeocodificacionInversa = components["schemas"]["LeadGeocodificacionInversa"];
 export type LeadRow = components["schemas"]["LeadRow"];
 export type CostsResponse = components["schemas"]["CostsResponse"];
 export type PlanResponse = components["schemas"]["PlanResponse"];

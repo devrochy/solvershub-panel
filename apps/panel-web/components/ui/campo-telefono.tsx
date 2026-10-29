@@ -20,30 +20,45 @@ export function CampoTelefono({
   numero,
   onIndicativo,
   onNumero,
+  id = "telefono",
+  label = "Teléfono",
+  help = "Con indicativo, por ejemplo +57.",
+  placeholder = "300 123 4567",
+  error,
+  required = false,
+  onBlur,
 }: {
   indicativo: string;
   numero: string;
   onIndicativo: (codigo: string) => void;
   onNumero: (numero: string) => void;
+  id?: string;
+  label?: string;
+  help?: string;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
+  onBlur?: () => void;
 }) {
   const pais = PAISES.find((p) => p.codigo === indicativo) ?? PAISES[0];
 
   return (
-    <Field label="Teléfono" htmlFor="new-telefono" help="Con indicativo, por ejemplo +57.">
+    <Field label={label} htmlFor={`${id}-numero`} help={help} error={error} required={required}>
       <div className="grid grid-cols-[9.5rem_1fr] gap-2">
         <SelectConIcono
-          id="new-indicativo"
+          id={`${id}-indicativo`}
           label="Indicativo"
           value={pais.codigo}
           onChange={onIndicativo}
           options={OPCIONES}
         />
         <Input
-          id="new-telefono"
+          id={`${id}-numero`}
           inputMode="tel"
           autoComplete="tel"
-          placeholder="300 123 4567"
+          placeholder={placeholder}
           value={numero}
+          onBlur={onBlur}
           onChange={(e) => onNumero(e.target.value.replace(/[^\d\s]/g, ""))}
         />
       </div>

@@ -30,7 +30,8 @@ export const metadata = { title: "Clientes" };
 
 type LeadRow = LeadsResponse["items"][number];
 
-const TONO_CLASIFICACION: Record<string, "neutral" | "accent" | "success" | "warning" | "danger"> = {
+const TONO_CLASIFICACION: Record<string, "neutral" | "info" | "accent" | "success" | "warning" | "danger"> = {
+  nuevo: "info",
   prospecto: "neutral",
   cliente: "success",
   vip: "accent",

@@ -169,5 +169,8 @@ describe("ficha del cliente", () => {
 
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Datos del cliente")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "General" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Ubicación" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Preferencias" })).toBeTruthy();
   });
 });
