@@ -8188,6 +8188,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Lead Avatar
+         * @description Sube o reemplaza la foto del cliente en el almacenamiento del negocio.
+         *
+         *     La foto queda como dato de una persona (`source="human"`) y la API devuelve el
+         *     `avatar_url` ya firmado para que el panel y la APK lo pinten sin proxys.
+         */
+        post: operations["upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post"];
+        /**
+         * Delete Lead Avatar
+         * @description Quita la foto del cliente y borra el archivo si era del almacenamiento.
+         */
+        delete: operations["delete_lead_avatar_api_v1_admin_leads__lead_id__avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/geocodificar/reverso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Geocodificar Lead Inverso
+         * @description Propone una dirección a partir de un punto del mapa, sin escribir el perfil.
+         *
+         *     Solo se envían latitud y longitud al proveedor. La persona confirma la propuesta y
+         *     el guardado sigue siendo un `PATCH /perfil` normal, con `source="human"`.
+         */
+        post: operations["geocodificar_lead_inverso_api_v1_admin_leads__lead_id__geocodificar_reverso_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -21097,6 +21147,43 @@ export interface components {
              * @description Columnas obligatorias que el archivo no trae.
              */
             columnas_faltantes: string[];
+        };
+        /** Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post */
+        Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post: {
+            /** File */
+            file: string;
+        };
+        /**
+         * LeadGeocodificacionInversa
+         * @description Dirección propuesta a partir de un punto del mapa; no se guarda hasta confirmarla.
+         */
+        LeadGeocodificacionInversa: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
+            /** Direccion */
+            direccion?: string | null;
+            /** Municipio */
+            municipio?: string | null;
+            /** Departamento */
+            departamento?: string | null;
+            /** Pais */
+            pais?: string | null;
+            /** Precision */
+            precision?: string | null;
+            /** Proveedor */
+            proveedor: string;
+        };
+        /**
+         * LeadUbicacionInversa
+         * @description Coordenadas que manda el mapa táctil de la ficha.
+         */
+        LeadUbicacionInversa: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
         };
     };
     responses: never;
@@ -38688,6 +38775,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VistaPreviaImportacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lead_avatar_api_v1_admin_leads__lead_id__avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    geocodificar_lead_inverso_api_v1_admin_leads__lead_id__geocodificar_reverso_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUbicacionInversa"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadGeocodificacionInversa"];
                 };
             };
             /** @description Validation Error */

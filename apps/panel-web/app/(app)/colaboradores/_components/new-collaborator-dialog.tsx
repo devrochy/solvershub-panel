@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, Loader2, MailPlus, Plus, X } from "lucide-react";
 
-import { CampoTelefono } from "@/app/(app)/colaboradores/_components/campo-telefono";
+import { CampoTelefono } from "@/components/ui/campo-telefono";
 import { SelectorDeRol, type RolSeleccion } from "@/app/(app)/colaboradores/_components/selector-de-rol";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";

@@ -36,6 +36,10 @@ const CSP_EMBEDDED_SIGNUP = [
 // (su tienda, un CDN). Una imagen no ejecuta código; el resto del panel sigue en 'self'.
 const CSP_FOTOS_DE_PRODUCTOS = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https:");
 
+// La ficha del cliente muestra el avatar subido (URL firmada del backend) y el mapa
+// (tiles de OpenStreetMap). Son imágenes: no ejecutan código.
+const CSP_FICHA_CLIENTE = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https: http:");
+
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
   output: "standalone",
@@ -70,6 +74,14 @@ const nextConfig: NextConfig = {
       {
         source: "/comercio/productos",
         headers: [{ key: "Content-Security-Policy", value: CSP_FOTOS_DE_PRODUCTOS }],
+      },
+      {
+        source: "/leads",
+        headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
+      },
+      {
+        source: "/conversaciones",
+        headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
       },
     ];
   },

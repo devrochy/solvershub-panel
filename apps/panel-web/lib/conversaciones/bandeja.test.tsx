@@ -158,7 +158,7 @@ describe("bandeja de conversaciones", () => {
       const ficha = screen.getByRole("dialog");
       expect(ficha).toBeTruthy();
       expect(within(ficha).getByText("Información general")).toBeTruthy();
-      expect(within(ficha).getByText("Ana Prueba")).toBeTruthy();
+      expect(within(ficha).getAllByText("Ana Prueba").length).toBeGreaterThan(0);
     } finally {
       globalThis.fetch = fetchOriginal;
       delete respuestas["/admin/leads/test-lead-1"];
