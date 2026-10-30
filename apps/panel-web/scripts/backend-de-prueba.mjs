@@ -39,6 +39,20 @@ if (process.env.AGENDAS === "2") {
   respuestas["/pack/calendar/events"] = eventosAgenda();
 }
 
+// GESTOR_EN_EQUIPO=1: Equipo trae un gestor de cobranza con su perfil (ADR-0176, HU-ACC-07): otro con el
+// detalle recortado y uno con una edición que el panel no conoce.
+if (process.env.GESTOR_EN_EQUIPO === "1") {
+  const perfil = (ref, resumen, edit) => ({ pack: "pack_cobranza", role_id: "gestor", ref_id: ref, etiqueta: "Gestor", resumen, edit });
+  const base = { telefono: null, avatar_url: null, role: "colaborador", active: true, is_self: false, is_platform_master: false, permissions: [], links: [{ role: "colaborador", slug: "negocio-de-prueba", name: "Negocio" }] };
+  respuestas["/admin/collaborators"] = [
+    ...respuestas["/admin/collaborators"],
+    { ...base, id: "g-1", email: "gestor@test.example", username: null, nombre: "Gestor Uno", pack_profiles: [perfil("gp-1", { estatus: "activo", carteras: [{ id: "c1", nombre: "Ruta A" }, { id: "c2", nombre: "Ruta B" }], permisos_activos: 9, permisos_total: 14 }, { kind: "cobranza_gestor_permisos", ref_id: "gp-1" })] },
+    { ...base, id: "g-2", email: "recortado@test.example", username: null, nombre: null, pack_profiles: [perfil("gp-2", null, null)] },
+    { ...base, id: "g-3", email: "desconocido@test.example", username: null, nombre: null, pack_profiles: [perfil("gp-3", { estatus: "suspendido", carteras: [], permisos_activos: 0, permisos_total: 14 }, { kind: "otro_pack_otro_kind", ref_id: "z" })] },
+  ];
+  respuestas["/pack/cobranza/collectors/gp-1/permissions"] = { catalogo: ["registrar_pago", "ver_cartera", "generar_reporte"], activos: ["registrar_pago", "ver_cartera"] };
+}
+
 // SOLO_LECTURA=1: quien mira no es el propietario (plantillas con opciones en solo lectura).
 if (process.env.SOLO_LECTURA === "1") {
   respuestas["/admin/me"] = { ...me, role: "agent", tenant: { ...me.tenant, role: "agent" } };
