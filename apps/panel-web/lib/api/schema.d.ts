@@ -4308,7 +4308,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Orders */
+        /**
+         * List Orders
+         * @description Pedidos del negocio, del más reciente al más antiguo (HU-CRM-20).
+         *
+         *     Conserva la forma de lista (la consumen el panel y la APK); el total de los que coinciden
+         *     con los filtros viaja en la cabecera `X-Total-Count`.
+         */
         get: operations["list_orders_api_v1_pack_commerce_orders_get"];
         put?: never;
         post?: never;
@@ -10187,6 +10193,11 @@ export interface components {
              * Format: uuid
              */
             conversation_id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
             /** Customer Name */
             customer_name: string | null;
             /** External Id */
@@ -12226,6 +12237,13 @@ export interface components {
             id: string;
             /** Public Order Number */
             public_order_number: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Customer Name */
+            customer_name?: string | null;
             /** Total */
             total: number;
             /** Status */
@@ -30201,7 +30219,18 @@ export interface operations {
     };
     list_orders_api_v1_pack_commerce_orders_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Estado del pedido. */
+                estado?: string | null;
+                /** @description Estado del pago: pendiente, pagado o rechazado. */
+                pago?: string | null;
+                /** @description Número de pedido o nombre del cliente. */
+                q?: string | null;
+                /** @description Solo los pedidos de este cliente. */
+                customer_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -30214,6 +30243,8 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Total de pedidos que coinciden con los filtros (sin paginar). */
+                    "X-Total-Count"?: number;
                     [name: string]: unknown;
                 };
                 content: {

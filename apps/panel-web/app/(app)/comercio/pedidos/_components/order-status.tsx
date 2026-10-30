@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { FormFeedback } from "@/components/ui/form-feedback";
-
-const STATUSES = ["abierto", "despachado", "entregado", "cancelado", "expirado"];
+import { ESTADOS_DE_PEDIDO } from "@/lib/pedidos";
 
 /** Cambia el estado de un pedido del pack de Comercio. */
 export function OrderStatus({ orderId, status }: { orderId: string; status: string }) {
@@ -40,9 +39,9 @@ export function OrderStatus({ orderId, status }: { orderId: string; status: stri
           onChange={(e) => setValue(e.target.value)}
           className="h-9 w-36"
         >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
+          {Object.entries(ESTADOS_DE_PEDIDO).map(([valor, etiqueta]) => (
+            <option key={valor} value={valor}>
+              {etiqueta}
             </option>
           ))}
         </Select>

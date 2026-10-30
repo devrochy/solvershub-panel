@@ -7,7 +7,8 @@ import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { EscalationPage } from "@/lib/api/types";
+import type { EscalationPage, Me } from "@/lib/api/types";
+import { hrefFicha, puedeVerClientes } from "@/lib/clientes";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Escalaciones" };
@@ -24,9 +25,12 @@ export default async function EscalationsPage({
   if (sp.reason_code) qs.set("reason_code", sp.reason_code);
   if (sp.estado) qs.set("estado", sp.estado);
   if (sp.page) qs.set("page", sp.page);
-  const res = await apiFetch<EscalationPage>(
-    `/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`,
-  );
+  const [res, me] = await Promise.all([
+    apiFetch<EscalationPage>(`/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`),
+    apiFetch<Me>("/admin/me"),
+  ]);
+  // HU-CRM-20: el nombre abre la ficha solo si la sesión ve Clientes; si no, es texto.
+  const puedeAbrirFicha = me.ok && puedeVerClientes(me.data);
   const { items, page, has_more, total } = res.ok
     ? res.data
     : { items: [], page: 1, has_more: false, total: 0 };
@@ -35,7 +39,16 @@ export default async function EscalationsPage({
     {
       key: "cliente",
       header: "Cliente",
-      cell: (esc) => esc.customer_name ?? esc.external_id ?? "Cliente",
+      cell: (esc) => {
+        const nombre = esc.customer_name ?? esc.external_id ?? "Cliente";
+        return puedeAbrirFicha ? (
+          <Link href={hrefFicha(esc.customer_id)} className="text-link hover:underline">
+            {nombre}
+          </Link>
+        ) : (
+          nombre
+        );
+      },
     },
     {
       key: "motivo",

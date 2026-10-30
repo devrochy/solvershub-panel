@@ -434,7 +434,12 @@ function AgenteTab({ leadId, agente }: { leadId: string; agente: LeadAgentData }
       {ENLACE_DEL_AGENTE[agente.key] && (
         <div className="flex justify-end">
           <Button asChild size="sm" variant="outline">
-            <Link href={ENLACE_DEL_AGENTE[agente.key]}>Abrir en {agente.name}</Link>
+            {agente.key === "ventas" ? (
+              // HU-CRM-20: los pedidos de ESTE cliente, no la lista general.
+              <Link href={`${ENLACE_DEL_AGENTE.ventas}?cliente=${encodeURIComponent(leadId)}`}>Ver sus pedidos</Link>
+            ) : (
+              <Link href={ENLACE_DEL_AGENTE[agente.key]}>Abrir en {agente.name}</Link>
+            )}
           </Button>
         </div>
       )}
