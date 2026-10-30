@@ -50,6 +50,7 @@ export type CostsResponse = components["schemas"]["CostsResponse"];
 export type PlanResponse = components["schemas"]["PlanResponse"];
 
 export type CollaboratorItem = components["schemas"]["CollaboratorItem"];
+export type PackProfile = components["schemas"]["PackProfile"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
 export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];
