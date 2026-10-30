@@ -239,3 +239,87 @@ export function ubicacionVisible(perfil: Ubicacion): string {
 export function datosFueraDelPerfil<T extends { namespace: string; key: string }>(datos: T[]): T[] {
   return datos.filter((d) => d.namespace !== "perfil" || !CLAVES_DEL_PERFIL.has(d.key));
 }
+
+// ── Ventas › Clientes operable (HU-CRM-17) ──────────────────────────────────────────────────────
+
+/** Máximo de filas del CSV (`MAX_CSV` del backend): pasado ese total el panel avisa que se trunca. */
+export const MAX_FILAS_CSV = 5000;
+
+/** Órdenes de la lista (`orden=` de `/admin/leads`); `alta` es el valor por defecto de la API. */
+export const ORDENES_CLIENTES = [
+  { value: "alta", label: "Más nuevos primero" },
+  { value: "actividad", label: "Última actividad" },
+  { value: "nombre", label: "Nombre (A–Z)" },
+  { value: "nombre_desc", label: "Nombre (Z–A)" },
+] as const;
+
+export type OrdenClientes = (typeof ORDENES_CLIENTES)[number]["value"];
+
+/** El `orden` de la URL si la API lo conoce; cualquier otro valor se descarta (la API respondería 422). */
+export function ordenValido(valor: string | undefined): OrdenClientes | null {
+  return ORDENES_CLIENTES.find((o) => o.value === valor)?.value ?? null;
+}
+
+/** Solo dígitos del teléfono del cliente (con indicativo si el perfil lo trae), o "" si no hay uno usable. */
+function digitosDelTelefono(perfil: Telefono): string {
+  const digitos = soloDigitos(perfil.phone_e164 || perfil.phone || `${perfil.phone_indicativo ?? ""}${perfil.phone_local ?? ""}`);
+  return digitos.length >= 7 ? digitos : "";
+}
+
+/** `tel:` para llamar al cliente; null si no tiene teléfono (la acción se oculta, no se deshabilita). */
+export function enlaceTelefono(perfil: Telefono): string | null {
+  const digitos = digitosDelTelefono(perfil);
+  return digitos ? `tel:+${digitos}` : null;
+}
+
+/** `wa.me` para escribirle al cliente por WhatsApp; null si no tiene teléfono. Mismo criterio que la APK. */
+export function enlaceWhatsApp(perfil: Telefono): string | null {
+  const digitos = digitosDelTelefono(perfil);
+  return digitos ? `https://wa.me/${digitos}` : null;
+}
+
+/** Quién puede enviar plantillas desde la lista: el propietario del negocio, la plataforma y el tester (D-SPEC-33-8). */
+export function puedeEnviarPlantilla(me: { role?: string | null; tenant?: { role?: string | null } | null } | null | undefined): boolean {
+  return Boolean(me && (me.role === "master" || me.role === "tester" || me.tenant?.role === "owner"));
+}
+
+/** «Hace 3 min», «Hace 2 h», «Hace 5 días» o la fecha si pasó más de un mes; «Sin mensajes» si nunca escribió. */
+export function textoDeActividad(iso: string | null | undefined, ahora: Date = new Date()): string {
+  if (!iso) return "Sin mensajes";
+  const minutos = Math.max(0, Math.floor((ahora.getTime() - new Date(iso).getTime()) / 60000));
+  if (minutos < 1) return "Ahora";
+  if (minutos < 60) return `Hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias === 1) return "Ayer";
+  if (dias < 31) return `Hace ${dias} días`;
+  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(iso));
+}
+
+export type PestanaDeEtapa = { value: string; label: string; count: number };
+
+/**
+ * Pestañas de un filtro del pack con su contador (`facetas=` de la API): «Todas» más una por opción
+ * declarada, en el orden del pack. Los clientes sin valor (sin lead de venta) no son una pestaña: no
+ * hay filtro que los seleccione, así que se devuelven aparte.
+ */
+export function pestanasDeFaceta(
+  filtro: { options: { value: string; label: string }[] },
+  faceta: { counts: Record<string, number>; sin_valor: number; total: number } | undefined,
+): { pestanas: PestanaDeEtapa[]; sinValor: number } {
+  const contar = (v: string) => faceta?.counts[v] ?? 0;
+  return {
+    pestanas: [
+      { value: "", label: "Todas", count: faceta?.total ?? 0 },
+      ...filtro.options.map((o) => ({ value: o.value, label: o.label, count: contar(o.value) })),
+    ],
+    sinValor: faceta?.sin_valor ?? 0,
+  };
+}
+
+/** `filtro` de la URL con la clave `clave` cambiada (valor vacío = quitarla), conservando los demás. */
+export function filtrosCon(filtro: string | string[] | undefined, clave: string, valor: string): string[] {
+  const otros = filtrosDePacks(filtro).filter((f) => !f.startsWith(`${clave}:`));
+  return valor ? [...otros, `${clave}:${valor}`] : otros;
+}

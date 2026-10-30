@@ -16,6 +16,9 @@ export async function GET(request: Request) {
     },
     { conPagina: false },
   );
+  // Lista de un módulo (Ventas, Agenda): solo los clientes con datos de ese agente.
+  const agente = url.searchParams.get("agente");
+  if (agente) qs.set("agente", agente);
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   const tenant = store.get(TENANT_COOKIE)?.value;

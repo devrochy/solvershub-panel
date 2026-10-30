@@ -5,15 +5,22 @@ import {
   consultaClientes,
   datosDelPerfil,
   datosFueraDelPerfil,
+  enlaceTelefono,
+  enlaceWhatsApp,
   etiquetaClasificacion,
   etiquetaDeDato,
   etiquetaTipoDocumento,
+  filtrosCon,
   filtrosDePacks,
   mismoTelefono,
   normalizarClave,
+  ordenValido,
   origenDelDato,
+  pestanasDeFaceta,
+  puedeEnviarPlantilla,
   segmentoDelFiltro,
   telefonoVisible,
+  textoDeActividad,
   textoDeDato,
   ubicacionVisible,
   valorDeFiltro,
@@ -145,5 +152,93 @@ describe("perfil base (tanda 1A)", () => {
       "perfil:preferencia",
       "ventas:interes",
     ]);
+  });
+});
+
+describe("enlaces de contacto (HU-CRM-17)", () => {
+  it("arma tel: y wa.me solo con dígitos, con el indicativo del perfil", () => {
+    const perfil = { phone_e164: "+57 300 000-0000" };
+    expect(enlaceTelefono(perfil)).toBe("tel:+573000000000");
+    expect(enlaceWhatsApp(perfil)).toBe("https://wa.me/573000000000");
+  });
+
+  it("usa indicativo y número local cuando no hay e164", () => {
+    expect(enlaceWhatsApp({ phone_indicativo: "+57", phone_local: "3001112233" })).toBe("https://wa.me/573001112233");
+  });
+
+  it("sin teléfono usable devuelve null para ocultar la acción", () => {
+    expect(enlaceTelefono({})).toBeNull();
+    expect(enlaceWhatsApp({ phone: "—" })).toBeNull();
+    expect(enlaceWhatsApp({ phone: "123" })).toBeNull();
+  });
+});
+
+describe("orden de la lista", () => {
+  it("acepta solo los valores que conoce la API", () => {
+    expect(ordenValido("actividad")).toBe("actividad");
+    expect(ordenValido("nombre_desc")).toBe("nombre_desc");
+    expect(ordenValido("por-el-color")).toBeNull();
+    expect(ordenValido(undefined)).toBeNull();
+  });
+});
+
+describe("textoDeActividad", () => {
+  const ahora = new Date("2026-10-29T12:00:00Z");
+  const hace = (min: number) => new Date(ahora.getTime() - min * 60_000).toISOString();
+
+  it("escribe el tiempo transcurrido en español", () => {
+    expect(textoDeActividad(hace(0), ahora)).toBe("Ahora");
+    expect(textoDeActividad(hace(3), ahora)).toBe("Hace 3 min");
+    expect(textoDeActividad(hace(125), ahora)).toBe("Hace 2 h");
+    expect(textoDeActividad(hace(24 * 60 + 5), ahora)).toBe("Ayer");
+    expect(textoDeActividad(hace(5 * 24 * 60), ahora)).toBe("Hace 5 días");
+  });
+
+  it("pasado un mes da la fecha y sin mensajes lo dice", () => {
+    expect(textoDeActividad(hace(60 * 24 * 60), ahora)).toMatch(/2026/);
+    expect(textoDeActividad(null, ahora)).toBe("Sin mensajes");
+    expect(textoDeActividad(undefined, ahora)).toBe("Sin mensajes");
+  });
+
+  it("una hora futura (reloj desfasado) no da tiempos negativos", () => {
+    expect(textoDeActividad(hace(-10), ahora)).toBe("Ahora");
+  });
+});
+
+describe("pestanasDeFaceta", () => {
+  const filtro = { options: [{ value: "nuevo", label: "Nuevo" }, { value: "perdido", label: "Perdido" }] };
+
+  it("pone «Todas» primero y una pestaña por opción con su contador (cero si falta)", () => {
+    const { pestanas, sinValor } = pestanasDeFaceta(filtro, { counts: { nuevo: 4 }, sin_valor: 2, total: 6 });
+    expect(pestanas).toEqual([
+      { value: "", label: "Todas", count: 6 },
+      { value: "nuevo", label: "Nuevo", count: 4 },
+      { value: "perdido", label: "Perdido", count: 0 },
+    ]);
+    expect(sinValor).toBe(2);
+  });
+});
+
+describe("filtrosCon", () => {
+  it("cambia solo la clave pedida y conserva las demás", () => {
+    expect(filtrosCon(["estado_lead:nuevo", "clasificacion:fiel"], "estado_lead", "perdido")).toEqual([
+      "clasificacion:fiel",
+      "estado_lead:perdido",
+    ]);
+  });
+
+  it("un valor vacío quita la clave", () => {
+    expect(filtrosCon("estado_lead:nuevo", "estado_lead", "")).toEqual([]);
+    expect(filtrosCon(undefined, "estado_lead", "")).toEqual([]);
+  });
+});
+
+describe("puedeEnviarPlantilla", () => {
+  it("propietario del negocio, plataforma y tester sí; el resto no", () => {
+    expect(puedeEnviarPlantilla({ role: "user", tenant: { role: "owner" } })).toBe(true);
+    expect(puedeEnviarPlantilla({ role: "master" })).toBe(true);
+    expect(puedeEnviarPlantilla({ role: "tester" })).toBe(true);
+    expect(puedeEnviarPlantilla({ role: "user", tenant: { role: "colaborador" } })).toBe(false);
+    expect(puedeEnviarPlantilla(null)).toBe(false);
   });
 });

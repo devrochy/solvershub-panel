@@ -11066,6 +11066,8 @@ export interface components {
             bot_paused: boolean;
             /** Alta */
             alta: string;
+            /** Ultima Actividad */
+            ultima_actividad?: string | null;
             /** Extras */
             extras: {
                 [key: string]: unknown;
@@ -11080,6 +11082,8 @@ export interface components {
             columns: components["schemas"]["LeadColumn"][];
             /** Filters */
             filters?: components["schemas"]["LeadFilter"][];
+            /** Facetas */
+            facetas?: components["schemas"]["LeadFacetaOut"][];
             /** Agents */
             agents: components["schemas"]["LeadAgentOut"][];
             /** Items */
@@ -21098,6 +21102,23 @@ export interface components {
              */
             columnas_faltantes: string[];
         };
+        /**
+         * LeadFacetaOut
+         * @description Cuántos clientes hay por opción de un filtro, con el resto de los filtros de la lista aplicados
+         *     (pero no el propio, para que las pestañas de un mismo filtro sumen contra el mismo total).
+         */
+        LeadFacetaOut: {
+            /** Key */
+            key: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Sin Valor */
+            sin_valor: number;
+            /** Total */
+            total: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -23149,6 +23170,10 @@ export interface operations {
                 filtro?: string[] | null;
                 /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
                 agente?: string | null;
+                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre` o `nombre_desc`. */
+                orden?: "alta" | "actividad" | "nombre" | "nombre_desc";
+                /** @description Claves de `filters` de las que se quieren contadores por opción (se repite el parámetro). Una clave que no declara ningún pack, o que no sabe contar, responde 400 `filtro_invalido`. */
+                facetas?: string[] | null;
                 page?: number;
                 page_size?: number;
             };
