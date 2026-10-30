@@ -61,6 +61,14 @@ const SECCION_FUERA_DEL_MENU: Record<string, string> = {
   "/plantillas-opciones": "connections",
 };
 
+/**
+ * Rutas que se movieron de sitio y solo redirigen (Dispositivos y Alertas de acceso pasaron de
+ * Cobranza a Seguridad, ADR-0174). Se dejan pasar: la página nueva decide con su propia clave.
+ * Sin esto, `/cobranza/*` las trataría como Resumen de Cobranza y quien no tiene Cobranza vería un
+ * «sin acceso» en vez de llegar a Seguridad. Se quitan junto con los redirects.
+ */
+const RUTAS_MOVIDAS = new Set(["/cobranza/dispositivos", "/cobranza/alertas"]);
+
 function seccionFueraDelMenu(pathname: string): string | null {
   const match = Object.entries(SECCION_FUERA_DEL_MENU)
     .filter(([ruta]) => pathname === ruta || pathname.startsWith(`${ruta}/`))
@@ -74,6 +82,7 @@ function seccionFueraDelMenu(pathname: string): string | null {
  * ser master. Una ruta fuera del menú siempre se puede ver: su página decide.
  */
 export function puedeVerRuta(pathname: string, sesion: SesionRenderizada, grupos: NavGroupDef[] = NAV_GROUPS): boolean {
+  if (RUTAS_MOVIDAS.has(pathname)) return true;
   const item = itemDeRuta(pathname, grupos);
   if (item) {
     if (!sesion.permisos?.[item.section]) return false;

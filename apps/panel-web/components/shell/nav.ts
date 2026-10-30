@@ -10,6 +10,7 @@ import {
   Network,
   HandCoins,
   LayoutDashboard,
+  LockKeyhole,
   LogIn,
   MessageSquare,
   MessagesSquare,
@@ -188,8 +189,6 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { label: "Promesas", href: "/cobranza/promesas", section: "pack_cobranza:promesas", icon: Handshake, sub: "Actividad", ready: true },
           { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Actividad", ready: true },
           { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Equipo", ready: true },
-          { label: "Dispositivos", href: "/cobranza/dispositivos", section: "pack_cobranza:dispositivos", icon: Smartphone, sub: "Equipo", ready: true },
-          { label: "Alertas de acceso", href: "/cobranza/alertas", section: "pack_cobranza:alertas", icon: BellRing, sub: "Equipo", ready: true },
           { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Equipo", ready: true },
           { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Asistente", ready: true },
           { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Asistente", ready: true },
@@ -207,6 +206,11 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "costs", label: "Costos", href: "/costos", icon: Coins, ready: true },
       ]),
       { section: "collaborators", label: "Equipo", href: "/colaboradores", icon: UserCog, ready: true },
+      // Seguridad es del negocio, no de un pack (ADR-0174, HU-ACC-04): dispositivos y alertas de acceso.
+      entrada("Seguridad", LockKeyhole, [
+        { section: "devices", label: "Dispositivos", href: "/seguridad/dispositivos", icon: Smartphone, ready: true },
+        { section: "access_alerts", label: "Alertas de acceso", href: "/seguridad/alertas", icon: BellRing, ready: true },
+      ]),
       entrada("Configuración", Settings, [
         { section: "settings", label: "General", href: "/configuracion", icon: Settings, ready: true },
         { section: "plugins", label: "Habilidades", href: "/habilidades", icon: Workflow, ready: true },
