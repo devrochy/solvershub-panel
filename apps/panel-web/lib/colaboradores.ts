@@ -1,4 +1,4 @@
-import type { CollaboratorItem, Me } from "@/lib/api/types";
+import type { CollaboratorItem, Me, PackProfile } from "@/lib/api/types";
 import { rolLabel, seccionLabel } from "@/lib/labels";
 
 /**
@@ -92,4 +92,65 @@ export function seccionesOtorgables(permisos: Me["permissions"] | null | undefin
 export function mensajeDeAlta(resultado: string | undefined): string {
   if (resultado === "invitado") return "Ese correo ya tiene cuenta: se le envió una invitación al negocio.";
   return "Cuenta creada. Ya puede entrar al panel con la contraseña que definiste.";
+}
+
+/** `kind` de edición que este panel sabe resolver; cualquier otro se muestra solo en lectura (ADR-0176). */
+export const KIND_PERMISOS_DE_GESTOR = "cobranza_gestor_permisos";
+
+export type PerfilDePack = {
+  /** Clave estable para la lista (pack + perfil). */
+  clave: string;
+  etiqueta: string;
+  /** `null` cuando el servidor recortó el detalle: no tienes acceso a ese pack. */
+  detalle: {
+    estatus: string | null;
+    carteras: { id: string; nombre: string }[];
+    permisos: { activos: number; total: number } | null;
+  } | null;
+  /** Solo con `edit.kind` conocido y detalle visible. */
+  edicion: { kind: typeof KIND_PERMISOS_DE_GESTOR; refId: string } | null;
+};
+
+function texto(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v : null;
+}
+
+function entero(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null;
+}
+
+/**
+ * Traduce un `PackProfile` del servidor a lo que la fila pinta. El `resumen` lo define cada pack y
+ * llega como objeto abierto: aquí solo se leen los campos conocidos y lo demás se ignora, así un
+ * perfil con otra forma (u otro pack) nunca rompe la fila.
+ */
+export function perfilDePack(perfil: PackProfile): PerfilDePack {
+  const clave = `${perfil.pack}:${perfil.ref_id}`;
+  const etiqueta = perfil.etiqueta || perfil.role_id;
+  const resumen = perfil.resumen ?? null;
+  if (resumen === null) return { clave, etiqueta, detalle: null, edicion: null };
+  const carteras = Array.isArray(resumen.carteras)
+    ? resumen.carteras.flatMap((c) => {
+        const o = c as { id?: unknown; nombre?: unknown };
+        const id = texto(o?.id);
+        const nombre = texto(o?.nombre);
+        return id && nombre ? [{ id, nombre }] : [];
+      })
+    : [];
+  const activos = entero(resumen.permisos_activos);
+  const total = entero(resumen.permisos_total);
+  const edicion: PerfilDePack["edicion"] =
+    perfil.edit?.kind === KIND_PERMISOS_DE_GESTOR
+      ? { kind: KIND_PERMISOS_DE_GESTOR, refId: perfil.edit.ref_id }
+      : null;
+  return {
+    clave,
+    etiqueta,
+    detalle: {
+      estatus: texto(resumen.estatus),
+      carteras,
+      permisos: activos !== null && total !== null ? { activos, total } : null,
+    },
+    edicion,
+  };
 }

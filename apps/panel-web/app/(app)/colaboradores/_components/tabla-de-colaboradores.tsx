@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { CollaboratorItem } from "@/lib/api/types";
 import { GrillaDePermisos } from "@/app/(app)/colaboradores/_components/grilla-de-permisos";
 import { CollaboratorActions } from "@/app/(app)/colaboradores/_components/collaborator-actions";
+import { PerfilesDePack } from "@/app/(app)/colaboradores/_components/perfiles-de-pack";
 import { EstadoDeColaborador } from "@/app/(app)/colaboradores/_components/estado-de-colaborador";
 import { puedeActuarSobre } from "@/lib/colaboradores";
 import { rolLabel } from "@/lib/labels";
@@ -54,6 +55,9 @@ export function TablaDeColaboradores({
     }
   }
 
+  // La columna solo existe si alguna cuenta tiene perfil de un pack: sin cobranza no aparece vacía.
+  const hayPerfiles = actuales.some((c) => (c.pack_profiles ?? []).length > 0);
+
   const columns: Column<CollaboratorItem>[] = [
     {
       key: "cuenta",
@@ -82,6 +86,16 @@ export function TablaDeColaboradores({
         </Badge>
       ),
     },
+    ...(hayPerfiles
+      ? [
+          {
+            key: "perfil",
+            header: "Perfil",
+            info: "Perfil que un módulo tiene de la cuenta, como el gestor de cobranza: estatus, carteras y permisos de campo.",
+            cell: (c: CollaboratorItem) => <PerfilesDePack colaborador={c} />,
+          } satisfies Column<CollaboratorItem>,
+        ]
+      : []),
     {
       key: "estado",
       header: "Estado",

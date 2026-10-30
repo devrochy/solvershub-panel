@@ -29,10 +29,13 @@ export function CollectorPermissionsDialog({
   collectorId,
   nombre,
   trigger,
+  onSaved,
 }: {
   collectorId: string;
   nombre: string;
   trigger: ReactNode;
+  /** Se llama tras guardar (p. ej. para refrescar el conteo en Equipo). */
+  onSaved?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [catalogo, setCatalogo] = useState<string[]>([]);
@@ -83,6 +86,7 @@ export function CollectorPermissionsDialog({
       return;
     }
     setOpen(false);
+    onSaved?.();
   }
 
   return (
