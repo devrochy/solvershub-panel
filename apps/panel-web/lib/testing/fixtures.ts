@@ -108,6 +108,7 @@ export const resumenPorAgente: ResumenPorAgente = {
     hasta: "2026-10-27T00:00:00Z",
     previo_desde: "2026-10-13T00:00:00Z",
     previo_hasta: "2026-10-20T00:00:00Z",
+    dias: 7,
   },
   runtime: "v3",
   general: {
@@ -127,6 +128,16 @@ export const resumenPorAgente: ResumenPorAgente = {
         { id: "turnos", label: "Turnos atendidos", valor: 60, unidad: "count", previo: 40, delta_pct: 50, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "conversaciones" } } },
         { id: "tareas_abiertas", label: "Tareas abiertas", valor: 3, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "agente", params: { ref: "agente-ventas", pestana: "tareas" } } },
       ],
+      serie: [
+        { fecha: "2026-10-21", turnos: 5, conversaciones: 2, costo: 0.01 },
+        { fecha: "2026-10-22", turnos: 8, conversaciones: 3, costo: 0.02 },
+        { fecha: "2026-10-23", turnos: 0, conversaciones: 0, costo: 0 },
+        { fecha: "2026-10-24", turnos: 12, conversaciones: 4, costo: 0.03 },
+        { fecha: "2026-10-25", turnos: 9, conversaciones: 3, costo: 0.02 },
+        { fecha: "2026-10-26", turnos: 14, conversaciones: 5, costo: 0.04 },
+        { fecha: "2026-10-27", turnos: 12, conversaciones: 4, costo: 0.03 },
+      ],
+      ultima_actividad: "2026-10-27T18:30:00Z",
       modulos: [
         {
           id: "pack_commerce",
@@ -138,6 +149,26 @@ export const resumenPorAgente: ResumenPorAgente = {
           ],
         },
       ],
+    },
+    {
+      ref: "general",
+      key: "general",
+      name: "General",
+      kind: "specialist",
+      kpis: [
+        { id: "turnos", label: "Turnos atendidos", valor: 20, unidad: "count", previo: 10, delta_pct: 100, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "general", pestana: "conversaciones" } } },
+      ],
+      serie: [
+        { fecha: "2026-10-21", turnos: 2, conversaciones: 1, costo: 0.01 },
+        { fecha: "2026-10-22", turnos: 3, conversaciones: 1, costo: 0.01 },
+        { fecha: "2026-10-23", turnos: 1, conversaciones: 1, costo: 0 },
+        { fecha: "2026-10-24", turnos: 4, conversaciones: 2, costo: 0.02 },
+        { fecha: "2026-10-25", turnos: 3, conversaciones: 1, costo: 0.01 },
+        { fecha: "2026-10-26", turnos: 4, conversaciones: 2, costo: 0.02 },
+        { fecha: "2026-10-27", turnos: 3, conversaciones: 1, costo: 0.01 },
+      ],
+      ultima_actividad: "2026-10-27T17:10:00Z",
+      modulos: [],
     },
   ],
 };

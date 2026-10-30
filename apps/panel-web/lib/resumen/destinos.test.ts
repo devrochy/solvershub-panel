@@ -5,10 +5,20 @@ import { hrefDeDestino } from "./destinos";
 describe("hrefDeDestino (ADR-0171)", () => {
   it("traduce las rutas lógicas del backend a pantallas del panel", () => {
     expect(hrefDeDestino({ ruta: "conversaciones", params: {} })).toBe("/conversaciones");
-    expect(hrefDeDestino({ ruta: "escalaciones", params: { estado: "pendiente" } })).toBe("/escalaciones");
-    expect(hrefDeDestino({ ruta: "comercio.pedidos", params: { estado: "abierto" } })).toBe("/comercio/pedidos");
+    expect(hrefDeDestino({ ruta: "escalaciones", params: { estado: "pendiente" } })).toBe(
+      "/escalaciones?estado=pendiente",
+    );
+    expect(hrefDeDestino({ ruta: "comercio.pedidos", params: { estado: "abierto" } })).toBe(
+      "/comercio/pedidos?estado=abierto",
+    );
     expect(hrefDeDestino({ ruta: "calendario.citas", params: { periodo: "hoy" } })).toBe("/calendario");
     expect(hrefDeDestino({ ruta: "cobranza.carteras", params: { mora: "1" } })).toBe("/cobranza/carteras");
+    expect(hrefDeDestino({ ruta: "cobranza.promesas", params: { estado: "pendiente" } })).toBe(
+      "/cobranza/promesas?estado=pendiente",
+    );
+    expect(hrefDeDestino({ ruta: "comercio.pedidos", params: { pago: "pagado" } })).toBe(
+      "/comercio/pedidos?pago=pagado",
+    );
     expect(hrefDeDestino({ ruta: "suscripciones", params: {} })).toBe("/suscripciones");
     expect(hrefDeDestino({ ruta: "leads", params: {} })).toBe("/leads");
   });

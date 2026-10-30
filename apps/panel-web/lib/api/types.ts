@@ -18,6 +18,7 @@ export type AgenteResumen = components["schemas"]["AgenteResumen"];
 export type ModuloResumen = components["schemas"]["ModuloOut"];
 export type KpiResumen = components["schemas"]["KpiOut"];
 export type DestinoResumen = components["schemas"]["DestinoOut"];
+export type PuntoActividad = components["schemas"]["PuntoActividadOut"];
 export type BillingSummary = components["schemas"]["BillingSummary"];
 export type UsageMetric = components["schemas"]["UsageMetric"];
 
