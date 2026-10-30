@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { Bienvenida } from "@/components/domain/bienvenida";
@@ -13,24 +14,30 @@ import { apiFetch } from "@/lib/api/server";
 import type { Dashboard, Me, PrimerosPasos, ResumenPorAgente } from "@/lib/api/types";
 import { formatNumber, formatUsd } from "@/lib/format";
 import { PASOS_PLEGADOS_COOKIE, hayPasosParaActuar } from "@/lib/primeros-pasos";
+import { diasValidos } from "@/lib/resumen/periodos";
 import { TOUR_COOKIE, debeOfrecerTour } from "@/lib/tour";
 
 export const metadata = { title: "Resumen" };
 
-const DESCRIPCION = "Estado del agente, conversaciones y consumo del negocio.";
+const DESCRIPCION = "Estado del negocio, actividad por agente y consumo.";
 
 /** Un colaborador con solo «Resumen» recibe el bloque vacío: ahí se muestran las cifras de siempre. */
 function tieneResumen(r: ResumenPorAgente): boolean {
   return r.general.kpis.length > 0 || r.agentes.some((a) => a.kpis.length > 0 || a.modulos.length > 0);
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dias?: string }>;
+}) {
+  const dias = diasValidos((await searchParams).dias);
   // `/admin/me` ya lo pidió el layout: el fetch se memoiza en el mismo render.
   const [meRes, res, pasosRes, agentesRes] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<Dashboard>("/admin/dashboard"),
     apiFetch<PrimerosPasos>("/admin/onboarding"),
-    apiFetch<ResumenPorAgente>("/admin/dashboard/agents"),
+    apiFetch<ResumenPorAgente>(`/admin/dashboard/agents?dias=${dias}`),
   ]);
 
   if (meRes.ok && !meRes.data.tenant) {
@@ -101,18 +108,20 @@ export default async function DashboardPage() {
         <ResumenAgentes datos={agentesRes.data} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} />
-          <StatCard label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} />
+          <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} href="/conversaciones" />
+          <StatCard label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} href="/conversaciones" />
           <StatCard
             label="Escalaciones pendientes"
             value={formatNumber(d.kpi.pending_escalations)}
             tone={d.kpi.pending_escalations > 0 ? "warning" : "default"}
+            href="/escalaciones?estado=pendiente"
           />
           <StatCard
             label="Costo LLM (30 días)"
             value={formatUsd(d.kpi.cost_30d)}
             tone="accent"
             hint={planHint}
+            href="/costos"
           />
         </div>
       )}
@@ -122,27 +131,39 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle>Estado del sistema</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4 text-sm">
-            <div className="flex items-center justify-between">
+          <CardContent className="flex flex-col gap-1 text-sm">
+            <Link
+              href="/agentes"
+              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
+            >
               <span className="text-body">Agente</span>
               <Badge variant={d.bot_paused ? "danger" : "success"}>
                 {d.bot_paused ? "Pausado" : "Activo"}
               </Badge>
-            </div>
-            <div className="flex items-center justify-between">
+            </Link>
+            <Link
+              href="/configuracion?tab=advanced"
+              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
+            >
               <span className="text-body">Proveedor LLM</span>
-              <span className="font-mono text-xs text-headline">{d.llm_label}</span>
-            </div>
-            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs tabular-nums text-headline">{d.llm_label}</span>
+            </Link>
+            <Link
+              href="/habilidades"
+              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
+            >
               <span className="text-body">Habilidades activas</span>
               <Badge variant="accent">{d.kpi.active_plugins}</Badge>
-            </div>
+            </Link>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between gap-3">
             <CardTitle>Conversaciones recientes</CardTitle>
+            <Link href="/conversaciones" className="text-sm text-link hover:underline">
+              Ver todas
+            </Link>
           </CardHeader>
           <CardContent>
             {d.recent.length === 0 ? (
@@ -150,11 +171,16 @@ export default async function DashboardPage() {
             ) : (
               <ul className="flex flex-col divide-y divide-border-soft text-sm">
                 {d.recent.map((conv) => (
-                  <li key={conv.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="truncate text-headline">
-                      {conv.customer_name ?? conv.external_id ?? "Cliente"}
-                    </span>
-                    <StatusBadge value={conv.status} map={CONVERSATION_STATUS} />
+                  <li key={conv.id}>
+                    <Link
+                      href={`/conversaciones/${encodeURIComponent(conv.id)}`}
+                      className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-hover"
+                    >
+                      <span className="truncate text-headline">
+                        {conv.customer_name ?? conv.external_id ?? "Cliente"}
+                      </span>
+                      <StatusBadge value={conv.status} map={CONVERSATION_STATUS} />
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -16034,6 +16034,16 @@ export interface components {
             kpis: components["schemas"]["KpiOut"][];
             /** Modulos */
             modulos: components["schemas"]["ModuloOut"][];
+            /**
+             * Serie
+             * @description Serie diaria cero-rellena del período (días calendario del negocio).
+             */
+            serie?: components["schemas"]["PuntoActividadOut"][];
+            /**
+             * Ultima Actividad
+             * @description Último turno del agente dentro del período.
+             */
+            ultima_actividad?: string | null;
         };
         /** ConfiguredSecret */
         ConfiguredSecret: {
@@ -18583,6 +18593,8 @@ export interface components {
              * Format: date-time
              */
             previo_hasta: string;
+            /** Dias */
+            dias: number;
         };
         /** PermissionChange */
         PermissionChange: {
@@ -21185,6 +21197,23 @@ export interface components {
             /** Longitud */
             longitud: number;
         };
+        /** PuntoActividadOut */
+        PuntoActividadOut: {
+            /**
+             * Fecha
+             * Format: date
+             */
+            fecha: string;
+            /** Turnos */
+            turnos: number;
+            /** Conversaciones */
+            conversaciones: number;
+            /**
+             * Costo
+             * @description Costo del día en USD; `null` sin la sección `costs`.
+             */
+            costo: number | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -22147,7 +22176,10 @@ export interface operations {
     };
     dashboard_agents_api_v1_admin_dashboard_agents_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Ventana del Resumen en días: 7, 15 o 30. */
+                dias?: number;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -23193,6 +23225,8 @@ export interface operations {
                 reason_code?: ("solicitud_cliente" | "queja" | "fuera_de_alcance" | "intentos_fallidos" | "monto_alto" | "palabra_clave" | "accion_habilidad" | "regla_negocio" | "verificacion" | "frase_prohibida" | "falla_ia" | "rechazo_ia" | "envio_fallido" | "sin_resolver" | "limite_iteraciones" | "otro") | null;
                 page?: number;
                 page_size?: number;
+                /** @description Filtra por estado de la escalación */
+                estado?: ("pendiente" | "asignada" | "resuelta") | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
