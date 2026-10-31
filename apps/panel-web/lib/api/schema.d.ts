@@ -9557,6 +9557,11 @@ export interface components {
             permissions: components["schemas"]["PermissionItem"][];
             /** Links */
             links: components["schemas"]["TenantLink"][];
+            /**
+             * Pack Profiles
+             * @default []
+             */
+            pack_profiles: components["schemas"]["PackProfile"][];
         };
         /** Collector */
         Collector: {
@@ -20865,7 +20870,7 @@ export interface components {
             valor: number;
             /**
              * Periodos
-             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @description Cobros que descuenta. De 1 a 12 períodos; el monto fijo solo descuenta 1.
              * @default 1
              */
             periodos: number;
@@ -20914,7 +20919,7 @@ export interface components {
             valor: number;
             /**
              * Periodos
-             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @description Cobros que descuenta. De 1 a 12 períodos; el monto fijo solo descuenta 1.
              * @default 1
              */
             periodos: number;
@@ -21231,6 +21236,38 @@ export interface components {
              * @description Costo del día en USD; `null` sin la sección `costs`.
              */
             costo: number | null;
+        };
+        /**
+         * PackProfile
+         * @description Perfil que un pack tiene de un colaborador (ADR-0176), para mostrarlo en Equipo.
+         *
+         *     `resumen` es un objeto pequeño y plano que el cliente pinta sin interpretar; lo define el pack. El core
+         *     lo descarta (y `edit`) para quien no tiene acceso a ninguna sección del pack.
+         */
+        PackProfile: {
+            /** Pack */
+            pack: string;
+            /** Role Id */
+            role_id: string;
+            /** Ref Id */
+            ref_id: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Resumen */
+            resumen?: {
+                [key: string]: unknown;
+            } | null;
+            edit?: components["schemas"]["PackProfileEdit"] | null;
+        };
+        /**
+         * PackProfileEdit
+         * @description Cómo se edita un perfil: `kind` es una cadena abierta que el cliente reconoce o ignora.
+         */
+        PackProfileEdit: {
+            /** Kind */
+            kind: string;
+            /** Ref Id */
+            ref_id: string;
         };
     };
     responses: never;

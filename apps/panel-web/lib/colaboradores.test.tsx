@@ -5,13 +5,14 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new-collaborator-dialog";
 import { TablaDeColaboradores } from "@/app/(app)/colaboradores/_components/tabla-de-colaboradores";
 import { FeedbackProviders } from "@/components/ui/providers";
-import type { CollaboratorItem } from "@/lib/api/types";
+import type { CollaboratorItem, PackProfile } from "@/lib/api/types";
 import { resetToasts } from "@/lib/toast-store";
 
 import {
   filtrarPorNegocio,
   mensajeDeAlta,
   negociosDeFilas,
+  perfilDePack,
   permisoLegible,
   puedeActuarSobre,
   seccionesOtorgables,
@@ -40,6 +41,7 @@ function cuenta(extra: Partial<CollaboratorItem>): CollaboratorItem {
     is_platform_master: false,
     permissions: [],
     links: [{ role: "colaborador", ...NORTE }],
+    pack_profiles: [],
     ...extra,
   };
 }
@@ -196,6 +198,123 @@ describe("tabla de colaboradores", () => {
     });
     // El interruptor refleja el nuevo estado (optimista).
     await waitFor(() => expect(screen.getByRole("switch", { name: "Activar a operador@test" })).toBeTruthy());
+    vi.unstubAllGlobals();
+  });
+});
+
+const PERFIL_GESTOR: PackProfile = {
+  pack: "pack_cobranza",
+  role_id: "gestor",
+  ref_id: "g-1",
+  etiqueta: "Gestor",
+  resumen: {
+    estatus: "activo",
+    carteras: [
+      { id: "c1", nombre: "Ruta A" },
+      { id: "c2", nombre: "Ruta B" },
+    ],
+    permisos_activos: 3,
+    permisos_total: 14,
+  },
+  edit: { kind: "cobranza_gestor_permisos", ref_id: "g-1" },
+};
+
+describe("perfil de pack en la fila (ADR-0176)", () => {
+  afterEach(cleanup);
+
+  it("traduce el perfil de gestor: estatus, carteras, permisos y edición conocida", () => {
+    expect(perfilDePack(PERFIL_GESTOR)).toEqual({
+      clave: "pack_cobranza:g-1",
+      etiqueta: "Gestor",
+      detalle: {
+        estatus: "activo",
+        carteras: [
+          { id: "c1", nombre: "Ruta A" },
+          { id: "c2", nombre: "Ruta B" },
+        ],
+        permisos: { activos: 3, total: 14 },
+      },
+      edicion: { kind: "cobranza_gestor_permisos", refId: "g-1" },
+    });
+  });
+
+  it("sin detalle (recortado por permiso) queda solo la etiqueta y no se edita", () => {
+    const p = perfilDePack({ ...PERFIL_GESTOR, resumen: null, edit: null });
+    expect(p.detalle).toBeNull();
+    expect(p.edicion).toBeNull();
+    expect(p.etiqueta).toBe("Gestor");
+  });
+
+  it("un resumen con otra forma o un `kind` desconocido no rompe: solo lectura", () => {
+    const p = perfilDePack({
+      ...PERFIL_GESTOR,
+      resumen: { carteras: "no-es-lista", permisos_activos: "x", otra_cosa: 1 },
+      edit: { kind: "otro_pack_otro_kind", ref_id: "z" },
+    });
+    expect(p.detalle).toEqual({ estatus: null, carteras: [], permisos: null });
+    expect(p.edicion).toBeNull();
+  });
+
+  it("la fila muestra «Gestor», estatus, carteras y el conteo; quien no es gestor no muestra nada", () => {
+    const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+    expect(screen.getByText("Gestor")).toBeTruthy();
+    expect(screen.getByText("activo")).toBeTruthy();
+    expect(screen.getByText("2 carteras")).toBeTruthy();
+    expect(screen.getByText(/3 de 14/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Permisos de campo de gestor@test" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Asignar" }).getAttribute("href")).toBe("/cobranza/gestores");
+  });
+
+  it("sin ningún perfil la columna no existe", () => {
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[YO, OPERADOR]} secciones={["conversations"]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+    expect(screen.queryByRole("columnheader", { name: /Perfil/ })).toBeNull();
+  });
+
+  it("con el detalle recortado se ve que es gestor pero sin carteras ni permisos", () => {
+    const gestor = cuenta({
+      id: "g",
+      email: "gestor@test",
+      pack_profiles: [{ ...PERFIL_GESTOR, resumen: null, edit: null }],
+    });
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+    expect(screen.getByText("Gestor")).toBeTruthy();
+    expect(screen.queryByText(/permisos de campo/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Asignar" })).toBeNull();
+  });
+
+  it("editar los permisos usa el PUT existente y refresca la lista", async () => {
+    refresh.mockClear();
+    const fetchMock = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "PUT") return new Response(JSON.stringify({ activos: [] }), { status: 200 });
+      return new Response(JSON.stringify({ catalogo: ["ver_cartera"], activos: ["ver_cartera"] }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} />
+      </FeedbackProviders>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Permisos de campo de gestor@test" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Guardar permisos" }));
+
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+    const put = fetchMock.mock.calls.find(([, init]) => init?.method === "PUT");
+    expect(String(put?.[0])).toBe("/api/pack/cobranza/collectors/g-1/permissions");
     vi.unstubAllGlobals();
   });
 });

@@ -25,8 +25,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/cobranza/pagos", "pack_cobranza:cobros", false], ["/cobranza/promesas", "pack_cobranza:promesas", false],
   ["/cobranza/reportes", "pack_cobranza:reportes", false],
   ["/cobranza/monitoreo", "pack_cobranza:monitoreo", false], ["/cobranza/reglas", "pack_cobranza:reglas", false],
-  ["/cobranza/alertas", "pack_cobranza:alertas", false], ["/cobranza/auditoria", "pack_cobranza:auditoria", false],
-  ["/cobranza/dispositivos", "pack_cobranza:dispositivos", false], ["/comercio", "pack_commerce", false],
+  ["/cobranza/auditoria", "pack_cobranza:auditoria", false], ["/comercio", "pack_commerce", false],
   ["/comercio/productos", "pack_commerce", false], ["/comercio/categorias", "pack_commerce", false],
   ["/comercio/promociones", "pack_commerce", false], ["/comercio/pedidos", "pack_commerce", false],
   // HU-CAL-08: Agenda es una sola vista; las rutas viejas (`/calendario/citas|tipos|horario|bloqueos`)
@@ -46,6 +45,8 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/agentes/calidad", "agents", false],
   // HU-CRM-12: lista de clientes de Ventas y de Agenda; exigen la sección `leads`, como Clientes.
   ["/comercio/clientes", "leads", false], ["/calendario/clientes", "leads", false],
+  // HU-ACC-04 (ADR-0174): Dispositivos y Alertas de acceso salen de Cobranza y son del negocio.
+  ["/seguridad/dispositivos", "devices", false], ["/seguridad/alertas", "access_alerts", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -72,13 +73,13 @@ describe("menú v2 (HU-UX-02)", () => {
     }
   });
 
-  it("un dueño con todos los packs ve 12 entradas en 4 grupos (Suscripciones tiene la suya, D-43)", () => {
+  it("un dueño con todos los packs ve 13 entradas en 4 grupos (Suscripciones tiene la suya, D-43)", () => {
     const owner = { ...TODO, tenants: null, qa: null };
     const visibles = gruposVisibles(owner);
     expect(visibles.map((g) => g.group.label)).toEqual(["Operación", "Tu asistente", "Negocio", "Cuenta"]);
     expect(etiquetas(visibles)).toEqual([
       "Resumen", "Conversaciones", "Clientes", "Agentes", "Conexiones", "Agenda", "Ventas", "Suscripciones", "Cobranza",
-      "Consumo y plan", "Equipo", "Configuración",
+      "Consumo y plan", "Equipo", "Seguridad", "Configuración",
     ]);
   });
 
@@ -183,11 +184,24 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(pestanasPara("/dashboard", grupos)).toEqual({ subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] });
   });
 
-  it("quien solo tiene Alertas de acceso sigue viéndolas en Equipo, sin 403", () => {
-    const soloAlertas = gruposVisibles({ "pack_cobranza:alertas": "read" });
-    expect(puedeVerRuta("/cobranza/alertas", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(true);
-    expect(puedeVerRuta("/cobranza/dispositivos", { permisos: { "pack_cobranza:alertas": "read" }, esMaster: false, negocioId: "t" })).toBe(false);
-    expect(pestanasPara("/cobranza/alertas", soloAlertas).subgrupos).toEqual([]);
+  it("Seguridad es del negocio: sale de Cobranza y se ve con sus propias secciones (HU-ACC-04)", () => {
+    const cobranza = pestanasPara("/cobranza/gestores", grupos);
+    expect(cobranza.subgrupos.map((s) => s.label)).toEqual(["Resumen", "Carteras", "Actividad", "Equipo", "Asistente"]);
+    expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Gestores", "Auditoría"]);
+    const sesion = (permisos: Record<string, string>) => ({ permisos, esMaster: false, negocioId: "t" });
+    const soloAlertas = gruposVisibles({ access_alerts: "read" });
+    expect(puedeVerRuta("/seguridad/alertas", sesion({ access_alerts: "read" }))).toBe(true);
+    expect(puedeVerRuta("/seguridad/dispositivos", sesion({ access_alerts: "read" }))).toBe(false);
+    expect(etiquetas(soloAlertas)).toContain("Seguridad");
+    // Con una sola pestaña permitida, la entrada lleva directo a ella.
+    expect(pestanasPara("/seguridad/alertas", soloAlertas).pestanas).toEqual([]);
+    expect(pestanasPara("/seguridad/dispositivos", grupos).pestanas.map((p) => p.label)).toEqual(["Dispositivos", "Alertas de acceso"]);
+    // Las rutas viejas de Cobranza solo redirigen: pasan aunque la sesión no tenga Cobranza.
+    expect(puedeVerRuta("/cobranza/dispositivos", sesion({ devices: "read" }))).toBe(true);
+    expect(puedeVerRuta("/cobranza/alertas", sesion({}))).toBe(true);
+    expect(puedeVerRuta("/cobranza/gestores", sesion({ devices: "read" }))).toBe(false);
+    // Los permisos viejos del pack ya no abren Seguridad: el core copió las concesiones (migración 0104).
+    expect(puedeVerRuta("/seguridad/dispositivos", sesion({ "pack_cobranza:dispositivos": "write" }))).toBe(false);
   });
 
   it("las pestañas respetan los permisos", () => {

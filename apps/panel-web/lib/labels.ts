@@ -83,6 +83,8 @@ const ESCALACION_DE_TOOL = new Set([
 export const ESCALACION_RIESGO = new Set(["queja", "monto_alto"]);
 
 export const SECCION: Record<string, string> = {
+  devices: "Dispositivos",
+  access_alerts: "Alertas de acceso",
   "pack_cobranza:suscripciones": "Suscripciones",
   "pack_cobranza:carteras": "Carteras",
   "pack_cobranza:clientes": "Clientes",
