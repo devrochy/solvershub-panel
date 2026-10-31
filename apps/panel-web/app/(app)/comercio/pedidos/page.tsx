@@ -101,12 +101,6 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <Badge variant={o.payment_status === "pagado" ? "success" : "neutral"}>
             {etiquetaDePago(o.payment_status)}
           </Badge>
-          {o.plan_activation_status === "pendiente" && (
-            // HU-SUB-09: pagado pero el plan no se activó (configuración del proveedor).
-            <Badge variant="danger" title={o.plan_activation_error ?? undefined}>
-              Plan sin activar
-            </Badge>
-          )}
         </div>
       ),
     },

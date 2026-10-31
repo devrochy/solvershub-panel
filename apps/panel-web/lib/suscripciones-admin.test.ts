@@ -14,10 +14,16 @@ import {
   enlaceDePagina,
   mensajeDeReenvio,
   mensajeDePagoRegistrado,
+  descripcionDeConfirmacionDePago,
   descripcionDeRegistroDePago,
+  mensajeDePagoConfirmado,
+  montosDeInscripcion,
+  textoDeDescuentoVigente,
+  ESTADOS_SUSCRIPCION,
+  tipoDePagoLabel,
   mesLegible,
   nombreDelCliente,
-  planesDeProductos,
+  opcionesDePlanes,
   porcentaje,
   puedeAdministrar,
   resultadoDelAviso,
@@ -34,7 +40,7 @@ describe("filtros de las listas (SPEC-35)", () => {
       estado: "pausada", plan: ID, periodicidad: "anual", con_mora: "1", q: "  ana ", cliente_id: ID, page: "2",
     });
     expect(Object.fromEntries(qs)).toEqual({
-      estado: "pausada", variante_id: ID, periodicidad: "anual", con_mora: "true", q: "ana", cliente_id: ID, page: "2",
+      estado: "pausada", plan_id: ID, periodicidad: "anual", con_mora: "true", q: "ana", cliente_id: ID, page: "2",
     });
     const malo = consultaSuscripciones({ estado: "inventado", plan: "no-es-uuid", periodicidad: "diaria", cliente_id: "x", page: "0" });
     expect(malo.size).toBe(0);
@@ -151,23 +157,18 @@ describe("permisos y planes", () => {
     expect(puedeAdministrar(null)).toBe(false);
   });
 
-  it("los planes del filtro son las variantes con recurrencia", () => {
-    const planes = planesDeProductos([
-      { name: "Camisa", variants: [{ id: "v1", sku: "CAM-M" }] },
-      { name: "Plan Pro", variants: [{ id: "v2", sku: "PRO", billing_period: "mensual" }] },
-      {
-        name: "Plan Max",
-        variants: [
-          { id: "v3", sku: "MAX-M", billing_period: "mensual" },
-          { id: "v4", sku: "MAX-A", billing_period: "anual" },
-        ],
-      },
+  it("las opciones del filtro «Plan» salen del catálogo, con los apagados rotulados", () => {
+    const opciones = opcionesDePlanes([
+      { id: "p-pro", nombre: "Plan Pro", activo: true },
+      { id: "p-viejo", nombre: "Plan Viejo", activo: false },
+      { id: "p-basic", nombre: "Plan Basic", activo: true },
     ]);
-    expect(planes).toEqual([
-      { value: "v4", label: "Plan Max · MAX-A" },
-      { value: "v3", label: "Plan Max · MAX-M" },
-      { value: "v2", label: "Plan Pro" },
+    expect(opciones).toEqual([
+      { value: "p-basic", label: "Plan Basic" },
+      { value: "p-pro", label: "Plan Pro" },
+      { value: "p-viejo", label: "Plan Viejo (inactivo)" },
     ]);
+    expect(opcionesDePlanes([])).toEqual([]);
   });
 
   it("el registro del pago se explica en palabras del negocio", () => {
@@ -175,5 +176,49 @@ describe("permisos y planes", () => {
     expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "activa" })).toMatch(/está activa/);
     expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "pausada" })).toBe("Pago registrado.");
     expect(descripcionDeRegistroDePago({ periodo: "2026-10", monto: 200000, moneda: "COP" }, "Ana")).toMatch(/2026-10 de Ana/);
+  });
+});
+
+describe("inscripción pendiente de pago (SPEC-43, HU-SUB-31)", () => {
+  it("pendiente_pago es un estado y la inscripción un tipo de pago que se pueden filtrar", () => {
+    expect(ESTADOS_SUSCRIPCION).toContain("pendiente_pago");
+    expect(consultaSuscripciones({ estado: "pendiente_pago" }).get("estado")).toBe("pendiente_pago");
+    expect(consultaPagos({ tipo: "inscripcion" }).get("tipo")).toBe("inscripcion");
+    expect(tipoDePagoLabel("inscripcion")).toBe("Inscripción");
+  });
+
+  it("la confirmación dice qué se confirma, cuánto y que el sistema no comprueba el dinero", () => {
+    const texto = descripcionDeConfirmacionDePago({ monto: 99000, moneda: "COP", tipo: "inscripcion" }, "Plan Premium", "Caro");
+    expect(texto).toMatch(/Caro pagó la inscripción al plan «Plan Premium» por .*99\.000/);
+    expect(texto).toMatch(/el sistema no lo comprueba/);
+    expect(texto).toMatch(/La suscripción se activa/);
+    const cambio = descripcionDeConfirmacionDePago({ monto: 1, tipo: "cambio_plan" }, "Plan Pro", "Caro");
+    expect(cambio).toMatch(/el cambio al plan «Plan Pro»/);
+    expect(cambio).toMatch(/El cambio de plan se aplica/);
+    expect(cambio).not.toMatch(/se activa/);
+  });
+
+  it("el resultado de confirmar distingue la primera vez de la repetición", () => {
+    expect(mensajeDePagoConfirmado({ estado: "confirmado", suscripcion_estado: "activa" })).toBe("Pago confirmado. La suscripción está activa.");
+    expect(mensajeDePagoConfirmado({ estado: "ya_confirmado", suscripcion_estado: "activa" })).toMatch(/ya estaba confirmado/);
+    expect(mensajeDePagoConfirmado({ estado: "confirmado", suscripcion_estado: "pausada" })).toBe("Pago confirmado.");
+  });
+
+  it("el monto de la lista sale del cargo de inscripción pendiente, no de otros cargos", () => {
+    const montos = montosDeInscripcion([
+      { suscripcion_id: "s1", monto: 99000, tipo: "inscripcion", estado: "pendiente" },
+      { suscripcion_id: "s2", monto: 50000, tipo: "periodo", estado: "pendiente" },
+      { suscripcion_id: "s3", monto: 70000, tipo: "inscripcion", estado: "anulado" },
+    ]);
+    expect([...montos]).toEqual([["s1", 99000]]);
+  });
+
+  it("la línea del descuento vigente solo sale si hay descuento", () => {
+    expect(textoDeDescuentoVigente({ mrr_descuento: 25000, suscripciones_con_descuento: 3 }, "COP")).toMatch(
+      /^Descuento vigente: −.*25\.000\/mes en 3 suscripciones\.$/,
+    );
+    expect(textoDeDescuentoVigente({ mrr_descuento: 25000, suscripciones_con_descuento: 1 }, "COP")).toMatch(/en 1 suscripción\./);
+    expect(textoDeDescuentoVigente({ mrr_descuento: 0, suscripciones_con_descuento: 0 }, "COP")).toBeNull();
+    expect(textoDeDescuentoVigente({}, "COP")).toBeNull();
   });
 });

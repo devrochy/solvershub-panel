@@ -28,6 +28,8 @@ import type {
   LeadsResponse,
   Me,
   MetricasSuscripciones,
+  MinimoPagoEnLineaOut,
+  PlanOut,
   MissingTemplates,
   PlanResponse,
   PlatformTenantPage,
@@ -863,7 +865,7 @@ export const suscripcionEnMora: SuscripcionItem = {
   id: "test-sub-1",
   cliente: ANA,
   plan: "Plan Pro",
-  variante_id: "test-variante-pro",
+  plan_id: "test-plan-pro",
   estado: "activa",
   motivo_pausa: null,
   periodicidad: "mensual",
@@ -893,9 +895,26 @@ export const suscripcionPausada: SuscripcionItem = {
   dias_mora: null,
 };
 
+/** SPEC-43: inscripción que espera el pago (transferencia o link sin pagar todavía). */
+export const suscripcionPendiente: SuscripcionItem = {
+  ...suscripcionEnMora,
+  id: "test-sub-3",
+  cliente: { id: "test-cliente-caro", nombre: "Caro Prueba", telefono: "+573000000003", canal: "whatsapp" },
+  plan: "Plan Premium",
+  plan_id: "test-plan-premium",
+  estado: "pendiente_pago",
+  valor_periodo: 99000,
+  proximo_cargo: null,
+  fecha_alta: null,
+  deuda: 0,
+  cargos_pendientes: 0,
+  en_mora: 0,
+  dias_mora: null,
+};
+
 export const suscripciones: SuscripcionesPage = {
-  items: [suscripcionEnMora, suscripcionPausada],
-  total: 2,
+  items: [suscripcionEnMora, suscripcionPausada, suscripcionPendiente],
+  total: 3,
   page: 1,
   page_size: 20,
   has_more: false,
@@ -916,6 +935,21 @@ const cargoVencido: CargoSuscripcion = {
   link_url: "https://pago.test/abc",
   pago_externo: null,
   creado: "2026-10-10T00:00:00Z",
+};
+
+/** Cargo de inscripción de `suscripcionPendiente`: el que se confirma a mano (transferencia). */
+export const cargoDeInscripcion: CargoSuscripcion = {
+  ...cargoVencido,
+  id: "test-cargo-3",
+  suscripcion_id: "test-sub-3",
+  cliente: suscripcionPendiente.cliente,
+  plan: "Plan Premium",
+  periodo: "2026-10",
+  tipo: "inscripcion",
+  monto: 99000,
+  fecha_vencimiento: "2026-11-05T00:00:00Z",
+  dias_mora: null,
+  link_url: null,
 };
 
 const cargoPagado: CargoSuscripcion = {
@@ -962,6 +996,30 @@ export const avisosDelCargo: AvisoDeCargo[] = [
     enviado: "2026-10-16T14:00:05Z",
   },
 ];
+
+/** Catálogo de planes del negocio (SPEC-43, `GET /planes`). */
+export const planes: PlanOut[] = [
+  {
+    id: "test-plan-free", codigo: "PLAN-FREE", nombre: "Plan Free", descripcion: "Para probar", precio: 0, moneda: "COP",
+    periodicidad: "mensual", trial_dias: 30, entitlements: { clientes: 50 }, plan_plataforma: null, activo: true, orden: 0,
+    creado: "2026-10-28T12:00:00Z", actualizado: null,
+  },
+  {
+    id: "test-plan-pro", codigo: "PLAN-PRO", nombre: "Plan Pro", descripcion: "", precio: 200000, moneda: "COP",
+    periodicidad: "mensual", trial_dias: 0, entitlements: { clientes: 500, mensajes: 15000 }, plan_plataforma: "pro",
+    activo: true, orden: 1, creado: "2026-10-28T12:00:00Z", actualizado: "2026-10-29T12:00:00Z",
+  },
+  {
+    id: "test-plan-viejo", codigo: "PLAN-VIEJO", nombre: "Plan Viejo", descripcion: "", precio: 80000, moneda: "COP",
+    periodicidad: "trimestral", trial_dias: 0, entitlements: {}, plan_plataforma: null, activo: false, orden: 2,
+    creado: "2026-10-28T12:00:00Z", actualizado: null,
+  },
+];
+
+/** Mínimo de pago en línea del sandbox (150.000) con dos cuentas de transferencia. */
+export const minimoDePago: MinimoPagoEnLineaOut = {
+  minimo: 150_000, fuente: "pasarela", moneda: "COP", cuentas_de_transferencia: 2,
+};
 
 export const clientesConSuscripcion: ClientesConSuscripcionPage = {
   items: [
@@ -1302,6 +1360,8 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/pack_subscriptions/suscripciones": suscripciones,
   "/pack/pack_subscriptions/suscripciones/test-sub-1": suscripcionDetalle,
   "/pack/pack_subscriptions/cargos": cargosSuscripcion,
+  "/pack/pack_subscriptions/planes": planes,
+  "/pack/commerce/pago-en-linea/minimo": minimoDePago,
   "/pack/pack_subscriptions/cargos/test-cargo-1/avisos": avisosDelCargo,
   "/pack/pack_subscriptions/clientes": clientesConSuscripcion,
   "/pack/pack_subscriptions/metricas": metricasSuscripciones,

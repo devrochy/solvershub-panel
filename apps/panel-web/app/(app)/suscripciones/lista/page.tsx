@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Eye } from "lucide-react";
 
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
+import { ConfirmarPago } from "@/app/(app)/suscripciones/_components/confirmar-pago";
 import { FiltrosSuscripciones } from "@/app/(app)/suscripciones/_components/filtros";
 import { StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
@@ -9,16 +10,25 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { IconAction } from "@/components/ui/icon-action";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { SubscriptionProviderSettings, SuscripcionItem, SuscripcionesPage } from "@/lib/api/types";
+import type {
+  CargosSuscripcionPage,
+  Me,
+  PlanOut,
+  SubscriptionProviderSettings,
+  SuscripcionItem,
+  SuscripcionesPage,
+} from "@/lib/api/types";
 import { formatDate, formatMoney } from "@/lib/format";
 import {
   MOTIVO_PAUSA_LABEL,
   conQuery,
   consultaSuscripciones,
   enlaceDePagina,
+  montosDeInscripcion,
   nombreDelCliente,
+  opcionesDePlanes,
   periodicidadLabel,
-  planesDeProductos,
+  puedeAdministrar,
   textoDeMora,
   type FiltrosSuscripciones as Filtros,
 } from "@/lib/suscripciones-admin";
@@ -28,14 +38,26 @@ export const metadata = { title: "Suscripciones" };
 export default async function SuscripcionesListaPage({ searchParams }: { searchParams: Promise<Filtros> }) {
   const sp = await searchParams;
   const qs = consultaSuscripciones(sp);
-  const [res, productos, proveedor] = await Promise.all([
+  const [res, planes, proveedor, me] = await Promise.all([
     apiFetch<SuscripcionesPage>(`/pack/pack_subscriptions/suscripciones${conQuery(qs)}`),
-    apiFetch<Parameters<typeof planesDeProductos>[0]>("/pack/commerce/products"),
+    // SPEC-43: las opciones del filtro «Plan» salen del catálogo de planes, no de los productos.
+    apiFetch<PlanOut[]>("/pack/pack_subscriptions/planes?incluir_inactivos=true"),
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
+    apiFetch<Me>("/admin/me"),
   ]);
   const { items, page, has_more, total } = res.ok
     ? res.data
     : { items: [] as SuscripcionItem[], page: 1, has_more: false, total: 0 };
+  const puedeEscribir = me.ok && puedeAdministrar(me.data);
+  // El cargo de la inscripción no cuenta en «Debe» (solo cobros de período): se busca aparte, y solo
+  // si hay inscripciones esperando pago en esta página.
+  const hayPendientes = items.some((s) => s.estado === "pendiente_pago");
+  const cargosDeInscripcion = hayPendientes
+    ? await apiFetch<CargosSuscripcionPage>(
+        "/pack/pack_subscriptions/cargos?tipo=inscripcion&estado=pendiente&page_size=100",
+      )
+    : null;
+  const montos = montosDeInscripcion(cargosDeInscripcion?.ok ? cargosDeInscripcion.data.items : []);
 
   const columns: Column<SuscripcionItem>[] = [
     {
@@ -71,6 +93,9 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
           {s.estado === "pausada" && s.motivo_pausa && (
             <span className="text-xs text-text-soft">{MOTIVO_PAUSA_LABEL[s.motivo_pausa] ?? s.motivo_pausa}</span>
           )}
+          {s.estado === "pendiente_pago" && (
+            <span className="text-xs text-text-soft">Espera {formatMoney(montos.get(s.id) ?? s.valor_periodo, s.moneda)}</span>
+          )}
         </div>
       ),
     },
@@ -104,6 +129,14 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
       align: "right",
       cell: (s) => (
         <div className="flex items-center justify-end gap-1">
+          {puedeEscribir && s.estado === "pendiente_pago" && (
+            <ConfirmarPago
+              suscripcionId={s.id}
+              plan={s.plan}
+              cliente={nombreDelCliente(s.cliente)}
+              cargo={{ monto: montos.get(s.id) ?? s.valor_periodo, moneda: s.moneda, tipo: "inscripcion" }}
+            />
+          )}
           <IconAction href={`/suscripciones/lista/${s.id}`} label={`Ver suscripción de ${nombreDelCliente(s.cliente)}`} tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
@@ -120,7 +153,7 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
         helpSection: "subscriptions",
       }}
       filters={
-        <FiltrosSuscripciones sp={sp} planes={productos.ok ? planesDeProductos(productos.data) : []} />
+        <FiltrosSuscripciones sp={sp} planes={planes.ok ? opcionesDePlanes(planes.data) : []} />
       }
     >
       <AvisoDeAlcance proveedor={proveedor.ok ? proveedor.data : null} />
@@ -129,7 +162,7 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
         rows={items}
         getRowKey={(s) => s.id}
         emptyTitle="Sin suscripciones"
-        emptyDescription="Cuando un cliente compre un plan, su suscripción aparecerá aquí."
+        emptyDescription="Cuando un cliente se inscriba a un plan, su suscripción aparecerá aquí."
         error={res.ok ? null : `No se pudieron cargar las suscripciones: ${res.error}`}
         caption="Suscripciones"
         serverPaginated

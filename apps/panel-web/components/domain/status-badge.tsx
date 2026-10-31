@@ -48,6 +48,7 @@ export const PAYMENT_STATUS: StatusMap = {
  * del plan Free; `vencida` = un cobro quedó sin pagar pasados los días de gracia.
  */
 export const SUBSCRIPTION_STATUS: StatusMap = {
+  pendiente_pago: { label: "Pendiente de pago", variant: "warning" },
   activa: { label: "Activa", variant: "success" },
   trialing: { label: "En prueba", variant: "accent" },
   pausada: { label: "Pausada", variant: "warning" },

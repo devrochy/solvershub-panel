@@ -268,6 +268,10 @@ export type HistorialSuscripcion = components["schemas"]["HistorialItem"];
 export type AccionSuscripcionOut = components["schemas"]["AccionOut"];
 export type ReenvioLinkOut = components["schemas"]["ReenvioOut"];
 export type PagoRegistradoOut = components["schemas"]["PagoRegistradoOut"];
+// Planes e inscripción (SPEC-43, HU-SUB-31).
+export type PlanOut = components["schemas"]["PlanOut"];
+export type PlanBody = components["schemas"]["PlanBody"];
+export type PagoConfirmadoOut = components["schemas"]["PagoConfirmadoOut"];
 export type MinimoPagoEnLineaOut = components["schemas"]["MinimoPagoEnLineaOut"];
 export type AvisoDeCargo = components["schemas"]["AvisoOut"];
 export type CohorteSuscripciones = components["schemas"]["CohorteFila"];

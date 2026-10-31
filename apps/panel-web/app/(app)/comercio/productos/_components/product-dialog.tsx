@@ -2,7 +2,6 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Pencil, X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FotoProducto } from "@/components/comercio/foto-producto";
 import { FOTO_URL_MAX, esFotoValida } from "@/lib/foto-producto";
-import type { MinimoPagoEnLineaOut } from "@/lib/api/types";
-import { formatMoney } from "@/lib/format";
-import { AYUDA_COBRO, COBROS, avisoDeMinimo, cuerpoDelPlan } from "@/lib/suscripciones";
 
 type Product = {
   id: string;
@@ -27,7 +23,7 @@ type Product = {
   image_url?: string | null;
   image_url_externa?: string | null;
   image_key?: string | null;
-  variants: { sku: string; stock: number; billing_period?: string | null; trial_days?: number | null }[];
+  variants: { sku: string; stock: number }[];
 };
 
 /** Alta/edición de producto del pack de Comercio. */
@@ -35,16 +31,11 @@ export function ProductDialog({
   product,
   categories,
   allies = null,
-  minimo = null,
-  moneda = "COP",
 }: {
   product?: Product;
   categories: { id: string; name: string }[];
   /** HU-CRM-03: `null` = aliados apagados; el producto se guarda sin tocar su aliado. */
   allies?: { id: string; name: string }[] | null;
-  /** HU-SUB-25: mínimo del pago en línea según el servidor; `null` = no se pudo saber, sin aviso. */
-  minimo?: Pick<MinimoPagoEnLineaOut, "minimo" | "cuentas_de_transferencia"> | null;
-  moneda?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -56,8 +47,6 @@ export function ProductDialog({
   const [subiendo, setSubiendo] = useState(false);
   const fotoInvalida = foto.trim() !== "" && !esFotoValida(foto);
   const [precio, setPrecio] = useState(String(product?.price ?? 0));
-  const [cobro, setCobro] = useState(variant?.billing_period ?? "");
-  const aviso = avisoDeMinimo({ precio: Number(precio), periodo: cobro }, minimo, moneda);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +71,6 @@ export function ProductDialog({
         // "" quita el link externo (HU-CRM-01); `image_key` (HU-CRM-05) gana si está.
         image_url: foto.trim(),
         image_key: imageKey,
-        ...cuerpoDelPlan(data),
       }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
@@ -132,7 +120,6 @@ export function ProductDialog({
           setImageKey(product?.image_key ?? "");
           setPreview(product?.image_url ?? externa);
           setPrecio(String(product?.price ?? 0));
-          setCobro(variant?.billing_period ?? "");
         }
         setOpen(abierto);
       }}
@@ -250,67 +237,6 @@ export function ProductDialog({
               <Input id="p-stock" name="stock" type="number" min={0} defaultValue={variant?.stock ?? 0} />
             </Field>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Cobro"
-              htmlFor="p-cobro"
-              help={AYUDA_COBRO}
-            >
-              <Select id="p-cobro" name="billing_period" value={cobro} onChange={(e) => setCobro(e.target.value)}>
-                {COBROS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Días de prueba" htmlFor="p-trial" help="Solo el plan Free ($0) tiene prueba.">
-              <Input
-                id="p-trial"
-                name="trial_days"
-                type="number"
-                min={0}
-                max={365}
-                defaultValue={variant?.trial_days ?? ""}
-              />
-            </Field>
-          </div>
-
-          {aviso && (
-            <div role="status" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-3 text-sm text-body">
-              <p className="font-medium text-headline">Este plan no podrá cobrarse con link de pago</p>
-              <p className="mt-1">{aviso.mensaje}</p>
-              {aviso.sinCuentas && (
-                <p className="mt-1">
-                  Todavía no configuraste cuentas de transferencia: sin ellas el cliente no sabría cómo pagar.{" "}
-                  <Link href="/habilidades/pack_commerce" className="font-medium underline underline-offset-2">
-                    Configurarlas
-                  </Link>
-                </p>
-              )}
-              {aviso.alternativas.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span>Con un plan más largo sí llega al mínimo:</span>
-                  {aviso.alternativas.map((a) => (
-                    <Button
-                      key={a.value}
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setCobro(a.value);
-                        setPrecio(String(a.precio));
-                      }}
-                    >
-                      {a.label} a {formatMoney(a.precio, moneda)}
-                    </Button>
-                  ))}
-                </div>
-              )}
-              <p className="mt-2 text-xs text-text-soft">Puedes guardarlo igual: ese cobro se hará por transferencia.</p>
-            </div>
-          )}
 
           <FormFeedback error={status.error} />
 

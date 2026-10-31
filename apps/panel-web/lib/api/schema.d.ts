@@ -3871,10 +3871,10 @@ export interface paths {
         put?: never;
         /**
          * Crear Suscripcion Manual
-         * @description Inscribe a un `Customer` en un plan del catálogo (o, camino anterior, crea la suscripción de un plan libre).
+         * @description Inscribe a un `Customer` en un plan del catálogo.
          *
-         *     Con `plan_codigo`: un plan de $0 nace activa (o en prueba); uno de pago nace `pendiente_pago` con su
-         *     cobro y su link (o las instrucciones de transferencia). Repetir la petición devuelve la misma inscripción.
+         *     Un plan de $0 nace activa (o en prueba); uno de pago nace `pendiente_pago` con su cobro y su link (o
+         *     las instrucciones de transferencia). Repetir la petición devuelve la misma inscripción.
          */
         post: operations["crear_suscripcion_manual_api_v1_pack_pack_subscriptions_suscripciones_post"];
         delete?: never;
@@ -9944,8 +9944,8 @@ export interface components {
         };
         /**
          * CrearSuscripcionBody
-         * @description Con `plan_codigo` se inscribe al cliente en un plan del catálogo (SPEC-43). Los campos de plan
-         *     libre (`nombre`, `precio`, ...) son el camino anterior, que se retira con commerce sin planes (PR-4).
+         * @description Inscribe a un `Customer` en un plan del catálogo (SPEC-43). El plan libre (nombre, precio,
+         *     periodicidad, variante de commerce) del contrato v1 se retiró con HU-COM-17.
          */
         CrearSuscripcionBody: {
             /**
@@ -9958,7 +9958,7 @@ export interface components {
              * Plan Codigo
              * @description Código del plan del catálogo.
              */
-            plan_codigo?: string | null;
+            plan_codigo: string;
             /**
              * Datos Alta
              * @description Datos del cliente para el alta (nombre, email, teléfono, negocio, vertical).
@@ -9977,38 +9977,6 @@ export interface components {
              * @description Código de una promoción de plan: el primer cobro sale con descuento (HU-SUB-33).
              */
             codigo_promocion?: string | null;
-            /**
-             * Variant Id
-             * @description Camino anterior: variante de commerce.
-             */
-            variant_id?: string | null;
-            /**
-             * Nombre
-             * @description Camino anterior: nombre del plan.
-             */
-            nombre?: string | null;
-            /**
-             * Precio
-             * @description Valor del período.
-             * @default 0
-             */
-            precio: number;
-            /**
-             * Moneda
-             * @default COP
-             */
-            moneda: string;
-            /**
-             * Periodicidad
-             * @default mensual
-             */
-            periodicidad: string;
-            /**
-             * Trial Dias
-             * @description Días de prueba (0 = sin prueba).
-             * @default 0
-             */
-            trial_dias: number;
         };
         /** CreditIn */
         CreditIn: {
@@ -12271,10 +12239,6 @@ export interface components {
             created_at: string | null;
             /** Line Items */
             line_items: components["schemas"]["OrderLine"][];
-            /** Plan Activation Status */
-            plan_activation_status?: string | null;
-            /** Plan Activation Error */
-            plan_activation_error?: string | null;
         };
         /** OrderStatusUpdate */
         OrderStatusUpdate: {
@@ -13099,10 +13063,6 @@ export interface components {
              * @default 0
              */
             stock: number;
-            /** Billing Period */
-            billing_period?: ("mensual" | "trimestral" | "anual" | "") | null;
-            /** Trial Days */
-            trial_days?: number | null;
             /** Image Url */
             image_url?: string | null;
             /** Image Key */
@@ -15080,10 +15040,6 @@ export interface components {
             stock: number;
             /** Active */
             active: boolean;
-            /** Billing Period */
-            billing_period?: string | null;
-            /** Trial Days */
-            trial_days?: number | null;
         };
         /** VerifyCodeRequest */
         VerifyCodeRequest: {
@@ -19647,8 +19603,8 @@ export interface components {
             cliente: components["schemas"]["ClienteRef"];
             /** Plan */
             plan: string;
-            /** Variante Id */
-            variante_id?: string | null;
+            /** Plan Id */
+            plan_id?: string | null;
             /** Estado */
             estado: string;
             /** Motivo Pausa */
@@ -19708,8 +19664,8 @@ export interface components {
             cliente: components["schemas"]["ClienteRef"];
             /** Plan */
             plan: string;
-            /** Variante Id */
-            variante_id?: string | null;
+            /** Plan Id */
+            plan_id?: string | null;
             /** Estado */
             estado: string;
             /** Motivo Pausa */
@@ -29277,8 +29233,8 @@ export interface operations {
         parameters: {
             query?: {
                 estado?: ("pendiente_pago" | "trialing" | "activa" | "pausada" | "vencida" | "cancelada") | null;
-                /** @description Plan (variante de commerce). */
-                variante_id?: string | null;
+                /** @description Plan del catálogo. */
+                plan_id?: string | null;
                 periodicidad?: ("mensual" | "trimestral" | "anual") | null;
                 /** @description Solo con algún cargo vencido sin pagar. */
                 con_mora?: boolean;
