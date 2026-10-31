@@ -65,7 +65,7 @@ export default async function CommercePage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Leads" value={formatNumber(kpi.leads)} />
+        <StatCard label="Clientes" value={formatNumber(kpi.leads)} />
         <StatCard label="Productos" value={formatNumber(kpi.products)} />
         <StatCard label="Promociones" value={formatNumber(kpi.promotions)} tone="accent" />
         <StatCard label="Pedidos" value={formatNumber(kpi.orders)} />

@@ -228,6 +228,7 @@ export const escalaciones: EscalationPage = {
   items: [
     {
       conversation_id: "test-conv-1",
+      customer_id: "test-cliente-1",
       customer_name: "Ana Prueba",
       external_id: "573000000001",
       reason: "tool:solicitud_cliente",
@@ -239,6 +240,7 @@ export const escalaciones: EscalationPage = {
     },
     {
       conversation_id: "test-conv-2",
+      customer_id: "test-cliente-2",
       customer_name: "Luis Prueba",
       external_id: "573000000002",
       reason: "tool:queja",
@@ -252,6 +254,7 @@ export const escalaciones: EscalationPage = {
     },
     {
       conversation_id: "test-conv-3",
+      customer_id: "test-cliente-3",
       customer_name: null,
       external_id: "573000000003",
       reason: "plugin:crear_pedido",
@@ -983,6 +986,8 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   moneda: "COP",
   otras_monedas: 0,
   mrr: 400000,
+  mrr_descuento: 0,
+  suscripciones_con_descuento: 0,
   mrr_mes_anterior: 350000,
   activas: 5,
   en_prueba: 1,

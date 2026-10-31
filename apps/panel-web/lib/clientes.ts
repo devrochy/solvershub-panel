@@ -324,3 +324,30 @@ export function filtrosCon(filtro: string | string[] | undefined, clave: string,
   const otros = filtrosDePacks(filtro).filter((f) => !f.startsWith(`${clave}:`));
   return valor ? [...otros, `${clave}:${valor}`] : otros;
 }
+
+/**
+ * Enlace a la ficha de un cliente: la lista de Clientes con la ficha abierta (`/leads?cliente=`).
+ * `agente` abre la pestaña de ese agente (`ventas`…), `editar` abre el modo edición y `qs` conserva
+ * los filtros de la lista desde la que se abre. Sin `id` devuelve la lista (ficha cerrada).
+ */
+export function hrefFicha(
+  id?: string,
+  { agente, editar = false, qs }: { agente?: string; editar?: boolean; qs?: URLSearchParams } = {},
+): string {
+  const next = new URLSearchParams(qs);
+  if (id) next.set("cliente", id);
+  else next.delete("cliente");
+  if (id && agente) next.set("agente", agente);
+  else next.delete("agente");
+  if (id && editar) next.set("editar", "1");
+  else next.delete("editar");
+  return `/leads${next.size ? `?${next.toString()}` : ""}`;
+}
+
+/**
+ * ¿La sesión puede abrir la ficha de un cliente? La ficha vive en la sección Clientes (`leads`, ADR-0047):
+ * un colaborador de Comercio o de Escalaciones sin ella no ve el nombre como enlace.
+ */
+export function puedeVerClientes(sesion: { permissions?: Record<string, unknown> | null } | null | undefined): boolean {
+  return Boolean(sesion?.permissions?.leads);
+}

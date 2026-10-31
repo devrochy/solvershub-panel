@@ -19,6 +19,7 @@ import {
   enlaceWhatsApp,
   filtrosCon,
   filtrosDePacks,
+  hrefFicha,
   MAX_FILAS_CSV,
   ordenValido,
   ORDENES_CLIENTES,
@@ -113,8 +114,6 @@ export async function ClientesDeModulo({
   const columnasDelAgente = agents.find((a) => a.key === agente)?.columns ?? [];
   const puedeEnviar = me?.ok ? puedeEnviarPlantilla(me.data) : false;
 
-  const hrefFicha = (lead: Fila) => `/leads?cliente=${encodeURIComponent(lead.id)}&agente=${encodeURIComponent(agente)}`;
-
   // — Etapas (pestañas) y filtros declarados por el pack —
   const filtroDeEtapa = operable?.etapa ? filters?.find((f) => f.key === operable.etapa) : undefined;
   const faceta = operable?.etapa ? facetas?.find((f) => f.key === operable.etapa) : undefined;
@@ -201,12 +200,12 @@ export async function ClientesDeModulo({
         )}
         {grande ? (
           <Button asChild variant="ghost" size="icon" className={cn(tamano, "text-link")}>
-            <Link href={hrefFicha(lead)} aria-label={`Ver la ficha de ${nombre}`} title="Ver la ficha">
+            <Link href={hrefFicha(lead.id, { agente })} aria-label={`Ver la ficha de ${nombre}`} title="Ver la ficha">
               <Eye className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
         ) : (
-          <IconAction href={hrefFicha(lead)} label={`Ver la ficha de ${nombre}`} tone="ver">
+          <IconAction href={hrefFicha(lead.id, { agente })} label={`Ver la ficha de ${nombre}`} tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
         )}
@@ -219,7 +218,7 @@ export async function ClientesDeModulo({
       key: "cliente",
       header: "Cliente",
       cell: (lead) => (
-        <Link href={hrefFicha(lead)} className="truncate font-medium text-link hover:underline">
+        <Link href={hrefFicha(lead.id, { agente })} className="truncate font-medium text-link hover:underline">
           {lead.perfil.nombre_visible}
         </Link>
       ),
@@ -258,7 +257,7 @@ export async function ClientesDeModulo({
         ? (lead) => accionesDeFila(lead)
         : (lead) => (
             <div className="flex items-center justify-end gap-1">
-              <IconAction href={hrefFicha(lead)} label={`Ver la ficha de ${lead.perfil.nombre_visible}`} tone="ver">
+              <IconAction href={hrefFicha(lead.id, { agente })} label={`Ver la ficha de ${lead.perfil.nombre_visible}`} tone="ver">
                 <Eye className="h-4 w-4" aria-hidden />
               </IconAction>
             </div>
@@ -407,7 +406,7 @@ export async function ClientesDeModulo({
               <li key={lead.id} className="flex flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4">
                 <div className="flex items-start justify-between gap-3">
                   <Link
-                    href={hrefFicha(lead)}
+                    href={hrefFicha(lead.id, { agente })}
                     className="inline-flex min-h-11 min-w-0 items-center font-medium text-link hover:underline"
                   >
                     {lead.perfil.nombre_visible}
