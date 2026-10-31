@@ -986,6 +986,8 @@ export const metricasSuscripciones: MetricasSuscripciones = {
   moneda: "COP",
   otras_monedas: 0,
   mrr: 400000,
+  mrr_descuento: 0,
+  suscripciones_con_descuento: 0,
   mrr_mes_anterior: 350000,
   activas: 5,
   en_prueba: 1,
