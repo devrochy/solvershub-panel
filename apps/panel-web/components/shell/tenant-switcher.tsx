@@ -136,7 +136,7 @@ export function TenantSwitcher({
             aria-label="Buscar negocio"
             className="mb-2 h-9 w-full rounded-md border border-border-strong bg-bg-deep px-3 text-sm text-headline"
           />
-          <ul role="listbox" aria-label="Negocios" className="max-h-72 overflow-auto">
+          <ul role="listbox" aria-label="Negocios" className="max-h-[min(18rem,calc(100dvh-6rem))] overflow-auto overscroll-contain">
             {loading && <li className="px-2 py-1.5 text-sm text-body">Buscando…</li>}
             {!loading && results.length === 0 && (
               <li className="px-2 py-1.5 text-sm text-body">Sin resultados.</li>

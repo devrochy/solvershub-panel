@@ -76,6 +76,13 @@ tailwind-merge las tomaba por colores y las descartaba.
 - Migas y pestañas de sección salen solas del `PageHeader` (desde `nav.ts` y los
   permisos). En un detalle, el título de la página es el último nivel de las migas.
 - Topbar `h-16`, con el botón «Buscar…» que abre la paleta (solo ícono debajo de 1024 px).
+- Título de la página en la topbar (ADR-0003 §7): cuando el `h1` del `PageHeader` empieza a
+  ocultarse por arriba, la barra lo repite tras el selector de negocio. Entra desde abajo
+  (`translate-y-2 → 0`, 200 ms `ease-sh-out`) y se retira con 150 ms `ease-sh-in`; el
+  contenedor lo recorta para que nazca de la barra. El texto de la barra es `aria-hidden`
+  (el `h1` real no se mueve ni se duplica para lectores de pantalla). En celular reemplaza
+  al nombre del negocio mientras está visible. La lista del selector de negocios se
+  desplaza con `overscroll-contain` y se limita al alto de la ventana.
 - Paleta de comandos y atajos (HU-DS-05, ADR-0003): Ctrl/⌘ K abre la paleta (secciones
   permitidas, acciones rápidas y registros de `GET /search`). Los atajos de una tecla (`/`,
   `[`, `?`, `g` + letra) no se disparan en campos ni diálogos y se apagan en la ayuda (`?`),

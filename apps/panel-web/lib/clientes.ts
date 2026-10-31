@@ -170,6 +170,7 @@ export function columnasDeSoloLectura<C extends { key: string }>(
 }
 
 export const CLASIFICACION: Record<string, string> = {
+  nuevo: "Nuevo",
   prospecto: "Prospecto",
   cliente: "Cliente",
   vip: "VIP",

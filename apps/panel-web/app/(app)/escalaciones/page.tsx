@@ -17,11 +17,12 @@ type EscalationRow = EscalationPage["items"][number];
 export default async function EscalationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; reason_code?: string }>;
+  searchParams: Promise<{ page?: string; reason_code?: string; estado?: string }>;
 }) {
   const sp = await searchParams;
   const qs = new URLSearchParams();
   if (sp.reason_code) qs.set("reason_code", sp.reason_code);
+  if (sp.estado) qs.set("estado", sp.estado);
   if (sp.page) qs.set("page", sp.page);
   const res = await apiFetch<EscalationPage>(
     `/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`,
@@ -75,16 +76,18 @@ export default async function EscalationsPage({
         description: "Conversaciones que el agente derivó a una persona.",
         helpSection: "escalations",
       }}
-      filters={<EscalacionFilters motivo={sp.reason_code} />}
+      filters={<EscalacionFilters motivo={sp.reason_code} estado={sp.estado} />}
     >
       <DataTable
         columns={columns}
         rows={items}
         getRowKey={(esc, index) => `${esc.conversation_id}-${index}`}
-        emptyTitle={sp.reason_code ? "No hay escalaciones con este motivo" : "No hay escalaciones"}
+        emptyTitle={
+          sp.reason_code || sp.estado ? "No hay escalaciones con estos filtros" : "No hay escalaciones"
+        }
         emptyDescription={
-          sp.reason_code
-            ? "Prueba con otro motivo o quita el filtro."
+          sp.reason_code || sp.estado
+            ? "Prueba con otro filtro o quita los filtros."
             : "Cuando el agente derive una conversación, aparecerá aquí."
         }
         error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}

@@ -4308,7 +4308,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Orders */
+        /**
+         * List Orders
+         * @description Pedidos del negocio, del más reciente al más antiguo (HU-CRM-20).
+         *
+         *     Conserva la forma de lista (la consumen el panel y la APK); el total de los que coinciden
+         *     con los filtros viaja en la cabecera `X-Total-Count`.
+         */
         get: operations["list_orders_api_v1_pack_commerce_orders_get"];
         put?: never;
         post?: never;
@@ -8188,6 +8194,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Lead Avatar
+         * @description Sube o reemplaza la foto del cliente en el almacenamiento del negocio.
+         *
+         *     La foto queda como dato de una persona (`source="human"`) y la API devuelve el
+         *     `avatar_url` ya firmado para que el panel y la APK lo pinten sin proxys.
+         */
+        post: operations["upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post"];
+        /**
+         * Delete Lead Avatar
+         * @description Quita la foto del cliente y borra el archivo si era del almacenamiento.
+         */
+        delete: operations["delete_lead_avatar_api_v1_admin_leads__lead_id__avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{lead_id}/geocodificar/reverso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Geocodificar Lead Inverso
+         * @description Propone una dirección a partir de un punto del mapa, sin escribir el perfil.
+         *
+         *     Solo se envían latitud y longitud al proveedor. La persona confirma la propuesta y
+         *     el guardado sigue siendo un `PATCH /perfil` normal, con `source="human"`.
+         */
+        post: operations["geocodificar_lead_inverso_api_v1_admin_leads__lead_id__geocodificar_reverso_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9501,6 +9557,11 @@ export interface components {
             permissions: components["schemas"]["PermissionItem"][];
             /** Links */
             links: components["schemas"]["TenantLink"][];
+            /**
+             * Pack Profiles
+             * @default []
+             */
+            pack_profiles: components["schemas"]["PackProfile"][];
         };
         /** Collector */
         Collector: {
@@ -10137,6 +10198,11 @@ export interface components {
              * Format: uuid
              */
             conversation_id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
             /** Customer Name */
             customer_name: string | null;
             /** External Id */
@@ -12180,6 +12246,13 @@ export interface components {
             id: string;
             /** Public Order Number */
             public_order_number: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Customer Name */
+            customer_name?: string | null;
             /** Total */
             total: number;
             /** Status */
@@ -15988,6 +16061,16 @@ export interface components {
             kpis: components["schemas"]["KpiOut"][];
             /** Modulos */
             modulos: components["schemas"]["ModuloOut"][];
+            /**
+             * Serie
+             * @description Serie diaria cero-rellena del período (días calendario del negocio).
+             */
+            serie?: components["schemas"]["PuntoActividadOut"][];
+            /**
+             * Ultima Actividad
+             * @description Último turno del agente dentro del período.
+             */
+            ultima_actividad?: string | null;
         };
         /** ConfiguredSecret */
         ConfiguredSecret: {
@@ -18537,6 +18620,8 @@ export interface components {
              * Format: date-time
              */
             previo_hasta: string;
+            /** Dias */
+            dias: number;
         };
         /** PermissionChange */
         PermissionChange: {
@@ -19427,6 +19512,18 @@ export interface components {
              * @description Ingreso recurrente mensual: activas de pago, trimestral ÷ 3 y anual ÷ 12.
              */
             mrr: number;
+            /**
+             * Mrr Descuento
+             * @description Descuento vigente por mes (SPEC-43): de las activas de pago con descuento y períodos por consumir, valor del período por el porcentaje, normalizado a mes. El MRR no lo resta.
+             * @default 0
+             */
+            mrr_descuento: number;
+            /**
+             * Suscripciones Con Descuento
+             * @description Activas de pago con descuento vigente.
+             * @default 0
+             */
+            suscripciones_con_descuento: number;
             /**
              * Mrr Mes Anterior
              * @description Aproximado: suscripciones vivas al cierre del mes anterior, a su precio actual.
@@ -20789,7 +20886,7 @@ export interface components {
             valor: number;
             /**
              * Periodos
-             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @description Cobros que descuenta. De 1 a 12 períodos; el monto fijo solo descuenta 1.
              * @default 1
              */
             periodos: number;
@@ -20838,7 +20935,7 @@ export interface components {
             valor: number;
             /**
              * Periodos
-             * @description Cobros que descuenta. Hoy solo se acepta 1.
+             * @description Cobros que descuenta. De 1 a 12 períodos; el monto fijo solo descuenta 1.
              * @default 1
              */
             periodos: number;
@@ -21101,6 +21198,92 @@ export interface components {
              * @description Columnas obligatorias que el archivo no trae.
              */
             columnas_faltantes: string[];
+        };
+        /** Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post */
+        Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post: {
+            /** File */
+            file: string;
+        };
+        /**
+         * LeadGeocodificacionInversa
+         * @description Dirección propuesta a partir de un punto del mapa; no se guarda hasta confirmarla.
+         */
+        LeadGeocodificacionInversa: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
+            /** Direccion */
+            direccion?: string | null;
+            /** Municipio */
+            municipio?: string | null;
+            /** Departamento */
+            departamento?: string | null;
+            /** Pais */
+            pais?: string | null;
+            /** Precision */
+            precision?: string | null;
+            /** Proveedor */
+            proveedor: string;
+        };
+        /**
+         * LeadUbicacionInversa
+         * @description Coordenadas que manda el mapa táctil de la ficha.
+         */
+        LeadUbicacionInversa: {
+            /** Latitud */
+            latitud: number;
+            /** Longitud */
+            longitud: number;
+        };
+        /** PuntoActividadOut */
+        PuntoActividadOut: {
+            /**
+             * Fecha
+             * Format: date
+             */
+            fecha: string;
+            /** Turnos */
+            turnos: number;
+            /** Conversaciones */
+            conversaciones: number;
+            /**
+             * Costo
+             * @description Costo del día en USD; `null` sin la sección `costs`.
+             */
+            costo: number | null;
+        };
+        /**
+         * PackProfile
+         * @description Perfil que un pack tiene de un colaborador (ADR-0176), para mostrarlo en Equipo.
+         *
+         *     `resumen` es un objeto pequeño y plano que el cliente pinta sin interpretar; lo define el pack. El core
+         *     lo descarta (y `edit`) para quien no tiene acceso a ninguna sección del pack.
+         */
+        PackProfile: {
+            /** Pack */
+            pack: string;
+            /** Role Id */
+            role_id: string;
+            /** Ref Id */
+            ref_id: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Resumen */
+            resumen?: {
+                [key: string]: unknown;
+            } | null;
+            edit?: components["schemas"]["PackProfileEdit"] | null;
+        };
+        /**
+         * PackProfileEdit
+         * @description Cómo se edita un perfil: `kind` es una cadena abierta que el cliente reconoce o ignora.
+         */
+        PackProfileEdit: {
+            /** Kind */
+            kind: string;
+            /** Ref Id */
+            ref_id: string;
         };
         /**
          * LeadFacetaOut
@@ -22081,7 +22264,10 @@ export interface operations {
     };
     dashboard_agents_api_v1_admin_dashboard_agents_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Ventana del Resumen en días: 7, 15 o 30. */
+                dias?: number;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -23127,6 +23313,8 @@ export interface operations {
                 reason_code?: ("solicitud_cliente" | "queja" | "fuera_de_alcance" | "intentos_fallidos" | "monto_alto" | "palabra_clave" | "accion_habilidad" | "regla_negocio" | "verificacion" | "frase_prohibida" | "falla_ia" | "rechazo_ia" | "envio_fallido" | "sin_resolver" | "limite_iteraciones" | "otro") | null;
                 page?: number;
                 page_size?: number;
+                /** @description Filtra por estado de la escalación */
+                estado?: ("pendiente" | "asignada" | "resuelta") | null;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -30105,7 +30293,18 @@ export interface operations {
     };
     list_orders_api_v1_pack_commerce_orders_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Estado del pedido. */
+                estado?: string | null;
+                /** @description Estado del pago: pendiente, pagado o rechazado. */
+                pago?: string | null;
+                /** @description Número de pedido o nombre del cliente. */
+                q?: string | null;
+                /** @description Solo los pedidos de este cliente. */
+                customer_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -30118,6 +30317,8 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Total de pedidos que coinciden con los filtros (sin paginar). */
+                    "X-Total-Count"?: number;
                     [name: string]: unknown;
                 };
                 content: {
@@ -38713,6 +38914,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VistaPreviaImportacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_lead_avatar_api_v1_admin_leads__lead_id__avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lead_avatar_api_v1_admin_leads__lead_id__avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    geocodificar_lead_inverso_api_v1_admin_leads__lead_id__geocodificar_reverso_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUbicacionInversa"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadGeocodificacionInversa"];
                 };
             };
             /** @description Validation Error */

@@ -48,6 +48,7 @@ export function SelectConIcono({
         <button
           type="button"
           id={id}
+          aria-label={`${label}: ${elegida?.label ?? placeholder}`}
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(

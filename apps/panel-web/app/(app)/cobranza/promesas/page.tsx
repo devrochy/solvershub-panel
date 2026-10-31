@@ -1,13 +1,14 @@
 import { PromiseStatus } from "@/app/(app)/cobranza/promesas/_components/promise-status";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import { formatCop, formatDate } from "@/lib/format";
 
 export const metadata = { title: "Promesas" };
 
-type Promise = {
+type PromesaRow = {
   id: string;
   cliente: string;
   fecha_prometida: string;
@@ -17,8 +18,13 @@ type Promise = {
   creado_por: string;
 };
 
-export default async function PromisesPage() {
-  const res = await apiFetch<Promise[]>("/pack/cobranza/promises");
+export default async function PromisesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ estado?: string }>;
+}) {
+  const sp = await searchParams;
+  const res = await apiFetch<PromesaRow[]>("/pack/cobranza/promises");
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -27,7 +33,9 @@ export default async function PromisesPage() {
     );
   }
 
-  const columns: Column<Promise>[] = [
+  const estado = sp.estado && sp.estado !== "todas" ? sp.estado : null;
+  const filas = estado ? res.data.filter((p) => p.estado === estado) : res.data;
+  const columns: Column<PromesaRow>[] = [
     { key: "cliente", header: "Cliente", cell: (p) => <span className="text-headline">{p.cliente}</span> },
     {
       key: "fecha",
@@ -55,12 +63,25 @@ export default async function PromisesPage() {
         title="Promesas"
         description="Promesas de pago del asistente y de los gestores."
       />
+      <FilterChips
+        label="Filtros de promesas"
+        items={[
+          { label: "Todas", href: "/cobranza/promesas", active: !estado },
+          { label: "Pendientes", href: "/cobranza/promesas?estado=pendiente", active: estado === "pendiente" },
+          { label: "Cumplidas", href: "/cobranza/promesas?estado=cumplida", active: estado === "cumplida" },
+          { label: "Incumplidas", href: "/cobranza/promesas?estado=incumplida", active: estado === "incumplida" },
+        ]}
+      />
       <DataTable
         columns={columns}
-        rows={res.data}
+        rows={filas}
         getRowKey={(p) => p.id}
-        emptyTitle="Sin promesas"
-        emptyDescription="Cuando el agente pacte una promesa, aparecerá aquí con su estado."
+        emptyTitle={estado ? "Sin promesas con este estado" : "Sin promesas"}
+        emptyDescription={
+          estado
+            ? "Prueba con otro estado o quita el filtro."
+            : "Cuando el agente pacte una promesa, aparecerá aquí con su estado."
+        }
       />
     </div>
   );

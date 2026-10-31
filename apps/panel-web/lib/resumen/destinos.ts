@@ -29,7 +29,7 @@ export function hrefDeDestino(destino: DestinoResumen | null | undefined): strin
     case "conversaciones":
       return "/conversaciones";
     case "escalaciones":
-      return "/escalaciones";
+      return conFiltros("/escalaciones", p, ["estado"]);
     case "costos":
       return "/costos";
     case "agente": {
@@ -41,7 +41,7 @@ export function hrefDeDestino(destino: DestinoResumen | null | undefined): strin
         : base;
     }
     case "comercio.pedidos":
-      return "/comercio/pedidos";
+      return conFiltros("/comercio/pedidos", p, ["estado", "pago"]);
     case "calendario.citas":
       return "/calendario";
     case "cobranza.pagos":
@@ -49,7 +49,7 @@ export function hrefDeDestino(destino: DestinoResumen | null | undefined): strin
     case "cobranza.carteras":
       return "/cobranza/carteras";
     case "cobranza.promesas":
-      return "/cobranza/promesas";
+      return conFiltros("/cobranza/promesas", p, ["estado"]);
     case "suscripciones":
       return "/suscripciones";
     case "suscripciones.lista":

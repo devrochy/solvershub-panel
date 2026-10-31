@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { KpiResumen } from "@/lib/api/types";
+import { resumenPorAgente } from "@/lib/testing/fixtures";
 
 import { deltaDeKpi, propsDeKpi, valorDeKpi } from "./kpi";
 
@@ -37,6 +38,10 @@ describe("deltaDeKpi", () => {
       value: -5,
       versus: "el mes anterior",
     });
+    expect(deltaDeKpi(kpi({ delta_pct: 10 }), 15)).toEqual({
+      value: 10,
+      versus: "los 15 días anteriores",
+    });
   });
 
   it("sin variación calculable no hay delta", () => {
@@ -64,6 +69,18 @@ describe("propsDeKpi", () => {
       href: "/cobranza/carteras",
       tone: "default",
     });
+  });
+
+  it("todas las cifras del Resumen de prueba llevan a una pantalla", () => {
+    const kpis = [
+      ...resumenPorAgente.general.kpis,
+      ...resumenPorAgente.agentes.flatMap((a) => [
+        ...a.kpis,
+        ...a.modulos.flatMap((m) => m.kpis),
+      ]),
+    ];
+    expect(kpis.length).toBeGreaterThan(0);
+    for (const k of kpis) expect(propsDeKpi(k).href, k.id).toBeDefined();
   });
 
   it("las escalaciones pendientes piden atención en cuanto hay alguna", () => {

@@ -385,3 +385,15 @@ body {
   inset-inline: 0 !important;
   z-index: 0 !important;
 }
+
+/* Conversaciones usa todo el ancho del área de contenido: la bandeja y el chat
+   aprovechan la pantalla, sin el tope de lectura que sí tienen las páginas de texto. */
+main#contenido:has([data-ancho-completo]) > div {
+  max-width: none;
+}
+
+/* En Conversaciones el contenido no scrollea: la bandeja toma el alto de la pantalla y
+   cada columna (lista e hilo) resuelve su propio scroll interno. */
+main#contenido:has([data-ancho-completo]) {
+  overflow: hidden;
+}

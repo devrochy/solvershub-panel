@@ -16,11 +16,11 @@ export type SectionHelp = {
 export const SECTION_HELP: Record<string, SectionHelp> = {
   dashboard: {
     question: "¿Qué es el Resumen?",
-    what: "Es la foto del día: cuántas conversaciones hubo, cuántas escalaron y cómo va el consumo.",
+    what: "La foto del negocio: cifras clave, actividad de cada agente y consumo, en 7, 15 o 30 días.",
     first: [
-      "Sigue los primeros pasos hasta dejar tu asistente listo.",
-      "Revisa las conversaciones sin responder.",
-      "Confirma que tu asistente está activo.",
+      "Cambia la ventana (7, 15 o 30 días) para leer la tendencia.",
+      "Toca cualquier cifra o agente para abrir su detalle.",
+      "Revisa las conversaciones sin responder y confirma que el asistente está activo.",
     ],
   },
   conversations: {

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Eye, Pencil, Send } from "lucide-react";
 
-import { AgenteSwitch } from "@/app/(app)/leads/_components/agente-switch";
+import { AgenteSwitch } from "@/components/domain/cliente/agente-switch";
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
-import { FichaCliente } from "@/app/(app)/leads/_components/ficha-cliente";
+import { FichaCliente } from "@/components/domain/cliente/ficha-cliente";
 import { LeadsFilters } from "@/app/(app)/leads/_components/leads-filters";
 import { AgentIcon } from "@/components/domain/agent-icon";
 import { ChannelIcon } from "@/components/domain/channel-icon";
@@ -30,7 +30,8 @@ export const metadata = { title: "Clientes" };
 
 type LeadRow = LeadsResponse["items"][number];
 
-const TONO_CLASIFICACION: Record<string, "neutral" | "accent" | "success" | "warning" | "danger"> = {
+const TONO_CLASIFICACION: Record<string, "neutral" | "info" | "accent" | "success" | "warning" | "danger"> = {
+  nuevo: "info",
   prospecto: "neutral",
   cliente: "success",
   vip: "accent",

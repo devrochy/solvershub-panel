@@ -4,7 +4,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, KeyRound, Trash2 } from "lucide-react";
 
-import { CampoTelefono } from "@/app/(app)/colaboradores/_components/campo-telefono";
+import { CampoTelefono } from "@/components/ui/campo-telefono";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

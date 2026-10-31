@@ -8,8 +8,10 @@ import { AtajosProvider } from "@/components/shell/atajos";
 import { GuardiaDeSeccion } from "@/components/shell/guardia-de-seccion";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { PackLockBanner } from "@/components/shell/pack-lock-banner";
+import { ScrollAlInicio } from "@/components/shell/scroll-al-inicio";
 import { ShellProvider } from "@/components/shell/shell-context";
 import { Sidebar } from "@/components/shell/sidebar";
+import { TituloDePaginaProvider } from "@/components/shell/titulo-de-pagina";
 import { Topbar } from "@/components/shell/topbar";
 import { VigilanteDeSesion } from "@/components/shell/vigilante-de-sesion";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -87,37 +89,45 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           >
             Saltar al contenido
           </a>
-          <div className="flex min-h-screen">
-            {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-            <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} className="sticky top-0 hidden h-screen md:flex print:hidden" />
-            {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
-            <div className="flex min-w-0 flex-1 flex-col">
-              <Topbar
-                me={me}
-                menu={<MobileNav me={me} packs={packs} initialTheme={theme} />}
-                asistentePausado={asistentePausado}
-                puedeReactivar={puedeEditar}
-              />
-              {/*
-               * La clave es el negocio activo: al cambiarlo, la vista se vuelve a montar y los
-               * formularios del cliente arrancan con los datos del negocio nuevo (un
-               * `router.refresh()` solo conserva el estado que ya tenían).
-               */}
-              <main
-                key={claveDeNegocio(me)}
-                id="contenido"
-                tabIndex={-1}
-                className="flex-1 px-4 py-6 focus:outline-none md:px-6 md:py-8"
-              >
-                <div className="mx-auto w-full max-w-[1200px]">
-                  {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
-                  {puedeTerminarPrimerUso && <AvisoDeOnboarding recorrido={recorrido} />}
-                  <PackLockBanner packs={packs} />
-                  <GuardiaDeSeccion>{children}</GuardiaDeSeccion>
-                </div>
-              </main>
+          {/*
+            * Shell de altura fija: en el navegador nunca crece la página. La barra lateral y la
+            * topbar quedan quietas; el único que scrollea es `main` (y, dentro de Conversaciones,
+            * la lista y el hilo por separado).
+            */}
+          <TituloDePaginaProvider>
+            <div className="flex h-screen overflow-hidden supports-[height:100dvh]:h-dvh print:h-auto print:overflow-visible">
+              {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
+              <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} className="hidden h-full md:flex print:hidden" />
+              {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <Topbar
+                  me={me}
+                  menu={<MobileNav me={me} packs={packs} initialTheme={theme} />}
+                  asistentePausado={asistentePausado}
+                  puedeReactivar={puedeEditar}
+                />
+                {/*
+                 * La clave es el negocio activo: al cambiarlo, la vista se vuelve a montar y los
+                 * formularios del cliente arrancan con los datos del negocio nuevo (un
+                 * `router.refresh()` solo conserva el estado que ya tenían).
+                 */}
+                <main
+                  key={claveDeNegocio(me)}
+                  id="contenido"
+                  tabIndex={-1}
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 focus:outline-none md:px-6 md:py-8 print:overflow-visible"
+                >
+                  <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col">
+                    {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
+                    {puedeTerminarPrimerUso && <AvisoDeOnboarding recorrido={recorrido} />}
+                    <PackLockBanner packs={packs} />
+                    <GuardiaDeSeccion>{children}</GuardiaDeSeccion>
+                  </div>
+                </main>
+              </div>
+              <ScrollAlInicio />
             </div>
-          </div>
+          </TituloDePaginaProvider>
         </AtajosProvider>
       </FeedbackProviders>
     </ShellProvider>

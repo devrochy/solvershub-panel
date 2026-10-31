@@ -76,14 +76,17 @@ describe("GET /api/session (sesión vigente)", () => {
     expect(jar.get("panel_session")).toBe("token");
   });
 
-  it("las rutas de salida borran las cookies y redirigen", async () => {
-    const reset = await RESET(new Request("http://panel.test/api/tenant/reset"));
+  it("las rutas de salida borran las cookies y redirigen a la URL pública", async () => {
+    // Detrás del túnel, Next arma request.url con la dirección interna del contenedor;
+    // el navegador tiene que volver por el host que vio el proxy.
+    const interno = { "x-forwarded-host": "test.solvershub.site", "x-forwarded-proto": "https" };
+    const reset = await RESET(new Request("http://0.0.0.0:3000/api/tenant/reset", { headers: interno }));
     expect(reset.status).toBe(307);
-    expect(reset.headers.get("location")).toBe("http://panel.test/dashboard");
+    expect(reset.headers.get("location")).toBe("https://test.solvershub.site/dashboard");
     expect(jar.has("panel_tenant")).toBe(false);
     expect(jar.has("panel_session")).toBe(true);
-    const cerrar = await CERRAR(new Request("http://panel.test/api/session/cerrar"));
-    expect(cerrar.headers.get("location")).toBe("http://panel.test/login");
+    const cerrar = await CERRAR(new Request("http://0.0.0.0:3000/api/session/cerrar", { headers: interno }));
+    expect(cerrar.headers.get("location")).toBe("https://test.solvershub.site/login");
     expect(jar.has("panel_session")).toBe(false);
   });
 });

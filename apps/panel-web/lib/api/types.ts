@@ -18,6 +18,7 @@ export type AgenteResumen = components["schemas"]["AgenteResumen"];
 export type ModuloResumen = components["schemas"]["ModuloOut"];
 export type KpiResumen = components["schemas"]["KpiOut"];
 export type DestinoResumen = components["schemas"]["DestinoOut"];
+export type PuntoActividad = components["schemas"]["PuntoActividadOut"];
 export type BillingSummary = components["schemas"]["BillingSummary"];
 export type UsageMetric = components["schemas"]["UsageMetric"];
 
@@ -42,11 +43,14 @@ export type LeadAgent = components["schemas"]["LeadAgentOut"];
 export type LeadAgentData = components["schemas"]["LeadAgentData"];
 export type LeadCampoPerfil = components["schemas"]["LeadCampoPerfil"];
 export type LeadGeocodificacion = components["schemas"]["LeadGeocodificacion"];
+
+export type LeadGeocodificacionInversa = components["schemas"]["LeadGeocodificacionInversa"];
 export type LeadRow = components["schemas"]["LeadRow"];
 export type CostsResponse = components["schemas"]["CostsResponse"];
 export type PlanResponse = components["schemas"]["PlanResponse"];
 
 export type CollaboratorItem = components["schemas"]["CollaboratorItem"];
+export type PackProfile = components["schemas"]["PackProfile"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
 export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];

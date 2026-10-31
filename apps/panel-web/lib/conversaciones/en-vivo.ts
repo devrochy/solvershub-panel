@@ -122,15 +122,65 @@ export function ordenarPorLlegada(chats: ChatDeLista[]): ChatDeLista[] {
   return [...chats].sort((a, b) => actividadDe(b) - actividadDe(a) || b.id.localeCompare(a.id));
 }
 
-/** Lista de chats que se actualiza sola (cada `INTERVALO_LISTA_MS`) con los mismos filtros. */
-export function useListaEnVivo(query: string, iniciales: ChatDeLista[]) {
+/** Une páginas y actualizaciones del polling: actualiza por id sin duplicar ni perder lo cargado. */
+export function unirChats(actuales: ChatDeLista[], nuevos: ChatDeLista[]): ChatDeLista[] {
+  if (nuevos.length === 0) return actuales;
+  const porId = new Map(actuales.map((chat) => [chat.id, chat]));
+  for (const chat of nuevos) porId.set(chat.id, chat);
+  return ordenarPorLlegada([...porId.values()]);
+}
+
+type MetaLista = { page: number; total: number; has_more: boolean };
+
+/**
+ * Bandeja en vivo con scroll infinito (HU-UX-15): la primera página llega del servidor y el
+ * polling la refresca cada `INTERVALO_LISTA_MS`; las siguientes se piden al llegar al final y
+ * se fusionan, sin que el refresco vuelva a dejar solo la primera.
+ */
+export function useBandejaEnVivo(query: string, iniciales: ChatDeLista[], metaInicial: MetaLista) {
   const [chats, setChats] = useState(() => ordenarPorLlegada(iniciales));
-  // La vista del servidor se refrescó (filtros, una acción): manda la del servidor.
-  const [delServidor, setDelServidor] = useState(iniciales);
-  if (delServidor !== iniciales) {
-    setDelServidor(iniciales);
+  const [meta, setMeta] = useState<MetaLista>(metaInicial);
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // La vista del servidor se refrescó (filtros o navegación): manda la del servidor. Se
+  // compara una firma y no la identidad del arreglo: un render del cliente no reinicia nada.
+  const firma = `${metaInicial.page}:${metaInicial.total}:${metaInicial.has_more}|${iniciales
+    .map((chat) => `${chat.id}:${chat.last_message_at ?? ""}:${chat.status}:${chat.pending_count ?? 0}`)
+    .join("|")}`;
+  const [firmaDelServidor, setFirmaDelServidor] = useState(firma);
+  if (firmaDelServidor !== firma) {
+    setFirmaDelServidor(firma);
     setChats(ordenarPorLlegada(iniciales));
+    setMeta(metaInicial);
+    setError(null);
   }
+
+  // Las páginas ya cargadas y el estado de carga, sin re-suscribir el polling en cada cambio.
+  const ref = useRef({ meta, cargandoMas });
+  useEffect(() => {
+    ref.current = { meta, cargandoMas };
+  }, [meta, cargandoMas]);
+
+  const cargarMas = useCallback(async () => {
+    const actual = ref.current;
+    if (!actual.meta.has_more || actual.cargandoMas) return;
+    setCargandoMas(true);
+    setError(null);
+    try {
+      const qs = new URLSearchParams(query);
+      qs.set("page", String(actual.meta.page + 1));
+      const res = await fetch(`/api/conversations?${qs.toString()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`No se pudo cargar más: ${res.status}`);
+      const data = (await res.json()) as ConversationPage;
+      setChats((previos) => unirChats(previos, data.items));
+      setMeta({ page: data.page, total: data.total, has_more: data.has_more });
+    } catch {
+      setError("No se pudieron cargar más conversaciones.");
+    } finally {
+      setCargandoMas(false);
+    }
+  }, [query]);
 
   const consultar = useCallback(
     async (senal: AbortSignal) => {
@@ -140,11 +190,13 @@ export function useListaEnVivo(query: string, iniciales: ChatDeLista[]) {
       });
       if (!res.ok) return;
       const data = (await res.json()) as ConversationPage;
-      if (!senal.aborted) setChats(ordenarPorLlegada(data.items));
+      if (senal.aborted) return;
+      setChats((previos) => unirChats(previos, data.items));
+      setMeta((actual) => ({ ...actual, total: data.total }));
     },
     [query],
   );
 
   usePolling(consultar, INTERVALO_LISTA_MS);
-  return chats;
+  return { chats, total: meta.total, hayMas: meta.has_more, cargandoMas, error, cargarMas };
 }

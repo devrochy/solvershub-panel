@@ -242,3 +242,7 @@ describe("puedeEnviarPlantilla", () => {
     expect(puedeEnviarPlantilla(null)).toBe(false);
   });
 });
+
+it("la clasificación nuevo se muestra como Nuevo", () => {
+  expect(etiquetaClasificacion("nuevo")).toBe("Nuevo");
+});

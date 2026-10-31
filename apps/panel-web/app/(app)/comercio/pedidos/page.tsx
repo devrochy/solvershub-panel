@@ -1,6 +1,7 @@
 import { OrderStatus } from "@/app/(app)/comercio/pedidos/_components/order-status";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
 import { formatDateTime, formatMoney } from "@/lib/format";
@@ -23,7 +24,12 @@ type Order = {
   plan_activation_error?: string | null;
 };
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ estado?: string; pago?: string }>;
+}) {
+  const sp = await searchParams;
   const res = await apiFetch<Order[]>("/pack/commerce/orders");
   if (!res.ok) {
     return (
@@ -34,6 +40,11 @@ export default async function OrdersPage() {
   }
 
   const currency = await getBusinessCurrency();
+  const estado = sp.estado && sp.estado !== "todos" ? sp.estado : null;
+  const pago = sp.pago && sp.pago !== "todos" ? sp.pago : null;
+  const filas = res.data.filter(
+    (o) => (!estado || o.status === estado) && (!pago || o.payment_status === pago),
+  );
 
   const columns: Column<Order>[] = [
     {
@@ -105,12 +116,25 @@ export default async function OrdersPage() {
         title="Pedidos"
         description="Pedidos confirmados por el agente. El pago y el estado son ejes independientes."
       />
+      <FilterChips
+        label="Filtros de pedidos"
+        items={[
+          { label: "Todos", href: "/comercio/pedidos", active: !estado && !pago },
+          { label: "Por despachar", href: "/comercio/pedidos?estado=abierto", active: estado === "abierto" },
+          { label: "Pagados", href: "/comercio/pedidos?pago=pagado", active: pago === "pagado" },
+          { label: "Pago pendiente", href: "/comercio/pedidos?pago=pendiente", active: pago === "pendiente" },
+        ]}
+      />
       <DataTable
         columns={columns}
-        rows={res.data}
+        rows={filas}
         getRowKey={(o) => o.id}
-        emptyTitle="Sin pedidos todavía"
-        emptyDescription="Cuando el agente confirme un pedido, aparecerá aquí."
+        emptyTitle={estado || pago ? "Sin pedidos con estos filtros" : "Sin pedidos todavía"}
+        emptyDescription={
+          estado || pago
+            ? "Prueba con otro filtro o quita los filtros."
+            : "Cuando el agente confirme un pedido, aparecerá aquí."
+        }
       />
     </div>
   );

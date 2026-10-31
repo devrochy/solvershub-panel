@@ -43,8 +43,8 @@ export function EnCurso({ conversationId, estadoEscalacion }: { conversationId: 
   if (actual.error || !actual.valor || actual.valor.tasks.length === 0) return null;
 
   return (
-    // Plegable: en el celular deja lugar al hilo.
-    <details open className="group rounded-lg border border-border-soft bg-surface px-4 py-3">
+    // Plegable y cerrado: deja lugar al hilo hasta que la persona quiera el detalle.
+    <details className="group rounded-lg border border-border-soft bg-surface px-4 py-3">
       <summary
         className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-headline [&::-webkit-details-marker]:hidden focus-visible:outline-2"
       >

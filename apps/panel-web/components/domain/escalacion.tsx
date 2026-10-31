@@ -100,7 +100,7 @@ export function ResumenEscalacion({ esc }: { esc: Fila }) {
 }
 
 /** Filtro por motivo (`?reason_code=`). Form GET, como el de conversaciones. */
-export function EscalacionFilters({ motivo }: { motivo?: string }) {
+export function EscalacionFilters({ motivo, estado }: { motivo?: string; estado?: string }) {
   return (
     <form method="get" className="flex flex-wrap items-end gap-3">
       <Field label="Motivo" htmlFor="reason_code" className="w-64">
@@ -113,10 +113,18 @@ export function EscalacionFilters({ motivo }: { motivo?: string }) {
           ))}
         </Select>
       </Field>
+      <Field label="Estado" htmlFor="estado" className="w-48">
+        <Select id="estado" name="estado" defaultValue={estado ?? ""}>
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="asignada">Asignada</option>
+          <option value="resuelta">Resuelta</option>
+        </Select>
+      </Field>
       <Button type="submit" variant="outline">
         Filtrar
       </Button>
-      {motivo && (
+      {(motivo || estado) && (
         <Link href="/escalaciones" className="pb-2.5 text-sm text-link hover:underline">
           Limpiar
         </Link>

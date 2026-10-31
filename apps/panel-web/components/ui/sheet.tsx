@@ -20,12 +20,15 @@ export function SheetContent({
   description,
   children,
   footer,
+  hero,
   className,
 }: {
   title: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Contenido fijo entre el encabezado y el área desplazable (p. ej. avatar + pestañas). */
+  hero?: ReactNode;
   className?: string;
 }) {
   return (
@@ -53,6 +56,7 @@ export function SheetContent({
             <X className="h-4 w-4" aria-hidden />
           </DialogPrimitive.Close>
         </div>
+        {hero ? <div className="shrink-0 px-5 pt-5">{hero}</div> : null}
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
         {footer && <div className="flex justify-end gap-2 border-t border-border-soft p-4">{footer}</div>}
       </DialogPrimitive.Content>

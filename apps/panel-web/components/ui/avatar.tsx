@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 const TAMANO = {
@@ -36,11 +40,21 @@ export function Avatar({
   status?: keyof typeof ESTADO;
   className?: string;
 }) {
+  const [fallo, setFallo] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reintenta cuando cambia la URL
+    setFallo(false);
+  }, [src]);
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>
-      {src ? (
+      {src && !fallo ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatares externos sin optimizar
-        <img src={src} alt={name} className={cn("rounded-full object-cover", TAMANO[size])} />
+        <img
+          src={src}
+          alt={name}
+          className={cn("rounded-full object-cover", TAMANO[size])}
+          onError={() => setFallo(true)}
+        />
       ) : (
         <span
           role="img"

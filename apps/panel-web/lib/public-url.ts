@@ -6,8 +6,14 @@
  * dirección que no existe para él. El host y el protocolo reales vienen en los
  * encabezados del proxy (HU-CAL-07).
  */
+function firstValue(raw: string | null): string | null {
+  // `x-forwarded-*` puede traer una lista si hay varios proxies: manda el primero.
+  const value = raw?.split(",")[0]?.trim();
+  return value ? value : null;
+}
+
 export function publicUrl(request: Request, path: string): URL {
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const host = firstValue(request.headers.get("x-forwarded-host")) ?? firstValue(request.headers.get("host"));
+  const proto = firstValue(request.headers.get("x-forwarded-proto")) ?? "https";
   return new URL(path, host ? `${proto}://${host}` : request.url);
 }
