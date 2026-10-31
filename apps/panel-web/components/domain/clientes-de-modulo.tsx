@@ -3,6 +3,7 @@ import { Eye, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
+import { EtapaMenu } from "@/components/domain/cliente/etapa-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -24,7 +25,9 @@ import {
   ordenValido,
   ORDENES_CLIENTES,
   pestanasDeFaceta,
+  puedeEditarClientes,
   puedeEnviarPlantilla,
+  TONO_DE_ETAPA,
   telefonoVisible,
   textoDeActividad,
   valorDeFiltro,
@@ -46,6 +49,11 @@ export type OperableDeModulo = {
   etapa?: string;
   /** Claves de otros filtros del pack que se muestran como selects (`clasificacion`). */
   filtros?: string[];
+  /**
+   * Plugin dueño de la etapa (`pack_commerce`): con él, quien puede escribir cambia la etapa desde
+   * el menú de la columna (HU-CRM-19). Sin él la etapa es solo lectura.
+   */
+  pluginDeEtapa?: string;
 };
 
 /** Query de `/admin/leads` para la lista de un módulo: el agente, la búsqueda y la página (y, si es operable, filtros, orden y contadores). */
@@ -65,15 +73,6 @@ export function consultaClientesDeModulo(
   if (sp.page) qs.set("page", sp.page);
   return qs;
 }
-
-/** Tono del distintivo de cada etapa del lead; el texto siempre acompaña al color. */
-const TONO_ETAPA: Record<string, "neutral" | "accent" | "info" | "success" | "danger"> = {
-  nuevo: "neutral",
-  calificado: "accent",
-  contactado: "info",
-  convertido: "success",
-  perdido: "danger",
-};
 
 /**
  * Lista de clientes de un módulo (HU-CRM-12, ADR-0179): los clientes con datos reales de un
@@ -113,6 +112,7 @@ export async function ClientesDeModulo({
     : { items: [] as Fila[], agents: [], page: 1, has_more: false, total: 0, filters: [] as LeadFilter[], facetas: [] };
   const columnasDelAgente = agents.find((a) => a.key === agente)?.columns ?? [];
   const puedeEnviar = me?.ok ? puedeEnviarPlantilla(me.data) : false;
+  const puedeCambiarEtapa = Boolean(operable?.pluginDeEtapa) && (me?.ok ? puedeEditarClientes(me.data) : false);
 
   // — Etapas (pestañas) y filtros declarados por el pack —
   const filtroDeEtapa = operable?.etapa ? filters?.find((f) => f.key === operable.etapa) : undefined;
@@ -161,10 +161,24 @@ export async function ClientesDeModulo({
     return { texto, codigo };
   };
 
-  const badgeDeEtapa = (lead: Fila) => {
+  const badgeDeEtapa = (lead: Fila, grande = false) => {
     const etapa = etiquetaDeEtapa(lead);
+    if (etapa && puedeCambiarEtapa && operable?.etapa && operable.pluginDeEtapa && filtroDeEtapa) {
+      return (
+        <EtapaMenu
+          leadId={lead.id}
+          nombre={lead.perfil.nombre_visible}
+          pluginId={operable.pluginDeEtapa}
+          clave={operable.etapa}
+          actual={etapa.codigo}
+          texto={etapa.texto}
+          opciones={filtroDeEtapa.options}
+          grande={grande}
+        />
+      );
+    }
     return etapa ? (
-      <Badge variant={TONO_ETAPA[etapa.codigo] ?? "neutral"}>{etapa.texto}</Badge>
+      <Badge variant={TONO_DE_ETAPA[etapa.codigo] ?? "neutral"}>{etapa.texto}</Badge>
     ) : (
       <span className="text-xs text-text-soft">Sin lead de venta</span>
     );
@@ -224,7 +238,7 @@ export async function ClientesDeModulo({
       ),
     },
     ...(operable?.etapa
-      ? [{ key: "etapa", header: "Etapa", cell: badgeDeEtapa } satisfies Column<Fila>]
+      ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
       : []),
     {
       key: "telefono",
@@ -411,7 +425,7 @@ export async function ClientesDeModulo({
                   >
                     {lead.perfil.nombre_visible}
                   </Link>
-                  {operable.etapa && badgeDeEtapa(lead)}
+                  {operable.etapa && badgeDeEtapa(lead, true)}
                 </div>
                 <p className="text-sm text-body">{telefonoVisible(lead.perfil)}</p>
                 <p className="text-xs text-text-soft">Última actividad: {textoDeActividad(lead.ultima_actividad)}</p>

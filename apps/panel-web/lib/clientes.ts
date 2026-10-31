@@ -351,3 +351,24 @@ export function hrefFicha(
 export function puedeVerClientes(sesion: { permissions?: Record<string, unknown> | null } | null | undefined): boolean {
   return Boolean(sesion?.permissions?.leads);
 }
+
+/** Tono del distintivo de cada etapa del lead; el texto siempre acompaña al color. */
+export const TONO_DE_ETAPA: Record<string, "neutral" | "accent" | "info" | "success" | "danger"> = {
+  nuevo: "neutral",
+  calificado: "accent",
+  contactado: "info",
+  convertido: "success",
+  perdido: "danger",
+};
+
+/**
+ * ¿La sesión puede cambiar datos de los clientes (etapa del lead)? El propietario, la plataforma y el
+ * tester sí; un colaborador necesita la sección Clientes en escritura (ADR-0047). El servidor lo exige
+ * igual: esto solo decide si se ofrece el menú.
+ */
+export function puedeEditarClientes(
+  me: { role?: string | null; tenant?: { role?: string | null } | null; permissions?: Record<string, unknown> | null } | null | undefined,
+): boolean {
+  if (!me) return false;
+  return me.role === "master" || me.role === "tester" || me.tenant?.role === "owner" || me.permissions?.leads === "write";
+}

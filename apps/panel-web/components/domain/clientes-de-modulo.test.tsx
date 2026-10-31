@@ -88,7 +88,7 @@ const SIN_TELEFONO = {
   extras: { estado_lead: null, pedidos: 0 },
 };
 
-const OPERABLE = { etapa: "estado_lead", filtros: ["clasificacion"] };
+const OPERABLE: { etapa: string; filtros: string[]; pluginDeEtapa?: string } = { etapa: "estado_lead", filtros: ["clasificacion"] };
 
 function responder(extra: Partial<LeadsResponse> = {}, yo: Me = me) {
   respuestas["/admin/leads"] = { ...leads, filters: FILTROS, facetas: FACETAS, agents: AGENTES, items: [ANA, SIN_TELEFONO], total: 2, ...extra };
@@ -312,5 +312,36 @@ describe("estados, CSV y móvil", () => {
     expect(screen.queryByRole("link", { name: "Exportar CSV" })).toBeNull();
     expect(screen.queryByRole("link", { name: /WhatsApp/ })).toBeNull();
     expect(screen.getAllByRole("columnheader").map((c) => c.textContent)).not.toContain("Última actividad");
+  });
+});
+
+describe("cambio de etapa (HU-CRM-19)", () => {
+  const CAMBIABLE = { ...OPERABLE, pluginDeEtapa: "pack_commerce" };
+
+  it("el propietario cambia la etapa desde la fila; quien no tiene lead sigue sin menú", async () => {
+    responder();
+    await pintar({}, CAMBIABLE);
+    const [, ana, beto] = screen.getAllByRole("row");
+    expect(within(ana).getByRole("button", { name: "Etapa: Calificado. Cambiar la etapa de Ana Prueba" })).toBeTruthy();
+    expect(within(beto).queryByRole("button", { name: /Cambiar la etapa/ })).toBeNull();
+    expect(within(beto).getByText("Sin lead de venta")).toBeTruthy();
+  });
+
+  it("un colaborador sin escritura en Clientes ve la etapa pero no puede cambiarla", async () => {
+    responder({}, {
+      ...me,
+      role: "user",
+      tenant: { ...me.tenant!, role: "colaborador" },
+      permissions: { ...me.permissions, leads: "read" },
+    } as Me);
+    await pintar({}, CAMBIABLE);
+    expect(screen.queryByRole("button", { name: /Cambiar la etapa/ })).toBeNull();
+    expect(within(screen.getAllByRole("row")[1]).getByText("Calificado")).toBeTruthy();
+  });
+
+  it("sin plugin de etapa declarado la etapa es solo lectura", async () => {
+    responder();
+    await pintar({}, OPERABLE);
+    expect(screen.queryByRole("button", { name: /Cambiar la etapa/ })).toBeNull();
   });
 });

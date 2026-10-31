@@ -19,6 +19,7 @@ import {
   origenDelDato,
   pestanasDeFaceta,
   puedeEnviarPlantilla,
+  puedeEditarClientes,
   puedeVerClientes,
   segmentoDelFiltro,
   telefonoVisible,
@@ -270,5 +271,17 @@ describe("puedeVerClientes (HU-CRM-20)", () => {
     expect(puedeVerClientes({ permissions: { pack_commerce: "write" } })).toBe(false);
     expect(puedeVerClientes({ permissions: null })).toBe(false);
     expect(puedeVerClientes(null)).toBe(false);
+  });
+});
+
+describe("puedeEditarClientes (HU-CRM-19)", () => {
+  it("propietario, plataforma y tester sí; un colaborador solo con escritura en Clientes", () => {
+    expect(puedeEditarClientes({ role: "master" })).toBe(true);
+    expect(puedeEditarClientes({ role: "tester" })).toBe(true);
+    expect(puedeEditarClientes({ role: "user", tenant: { role: "owner" } })).toBe(true);
+    expect(puedeEditarClientes({ role: "user", tenant: { role: "colaborador" }, permissions: { leads: "write" } })).toBe(true);
+    expect(puedeEditarClientes({ role: "user", tenant: { role: "colaborador" }, permissions: { leads: "read" } })).toBe(false);
+    expect(puedeEditarClientes({ role: "user", tenant: { role: "colaborador" }, permissions: {} })).toBe(false);
+    expect(puedeEditarClientes(null)).toBe(false);
   });
 });
