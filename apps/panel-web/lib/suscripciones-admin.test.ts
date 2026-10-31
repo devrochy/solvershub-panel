@@ -191,7 +191,11 @@ describe("inscripción pendiente de pago (SPEC-43, HU-SUB-31)", () => {
     const texto = descripcionDeConfirmacionDePago({ monto: 99000, moneda: "COP", tipo: "inscripcion" }, "Plan Premium", "Caro");
     expect(texto).toMatch(/Caro pagó la inscripción al plan «Plan Premium» por .*99\.000/);
     expect(texto).toMatch(/el sistema no lo comprueba/);
-    expect(descripcionDeConfirmacionDePago({ monto: 1, tipo: "cambio_plan" }, "Plan Pro", "Caro")).toMatch(/el cambio al plan «Plan Pro»/);
+    expect(texto).toMatch(/La suscripción se activa/);
+    const cambio = descripcionDeConfirmacionDePago({ monto: 1, tipo: "cambio_plan" }, "Plan Pro", "Caro");
+    expect(cambio).toMatch(/el cambio al plan «Plan Pro»/);
+    expect(cambio).toMatch(/El cambio de plan se aplica/);
+    expect(cambio).not.toMatch(/se activa/);
   });
 
   it("el resultado de confirmar distingue la primera vez de la repetición", () => {

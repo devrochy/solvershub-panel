@@ -302,10 +302,12 @@ export function descripcionDeConfirmacionDePago(
   plan: string,
   cliente: string,
 ): string {
-  const que = cargo.tipo === "cambio_plan" ? `el cambio al plan «${plan}»` : `la inscripción al plan «${plan}»`;
+  const cambio = cargo.tipo === "cambio_plan";
+  const que = cambio ? `el cambio al plan «${plan}»` : `la inscripción al plan «${plan}»`;
+  const efecto = cambio ? "El cambio de plan se aplica." : "La suscripción se activa y empieza su período.";
   return (
-    `Confirma que ${cliente} pagó ${que} por ${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. ` +
-    "La suscripción se activa y empieza su período. Verifica antes que el dinero llegó: el sistema no lo comprueba."
+    `Confirma que ${cliente} pagó ${que} por ${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. ${efecto} ` +
+    "Verifica antes que el dinero llegó: el sistema no lo comprueba."
   );
 }
 
