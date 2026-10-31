@@ -21,6 +21,7 @@ import {
   nombreDelCliente,
   porcentaje,
   retencion,
+  textoDeDescuentoVigente,
   textoDeMora,
   variacion,
 } from "@/lib/suscripciones-admin";
@@ -125,7 +126,10 @@ export default async function ResumenSuscripcionesPage() {
           label="Ingreso mensual recurrente"
           value={dinero(m.mrr)}
           delta={delta(m.mrr, m.mrr_mes_anterior, "el cierre del mes anterior (aproximado)")}
-          hint="Activas de pago: trimestral ÷ 3, anual ÷ 12. No cuenta pruebas ni planes de $0."
+          hint={
+            "Activas de pago: trimestral ÷ 3, anual ÷ 12. No cuenta pruebas, planes de $0 ni inscripciones sin pagar." +
+            (textoDeDescuentoVigente(m, m.moneda) ? ` ${textoDeDescuentoVigente(m, m.moneda)}` : "")
+          }
         />
         <KpiTile
           label="Suscripciones activas"
@@ -133,6 +137,14 @@ export default async function ResumenSuscripcionesPage() {
           href="/suscripciones/lista?estado=activa"
           hint={`${formatNumber(m.en_prueba)} en prueba · ${formatNumber(m.pausadas)} pausadas · ${formatNumber(m.vencidas)} vencidas`}
         />
+        {m.pendientes_de_pago > 0 && (
+          <KpiTile
+            label="Esperando pago"
+            value={formatNumber(m.pendientes_de_pago)}
+            href="/suscripciones/lista?estado=pendiente_pago"
+            hint="Inscripciones que todavía no pagan. No cuentan como activas ni en el ingreso recurrente."
+          />
+        )}
         <KpiTile
           label="En mora"
           value={dinero(m.mora.monto)}

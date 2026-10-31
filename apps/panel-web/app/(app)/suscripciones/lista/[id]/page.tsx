@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { AccionesSuscripcion } from "@/app/(app)/suscripciones/_components/acciones-suscripcion";
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
+import { ConfirmarPago } from "@/app/(app)/suscripciones/_components/confirmar-pago";
 import { ReenviarLink } from "@/app/(app)/suscripciones/_components/reenviar-link";
 import { RegistrarPago } from "@/app/(app)/suscripciones/_components/registrar-pago";
 import { CHARGE_STATUS, StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
@@ -106,13 +107,28 @@ export default async function SuscripcionDetallePage({ params }: { params: Promi
       key: "acciones",
       header: "Acciones",
       align: "right",
-      cell: (c) =>
-        puedeEscribir && c.estado === "pendiente" && c.tipo === "periodo" ? (
+      cell: (c) => {
+        if (!puedeEscribir || c.estado !== "pendiente") return null;
+        if (c.tipo === "periodo") {
+          return (
+            <div className="flex justify-end gap-1">
+              <ReenviarLink cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
+              <RegistrarPago cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
+            </div>
+          );
+        }
+        // La inscripción y el cambio de plan se confirman por la suscripción, no por el cobro de período.
+        return (
           <div className="flex justify-end gap-1">
-            <ReenviarLink cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
-            <RegistrarPago cargo={{ id: c.id, periodo: c.periodo, monto: c.monto, moneda: s.moneda }} cliente={cliente} />
+            <ConfirmarPago
+              suscripcionId={s.id}
+              plan={s.plan}
+              cliente={cliente}
+              cargo={{ monto: c.monto, moneda: s.moneda, tipo: c.tipo }}
+            />
           </div>
-        ) : null,
+        );
+      },
     },
   ];
 

@@ -12,9 +12,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { SIN_ALIADO, filtroDeAliado, nombreDelAliado, type Aliado, type ModulosComercio } from "@/lib/aliados";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
-import type { EstadoDatosDePruebaModulo, MinimoPagoEnLineaOut } from "@/lib/api/types";
+import type { EstadoDatosDePruebaModulo } from "@/lib/api/types";
 import { formatMoney, formatNumber } from "@/lib/format";
-import { TIPOS_DE_PRODUCTO, filtrarPorTipo, planDelProducto } from "@/lib/suscripciones";
 
 export const metadata = { title: "Productos" };
 
@@ -25,8 +24,6 @@ type Variant = {
   price: number;
   stock: number;
   active: boolean;
-  billing_period?: string | null;
-  trial_days?: number | null;
 };
 type Product = {
   id: string;
@@ -46,19 +43,17 @@ type Category = { id: string; name: string; parent_id: string | null; sort_order
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aliado?: string | string[]; tipo?: string }>;
+  searchParams: Promise<{ aliado?: string | string[] }>;
 }) {
   // HU-CRM-03: aliados solo si el master los encendió en el negocio.
   const modulos = await apiFetch<ModulosComercio>("/pack/commerce/modulos");
   const conAliados = modulos.ok && modulos.data.aliados;
   const sp = await searchParams;
   const filtro = conAliados ? filtroDeAliado(sp.aliado) : null;
-  const tipo = TIPOS_DE_PRODUCTO.some((t) => t.value === sp.tipo) ? sp.tipo : undefined;
-  const [productsRes, categoriesRes, alliesRes, minimoRes, datosPruebaRes] = await Promise.all([
+  const [productsRes, categoriesRes, alliesRes, datosPruebaRes] = await Promise.all([
     apiFetch<Product[]>(`/pack/commerce/products${filtro ? `?ally_id=${filtro}` : ""}`),
     apiFetch<Category[]>("/pack/commerce/categories"),
     conAliados ? apiFetch<Aliado[]>("/pack/commerce/allies") : Promise.resolve(null),
-    apiFetch<MinimoPagoEnLineaOut>("/pack/commerce/pago-en-linea/minimo"),
     apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/ventas"),
   ]);
   if (!productsRes.ok) {
@@ -71,10 +66,8 @@ export default async function ProductsPage({
   const categories = categoriesRes.ok ? categoriesRes.data : [];
   // `null` = aliados apagados: ni columna, ni filtro, ni selector.
   const allies = conAliados ? (alliesRes?.ok ? alliesRes.data : []) : null;
-  const products = filtrarPorTipo(productsRes.data, tipo);
+  const products = productsRes.data;
   const currency = await getBusinessCurrency();
-  // HU-SUB-25: si no se pudo saber el mínimo, el diálogo no avisa (mejor callar que inventar una cifra).
-  const minimo = minimoRes.ok ? minimoRes.data : null;
 
   const columns: Column<Product>[] = [
     {
@@ -84,10 +77,7 @@ export default async function ProductsPage({
         <div className="flex items-center gap-3">
           <FotoProducto url={p.image_url} nombre={p.name} />
           <div className="flex flex-col">
-            <span className="flex flex-wrap items-center gap-2 text-headline">
-              {p.name}
-              {planDelProducto(p.variants) && <Badge variant="accent">{planDelProducto(p.variants)}</Badge>}
-            </span>
+            <span className="text-headline">{p.name}</span>
             {p.description && <span className="text-xs text-text-soft">{p.description}</span>}
           </div>
         </div>
@@ -118,7 +108,6 @@ export default async function ProductsPage({
             p.variants.map((v) => (
               <span key={v.id} className="font-mono">
                 {v.sku} · {formatMoney(v.price, currency)} · {formatNumber(v.stock)} en stock
-                {v.billing_period ? ` · plan ${v.billing_period}` : ""}
               </span>
             ))
           )}
@@ -139,17 +128,10 @@ export default async function ProductsPage({
         <ProductDialog
           product={{
             ...p,
-            variants: p.variants.map((v) => ({
-              sku: v.sku,
-              stock: v.stock,
-              billing_period: v.billing_period,
-              trial_days: v.trial_days,
-            })),
+            variants: p.variants.map((v) => ({ sku: v.sku, stock: v.stock })),
           }}
           categories={categories}
           allies={allies}
-          minimo={minimo}
-          moneda={currency}
         />
       ),
     },
@@ -168,24 +150,15 @@ export default async function ProductsPage({
               </Button>
             )}
             <CsvImportDialog allies={allies} />
-            <ProductDialog categories={categories} allies={allies} minimo={minimo} moneda={currency} />
+            <ProductDialog categories={categories} allies={allies} />
           </div>
         }
       />
       {datosPruebaRes.ok && (
         <DatosDePruebaDelModulo modulo="ventas" estado={datosPruebaRes.data} />
       )}
-      <form method="get" className="flex flex-wrap items-end gap-3">
-        <Field label="Tipo" htmlFor="filtro-tipo" className="w-56">
-          <Select id="filtro-tipo" name="tipo" defaultValue={tipo ?? ""}>
-            {TIPOS_DE_PRODUCTO.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        {allies && (
+      {allies && (
+        <form method="get" className="flex flex-wrap items-end gap-3">
           <Field label="Aliado" htmlFor="filtro-aliado" className="w-64">
             <Select id="filtro-aliado" name="aliado" defaultValue={filtro ?? ""}>
               <option value="">Todos los aliados</option>
@@ -197,23 +170,23 @@ export default async function ProductsPage({
               ))}
             </Select>
           </Field>
-        )}
-        <Button type="submit" variant="outline">
-          Filtrar
-        </Button>
-        {(filtro || tipo) && (
-          <Link href="/comercio/productos" className="pb-2.5 text-sm text-link hover:underline">
-            Limpiar
-          </Link>
-        )}
-      </form>
+          <Button type="submit" variant="outline">
+            Filtrar
+          </Button>
+          {filtro && (
+            <Link href="/comercio/productos" className="pb-2.5 text-sm text-link hover:underline">
+              Limpiar
+            </Link>
+          )}
+        </form>
+      )}
       <DataTable
         columns={columns}
         rows={products}
         getRowKey={(p) => p.id}
-        emptyTitle={tipo || filtro ? "Sin productos con ese filtro" : "Sin productos"}
+        emptyTitle={filtro ? "Sin productos con ese filtro" : "Sin productos"}
         emptyDescription={
-          tipo || filtro ? "Prueba con otro filtro." : "Agrega el primero para que el agente pueda cotizarlo."
+          filtro ? "Prueba con otro filtro." : "Agrega el primero para que el agente pueda cotizarlo."
         }
       />
     </div>

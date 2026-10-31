@@ -5,9 +5,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 
 import { AccionesSuscripcion } from "@/app/(app)/suscripciones/_components/acciones-suscripcion";
 import { ReenviarLink } from "@/app/(app)/suscripciones/_components/reenviar-link";
+import { ConfirmarPago } from "@/app/(app)/suscripciones/_components/confirmar-pago";
 import { RegistrarPago } from "@/app/(app)/suscripciones/_components/registrar-pago";
+import { AccionesDePlan } from "@/app/(app)/suscripciones/planes/_components/acciones-de-plan";
 import { FeedbackProviders } from "@/components/ui/providers";
-import { RESPUESTAS, suscripcionDetalle } from "@/lib/testing/fixtures";
+import { RESPUESTAS, cargoDeInscripcion, suscripcionDetalle, suscripcionPendiente } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 import { violacionesGraves } from "@/lib/testing/axe";
 import { resetToasts } from "@/lib/toast-store";
@@ -161,6 +163,153 @@ describe("páginas de Suscripciones (SPEC-35)", () => {
   });
 });
 
+const lectura = () => ({
+  ...(RESPUESTAS["/admin/me"] as object),
+  role: "colaborador",
+  permissions: { "pack_subscriptions:suscripciones": "read" },
+});
+
+describe("planes e inscripciones pendientes (SPEC-43, HU-SUB-31)", () => {
+  it("Planes lista nombre, precio, periodicidad, prueba y estado, con crear, editar y desactivar", async () => {
+    const Pagina = (await import("@/app/(app)/suscripciones/planes/page")).default as Pagina;
+    const { container } = await pintar(await Pagina({}));
+    expect(screen.getByRole("heading", { level: 1, name: "Planes" })).toBeTruthy();
+    const filas = within(screen.getByRole("table")).getAllByRole("row");
+    const pro = filas.find((f) => f.textContent?.includes("Plan Pro"))!;
+    expect(pro.textContent).toMatch(/PLAN-PRO/);
+    expect(pro.textContent).toMatch(/200\.000/);
+    expect(pro.textContent).toMatch(/Mensual/);
+    expect(pro.textContent).toMatch(/Activo/);
+    const free = filas.find((f) => f.textContent?.includes("Plan Free"))!;
+    expect(free.textContent).toMatch(/Gratis/);
+    expect(free.textContent).toMatch(/30 días/);
+    const viejo = filas.find((f) => f.textContent?.includes("Plan Viejo"))!;
+    expect(viejo.textContent).toMatch(/Inactivo/);
+    expect(viejo.textContent).toMatch(/Trimestral/);
+    expect(screen.getByRole("button", { name: "Nuevo plan" })).toBeTruthy();
+    expect(within(pro).getByRole("button", { name: "Editar Plan Pro" })).toBeTruthy();
+    expect(within(pro).getByRole("button", { name: "Desactivar Plan Pro" })).toBeTruthy();
+    expect(within(viejo).getByRole("button", { name: "Activar Plan Viejo" })).toBeTruthy();
+    expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("un colaborador de solo lectura ve los planes sin crear, editar ni desactivar", async () => {
+    respuestas["/admin/me"] = lectura();
+    const Pagina = (await import("@/app/(app)/suscripciones/planes/page")).default as Pagina;
+    await pintar(await Pagina({}));
+    expect(screen.getByRole("table").textContent).toMatch(/Plan Pro/);
+    expect(screen.queryByRole("button", { name: /Nuevo plan/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Editar|Desactivar|Activar|Eliminar)/ })).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Acciones" })).toBeNull();
+  });
+
+  it("sin planes muestra el vacío con la acción de crear el primero", async () => {
+    respuestas["/pack/pack_subscriptions/planes"] = [];
+    const Pagina = (await import("@/app/(app)/suscripciones/planes/page")).default as Pagina;
+    await pintar(await Pagina({}));
+    expect(screen.getByText("Todavía no tienes planes")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Nuevo plan" }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("si la API falla avisa y no pinta una lista vacía", async () => {
+    delete respuestas["/pack/pack_subscriptions/planes"];
+    const Pagina = (await import("@/app/(app)/suscripciones/planes/page")).default as Pagina;
+    await pintar(await Pagina({}));
+    expect(screen.getByRole("alert").textContent).toMatch(/No se pudieron cargar los planes/);
+    expect(screen.queryByText("Todavía no tienes planes")).toBeNull();
+  });
+
+  it("sin permiso de escritura el vacío no ofrece crear", async () => {
+    respuestas["/admin/me"] = lectura();
+    respuestas["/pack/pack_subscriptions/planes"] = [];
+    const Pagina = (await import("@/app/(app)/suscripciones/planes/page")).default as Pagina;
+    await pintar(await Pagina({}));
+    expect(screen.queryByRole("button", { name: "Nuevo plan" })).toBeNull();
+  });
+
+  it("el filtro «Plan» de la lista se alimenta de /planes, con los apagados rotulados", async () => {
+    const Pagina = (await import("@/app/(app)/suscripciones/lista/page")).default as Pagina;
+    await pintar(await Pagina(buscar()));
+    const select = screen.getByLabelText("Plan") as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual(["Todos", "Plan Free", "Plan Pro", "Plan Viejo (inactivo)"]);
+    expect([...select.options].map((o) => o.value)).toEqual(["", "test-plan-free", "test-plan-pro", "test-plan-viejo"]);
+  });
+
+  it("una inscripción pendiente muestra el badge, el cargo con su monto y «Confirmar pago»", async () => {
+    respuestas["/pack/pack_subscriptions/cargos"] = { items: [cargoDeInscripcion], total: 1, page: 1, page_size: 100, has_more: false };
+    const Pagina = (await import("@/app/(app)/suscripciones/lista/page")).default as Pagina;
+    await pintar(await Pagina(buscar()));
+    const fila = within(screen.getByRole("table")).getAllByRole("row").find((f) => f.textContent?.includes("Caro Prueba"))!;
+    expect(fila.textContent).toMatch(/Pendiente de pago/);
+    expect(fila.textContent).toMatch(/Espera .*99\.000/);
+    expect(within(fila).getByRole("button", { name: "Confirmar pago de Caro Prueba" })).toBeTruthy();
+    // Solo las inscripciones que esperan pago llevan el botón.
+    expect(screen.getAllByRole("button", { name: /Confirmar pago de/ })).toHaveLength(1);
+  });
+
+  it("sin el cargo a mano, la lista cae al valor del período y sigue ofreciendo confirmar", async () => {
+    delete respuestas["/pack/pack_subscriptions/cargos"];
+    const Pagina = (await import("@/app/(app)/suscripciones/lista/page")).default as Pagina;
+    await pintar(await Pagina(buscar()));
+    const fila = within(screen.getByRole("table")).getAllByRole("row").find((f) => f.textContent?.includes("Caro Prueba"))!;
+    expect(fila.textContent).toMatch(/Espera .*99\.000/);
+    expect(within(fila).getByRole("button", { name: "Confirmar pago de Caro Prueba" })).toBeTruthy();
+  });
+
+  it("un colaborador de solo lectura ve el badge pero no «Confirmar pago»", async () => {
+    respuestas["/admin/me"] = lectura();
+    const Pagina = (await import("@/app/(app)/suscripciones/lista/page")).default as Pagina;
+    await pintar(await Pagina(buscar()));
+    expect(screen.getByRole("table").textContent).toMatch(/Pendiente de pago/);
+    expect(screen.queryByRole("button", { name: /Confirmar pago/ })).toBeNull();
+  });
+
+  it("el detalle de una inscripción pendiente ofrece confirmar su cargo de inscripción", async () => {
+    respuestas["/pack/pack_subscriptions/suscripciones/test-sub-3"] = {
+      ...suscripcionDetalle, ...suscripcionPendiente, cambio_programado: null, acciones: ["cancelar"], cargos: [cargoDeInscripcion], historial: [],
+    };
+    const Pagina = (await import("@/app/(app)/suscripciones/lista/[id]/page")).default as Pagina;
+    await pintar(await Pagina({ params: Promise.resolve({ id: "test-sub-3" }) }));
+    expect(screen.getAllByText("Pendiente de pago").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Inscripción")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirmar pago de Caro Prueba" })).toBeTruthy();
+    // El cargo de inscripción no se reenvía ni se registra como pago de período.
+    expect(screen.queryByRole("button", { name: /Reenviar link/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Registrar pago por transferencia/ })).toBeNull();
+  });
+
+  it("el resumen cuenta las inscripciones que esperan pago y muestra el descuento vigente", async () => {
+    respuestas["/pack/pack_subscriptions/metricas"] = {
+      ...(RESPUESTAS["/pack/pack_subscriptions/metricas"] as object),
+      pendientes_de_pago: 2, mrr_descuento: 30000, suscripciones_con_descuento: 2,
+    };
+    const Pagina = (await import("@/app/(app)/suscripciones/page")).default as Pagina;
+    await pintar(await Pagina({}));
+    expect(screen.getByText("Esperando pago")).toBeTruthy();
+    expect(screen.getByText(/Descuento vigente: −.*30\.000\/mes en 2 suscripciones/)).toBeTruthy();
+  });
+});
+
+describe("Comercio › Productos sin planes (HU-COM-18)", () => {
+  it("la tabla no tiene filtro «Tipo» ni badge de plan", async () => {
+    respuestas["/pack/commerce/modulos"] = { aliados: false };
+    respuestas["/pack/commerce/products"] = [
+      { id: "pr1", name: "Camisa", description: "", category_id: null, category: "Ropa", price: 80000, variants: [{ id: "v1", sku: "CAM", attributes: {}, price: 80000, stock: 4, active: true }] },
+    ];
+    respuestas["/pack/commerce/categories"] = [];
+    respuestas["/admin/datos-de-prueba/ventas"] = { modulo: "ventas", titulo: "Ventas", disponible: false, motivo: "x" };
+    const Pagina = (await import("@/app/(app)/comercio/productos/page")).default as Pagina;
+    await pintar(await Pagina(buscar({ tipo: "planes" })));
+    expect(screen.getByRole("table").textContent).toMatch(/Camisa/);
+    expect(screen.getByRole("table").textContent).toMatch(/CAM · .*80\.000 · 4 en stock/);
+    expect(screen.queryByLabelText("Tipo")).toBeNull();
+    expect(screen.queryByText(/Planes \(suscripción\)/)).toBeNull();
+    expect(screen.queryByText(/plan mensual|Plan mensual/)).toBeNull();
+    // `?tipo=planes` (enlace viejo) ya no filtra nada.
+    expect(screen.getByRole("table").textContent).toMatch(/Camisa/);
+  });
+});
+
 describe("acciones con confirmación", () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
@@ -245,6 +394,103 @@ describe("acciones con confirmación", () => {
     expect(await screen.findByText(/no tiene una conversación de WhatsApp.*Ya quedó copiado/)).toBeTruthy();
     expect(fetchMock.mock.calls[0][0]).toBe("/api/pack/pack_subscriptions/cargos/test-cargo-1/reenviar-link");
   });
+  it("confirmar el pago pide la referencia, la envía a confirmar-pago y confirma", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true, status: 200,
+      json: async () => ({ estado: "confirmado", suscripcion_id: "test-sub-3", cargo_id: "c", suscripcion_estado: "activa" }),
+    });
+    render(
+      <FeedbackProviders>
+        <ConfirmarPago suscripcionId="test-sub-3" plan="Plan Premium" cliente="Caro Prueba" cargo={{ monto: 99000, moneda: "COP", tipo: "inscripcion" }} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar pago de Caro Prueba" }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(dialogo.textContent).toMatch(/Caro Prueba pagó la inscripción al plan «Plan Premium» por .*99\.000/);
+    const enviar = within(dialogo).getByRole("button", { name: "Confirmar pago" });
+    expect((enviar as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(within(dialogo).getByLabelText(/Referencia de la transferencia/), { target: { value: "  CUS-998877 " } });
+    fireEvent.click(enviar);
+    expect(await screen.findByText("Pago confirmado. La suscripción está activa.")).toBeTruthy();
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/pack/pack_subscriptions/suscripciones/test-sub-3/confirmar-pago");
+    expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ referencia: "CUS-998877" });
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("repetir la confirmación con la misma referencia responde ya_confirmado y no duplica", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true, status: 200,
+      json: async () => ({ estado: "ya_confirmado", suscripcion_id: "test-sub-3", cargo_id: "c", suscripcion_estado: "activa" }),
+    });
+    render(
+      <FeedbackProviders>
+        <ConfirmarPago suscripcionId="test-sub-3" plan="Plan Premium" cliente="Caro Prueba" cargo={{ monto: 99000, moneda: "COP" }} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar pago de Caro Prueba" }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.change(within(dialogo).getByLabelText(/Referencia de la transferencia/), { target: { value: "CUS-998877" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Confirmar pago" }));
+    expect(await screen.findByText(/ya estaba confirmado/)).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("un error al confirmar el pago se muestra y no cierra el diálogo", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: "Esta inscripción ya no espera pago." }) });
+    render(
+      <FeedbackProviders>
+        <ConfirmarPago suscripcionId="test-sub-3" plan="Plan Premium" cliente="Caro Prueba" cargo={{ monto: 99000 }} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar pago de Caro Prueba" }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.change(within(dialogo).getByLabelText(/Referencia de la transferencia/), { target: { value: "ABC" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Confirmar pago" }));
+    expect(await screen.findByText(/ya no espera pago/)).toBeTruthy();
+    expect(screen.queryByRole("dialog")).not.toBeNull();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("desactivar un plan pide confirmar y lo envía completo con activo en falso", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    const plan = (RESPUESTAS["/pack/pack_subscriptions/planes"] as { id: string }[])[1] as never;
+    render(
+      <FeedbackProviders>
+        <AccionesDePlan plan={plan} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Desactivar Plan Pro" }));
+    const dialogo = await screen.findByRole("alertdialog").catch(() => screen.findByRole("dialog"));
+    expect(dialogo.textContent).toMatch(/siguen pagando/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Desactivar plan" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/pack/pack_subscriptions/planes/test-plan-pro");
+    expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      codigo: "PLAN-PRO", precio: 200000, activo: false, entitlements: { clientes: 500, mensajes: 15000 }, plan_plataforma: "pro", orden: 1,
+    });
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
+  it("eliminar un plan usa DELETE y avisa que los inscritos siguen cobrándose", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, json: async () => ({}) });
+    const plan = (RESPUESTAS["/pack/pack_subscriptions/planes"] as { id: string }[])[1] as never;
+    render(
+      <FeedbackProviders>
+        <AccionesDePlan plan={plan} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar Plan Pro" }));
+    const dialogo = await screen.findByRole("alertdialog").catch(() => screen.findByRole("dialog"));
+    expect(dialogo.textContent).toMatch(/siguen cobrándose/);
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Eliminar plan" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
   it("registrar el pago pide la referencia, la envía y confirma", async () => {
     fetchMock.mockResolvedValue({
       ok: true, status: 200,

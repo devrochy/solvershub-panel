@@ -7,7 +7,7 @@
  * - Pagos = cobros de la suscripción: `pendiente`, `pagado` o `anulado`.
  * - El MRR cuenta solo suscripciones activas de pago (trimestral ÷ 3, anual ÷ 12).
  */
-import type { SuscripcionDetalle } from "@/lib/api/types";
+import type { PagoConfirmadoOut, PlanOut, SuscripcionDetalle } from "@/lib/api/types";
 import { formatDate, formatMoney } from "@/lib/format";
 
 export const RUTA = "/suscripciones";
@@ -61,16 +61,16 @@ function pagina(qs: URLSearchParams, valor: string | undefined) {
   if (valor && /^[1-9]\d{0,5}$/.test(valor)) qs.set("page", valor);
 }
 
-export const ESTADOS_SUSCRIPCION = ["activa", "trialing", "pausada", "vencida", "cancelada"] as const;
+export const ESTADOS_SUSCRIPCION = ["pendiente_pago", "activa", "trialing", "pausada", "vencida", "cancelada"] as const;
 export const ESTADOS_PAGO = ["pendiente", "pagado", "anulado"] as const;
-export const TIPOS_PAGO = ["periodo", "cambio_plan"] as const;
+export const TIPOS_PAGO = ["periodo", "cambio_plan", "inscripcion"] as const;
 export const PERIODICIDADES = ["mensual", "trimestral", "anual"] as const;
 
 /** Query de `GET /suscripciones`; lo que no es válido se descarta en vez de llegar a la API. */
 export function consultaSuscripciones(sp: FiltrosSuscripciones): URLSearchParams {
   const qs = new URLSearchParams();
   opcion(qs, "estado", sp.estado, ESTADOS_SUSCRIPCION);
-  if (sp.plan && UUID.test(sp.plan)) qs.set("variante_id", sp.plan);
+  if (sp.plan && UUID.test(sp.plan)) qs.set("plan_id", sp.plan);
   opcion(qs, "periodicidad", sp.periodicidad, PERIODICIDADES);
   if (verdadero(sp.con_mora)) qs.set("con_mora", "true");
   texto(qs, "q", sp.q);
@@ -134,6 +134,7 @@ export const MOTIVO_PAUSA_LABEL: Record<string, string> = {
 export const TIPO_PAGO_LABEL: Record<string, string> = {
   periodo: "Período",
   cambio_plan: "Cambio de plan",
+  inscripcion: "Inscripción",
 };
 
 export function tipoDePagoLabel(valor: string): string {
@@ -288,19 +289,43 @@ export function puedeAdministrar(
 
 export type OpcionDePlan = { value: string; label: string };
 
-/** Planes (variantes con recurrencia) del catálogo de Ventas, para el filtro por plan. */
-export function planesDeProductos(
-  productos: { name: string; variants: { id: string; sku: string; billing_period?: string | null }[] }[],
-): OpcionDePlan[] {
-  const planes: OpcionDePlan[] = [];
-  for (const p of productos) {
-    for (const v of p.variants) {
-      if (!v.billing_period) continue;
-      const solo = p.variants.filter((x) => x.billing_period).length === 1;
-      planes.push({ value: v.id, label: solo ? p.name : `${p.name} · ${v.sku}` });
-    }
+/** Opciones del filtro «Plan» desde `GET /planes`; los apagados se rotulan porque aún pueden tener inscritos. */
+export function opcionesDePlanes(planes: Pick<PlanOut, "id" | "nombre" | "activo">[]): OpcionDePlan[] {
+  return planes
+    .map((p) => ({ value: p.id, label: p.activo ? p.nombre : `${p.nombre} (inactivo)` }))
+    .sort((a, b) => a.label.localeCompare(b.label, "es"));
+}
+
+/** Texto del diálogo para confirmar a mano el pago de una inscripción (HU-SUB-31). */
+export function descripcionDeConfirmacionDePago(
+  cargo: { monto: number; moneda?: string | null; tipo?: string | null },
+  plan: string,
+  cliente: string,
+): string {
+  const que = cargo.tipo === "cambio_plan" ? `el cambio al plan «${plan}»` : `la inscripción al plan «${plan}»`;
+  return (
+    `Confirma que ${cliente} pagó ${que} por ${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. ` +
+    "La suscripción se activa y empieza su período. Verifica antes que el dinero llegó: el sistema no lo comprueba."
+  );
+}
+
+/** Resultado de confirmar el pago en palabras del negocio. */
+export function mensajeDePagoConfirmado(r: Pick<PagoConfirmadoOut, "estado" | "suscripcion_estado">): string {
+  if (r.estado === "ya_confirmado") return "Este pago ya estaba confirmado con esa referencia.";
+  return r.suscripcion_estado === "activa" || r.suscripcion_estado === "trialing"
+    ? "Pago confirmado. La suscripción está activa."
+    : "Pago confirmado.";
+}
+
+/** Monto del cargo de inscripción pendiente de cada suscripción, para mostrarlo en la lista. */
+export function montosDeInscripcion(
+  cargos: { suscripcion_id: string; monto: number; tipo: string; estado: string }[],
+): Map<string, number> {
+  const montos = new Map<string, number>();
+  for (const c of cargos) {
+    if (c.tipo === "inscripcion" && c.estado === "pendiente") montos.set(c.suscripcion_id, c.monto);
   }
-  return planes.sort((a, b) => a.label.localeCompare(b.label, "es"));
+  return montos;
 }
 
 // ----------------------------------------------------------------------------- avisos al cliente
@@ -347,6 +372,17 @@ export function mesLegible(cohorte: string): string {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+/** Segunda línea del MRR: lo que se deja de cobrar por descuentos vigentes (el MRR no lo resta). */
+export function textoDeDescuentoVigente(
+  m: { mrr_descuento?: number | null; suscripciones_con_descuento?: number | null },
+  moneda: string,
+): string | null {
+  const monto = m.mrr_descuento ?? 0;
+  const n = m.suscripciones_con_descuento ?? 0;
+  if (monto <= 0 || n <= 0) return null;
+  return `Descuento vigente: −${formatMoney(monto, moneda)}/mes en ${n === 1 ? "1 suscripción" : `${n} suscripciones`}.`;
 }
 
 /** Retención de una cohorte: las altas que siguen vigentes hoy (no canceladas). */

@@ -58,6 +58,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>, Record<string, stri
   ["Suscripciones · Lista", () => import("@/app/(app)/suscripciones/lista/page")],
   ["Suscripciones · Clientes", () => import("@/app/(app)/suscripciones/clientes/page")],
   ["Suscripciones · Pagos", () => import("@/app/(app)/suscripciones/pagos/page")],
+  ["Suscripciones · Planes", () => import("@/app/(app)/suscripciones/planes/page")],
   ["Agenda", () => import("@/app/(app)/calendario/page")],
   ["Plantillas con opciones", () => import("@/app/(app)/plantillas-opciones/page")],
   ["Mensajes", () => import("@/app/(app)/mensajes/page")],

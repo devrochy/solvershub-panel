@@ -39,6 +39,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   // SPEC-35 (D-43): entrada propia «Suscripciones».
   ["/suscripciones", "pack_subscriptions:suscripciones", false], ["/suscripciones/lista", "pack_subscriptions:suscripciones", false],
   ["/suscripciones/clientes", "pack_subscriptions:suscripciones", false], ["/suscripciones/pagos", "pack_subscriptions:suscripciones", false],
+  ["/suscripciones/planes", "pack_subscriptions:suscripciones", false],
   // HU-AOS-26: permisos entre agentes y «Probar una frase».
   ["/agentes/colaboracion", "settings", false],
   // HU-AOS-29: tablero de fiabilidad.
