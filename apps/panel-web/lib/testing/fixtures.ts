@@ -56,6 +56,8 @@ const SECCIONES = [
   "settings",
   "plan",
   "costs",
+  "devices",
+  "access_alerts",
   "pack_subscriptions:suscripciones",
   "pack_cobranza:resumen",
   "pack_cobranza:carteras",
