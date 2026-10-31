@@ -4308,7 +4308,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Orders */
+        /**
+         * List Orders
+         * @description Pedidos del negocio, del más reciente al más antiguo (HU-CRM-20).
+         *
+         *     Conserva la forma de lista (la consumen el panel y la APK); el total de los que coinciden
+         *     con los filtros viaja en la cabecera `X-Total-Count`.
+         */
         get: operations["list_orders_api_v1_pack_commerce_orders_get"];
         put?: never;
         post?: never;
@@ -10192,6 +10198,11 @@ export interface components {
              * Format: uuid
              */
             conversation_id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
             /** Customer Name */
             customer_name: string | null;
             /** External Id */
@@ -11121,6 +11132,8 @@ export interface components {
             bot_paused: boolean;
             /** Alta */
             alta: string;
+            /** Ultima Actividad */
+            ultima_actividad?: string | null;
             /** Extras */
             extras: {
                 [key: string]: unknown;
@@ -11135,6 +11148,8 @@ export interface components {
             columns: components["schemas"]["LeadColumn"][];
             /** Filters */
             filters?: components["schemas"]["LeadFilter"][];
+            /** Facetas */
+            facetas?: components["schemas"]["LeadFacetaOut"][];
             /** Agents */
             agents: components["schemas"]["LeadAgentOut"][];
             /** Items */
@@ -12231,6 +12246,13 @@ export interface components {
             id: string;
             /** Public Order Number */
             public_order_number: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Customer Name */
+            customer_name?: string | null;
             /** Total */
             total: number;
             /** Status */
@@ -19491,6 +19513,18 @@ export interface components {
              */
             mrr: number;
             /**
+             * Mrr Descuento
+             * @description Descuento vigente por mes (SPEC-43): de las activas de pago con descuento y períodos por consumir, valor del período por el porcentaje, normalizado a mes. El MRR no lo resta.
+             * @default 0
+             */
+            mrr_descuento: number;
+            /**
+             * Suscripciones Con Descuento
+             * @description Activas de pago con descuento vigente.
+             * @default 0
+             */
+            suscripciones_con_descuento: number;
+            /**
              * Mrr Mes Anterior
              * @description Aproximado: suscripciones vivas al cierre del mes anterior, a su precio actual.
              */
@@ -21250,6 +21284,23 @@ export interface components {
             kind: string;
             /** Ref Id */
             ref_id: string;
+        };
+        /**
+         * LeadFacetaOut
+         * @description Cuántos clientes hay por opción de un filtro, con el resto de los filtros de la lista aplicados
+         *     (pero no el propio, para que las pestañas de un mismo filtro sumen contra el mismo total).
+         */
+        LeadFacetaOut: {
+            /** Key */
+            key: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Sin Valor */
+            sin_valor: number;
+            /** Total */
+            total: number;
         };
     };
     responses: never;
@@ -23307,6 +23358,10 @@ export interface operations {
                 filtro?: string[] | null;
                 /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
                 agente?: string | null;
+                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre` o `nombre_desc`. */
+                orden?: "alta" | "actividad" | "nombre" | "nombre_desc";
+                /** @description Claves de `filters` de las que se quieren contadores por opción (se repite el parámetro). Una clave que no declara ningún pack, o que no sabe contar, responde 400 `filtro_invalido`. */
+                facetas?: string[] | null;
                 page?: number;
                 page_size?: number;
             };
@@ -30238,7 +30293,18 @@ export interface operations {
     };
     list_orders_api_v1_pack_commerce_orders_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Estado del pedido. */
+                estado?: string | null;
+                /** @description Estado del pago: pendiente, pagado o rechazado. */
+                pago?: string | null;
+                /** @description Número de pedido o nombre del cliente. */
+                q?: string | null;
+                /** @description Solo los pedidos de este cliente. */
+                customer_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -30251,6 +30317,8 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Total de pedidos que coinciden con los filtros (sin paginar). */
+                    "X-Total-Count"?: number;
                     [name: string]: unknown;
                 };
                 content: {

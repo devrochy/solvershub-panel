@@ -9,9 +9,11 @@ import {
   etiquetaDeDato,
   etiquetaTipoDocumento,
   filtrosDePacks,
+  hrefFicha,
   mismoTelefono,
   normalizarClave,
   origenDelDato,
+  puedeVerClientes,
   segmentoDelFiltro,
   telefonoVisible,
   textoDeDato,
@@ -151,4 +153,28 @@ describe("perfil base (tanda 1A)", () => {
 
 it("la clasificación nuevo se muestra como Nuevo", () => {
   expect(etiquetaClasificacion("nuevo")).toBe("Nuevo");
+});
+
+describe("hrefFicha (HU-CRM-20)", () => {
+  it("abre la ficha de un cliente en su pestaña", () => {
+    expect(hrefFicha("c-1")).toBe("/leads?cliente=c-1");
+    expect(hrefFicha("c-1", { agente: "ventas" })).toBe("/leads?cliente=c-1&agente=ventas");
+    expect(hrefFicha("c-1", { agente: "general", editar: true })).toBe("/leads?cliente=c-1&agente=general&editar=1");
+  });
+
+  it("conserva los filtros de la lista y cambia solo el cliente", () => {
+    const qs = new URLSearchParams("q=ana&cliente=viejo&agente=ventas&editar=1&page=2");
+    expect(hrefFicha("c-2", { qs })).toBe("/leads?q=ana&cliente=c-2&page=2");
+    expect(hrefFicha(undefined, { qs })).toBe("/leads?q=ana&page=2");
+    expect(hrefFicha()).toBe("/leads");
+  });
+});
+
+describe("puedeVerClientes (HU-CRM-20)", () => {
+  it("solo con el permiso de la sección Clientes", () => {
+    expect(puedeVerClientes({ permissions: { leads: "read" } })).toBe(true);
+    expect(puedeVerClientes({ permissions: { pack_commerce: "write" } })).toBe(false);
+    expect(puedeVerClientes({ permissions: null })).toBe(false);
+    expect(puedeVerClientes(null)).toBe(false);
+  });
 });

@@ -18,7 +18,13 @@ export const SESSION_COOKIE = "panel_session";
 export const TENANT_COOKIE = "panel_tenant";
 
 export type ApiResult<T> =
-  | { ok: true; status: number; data: T }
+  | {
+      ok: true;
+      status: number;
+      data: T;
+      /** Total sin paginar, si la API lo manda en `X-Total-Count` (listas con forma de arreglo). */
+      total?: number;
+    }
   | {
       ok: false;
       status: number;
@@ -86,7 +92,13 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
       ...(esObjeto(error?.details) ? { details: error.details } : {}),
     };
   }
-  return { ok: true, status: res.status, data: json as T };
+  const total = Number(res.headers.get("X-Total-Count"));
+  return {
+    ok: true,
+    status: res.status,
+    data: json as T,
+    ...(res.headers.get("X-Total-Count") !== null && Number.isInteger(total) && total >= 0 ? { total } : {}),
+  };
 }
 
 function esObjeto(valor: unknown): valor is Record<string, unknown> {

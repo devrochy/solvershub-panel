@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type { LeadsResponse } from "@/lib/api/types";
-import { telefonoVisible } from "@/lib/clientes";
+import { hrefFicha, telefonoVisible } from "@/lib/clientes";
 import { formatCellValue } from "@/lib/format";
 
 type Fila = LeadsResponse["items"][number];
@@ -56,14 +56,12 @@ export async function ClientesDeModulo({
     : { items: [] as Fila[], agents: [], page: 1, has_more: false, total: 0 };
   const columnasDelAgente = agents.find((a) => a.key === agente)?.columns ?? [];
 
-  const hrefFicha = (lead: Fila) => `/leads?cliente=${encodeURIComponent(lead.id)}&agente=${encodeURIComponent(agente)}`;
-
   const columns: Column<Fila>[] = [
     {
       key: "cliente",
       header: "Cliente",
       cell: (lead) => (
-        <Link href={hrefFicha(lead)} className="truncate font-medium text-link hover:underline">
+        <Link href={hrefFicha(lead.id, { agente })} className="truncate font-medium text-link hover:underline">
           {lead.perfil.nombre_visible}
         </Link>
       ),
@@ -86,7 +84,7 @@ export async function ClientesDeModulo({
       align: "right",
       cell: (lead) => (
         <div className="flex items-center justify-end gap-1">
-          <IconAction href={hrefFicha(lead)} label={`Ver la ficha de ${lead.perfil.nombre_visible}`} tone="ver">
+          <IconAction href={hrefFicha(lead.id, { agente })} label={`Ver la ficha de ${lead.perfil.nombre_visible}`} tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
         </div>
