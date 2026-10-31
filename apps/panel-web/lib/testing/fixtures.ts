@@ -230,7 +230,7 @@ export const escalaciones: EscalationPage = {
   items: [
     {
       conversation_id: "test-conv-1",
-      customer_id: "test-cliente-ana",
+      customer_id: "test-cliente-1",
       customer_name: "Ana Prueba",
       external_id: "573000000001",
       reason: "tool:solicitud_cliente",
@@ -242,7 +242,7 @@ export const escalaciones: EscalationPage = {
     },
     {
       conversation_id: "test-conv-2",
-      customer_id: "test-cliente-luis",
+      customer_id: "test-cliente-2",
       customer_name: "Luis Prueba",
       external_id: "573000000002",
       reason: "tool:queja",

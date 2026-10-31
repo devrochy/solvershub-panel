@@ -42,8 +42,8 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     first: ["Atiende primero las más antiguas.", "Revisa por qué se escaló para mejorar la guía."],
   },
   leads: {
-    question: "¿Qué son los Leads?",
-    what: "Personas interesadas que dejaron sus datos. Es tu lista de oportunidades para vender.",
+    question: "¿Qué son los Clientes?",
+    what: "Las personas que te escribieron o dejaron sus datos. Es tu lista de oportunidades para vender.",
     first: ["Contacta los nuevos.", "Marca su estado para no perderles la pista."],
   },
   connections: {

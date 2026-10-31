@@ -37,6 +37,7 @@ export type SubscriptionProviderSettings = components["schemas"]["SubscriptionPr
 
 export type EscalationItem = components["schemas"]["EscalationItem"];
 export type EscalationPage = components["schemas"]["Page_EscalationItem_"];
+export type Order = components["schemas"]["OrderOut"];
 export type LeadsResponse = components["schemas"]["LeadsResponse"];
 export type LeadPerfil = components["schemas"]["LeadPerfilOut"];
 export type LeadAgent = components["schemas"]["LeadAgentOut"];

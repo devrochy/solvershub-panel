@@ -1,36 +1,35 @@
+import Link from "next/link";
+
 import { OrderStatus } from "@/app/(app)/comercio/pedidos/_components/order-status";
+import { PedidosFilters } from "@/app/(app)/comercio/pedidos/_components/pedidos-filters";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { FilterChips } from "@/components/ui/filter-chips";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
+import type { Me, Order } from "@/lib/api/types";
+import { hrefFicha, puedeVerClientes } from "@/lib/clientes";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import {
+  consultaPedidos,
+  etiquetaDePago,
+  filtrosLimpios,
+  hrefPedidos,
+  paginaDe,
+  PEDIDOS_POR_PAGINA,
+  type FiltrosPedidos,
+} from "@/lib/pedidos";
 
 export const metadata = { title: "Pedidos" };
 
-type Order = {
-  id: string;
-  public_order_number: string;
-  total: number;
-  status: string;
-  payment_status: string;
-  payment_method: string;
-  delivery_method: string;
-  delivery_full_name: string | null;
-  delivery_address: string | null;
-  created_at: string | null;
-  line_items: { name: string; quantity: number; unit_price: number }[];
-  plan_activation_status?: string | null;
-  plan_activation_error?: string | null;
-};
-
-export default async function OrdersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ estado?: string; pago?: string }>;
-}) {
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<FiltrosPedidos> }) {
   const sp = await searchParams;
-  const res = await apiFetch<Order[]>("/pack/commerce/orders");
+  const filtros = filtrosLimpios(sp);
+  const page = paginaDe(sp.page);
+  const [res, me] = await Promise.all([
+    apiFetch<Order[]>(`/pack/commerce/orders?${consultaPedidos(sp).toString()}`),
+    apiFetch<Me>("/admin/me"),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -38,14 +37,16 @@ export default async function OrdersPage({
       </p>
     );
   }
+  // HU-CRM-20: el nombre abre la ficha solo si la sesión ve Clientes.
+  const puedeAbrirFicha = me.ok && puedeVerClientes(me.data);
+  const total = res.total ?? res.data.length;
+  const hayMas = (page - 1) * PEDIDOS_POR_PAGINA + res.data.length < total;
+  const hayFiltros = Boolean(filtros.estado || filtros.pago || filtros.q || filtros.cliente);
+  const nombreDelCliente = filtros.cliente
+    ? (res.data.find((o) => o.customer_id === filtros.cliente)?.customer_name ?? null)
+    : null;
 
   const currency = await getBusinessCurrency();
-  const estado = sp.estado && sp.estado !== "todos" ? sp.estado : null;
-  const pago = sp.pago && sp.pago !== "todos" ? sp.pago : null;
-  const filas = res.data.filter(
-    (o) => (!estado || o.status === estado) && (!pago || o.payment_status === pago),
-  );
-
   const columns: Column<Order>[] = [
     {
       key: "pedido",
@@ -57,7 +58,19 @@ export default async function OrdersPage({
       header: "Cliente",
       cell: (o) => (
         <div className="flex flex-col">
-          <span className="text-body">{o.delivery_full_name ?? "—"}</span>
+          {(() => {
+            const nombre = o.customer_name ?? o.delivery_full_name ?? "—";
+            return puedeAbrirFicha ? (
+              <Link
+                href={hrefFicha(o.customer_id, { agente: "ventas" })}
+                className="text-link hover:underline"
+              >
+                {nombre}
+              </Link>
+            ) : (
+              <span className="text-body">{nombre}</span>
+            );
+          })()}
           {o.delivery_address && (
             <span className="text-xs text-text-soft">{o.delivery_address}</span>
           )}
@@ -86,14 +99,8 @@ export default async function OrdersPage({
       cell: (o) => (
         <div className="flex flex-col items-start gap-1">
           <Badge variant={o.payment_status === "pagado" ? "success" : "neutral"}>
-            {o.payment_status}
+            {etiquetaDePago(o.payment_status)}
           </Badge>
-          {o.plan_activation_status === "pendiente" && (
-            // HU-SUB-09: pagado pero el plan no se activó (configuración del proveedor).
-            <Badge variant="danger" title={o.plan_activation_error ?? undefined}>
-              Plan sin activar
-            </Badge>
-          )}
         </div>
       ),
     },
@@ -116,25 +123,32 @@ export default async function OrdersPage({
         title="Pedidos"
         description="Pedidos confirmados por el agente. El pago y el estado son ejes independientes."
       />
-      <FilterChips
-        label="Filtros de pedidos"
-        items={[
-          { label: "Todos", href: "/comercio/pedidos", active: !estado && !pago },
-          { label: "Por despachar", href: "/comercio/pedidos?estado=abierto", active: estado === "abierto" },
-          { label: "Pagados", href: "/comercio/pedidos?pago=pagado", active: pago === "pagado" },
-          { label: "Pago pendiente", href: "/comercio/pedidos?pago=pendiente", active: pago === "pendiente" },
-        ]}
+      <PedidosFilters
+        estado={filtros.estado}
+        pago={filtros.pago}
+        q={filtros.q}
+        cliente={filtros.cliente}
+        nombreDelCliente={nombreDelCliente}
       />
       <DataTable
         columns={columns}
-        rows={filas}
+        rows={res.data}
         getRowKey={(o) => o.id}
-        emptyTitle={estado || pago ? "Sin pedidos con estos filtros" : "Sin pedidos todavía"}
+        emptyTitle={hayFiltros ? "Sin pedidos con estos filtros" : "Sin pedidos todavía"}
         emptyDescription={
-          estado || pago
+          hayFiltros
             ? "Prueba con otro filtro o quita los filtros."
             : "Cuando el agente confirme un pedido, aparecerá aquí."
         }
+        caption="Pedidos"
+        serverPaginated
+      />
+      <Pagination
+        page={page}
+        hasMore={hayMas}
+        total={total}
+        label="pedidos"
+        makeHref={(destino) => hrefPedidos(filtros, destino)}
       />
     </div>
   );
