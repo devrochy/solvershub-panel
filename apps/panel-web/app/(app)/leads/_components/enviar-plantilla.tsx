@@ -35,12 +35,19 @@ export function EnviarPlantilla({
   consulta,
   cliente,
   trigger,
+  icono,
 }: {
   consulta: string;
   /** Si viene, la plantilla se envía solo a este cliente (tanda 2). */
   cliente?: { id: string; nombre: string };
   /** Disparador propio (por ejemplo el icono de la columna Acciones). */
   trigger?: ReactNode;
+  /**
+   * Botón de solo icono con su nombre accesible (por fila de una lista). Lo pinta este componente
+   * cliente: pasar un `<Button>` ya renderizado desde una página de servidor como `trigger` llega
+   * como nodo diferido y Radix no puede montarse sobre él (`failed to slot onto its children`).
+   */
+  icono?: { className?: string };
 }) {
   const [open, setOpen] = useState(false);
   const [paso, setPaso] = useState<Paso>("armar");
@@ -154,11 +161,22 @@ export function EnviarPlantilla({
   return (
     <Dialog open={open} onOpenChange={(abierto) => void abrir(abierto)}>
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline">
-            <Send className="h-4 w-4" aria-hidden /> Enviar plantilla
-          </Button>
-        )}
+        {trigger ??
+          (icono ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={icono.className}
+              aria-label={`Enviar plantilla a ${cliente?.nombre ?? "este filtro"}`}
+              title="Enviar plantilla"
+            >
+              <Send className="h-4 w-4" aria-hidden />
+            </Button>
+          ) : (
+            <Button variant="outline">
+              <Send className="h-4 w-4" aria-hidden /> Enviar plantilla
+            </Button>
+          ))}
       </DialogTrigger>
       <DialogContent
         title={cliente ? `Enviar una plantilla a ${cliente.nombre}` : "Enviar una plantilla a este filtro"}

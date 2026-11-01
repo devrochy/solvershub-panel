@@ -31,6 +31,7 @@ import {
   BellRing,
   Bot,
   Handshake,
+  Layers,
   Package,
   Repeat,
   Scale,
@@ -172,6 +173,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
         [
           { section: "pack_subscriptions:suscripciones", label: "Resumen", href: "/suscripciones", icon: LayoutDashboard, ready: true },
           { section: "pack_subscriptions:suscripciones", label: "Suscripciones", href: "/suscripciones/lista", icon: Repeat, ready: true },
+          { section: "pack_subscriptions:suscripciones", label: "Planes", href: "/suscripciones/planes", icon: Layers, ready: true },
           { section: "pack_subscriptions:suscripciones", label: "Clientes", href: "/suscripciones/clientes", icon: Users, ready: true },
           { section: "pack_subscriptions:suscripciones", label: "Pagos", href: "/suscripciones/pagos", icon: Banknote, ready: true },
         ],

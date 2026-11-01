@@ -20,6 +20,7 @@ import type { ConversationConnection, LeadAgent, LeadDetail, LeadsResponse, Me }
 import {
   consultaClientes,
   etiquetaClasificacion,
+  hrefFicha,
   telefonoVisible,
   ubicacionVisible,
   type FiltrosClientes,
@@ -57,16 +58,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     ? res.data
     : { items: [], filters: [], agents: [], page: 1, has_more: false, total: 0 };
 
-  const hrefFicha = (id?: string, agente?: string, editar = false) => {
-    const next = new URLSearchParams(qs);
-    if (id) next.set("cliente", id);
-    else next.delete("cliente");
-    if (id && agente) next.set("agente", agente);
-    else next.delete("agente");
-    if (id && editar) next.set("editar", "1");
-    else next.delete("editar");
-    return `/leads${next.size ? `?${next.toString()}` : ""}`;
-  };
 
   // HU-CRM-12 (ADR-0179): solo los agentes con datos reales de este cliente; General siempre (ADR-0153).
   const agentesDeLaFila = (lead: LeadRow, agentes: LeadAgent[]) => (
@@ -74,7 +65,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       {agentes
         .filter((agente) => agente.key === "general" || lead.agentes.includes(agente.key))
         .map((agente) => {
-          const destino = agente.key === "general" ? hrefFicha(lead.id) : hrefFicha(lead.id, agente.key);
+          const destino = agente.key === "general" ? hrefFicha(lead.id, { qs }) : hrefFicha(lead.id, { agente: agente.key, qs });
           return (
             <Tooltip key={agente.key} label={agente.name}>
               <Link
@@ -104,7 +95,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       cell: (lead) => (
         <div className="flex min-w-0 flex-col">
           <Link
-            href={hrefFicha(lead.id)}
+            href={hrefFicha(lead.id, { qs })}
             scroll={false}
             className="truncate font-medium text-link hover:underline"
           >
@@ -215,10 +206,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
               }
             />
           )}
-          <IconAction href={hrefFicha(lead.id)} label="Ver ficha" tone="ver">
+          <IconAction href={hrefFicha(lead.id, { qs })} label="Ver ficha" tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
-          <IconAction href={hrefFicha(lead.id, "general", true)} label="Editar datos" tone="editar">
+          <IconAction href={hrefFicha(lead.id, { agente: "general", editar: true, qs })} label="Editar datos" tone="editar">
             <Pencil className="h-4 w-4" aria-hidden />
           </IconAction>
         </div>
@@ -274,10 +265,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <FichaCliente
           key={`${ficha.data.id}-${sp.agente ?? "general"}-${sp.editar ?? ""}`}
           detalle={ficha.data}
-          closeHref={hrefFicha()}
+          closeHref={hrefFicha(undefined, { qs })}
           agenteInicial={sp.agente}
           editarInicial={sp.editar === "1"}
-          hrefBase={hrefFicha()}
+          hrefBase={hrefFicha(undefined, { qs })}
         />
       )}
       {ficha && !ficha.ok && (
