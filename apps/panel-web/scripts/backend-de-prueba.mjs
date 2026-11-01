@@ -53,6 +53,29 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
   respuestas["/pack/cobranza/collectors/gp-1/permissions"] = { catalogo: ["registrar_pago", "ver_cartera", "generar_reporte"], activos: ["registrar_pago", "ver_cartera"] };
 }
 
+// SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol.
+{
+  const cuenta = (id, email, nombre) => ({ id, email, nombre, rol: id === "test-admin-1" ? "owner" : "colaborador" });
+  const equipo = (id, c, estado, extra = {}) => ({ id, cuenta: c, device_id_corto: "a1b2c3", device_label: "Samsung A15", plataforma: "android", estado, origen: "autoregistro", rol_al_registrar: "gestor", bloqueo_equipo: false, legacy: false, ultimo_uso_at: "2026-10-30T14:00:00Z", ultima_ip: "190.25.1.10", aprobado_at: null, bloqueado_at: null, motivo: null, created_at: "2026-10-29T09:00:00Z", ...extra });
+  respuestas["/access/policy"] = { owner: "abierto", colaborador: "abierto", gestor: "restringido" };
+  respuestas["/access/devices"] = {
+    items: [
+      equipo("d1", cuenta("g-1", "gestor@test.example", "Gestor Uno"), "pendiente"),
+      equipo("d2", cuenta("test-admin-1", "duena@test.example", "Dueña"), "activo", { rol_al_registrar: "owner", origen: "politica_abierta", device_label: "Pixel 8", device_id_corto: "9f8e7d" }),
+      equipo("d3", cuenta("g-3", "desconocido@test.example", null), "bloqueado", { bloqueado_at: "2026-10-30T10:00:00Z", motivo: "Equipo perdido" }),
+    ],
+    next_cursor: null,
+  };
+  respuestas["/access/events"] = {
+    items: [
+      { id: "e1", tipo: "dispositivo_pendiente", severidad: "aviso", canal: "campo", rol: "gestor", cuenta: cuenta("g-1", "gestor@test.example", "Gestor Uno"), device_id_corto: "a1b2c3", ip: "190.25.1.10", detalle: null, occurred_at: "2026-10-30T14:00:00Z" },
+      { id: "e2", tipo: "login_fallido", severidad: "aviso", canal: "panel_apk", rol: null, cuenta: null, device_id_corto: null, ip: "181.1.1.1", detalle: { repeticiones_previas: 3 }, occurred_at: "2026-10-30T13:00:00Z" },
+      { id: "e3", tipo: "dispositivo_bloqueado_usado", severidad: "critico", canal: "campo", rol: "gestor", cuenta: cuenta("g-3", "desconocido@test.example", null), device_id_corto: "a1b2c3", ip: "190.25.1.11", detalle: null, occurred_at: "2026-10-30T12:00:00Z" },
+    ],
+    next_cursor: null,
+  };
+}
+
 // SOLO_LECTURA=1: quien mira no es el propietario (plantillas con opciones en solo lectura).
 if (process.env.SOLO_LECTURA === "1") {
   respuestas["/admin/me"] = { ...me, role: "agent", tenant: { ...me.tenant, role: "agent" } };
