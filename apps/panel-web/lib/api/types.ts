@@ -243,7 +243,7 @@ export type LeadEditable = {
   plugin_id: string;
   key: string;
   label: string;
-  tipo: "opciones" | "texto" | "fecha";
+  tipo: "opciones" | "texto" | "fecha" | "numero";
   options?: { value: string; label: string }[];
   max_length: number;
   value?: string | null;

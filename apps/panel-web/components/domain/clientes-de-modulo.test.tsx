@@ -88,7 +88,10 @@ const SIN_TELEFONO = {
   extras: { estado_lead: null, pedidos: 0 },
 };
 
-const OPERABLE: { etapa: string; filtros: string[]; pluginDeEtapa?: string } = { etapa: "estado_lead", filtros: ["clasificacion"] };
+const OPERABLE: { etapa: string; filtros: string[]; pluginDeEtapa?: string; motivoDePerdida?: string; valor?: string } = {
+  etapa: "estado_lead",
+  filtros: ["clasificacion"],
+};
 
 function responder(extra: Partial<LeadsResponse> = {}, yo: Me = me) {
   respuestas["/admin/leads"] = { ...leads, filters: FILTROS, facetas: FACETAS, agents: AGENTES, items: [ANA, SIN_TELEFONO], total: 2, ...extra };
@@ -343,5 +346,72 @@ describe("cambio de etapa (HU-CRM-19)", () => {
     responder();
     await pintar({}, OPERABLE);
     expect(screen.queryByRole("button", { name: /Cambiar la etapa/ })).toBeNull();
+  });
+});
+
+describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
+  const MOTIVOS = [
+    { value: "precio", label: "Precio" },
+    { value: "sin_respuesta", label: "Sin respuesta" },
+    { value: "sin_motivo", label: "Sin motivo registrado" },
+  ];
+  const TRAMOS = [
+    { value: "hasta_100000", label: "Hasta $100.000" },
+    { value: "sin_valor", label: "Sin valor" },
+  ];
+  const CON_VALOR = {
+    ...OPERABLE,
+    pluginDeEtapa: "pack_commerce",
+    filtros: ["clasificacion", "motivo_perdida", "valor"],
+    motivoDePerdida: "motivo_perdida",
+    valor: "valor",
+  };
+  const FILTROS_DE_VENTAS: LeadsResponse["filters"] = [
+    ...FILTROS,
+    { key: "motivo_perdida", label: "Motivo de pérdida", options: MOTIVOS },
+    { key: "valor", label: "Valor estimado", options: TRAMOS },
+  ];
+
+  it("ofrece los órdenes por valor y los filtros de motivo y valor cuando el pack los declara", async () => {
+    responder({ filters: FILTROS_DE_VENTAS });
+    await pintar({ orden: "valor_desc" }, CON_VALOR);
+
+    const orden = screen.getByLabelText("Ordenar por") as HTMLSelectElement;
+    expect(orden.value).toBe("valor_desc");
+    expect(within(orden).getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "Más nuevos primero",
+      "Última actividad",
+      "Nombre (A–Z)",
+      "Nombre (Z–A)",
+      "Valor estimado (mayor primero)",
+      "Valor estimado (menor primero)",
+    ]);
+    expect(screen.getByLabelText("Motivo de pérdida")).toBeTruthy();
+    expect(screen.getByLabelText("Valor estimado")).toBeTruthy();
+  });
+
+  it("sin el filtro de valor del backend no ofrece órdenes por valor (backend viejo)", async () => {
+    responder();
+    await pintar({}, CON_VALOR);
+    const orden = screen.getByLabelText("Ordenar por") as HTMLSelectElement;
+    expect(within(orden).getAllByRole("option")).toHaveLength(4);
+  });
+
+  it("muestra el valor estimado en pesos y «—» si el lead no tiene", async () => {
+    responder({
+      filters: FILTROS_DE_VENTAS,
+      agents: [
+        AGENTES[0],
+        { ...AGENTES[1], columns: [...AGENTES[1].columns, { key: "valor_estimado", label: "Valor estimado" }] },
+      ],
+      items: [
+        { ...ANA, extras: { ...ANA.extras, valor_estimado: 250000 } },
+        { ...SIN_TELEFONO, extras: { ...SIN_TELEFONO.extras, valor_estimado: null } },
+      ],
+    });
+    await pintar({}, CON_VALOR);
+    const [, ana, beto] = screen.getAllByRole("row");
+    expect(within(ana).getByText(/250\.000/)).toBeTruthy();
+    expect(within(beto).queryByText(/\$/)).toBeNull();
   });
 });

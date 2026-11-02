@@ -24,7 +24,11 @@ import {
   MAX_FILAS_CSV,
   ordenValido,
   ORDEN_SEGUIMIENTO,
+  COLUMNA_DE_VALOR,
+  motivosParaElegir,
   ORDENES_CLIENTES,
+  ORDENES_DE_VALOR,
+  textoDeValor,
   pestanasDeFaceta,
   puedeEditarClientes,
   puedeEnviarPlantilla,
@@ -66,6 +70,13 @@ export type OperableDeModulo = {
    * contador (Vencidos, Hoy…), columna con la próxima acción y el orden «más atrasado».
    */
   seguimiento?: string;
+  /**
+   * Clave del filtro del pack con el motivo de la pérdida (`motivo_perdida`, HU-CRM-23): sus opciones son los
+   * motivos que se piden al pasar un lead a «perdido» desde el menú de la etapa.
+   */
+  motivoDePerdida?: string;
+  /** Clave del filtro por tramos del valor estimado (`valor`, HU-CRM-23): habilita sus órdenes y su columna en pesos. */
+  valor?: string;
 };
 
 /** Query de `/admin/leads` para la lista de un módulo: el agente, la búsqueda y la página (y, si es operable, filtros, orden y contadores). */
@@ -145,6 +156,10 @@ export async function ClientesDeModulo({
   const facetaDeSeguimiento = operable?.seguimiento ? facetas?.find((f) => f.key === operable.seguimiento) : undefined;
   const conSeguimiento = Boolean(filtroDeSeguimiento && facetaDeSeguimiento);
   const seguimientoActual = operable?.seguimiento ? valorDeFiltro(sp.filtro, operable.seguimiento) : "";
+  const filtroDeValor = operable?.valor ? filters?.find((f) => f.key === operable.valor) : undefined;
+  const motivosDePerdida = motivosParaElegir(
+    operable?.motivoDePerdida ? filters?.find((f) => f.key === operable.motivoDePerdida)?.options : undefined,
+  );
   const ordenActual =
     (operable?.seguimiento
       ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
@@ -199,6 +214,7 @@ export async function ClientesDeModulo({
           actual={etapa.codigo}
           texto={etapa.texto}
           opciones={filtroDeEtapa.options}
+          motivos={motivosDePerdida}
           grande={grande}
         />
       );
@@ -306,7 +322,13 @@ export async function ClientesDeModulo({
         (columna): Column<Fila> => ({
           key: `extra-${columna.key}`,
           header: columna.label,
-          cell: (lead) => <span className="text-body">{formatCellValue(lead.extras[columna.key])}</span>,
+          cell: (lead) => (
+            <span className="text-body">
+              {columna.key === COLUMNA_DE_VALOR
+                ? textoDeValor(lead.extras[columna.key])
+                : formatCellValue(lead.extras[columna.key])}
+            </span>
+          ),
         }),
       ),
     {
@@ -363,7 +385,11 @@ export async function ClientesDeModulo({
       {operable && (
         <Field label="Ordenar por" htmlFor="orden" className="w-48">
           <Select id="orden" name="orden" defaultValue={ordenActual}>
-            {[...ORDENES_CLIENTES, ...(filtroDeSeguimiento ? [ORDEN_SEGUIMIENTO] : [])].map((o) => (
+            {[
+              ...ORDENES_CLIENTES,
+              ...(filtroDeSeguimiento ? [ORDEN_SEGUIMIENTO] : []),
+              ...(filtroDeValor ? ORDENES_DE_VALOR : []),
+            ].map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
