@@ -56,7 +56,7 @@ const mensaje: OpcionConfig = {
 
 describe("catálogo de configuración", () => {
   it("indexa por clave y tolera un catálogo ausente", () => {
-    const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje] };
+    const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje], asistente: [] };
     expect(indexarCatalogo(catalogo).get("debounce_mode")?.etiqueta).toBe("Velocidad de respuesta");
     expect(indexarCatalogo(null).size).toBe(0);
   });
@@ -113,7 +113,7 @@ describe("catálogo de configuración", () => {
 });
 
 describe("pantalla de Identidad", () => {
-  const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje, mensaje] };
+  const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje, mensaje], asistente: [] };
 
   it("solo lista las opciones del grupo que la pantalla puede mostrar", () => {
     const valores = { debounce_mode: "natural", difficulty_score_threshold: 3 };
@@ -130,6 +130,7 @@ describe("pantalla de Identidad", () => {
         { ...velocidad, clave: "palabras_de_baja", grupo: "bajas" },
         { ...velocidad, clave: "business_tz", grupo: "horario" },
       ],
+      asistente: [],
     };
     expect(opcionesDelGrupo(propias, "bajas", { palabras_de_baja: [] })).toEqual([]);
     expect(opcionesDelGrupo(propias, "horario", { business_tz: "UTC" })).toEqual([]);

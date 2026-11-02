@@ -71,6 +71,13 @@ export type IdentitySettings = components["schemas"]["IdentitySettings"];
 export type CatalogoConfig = components["schemas"]["Catalogo"];
 export type OpcionConfig = components["schemas"]["Opcion"];
 export type ValorPosibleConfig = components["schemas"]["ValorPosible"];
+// Asistente por preguntas de Configuración (HU-CFG-10/11, ADR-0182). El guion viaja en el catálogo.
+export type GuionAsistente = components["schemas"]["Guion"];
+export type PreguntaAsistente = components["schemas"]["Pregunta"];
+export type RespuestaPosibleAsistente = components["schemas"]["RespuestaPosible"];
+export type PropuestaAsistente = components["schemas"]["Propuesta"];
+export type CambioAsistente = components["schemas"]["Cambio"];
+export type OmitidoAsistente = components["schemas"]["Omitido"];
 export type BajasSettings = components["schemas"]["BajasSettings"];
 export type WawebPolitica = components["schemas"]["WaWebPolicySettings"];
 export type BotPausedUpdate = components["schemas"]["BotPausedUpdate"];
