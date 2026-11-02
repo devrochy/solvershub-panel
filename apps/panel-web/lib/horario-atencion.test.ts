@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DIAS_FRANJA, franjasATexto, leyendaDias, textoAFranjas } from "@/lib/horario-atencion";
+import { DIAS_FRANJA, analizarFranjas, franjasATexto, leyendaDias, textoAFranjas } from "@/lib/horario-atencion";
 
 describe("horario de atención: índice de días como el backend (ADR-0051)", () => {
   it("0 es lunes y 6 es domingo, como `weekday()` de Python", () => {
@@ -22,5 +22,18 @@ describe("horario de atención: índice de días como el backend (ADR-0051)", ()
     expect(textoAFranjas("7 08:00-18:00\nlunes 8-18\n\n 6 9:00 - 12:00 ")).toEqual([
       { day: 6, from: "9:00", to: "12:00" },
     ]);
+  });
+});
+
+describe("horario de atención: líneas ignoradas", () => {
+  it("devuelve las líneas que no se pudieron leer y no cuenta las vacías", () => {
+    expect(analizarFranjas("0 08:00-18:00\n\nlunes 8-18\n7 08:00-18:00")).toEqual({
+      franjas: [{ day: 0, from: "08:00", to: "18:00" }],
+      ignoradas: ["lunes 8-18", "7 08:00-18:00"],
+    });
+  });
+
+  it("sin líneas ignoradas, la lista queda vacía", () => {
+    expect(analizarFranjas("6 9:00 - 12:00").ignoradas).toEqual([]);
   });
 });

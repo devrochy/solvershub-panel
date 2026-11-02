@@ -4,18 +4,20 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { toast } from "@/lib/toast-store";
+import { useAction } from "@/lib/use-action";
 
 type Advanced = {
   versions: { id: string; version: string; is_active: boolean; created_at: string | null }[];
@@ -27,69 +29,87 @@ type Advanced = {
 };
 
 /** Configuración avanzada: versiones, LLM, guardrails, flow y evals. */
-export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
-  const router = useRouter();
+export function AdvancedPanel({ advanced, puedeEditar = true }: { advanced: Advanced; puedeEditar?: boolean }) {
   const confirm = useConfirm();
+  const { run, pending } = useAction();
   const [llm, setLlm] = useState({ ...advanced.llm, llm_api_key: "" });
   const [guardrails, setGuardrails] = useState(advanced.guardrails_text);
   const [spec, setSpec] = useState(() => JSON.stringify(advanced.spec ?? {}, null, 2));
-  const [status, setStatus] = useState<{
-    loading?: string;
-    error?: string;
-    success?: string;
-    /** Líneas del DSL de guardrails que el backend ignoró (DEF-01). */
-    ignored?: string[];
-  }>({});
+  // Lo último guardado de cada formulario: sirve para avisar si algo quedó sin guardar.
+  const [guardado, setGuardado] = useState({
+    provider: advanced.llm.llm_provider,
+    model: advanced.llm.llm_model,
+    guardrails: advanced.guardrails_text,
+    spec: JSON.stringify(advanced.spec ?? {}, null, 2),
+  });
+  // Qué acción está en curso, para el texto del botón de cada formulario.
+  const [activa, setActiva] = useState<string | null>(null);
+  /** Líneas del DSL de guardrails que el backend ignoró (DEF-01): es un aviso, no un error. */
+  const [ignored, setIgnored] = useState<string[] | undefined>();
+  useAvisarCambios(
+    "agentspec",
+    llm.llm_provider !== guardado.provider ||
+      llm.llm_model !== guardado.model ||
+      llm.llm_api_key !== "" ||
+      guardrails !== guardado.guardrails ||
+      spec !== guardado.spec,
+  );
 
-  async function post(payload: Record<string, unknown>, ok: string) {
-    setStatus({ loading: String(payload.action) });
-    const res = await fetch("/api/settings/advanced", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+  async function post(payload: Record<string, unknown>, ok: string): Promise<boolean> {
+    setActiva(String(payload.action));
+    const hecho = await run(async () => {
+      const res = await fetch("/api/settings/advanced", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string; ignored?: string[] };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar." };
+      setIgnored(json.ignored?.length ? json.ignored : undefined);
+      return { ok: true, success: ok };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string; ignored?: string[] };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
+    setActiva(null);
+    return hecho;
+  }
+
+  async function onLlm(event: FormEvent) {
+    event.preventDefault();
+    if (await post({ action: "llm", ...llm }, "Proveedor de IA actualizado.")) {
+      setGuardado((prev) => ({ ...prev, provider: llm.llm_provider, model: llm.llm_model }));
+      setLlm((prev) => ({ ...prev, llm_api_key: "", has_api_key: prev.has_api_key || prev.llm_api_key !== "" }));
     }
-    setStatus({ success: ok, ignored: json.ignored?.length ? json.ignored : undefined });
-    router.refresh();
   }
 
-  function onLlm(event: FormEvent) {
+  async function onGuardrails(event: FormEvent) {
     event.preventDefault();
-    void post({ action: "llm", ...llm }, "LLM actualizado.");
+    if (await post({ action: "guardrails", guardrails_text: guardrails }, "Guardrails guardados.")) {
+      setGuardado((prev) => ({ ...prev, guardrails }));
+    }
   }
 
-  function onGuardrails(event: FormEvent) {
-    event.preventDefault();
-    void post({ action: "guardrails", guardrails_text: guardrails }, "Guardrails guardados.");
-  }
-
-  function onSpec(event: FormEvent) {
+  async function onSpec(event: FormEvent) {
     event.preventDefault();
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(spec) as Record<string, unknown>;
     } catch {
-      setStatus({ error: "El spec no es JSON válido." });
+      toast.error("El spec no es JSON válido.");
       return;
     }
-    void post({ action: "spec", spec: parsed }, "AgentSpec guardado (se crea versión solo si cambió).");
+    if (await post({ action: "spec", spec: parsed }, "AgentSpec guardado (se crea versión solo si cambió).")) {
+      setGuardado((prev) => ({ ...prev, spec }));
+    }
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <FormFeedback error={status.error} success={status.success} />
-
-      {status.ignored && (
+      {ignored && (
         <div role="alert" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
           <p className="text-sm font-medium text-headline">
-            Se ignoraron {status.ignored.length} línea(s) de guardrails (el resto sí se guardó):
+            Se ignoraron {ignored.length} línea(s) de guardrails (el resto sí se guardó):
           </p>
           <ul className="mt-1 list-disc pl-5 text-sm text-body">
-            {status.ignored.map((linea) => (
+            {ignored.map((linea) => (
               <li key={linea}>{linea}</li>
             ))}
           </ul>
@@ -103,7 +123,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
         <CardContent>
           <form onSubmit={onSpec} className="flex flex-col gap-4">
             <p className="text-xs text-text-soft">
-              Si completás este JSON y guardás, <strong>reemplaza todo el formulario</strong> de
+              Si completas este JSON y guardas, <strong>reemplaza todo el formulario</strong> de
               Configuración y crea una versión nueva del AgentSpec. Las versiones anteriores quedan
               como históricas.
             </p>
@@ -111,12 +131,17 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
               aria-label="AgentSpec (JSON)"
               className="min-h-96 font-mono text-xs"
               onChange={(e) => setSpec(e.target.value)}
+              readOnly={!puedeEditar}
               value={spec}
             />
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={status.loading === "spec"}>
-                {status.loading === "spec" ? "Guardando…" : "Guardar AgentSpec"}
-              </Button>
+              {puedeEditar ? (
+                <Button type="submit" disabled={pending}>
+                  {activa === "spec" ? "Guardando…" : "Guardar AgentSpec"}
+                </Button>
+              ) : (
+                <AvisoSoloLectura />
+              )}
             </div>
           </form>
         </CardContent>
@@ -175,7 +200,7 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                               );
                             })();
                           }}
-                          disabled={Boolean(status.loading)}
+                          disabled={pending || !puedeEditar}
                           aria-label="Activar"
                           size="icon"
                         >
@@ -197,15 +222,24 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onLlm} className="flex flex-col gap-4">
+            <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Proveedor" htmlFor="llm_provider">
+              <Field
+                label="Proveedor"
+                htmlFor="llm_provider"
+                help="La empresa de IA que genera las respuestas de este negocio, por ejemplo openai o anthropic."
+              >
                 <Input
                   id="llm_provider"
                   value={llm.llm_provider}
                   onChange={(e) => setLlm({ ...llm, llm_provider: e.target.value })}
                 />
               </Field>
-              <Field label="Modelo" htmlFor="llm_model">
+              <Field
+                label="Modelo"
+                htmlFor="llm_model"
+                help="El modelo concreto de ese proveedor. Debe existir en el proveedor elegido."
+              >
                 <Input
                   id="llm_model"
                   value={llm.llm_model}
@@ -226,11 +260,16 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                 onChange={(e) => setLlm({ ...llm, llm_api_key: e.target.value })}
               />
             </Field>
-            <div>
-              <Button type="submit" variant="accent" disabled={Boolean(status.loading)}>
-                Guardar LLM
-              </Button>
-            </div>
+            </ControlesEditables>
+            {puedeEditar ? (
+              <div>
+                <Button type="submit" variant="accent" disabled={pending}>
+                  {activa === "llm" ? "Guardando…" : "Guardar proveedor"}
+                </Button>
+              </div>
+            ) : (
+              <AvisoSoloLectura />
+            )}
           </form>
         </CardContent>
       </Card>
@@ -241,10 +280,11 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onGuardrails} className="flex flex-col gap-4">
+            <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
             <Field
               label="Reglas (una por línea)"
               htmlFor="guardrails_text"
-              help="forbidden_phrase | frase1, frase2 | retry · required_tool | frases | tool | escalate · max_length | 500 | retry"
+              help="Validaciones que se aplican a cada respuesta antes de enviarla; una por línea, con la forma «tipo | valor | qué hacer si falla». Ejemplos: forbidden_phrase | frase1, frase2 | retry · required_tool | frases | tool | escalate · max_length | 500 | retry."
             >
               <Textarea
                 id="guardrails_text"
@@ -253,11 +293,16 @@ export function AdvancedPanel({ advanced }: { advanced: Advanced }) {
                 onChange={(e) => setGuardrails(e.target.value)}
               />
             </Field>
-            <div>
-              <Button type="submit" variant="accent" disabled={Boolean(status.loading)}>
-                Guardar guardrails
-              </Button>
-            </div>
+            </ControlesEditables>
+            {puedeEditar ? (
+              <div>
+                <Button type="submit" variant="accent" disabled={pending}>
+                  {activa === "guardrails" ? "Guardando…" : "Guardar guardrails"}
+                </Button>
+              </div>
+            ) : (
+              <AvisoSoloLectura />
+            )}
           </form>
         </CardContent>
       </Card>

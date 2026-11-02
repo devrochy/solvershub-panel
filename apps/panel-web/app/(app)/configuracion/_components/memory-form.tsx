@@ -2,18 +2,25 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { InputNumero } from "@/components/ui/input-numero";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
 type MemorySettings = { short_term_turns: number; rag_top_k: number; rag_min_score: number };
 
-/** Memoria del agente: turnos de contexto y recall RAG. */
-export function MemoryForm({ memory }: { memory: MemorySettings }) {
+/** Memoria del agente: turnos de contexto y búsqueda de conocimiento (RAG). */
+export function MemoryForm({ memory, puedeEditar = true }: { memory: MemorySettings; puedeEditar?: boolean }) {
   const [values, setValues] = useState(memory);
+  const [guardado, setGuardado] = useState(memory);
   const { run, pending } = useAction();
+  useAvisarCambios("memoria", !igualProfundo(values, guardado));
+  // Con 0 resultados de recall no se busca nada: la similitud mínima no tiene a qué aplicarse.
+  const sinRecall = values.rag_top_k === 0;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -25,6 +32,7 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar la memoria." };
+      setGuardado(values);
       return { ok: true, success: "Memoria guardada." };
     });
   }
@@ -33,6 +41,7 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-5">
           <Field
             label="Turnos de contexto (memoria corta)"
             htmlFor="short_term_turns"
@@ -48,7 +57,11 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
           </Field>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Recall RAG (top K)" htmlFor="rag_top_k" help="0 = desactivado (1–20).">
+            <Field
+              label="Conocimiento a buscar (top K)"
+              htmlFor="rag_top_k"
+              help="Cuántos fragmentos de tu conocimiento y de conversaciones pasadas se le pasan al asistente en cada respuesta. 0 = no busca nada; de 1 a 20."
+            >
               <InputNumero
                 id="rag_top_k"
                 min={0}
@@ -57,25 +70,38 @@ export function MemoryForm({ memory }: { memory: MemorySettings }) {
                 onValueChange={(n) => setValues((previo) => ({ ...previo, rag_top_k: n }))}
               />
             </Field>
-            <Field label="Similitud mínima (0–1)" htmlFor="rag_min_score">
+            <Field
+              label="Similitud mínima (0–1)"
+              htmlFor="rag_min_score"
+              help={
+                sinRecall
+                  ? "No aplica mientras el conocimiento a buscar sea 0: sube ese valor para usarla."
+                  : "Qué tan parecido debe ser un fragmento a la pregunta para usarse. Más cerca de 1, solo entra lo muy relacionado; más cerca de 0, entra casi todo."
+              }
+            >
               <InputNumero
                 id="rag_min_score"
                 decimal
                 step={0.05}
                 min={0}
                 max={1}
+                disabled={sinRecall}
                 value={values.rag_min_score}
                 onValueChange={(n) => setValues((previo) => ({ ...previo, rag_min_score: n }))}
               />
             </Field>
           </div>
+          </ControlesEditables>
 
-
-          <div>
-            <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Guardando…" : "Guardar memoria"}
-            </Button>
-          </div>
+          {puedeEditar ? (
+            <div>
+              <Button type="submit" variant="accent" disabled={pending}>
+                {pending ? "Guardando…" : "Guardar memoria"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </form>
       </CardContent>
     </Card>

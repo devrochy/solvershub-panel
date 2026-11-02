@@ -2,18 +2,23 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
 import type { BrainSettings } from "@/lib/api/types";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
 /** Formulario del Cerebro (modelos y límites). Responsabilidad: editar y guardar. */
-export function BrainForm({ brain }: { brain: BrainSettings }) {
+export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings; puedeEditar?: boolean }) {
   const [values, setValues] = useState(brain);
+  const [guardado, setGuardado] = useState(brain);
   const { run, pending } = useAction();
+  useAvisarCambios("cerebro", !igualProfundo(values, guardado));
 
   const set = <K extends keyof BrainSettings>(key: K, value: BrainSettings[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -28,6 +33,7 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el cerebro." };
+      setGuardado(values);
       return { ok: true, success: "Cerebro guardado." };
     });
   }
@@ -36,8 +42,14 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Modelo primario" htmlFor="model_primary" required>
+            <Field
+              label="Modelo primario"
+              htmlFor="model_primary"
+              help="El modelo de IA que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas."
+              required
+            >
               <Input
                 id="model_primary"
                 required
@@ -63,7 +75,11 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
                 onChange={(e) => set("model_fallback", e.target.value)}
               />
             </Field>
-            <Field label="Temperatura (0-2)" htmlFor="model_temperature">
+            <Field
+              label="Temperatura (0-2)"
+              htmlFor="model_temperature"
+              help="Qué tan variadas son las respuestas: cerca de 0 el asistente es más predecible y cerca de 2 más creativo. Para atender clientes conviene un valor bajo."
+            >
               <InputNumero
                 id="model_temperature"
                 decimal
@@ -77,7 +93,11 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Máx. llamadas a herramientas por turno" htmlFor="policy_max_tool_calls">
+            <Field
+              label="Máx. llamadas a herramientas por turno"
+              htmlFor="policy_max_tool_calls"
+              help="Cuántas veces puede usar una herramienta (agendar, consultar, cobrar…) para responder un solo mensaje. Entre 1 y 50."
+            >
               <InputNumero
                 id="policy_max_tool_calls"
                 min={1}
@@ -89,7 +109,7 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
             <Field
               label="Presupuesto por conversación"
               htmlFor="policy_budget"
-              help="En dólares (corta el turno al alcanzarlo)."
+              help="En dólares: el asistente deja de trabajar en una conversación al llegar a este gasto."
             >
               <InputNumero
                 id="policy_budget"
@@ -101,13 +121,17 @@ export function BrainForm({ brain }: { brain: BrainSettings }) {
               />
             </Field>
           </div>
+          </ControlesEditables>
 
-
-          <div>
-            <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Guardando…" : "Guardar cerebro"}
-            </Button>
-          </div>
+          {puedeEditar ? (
+            <div>
+              <Button type="submit" variant="accent" disabled={pending}>
+                {pending ? "Guardando…" : "Guardar cerebro"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </form>
       </CardContent>
     </Card>
