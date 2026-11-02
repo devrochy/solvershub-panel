@@ -2,13 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AsistenteDeConfiguracion } from "@/app/(app)/configuracion/_components/asistente-de-configuracion";
 import { CampoOpcion } from "@/app/(app)/configuracion/_components/campo-opcion";
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { CatalogoConfig, IdentitySettings } from "@/lib/api/types";
+import type { CatalogoConfig, IdentitySettings, PropuestaAsistente } from "@/lib/api/types";
 import { ayudaFueraDeHorario, cuerpoIdentidad } from "@/lib/asistente";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { conCambiosAplicados, guionDe } from "@/lib/configuracion-asistente";
 import { ayudaDeOpcion, GRUPOS_IDENTIDAD, erroresDeRango, indexarCatalogo, opcionesDelGrupo } from "@/lib/catalogo-config";
 import {
   igualProfundo,
@@ -52,9 +54,13 @@ export function IdentityForm({
   // Lo último guardado: la comparación con `values` dice si hay cambios sin guardar.
   const [guardado, setGuardado] = useState(identity);
   const [errores, setErrores] = useState<Record<string, string>>({});
+  // Algunos controles (el horario, el texto sin agregar de las listas) guardan su propio texto: al cambiar
+  // los valores desde fuera —descartar o aplicar el asistente— se vuelven a montar para que lo muestren.
+  const [version, setVersion] = useState(0);
   const { run, pending } = useAction();
   const pendientes = usePendientes();
-  useAvisarCambios("identidad", !igualProfundo(values, guardado));
+  const sucio = !igualProfundo(values, guardado);
+  useAvisarCambios("identidad", sucio);
 
   if (!catalogo) {
     return (
@@ -66,7 +72,24 @@ export function IdentityForm({
 
   const valores = values as unknown as Record<string, unknown>;
   const indice = indexarCatalogo(catalogo);
+  // El asistente por preguntas (HU-CFG-11) solo aparece si el catálogo trae su guion para esta sección y
+  // la persona puede editar: un catálogo anterior no lo trae y la sección queda como siempre.
+  const guion = puedeEditar ? guionDe(catalogo, seccion) : null;
   const grupos = seccionPorId(seccion).gruposIdentidad ?? [];
+  /** Vuelve a lo último guardado: el asistente parte de lo guardado, no de lo editado sin guardar. */
+  const descartarCambios = () => {
+    setValues(guardado);
+    setErrores({});
+    pendientes.descartar();
+    setVersion((v) => v + 1);
+  };
+  /** El servidor aplicó la propuesta del asistente: el formulario ya muestra el resultado, sin cambios pendientes. */
+  const reflejarAplicado = (propuesta: PropuestaAsistente) => {
+    setValues((prev) => conCambiosAplicados(prev, propuesta.cambios));
+    setGuardado((prev) => conCambiosAplicados(prev, propuesta.cambios));
+    setErrores({});
+    setVersion((v) => v + 1);
+  };
   const cambiar = (clave: string, valor: unknown) => {
     setValues((prev) => ({ ...prev, [clave]: valor }) as IdentitySettings);
     setErrores((prev) => {
@@ -129,10 +152,21 @@ export function IdentityForm({
   }
 
   return (
+    <>
+      {guion && (
+        <AsistenteDeConfiguracion
+          key={guion.seccion}
+          guion={guion}
+          catalogo={catalogo}
+          hayCambiosSinGuardar={sucio}
+          onDescartar={descartarCambios}
+          onAplicado={reflejarAplicado}
+        />
+      )}
     <Card>
       <CardContent className="pt-5">
         {/* noValidate: los errores salen en español junto a cada campo, no en la burbuja del navegador. */}
-        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
+        <form key={version} onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-8">
           {/* En el orden de la sección (Horario antes que Escalamiento), no el del catálogo. */}
           {grupos.flatMap((id) => GRUPOS_IDENTIDAD.filter((g) => g.id === id)).map((grupo) => {
@@ -205,5 +239,6 @@ export function IdentityForm({
         </form>
       </CardContent>
     </Card>
+    </>
   );
 }

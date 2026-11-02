@@ -13,6 +13,9 @@
 //   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
 //   ejecuta una sola vez (el segundo toque es `duplicate`); OPCIONES_BANDERA=0 los apaga (404 por negocio).
 //   Avisos por evento (Plantillas → Por evento) y su texto por canal; el interruptor «Avisos por canal» de Tenants (MASTER=1).
+//   Asistente por preguntas de Configuración (HU-CFG-10/11): simula vista previa y aplicar con el guion del catálogo de
+//   prueba y guarda lo aplicado en memoria (recargar la página lo muestra). ASISTENTE_409=1: el primer «aplicar» responde
+//   409 porque «alguien» cambió la calidez en medio · ASISTENTE_422=1: la vista previa rechaza la pregunta de emojis.
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -27,8 +30,10 @@ import { createServer } from "node:http";
 const { RESPUESTAS, accionesDeOpciones, ajustes, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
 
+const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts");
+
 const puerto = Number(process.env.PUERTO ?? 8765);
-const respuestas = { ...RESPUESTAS };
+const respuestas = { ...RESPUESTAS, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
 if (process.env.BOT_PAUSADO === "1") {
   respuestas["/admin/settings"] = { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } };
 }
@@ -384,6 +389,73 @@ function avisosPorEvento(metodo, cuerpo) {
   }];
 }
 
+// Asistente de Configuración: mismas reglas que `core/config_registro/asistente.py` en pequeño (sin v3).
+{
+  respuestas["/admin/settings"] = structuredClone(respuestas["/admin/settings"]);
+}
+let yaVencio = false;
+function asistente(metodo, ruta, cuerpo) {
+  const m = /^\/admin\/settings\/asistente\/([^/]+)\/(vista-previa|aplicar)$/.exec(ruta);
+  if (!m || metodo !== "POST") return null;
+  const [, seccion, accion] = m;
+  const catalogo = respuestas["/admin/settings/catalog"];
+  const guion = catalogo.asistente.find((g) => g.seccion === seccion);
+  if (!guion) return [404, { error: { code: "not_found", message: `Sección desconocida: «${seccion}».` } }];
+  const dadas = cuerpo.respuestas ?? {};
+  const errores = {};
+  for (const [id, valor] of Object.entries(dadas)) {
+    const pregunta = guion.preguntas.find((p) => p.id === id);
+    const ids = new Set((pregunta?.opciones ?? []).map((o) => o.id));
+    if (!pregunta) errores[id] = "Esta pregunta no existe en esta sección.";
+    else if (pregunta.tipo === "una" ? !ids.has(valor) : !Array.isArray(valor) || !valor.every((v) => ids.has(v))) errores[id] = "Elige una de las opciones.";
+  }
+  if (process.env.ASISTENTE_422 === "1" && "emojis" in dadas) errores.emojis = "Esta opción ya no está disponible.";
+  if (Object.keys(errores).length) return [422, { error: { code: "validation_error", message: "Revisa las respuestas marcadas.", fields: errores } }];
+
+  const identidad = respuestas["/admin/settings"].identity;
+  const propuestos = {};
+  for (const pregunta of guion.preguntas) {
+    if (!(pregunta.id in dadas)) continue;
+    if (pregunta.tipo === "una") Object.assign(propuestos, pregunta.opciones.find((o) => o.id === dadas[pregunta.id]).cambios);
+    else {
+      const claves = new Set(pregunta.opciones.flatMap((o) => Object.keys(o.cambios)));
+      for (const clave of claves) {
+        const conocidas = pregunta.opciones.flatMap((o) => o.cambios[clave] ?? []);
+        const propias = (identidad[clave] ?? []).filter((v) => !conocidas.includes(v));
+        const elegidas = pregunta.opciones.filter((o) => dadas[pregunta.id].includes(o.id)).flatMap((o) => o.cambios[clave] ?? []);
+        propuestos[clave] = [...new Set([...propias, ...elegidas])];
+      }
+    }
+  }
+  const omitidos = [];
+  const estado = { ...identidad, ...propuestos };
+  for (const clave of Object.keys(propuestos)) {
+    const op = catalogo.opciones.find((o) => o.clave === clave);
+    if (op?.depende_de?.condicion === "no_vacia" && !(estado[op.depende_de.clave] ?? []).length) {
+      omitidos.push({ clave, etiqueta: op.etiqueta, motivo: op.depende_de.motivo });
+      delete propuestos[clave];
+    }
+  }
+  const cambios = Object.entries(propuestos)
+    .filter(([clave, nuevo]) => JSON.stringify(identidad[clave]) !== JSON.stringify(nuevo))
+    .map(([clave, nuevo]) => {
+      const antes = identidad[clave];
+      const vacio = antes == null || antes === "" || antes === 0 || (Array.isArray(antes) && antes.length === 0);
+      return { clave, etiqueta: catalogo.opciones.find((o) => o.clave === clave)?.etiqueta ?? clave, actual: antes, propuesto: nuevo, editado_a_mano: !vacio };
+    });
+  const huella = JSON.stringify(cambios.map((c) => [c.clave, c.propuesto])).length.toString(36) + cambios.map((c) => c.clave.length + JSON.stringify(c.propuesto).length).join("-");
+  const propuesta = { seccion, cambios, omitidos, huella };
+  if (accion === "vista-previa") return [200, propuesta];
+  if (process.env.ASISTENTE_409 === "1" && !yaVencio) {
+    yaVencio = true;
+    identidad.persona_warmth = (identidad.persona_warmth ?? 3) + 1;
+    return [409, { error: { code: "conflict", message: "La configuración cambió mientras decidías: revisa los cambios de nuevo." } }];
+  }
+  if (huella !== cuerpo.huella) return [409, { error: { code: "conflict", message: "La configuración cambió mientras decidías: revisa los cambios de nuevo." } }];
+  for (const c of cambios) identidad[c.clave] = c.propuesto;
+  return [200, propuesta];
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const ruta = url.pathname.replace(/^\/api\/v1/, "");
@@ -403,6 +475,16 @@ createServer(async (req, res) => {
     if (r) {
       res.statusCode = r[0];
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
+      return;
+    }
+  }
+  if (ruta.startsWith("/admin/settings/asistente/")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = asistente(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
       return;
     }
   }

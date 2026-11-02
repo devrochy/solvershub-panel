@@ -5,11 +5,15 @@ import { cleanup, render } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import { violacionesGraves } from "@/lib/testing/axe";
-import { RESPUESTAS } from "@/lib/testing/fixtures";
+import { CATALOGO_DE_PRUEBA } from "@/lib/testing/asistente-config";
+import { RESPUESTAS as RESPUESTAS_BASE } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 // Accesibilidad de las páginas principales (HU-UI-04): se renderiza cada página con
 // respuestas de prueba del backend y axe no debe encontrar violaciones graves.
+
+// El catálogo de opciones con el guion del asistente (HU-CFG-11) para ejercitar las secciones de Configuración.
+const RESPUESTAS: Record<string, unknown> = { ...RESPUESTAS_BASE, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
 
 vi.mock("@/lib/api/server", async (original) => ({
   ...(await original<typeof import("@/lib/api/server")>()),
@@ -52,6 +56,8 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>, Record<string, stri
   ["Plan", () => import("@/app/(app)/plan/page")],
   ["Negocios", () => import("@/app/(app)/tenants/page")],
   ["Configuración", () => import("@/app/(app)/configuracion/page")],
+  ["Configuración · Horario y escalamiento", () => import("@/app/(app)/configuracion/page"), { seccion: "horario" }],
+  ["Configuración · Voz y estilo", () => import("@/app/(app)/configuracion/page"), { seccion: "voz" }],
   ["Configuración · Datos del cliente", () => import("@/app/(app)/configuracion/page"), { tab: "datos-cliente" }],
   ["Cobranza", () => import("@/app/(app)/cobranza/page")],
   ["Suscripciones · Resumen", () => import("@/app/(app)/suscripciones/page")],
