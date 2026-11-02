@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Field } from "@/components/ui/field";
 import { InputPassword } from "@/components/ui/input-password";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { MediaSettings } from "@/lib/api/types";
+import type { CatalogoConfig, MediaSettings } from "@/lib/api/types";
+import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
@@ -20,7 +21,16 @@ const AYUDA_PROVEEDOR = "La empresa de IA que procesa esto. Si no estás seguro,
 const AYUDA_MODELO = "Cada proveedor ofrece varios modelos; el que viene por defecto sirve para la mayoría de los casos.";
 
 /** Configuración de multimedia: notas de voz (STT) e imágenes (visión). */
-export function MultimediaForm({ media, puedeEditar = true }: { media: MediaSettings; puedeEditar?: boolean }) {
+export function MultimediaForm({
+  media,
+  catalogo = null,
+  puedeEditar = true,
+}: {
+  media: MediaSettings;
+  catalogo?: CatalogoConfig | null;
+  puedeEditar?: boolean;
+}) {
+  const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
   const [audio, setAudio] = useState(media.audio);
   const [vision, setVision] = useState(media.vision);
   const [guardado, setGuardado] = useState({ audio: media.audio, vision: media.vision });
@@ -277,7 +287,7 @@ export function MultimediaForm({ media, puedeEditar = true }: { media: MediaSett
           <Field
             label="Modo de imagen"
             htmlFor="vision_mode"
-            help="Sin descripción, el asistente solo acusa recibo y pregunta qué necesita."
+            help={ayudaDelCatalogo(indice, "vision_mode", "Sin descripción, el asistente solo acusa recibo y pregunta qué necesita.")}
           >
             <Select
               id="vision_mode"
