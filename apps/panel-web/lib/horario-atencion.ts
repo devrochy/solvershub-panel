@@ -40,3 +40,43 @@ export function analizarFranjas(text: string): { franjas: Franja[]; ignoradas: s
 export function textoAFranjas(text: string): Franja[] {
   return analizarFranjas(text).franjas;
 }
+
+/** «Lun», «Lun y Mar», «Lun a Vie»: tramos de días seguidos; los salteados se separan con coma. */
+function diasLegibles(dias: number[]): string {
+  const ordenados = [...new Set(dias)].filter((d) => d >= 0 && d < DIAS_FRANJA.length).sort((a, b) => a - b);
+  if (ordenados.length === DIAS_FRANJA.length) return "Todos los días";
+  const tramos: number[][] = [];
+  for (const dia of ordenados) {
+    const ultimo = tramos[tramos.length - 1];
+    if (ultimo && dia === ultimo[ultimo.length - 1] + 1) ultimo.push(dia);
+    else tramos.push([dia]);
+  }
+  return tramos
+    .map((t) =>
+      t.length === 1
+        ? DIAS_FRANJA[t[0]]
+        : t.length === 2
+          ? `${DIAS_FRANJA[t[0]]} y ${DIAS_FRANJA[t[1]]}`
+          : `${DIAS_FRANJA[t[0]]} a ${DIAS_FRANJA[t[t.length - 1]]}`,
+    )
+    .join(", ");
+}
+
+/**
+ * Franjas a una frase corta para leer, no para editar: los días con las mismas horas se juntan
+ * («Lun a Vie 08:00–18:00; Sáb 09:00–13:00»). Sin franjas, «Siempre, sin horario». Entradas que no
+ * tienen la forma de una franja se ignoran.
+ */
+export function franjasLegibles(ranges: unknown): string {
+  const franjas = (Array.isArray(ranges) ? ranges : []).filter(
+    (r): r is Franja =>
+      !!r && typeof r === "object" && typeof (r as Franja).day === "number" && typeof (r as Franja).from === "string" && typeof (r as Franja).to === "string",
+  );
+  if (franjas.length === 0) return "Siempre, sin horario";
+  const porHoras = new Map<string, number[]>();
+  for (const { day, from, to } of franjas) {
+    const clave = `${from}–${to}`;
+    porHoras.set(clave, [...(porHoras.get(clave) ?? []), day]);
+  }
+  return [...porHoras].map(([horas, dias]) => `${diasLegibles(dias)} ${horas}`).join("; ");
+}

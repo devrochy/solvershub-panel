@@ -3397,6 +3397,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/asistente/{seccion}/aplicar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Asistente Aplicar
+         * @description Escribe lo que mostró la vista previa. Todo o nada: la configuración del negocio y la persona
+         *     del agente se guardan en una sola transacción, y si lo que se escribiría ya no es lo que se vio
+         *     (la configuración cambió en medio) responde 409 sin escribir.
+         */
+        post: operations["asistente_aplicar_api_v1_admin_settings_asistente__seccion__aplicar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings/asistente/{seccion}/vista-previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Asistente Vista Previa
+         * @description Qué cambiaría el asistente con esas respuestas (valor actual → propuesto), sin escribir nada.
+         */
+        post: operations["asistente_vista_previa_api_v1_admin_settings_asistente__seccion__vista_previa_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/identity": {
         parameters: {
             query?: never;
@@ -9233,6 +9275,11 @@ export interface components {
             version: string;
             /** Opciones */
             opciones: components["schemas"]["Opcion"][];
+            /**
+             * Asistente
+             * @default []
+             */
+            asistente: components["schemas"]["Guion"][];
         };
         /** CatalogoDeMensajesOut */
         CatalogoDeMensajesOut: {
@@ -21258,6 +21305,122 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** AsistenteAplicar */
+        AsistenteAplicar: {
+            /** Respuestas */
+            respuestas?: {
+                [key: string]: string | string[];
+            };
+            /** Huella */
+            huella: string;
+        };
+        /**
+         * AsistenteRespuestas
+         * @description Lo que el dueño contestó: id de pregunta → id de opción (o lista de ids en las de varias).
+         */
+        AsistenteRespuestas: {
+            /** Respuestas */
+            respuestas?: {
+                [key: string]: string | string[];
+            };
+        };
+        /** Cambio */
+        Cambio: {
+            /** Clave */
+            clave: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Actual */
+            actual?: unknown;
+            /** Propuesto */
+            propuesto?: unknown;
+            /**
+             * Editado A Mano
+             * @default false
+             */
+            editado_a_mano: boolean;
+        };
+        /** Guion */
+        Guion: {
+            /**
+             * Seccion
+             * @enum {string}
+             */
+            seccion: "voz" | "atencion";
+            /** Titulo */
+            titulo: string;
+            /**
+             * Ayuda
+             * @default
+             */
+            ayuda: string;
+            /** Preguntas */
+            preguntas: components["schemas"]["Pregunta"][];
+        };
+        /** Omitido */
+        Omitido: {
+            /** Clave */
+            clave: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Motivo */
+            motivo: string;
+        };
+        /** Pregunta */
+        Pregunta: {
+            /** Id */
+            id: string;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Ayuda
+             * @default
+             */
+            ayuda: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "una" | "varias";
+            /** Opciones */
+            opciones: components["schemas"]["RespuestaPosible"][];
+        };
+        /** Propuesta */
+        Propuesta: {
+            /**
+             * Seccion
+             * @enum {string}
+             */
+            seccion: "voz" | "atencion";
+            /** Cambios */
+            cambios?: components["schemas"]["Cambio"][];
+            /** Omitidos */
+            omitidos?: components["schemas"]["Omitido"][];
+            /**
+             * Huella
+             * @default
+             */
+            huella: string;
+        };
+        /**
+         * RespuestaPosible
+         * @description Una opción que el dueño puede elegir y lo que cambia en el registro.
+         */
+        RespuestaPosible: {
+            /** Id */
+            id: string;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Ayuda
+             * @default
+             */
+            ayuda: string;
+            /** Cambios */
+            cambios: {
+                [key: string]: unknown;
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -28231,6 +28394,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Catalogo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    asistente_aplicar_api_v1_admin_settings_asistente__seccion__aplicar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                seccion: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AsistenteAplicar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Propuesta"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    asistente_vista_previa_api_v1_admin_settings_asistente__seccion__vista_previa_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                seccion: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AsistenteRespuestas"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Propuesta"];
                 };
             };
             /** @description Validation Error */

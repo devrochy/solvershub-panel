@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
@@ -22,6 +22,8 @@ export function SheetContent({
   footer,
   hero,
   className,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
 }: {
   title: string;
   description?: string;
@@ -30,11 +32,17 @@ export function SheetContent({
   /** Contenido fijo entre el encabezado y el área desplazable (p. ej. avatar + pestañas). */
   hero?: ReactNode;
   className?: string;
+  /** A dónde va el foco al abrir (por defecto, el primer control). */
+  onOpenAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onOpenAutoFocus"];
+  /** Devuelve el foco a quien abrió el panel cuando no hay un `SheetTrigger` de Radix. */
+  onCloseAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onCloseAutoFocus"];
 }) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <DialogPrimitive.Content
+        onOpenAutoFocus={onOpenAutoFocus}
+        onCloseAutoFocus={onCloseAutoFocus}
         className={cn(
           "fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-surface shadow-elev-3 focus:outline-none sm:max-w-md",
           className,

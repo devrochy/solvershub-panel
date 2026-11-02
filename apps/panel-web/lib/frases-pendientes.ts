@@ -87,5 +87,10 @@ export function usePendientes() {
     return { listas, errores, limpiar: () => aLimpiar.forEach((p) => p.limpiar()) };
   }, []);
 
-  return { registrar, completar };
+  /** Deja en blanco todos los campos con texto sin agregar (al descartar los cambios del formulario). */
+  const descartar = useCallback(() => {
+    for (const p of pendientes.current.values()) p.limpiar();
+  }, []);
+
+  return { registrar, completar, descartar };
 }

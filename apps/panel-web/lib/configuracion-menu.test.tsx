@@ -38,6 +38,7 @@ const catalogo: CatalogoConfig = {
     opcion("persona_warmth", "voz", "entero", "Calidez"),
     opcion("guardrail_max_retries", "calidad", "entero", "Reintentos"),
   ],
+  asistente: [],
 };
 
 function montar(props: Partial<Parameters<typeof SettingsTabs>[0]> = {}) {
