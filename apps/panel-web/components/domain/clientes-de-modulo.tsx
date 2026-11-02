@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { TabLinks } from "@/components/ui/tab-links";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { LeadFilter, LeadsResponse, Me } from "@/lib/api/types";
 import {
   enlaceTelefono,
@@ -23,6 +23,7 @@ import {
   hrefFicha,
   MAX_FILAS_CSV,
   ordenValido,
+  ORDEN_SEGUIMIENTO,
   ORDENES_CLIENTES,
   pestanasDeFaceta,
   puedeEditarClientes,
@@ -33,6 +34,12 @@ import {
   valorDeFiltro,
 } from "@/lib/clientes";
 import { formatCellValue, formatNumber } from "@/lib/format";
+import {
+  ESTADO_DE_SEGUIMIENTO,
+  ordenPorDefectoDeSeguimiento,
+  seguimientoDeExtras,
+  textoDeSeguimiento,
+} from "@/lib/seguimiento";
 import { cn } from "@/lib/utils";
 
 type Fila = LeadsResponse["items"][number];
@@ -54,6 +61,11 @@ export type OperableDeModulo = {
    * el menú de la columna (HU-CRM-19). Sin él la etapa es solo lectura.
    */
   pluginDeEtapa?: string;
+  /**
+   * Clave del filtro del pack con el seguimiento de cada lead (`seguimiento`, HU-CRM-21): pestañas con
+   * contador (Vencidos, Hoy…), columna con la próxima acción y el orden «más atrasado».
+   */
+  seguimiento?: string;
 };
 
 /** Query de `/admin/leads` para la lista de un módulo: el agente, la búsqueda y la página (y, si es operable, filtros, orden y contadores). */
@@ -66,9 +78,12 @@ export function consultaClientesDeModulo(
   if (sp.q?.trim()) qs.set("q", sp.q.trim());
   if (operable) {
     for (const f of filtrosDePacks(sp.filtro)) qs.append("filtro", f);
-    const orden = ordenValido(sp.orden);
+    const orden = operable.seguimiento
+      ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
+      : ordenValido(sp.orden);
     if (orden && orden !== "alta") qs.set("orden", orden);
-    if (operable.etapa) qs.set("facetas", operable.etapa);
+    if (operable.etapa) qs.append("facetas", operable.etapa);
+    if (operable.seguimiento) qs.append("facetas", operable.seguimiento);
   }
   if (sp.page) qs.set("page", sp.page);
   return qs;
@@ -103,9 +118,10 @@ export async function ClientesDeModulo({
   operable?: OperableDeModulo;
 }) {
   const qs = consultaClientesDeModulo(agente, sp, operable);
-  const [res, me] = await Promise.all([
+  const [res, me, zona] = await Promise.all([
     apiFetch<LeadsResponse>(`/admin/leads?${qs.toString()}`),
     operable ? apiFetch<Me>("/admin/me") : null,
+    operable?.seguimiento ? getBusinessTimezone() : null,
   ]);
   const { items, agents, page, has_more, total, filters, facetas } = res.ok
     ? res.data
@@ -123,6 +139,16 @@ export async function ClientesDeModulo({
     (f) => operable?.filtros?.includes(f.key) || (f.key === operable?.etapa && !etapaComoPestanas),
   );
   const etapaActual = operable?.etapa ? valorDeFiltro(sp.filtro, operable.etapa) : "";
+
+  // — Seguimiento (HU-CRM-21): pestañas con contador cuando el backend trae el filtro y sus contadores —
+  const filtroDeSeguimiento = operable?.seguimiento ? filters?.find((f) => f.key === operable.seguimiento) : undefined;
+  const facetaDeSeguimiento = operable?.seguimiento ? facetas?.find((f) => f.key === operable.seguimiento) : undefined;
+  const conSeguimiento = Boolean(filtroDeSeguimiento && facetaDeSeguimiento);
+  const seguimientoActual = operable?.seguimiento ? valorDeFiltro(sp.filtro, operable.seguimiento) : "";
+  const ordenActual =
+    (operable?.seguimiento
+      ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
+      : ordenValido(sp.orden)) ?? "alta";
 
   const hrefCon = (cambios: { q?: string | null; filtro?: string[]; orden?: string | null }) => {
     const next = new URLSearchParams();
@@ -184,6 +210,22 @@ export async function ClientesDeModulo({
     );
   };
 
+  /** Próxima acción del lead: «Vencido» (texto y color), la fecha en hora del negocio y la nota. */
+  const seguimientoDeFila = (lead: Fila) => {
+    const seg = seguimientoDeExtras(lead.extras);
+    if (!seg) return <span className="text-xs text-text-soft">Sin seguimiento</span>;
+    const estado = seg.estado ? ESTADO_DE_SEGUIMIENTO[seg.estado] : null;
+    return (
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="flex flex-wrap items-center gap-1.5">
+          {estado && <Badge variant={estado.tono}>{estado.texto}</Badge>}
+          <span className="text-xs text-body">{textoDeSeguimiento(seg.en, zona ?? undefined)}</span>
+        </span>
+        {seg.nota && <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-text-soft">{seg.nota}</span>}
+      </div>
+    );
+  };
+
   const accionesDeFila = (lead: Fila, grande = false) => {
     const nombre = lead.perfil.nombre_visible;
     const tel = enlaceTelefono(lead.perfil);
@@ -240,6 +282,9 @@ export async function ClientesDeModulo({
     ...(operable?.etapa
       ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
       : []),
+    ...(operable?.seguimiento
+      ? [{ key: "seguimiento", header: "Seguimiento", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
+      : []),
     {
       key: "telefono",
       header: "Teléfono",
@@ -255,7 +300,8 @@ export async function ClientesDeModulo({
         ]
       : []),
     ...columnasDelAgente
-      .filter((columna) => columna.key !== operable?.etapa)
+      // La etapa y el seguimiento tienen su propia columna: no se repiten como texto.
+      .filter((columna) => columna.key !== operable?.etapa && columna.key !== "seguimiento_nota")
       .map(
         (columna): Column<Fila> => ({
           key: `extra-${columna.key}`,
@@ -295,6 +341,9 @@ export async function ClientesDeModulo({
       <Field label="Buscar" htmlFor="q" className="w-60">
         <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre, identificador o teléfono" />
       </Field>
+      {conSeguimiento && seguimientoActual && operable?.seguimiento && (
+        <input type="hidden" name="filtro" value={`${operable.seguimiento}:${seguimientoActual}`} />
+      )}
       {operable &&
         filtrosEnSelect.map((f) => {
           const valor = valorDeFiltro(sp.filtro, f.key);
@@ -313,8 +362,8 @@ export async function ClientesDeModulo({
         })}
       {operable && (
         <Field label="Ordenar por" htmlFor="orden" className="w-48">
-          <Select id="orden" name="orden" defaultValue={ordenValido(sp.orden) ?? "alta"}>
-            {ORDENES_CLIENTES.map((o) => (
+          <Select id="orden" name="orden" defaultValue={ordenActual}>
+            {[...ORDENES_CLIENTES, ...(filtroDeSeguimiento ? [ORDEN_SEGUIMIENTO] : [])].map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -388,6 +437,15 @@ export async function ClientesDeModulo({
         />
       )}
 
+      {operable && conSeguimiento && filtroDeSeguimiento && (
+        <SeguimientoConContador
+          filtro={filtroDeSeguimiento}
+          faceta={facetaDeSeguimiento}
+          actual={seguimientoActual}
+          hrefDe={(valor) => hrefCon({ filtro: filtrosCon(sp.filtro, filtroDeSeguimiento.key, valor) })}
+        />
+      )}
+
       {chips.length > 0 && (
         <ul aria-label="Filtros activos" className="flex flex-wrap items-center gap-2">
           {chips.map((chip) => (
@@ -428,6 +486,7 @@ export async function ClientesDeModulo({
                   {operable.etapa && badgeDeEtapa(lead, true)}
                 </div>
                 <p className="text-sm text-body">{telefonoVisible(lead.perfil)}</p>
+                {operable.seguimiento && seguimientoDeFila(lead)}
                 <p className="text-xs text-text-soft">Última actividad: {textoDeActividad(lead.ultima_actividad)}</p>
                 {accionesDeFila(lead, true)}
               </li>
@@ -483,4 +542,22 @@ function EtapasConContador({
       )}
     </div>
   );
+}
+
+/** Pestañas «Todas · Vencidos · Hoy · Próximos 7 días…» con cuántos leads hay en cada una. */
+function SeguimientoConContador({
+  filtro,
+  faceta,
+  actual,
+  hrefDe,
+}: {
+  filtro: LeadFilter;
+  faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
+  actual: string;
+  hrefDe: (valor: string) => string;
+}) {
+  const { pestanas } = pestanasDeFaceta(filtro, faceta);
+  const items = pestanas.map((p) => ({ href: hrefDe(p.value), label: p.label, count: p.count }));
+  const hrefActual = items[Math.max(0, pestanas.findIndex((p) => p.value === actual))].href;
+  return <TabLinks label="Clientes por seguimiento" items={items} current={hrefActual} />;
 }

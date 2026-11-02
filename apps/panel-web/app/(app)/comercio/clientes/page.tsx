@@ -12,7 +12,12 @@ export default async function ClientesDeVentasPage({ searchParams }: { searchPar
       sp={await searchParams}
       helpSection="leads"
       vacioDescripcion="Cuando el agente de Ventas atienda al primer cliente, aparecerá aquí."
-      operable={{ etapa: "estado_lead", filtros: ["clasificacion"], pluginDeEtapa: "pack_commerce" }}
+      operable={{
+        etapa: "estado_lead",
+        filtros: ["clasificacion"],
+        pluginDeEtapa: "pack_commerce",
+        seguimiento: "seguimiento",
+      }}
     />
   );
 }

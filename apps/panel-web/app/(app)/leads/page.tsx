@@ -21,9 +21,10 @@ import {
   consultaClientes,
   etiquetaClasificacion,
   hrefFicha,
+  puedeEditarClientes,
   telefonoVisible,
-  ubicacionVisible,
   type FiltrosClientes,
+  ubicacionVisible,
 } from "@/lib/clientes";
 import { canalLabel } from "@/lib/labels";
 
@@ -269,6 +270,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           agenteInicial={sp.agente}
           editarInicial={sp.editar === "1"}
           hrefBase={hrefFicha(undefined, { qs })}
+          puedeEditar={me.ok ? puedeEditarClientes(me.data) : false}
         />
       )}
       {ficha && !ficha.ok && (

@@ -47,6 +47,7 @@ import { MapaDireccion } from "./mapa-direccion";
 import { ConsentimientoDelCliente } from "./consentimiento";
 import { ConsentimientoDatosDelCliente } from "./consentimiento-datos";
 import { HistoriaDelCliente, NotasDelCliente } from "./notas-y-historia";
+import { esCampoDeSeguimiento, SeguimientoDelLead } from "./seguimiento-lead";
 
 const TITULO_DEL_PACK: Record<string, string> = {
   pack_commerce: "Lead de venta",
@@ -93,11 +94,14 @@ export function FichaCliente({
   agenteInicial,
   editarInicial = false,
   hrefBase,
+  puedeEditar = true,
 }: {
   detalle: LeadDetail;
   closeHref: string;
   agenteInicial?: string;
   editarInicial?: boolean;
+  /** La sesión puede cambiar datos de clientes (HU-CRM-21: sin permiso el seguimiento se ve, no se edita). */
+  puedeEditar?: boolean;
   /** URL de `/leads` con los filtros actuales, sin `cliente`/`agente`/`editar`. */
   hrefBase: string;
 }) {
@@ -220,7 +224,7 @@ export function FichaCliente({
             )}
 
             {detalle.agentes.length === 0
-              ? agruparPorPack(detalle.editables).map(([pluginId, campos]) => (
+              ? agruparPorPack(detalle.editables.filter((e) => !esCampoDeSeguimiento(e.key))).map(([pluginId, campos]) => (
                   <EditablesDelPack key={pluginId} leadId={detalle.id} pluginId={pluginId} campos={campos} />
                 ))
               : null}
@@ -273,7 +277,7 @@ export function FichaCliente({
             <HistoriaDelCliente key={versionHistoria} leadId={detalle.id} />
           </div>
         ) : agente ? (
-          <AgenteTab leadId={detalle.id} agente={agente} />
+          <AgenteTab leadId={detalle.id} agente={agente} extras={detalle.extras} puedeEditar={puedeEditar} />
         ) : null}
       </SheetContent>
     </Sheet>
@@ -416,9 +420,22 @@ function CampoPar({
   );
 }
 
-function AgenteTab({ leadId, agente }: { leadId: string; agente: LeadAgentData }) {
+function AgenteTab({
+  leadId,
+  agente,
+  extras,
+  puedeEditar,
+}: {
+  leadId: string;
+  agente: LeadAgentData;
+  extras: Record<string, unknown>;
+  puedeEditar: boolean;
+}) {
   const soloLectura = columnasDeSoloLectura(agente.columns, agente.editables);
-  const porPack = agruparPorPack(agente.editables);
+  // El seguimiento (HU-CRM-21) tiene su propia tarjeta: no se repite en el formulario del pack.
+  const porPack = agruparPorPack(agente.editables.filter((e) => !esCampoDeSeguimiento(e.key)));
+  const tieneSeguimiento = agente.editables.some((e) => esCampoDeSeguimiento(e.key));
+  const tieneLead = agente.editables.some((e) => e.key === "estado_lead" && Boolean(e.value));
 
   if (agente.columns.length === 0 && agente.editables.length === 0) {
     return (
@@ -454,6 +471,16 @@ function AgenteTab({ leadId, agente }: { leadId: string; agente: LeadAgentData }
             ))}
           </dl>
         </section>
+      )}
+
+      {tieneSeguimiento && (
+        <SeguimientoDelLead
+          leadId={leadId}
+          editables={agente.editables}
+          extras={extras}
+          tieneLead={tieneLead}
+          puedeEditar={puedeEditar}
+        />
       )}
 
       {porPack.map(([pluginId, campos]) => (
