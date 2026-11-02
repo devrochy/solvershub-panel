@@ -26,13 +26,16 @@ import type {
 import {
   columnasDeSoloLectura,
   datosFueraDelPerfil,
+  ETAPA_PERDIDA,
   esClaveDelPerfil,
   etiquetaClasificacion,
   etiquetaDeDato,
   etiquetaTipoDocumento,
+  MENSAJE_VALOR_INVALIDO,
   normalizarClave,
   origenDelDato,
   textoDeDato,
+  valorEstimadoValido,
 } from "@/lib/clientes";
 import { formatCellValue, formatDate } from "@/lib/format";
 import { canalLabel } from "@/lib/labels";
@@ -48,6 +51,10 @@ import { ConsentimientoDelCliente } from "./consentimiento";
 import { ConsentimientoDatosDelCliente } from "./consentimiento-datos";
 import { HistoriaDelCliente, NotasDelCliente } from "./notas-y-historia";
 import { esCampoDeSeguimiento, SeguimientoDelLead } from "./seguimiento-lead";
+
+/** Campo de la etapa del lead y los que solo existen mientras está «perdido» (HU-CRM-23). */
+const CLAVE_DE_ETAPA = "estado_lead";
+const CAMPOS_DE_PERDIDA = ["motivo_perdida", "nota_perdida"];
 
 const TITULO_DEL_PACK: Record<string, string> = {
   pack_commerce: "Lead de venta",
@@ -497,7 +504,7 @@ function agruparPorPack(editables: LeadEditable[]): [string, LeadEditable[]][] {
 }
 
 /** Título de la sección de cada pack; uno sin título propio usa el genérico. */
-function EditablesDelPack({
+export function EditablesDelPack({
   leadId,
   pluginId,
   campos,
@@ -511,15 +518,36 @@ function EditablesDelPack({
   const [valores, setValores] = useState(inicial);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const guardar = useAction();
+  // Perder un lead pide motivo (HU-CRM-23): el motivo y la nota solo existen mientras la etapa es «perdido».
+  const esPerdido = valores[CLAVE_DE_ETAPA] === ETAPA_PERDIDA;
   const cambios = Object.fromEntries(
-    Object.entries(valores).filter(([k, v]) => v.trim() !== (inicial[k] ?? "").trim()),
+    Object.entries(valores).filter(
+      ([k, v]) => v.trim() !== (inicial[k] ?? "").trim() && (esPerdido || !CAMPOS_DE_PERDIDA.includes(k)),
+    ),
   );
+  const visibles = campos.filter((c) => esPerdido || !CAMPOS_DE_PERDIDA.includes(c.key));
   const tituloId = `ficha-pack-${pluginId}`;
+
+  /** Errores que se pueden ver sin ir al servidor; vacío si el formulario se puede enviar. */
+  function revisar(): Record<string, string> {
+    const problemas: Record<string, string> = {};
+    const pasaAPerdido = esPerdido && inicial[CLAVE_DE_ETAPA] !== ETAPA_PERDIDA;
+    const hayMotivo = campos.some((c) => c.key === "motivo_perdida");
+    if (pasaAPerdido && hayMotivo && !(valores.motivo_perdida ?? "").trim()) {
+      problemas.motivo_perdida = "Elige el motivo de la pérdida para marcar el lead como perdido.";
+    }
+    if ("valor_estimado" in cambios && !valorEstimadoValido(valores.valor_estimado ?? "")) {
+      problemas.valor_estimado = MENSAJE_VALOR_INVALIDO;
+    }
+    return problemas;
+  }
 
   async function onGuardar(e: React.FormEvent) {
     e.preventDefault();
     if (Object.keys(cambios).length === 0) return;
-    setErrores({});
+    const problemas = revisar();
+    setErrores(problemas);
+    if (Object.keys(problemas).length > 0) return;
     const ok = await guardar.run(async () => {
       const res = await fetch(`/api/leads/${leadId}/pack/${encodeURIComponent(pluginId)}`, {
         method: "PATCH",
@@ -539,15 +567,22 @@ function EditablesDelPack({
         {TITULO_DEL_PACK[pluginId] ?? "Seguimiento"}
       </h3>
       <form onSubmit={(e) => void onGuardar(e)} className="space-y-3">
-        {campos.map((c) => (
-          <Field key={c.key} label={c.label} htmlFor={`pack-${pluginId}-${c.key}`} error={errores[c.key]}>
+        {visibles.map((c) => (
+          <Field
+            key={c.key}
+            label={c.label}
+            htmlFor={`pack-${pluginId}-${c.key}`}
+            error={errores[c.key]}
+            required={c.key === "motivo_perdida" && inicial[CLAVE_DE_ETAPA] !== ETAPA_PERDIDA}
+            help={c.tipo === "numero" ? "Solo números, sin puntos de miles ni símbolos (por ejemplo 250000)." : undefined}
+          >
             {c.tipo === "opciones" ? (
               <Select
                 id={`pack-${pluginId}-${c.key}`}
                 value={valores[c.key] ?? ""}
                 onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
               >
-                {!inicial[c.key] && <option value="">Sin definir</option>}
+                {!inicial[c.key] && <option value="">{c.key === "motivo_perdida" ? "Elige un motivo" : "Sin definir"}</option>}
                 {(c.options ?? []).map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -559,9 +594,8 @@ function EditablesDelPack({
                 id={`pack-${pluginId}-${c.key}`}
                 value={valores[c.key] ?? ""}
                 onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
-                type={c.tipo === "numero" ? "number" : undefined}
-                step={c.tipo === "numero" ? "any" : undefined}
-                maxLength={c.tipo === "numero" ? undefined : c.max_length}
+                maxLength={c.max_length}
+                inputMode={c.tipo === "numero" ? "decimal" : undefined}
               />
             )}
           </Field>

@@ -14,7 +14,9 @@ export default async function ClientesDeVentasPage({ searchParams }: { searchPar
       vacioDescripcion="Cuando el agente de Ventas atienda al primer cliente, aparecerá aquí."
       operable={{
         etapa: "estado_lead",
-        filtros: ["clasificacion"],
+        filtros: ["clasificacion", "motivo_perdida", "valor"],
+        motivoDePerdida: "motivo_perdida",
+        valor: "valor",
         pluginDeEtapa: "pack_commerce",
         seguimiento: "seguimiento",
       }}
