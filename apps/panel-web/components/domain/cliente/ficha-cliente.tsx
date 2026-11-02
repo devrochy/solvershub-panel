@@ -559,7 +559,9 @@ function EditablesDelPack({
                 id={`pack-${pluginId}-${c.key}`}
                 value={valores[c.key] ?? ""}
                 onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
-                maxLength={c.max_length}
+                type={c.tipo === "numero" ? "number" : undefined}
+                step={c.tipo === "numero" ? "any" : undefined}
+                maxLength={c.tipo === "numero" ? undefined : c.max_length}
               />
             )}
           </Field>

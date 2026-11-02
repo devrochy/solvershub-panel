@@ -9300,6 +9300,11 @@ export interface components {
              * @default []
              */
             asistente: components["schemas"]["Guion"][];
+            /**
+             * Aos Runtime
+             * @default legacy
+             */
+            aos_runtime: string;
         };
         /** CatalogoDeMensajesOut */
         CatalogoDeMensajesOut: {
@@ -11871,7 +11876,7 @@ export interface components {
              * Grupo
              * @enum {string}
              */
-            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os";
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os" | "cerebro" | "memoria" | "chat_web" | "multimedia";
             /**
              * Tipo
              * @enum {string}
@@ -18078,7 +18083,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "opciones" | "texto" | "fecha";
+            tipo: "opciones" | "texto" | "fecha" | "numero";
             /** Options */
             options?: components["schemas"]["LeadFilterOption"][];
             /** Max Length */
@@ -23510,8 +23515,8 @@ export interface operations {
                 filtro?: string[] | null;
                 /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
                 agente?: string | null;
-                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre`, `nombre_desc` o `seguimiento` (el seguimiento más atrasado primero; los clientes sin seguimiento van al final). */
-                orden?: "alta" | "actividad" | "nombre" | "nombre_desc" | "seguimiento";
+                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre`, `nombre_desc` o `seguimiento` (el seguimiento más atrasado primero; los clientes sin seguimiento van al final), `valor` (valor estimado del lead, de menor a mayor) o `valor_desc` (de mayor a menor); los clientes sin valor van siempre al final. */
+                orden?: "alta" | "actividad" | "nombre" | "nombre_desc" | "seguimiento" | "valor" | "valor_desc";
                 /** @description Claves de `filters` de las que se quieren contadores por opción (se repite el parámetro). Una clave que no declara ningún pack, o que no sabe contar, responde 400 `filtro_invalido`. */
                 facetas?: string[] | null;
                 page?: number;

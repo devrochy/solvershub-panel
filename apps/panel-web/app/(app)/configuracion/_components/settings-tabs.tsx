@@ -158,8 +158,8 @@ export function SettingsTabs({
           )}
           {seccion === "identidad" && bajas && <BajasCard bajas={bajas} catalogo={catalogo} puedeEditar={puedeEditar} />}
           {seccion === "whatsapp-web" && waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
-          {seccion === "cerebro" && <BrainForm brain={settings.brain} puedeEditar={puedeEditar} />}
-          {seccion === "memoria" && <MemoryForm memory={settings.memory} puedeEditar={puedeEditar} />}
+          {seccion === "cerebro" && <BrainForm brain={settings.brain} catalogo={catalogo} puedeEditar={puedeEditar} />}
+          {seccion === "memoria" && <MemoryForm memory={settings.memory} catalogo={catalogo} puedeEditar={puedeEditar} />}
           {seccion === "herramientas" && <SkillsForm skills={settings.skills} puedeEditar={puedeEditar} />}
           {seccion === "datos-cliente" && (
             <>
@@ -175,8 +175,8 @@ export function SettingsTabs({
               />
             </>
           )}
-          {seccion === "chat-web" && <WebChatForm webChat={webChat} puedeEditar={puedeEditar} />}
-          {seccion === "multimedia" && <MultimediaForm media={media} puedeEditar={puedeEditar} />}
+          {seccion === "chat-web" && <WebChatForm webChat={webChat} catalogo={catalogo} puedeEditar={puedeEditar} />}
+          {seccion === "multimedia" && <MultimediaForm media={media} catalogo={catalogo} puedeEditar={puedeEditar} />}
           {seccion === "agentspec" && <AdvancedPanel advanced={advanced} puedeEditar={puedeEditar} />}
           {seccion === "accesibilidad" && <AccesibilidadPanel />}
         </div>

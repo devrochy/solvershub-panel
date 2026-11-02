@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
-import type { BrainSettings } from "@/lib/api/types";
+import type { BrainSettings, CatalogoConfig } from "@/lib/api/types";
+import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
 /** Formulario del Cerebro (modelos y límites). Responsabilidad: editar y guardar. */
-export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings; puedeEditar?: boolean }) {
+export function BrainForm({
+  brain,
+  catalogo = null,
+  puedeEditar = true,
+}: {
+  brain: BrainSettings;
+  catalogo?: CatalogoConfig | null;
+  puedeEditar?: boolean;
+}) {
+  const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
+  const ayuda = (clave: string, respaldo: string) => ayudaDelCatalogo(indice, clave, respaldo);
   const [values, setValues] = useState(brain);
   const [guardado, setGuardado] = useState(brain);
   const { run, pending } = useAction();
@@ -47,7 +58,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
             <Field
               label="Modelo primario"
               htmlFor="model_primary"
-              help="El modelo de IA que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas."
+              help={ayuda("model_primary", "El modelo de IA que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas.")}
               required
             >
               <Input
@@ -60,7 +71,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
             <Field
               label="Modelo de razonamiento"
               htmlFor="model_router"
-              help="Para turnos complejos sin herramientas."
+              help={ayuda("model_router", "Para turnos complejos sin herramientas.")}
             >
               <Input
                 id="model_router"
@@ -68,7 +79,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
                 onChange={(e) => set("model_router", e.target.value)}
               />
             </Field>
-            <Field label="Modelo de respaldo" htmlFor="model_fallback" help="Se usa si el primario falla.">
+            <Field label="Modelo de respaldo" htmlFor="model_fallback" help={ayuda("model_fallback", "Se usa si el primario falla.")}>
               <Input
                 id="model_fallback"
                 value={values.model_fallback ?? ""}
@@ -78,7 +89,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
             <Field
               label="Temperatura (0-2)"
               htmlFor="model_temperature"
-              help="Qué tan variadas son las respuestas: cerca de 0 el asistente es más predecible y cerca de 2 más creativo. Para atender clientes conviene un valor bajo."
+              help={ayuda("model_temperature", "Qué tan variadas son las respuestas: cerca de 0 el asistente es más predecible y cerca de 2 más creativo. Para atender clientes conviene un valor bajo.")}
             >
               <InputNumero
                 id="model_temperature"
@@ -96,7 +107,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
             <Field
               label="Máx. llamadas a herramientas por turno"
               htmlFor="policy_max_tool_calls"
-              help="Cuántas veces puede usar una herramienta (agendar, consultar, cobrar…) para responder un solo mensaje. Entre 1 y 50."
+              help={ayuda("policy_max_tool_calls", "Cuántas veces puede usar una herramienta (agendar, consultar, cobrar…) para responder un solo mensaje. Entre 1 y 50.")}
             >
               <InputNumero
                 id="policy_max_tool_calls"
@@ -109,7 +120,7 @@ export function BrainForm({ brain, puedeEditar = true }: { brain: BrainSettings;
             <Field
               label="Presupuesto por conversación"
               htmlFor="policy_budget"
-              help="En dólares: el asistente deja de trabajar en una conversación al llegar a este gasto."
+              help={ayuda("policy_budget", "En dólares: el asistente deja de trabajar en una conversación al llegar a este gasto.")}
             >
               <InputNumero
                 id="policy_budget"

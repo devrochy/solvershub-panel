@@ -35,6 +35,10 @@ const AYUDA_MONEDA = "Solo cambia cómo se muestran los montos en el panel; el c
  * Voz, Calidad): el shell lo mantiene montado mientras se cambia entre ellas, así lo escrito en
  * una no se pierde al pasar a otra, y `seccion` decide qué grupos del catálogo se pintan.
  */
+/** Con el Agent OS (runtime `v3`) el nombre, la descripción y la voz salen de la versión publicada del agente. */
+const AVISO_RUNTIME_V3 =
+  "Tu negocio usa el Agent OS: el nombre, la descripción y la voz se aplican cuando publicas una nueva versión del agente, no al guardar aquí.";
+
 export function IdentityForm({
   identity,
   catalogo,
@@ -179,6 +183,11 @@ export function IdentityForm({
                     {grupo.titulo}
                   </h3>
                   <p className="text-xs text-text-soft">{grupo.descripcion}</p>
+                  {catalogo.aos_runtime === "v3" && (grupo.id === "identidad" || grupo.id === "voz") && (
+                    <p role="note" className="mt-1.5 rounded-md border border-border-soft bg-status-info-bg p-2 text-xs text-status-info-fg">
+                      {AVISO_RUNTIME_V3}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   {opciones.map((opcion) => (

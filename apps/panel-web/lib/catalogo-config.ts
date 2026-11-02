@@ -33,6 +33,15 @@ export function rangoTexto(opcion: OpcionConfig): string {
   return `Entre ${opcion.minimo} y ${opcion.maximo}${unidad}.`;
 }
 
+/**
+ * Ayuda de un campo que el backend ya describe (Cerebro, Memoria, Chat web, Multimedia: HU-CFG-09). Si el
+ * catálogo no trae la opción (un backend anterior), queda el texto de respaldo y la pantalla no se rompe.
+ */
+export function ayudaDelCatalogo(indice: OpcionesPorClave, clave: string, respaldo: string): string {
+  const opcion = indice.get(clave);
+  return opcion ? ayudaDeOpcion(opcion) : respaldo;
+}
+
 /** Ayuda de un campo: qué cambia, el ejemplo si lo hay y el rango si es numérico. */
 export function ayudaDeOpcion(opcion: OpcionConfig): string {
   const partes = [opcion.explicacion.trim()];

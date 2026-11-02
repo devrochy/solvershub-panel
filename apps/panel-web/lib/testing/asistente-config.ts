@@ -95,6 +95,7 @@ export const OPCIONES_DEL_ASISTENTE: OpcionConfig[] = [
 ];
 
 export const CATALOGO_CON_ASISTENTE: CatalogoConfig = {
+  aos_runtime: "legacy",
   version: "asistente",
   opciones: OPCIONES_DEL_ASISTENTE,
   asistente: [GUION_VOZ, GUION_ATENCION],
@@ -128,6 +129,7 @@ export const PROPUESTA_DE_ATENCION: PropuestaAsistente = {
  */
 const si = (valor: string, etiqueta: string, nota = "") => ({ valor, etiqueta, nota });
 export const CATALOGO_DE_PRUEBA: CatalogoConfig = {
+  aos_runtime: "legacy",
   version: "prueba-asistente",
   opciones: [
     opcion("assistant_name", "identidad", "texto", "Nombre del asistente"),
