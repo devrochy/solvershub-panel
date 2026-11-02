@@ -134,7 +134,8 @@ export function IdentityForm({
         {/* noValidate: los errores salen en español junto a cada campo, no en la burbuja del navegador. */}
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-8">
-          {GRUPOS_IDENTIDAD.filter((grupo) => grupos.includes(grupo.id)).map((grupo) => {
+          {/* En el orden de la sección (Horario antes que Escalamiento), no el del catálogo. */}
+          {grupos.flatMap((id) => GRUPOS_IDENTIDAD.filter((g) => g.id === id)).map((grupo) => {
             const opciones = opcionesDelGrupo(catalogo, grupo.id, valores);
             if (opciones.length === 0) return null;
             return (
