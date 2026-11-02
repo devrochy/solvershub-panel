@@ -8286,6 +8286,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/commerce/leads/{customer_id}/seguimiento/hecho": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Seguimiento Hecho
+         * @description Marca como hecho el seguimiento del lead del cliente. Queda en su línea de tiempo con la nota.
+         */
+        post: operations["seguimiento_hecho_api_v1_pack_commerce_leads__customer_id__seguimiento_hecho_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -18058,7 +18078,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "opciones" | "texto";
+            tipo: "opciones" | "texto" | "fecha";
             /** Options */
             options?: components["schemas"]["LeadFilterOption"][];
             /** Max Length */
@@ -21421,6 +21441,17 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * SeguimientoHechoIn
+         * @description Cierra el seguimiento y, si se pide, programa el siguiente en el mismo gesto (HU-CRM-21).
+         *     `siguiente_en` es ISO 8601: sin zona es hora del negocio.
+         */
+        SeguimientoHechoIn: {
+            /** Siguiente En */
+            siguiente_en?: string | null;
+            /** Siguiente Nota */
+            siguiente_nota?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -23477,8 +23508,8 @@ export interface operations {
                 filtro?: string[] | null;
                 /** @description Solo los clientes con datos reales de este agente (clave de `agents`). `general` no filtra; una clave sin datos propios responde 400 `filtro_invalido`. */
                 agente?: string | null;
-                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre` o `nombre_desc`. */
-                orden?: "alta" | "actividad" | "nombre" | "nombre_desc";
+                /** @description `alta` (por defecto, el más nuevo primero), `actividad` (último mensaje, el más reciente primero; los clientes sin mensajes van al final), `nombre`, `nombre_desc` o `seguimiento` (el seguimiento más atrasado primero; los clientes sin seguimiento van al final). */
+                orden?: "alta" | "actividad" | "nombre" | "nombre_desc" | "seguimiento";
                 /** @description Claves de `filters` de las que se quieren contadores por opción (se repite el parámetro). Una clave que no declara ningún pack, o que no sabe contar, responde 400 `filtro_invalido`. */
                 facetas?: string[] | null;
                 page?: number;
@@ -39218,6 +39249,42 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LeadGeocodificacionInversa"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    seguimiento_hecho_api_v1_pack_commerce_leads__customer_id__seguimiento_hecho_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeguimientoHechoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

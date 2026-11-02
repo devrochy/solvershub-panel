@@ -128,6 +128,8 @@ export const TIPO_DE_EVENTO: Record<string, string> = {
   escalacion: "Escalación",
   dato: "Dato",
   nota: "Nota",
+  etapa: "Etapa",
+  seguimiento: "Seguimiento",
   cotizacion: "Cotización",
   pedido: "Pedido",
   cita: "Cita",
@@ -254,11 +256,14 @@ export const ORDENES_CLIENTES = [
   { value: "nombre_desc", label: "Nombre (Z–A)" },
 ] as const;
 
-export type OrdenClientes = (typeof ORDENES_CLIENTES)[number]["value"];
+/** Orden extra de Ventas (HU-CRM-21): solo existe si el negocio tiene un pack con seguimiento. */
+export const ORDEN_SEGUIMIENTO = { value: "seguimiento", label: "Seguimiento (más atrasado)" } as const;
+
+export type OrdenClientes = (typeof ORDENES_CLIENTES)[number]["value"] | typeof ORDEN_SEGUIMIENTO.value;
 
 /** El `orden` de la URL si la API lo conoce; cualquier otro valor se descarta (la API respondería 422). */
 export function ordenValido(valor: string | undefined): OrdenClientes | null {
-  return ORDENES_CLIENTES.find((o) => o.value === valor)?.value ?? null;
+  return [...ORDENES_CLIENTES, ORDEN_SEGUIMIENTO].find((o) => o.value === valor)?.value ?? null;
 }
 
 /** Solo dígitos del teléfono del cliente (con indicativo si el perfil lo trae), o "" si no hay uno usable. */
