@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,17 +11,24 @@ import { InputPassword } from "@/components/ui/input-password";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { WebChatSettings } from "@/lib/api/types";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { useAction } from "@/lib/use-action";
 
 /** Chat web embebible: habilita el widget, dominios permitidos y Turnstile. */
-export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
+export function WebChatForm({ webChat, puedeEditar = true }: { webChat: WebChatSettings; puedeEditar?: boolean }) {
   const [enabled, setEnabled] = useState(webChat.enabled);
   const [originsText, setOriginsText] = useState(webChat.allowed_origins.join("\n"));
+  // Lo último guardado, para saber si hay cambios sin guardar.
+  const [guardado, setGuardado] = useState({ enabled: webChat.enabled, originsText: webChat.allowed_origins.join("\n") });
   const [turnstile, setTurnstile] = useState("");
   const [rotateKey, setRotateKey] = useState(false);
   const [snippet, setSnippet] = useState(webChat.snippet);
   const [copied, setCopied] = useState(false);
   const { run, pending } = useAction();
+  useAvisarCambios(
+    "chat-web",
+    enabled !== guardado.enabled || originsText !== guardado.originsText || turnstile.trim() !== "" || rotateKey,
+  );
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -42,6 +50,7 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
       });
       const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string };
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el chat web." };
+      setGuardado({ enabled, originsText });
       setSnippet(json.snippet ?? "");
       setRotateKey(false);
       setTurnstile("");
@@ -63,6 +72,7 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
     <Card>
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[13px] font-medium text-body">Chat web embebible</p>
@@ -115,7 +125,7 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
             />
             Rotar la clave pública (el fragmento actual deja de funcionar)
           </label>
-
+          </ControlesEditables>
 
           {snippet ? (
             <div className="flex flex-col gap-2">
@@ -129,11 +139,15 @@ export function WebChatForm({ webChat }: { webChat: WebChatSettings }) {
             </div>
           ) : null}
 
-          <div>
-            <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Guardando…" : "Guardar chat web"}
-            </Button>
-          </div>
+          {puedeEditar ? (
+            <div>
+              <Button type="submit" variant="accent" disabled={pending}>
+                {pending ? "Guardando…" : "Guardar chat web"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </form>
       </CardContent>
     </Card>

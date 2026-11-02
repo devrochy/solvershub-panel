@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import type { CatalogoConfig, WawebPolitica } from "@/lib/api/types";
 import { erroresDeRango, indexarCatalogo } from "@/lib/catalogo-config";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 import { cuerpoWaweb, erroresPorClave, exigeAceptarRiesgo, valoresDePolitica } from "@/lib/waweb";
@@ -21,9 +23,11 @@ export function WawebCard({ politica, catalogo }: { politica: WawebPolitica; cat
   const indice = indexarCatalogo(catalogo);
   const opciones = [...indice.values()].filter((o) => o.grupo === "whatsapp_web");
   const [valores, setValores] = useState<Record<string, unknown>>(valoresDePolitica(politica));
+  const [guardados, setGuardados] = useState<Record<string, unknown>>(valoresDePolitica(politica));
   const [acepta, setAcepta] = useState(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const { run, pending } = useAction();
+  useAvisarCambios("waweb", !igualProfundo(valores, guardados) || acepta);
 
   const exigeRiesgo = exigeAceptarRiesgo(valores, politica);
   const cambiar = (clave: string, valor: unknown) => {
@@ -59,6 +63,8 @@ export function WawebCard({ politica, catalogo }: { politica: WawebPolitica; cat
           error: json.fields ? "Revisa los campos marcados antes de guardar." : (json.error ?? "No se pudo guardar la política."),
         };
       }
+      setGuardados(valores);
+      setAcepta(false);
       return { ok: true, success: "Política de WhatsApp Web guardada." };
     });
   }

@@ -25,6 +25,7 @@ import {
   type NivelDato,
   type PoliticaDatos,
 } from "@/lib/datos-cliente";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { cn } from "@/lib/utils";
 import { useAction } from "@/lib/use-action";
 
@@ -93,6 +94,7 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
 
   const grupos = agruparPorModulo(politica.acciones);
   const sinGuardar = hayCambios(politica, estado);
+  useAvisarCambios("datos-cliente", sinGuardar);
 
   async function guardar() {
     await run(async () => {

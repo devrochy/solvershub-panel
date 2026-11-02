@@ -16,6 +16,7 @@ import {
   puedeActivar,
   type AvisoDatos,
 } from "@/lib/aviso-datos";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -60,6 +61,7 @@ function Editor({ aviso, puedeEditar }: { aviso: AvisoDatos; puedeEditar: boolea
   const { run, pending } = useAction();
 
   const sinGuardar = texto.trim() !== (aviso.texto_propio || aviso.texto).trim() || activo !== aviso.activo;
+  useAvisarCambios("aviso-datos", sinGuardar);
   // Dejar el borrador tal cual no cuenta como texto propio: sigue siendo borrador.
   const sigueBorrador = texto.trim() === aviso.texto.trim() && aviso.es_borrador && !aviso.texto_propio;
   const faltaConfirmar = activo && !aviso.activo && !puedeActivar(texto, confirmo, false);

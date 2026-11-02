@@ -2,28 +2,39 @@
 
 import { useState } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { InputPassword } from "@/components/ui/input-password";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { MediaSettings } from "@/lib/api/types";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
+import { useAction } from "@/lib/use-action";
 
 type Capability = "audio" | "vision";
 
+const AYUDA_PROVEEDOR = "La empresa de IA que procesa esto. Si no estás seguro, deja el que viene elegido.";
+const AYUDA_MODELO = "Cada proveedor ofrece varios modelos; el que viene por defecto sirve para la mayoría de los casos.";
+
 /** Configuración de multimedia: notas de voz (STT) e imágenes (visión). */
-export function MultimediaForm({ media }: { media: MediaSettings }) {
+export function MultimediaForm({ media, puedeEditar = true }: { media: MediaSettings; puedeEditar?: boolean }) {
   const [audio, setAudio] = useState(media.audio);
   const [vision, setVision] = useState(media.vision);
+  const [guardado, setGuardado] = useState({ audio: media.audio, vision: media.vision });
   const [audioKey, setAudioKey] = useState("");
   const [visionKey, setVisionKey] = useState("");
-  const [status, setStatus] = useState<{
-    loading?: string;
-    error?: string;
-    success?: string;
-  }>({});
+  // Qué acción está en curso («test-audio», «save-vision»…), para el texto de cada botón.
+  const [activa, setActiva] = useState<string | null>(null);
+  const guardar = useAction();
+  const probar = useAction({ refresh: false });
+  const ocupado = guardar.pending || probar.pending;
+  useAvisarCambios(
+    "multimedia",
+    !igualProfundo({ audio, vision }, guardado) || audioKey !== "" || visionKey !== "",
+  );
 
   const audioProvider = media.catalog.audio.find((p) => p.key === audio.provider);
   const visionProvider = media.catalog.vision.find((p) => p.key === vision.provider);
@@ -44,57 +55,63 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
     setVision({ ...vision, provider: providerKey, model: entry?.default_model ?? "" });
   }
 
+  const nombre = (capability: Capability) => (capability === "audio" ? "audio" : "visión");
+
   async function test(capability: Capability) {
     const values = capability === "audio" ? audio : vision;
     const key = capability === "audio" ? audioKey : visionKey;
-    setStatus({ loading: `test-${capability}` });
-    const res = await fetch("/api/settings/media/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: capability,
-        provider: values.provider,
-        model: values.model,
-        api_key: key,
-      }),
+    setActiva(`test-${capability}`);
+    await probar.run(async () => {
+      const res = await fetch("/api/settings/media/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: capability,
+          provider: values.provider,
+          model: values.model,
+          api_key: key,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo probar la conexión." };
+      return { ok: true, success: `Conexión de ${nombre(capability)} verificada.` };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo probar la conexión." });
-      return;
-    }
-    setStatus({ success: `Conexión de ${capability === "audio" ? "audio" : "visión"} verificada.` });
+    setActiva(null);
   }
 
   async function save(capability: Capability) {
     const values = capability === "audio" ? audio : vision;
     const key = capability === "audio" ? audioKey : visionKey;
-    setStatus({ loading: `save-${capability}` });
-    const res = await fetch("/api/settings/media", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: capability,
-        enabled: values.enabled,
-        provider: values.provider,
-        model: values.model,
-        ...(capability === "vision" ? { mode: vision.mode } : {}),
-        api_key: key,
-      }),
+    setActiva(`save-${capability}`);
+    await guardar.run(async () => {
+      const res = await fetch("/api/settings/media", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: capability,
+          enabled: values.enabled,
+          provider: values.provider,
+          model: values.model,
+          ...(capability === "vision" ? { mode: vision.mode } : {}),
+          api_key: key,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar." };
+      if (capability === "audio") {
+        const nuevo = { ...audio, has_api_key: audio.has_api_key || Boolean(key), using_platform_key: false };
+        setAudio(nuevo);
+        setGuardado((prev) => ({ ...prev, audio: nuevo }));
+        setAudioKey("");
+      } else {
+        const nuevo = { ...vision, has_api_key: vision.has_api_key || Boolean(key), using_platform_key: false };
+        setVision(nuevo);
+        setGuardado((prev) => ({ ...prev, vision: nuevo }));
+        setVisionKey("");
+      }
+      return { ok: true, success: `Configuración de ${nombre(capability)} guardada.` };
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar." });
-      return;
-    }
-    if (capability === "audio") {
-      setAudio({ ...audio, has_api_key: audio.has_api_key || Boolean(key), using_platform_key: false });
-      setAudioKey("");
-    } else {
-      setVision({ ...vision, has_api_key: vision.has_api_key || Boolean(key), using_platform_key: false });
-      setVisionKey("");
-    }
-    setStatus({ success: `Configuración de ${capability === "audio" ? "audio" : "visión"} guardada.` });
+    setActiva(null);
   }
 
   if (!disponible) {
@@ -102,8 +119,8 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
       <Card>
         <CardContent className="pt-5">
           <p className="text-sm text-body">
-            La configuración de multimedia no está disponible en este servidor. Actualizá el
-            backend y volvé a cargar la página.
+            La configuración de multimedia no está disponible en este servidor. Actualiza el
+            backend y vuelve a cargar la página.
           </p>
         </CardContent>
       </Card>
@@ -112,13 +129,12 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <FormFeedback error={status.error} success={status.success} />
-
       <Card>
         <CardHeader>
           <CardTitle>Notas de voz</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm text-headline">Transcribir notas de voz</p>
@@ -134,7 +150,7 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Proveedor" htmlFor="audio_provider">
+            <Field label="Proveedor" htmlFor="audio_provider" help={AYUDA_PROVEEDOR}>
               <Select
                 id="audio_provider"
                 value={audio.provider}
@@ -147,7 +163,7 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Modelo" htmlFor="audio_model">
+            <Field label="Modelo" htmlFor="audio_model" help={AYUDA_MODELO}>
               <Select
                 id="audio_model"
                 value={audio.model}
@@ -186,24 +202,20 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
             />
           </Field>
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void test("audio")}
-              disabled={Boolean(status.loading)}
-            >
-              {status.loading === "test-audio" ? "Probando…" : "Probar conexión"}
-            </Button>
-            <Button
-              type="button"
-              variant="accent"
-              onClick={() => void save("audio")}
-              disabled={Boolean(status.loading)}
-            >
-              {status.loading === "save-audio" ? "Guardando…" : "Guardar audio"}
-            </Button>
-          </div>
+          </ControlesEditables>
+
+          {puedeEditar ? (
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="outline" onClick={() => void test("audio")} disabled={ocupado}>
+                {activa === "test-audio" ? "Probando…" : "Probar conexión"}
+              </Button>
+              <Button type="button" variant="accent" onClick={() => void save("audio")} disabled={ocupado}>
+                {activa === "save-audio" ? "Guardando…" : "Guardar audio"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </CardContent>
       </Card>
 
@@ -212,6 +224,7 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
           <CardTitle>Imágenes</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm text-headline">Interpretar imágenes</p>
@@ -227,7 +240,7 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Proveedor" htmlFor="vision_provider">
+            <Field label="Proveedor" htmlFor="vision_provider" help={AYUDA_PROVEEDOR}>
               <Select
                 id="vision_provider"
                 value={vision.provider}
@@ -241,7 +254,7 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
                 ))}
               </Select>
             </Field>
-            <Field label="Modelo" htmlFor="vision_model">
+            <Field label="Modelo" htmlFor="vision_model" help={AYUDA_MODELO}>
               <Select
                 id="vision_model"
                 value={vision.model}
@@ -298,24 +311,20 @@ export function MultimediaForm({ media }: { media: MediaSettings }) {
             />
           </Field>
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void test("vision")}
-              disabled={Boolean(status.loading) || !vision.enabled}
-            >
-              {status.loading === "test-vision" ? "Probando…" : "Probar conexión"}
-            </Button>
-            <Button
-              type="button"
-              variant="accent"
-              onClick={() => void save("vision")}
-              disabled={Boolean(status.loading)}
-            >
-              {status.loading === "save-vision" ? "Guardando…" : "Guardar imágenes"}
-            </Button>
-          </div>
+          </ControlesEditables>
+
+          {puedeEditar ? (
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="outline" onClick={() => void test("vision")} disabled={ocupado || !vision.enabled}>
+                {activa === "test-vision" ? "Probando…" : "Probar conexión"}
+              </Button>
+              <Button type="button" variant="accent" onClick={() => void save("vision")} disabled={ocupado}>
+                {activa === "save-vision" ? "Guardando…" : "Guardar imágenes"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </CardContent>
       </Card>
     </div>

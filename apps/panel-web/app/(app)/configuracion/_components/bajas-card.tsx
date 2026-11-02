@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -10,18 +11,30 @@ import type { BajasSettings, CatalogoConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, indexarCatalogo } from "@/lib/catalogo-config";
 import { formatList } from "@/lib/format";
 import { usePendientes } from "@/lib/frases-pendientes";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
 /**
  * Palabras con las que un cliente pide dejar de recibir mensajes (SPEC-37, HU-CFG-05). El
  * dueño las edita; vacío = se usan las de por defecto. Se guarda aparte de la identidad.
  */
-export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo: CatalogoConfig | null }) {
+export function BajasCard({
+  bajas,
+  catalogo,
+  puedeEditar = true,
+}: {
+  bajas: BajasSettings;
+  catalogo: CatalogoConfig | null;
+  puedeEditar?: boolean;
+}) {
   const opcion = indexarCatalogo(catalogo).get("palabras_de_baja");
   const [palabras, setPalabras] = useState(bajas.palabras);
+  const [guardadas, setGuardadas] = useState(bajas.palabras);
   const [error, setError] = useState<string | undefined>();
   const { run, pending } = useAction();
   const pendientes = usePendientes();
+  useAvisarCambios("bajas", !igualProfundo(palabras, guardadas));
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -46,6 +59,7 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
         setError(json.fields?.palabras);
         return { ok: false, status: res.status, error: json.error ?? "No se pudieron guardar las palabras de baja." };
       }
+      setGuardadas(completas);
       return { ok: true, success: "Palabras de baja guardadas." };
     });
   }
@@ -63,6 +77,7 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
               Si un cliente escribe una de estas palabras, deja de recibir mensajes de campañas.
             </p>
           </div>
+          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
           <Field label={opcion?.etiqueta ?? "Palabras de baja"} htmlFor="palabras_de_baja" help={ayuda} error={error}>
             <ListaDeFrases
               id="palabras_de_baja"
@@ -77,11 +92,16 @@ export function BajasCard({ bajas, catalogo }: { bajas: BajasSettings; catalogo:
               describedBy={error || ayuda ? "palabras_de_baja-mensaje" : undefined}
             />
           </Field>
-          <div>
-            <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Guardando…" : "Guardar palabras de baja"}
-            </Button>
-          </div>
+          </ControlesEditables>
+          {puedeEditar ? (
+            <div>
+              <Button type="submit" variant="accent" disabled={pending}>
+                {pending ? "Guardando…" : "Guardar palabras de baja"}
+              </Button>
+            </div>
+          ) : (
+            <AvisoSoloLectura />
+          )}
         </form>
       </CardContent>
     </Card>

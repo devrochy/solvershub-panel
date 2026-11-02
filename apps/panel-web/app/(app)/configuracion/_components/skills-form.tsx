@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 
+import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { InputNumero } from "@/components/ui/input-numero";
 import { Switch } from "@/components/ui/switch";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
 type SkillBinding = {
@@ -17,10 +20,12 @@ type SkillBinding = {
   requires_confirmation: boolean;
 };
 
-/** Herramientas del agente: activar, límite por conversación y confirmación. */
-export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
+/** Herramientas del agente: activar, límite por conversación (0 = sin límite) y confirmación. */
+export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBinding[]; puedeEditar?: boolean }) {
   const [values, setValues] = useState(skills);
+  const [guardado, setGuardado] = useState(skills);
   const { run, pending } = useAction();
+  useAvisarCambios("herramientas", !igualProfundo(values, guardado));
 
   function update(name: string, patch: Partial<SkillBinding>) {
     setValues((prev) => prev.map((tool) => (tool.name === name ? { ...tool, ...patch } : tool)));
@@ -35,6 +40,7 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudieron guardar las herramientas." };
+      setGuardado(values);
       return { ok: true, success: "Herramientas guardadas." };
     });
   }
@@ -42,6 +48,12 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 pt-5">
+        <p className="text-xs text-text-soft">
+          Cada herramienta es una acción concreta que el asistente puede hacer (agendar, consultar, cobrar…). Aquí
+          apagas las que no quieres que use, le pones un tope de usos por conversación y decides si pide confirmación al
+          cliente antes de ejecutarlas. Las habilidades del negocio se activan en Habilidades.
+        </p>
+        <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
         {values.length === 0 ? (
           <p className="text-sm text-text-soft">
             No hay herramientas disponibles: activa una habilidad primero.
@@ -61,8 +73,8 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
                     {tool.description ?? tool.plugin_id}
                   </span>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-body">
-                  Límite/turno
+                <label className="flex flex-col gap-1 text-xs text-body">
+                  Límite por conversación
                   <InputNumero
                     min={0}
                     className="h-9 w-20"
@@ -70,27 +82,37 @@ export function SkillsForm({ skills }: { skills: SkillBinding[] }) {
                     onValueChange={(n) => update(tool.name, { max_calls_per_conversation: n || null })}
                     aria-label={`Límite por conversación de ${tool.name}`}
                   />
+                  <span className="text-text-soft">0 = sin límite</span>
                 </label>
-                <label className="flex items-center gap-2 text-xs text-body">
-                  <Switch
-                    checked={tool.requires_confirmation}
-                    onCheckedChange={(checked) =>
-                      update(tool.name, { requires_confirmation: checked })
-                    }
-                    aria-label={`Confirmación de ${tool.name}`}
-                  />
-                  Confirmar
+                <label className="flex flex-col gap-1 text-xs text-body">
+                  <span className="flex items-center gap-2">
+                    <Switch
+                      checked={tool.requires_confirmation}
+                      onCheckedChange={(checked) =>
+                        update(tool.name, { requires_confirmation: checked })
+                      }
+                      aria-label={`Confirmación de ${tool.name}`}
+                    />
+                    Pedir confirmación
+                  </span>
+                  <span className="text-text-soft">El cliente confirma antes de ejecutarla.</span>
                 </label>
               </li>
             ))}
           </ul>
         )}
 
-        <div>
-          <Button variant="accent" onClick={() => void onSubmit()} disabled={pending}>
-            {pending ? "Guardando…" : "Guardar herramientas"}
-          </Button>
-        </div>
+        </ControlesEditables>
+
+        {puedeEditar ? (
+          <div>
+            <Button variant="accent" onClick={() => void onSubmit()} disabled={pending}>
+              {pending ? "Guardando…" : "Guardar herramientas"}
+            </Button>
+          </div>
+        ) : (
+          <AvisoSoloLectura />
+        )}
       </CardContent>
     </Card>
   );

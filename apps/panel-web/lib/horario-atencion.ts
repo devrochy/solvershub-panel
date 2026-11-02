@@ -19,12 +19,24 @@ export function franjasATexto(ranges: Record<string, unknown>[]): string {
   return ranges.map((r) => `${r.day} ${r.from}-${r.to}`).join("\n");
 }
 
-/** Texto editable a franjas. Ignora las líneas que no tienen la forma «día HH:MM-HH:MM». */
-export function textoAFranjas(text: string): Franja[] {
-  const out: Franja[] = [];
+/**
+ * Texto editable a franjas. Las líneas que no tienen la forma «día HH:MM-HH:MM» no se guardan:
+ * vuelven en `ignoradas` para avisarlo (las líneas en blanco no cuentan).
+ */
+export function analizarFranjas(text: string): { franjas: Franja[]; ignoradas: string[] } {
+  const franjas: Franja[] = [];
+  const ignoradas: string[] = [];
   for (const line of text.split("\n")) {
-    const m = /^([0-6])\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(line.trim());
-    if (m) out.push({ day: Number(m[1]), from: m[2], to: m[3] });
+    const limpia = line.trim();
+    if (!limpia) continue;
+    const m = /^([0-6])\s+(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(limpia);
+    if (m) franjas.push({ day: Number(m[1]), from: m[2], to: m[3] });
+    else ignoradas.push(limpia);
   }
-  return out;
+  return { franjas, ignoradas };
+}
+
+/** Texto editable a franjas, sin las líneas que no tienen la forma «día HH:MM-HH:MM». */
+export function textoAFranjas(text: string): Franja[] {
+  return analizarFranjas(text).franjas;
 }

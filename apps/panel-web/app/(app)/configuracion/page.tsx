@@ -1,7 +1,8 @@
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import type { AvisoDatos } from "@/lib/aviso-datos";
-import { puedeEditarDatosCliente, type PoliticaDatos } from "@/lib/datos-cliente";
+import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
+import type { PoliticaDatos } from "@/lib/datos-cliente";
 import { apiFetch } from "@/lib/api/server";
 import type {
   BajasSettings,
@@ -26,9 +27,9 @@ const MEDIA_FALLBACK: MediaSettings = {
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; seccion?: string }>;
 }) {
-  const tab = (await searchParams).tab;
+  const { tab, seccion } = await searchParams;
   const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, avisoRes, meRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
@@ -63,16 +64,21 @@ export default async function SettingsPage({
   const esMaster = catalogoRes.ok && catalogoRes.data.opciones.some((o) => o.grupo === "whatsapp_web");
   const wawebRes = esMaster ? await apiFetch<WawebPolitica>("/admin/settings/whatsapp-web") : null;
 
+  // Quien solo puede ver recibe los formularios sin botones de guardado; el backend igual rechaza sus cambios.
+  const puedeEditar = meRes.ok && puedeEditarConfiguracion(meRes.data);
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Configuración"
-        description="Identidad y comportamiento del agente de este negocio."
+        description="Cómo se presenta y cómo responde el asistente de este negocio."
         helpSection="settings"
-        />
+      />
       <SettingsTabs
         advanced={advancedRes.data}
         defaultTab={tab}
+        defaultSeccion={seccion}
+        puedeEditar={puedeEditar}
         settings={res.data}
         webChat={webChatRes.ok ? webChatRes.data : { enabled: false, key: "", allowed_origins: [], turnstile_configured: false, snippet: "" }}
         media={mediaRes.ok ? mediaRes.data : MEDIA_FALLBACK}
@@ -82,7 +88,7 @@ export default async function SettingsPage({
         datosCliente={{
           politica: datosRes.ok ? datosRes.data : null,
           error: datosRes.ok ? undefined : datosRes.error,
-          puedeEditar: meRes.ok && puedeEditarDatosCliente(meRes.data),
+          puedeEditar,
           aviso: avisoRes.ok ? avisoRes.data : null,
           avisoError: avisoRes.ok ? undefined : avisoRes.error,
         }}

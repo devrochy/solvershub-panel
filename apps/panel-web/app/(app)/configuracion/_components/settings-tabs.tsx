@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
@@ -14,8 +14,18 @@ import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia
 import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
-import { Tabs } from "@/components/ui/tabs";
+import { MenuDeSecciones } from "@/app/(app)/configuracion/_components/menu-de-secciones";
+import { useConfirm } from "@/components/ui/confirm";
 import type { AvisoDatos } from "@/lib/aviso-datos";
+import { CambiosSinGuardarProvider, useRegistroDeCambios } from "@/lib/cambios-sin-guardar";
+import {
+  consultaConSeccion,
+  resolverSeccion,
+  seccionesVisibles,
+  seccionPorId,
+  SECCIONES_DE_IDENTIDAD,
+  type SeccionId,
+} from "@/lib/configuracion-secciones";
 import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   BajasSettings,
@@ -35,34 +45,14 @@ type Advanced = {
   spec: Record<string, unknown>;
 };
 
-// Alias de las pestañas del panel clásico → ids de esta pantalla (para ?tab=).
-const ALIAS_TABS: Record<string, string> = {
-  identidad: "identity",
-  cerebro: "brain",
-  memoria: "memory",
-  habilidades: "skills",
-  avanzado: "advanced",
-  "chat-web": "web-chat",
-  multimedia: "media",
-  accesibilidad: "a11y",
-  "datos-del-cliente": "datos-cliente",
-};
-
-const TABS = [
-  { id: "identity", label: "Identidad" },
-  { id: "brain", label: "Cerebro" },
-  { id: "memory", label: "Memoria" },
-  { id: "skills", label: "Habilidades" },
-  { id: "datos-cliente", label: "Datos del cliente" },
-  { id: "web-chat", label: "Chat web" },
-  { id: "media", label: "Multimedia" },
-  { id: "advanced", label: "Avanzado" },
-  { id: "a11y", label: "Accesibilidad" },
-];
-
-/** Shell de Configuración: elige la pestaña activa y monta su formulario. */
+/**
+ * Shell de Configuración: menú por tareas (lateral en escritorio, selector en celular) y el
+ * formulario de la sección elegida. La sección vive en la URL (`?seccion=`; `?tab=` y sus alias
+ * siguen valiendo) y, si hay cambios sin guardar, cambiar de sección pide confirmación.
+ */
 export function SettingsTabs({
   defaultTab,
+  defaultSeccion,
   settings,
   webChat,
   advanced,
@@ -71,8 +61,12 @@ export function SettingsTabs({
   bajas,
   waweb,
   datosCliente,
+  puedeEditar = true,
 }: {
+  /** `?tab=` de la URL (id de la antigua pantalla o alias del panel clásico). */
   defaultTab?: string;
+  /** `?seccion=` de la URL; gana a `defaultTab`. */
+  defaultSeccion?: string;
   settings: SettingsResponse;
   webChat: WebChatSettings;
   advanced: Advanced;
@@ -88,42 +82,105 @@ export function SettingsTabs({
     aviso: AvisoDatos | null;
     avisoError?: string;
   };
+  /** Quien solo puede ver recibe los formularios sin botones de guardado. */
+  puedeEditar?: boolean;
 }) {
-  const pedido = defaultTab ? (ALIAS_TABS[defaultTab] ?? defaultTab) : "";
-  const [tab, setTab] = useState(
-    TABS.some((t) => t.id === pedido) ? pedido : "identity");
+  const confirm = useConfirm();
+  const registro = useRegistroDeCambios();
+  const visibles = seccionesVisibles({ waweb: Boolean(waweb && catalogo) });
+  const disponibles = new Set(visibles.map((s) => s.id));
+  const pedida = resolverSeccion({ seccion: defaultSeccion, tab: defaultTab }, disponibles);
+  const [seccion, setSeccion] = useState<SeccionId>(pedida);
+  // Si la página se vuelve a pedir con otra sección (un enlace a ?tab=… estando aquí), se sigue la URL.
+  const [pedidaAntes, setPedidaAntes] = useState(pedida);
+  if (pedida !== pedidaAntes) {
+    setPedidaAntes(pedida);
+    setSeccion(pedida);
+  }
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const primeraVez = useRef(true);
+  const actual = seccionPorId(seccion);
+  const esIdentidad = SECCIONES_DE_IDENTIDAD.includes(seccion);
+
+  // Tras cambiar de sección, el foco va al título: el lector de pantalla anuncia dónde quedó.
+  useEffect(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    titulo.current?.focus();
+  }, [seccion]);
+
+  async function irA(id: SeccionId) {
+    if (id === seccion) return;
+    // Las secciones de identidad comparten un solo formulario, que sigue montado: no se pierde nada.
+    const sigueMontado = esIdentidad && SECCIONES_DE_IDENTIDAD.includes(id) ? "identidad" : undefined;
+    if (registro.hayCambios(sigueMontado)) {
+      const salir = await confirm({
+        title: "Tienes cambios sin guardar",
+        description: `Si pasas a «${seccionPorId(id).titulo}», se pierde lo que cambiaste en «${actual.titulo}».`,
+        confirmLabel: "Descartar cambios",
+        cancelLabel: "Seguir editando",
+        destructive: true,
+      });
+      if (!salir) return;
+    }
+    setSeccion(id);
+    // Sin `router`: solo se reescribe la URL (compartible y sobrevive a recargar) sin volver a pedir los datos.
+    window.history.replaceState(null, "", consultaConSeccion(window.location.search, id));
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Tabs items={TABS} value={tab} onValueChange={setTab} />
-      {tab === "identity" && (
-        <>
-          <IdentityForm identity={settings.identity} catalogo={catalogo} />
-          {bajas && <BajasCard bajas={bajas} catalogo={catalogo} />}
-          {waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
-        </>
-      )}
-      {tab === "brain" && <BrainForm brain={settings.brain} />}
-      {tab === "memory" && <MemoryForm memory={settings.memory} />}
-      {tab === "skills" && <SkillsForm skills={settings.skills} />}
-      {tab === "datos-cliente" && (
-        <>
-          <DatosClienteCard
-            politica={datosCliente.politica}
-            error={datosCliente.error}
-            puedeEditar={datosCliente.puedeEditar}
-          />
-          <AvisoDatosCard
-            aviso={datosCliente.aviso}
-            error={datosCliente.avisoError}
-            puedeEditar={datosCliente.puedeEditar}
-          />
-        </>
-      )}
-      {tab === "web-chat" && <WebChatForm webChat={webChat} />}
-      {tab === "media" && <MultimediaForm media={media} />}
-      {tab === "advanced" && <AdvancedPanel advanced={advanced} />}
-      {tab === "a11y" && <AccesibilidadPanel />}
-    </div>
+    <CambiosSinGuardarProvider registro={registro}>
+      <div className="flex flex-col gap-6 md:grid md:grid-cols-[15rem_minmax(0,1fr)] md:items-start md:gap-8">
+        <MenuDeSecciones secciones={visibles} actual={seccion} onElegir={(id) => void irA(id)} />
+        <div className="flex min-w-0 flex-col gap-6">
+          <div>
+            <h2 ref={titulo} tabIndex={-1} className="font-display text-lg font-semibold text-headline outline-none">
+              {actual.titulo}
+            </h2>
+            <p className="mt-1 text-sm text-body">{actual.descripcion}</p>
+            {actual.grupo === "avanzado" && actual.id !== "accesibilidad" && (
+              <p role="note" className="mt-2 text-xs text-text-soft">
+                Normalmente no necesitas tocar esto: los valores por defecto funcionan para la mayoría de los negocios.
+              </p>
+            )}
+          </div>
+
+          {esIdentidad && (
+            <IdentityForm
+              identity={settings.identity}
+              catalogo={catalogo}
+              seccion={seccion}
+              puedeEditar={puedeEditar}
+              irASeccion={(id) => void irA(id)}
+            />
+          )}
+          {seccion === "identidad" && bajas && <BajasCard bajas={bajas} catalogo={catalogo} puedeEditar={puedeEditar} />}
+          {seccion === "whatsapp-web" && waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
+          {seccion === "cerebro" && <BrainForm brain={settings.brain} puedeEditar={puedeEditar} />}
+          {seccion === "memoria" && <MemoryForm memory={settings.memory} puedeEditar={puedeEditar} />}
+          {seccion === "herramientas" && <SkillsForm skills={settings.skills} puedeEditar={puedeEditar} />}
+          {seccion === "datos-cliente" && (
+            <>
+              <DatosClienteCard
+                politica={datosCliente.politica}
+                error={datosCliente.error}
+                puedeEditar={datosCliente.puedeEditar}
+              />
+              <AvisoDatosCard
+                aviso={datosCliente.aviso}
+                error={datosCliente.avisoError}
+                puedeEditar={datosCliente.puedeEditar}
+              />
+            </>
+          )}
+          {seccion === "chat-web" && <WebChatForm webChat={webChat} puedeEditar={puedeEditar} />}
+          {seccion === "multimedia" && <MultimediaForm media={media} puedeEditar={puedeEditar} />}
+          {seccion === "agentspec" && <AdvancedPanel advanced={advanced} puedeEditar={puedeEditar} />}
+          {seccion === "accesibilidad" && <AccesibilidadPanel />}
+        </div>
+      </div>
+    </CambiosSinGuardarProvider>
   );
 }

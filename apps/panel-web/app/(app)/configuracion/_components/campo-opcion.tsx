@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { TriangleAlert } from "lucide-react";
+
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
@@ -10,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
 import { type Pendiente } from "@/lib/frases-pendientes";
-import { franjasATexto, textoAFranjas } from "@/lib/horario-atencion";
+import { analizarFranjas, franjasATexto } from "@/lib/horario-atencion";
 
 type Valores = Record<string, unknown>;
 
@@ -40,6 +43,8 @@ export function CampoOpcion({
   onPendiente?: (pendiente: Pendiente | null) => void;
 }) {
   const { clave } = opcion;
+  // Líneas del horario que no se pudieron leer: no se guardan, así que se avisa en vez de callar.
+  const [ignoradas, setIgnoradas] = useState<string[]>([]);
   const valor = valores[clave];
   const dep = dependencia(opcion, valores);
   const bloqueado = opcion.solo_lectura || !dep.activa;
@@ -113,6 +118,15 @@ export function CampoOpcion({
         {control()}
       </Field>
       {enlace && <p className="mt-1 text-xs text-text-soft">{enlace}</p>}
+      {ignoradas.length > 0 && (
+        <p role="status" className="mt-1.5 flex items-start gap-1 text-xs text-status-warning-fg">
+          <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>
+            {ignoradas.length === 1 ? "Esta línea no se va a guardar" : `Estas ${ignoradas.length} líneas no se van a guardar`}{" "}
+            porque no tienen la forma «día HH:MM-HH:MM»: {ignoradas.map((l) => `«${l}»`).join(", ")}.
+          </span>
+        </p>
+      )}
     </>
   );
 
@@ -177,7 +191,11 @@ export function CampoOpcion({
             rows={3}
             disabled={bloqueado}
             defaultValue={franjasATexto((valor as Parameters<typeof franjasATexto>[0]) ?? [])}
-            onChange={(e) => onChange(clave, textoAFranjas(e.target.value))}
+            onChange={(e) => {
+              const { franjas, ignoradas: sinLeer } = analizarFranjas(e.target.value);
+              setIgnoradas(sinLeer);
+              onChange(clave, franjas);
+            }}
           />
         );
       default:
@@ -185,7 +203,6 @@ export function CampoOpcion({
           <Input
             id={clave}
             disabled={bloqueado}
-            required={clave === "assistant_name"}
             value={String(valor ?? "")}
             onChange={(e) => onChange(clave, e.target.value)}
           />
