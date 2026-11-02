@@ -15,6 +15,8 @@ import {
   hrefFicha,
   mismoTelefono,
   normalizarClave,
+  MENSAJE_VALOR_INVALIDO,
+  motivosParaElegir,
   ordenValido,
   origenDelDato,
   pestanasDeFaceta,
@@ -22,6 +24,8 @@ import {
   puedeEditarClientes,
   puedeVerClientes,
   segmentoDelFiltro,
+  textoDeValor,
+  valorEstimadoValido,
   telefonoVisible,
   textoDeActividad,
   textoDeDato,
@@ -283,5 +287,35 @@ describe("puedeEditarClientes (HU-CRM-19)", () => {
     expect(puedeEditarClientes({ role: "user", tenant: { role: "colaborador" }, permissions: { leads: "read" } })).toBe(false);
     expect(puedeEditarClientes({ role: "user", tenant: { role: "colaborador" }, permissions: {} })).toBe(false);
     expect(puedeEditarClientes(null)).toBe(false);
+  });
+});
+
+describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
+  it("los órdenes por valor son válidos y los desconocidos se siguen descartando", () => {
+    expect(ordenValido("valor")).toBe("valor");
+    expect(ordenValido("valor_desc")).toBe("valor_desc");
+    expect(ordenValido("valores")).toBeNull();
+  });
+
+  it("los motivos para elegir no incluyen «Sin motivo registrado»", () => {
+    const opciones = [
+      { value: "precio", label: "Precio" },
+      { value: "sin_motivo", label: "Sin motivo registrado" },
+    ];
+    expect(motivosParaElegir(opciones)).toEqual([{ value: "precio", label: "Precio" }]);
+    expect(motivosParaElegir(undefined)).toEqual([]);
+  });
+
+  it("el valor estimado es vacío o un número simple con hasta dos decimales", () => {
+    for (const bueno of ["", "  ", "0", "250000", "250000.5", "250000,50"]) expect(valorEstimadoValido(bueno)).toBe(true);
+    for (const malo of ["150.000", "$150000", "-5", "1e3", "12.345", "abc"]) expect(valorEstimadoValido(malo)).toBe(false);
+    expect(MENSAJE_VALOR_INVALIDO).toContain("sin puntos de miles");
+  });
+
+  it("el valor se muestra en pesos y sin valor es «—»", () => {
+    expect(textoDeValor(250000)).toMatch(/250\.000/);
+    expect(textoDeValor(null)).toBe("—");
+    expect(textoDeValor(undefined)).toBe("—");
+    expect(textoDeValor("250000")).toBe("—");
   });
 });

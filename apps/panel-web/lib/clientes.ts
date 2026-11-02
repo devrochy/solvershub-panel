@@ -5,6 +5,8 @@
  * (opción «Todos» del select) se descarta antes de llamar a la API.
  */
 
+import { formatCop } from "@/lib/format";
+
 export type FiltrosClientes = {
   q?: string;
   channel?: string;
@@ -259,11 +261,53 @@ export const ORDENES_CLIENTES = [
 /** Orden extra de Ventas (HU-CRM-21): solo existe si el negocio tiene un pack con seguimiento. */
 export const ORDEN_SEGUIMIENTO = { value: "seguimiento", label: "Seguimiento (más atrasado)" } as const;
 
-export type OrdenClientes = (typeof ORDENES_CLIENTES)[number]["value"] | typeof ORDEN_SEGUIMIENTO.value;
+/** Órdenes por valor estimado (HU-CRM-23): solo existen si el negocio tiene un pack con ese filtro. Sin valor va al final. */
+export const ORDENES_DE_VALOR = [
+  { value: "valor_desc", label: "Valor estimado (mayor primero)" },
+  { value: "valor", label: "Valor estimado (menor primero)" },
+] as const;
+
+export type OrdenClientes =
+  | (typeof ORDENES_CLIENTES)[number]["value"]
+  | typeof ORDEN_SEGUIMIENTO.value
+  | (typeof ORDENES_DE_VALOR)[number]["value"];
 
 /** El `orden` de la URL si la API lo conoce; cualquier otro valor se descarta (la API respondería 422). */
 export function ordenValido(valor: string | undefined): OrdenClientes | null {
-  return [...ORDENES_CLIENTES, ORDEN_SEGUIMIENTO].find((o) => o.value === valor)?.value ?? null;
+  return [...ORDENES_CLIENTES, ORDEN_SEGUIMIENTO, ...ORDENES_DE_VALOR].find((o) => o.value === valor)?.value ?? null;
+}
+
+// ── Motivo de pérdida y valor estimado (HU-CRM-23) ─────────────────────────────────────────────
+
+/** Etapa que pide motivo (ADR-0181): el catálogo de etapas es fijo. */
+export const ETAPA_PERDIDA = "perdido";
+
+/** Largo máximo de la nota de la pérdida (`max_length` del campo `nota_perdida`). */
+export const MAX_NOTA_PERDIDA = 300;
+
+/**
+ * Motivos que una persona puede elegir al perder un lead: las opciones del filtro del pack, sin la
+ * de «Sin motivo registrado» (esa solo describe a los perdidos de antes y no se puede escribir).
+ */
+export function motivosParaElegir(opciones: { value: string; label: string }[] | undefined): { value: string; label: string }[] {
+  return (opciones ?? []).filter((o) => o.value !== "sin_motivo");
+}
+
+/** Clave de la columna del valor estimado que trae la lista (número o `null`). */
+export const COLUMNA_DE_VALOR = "valor_estimado";
+
+/** «$ 250.000» en pesos, o «—» si el lead no tiene valor. */
+export function textoDeValor(valor: unknown): string {
+  return typeof valor === "number" && Number.isFinite(valor) ? formatCop(valor) : "—";
+}
+
+export const MENSAJE_VALOR_INVALIDO =
+  "Escribe el valor como número de cero en adelante, sin puntos de miles ni símbolos (por ejemplo 250000 o 250000.50).";
+
+/** Vacío (quita el valor) o un monto simple con hasta dos decimales; el servidor vuelve a validar. */
+export function valorEstimadoValido(texto: string): boolean {
+  const t = texto.trim();
+  return t === "" || /^\d+(?:[.,]\d{1,2})?$/.test(t);
 }
 
 /** Solo dígitos del teléfono del cliente (con indicativo si el perfil lo trae), o "" si no hay uno usable. */
