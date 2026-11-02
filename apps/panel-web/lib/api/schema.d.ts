@@ -20134,6 +20134,8 @@ export interface components {
             id: string | null;
             /** Section */
             section: string | null;
+            /** Filtro */
+            filtro?: string | null;
         };
         /** PreferencesUpdate */
         PreferencesUpdate: {
