@@ -83,6 +83,8 @@ export function severidadDe(valor: string): Severidad {
   return (SEVERIDADES as readonly string[]).includes(valor) ? (valor as Severidad) : "info";
 }
 
+const FILTRO_DE_DESTINO = /^[a-z_]+:[a-z0-9_]+$/;
+
 /**
  * A dónde lleva cada entidad del destino neutro `{entity, id, section}`. Devuelve rutas
  * candidatas en orden de preferencia: la primera que el usuario ve en su menú es la que se
@@ -97,8 +99,16 @@ export function candidatasDeDestino(destino: NotificacionDestino): { href: strin
     case "escalacion":
       return [ruta("/escalaciones")];
     case "lead":
-    case "cliente":
+    case "cliente": {
+      // Con id (aviso de un cliente en concreto: lead nuevo, seguimiento vencido) abre su ficha.
+      if (id) return [ruta("/leads", `/leads?cliente=${id}`)];
+      // Con `filtro` (resumen diario de Ventas, HU-CRM-22) abre la lista de Ventas ya filtrada; quien no
+      // la ve en su menú cae en Clientes, sin filtro. Solo pasa `clave:valor` simple, nunca texto libre.
+      if (destino.filtro && FILTRO_DE_DESTINO.test(destino.filtro)) {
+        return [ruta("/comercio/clientes", `/comercio/clientes?filtro=${encodeURIComponent(destino.filtro)}`), ruta("/leads")];
+      }
       return [ruta("/leads")];
+    }
     case "pedido":
     case "pago":
       return [ruta("/comercio/pedidos")];

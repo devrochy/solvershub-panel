@@ -66,6 +66,30 @@ describe("destino", () => {
     expect(rutaDeNotificacion({ entity: "conexion", id: "x", section: "connections" }, soloEscalaciones)).toBeNull();
   });
 
+  it("el aviso de un cliente abre su ficha (lead nuevo, seguimiento vencido)", () => {
+    const destino = { entity: "cliente", id: "c-1", section: "leads" };
+    expect(rutaDeNotificacion(destino, TODO)).toBe("/leads?cliente=c-1");
+    expect(rutaDeNotificacion(destino, { escalations: "read" })).toBeNull();
+  });
+
+  it("el resumen de Ventas abre la lista de Ventas ya filtrada (HU-CRM-22)", () => {
+    const packs = { pack_commerce: { enabled: true } };
+    const resumen = { entity: "lead", id: null, section: "leads", filtro: "seguimiento:vencidos" };
+    expect(rutaDeNotificacion(resumen, TODO, packs)).toBe("/comercio/clientes?filtro=seguimiento%3Avencidos");
+    expect(rutaDeNotificacion({ ...resumen, filtro: "seguimiento:hoy" }, TODO, packs)).toBe(
+      "/comercio/clientes?filtro=seguimiento%3Ahoy",
+    );
+  });
+
+  it("sin la lista de Ventas en su menú, el resumen cae en Clientes sin filtro", () => {
+    const resumen = { entity: "lead", id: null, section: "leads", filtro: "seguimiento:hoy" };
+    // Ventas apagado: la entrada de Ventas no aparece y queda Clientes.
+    expect(rutaDeNotificacion(resumen, TODO, { pack_commerce: { enabled: false } })).toBe("/leads");
+    // Un cliente sin filtro (o con uno que no es `clave:valor`) abre la lista general.
+    expect(rutaDeNotificacion({ ...resumen, filtro: null }, TODO)).toBe("/leads");
+    expect(rutaDeNotificacion({ ...resumen, filtro: "x&y=1" }, TODO, { pack_commerce: { enabled: true } })).toBe("/leads");
+  });
+
   it("una entidad desconocida o sin destino no rompe", () => {
     expect(rutaDeNotificacion({ entity: "nueva", id: null, section: null }, TODO)).toBeNull();
     expect(rutaDeNotificacion(null, TODO)).toBeNull();
