@@ -63,8 +63,8 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
   },
   settings: {
     question: "¿Qué es Configuración?",
-    what: "La identidad y el comportamiento del asistente: nombre, tono, moneda y reglas.",
-    first: ["Revisa el tono.", "Confirma la moneda de tu negocio."],
+    what: "Cómo se presenta y cómo responde el asistente: nombre, voz, horario y reglas. Está ordenado por tareas en el menú de la izquierda.",
+    first: ["Revisa la voz en «Voz y estilo».", "Confirma la moneda de tu negocio en «Identidad»."],
   },
   costs: {
     question: "¿Qué son los Costos LLM?",

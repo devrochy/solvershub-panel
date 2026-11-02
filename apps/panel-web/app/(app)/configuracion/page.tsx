@@ -64,8 +64,10 @@ export default async function SettingsPage({
   const esMaster = catalogoRes.ok && catalogoRes.data.opciones.some((o) => o.grupo === "whatsapp_web");
   const wawebRes = esMaster ? await apiFetch<WawebPolitica>("/admin/settings/whatsapp-web") : null;
 
-  // Quien solo puede ver recibe los formularios sin botones de guardado; el backend igual rechaza sus cambios.
-  const puedeEditar = meRes.ok && puedeEditarConfiguracion(meRes.data);
+  // Quien solo puede ver recibe los formularios sin botones de guardado. Si no se pudo saber quién es
+  // (falló /admin/me), no se bloquea nada: el backend rechaza igual lo que no se puede, y culpar al
+  // permiso a quien sí puede editar sería un error.
+  const puedeEditar = meRes.ok ? puedeEditarConfiguracion(meRes.data) : true;
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,7 +90,8 @@ export default async function SettingsPage({
         datosCliente={{
           politica: datosRes.ok ? datosRes.data : null,
           error: datosRes.ok ? undefined : datosRes.error,
-          puedeEditar,
+          // Datos del cliente conserva su criterio: sin saber quién es, solo lectura.
+          puedeEditar: meRes.ok && puedeEditarConfiguracion(meRes.data),
           aviso: avisoRes.ok ? avisoRes.data : null,
           avisoError: avisoRes.ok ? undefined : avisoRes.error,
         }}
