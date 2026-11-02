@@ -331,3 +331,10 @@ export type CatalogoDeMensajes = components["schemas"]["CatalogoDeMensajesOut"];
 export type MensajeDelCatalogo = components["schemas"]["MensajeDelCatalogo"];
 export type FuenteDeMensaje = components["schemas"]["FuenteDeMensaje"];
 export type MensajeOmitido = components["schemas"]["MensajeOmitido"];
+
+// Gestión de crons de la plataforma (ADR-0183 de agent-core, solo master).
+export type Cron = components["schemas"]["CronOut"];
+export type CronEjecucion = components["schemas"]["CronRunOut"];
+export type CronListado = components["schemas"]["CronList"];
+export type CronResumen = components["schemas"]["CronSummary"];
+export type CronEjecucionesPage = components["schemas"]["Page_CronRunOut_"];
