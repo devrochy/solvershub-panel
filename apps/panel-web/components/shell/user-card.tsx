@@ -2,12 +2,13 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronUp, LogOut, Palette, UserRound } from "lucide-react";
+import { BookOpen, ChevronUp, LogOut, Palette, UserRound } from "lucide-react";
 
 import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuExternalLinkItem,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuLinkItem,
@@ -18,12 +19,13 @@ import { Avatar } from "@/components/ui/avatar";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
+import { DOCUMENTACION } from "@/lib/copy";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
  * Tarjeta del usuario al pie del menú (D-SPEC-34): avatar + nombre en una tarjeta resaltada y
- * un submenú con el perfil, un interruptor de tema y cerrar sesión. En la barra plegada queda
+ * un submenú con el perfil, la documentación (si hay `WIKI_URL`), un interruptor de tema y cerrar sesión. En la barra plegada queda
  * solo el avatar.
  */
 export function UserCard({
@@ -31,9 +33,12 @@ export function UserCard({
   initialTheme,
   collapsed = false,
   onNavigate,
+  docsUrl = null,
 }: {
   me: Me;
   initialTheme: ThemeName;
+  /** Destino de «Documentación» (`WIKI_URL` resuelta en el servidor); sin él, el ítem no aparece. */
+  docsUrl?: string | null;
   collapsed?: boolean;
   /** El cajón móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -101,6 +106,16 @@ export function UserCard({
           <UserRound className="h-4 w-4 text-text-soft" aria-hidden />
           Editar perfil
         </DropdownMenuLinkItem>
+        {docsUrl && (
+          <DropdownMenuExternalLinkItem
+            href={docsUrl}
+            avisoNuevaPestana={DOCUMENTACION.avisoNuevaPestana}
+            onClick={onNavigate}
+          >
+            <BookOpen className="h-4 w-4 text-text-soft" aria-hidden />
+            {DOCUMENTACION.etiqueta}
+          </DropdownMenuExternalLinkItem>
+        )}
         <div className="flex items-center justify-between gap-3 px-2 py-1.5">
           <span className="flex items-center gap-2 text-sm text-body">
             <Palette className="h-4 w-4 text-text-soft" aria-hidden />

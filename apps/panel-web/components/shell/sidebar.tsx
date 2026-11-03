@@ -157,6 +157,7 @@ export function Sidebar({
   packs,
   modo: modoInicial = "auto",
   initialTheme = DEFAULT_THEME,
+  docsUrl = null,
   className,
   onNavigate,
 }: {
@@ -166,6 +167,8 @@ export function Sidebar({
   modo?: ModoSidebar;
   /** Tema leído de la cookie en el servidor (para la tarjeta del usuario). */
   initialTheme?: ThemeName;
+  /** Destino de «Documentación» para la tarjeta del usuario (`WIKI_URL`); sin él no se muestra. */
+  docsUrl?: string | null;
   className?: string;
   /** El menú móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -319,6 +322,7 @@ export function Sidebar({
         <UserCard
           me={me}
           initialTheme={initialTheme}
+          docsUrl={docsUrl}
           collapsed={!expandidaAhora && !esMovil}
           onNavigate={onNavigate}
         />

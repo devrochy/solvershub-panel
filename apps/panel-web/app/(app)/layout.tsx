@@ -18,6 +18,7 @@ import { FeedbackProviders } from "@/components/ui/providers";
 import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
 import type { Me, PendingInvitations, PluginSummary, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
+import { resolverDocsUrl } from "@/lib/docs-url";
 import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
 import { THEME_COOKIE, normalizeTheme } from "@/lib/theme";
 import { claveDeNegocio } from "@/lib/shell/sesion";
@@ -68,6 +69,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const atajosActivos = leerAtajosActivos(store.get(ATAJOS_COOKIE)?.value);
   const puedeEditar = puedeEditarAsistente(me.permissions);
   const esMaster = me.role === "master";
+  // Destino de «Documentación» en la tarjeta del usuario: variable de servidor, leída en runtime.
+  const docsUrl = resolverDocsUrl(process.env.WIKI_URL);
 
   return (
     <ShellProvider
@@ -97,12 +100,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <TituloDePaginaProvider>
             <div className="flex h-screen overflow-hidden supports-[height:100dvh]:h-dvh print:h-auto print:overflow-visible">
               {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-              <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} className="hidden h-full md:flex print:hidden" />
+              <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} docsUrl={docsUrl} className="hidden h-full md:flex print:hidden" />
               {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <Topbar
                   me={me}
-                  menu={<MobileNav me={me} packs={packs} initialTheme={theme} />}
+                  menu={<MobileNav me={me} packs={packs} initialTheme={theme} docsUrl={docsUrl} />}
                   asistentePausado={asistentePausado}
                   puedeReactivar={puedeEditar}
                 />

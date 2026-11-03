@@ -77,4 +77,40 @@ describe("tarjeta del usuario", () => {
     });
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
   });
+
+  it("no muestra «Documentación» si no hay destino configurado", async () => {
+    render(<UserCard me={ME} initialTheme="sh-dark" />);
+    await abrirMenu();
+    expect(screen.queryByRole("menuitem", { name: /Documentación/ })).toBeNull();
+  });
+
+  it("muestra «Documentación» como enlace a pestaña nueva, entre el perfil y el tema", async () => {
+    render(<UserCard me={ME} initialTheme="sh-dark" docsUrl="/ayuda" />);
+    await abrirMenu();
+    const docs = screen.getByRole("menuitem", { name: /Documentación/ });
+    expect(docs.tagName).toBe("A");
+    expect(docs.getAttribute("href")).toBe("/ayuda");
+    expect(docs.getAttribute("target")).toBe("_blank");
+    expect(docs.getAttribute("rel")).toBe("noopener noreferrer");
+    // El aviso de pestaña nueva llega a lectores de pantalla y como tooltip.
+    expect(docs.textContent).toContain("se abre en una pestaña nueva");
+    expect(docs.getAttribute("title")).toBe("se abre en una pestaña nueva");
+    const items = screen.getAllByRole("menuitem").map((el) => el.textContent ?? "");
+    const iPerfil = items.findIndex((t) => /Editar perfil/.test(t));
+    const iDocs = items.findIndex((t) => /Documentación/.test(t));
+    const iSalir = items.findIndex((t) => /Cerrar sesión/.test(t));
+    expect(iPerfil).toBeLessThan(iDocs);
+    expect(iDocs).toBeLessThan(iSalir);
+  });
+
+  it("avisa al cajón móvil para que se cierre al abrir la documentación", async () => {
+    const onNavigate = vi.fn();
+    render(<UserCard me={ME} initialTheme="sh-dark" docsUrl="https://docs.ejemplo.test/" onNavigate={onNavigate} />);
+    await abrirMenu();
+    const docs = screen.getByRole("menuitem", { name: /Documentación/ });
+    // jsdom no navega; el clic solo debe disparar el cierre del cajón.
+    docs.addEventListener("click", (e) => e.preventDefault());
+    fireEvent.click(docs);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
 });

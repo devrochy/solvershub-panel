@@ -9,6 +9,7 @@
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
+//   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
 //   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
 //   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
 //   ejecuta una sola vez (el segundo toque es `duplicate`); OPCIONES_BANDERA=0 los apaga (404 por negocio).
@@ -87,6 +88,19 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
 if (process.env.SOLO_LECTURA === "1") {
   respuestas["/admin/me"] = { ...me, role: "agent", tenant: { ...me.tenant, role: "agent" } };
 }
+
+// COLABORADOR=1: un colaborador sin permisos de Equipo ni Configuración (ve la Wiki solo en su nivel «usuario»).
+// TESTER=1: el rol de pruebas (nivel «técnico» en la Wiki).
+if (process.env.COLABORADOR === "1") {
+  respuestas["/admin/me"] = {
+    ...me,
+    email: "colaborador@test.example",
+    role: "agent",
+    tenant: { ...me.tenant, role: "agent" },
+    permissions: { dashboard: "read", conversations: "write" },
+  };
+}
+if (process.env.TESTER === "1") respuestas["/admin/me"] = { ...me, role: "tester" };
 
 // SIN_CONEXIONES=1: sin conexiones de Meta (el diálogo de publicar en Meta explica cómo conectar WhatsApp).
 if (process.env.SIN_CONEXIONES === "1") respuestas["/admin/meta/health"] = { connections: [] };
