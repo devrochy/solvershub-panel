@@ -16,6 +16,8 @@
 //   Asistente por preguntas de Configuración (HU-CFG-10/11): simula vista previa y aplicar con el guion del catálogo de
 //   prueba y guarda lo aplicado en memoria (recargar la página lo muestra). ASISTENTE_409=1: el primer «aplicar» responde
 //   409 porque «alguien» cambió la calidez en medio · ASISTENTE_422=1: la vista previa rechaza la pregunta de emojis.
+//   EMBUDO=1 (Ventas › Clientes › Embudo, HU-CRM-24): 130 leads repartidos en cinco etapas con contadores y sumas de valor;
+//   mover una tarjeta cambia la etapa en memoria · EMBUDO=rechazo (el servidor rechaza todo cambio de etapa)
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -456,10 +458,87 @@ function asistente(metodo, ruta, cuerpo) {
   return [200, propuesta];
 }
 
+
+// EMBUDO: leads de Ventas por etapa (HU-CRM-24). `/admin/leads` filtra por `estado_lead`, pagina y devuelve los
+// contadores y las sumas de valor; el PATCH del pack cambia la etapa en memoria (o la rechaza con EMBUDO=rechazo).
+const ETAPAS_EMBUDO = [
+  { value: "nuevo", label: "Nuevo" },
+  { value: "calificado", label: "Calificado" },
+  { value: "contactado", label: "Contactado" },
+  { value: "convertido", label: "Convertido" },
+  { value: "perdido", label: "Perdido" },
+];
+const leadsDeEmbudo = [];
+if (process.env.EMBUDO) {
+  const { leads } = await import("../lib/testing/fixtures.ts");
+  const plantilla = leads.items[0];
+  const reparto = { nuevo: 120, calificado: 6, contactado: 4, convertido: 3, perdido: 2 };
+  let n = 0;
+  for (const [etapa, cuantos] of Object.entries(reparto)) {
+    for (let i = 0; i < cuantos; i++, n++) {
+      leadsDeEmbudo.push({
+        ...plantilla,
+        id: `lead-${n}`,
+        perfil: { ...plantilla.perfil, nombre_visible: `Cliente ${String(n + 1).padStart(3, "0")}` },
+        agentes: ["general", "ventas"],
+        ultima_actividad: new Date(Date.now() - n * 3_600_000).toISOString(),
+        extras: {
+          estado_lead: etapa,
+          puntaje: 20 + (n % 70),
+          valor_estimado: n % 3 === 0 ? null : 50000 * (1 + (n % 9)),
+          ...(n % 7 === 0 ? { seguimiento_en: "2026-10-30T10:00:00+00:00", seguimiento_estado: "vencidos", seguimiento_nota: "Llamar" } : {}),
+        },
+      });
+    }
+  }
+}
+const etapaDeEmbudo = (l) => l.extras.estado_lead;
+function listaDeEmbudo(url) {
+  const pedida = url.searchParams.getAll("filtro").find((f) => f.startsWith("estado_lead:"))?.slice("estado_lead:".length);
+  const porPagina = Number(url.searchParams.get("page_size") ?? 20);
+  const pagina = Number(url.searchParams.get("page") ?? 1);
+  const filtrados = leadsDeEmbudo.filter((l) => !pedida || etapaDeEmbudo(l) === pedida);
+  const counts = Object.fromEntries(ETAPAS_EMBUDO.map((e) => [e.value, leadsDeEmbudo.filter((l) => etapaDeEmbudo(l) === e.value).length]));
+  const sumas = Object.fromEntries(ETAPAS_EMBUDO.map((e) => [e.value, leadsDeEmbudo.filter((l) => etapaDeEmbudo(l) === e.value).reduce((t, l) => t + (l.extras.valor_estimado ?? 0), 0)]));
+  const faceta = { key: "estado_lead", counts, sin_valor: 0, total: leadsDeEmbudo.length, ...(url.searchParams.get("resumen") === "valor" ? { sumas: { ...sumas, sin_valor: 0 } } : {}) };
+  return {
+    items: filtrados.slice((pagina - 1) * porPagina, pagina * porPagina),
+    total: filtrados.length,
+    page: pagina,
+    page_size: porPagina,
+    has_more: pagina * porPagina < filtrados.length,
+    agents: [{ key: "ventas", name: "Ventas", icon: "shopping-cart", columns: [{ key: "estado_lead", label: "Estado del lead" }, { key: "puntaje", label: "Puntaje" }, { key: "valor_estimado", label: "Valor estimado" }] }],
+    filters: [
+      { key: "estado_lead", label: "Estado del lead", options: ETAPAS_EMBUDO },
+      { key: "motivo_perdida", label: "Motivo de pérdida", options: [{ value: "precio", label: "Precio" }, { value: "sin_respuesta", label: "Sin respuesta" }, { value: "sin_motivo", label: "Sin motivo registrado" }] },
+    ],
+    facetas: url.searchParams.getAll("facetas").includes("estado_lead") ? [faceta] : [],
+  };
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const ruta = url.pathname.replace(/^\/api\/v1/, "");
   res.setHeader("Content-Type", "application/json");
+  if (process.env.EMBUDO && ruta === "/admin/leads") {
+    res.end(JSON.stringify(listaDeEmbudo(url)));
+    return;
+  }
+  const cambioDeEtapa = ruta.match(/^\/admin\/leads\/([^/]+)\/pack\/[^/]+$/);
+  if (process.env.EMBUDO && cambioDeEtapa && req.method === "PATCH") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    if (process.env.EMBUDO === "rechazo") {
+      res.statusCode = 409;
+      res.end(JSON.stringify({ error: { code: "conflict", message: "Solo una persona puede reabrir un lead perdido." } }));
+      return;
+    }
+    const lead = leadsDeEmbudo.find((l) => l.id === decodeURIComponent(cambioDeEtapa[1]));
+    const valores = JSON.parse(texto || "{}").valores ?? {};
+    if (lead && valores.estado_lead) lead.extras.estado_lead = valores.estado_lead;
+    res.end(JSON.stringify({}));
+    return;
+  }
   if (ruta === "/plantillas-opciones" || ruta.startsWith("/plantillas-opciones/")) {
     let texto = "";
     for await (const trozo of req) texto += trozo;

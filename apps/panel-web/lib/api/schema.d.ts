@@ -21331,6 +21331,10 @@ export interface components {
             sin_valor: number;
             /** Total */
             total: number;
+            /** Sumas */
+            sumas?: {
+                [key: string]: number;
+            } | null;
         };
         /** AsistenteAplicar */
         AsistenteAplicar: {
@@ -23519,6 +23523,8 @@ export interface operations {
                 orden?: "alta" | "actividad" | "nombre" | "nombre_desc" | "seguimiento" | "valor" | "valor_desc";
                 /** @description Claves de `filters` de las que se quieren contadores por opción (se repite el parámetro). Una clave que no declara ningún pack, o que no sabe contar, responde 400 `filtro_invalido`. */
                 facetas?: string[] | null;
+                /** @description Con `facetas`, suma además una cifra por opción en `sumas`: `valor` es el valor estimado de los leads (HU-CRM-24). Las sumas respetan los mismos filtros que los contadores. */
+                resumen?: "valor" | null;
                 page?: number;
                 page_size?: number;
             };

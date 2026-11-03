@@ -4,18 +4,14 @@ import { useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field } from "@/components/ui/field";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ETAPA_PERDIDA, MAX_NOTA_PERDIDA, TONO_DE_ETAPA } from "@/lib/clientes";
+import { cambiarEtapaEnServidor, MotivoDePerdidaDialog } from "@/components/domain/cliente/cambio-de-etapa";
+import { ETAPA_PERDIDA, TONO_DE_ETAPA } from "@/lib/clientes";
 import { cn } from "@/lib/utils";
 import { useAction } from "@/lib/use-action";
 
@@ -71,33 +67,14 @@ export function EtapaMenu({
 
   // Diálogo del motivo: se abre al elegir «perdido» y no cambia nada hasta confirmar.
   const [pidiendoMotivo, setPidiendoMotivo] = useState(false);
-  const [motivo, setMotivo] = useState("");
-  const [nota, setNota] = useState("");
-  const [errorMotivo, setErrorMotivo] = useState<string | undefined>();
 
   function elegir(valor: string) {
     if (valor === codigo || accion.pending) return;
     if (valor === ETAPA_PERDIDA && motivos.length > 0) {
-      setMotivo("");
-      setNota("");
-      setErrorMotivo(undefined);
       setPidiendoMotivo(true);
       return;
     }
     void cambiar(valor);
-  }
-
-  function confirmarPerdida(e: React.FormEvent) {
-    e.preventDefault();
-    if (!motivo) {
-      setErrorMotivo("Elige el motivo de la pérdida.");
-      return;
-    }
-    setPidiendoMotivo(false);
-    void cambiar(ETAPA_PERDIDA, {
-      motivo_perdida: motivo,
-      ...(nota.trim() ? { nota_perdida: nota.trim() } : {}),
-    });
   }
 
   async function cambiar(valor: string, extra: Record<string, string> = {}) {
@@ -105,23 +82,17 @@ export function EtapaMenu({
     const nueva = opciones.find((o) => o.value === valor);
     anterior.current = codigo;
     setCodigo(valor);
-    await accion.run(async () => {
-      const res = await fetch(
-        `/api/leads/${encodeURIComponent(leadId)}/pack/${encodeURIComponent(pluginId)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ valores: { [clave]: valor, ...extra } }),
-        },
-      );
-      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
-      return {
-        ok: res.ok,
-        status: res.status,
-        error: typeof json.error === "string" ? json.error : undefined,
-        success: `${nombre} pasó a ${nueva?.label ?? valor}.`,
-      };
-    });
+    await accion.run(() =>
+      cambiarEtapaEnServidor({
+        leadId,
+        pluginId,
+        clave,
+        valor,
+        extra,
+        nombre,
+        etiqueta: nueva?.label ?? valor,
+      }),
+    );
   }
 
   return (
@@ -162,61 +133,17 @@ export function EtapaMenu({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={pidiendoMotivo} onOpenChange={setPidiendoMotivo}>
-        <DialogContent
-          title="¿Por qué se perdió?"
-          description={`Elige el motivo para marcar a ${nombre} como perdido. Queda en su historia.`}
-          className="max-w-md"
-        >
-          <form onSubmit={confirmarPerdida} className="flex flex-col gap-4">
-            <Field
-              label="Motivo de la pérdida"
-              htmlFor={`motivo-${leadId}`}
-              error={errorMotivo}
-              required
-            >
-              <Select
-                id={`motivo-${leadId}`}
-                value={motivo}
-                onChange={(e) => {
-                  setMotivo(e.target.value);
-                  setErrorMotivo(undefined);
-                }}
-              >
-                <option value="">Elige un motivo</option>
-                {motivos.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field
-              label="Nota (opcional)"
-              htmlFor={`nota-${leadId}`}
-              help={`Hasta ${MAX_NOTA_PERDIDA} caracteres.`}
-            >
-              <Textarea
-                id={`nota-${leadId}`}
-                value={nota}
-                onChange={(e) => setNota(e.target.value)}
-                maxLength={MAX_NOTA_PERDIDA}
-                rows={3}
-              />
-            </Field>
-            <div className="flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button type="button" variant="ghost" size="sm">
-                  Cancelar
-                </Button>
-              </DialogClose>
-              <Button type="submit" variant="accent" size="sm">
-                Marcar como perdido
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <MotivoDePerdidaDialog
+        abierto={pidiendoMotivo}
+        alCambiar={setPidiendoMotivo}
+        leadId={leadId}
+        nombre={nombre}
+        motivos={motivos}
+        alConfirmar={(extra) => {
+          setPidiendoMotivo(false);
+          void cambiar(ETAPA_PERDIDA, extra);
+        }}
+      />
     </>
   );
 }
