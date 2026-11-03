@@ -105,3 +105,9 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
 export function sectionHelp(section: string): SectionHelp | undefined {
   return SECTION_HELP[section];
 }
+
+/** Enlace «Documentación» de la tarjeta del usuario (se muestra solo si hay `WIKI_URL`). */
+export const DOCUMENTACION = {
+  etiqueta: "Documentación",
+  avisoNuevaPestana: "se abre en una pestaña nueva",
+} as const;

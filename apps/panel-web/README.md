@@ -42,6 +42,27 @@ admin creado (`python scripts/init_db.py` en agent-core).
   (cd ../../brand/tokens && npm run build)
   npm run tokens:sync
   ```
+- **Ayuda (`/ayuda`)**: la Wiki de SolversHub dentro del panel, solo con sesión. Cada
+  página trae `acceso` en su frontmatter y el panel lo cruza con `/admin/me`:
+  `usuario` (cualquier sesión), `administrador` (dueño del negocio, colaboradores con
+  Equipo o Configuración, master y tester) y `tecnico` (solo master y tester). Una página
+  que el rol no alcanza responde igual que una que no existe (la pantalla «no existe» de
+  la Wiki; el menú tampoco la lista). Sin sesión, `middleware.ts` manda a
+  `/login?volver=/ayuda/...` y el login vuelve ahí al entrar.
+  - **Contenido**: el Markdown vive en el repo `solvershub-wiki`; el panel no lo lee en
+    runtime. `npm run wiki:sync` (o `node scripts/sync-wiki.mjs <ruta>`, o `WIKI_DIR`)
+    lo renderiza a HTML saneado y escribe `lib/ayuda/contenido.generado.json`, que **se
+    versiona** como `app/tokens.css`: el build de la imagen no tiene la wiki a mano. Tras
+    cambiar la wiki: sincroniza y sube el JSON. `npm run wiki:sync -- --check` falla si
+    lo versionado no coincide (necesita la wiki en disco, por eso no corre en el CI).
+    No edites el JSON a mano; el script también falla si hay un enlace roto o una
+    página que enlaza a otra de nivel superior.
+  - **Enlace «Documentación» de la tarjeta del avatar**: lo activa la variable de servidor
+    `WIKI_URL` (se lee en runtime). **`WIKI_URL=/ayuda`** muestra el ítem y lo lleva a la
+    Wiki; vacía, el ítem no aparece. Déjala vacía en un entorno hasta que ese despliegue
+    lleve `/ayuda`.
+  - **Probar los niveles sin agent-core**: `node scripts/backend-de-prueba.mjs` (dueño),
+    con `COLABORADOR=1` (nivel usuario), `MASTER=1` o `TESTER=1` (nivel técnico).
 
 ## Panel clásico (`/legacy`) — transición sin pérdida
 

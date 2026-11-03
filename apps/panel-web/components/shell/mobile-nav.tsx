@@ -16,10 +16,12 @@ export function MobileNav({
   me,
   packs,
   initialTheme = DEFAULT_THEME,
+  docsUrl = null,
 }: {
   me: Me;
   packs: Record<string, PackState>;
   initialTheme?: ThemeName;
+  docsUrl?: string | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -63,6 +65,7 @@ export function MobileNav({
               me={me}
               packs={packs}
               initialTheme={initialTheme}
+              docsUrl={docsUrl}
               className="h-full w-full"
               onNavigate={() => setOpen(false)}
             />
