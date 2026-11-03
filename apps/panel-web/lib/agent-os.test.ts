@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { iguales, normalizar, objetivoValido, resumenDelCambio, type Banderas } from "@/lib/agent-os";
+import { iguales, normalizar, objetivoValido, resumenDelCambio, runtimesOfrecidos, type Banderas } from "@/lib/agent-os";
 
 // Agent OS del panel del master (HU-AOS-15): orden de banderas al editar y lo que se reenvía.
 
@@ -49,5 +49,15 @@ describe("resumen de la confirmación", () => {
     expect(activo).toContain("una semana en sombra");
     expect(resumenDelCambio({ ...V3, routing: "shadow" }, { ...V3, routing: "active" })).not.toContain("una semana");
     expect(resumenDelCambio({ runtime: "v3", procedures: true, routing: "shadow" }, LEGACY)).toContain("Vuelve a legacy");
+  });
+});
+
+describe("runtimes que ofrece el panel", () => {
+  it("un negocio en v3 no ofrece volver a legacy", () => {
+    expect(runtimesOfrecidos("v3")).toEqual(["v3"]);
+  });
+
+  it("un negocio que sigue en legacy puede pasar a v3", () => {
+    expect(runtimesOfrecidos("legacy")).toEqual(["legacy", "v3"]);
   });
 });

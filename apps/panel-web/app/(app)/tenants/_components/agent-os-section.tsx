@@ -14,11 +14,11 @@ import {
   ETIQUETA_RUNTIME,
   ETIQUETA_RUTEO,
   NOTA_RUNBOOK,
-  RUNTIMES,
   RUTEOS,
   iguales,
   normalizar,
   resumenDelCambio,
+  runtimesOfrecidos,
   type Banderas,
   type Ruteo,
   type Runtime,
@@ -124,7 +124,6 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
       title: "¿Aplicar el cambio del Agent OS?",
       description: `${resumenDelCambio(actual, objetivo)} ${NOTA_RUNBOOK}`,
       confirmLabel: "Aplicar",
-      destructive: objetivo.runtime === "legacy" && actual.runtime === "v3",
     });
     if (!ok) return;
     await run(async () => {
@@ -169,7 +168,7 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
             onChange={(e) => cambiar({ runtime: e.target.value as Runtime })}
             disabled={pending}
           >
-            {RUNTIMES.map((r) => (
+            {runtimesOfrecidos(actual.runtime).map((r) => (
               <option key={r} value={r}>
                 {ETIQUETA_RUNTIME[r]}
               </option>
