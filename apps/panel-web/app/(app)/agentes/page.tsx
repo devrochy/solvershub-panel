@@ -1,18 +1,24 @@
 import Link from "next/link";
 
 import { AgentCard } from "@/app/(app)/agentes/_components/agent-card";
+import { AvisoDeReferenciasEnLista } from "@/components/domain/aviso-de-referencias-retiradas";
 import { DatosDePruebaParaTodos } from "@/app/(app)/agentes/_components/datos-de-prueba-para-todos";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentsOverview, EstadoDatosDePrueba, Me } from "@/lib/api/types";
+import type { AgentsOverview, EstadoDatosDePrueba, Me, RetiredReferencesOut } from "@/lib/api/types";
 import { puedeEditarAgentes, puedeEscribirConocimiento } from "@/lib/agentes";
 
 export const metadata = { title: "Agentes" };
 
 export default async function AgentesPage() {
-  const [res, meRes] = await Promise.all([apiFetch<AgentsOverview>("/admin/agents/overview"), apiFetch<Me>("/admin/me")]);
+  const [res, meRes, retiradas] = await Promise.all([
+    apiFetch<AgentsOverview>("/admin/agents/overview"),
+    apiFetch<Me>("/admin/me"),
+    // Aviso (HU-AOS-59): sin permiso o sin respuesta, la lista sale igual y sin aviso.
+    apiFetch<RetiredReferencesOut>("/admin/agents/retired-references"),
+  ]);
   if (!res.ok) {
     return (
       <p role="alert" className="text-status-danger-fg">
@@ -30,6 +36,7 @@ export default async function AgentesPage() {
     especialistas.length > 0 && meRes.ok && puedeEscribirConocimiento(meRes.data)
       ? (await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${especialistas[0].id}/datos-de-prueba`)).ok
       : false;
+  const conAviso = new Set(retiradas.ok ? retiradas.data.agents.map((a) => a.agent_id) : []);
   const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data, runtime);
 
   return (
@@ -60,6 +67,8 @@ export default async function AgentesPage() {
         </p>
       )}
 
+      <AvisoDeReferenciasEnLista avisos={retiradas.ok ? retiradas.data : null} />
+
       {items.length === 0 ? (
         <EmptyState
           title="Todavía no hay agentes"
@@ -69,7 +78,7 @@ export default async function AgentesPage() {
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((agent) => (
             <li key={agent.ref} className="flex">
-              <AgentCard agent={agent} />
+              <AgentCard agent={agent} conAviso={Boolean(agent.id && conAviso.has(agent.id))} />
             </li>
           ))}
         </ul>

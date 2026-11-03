@@ -8,7 +8,7 @@ import { tipoDeAgente } from "@/lib/agentes";
 import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
 
 /** Tarjeta de un agente en la lista: qué es, dónde atiende y qué hizo en 30 días. */
-export function AgentCard({ agent }: { agent: AgentOverviewItem }) {
+export function AgentCard({ agent, conAviso = false }: { agent: AgentOverviewItem; conAviso?: boolean }) {
   const conexiones = agent.connections.map((c) => c.label);
   return (
     <Card className="flex w-full flex-col">
@@ -37,6 +37,7 @@ export function AgentCard({ agent }: { agent: AgentOverviewItem }) {
           ) : (
             <Badge variant="neutral">Sin conexión activa</Badge>
           )}
+          {conAviso && <Badge variant="warning">Nombra algo retirado</Badge>}
           {conexiones.map((label, i) => (
             <Badge key={`${label}-${i}`} variant="neutral">
               {label}

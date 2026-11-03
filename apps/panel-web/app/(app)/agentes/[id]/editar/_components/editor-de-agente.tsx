@@ -9,6 +9,7 @@ import {
   PasoPublicar,
   PasoSuperpoderes,
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/agentes-editor";
 import type {
   AgentDetail,
+  AgentRetiredNotices,
   EditorPublishOut,
   LlmModelCatalog,
   PublishTarget,
@@ -36,12 +38,19 @@ import type {
 } from "@/lib/api/types";
 import { usePendientes } from "@/lib/frases-pendientes";
 import { esLimiteDePlan } from "@/lib/plan-limite";
+import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
 
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
 
-type Respuesta = { error?: string; code?: string; fields?: Record<string, string> };
+type Respuesta = {
+  error?: string;
+  code?: string;
+  fields?: Record<string, string>;
+  /** El 422 `invalid_spec` trae aquí `retired_references` (HU-AOS-59). */
+  details?: Record<string, unknown>;
+};
 
 /**
  * Editor por pasos de un agente especialista (HU-AOS-24): identidad, proveedor y modelo,
@@ -57,6 +66,7 @@ export function EditorDeAgente({
   puedeActivar,
   requisitos = [],
   pasoInicial = "identidad",
+  avisosRetirados = null,
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -68,6 +78,8 @@ export function EditorDeAgente({
   requisitos?: Requirement[];
   /** Paso con el que abre (el asistente de creación entra directo a publicar, HU-AOS-54). */
   pasoInicial?: PasoId;
+  /** Lo que el agente nombra y ya no existe (HU-AOS-59): solo avisa, en palabras simples. */
+  avisosRetirados?: AgentRetiredNotices | null;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -88,6 +100,7 @@ export function EditorDeAgente({
   const [notas, setNotas] = useState("");
   const [publicado, setPublicado] = useState<EditorPublishOut | null>(null);
   const [activadas, setActivadas] = useState<Set<string>>(new Set());
+  const [retiradas, setRetiradas] = useState<AgentRetiredNotices | null>(avisosRetirados);
   const pendientes = usePendientes();
   // Avisos de texto escrito y no agregado en una lista, por id de la lista.
   const [avisos, setAvisos] = useState<Record<string, string>>({});
@@ -95,7 +108,16 @@ export function EditorDeAgente({
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
   const contenido = useMemo(() => contenidoDesdeEstado(base, estado, superpoderes), [base, estado, superpoderes]);
-  const porPoder = useMemo(() => erroresPorSuperpoder(errores, contenido), [errores, contenido]);
+  // Lo retirado que está en el borrador se señala junto al superpoder (los índices `procedures[i]` son los del
+  // contenido guardado, igual que los errores de la API); lo de versiones publicadas va solo en el aviso.
+  const avisoPorPoder = useMemo(
+    () => erroresPorSuperpoder(avisosDelBorrador(retiradas?.notices ?? []), base),
+    [retiradas, base],
+  );
+  const porPoder = useMemo(
+    () => ({ ...avisoPorPoder, ...erroresPorSuperpoder(errores, contenido) }),
+    [avisoPorPoder, errores, contenido],
+  );
 
   function cambiar(cambio: Partial<EstadoDelEditor>) {
     setEstado((actual) => ({ ...actual, ...cambio }));
@@ -166,9 +188,18 @@ export function EditorDeAgente({
       setLock(resultado.lock);
       if (json.content) setBase(json.content);
       setGuardado(actual);
+      void recargarAvisos();
       return { ok: true, success: "Borrador guardado." };
     });
     return ok ? resultado.lock : null;
+  }
+
+  /** Vuelve a leer los avisos del agente (tras guardar el borrador): quitar lo retirado debe apagar el aviso. */
+  async function recargarAvisos() {
+    const res = await fetch(`/api/agent-editor/${agente.id}/retired-references`, { cache: "no-store" }).catch(() => null);
+    if (!res?.ok) return;
+    const json = (await res.json().catch(() => null)) as AgentRetiredNotices | null;
+    if (json && Array.isArray(json.notices)) setRetiradas(json);
   }
 
   function mostrarErrores(campos: Errores) {
@@ -211,14 +242,22 @@ export function EditorDeAgente({
       });
       const json = (await res.json().catch(() => ({}))) as Respuesta & Partial<EditorPublishOut>;
       if (!res.ok) {
-        if (json.fields) mostrarErrores(json.fields);
+        // Referencias retiradas (HU-AOS-59): cada texto va junto a su control y el mensaje es el de la API,
+        // no el genérico. Si `fields` faltara, se arma desde `details.retired_references`.
+        const retiradas422 = referenciasDelError(json.details);
+        const campos =
+          json.fields ?? (retiradas422.length > 0 ? Object.fromEntries(retiradas422.map((r) => [r.field, r.message])) : undefined);
+        if (campos) mostrarErrores(campos);
         // Tope de agentes publicados del plan (HU-BILL-05): no se publicó nada; se explica y se
         // ofrece mejorar el plan junto al botón.
         setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de agentes de tu plan.") : null);
         return {
           ok: false,
           status: res.status,
-          error: json.fields ? "Revisa los campos marcados antes de publicar." : (json.error ?? "No se pudo publicar."),
+          error:
+            campos && retiradas422.length === 0
+              ? "Revisa los campos marcados antes de publicar."
+              : (json.error ?? "No se pudo publicar."),
         };
       }
       setErrores({});
@@ -342,6 +381,8 @@ export function EditorDeAgente({
 
   return (
     <div className="flex flex-col gap-6">
+      <AvisoDeReferenciasRetiradas aviso={retiradas} />
+
       <Stepper steps={steps} onSelect={(id) => irA(id as PasoId)} label="Pasos del editor de agentes" />
 
       {publicado && (

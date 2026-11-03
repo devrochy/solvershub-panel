@@ -62,6 +62,13 @@ export type TenantOwnerInvitation = components["schemas"]["TenantOwnerInvitation
 export type AgentOSEstado = components["schemas"]["AgentOSEstado"];
 export type AgentOSObjetivo = components["schemas"]["AgentOSObjetivo"];
 export type AgentOSResultado = components["schemas"]["AgentOSResultado"];
+// Referencias retiradas en agentes y releases (HU-AOS-59): solo lectura.
+export type RetiredReferencesReport = components["schemas"]["RetiredReferencesReport"];
+export type RetiredReferenceRow = components["schemas"]["RetiredReferenceRow"];
+export type RetiredAsideConnection = components["schemas"]["RetiredAsideConnection"];
+export type RetiredReferencesOut = components["schemas"]["RetiredReferencesOut"];
+export type AgentRetiredNotices = components["schemas"]["AgentRetiredNotices"];
+export type RetiredNotice = components["schemas"]["RetiredNotice"];
 
 export type SettingsResponse = components["schemas"]["SettingsResponse"];
 export type WebChatSettings = components["schemas"]["WebChatSettings"];

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { ReferenciasRetiradas } from "@/app/(app)/tenants/_components/referencias-retiradas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -250,6 +251,8 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
           Aplicar
         </Button>
       </div>
+
+      <ReferenciasRetiradas tenantId={tenantId} />
     </section>
   );
 }
