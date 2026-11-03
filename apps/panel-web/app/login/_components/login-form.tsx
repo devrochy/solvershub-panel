@@ -9,7 +9,8 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 
-export function LoginForm() {
+/** `destino`: ruta del panel a la que se va al entrar (ya validada por el servidor). */
+export function LoginForm({ destino = "/dashboard" }: { destino?: string }) {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +32,7 @@ export function LoginForm() {
       setLoading(false);
       return;
     }
-    router.replace("/dashboard");
+    router.replace(destino);
     router.refresh();
   }
 

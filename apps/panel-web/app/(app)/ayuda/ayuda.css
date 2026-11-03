@@ -1,0 +1,61 @@
+/*
+ * Contenido de la Wiki (/ayuda). El HTML viene ya generado desde Markdown (lib/ayuda/render.ts),
+ * así que los estilos van por selector de elemento bajo `.ayuda-contenido`, sobre los tokens de
+ * marca (--sh-*): cambian con el tema sin tocar nada aquí.
+ */
+.ayuda-contenido { color: var(--sh-text-muted); font-size: 0.9375rem; line-height: 1.7; overflow-wrap: anywhere; }
+.ayuda-contenido > :first-child { margin-top: 0; }
+.ayuda-contenido h1, .ayuda-contenido h2, .ayuda-contenido h3, .ayuda-contenido h4 {
+  color: var(--sh-text); font-family: var(--sh-font-display); font-weight: 600; line-height: 1.25; scroll-margin-top: 1rem;
+}
+.ayuda-contenido h1 { font-size: 1.75rem; margin: 0 0 1rem; }
+.ayuda-contenido h2 { font-size: 1.35rem; margin: 2.25rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--sh-border); }
+.ayuda-contenido h3 { font-size: 1.125rem; margin: 1.75rem 0 0.5rem; }
+.ayuda-contenido h4 { font-size: 1rem; margin: 1.25rem 0 0.5rem; }
+.ayuda-contenido p, .ayuda-contenido ul, .ayuda-contenido ol, .ayuda-contenido blockquote, .ayuda-contenido pre, .ayuda-contenido .ayuda-tabla { margin: 0.9rem 0; }
+.ayuda-contenido ul { list-style: disc; padding-left: 1.5rem; }
+.ayuda-contenido ol { list-style: decimal; padding-left: 1.5rem; }
+.ayuda-contenido li { margin: 0.25rem 0; }
+.ayuda-contenido li > ul, .ayuda-contenido li > ol { margin: 0.25rem 0; }
+.ayuda-contenido strong { color: var(--sh-text); font-weight: 600; }
+.ayuda-contenido a { color: var(--sh-link); text-decoration: underline; text-underline-offset: 3px; }
+.ayuda-contenido a:hover { text-decoration-thickness: 2px; }
+.ayuda-contenido hr { border: 0; border-top: 1px solid var(--sh-border); margin: 2rem 0; }
+.ayuda-contenido blockquote { border-left: 4px solid var(--sh-border-strong); padding: 0.1rem 1rem; color: var(--sh-text-muted); }
+
+.ayuda-contenido code { font-family: var(--sh-font-mono); font-size: 0.85em; background: var(--sh-surface-2); border: 1px solid var(--sh-border-soft); border-radius: 4px; padding: 0.1em 0.35em; }
+.ayuda-contenido pre {
+  position: relative; background: var(--sh-surface-2); border: 1px solid var(--sh-border); border-radius: 8px;
+  padding: 2rem 1rem 0.9rem; overflow-x: auto; line-height: 1.55;
+}
+.ayuda-contenido pre::before {
+  content: attr(data-lang); position: absolute; top: 0.4rem; right: 0.75rem;
+  font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sh-text-soft);
+}
+.ayuda-contenido pre:not([data-lang])::before { content: none; }
+.ayuda-contenido pre:not([data-lang]) { padding-top: 0.9rem; }
+.ayuda-contenido pre code { background: none; border: 0; padding: 0; font-size: 0.85rem; white-space: pre; overflow-wrap: normal; }
+
+.ayuda-contenido .ayuda-tabla { overflow-x: auto; border: 1px solid var(--sh-border); border-radius: 8px; }
+.ayuda-contenido table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+.ayuda-contenido th, .ayuda-contenido td { text-align: left; vertical-align: top; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--sh-border-soft); }
+.ayuda-contenido th { background: var(--sh-surface-2); color: var(--sh-text); font-weight: 600; white-space: nowrap; }
+.ayuda-contenido tbody tr:last-child td { border-bottom: 0; }
+
+/* Admoniciones: el borde y el fondo usan los colores de estado de cada tema (AA). */
+.ayuda-contenido .admonition { margin: 1.25rem 0; padding: 0.75rem 1rem; border: 1px solid var(--sh-status-info-border); border-left-width: 4px; border-radius: 8px; background: var(--sh-status-info-bg); }
+.ayuda-contenido .admonition > :first-child { margin-top: 0; }
+.ayuda-contenido .admonition > :last-child { margin-bottom: 0; }
+.ayuda-contenido .admonition-title { margin: 0 0 0.4rem; color: var(--sh-text); }
+.ayuda-contenido .admonition.note, .ayuda-contenido .admonition.tip { border-color: var(--sh-status-success-border); background: var(--sh-status-success-bg); }
+.ayuda-contenido .admonition.warning { border-color: var(--sh-status-warning-border); background: var(--sh-status-warning-bg); }
+.ayuda-contenido .admonition.danger { border-color: var(--sh-status-danger-border); background: var(--sh-status-danger-bg); }
+.ayuda-contenido .admonition code { background: var(--sh-surface); }
+
+/* Captura que aún no existe: se ve qué iría ahí, con el texto alternativo como texto. */
+.ayuda-contenido .ayuda-captura-pendiente { margin: 1.25rem 0; padding: 1.25rem 1rem; border: 2px dashed var(--sh-border-strong); border-radius: 8px; background: var(--sh-surface-2); text-align: center; }
+.ayuda-contenido .ayuda-captura-pendiente strong { display: block; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sh-text-soft); }
+.ayuda-contenido .ayuda-captura-pendiente figcaption { margin-top: 0.25rem; color: var(--sh-text-muted); }
+.ayuda-contenido img.ayuda-imagen { max-width: 100%; height: auto; border: 1px solid var(--sh-border); border-radius: 8px; margin: 1.25rem 0; }
+
+@media print { .ayuda-contenido pre { white-space: pre-wrap; } }
