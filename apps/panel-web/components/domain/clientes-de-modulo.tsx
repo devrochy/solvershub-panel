@@ -4,6 +4,7 @@ import { Eye, MessageCircle, Phone, X } from "lucide-react";
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
 import { EtapaMenu } from "@/components/domain/cliente/etapa-menu";
+import { TableroEmbudo } from "@/components/domain/cliente/tablero-embudo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -37,6 +38,7 @@ import {
   textoDeActividad,
   valorDeFiltro,
 } from "@/lib/clientes";
+import { consultaDeColumna, tarjetaDeFila, type ColumnaDeEmbudo } from "@/lib/embudo";
 import { formatCellValue, formatNumber } from "@/lib/format";
 import {
   ESTADO_DE_SEGUIMIENTO,
@@ -48,7 +50,19 @@ import { cn } from "@/lib/utils";
 
 type Fila = LeadsResponse["items"][number];
 
-export type FiltrosClientesDeModulo = { q?: string; page?: string; filtro?: string | string[]; orden?: string };
+export type FiltrosClientesDeModulo = {
+  q?: string;
+  page?: string;
+  filtro?: string | string[];
+  orden?: string;
+  /** `embudo` abre el tablero por etapas (HU-CRM-24); cualquier otro valor, la lista. */
+  vista?: string;
+};
+
+/** ¿Esta página pide el tablero de embudo y el módulo puede mostrarlo? Necesita la etapa y quién la escribe. */
+function pideEmbudo(sp: FiltrosClientesDeModulo, operable?: OperableDeModulo): boolean {
+  return sp.vista === "embudo" && Boolean(operable?.etapa && operable.pluginDeEtapa);
+}
 
 /**
  * Lo que vuelve operable la lista de un módulo (HU-CRM-17): pestañas con contador por una opción del
@@ -88,13 +102,22 @@ export function consultaClientesDeModulo(
   const qs = new URLSearchParams({ agente });
   if (sp.q?.trim()) qs.set("q", sp.q.trim());
   if (operable) {
-    for (const f of filtrosDePacks(sp.filtro)) qs.append("filtro", f);
+    // En el tablero las columnas son las etapas: la etapa de la URL no filtra, y esta consulta solo trae
+    // los contadores y las sumas (una fila basta); las tarjetas de cada columna se piden aparte.
+    const embudo = pideEmbudo(sp, operable);
+    const filtros = embudo && operable.etapa ? filtrosCon(sp.filtro, operable.etapa, "") : filtrosDePacks(sp.filtro);
+    for (const f of filtros) qs.append("filtro", f);
     const orden = operable.seguimiento
       ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
       : ordenValido(sp.orden);
     if (orden && orden !== "alta") qs.set("orden", orden);
     if (operable.etapa) qs.append("facetas", operable.etapa);
     if (operable.seguimiento) qs.append("facetas", operable.seguimiento);
+    if (embudo) {
+      qs.set("resumen", "valor");
+      qs.set("page_size", "1");
+      return qs;
+    }
   }
   if (sp.page) qs.set("page", sp.page);
   return qs;
@@ -129,6 +152,9 @@ export async function ClientesDeModulo({
   operable?: OperableDeModulo;
 }) {
   const qs = consultaClientesDeModulo(agente, sp, operable);
+  const embudoPedido = pideEmbudo(sp, operable);
+  // En el tablero la etapa de la URL no filtra: las columnas ya son las etapas.
+  const filtroSp = embudoPedido && operable?.etapa ? filtrosCon(sp.filtro, operable.etapa, "") : sp.filtro;
   const [res, me, zona] = await Promise.all([
     apiFetch<LeadsResponse>(`/admin/leads?${qs.toString()}`),
     operable ? apiFetch<Me>("/admin/me") : null,
@@ -149,29 +175,48 @@ export async function ClientesDeModulo({
   const filtrosEnSelect = (filters ?? []).filter(
     (f) => operable?.filtros?.includes(f.key) || (f.key === operable?.etapa && !etapaComoPestanas),
   );
-  const etapaActual = operable?.etapa ? valorDeFiltro(sp.filtro, operable.etapa) : "";
+  const etapaActual = operable?.etapa ? valorDeFiltro(filtroSp, operable.etapa) : "";
 
   // — Seguimiento (HU-CRM-21): pestañas con contador cuando el backend trae el filtro y sus contadores —
   const filtroDeSeguimiento = operable?.seguimiento ? filters?.find((f) => f.key === operable.seguimiento) : undefined;
   const facetaDeSeguimiento = operable?.seguimiento ? facetas?.find((f) => f.key === operable.seguimiento) : undefined;
   const conSeguimiento = Boolean(filtroDeSeguimiento && facetaDeSeguimiento);
-  const seguimientoActual = operable?.seguimiento ? valorDeFiltro(sp.filtro, operable.seguimiento) : "";
+  const seguimientoActual = operable?.seguimiento ? valorDeFiltro(filtroSp, operable.seguimiento) : "";
   const filtroDeValor = operable?.valor ? filters?.find((f) => f.key === operable.valor) : undefined;
   const motivosDePerdida = motivosParaElegir(
     operable?.motivoDePerdida ? filters?.find((f) => f.key === operable.motivoDePerdida)?.options : undefined,
   );
   const ordenActual =
     (operable?.seguimiento
-      ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
+      ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(filtroSp), operable.seguimiento)
       : ordenValido(sp.orden)) ?? "alta";
 
-  const hrefCon = (cambios: { q?: string | null; filtro?: string[]; orden?: string | null }) => {
+  // — Tablero de embudo (HU-CRM-24): solo con contadores de etapa; sin ellos (backend viejo) se queda la lista —
+  const modoEmbudo = embudoPedido && etapaComoPestanas;
+  const puedeVerEmbudo = Boolean(operable?.pluginDeEtapa) && etapaComoPestanas;
+  const ordenDelTablero = ordenActual === "alta" ? undefined : ordenActual;
+  const columnasDeEmbudo: ColumnaDeEmbudo[] =
+    modoEmbudo && filtroDeEtapa && operable?.etapa
+      ? await columnasDelTablero({
+          agente,
+          q: sp.q,
+          filtros: filtroSp,
+          orden: ordenDelTablero,
+          etapa: operable.etapa,
+          filtro: filtroDeEtapa,
+          faceta,
+        })
+      : [];
+  const sinLeadDeVenta = faceta?.sin_valor ?? 0;
+
+  const hrefCon = (cambios: { q?: string | null; filtro?: string[]; orden?: string | null; vista?: "lista" | "embudo" }) => {
     const next = new URLSearchParams();
     const q = cambios.q === undefined ? sp.q?.trim() : cambios.q;
     if (q) next.set("q", q);
-    for (const f of cambios.filtro ?? filtrosDePacks(sp.filtro)) next.append("filtro", f);
+    for (const f of cambios.filtro ?? filtrosDePacks(filtroSp)) next.append("filtro", f);
     const orden = cambios.orden === undefined ? ordenValido(sp.orden) : cambios.orden;
     if (orden && orden !== "alta") next.set("orden", orden);
+    if ((cambios.vista ?? (embudoPedido ? "embudo" : "lista")) === "embudo") next.set("vista", "embudo");
     return `${basePath}${next.size ? `?${next.toString()}` : ""}`;
   };
 
@@ -182,14 +227,14 @@ export async function ClientesDeModulo({
       chips.push({ clave: "q", texto: `Búsqueda: ${sp.q.trim()}`, quitarLabel: "Quitar la búsqueda", href: hrefCon({ q: null }) });
     }
     for (const f of filters ?? []) {
-      const valor = valorDeFiltro(sp.filtro, f.key);
+      const valor = valorDeFiltro(filtroSp, f.key);
       if (!valor) continue;
       const opcion = f.options.find((o) => o.value === valor)?.label ?? valor;
       chips.push({
         clave: f.key,
         texto: `${f.label}: ${opcion}`,
         quitarLabel: `Quitar el filtro ${f.label}: ${opcion}`,
-        href: hrefCon({ filtro: filtrosCon(sp.filtro, f.key, "") }),
+        href: hrefCon({ filtro: filtrosCon(filtroSp, f.key, "") }),
       });
     }
   }
@@ -350,12 +395,13 @@ export async function ClientesDeModulo({
   const csv = new URLSearchParams({ agente });
   if (operable) {
     if (sp.q?.trim()) csv.set("q", sp.q.trim());
-    for (const f of filtrosDePacks(sp.filtro)) csv.append("filtro", f);
+    for (const f of filtrosDePacks(filtroSp)) csv.append("filtro", f);
   }
   const csvTruncado = Boolean(operable) && res.ok && total > MAX_FILAS_CSV;
 
   const filtrosForm = (
     <form method="get" action={basePath} className="flex flex-wrap items-end gap-3">
+      {modoEmbudo && <input type="hidden" name="vista" value="embudo" />}
       {/* La etapa elegida en las pestañas no es un campo del formulario: se conserva al filtrar. */}
       {etapaComoPestanas && etapaActual && operable?.etapa && (
         <input type="hidden" name="filtro" value={`${operable.etapa}:${etapaActual}`} />
@@ -368,7 +414,7 @@ export async function ClientesDeModulo({
       )}
       {operable &&
         filtrosEnSelect.map((f) => {
-          const valor = valorDeFiltro(sp.filtro, f.key);
+          const valor = valorDeFiltro(filtroSp, f.key);
           return (
             <Field key={f.key} label={f.label} htmlFor={`filtro-${f.key}`} className="w-44">
               <Select id={`filtro-${f.key}`} name="filtro" defaultValue={valor ? `${f.key}:${valor}` : ""}>
@@ -412,7 +458,7 @@ export async function ClientesDeModulo({
   const tabla = (
     <DataTable
       columns={columns}
-      rows={items}
+      rows={modoEmbudo ? [] : items}
       getRowKey={(lead) => lead.id}
       emptyTitle={operable && hayFiltros ? "Ningún cliente coincide" : "Sin clientes todavía"}
       emptyDescription={
@@ -454,12 +500,23 @@ export async function ClientesDeModulo({
       }}
       filters={filtrosForm}
     >
-      {operable && etapaComoPestanas && filtroDeEtapa && (
+      {puedeVerEmbudo && (
+        <TabLinks
+          label="Vista de los clientes"
+          items={[
+            { href: hrefCon({ vista: "lista" }), label: "Lista" },
+            { href: hrefCon({ vista: "embudo" }), label: "Embudo" },
+          ]}
+          current={hrefCon({ vista: modoEmbudo ? "embudo" : "lista" })}
+        />
+      )}
+
+      {operable && etapaComoPestanas && filtroDeEtapa && !modoEmbudo && (
         <EtapasConContador
           filtro={filtroDeEtapa}
           faceta={faceta}
           etapaActual={etapaActual}
-          hrefDeEtapa={(valor) => hrefCon({ filtro: filtrosCon(sp.filtro, filtroDeEtapa.key, valor) })}
+          hrefDeEtapa={(valor) => hrefCon({ filtro: filtrosCon(filtroSp, filtroDeEtapa.key, valor) })}
         />
       )}
 
@@ -468,7 +525,7 @@ export async function ClientesDeModulo({
           filtro={filtroDeSeguimiento}
           faceta={facetaDeSeguimiento}
           actual={seguimientoActual}
-          hrefDe={(valor) => hrefCon({ filtro: filtrosCon(sp.filtro, filtroDeSeguimiento.key, valor) })}
+          hrefDe={(valor) => hrefCon({ filtro: filtrosCon(filtroSp, filtroDeSeguimiento.key, valor) })}
         />
       )}
 
@@ -496,7 +553,25 @@ export async function ClientesDeModulo({
         </p>
       )}
 
-      {operable && hayFilas ? (
+      {modoEmbudo && sinLeadDeVenta > 0 && (
+        <p className="text-xs text-text-soft">
+          {formatNumber(sinLeadDeVenta)} {sinLeadDeVenta === 1 ? "cliente aún no tiene" : "clientes aún no tienen"} lead de
+          venta y no aparecen en ninguna etapa.
+        </p>
+      )}
+
+      {modoEmbudo && operable?.etapa && operable.pluginDeEtapa && columnasDeEmbudo.some((c) => c.total > 0) ? (
+        <TableroEmbudo
+          key={JSON.stringify(columnasDeEmbudo.map((c) => [c.value, c.total, c.tarjetas[0]?.id ?? ""]))}
+          titulo={titulo}
+          columnas={columnasDeEmbudo}
+          pluginId={operable.pluginDeEtapa}
+          clave={operable.etapa}
+          motivos={motivosDePerdida}
+          puedeMover={puedeCambiarEtapa}
+          consulta={{ agente, q: sp.q?.trim() || undefined, filtros: filtrosDePacks(filtroSp), orden: ordenDelTablero }}
+        />
+      ) : operable && hayFilas && !modoEmbudo ? (
         <>
           <div className="hidden md:block">{tabla}</div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label={titulo}>
@@ -523,7 +598,7 @@ export async function ClientesDeModulo({
         tabla
       )}
 
-      {res.ok && (
+      {res.ok && !modoEmbudo && (
         <Pagination
           page={page}
           hasMore={has_more}
@@ -586,4 +661,47 @@ function SeguimientoConContador({
   const items = pestanas.map((p) => ({ href: hrefDe(p.value), label: p.label, count: p.count }));
   const hrefActual = items[Math.max(0, pestanas.findIndex((p) => p.value === actual))].href;
   return <TabLinks label="Clientes por seguimiento" items={items} current={hrefActual} />;
+}
+
+/**
+ * Las columnas del tablero (HU-CRM-24): para cada etapa del pack, su cantidad y su suma (de los contadores)
+ * y sus primeras tarjetas. Las páginas se piden en paralelo y una columna que falla no tumba el tablero.
+ */
+async function columnasDelTablero({
+  agente,
+  q,
+  filtros,
+  orden,
+  etapa,
+  filtro,
+  faceta,
+}: {
+  agente: string;
+  q?: string;
+  filtros: string | string[] | undefined;
+  orden?: string;
+  etapa: string;
+  filtro: LeadFilter;
+  faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
+}): Promise<ColumnaDeEmbudo[]> {
+  const paginas = await Promise.all(
+    filtro.options.map((o) =>
+      apiFetch<LeadsResponse>(
+        `/admin/leads?${consultaDeColumna({ agente, q, filtros, orden, etapa, valor: o.value }).toString()}`,
+      ),
+    ),
+  );
+  return filtro.options.map((o, i) => {
+    const pagina = paginas[i];
+    return {
+      value: o.value,
+      label: o.label,
+      total: faceta?.counts[o.value] ?? (pagina.ok ? pagina.data.total : 0),
+      suma: faceta?.sumas ? (faceta.sumas[o.value] ?? 0) : null,
+      tarjetas: pagina.ok ? pagina.data.items.map((fila) => tarjetaDeFila(fila, agente)) : [],
+      entraron: [],
+      hayMas: pagina.ok && pagina.data.has_more,
+      error: pagina.ok ? undefined : `No se pudo cargar la etapa: ${pagina.error}`,
+    };
+  });
 }
