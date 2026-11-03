@@ -17,6 +17,15 @@ export interface Banderas {
 }
 
 export const RUNTIMES: readonly Runtime[] = ["legacy", "v3"];
+/**
+ * Runtimes que el panel ofrece para un negocio. El Agent OS (v3) es el único motor: «legacy» solo
+ * aparece mientras el negocio todavía está ahí, para poder pasarlo a v3. Volver a legacy es un
+ * rollback de emergencia por consola (`agent-core db migrar-a-v3 --volver`) y la API lo rechaza.
+ */
+export function runtimesOfrecidos(actual: Runtime): readonly Runtime[] {
+  return actual === "legacy" ? RUNTIMES : ["v3"];
+}
+
 export const RUTEOS: readonly Ruteo[] = ["off", "shadow", "active"];
 
 export const ETIQUETA_RUNTIME: Record<Runtime, string> = {
