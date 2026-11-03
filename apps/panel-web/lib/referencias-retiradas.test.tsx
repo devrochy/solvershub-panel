@@ -293,6 +293,7 @@ describe("editor de agentes con referencias retiradas", () => {
     blocks_publish: true,
     notices: [
       { scope: "draft", field: "procedures[1].id", kind: "procedure", name: "pack_commerce.informar_plan", message: "«Informar plan» ya no existe: quítalo para publicar." },
+      { scope: "draft", field: "tools[0].tool", kind: "action", name: "informar_plan", message: "La acción «Informar plan» ya no existe." },
       { scope: "published", field: "procedures[0].id", kind: "procedure", name: "x", message: "Otra cosa de la versión publicada." },
     ],
   });
@@ -304,6 +305,8 @@ describe("editor de agentes con referencias retiradas", () => {
     const bloque = screen.getByRole("list", { name: "Superpoderes que no corresponden a este agente" });
     expect(within(bloque).getByText("Informar plan")).toBeTruthy();
     expect(within(bloque).getByText("«Informar plan» ya no existe: quítalo para publicar.")).toBeTruthy();
+    // Una acción retirada no tiene control propio: se lista en el paso, además del aviso de arriba.
+    expect(screen.getAllByText("La acción «Informar plan» ya no existe.")).toHaveLength(2);
     // El aviso de la versión publicada vive solo arriba, no pegado a un superpoder del borrador.
     expect(screen.getAllByText("Otra cosa de la versión publicada.")).toHaveLength(1);
   });

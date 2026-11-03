@@ -19,6 +19,9 @@
 //   409 porque «alguien» cambió la calidez en medio · ASISTENTE_422=1: la vista previa rechaza la pregunta de emojis.
 //   EMBUDO=1 (Ventas › Clientes › Embudo, HU-CRM-24): 130 leads repartidos en cinco etapas con contadores y sumas de valor;
 //   mover una tarjeta cambia la etapa en memoria · EMBUDO=rechazo (el servidor rechaza todo cambio de etapa)
+//   RETIRADAS=1 (HU-AOS-59): el negocio de MASTER=1 y el agente Ventas nombran acciones y procedimientos retirados: aviso del
+//   master (Tenants › Agent OS), aviso del dueño en la lista de agentes y en el editor (/agentes/<id>/editar); publicar
+//   responde el 422 invalid_spec con error.fields. RETIRADAS=limpio: los mismos endpoints, sin nada retirado.
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -119,12 +122,76 @@ if (process.env.MASTER === "1") {
     total: 2,
   };
 }
+
+// RETIRADAS=1|limpio (HU-AOS-59): referencias retiradas en agentes y releases, solo lectura. Reproduce el caso del incidente de
+// test: una versión de Ventas nombra `informar_plan` y el procedimiento `pack_commerce.contratar_plan` que el código retiró.
+const VENTAS_ID = "00000000-0000-4000-8000-000000000002";
+const retiradas = process.env.RETIRADAS;
+const MSG_ACCION = "La acción «Informar plan» ya no existe. Quítala de las acciones del agente y vuelve a publicar.";
+const MSG_PROC = "El superpoder «Contratar plan» se reemplazó por uno nuevo. Quita el viejo y marca el nuevo en el paso Superpoderes.";
+const filaRetirada = (extra) => ({ scope: "version", agent: "ventas", version: 3, path: "tools[3].tool", code: "accion_inexistente", kind: "action", name: "informar_plan", destination: "quitar", message: MSG_ACCION, where: ["conexión …c1 release #4"], ...extra });
+const reporteRetiradas = (tenantId) => retiradas === "limpio"
+  ? { tenant_id: tenantId, slug: "cafe-aurora", affected: false, agents_affected: 0, releases_affected: 0, rows: [], drafts: [], affected_connections: [], aside: [], error: null }
+  : {
+      tenant_id: tenantId, slug: "cafe-aurora", affected: true, agents_affected: 2, releases_affected: 1,
+      rows: [
+        filaRetirada(),
+        filaRetirada({ path: "procedures[1].id", code: "procedimiento_inexistente", kind: "procedure", name: "pack_commerce.contratar_plan", destination: "reemplazar por pack_subscriptions.contratar_plan ^2.0", message: MSG_PROC, where: [] }),
+        filaRetirada({ agent: "agenda", version: 2, path: "tools[0].tool", message: "La acción «Informar plan» ya no existe. Quítala de las acciones del agente y vuelve a publicar.", where: [] }),
+        filaRetirada({ scope: "release", version: null, path: "manifest.procedures[0]", code: "procedimiento_inexistente", kind: "procedure", name: "pack_commerce.contratar_plan", message: MSG_PROC, where: ["conexión …c1 release #4"] }),
+      ],
+      drafts: [filaRetirada({ scope: "draft", version: null, path: "tools[3].tool", where: [], message: "En el borrador de Ventas sigue la acción «Informar plan», que ya no existe." })],
+      affected_connections: [{ connection_id: "00000000-0000-4000-8000-0000000000c1", release: 4 }],
+      aside: [
+        { connection_id: "00000000-0000-4000-8000-0000000000d1", reason: "borrada", release: 2, rows: [filaRetirada({ scope: "release", version: null, where: [], message: "Una release vieja de una conexión borrada nombra «Informar plan»." })] },
+        { connection_id: "00000000-0000-4000-8000-0000000000d2", reason: "playground", release: 3, rows: [filaRetirada({ scope: "release", version: null, where: [], message: "El playground todavía nombra «Informar plan»." })] },
+      ],
+      error: null,
+    };
+const avisoVentas = () => retiradas === "limpio"
+  ? { agent_id: VENTAS_ID, key: "ventas", name: "Ventas", published_version: 3, in_use: false, blocks_publish: false, notices: [] }
+  : {
+      agent_id: VENTAS_ID, key: "ventas", name: "Ventas", published_version: 3, in_use: true, blocks_publish: true,
+      notices: [
+        { scope: "draft", field: "tools[3].tool", kind: "action", name: "informar_plan", message: MSG_ACCION },
+        { scope: "draft", field: "procedures[1].id", kind: "procedure", name: "pack_commerce.contratar_plan", message: MSG_PROC },
+        { scope: "in_use", field: "procedures[1].id", kind: "procedure", name: "pack_commerce.contratar_plan", message: "En el chat web de tu negocio, tus clientes siguen hablando con una versión que nombra «Contratar plan», que se reemplazó." },
+      ],
+    };
+if (retiradas) {
+  respuestas["/admin/agents/retired-references"] = retiradas === "limpio" ? { affected_agents: 0, agents: [] } : { affected_agents: 1, agents: [avisoVentas()] };
+  respuestas[`/admin/agents/${VENTAS_ID}/retired-references`] = avisoVentas();
+  respuestas[`/admin/agents/${VENTAS_ID}`] = {
+    id: VENTAS_ID, key: "ventas", kind: "specialist", contract: "agentspec/3", name: "Ventas", description: "Atiende pedidos y planes.",
+    status: "active", latest_version: 3, created_at: "2026-10-20T12:00:00Z",
+    draft: {
+      lock_version: 1, base_version_id: null, updated_at: "2026-11-03T12:00:00Z",
+      content: {
+        contract: "agentspec/3", description: "Ventas",
+        persona: { inheritConnectionVoice: true, maxLength: 500, forbiddenPhrases: [] },
+        model: { primary: "deepseek-flash", temperature: 0.3 },
+        procedures: [{ id: "pack_commerce.tomar_pedido", version: "^1.0" }, { id: "pack_commerce.contratar_plan", version: "^1.0" }],
+        memory: { shortTermTurns: 30, readScopes: ["customer", "connection", "tenant"], writeNamespaces: [] },
+        tools: [{ tool: "buscar_producto", enabled: true }, { tool: "crear_pedido", enabled: true }, { tool: "cotizar", enabled: true }, { tool: "informar_plan", enabled: true }],
+      },
+    },
+    versions: [],
+  };
+  const pagina = (items) => ({ items, total: items.length, page: 1, page_size: 100, has_more: false });
+  respuestas["/admin/agent-superpowers"] = pagina([
+    { id: "pack_commerce.tomar_pedido", version: "1.2.0", skill: "pack_commerce", title: "Tomar un pedido", description: "Arma el pedido con el cliente.", phrases: ["quiero comprar", "hacer un pedido", "me lo vendes"] },
+  ]);
+  respuestas["/admin/agent-models"] = { items: [{ provider: "deepseek", model: "deepseek-flash", input_usd_per_mtok: 0.14, output_usd_per_mtok: 0.28, selectable: true, retired: false }], total: 1, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
+  respuestas[`/admin/agents/${VENTAS_ID}/publish-targets`] = pagina([{ connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: true, covers_skills: true, missing_skills: [], active_release_id: null }]);
+  respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
+}
 const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
 const avisosPorCanal = new Map();
 function plataforma(metodo, ruta, cuerpo) {
-  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados)$/.exec(ruta);
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados|retired-references)$/.exec(ruta);
   if (!m) return undefined;
+  if (m[2] === "retired-references") return retiradas ? [200, reporteRetiradas(m[1])] : [404, { error: { message: "Sin fixture" } }];
   if (m[2] === "avisos-por-canal") {
     if (process.env.PLATAFORMA === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
     if (metodo === "PUT") avisosPorCanal.set(m[1], cuerpo.habilitada === true);
@@ -559,6 +626,11 @@ createServer(async (req, res) => {
     const [estado, cuerpo] = opciones(req.method ?? "GET", ruta.split("/").slice(2), texto ? JSON.parse(texto) : {});
     res.statusCode = estado;
     res.end(cuerpo === null ? undefined : JSON.stringify(cuerpo));
+    return;
+  }
+  if (retiradas === "1" && req.method === "POST" && ruta === `/admin/agents/${VENTAS_ID}/publish`) {
+    res.statusCode = 422;
+    res.end(JSON.stringify({ error: { code: "invalid_spec", message: "Tu agente nombra 2 cosas que ya no existen. Revisa los textos junto a cada control.", fields: { "tools[3].tool": MSG_ACCION, "procedures[1].id": MSG_PROC }, details: { retired_references: [{ field: "tools[3].tool", message: MSG_ACCION }, { field: "procedures[1].id", message: MSG_PROC }] } } }));
     return;
   }
   if (ruta === "/admin/playground" || ruta.startsWith("/admin/playground/")) {

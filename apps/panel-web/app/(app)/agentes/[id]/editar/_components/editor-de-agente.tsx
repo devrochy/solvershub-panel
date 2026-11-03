@@ -110,10 +110,8 @@ export function EditorDeAgente({
   const contenido = useMemo(() => contenidoDesdeEstado(base, estado, superpoderes), [base, estado, superpoderes]);
   // Lo retirado que está en el borrador se señala junto al superpoder (los índices `procedures[i]` son los del
   // contenido guardado, igual que los errores de la API); lo de versiones publicadas va solo en el aviso.
-  const avisoPorPoder = useMemo(
-    () => erroresPorSuperpoder(avisosDelBorrador(retiradas?.notices ?? []), base),
-    [retiradas, base],
-  );
+  const avisosDeBorrador = useMemo(() => avisosDelBorrador(retiradas?.notices ?? []), [retiradas]);
+  const avisoPorPoder = useMemo(() => erroresPorSuperpoder(avisosDeBorrador, base), [avisosDeBorrador, base]);
   const porPoder = useMemo(
     () => ({ ...avisoPorPoder, ...erroresPorSuperpoder(errores, contenido) }),
     [avisoPorPoder, errores, contenido],
@@ -309,7 +307,9 @@ export function EditorDeAgente({
       <PasoSuperpoderes
         estado={estado}
         cambiar={cambiar}
-        errores={errores}
+        // Las acciones retiradas del borrador no tienen un control propio: se listan en este paso, junto a los
+        // errores de la API de esos mismos campos.
+        errores={{ ...avisosDeBorrador, ...errores }}
         erroresPorPoder={{ ...porPoder, ...avisosPorPoder }}
         registrarPendiente={pendientes.registrar}
         catalogo={superpoderes}
