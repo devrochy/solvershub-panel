@@ -38,6 +38,7 @@ import {
   ScrollText,
   Smartphone,
   Tags,
+  Timer,
   Wallet,
 } from "lucide-react";
 
@@ -234,6 +235,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "tenants", label: "App de Meta", href: "/plataforma/meta", icon: ShieldCheck, ready: true },
         { section: "tenants", label: "Embedded Signup", href: "/plataforma/meta/embedded-signup", icon: LogIn, ready: true },
       ]),
+      // Crons (ADR-0183): catálogo por módulo, historial, ejecución manual y horario. Solo master.
+      { section: "tenants", label: "Crons", href: "/plataforma/crons", icon: Timer, ready: true, soloMaster: true },
       // Centro de pruebas (SPEC-30): sección global `qa`, de master y testers (solo en test).
       { section: "qa", label: "Pruebas", href: "/pruebas", icon: FlaskConical, ready: true },
     ],
