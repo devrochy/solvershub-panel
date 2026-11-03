@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { InputNumero } from "@/components/ui/input-numero";
+import type { CatalogoConfig } from "@/lib/api/types";
+import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
@@ -14,7 +16,17 @@ import { useAction } from "@/lib/use-action";
 type MemorySettings = { short_term_turns: number; rag_top_k: number; rag_min_score: number };
 
 /** Memoria del agente: turnos de contexto y búsqueda de conocimiento (RAG). */
-export function MemoryForm({ memory, puedeEditar = true }: { memory: MemorySettings; puedeEditar?: boolean }) {
+export function MemoryForm({
+  memory,
+  catalogo = null,
+  puedeEditar = true,
+}: {
+  memory: MemorySettings;
+  catalogo?: CatalogoConfig | null;
+  puedeEditar?: boolean;
+}) {
+  const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
+  const ayuda = (clave: string, respaldo: string) => ayudaDelCatalogo(indice, clave, respaldo);
   const [values, setValues] = useState(memory);
   const [guardado, setGuardado] = useState(memory);
   const { run, pending } = useAction();
@@ -45,7 +57,7 @@ export function MemoryForm({ memory, puedeEditar = true }: { memory: MemorySetti
           <Field
             label="Turnos de contexto (memoria corta)"
             htmlFor="short_term_turns"
-            help="Cuántos mensajes recientes ve el agente. 1–200."
+            help={ayuda("short_term_turns", "Cuántos mensajes recientes ve el agente. 1–200.")}
           >
             <InputNumero
               id="short_term_turns"
@@ -60,7 +72,7 @@ export function MemoryForm({ memory, puedeEditar = true }: { memory: MemorySetti
             <Field
               label="Conocimiento a buscar (top K)"
               htmlFor="rag_top_k"
-              help="Cuántos fragmentos de tu conocimiento y de conversaciones pasadas se le pasan al asistente en cada respuesta. 0 = no busca nada; de 1 a 20."
+              help={ayuda("rag_top_k", "Cuántos fragmentos de tu conocimiento y de conversaciones pasadas se le pasan al asistente en cada respuesta. 0 = no busca nada; de 1 a 20.")}
             >
               <InputNumero
                 id="rag_top_k"
@@ -76,7 +88,7 @@ export function MemoryForm({ memory, puedeEditar = true }: { memory: MemorySetti
               help={
                 sinRecall
                   ? "No aplica mientras el conocimiento a buscar sea 0: sube ese valor para usarla."
-                  : "Qué tan parecido debe ser un fragmento a la pregunta para usarse. Más cerca de 1, solo entra lo muy relacionado; más cerca de 0, entra casi todo."
+                  : ayuda("rag_min_score", "Qué tan parecido debe ser un fragmento a la pregunta para usarse. Más cerca de 1, solo entra lo muy relacionado; más cerca de 0, entra casi todo.")
               }
             >
               <InputNumero

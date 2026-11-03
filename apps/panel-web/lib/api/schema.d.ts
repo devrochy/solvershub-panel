@@ -9446,6 +9446,11 @@ export interface components {
              * @default []
              */
             asistente: components["schemas"]["Guion"][];
+            /**
+             * Aos Runtime
+             * @default legacy
+             */
+            aos_runtime: string;
         };
         /** CatalogoDeMensajesOut */
         CatalogoDeMensajesOut: {
@@ -12017,7 +12022,7 @@ export interface components {
              * Grupo
              * @enum {string}
              */
-            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os";
+            grupo: "identidad" | "voz" | "respuesta" | "escalamiento" | "horario" | "calidad" | "bajas" | "whatsapp_web" | "coordinador" | "agent_os" | "cerebro" | "memoria" | "chat_web" | "multimedia";
             /**
              * Tipo
              * @enum {string}

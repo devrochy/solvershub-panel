@@ -56,7 +56,7 @@ const mensaje: OpcionConfig = {
 
 describe("catálogo de configuración", () => {
   it("indexa por clave y tolera un catálogo ausente", () => {
-    const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje], asistente: [] };
+    const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje], asistente: [], aos_runtime: "legacy" };
     expect(indexarCatalogo(catalogo).get("debounce_mode")?.etiqueta).toBe("Velocidad de respuesta");
     expect(indexarCatalogo(null).size).toBe(0);
   });
@@ -113,7 +113,7 @@ describe("catálogo de configuración", () => {
 });
 
 describe("pantalla de Identidad", () => {
-  const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje, mensaje], asistente: [] };
+  const catalogo: CatalogoConfig = { version: "x", opciones: [velocidad, puntaje, mensaje], asistente: [], aos_runtime: "legacy" };
 
   it("solo lista las opciones del grupo que la pantalla puede mostrar", () => {
     const valores = { debounce_mode: "natural", difficulty_score_threshold: 3 };
@@ -125,6 +125,7 @@ describe("pantalla de Identidad", () => {
     expect(opcionesDelGrupo(catalogo, "horario", valores)).toEqual([]);
     // La palabra de baja y la zona del horario tienen su propia pantalla o se unifican.
     const propias: CatalogoConfig = {
+      aos_runtime: "legacy",
       version: "x",
       opciones: [
         { ...velocidad, clave: "palabras_de_baja", grupo: "bajas" },

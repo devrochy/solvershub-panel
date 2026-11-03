@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +10,22 @@ import { Field } from "@/components/ui/field";
 import { InputPassword } from "@/components/ui/input-password";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { WebChatSettings } from "@/lib/api/types";
+import type { CatalogoConfig, WebChatSettings } from "@/lib/api/types";
+import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { useAction } from "@/lib/use-action";
 
 /** Chat web embebible: habilita el widget, dominios permitidos y Turnstile. */
-export function WebChatForm({ webChat, puedeEditar = true }: { webChat: WebChatSettings; puedeEditar?: boolean }) {
+export function WebChatForm({
+  webChat,
+  catalogo = null,
+  puedeEditar = true,
+}: {
+  webChat: WebChatSettings;
+  catalogo?: CatalogoConfig | null;
+  puedeEditar?: boolean;
+}) {
+  const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
   const [enabled, setEnabled] = useState(webChat.enabled);
   const [originsText, setOriginsText] = useState(webChat.allowed_origins.join("\n"));
   // Lo último guardado, para saber si hay cambios sin guardar.
@@ -86,7 +96,7 @@ export function WebChatForm({ webChat, puedeEditar = true }: { webChat: WebChatS
           <Field
             label="Dominios permitidos"
             htmlFor="allowed_origins"
-            help="Uno por línea, con esquema (https://tunegocio.com). Solo estos dominios pueden incrustar el chat."
+            help={ayudaDelCatalogo(indice, "web_chat_allowed_origins", "Uno por línea, con esquema (https://tunegocio.com). Solo estos dominios pueden incrustar el chat.")}
           >
             <Textarea
               id="allowed_origins"
