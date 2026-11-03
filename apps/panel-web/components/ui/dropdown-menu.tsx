@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
+import { ExternalLink } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -90,6 +91,44 @@ export function DropdownMenuLinkItem({
       >
         {children}
       </Link>
+    </Menu.Item>
+  );
+}
+
+/**
+ * Ítem que abre un destino en una pestaña nueva (documentación, ayuda). Es un `<a>` real con
+ * `rel="noopener noreferrer"`; el aviso «se abre en una pestaña nueva» va como texto solo para
+ * lectores de pantalla y como `title` para quien pasa el puntero. `onClick` cierra el menú.
+ */
+export function DropdownMenuExternalLinkItem({
+  href,
+  children,
+  avisoNuevaPestana,
+  onClick,
+}: {
+  href: string;
+  children: ReactNode;
+  /** Texto accesible y tooltip: «se abre en una pestaña nueva». */
+  avisoNuevaPestana: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Menu.Item asChild>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={avisoNuevaPestana}
+        onClick={onClick}
+        className={cn(
+          "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-body outline-none transition-colors",
+          "data-[highlighted]:bg-hover",
+        )}
+      >
+        {children}
+        <ExternalLink aria-hidden className="ml-auto h-3.5 w-3.5 text-text-soft" />
+        <span className="sr-only">{" "}({avisoNuevaPestana})</span>
+      </a>
     </Menu.Item>
   );
 }
