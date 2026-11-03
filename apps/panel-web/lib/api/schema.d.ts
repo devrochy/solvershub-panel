@@ -5602,6 +5602,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/crons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Crons */
+        get: operations["list_crons_api_v1_admin_platform_crons_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Crons Summary */
+        get: operations["crons_summary_api_v1_admin_platform_crons_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Cron */
+        get: operations["get_cron_api_v1_admin_platform_crons__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cron Runs */
+        get: operations["list_cron_runs_api_v1_admin_platform_crons__name__runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Cron Now
+         * @description Encola una ejecución manual. Ignora la pausa; no se solapa con otra en curso (409).
+         */
+        post: operations["run_cron_now_api_v1_admin_platform_crons__name__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause Cron */
+        post: operations["pause_cron_api_v1_admin_platform_crons__name__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Cron */
+        post: operations["resume_cron_api_v1_admin_platform_crons__name__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/crons/{name}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reschedule Cron
+         * @description Cambia el horario (5 campos, UTC). El beat lo aplica en ~30 s, sin reiniciar.
+         */
+        put: operations["reschedule_cron_api_v1_admin_platform_crons__name__schedule_put"];
+        post?: never;
+        /**
+         * Reset Cron Schedule
+         * @description Vuelve al horario por defecto del código.
+         */
+        delete: operations["reset_cron_schedule_api_v1_admin_platform_crons__name__schedule_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/qa/catalog": {
         parameters: {
             query?: never;
@@ -12367,6 +12513,19 @@ export interface components {
             /** Has More */
             has_more: boolean;
         };
+        /** Page[CronRunOut] */
+        Page_CronRunOut_: {
+            /** Items */
+            items: components["schemas"]["CronRunOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
         /** Page[EscalationItem] */
         Page_EscalationItem_: {
             /** Items */
@@ -17847,6 +18006,153 @@ export interface components {
              * @default false
              */
             by_agent_truncated: boolean;
+        };
+        /** CronList */
+        CronList: {
+            /** Items */
+            items: components["schemas"]["CronOut"][];
+            /**
+             * Modules
+             * @description Módulos en el orden de la pantalla.
+             */
+            modules: string[];
+        };
+        /** CronModuleSummary */
+        CronModuleSummary: {
+            /** Module */
+            module: string;
+            /** Total */
+            total: number;
+            /** Pausados */
+            pausados: number;
+            /** Con Fallo */
+            con_fallo: number;
+        };
+        /** CronOut */
+        CronOut: {
+            /** Name */
+            name: string;
+            /** Module */
+            module: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /**
+             * Default Schedule
+             * @description Expresión de 5 campos (UTC) del código.
+             */
+            default_schedule: string | null;
+            /**
+             * Interval S
+             * @description Segundos, en los crons de intervalo fijo.
+             */
+            interval_s: number | null;
+            /**
+             * Schedule
+             * @description Horario vigente: el reprogramado o el por defecto.
+             */
+            schedule: string | null;
+            /** Overridden */
+            overridden: boolean;
+            /** Paused */
+            paused: boolean;
+            /** Critical */
+            critical: boolean;
+            /** Sensitive */
+            sensitive: boolean;
+            /** Reprogramable */
+            reprogramable: boolean;
+            /**
+             * Record Success
+             * @description False: no se guarda cada ejecución exitosa.
+             */
+            record_success: boolean;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "paused" | "running" | "failing" | "ok" | "never" | "untracked";
+            /** Next Run At */
+            next_run_at: string | null;
+            last_run: components["schemas"]["CronRunOut"] | null;
+            /** Last Success At */
+            last_success_at: string | null;
+            /** Runs 24H */
+            runs_24h: number;
+            /** Failures 24H */
+            failures_24h: number;
+            /**
+             * Acciones
+             * @description Acciones válidas para su estado actual.
+             */
+            acciones: ("run" | "pause" | "resume" | "schedule" | "reset_schedule")[];
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /** CronRunOut */
+        CronRunOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "success" | "failed" | "skipped";
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "scheduled" | "manual";
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Error Class */
+            error_class: string | null;
+            /** Detail */
+            detail: string | null;
+        };
+        /** CronRunQueued */
+        CronRunQueued: {
+            /**
+             * Queued
+             * @default true
+             */
+            queued: boolean;
+            /** Message */
+            message: string;
+        };
+        /** CronScheduleIn */
+        CronScheduleIn: {
+            /**
+             * Schedule
+             * @description Cinco campos: minuto hora día-del-mes mes día-de-la-semana (UTC).
+             */
+            schedule: string;
+        };
+        /** CronSummary */
+        CronSummary: {
+            /** Total */
+            total: number;
+            /** Activos */
+            activos: number;
+            /** Pausados */
+            pausados: number;
+            /** Con Fallo */
+            con_fallo: number;
+            /** Ejecutando */
+            ejecutando: number;
+            /** Modulos */
+            modulos: components["schemas"]["CronModuleSummary"][];
         };
         /** Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post */
         Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
@@ -33401,6 +33707,324 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_crons_api_v1_admin_platform_crons_get: {
+        parameters: {
+            query?: {
+                /** @description Filtra por módulo. */
+                module?: string | null;
+                /** @description Filtra por estado. */
+                estado?: ("paused" | "running" | "failing" | "ok" | "never" | "untracked") | null;
+                /** @description Busca por nombre o etiqueta. */
+                q?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crons_summary_api_v1_admin_platform_crons_summary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cron_api_v1_admin_platform_crons__name__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cron_runs_api_v1_admin_platform_crons__name__runs_get: {
+        parameters: {
+            query?: {
+                status?: ("running" | "success" | "failed" | "skipped") | null;
+                trigger?: ("scheduled" | "manual") | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CronRunOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_cron_now_api_v1_admin_platform_crons__name__run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronRunQueued"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_cron_api_v1_admin_platform_crons__name__pause_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_cron_api_v1_admin_platform_crons__name__resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reschedule_cron_api_v1_admin_platform_crons__name__schedule_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CronScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_cron_schedule_api_v1_admin_platform_crons__name__schedule_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronOut"];
+                };
             };
             /** @description Validation Error */
             422: {

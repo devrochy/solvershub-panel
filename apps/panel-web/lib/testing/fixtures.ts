@@ -13,6 +13,10 @@ import type {
   AgentsOverview,
   AgentTaskPage,
   AvisoDeCargo,
+  Cron,
+  CronEjecucionesPage,
+  CronListado,
+  CronResumen,
   CargosSuscripcionPage,
   CargoSuscripcion,
   CatalogoDeMensajes,
@@ -1319,6 +1323,125 @@ export const avisoDatos: AvisoDatos = {
   version: "abc123def456",
 };
 
+// ----------------------------------------------------------------------------- crons (ADR-0183)
+export const meMaster: Me = { ...me, role: "master" };
+
+export const cronRenovacion: Cron = {
+  name: "core.billing_renovacion",
+  module: "Facturación",
+  label: "Renovación del plan",
+  description: "Cobra la renovación de los planes que vencen.",
+  default_schedule: "0 13 * * *",
+  interval_s: null,
+  schedule: "0 13 * * *",
+  overridden: false,
+  paused: false,
+  critical: false,
+  sensitive: true,
+  reprogramable: true,
+  record_success: true,
+  estado: "failing",
+  next_run_at: "2026-11-03T13:00:00Z",
+  last_run: {
+    id: "run-1",
+    status: "failed",
+    trigger: "scheduled",
+    started_at: "2026-11-02T13:00:00Z",
+    finished_at: "2026-11-02T13:00:02Z",
+    duration_ms: 2100,
+    error_class: "ProgrammingError",
+    detail: null,
+  },
+  last_success_at: "2026-11-01T13:00:00Z",
+  runs_24h: 1,
+  failures_24h: 1,
+  acciones: ["run", "pause", "schedule"],
+  updated_at: null,
+};
+
+export const cronLatido: Cron = {
+  ...cronRenovacion,
+  name: "core.worker_heartbeat",
+  module: "Plataforma y salud",
+  label: "Latido del worker",
+  description: "Marca que el worker está vivo.",
+  default_schedule: "* * * * *",
+  schedule: "* * * * *",
+  sensitive: false,
+  critical: true,
+  record_success: false,
+  estado: "untracked",
+  last_run: null,
+  last_success_at: null,
+  runs_24h: 0,
+  failures_24h: 0,
+  acciones: ["run", "schedule"],
+};
+
+export const cronPausado: Cron = {
+  ...cronRenovacion,
+  name: "pack_cobranza.marcar_mora",
+  module: "Cobranza",
+  label: "Marcar mora",
+  description: "Marca los cobros vencidos.",
+  default_schedule: "0 8 * * *",
+  schedule: "30 9 * * *",
+  overridden: true,
+  paused: true,
+  sensitive: false,
+  estado: "paused",
+  failures_24h: 0,
+  acciones: ["run", "resume", "schedule", "reset_schedule"],
+};
+
+export const cronsListado: CronListado = {
+  items: [cronRenovacion, cronLatido, cronPausado],
+  modules: ["Plataforma y salud", "Facturación", "Cobranza"],
+};
+
+export const cronsResumen: CronResumen = {
+  total: 3,
+  activos: 2,
+  pausados: 1,
+  con_fallo: 1,
+  ejecutando: 0,
+  modulos: [
+    { module: "Facturación", total: 1, pausados: 0, con_fallo: 1 },
+    { module: "Cobranza", total: 1, pausados: 1, con_fallo: 0 },
+    { module: "Plataforma y salud", total: 1, pausados: 0, con_fallo: 0 },
+  ],
+};
+
+export const ejecucionesDeCron: CronEjecucionesPage = {
+  items: [
+    cronRenovacion.last_run!,
+    {
+      id: "run-2",
+      status: "success",
+      trigger: "manual",
+      started_at: "2026-11-01T13:00:00Z",
+      finished_at: "2026-11-01T13:00:01Z",
+      duration_ms: 950,
+      error_class: null,
+      detail: null,
+    },
+    {
+      id: "run-3",
+      status: "skipped",
+      trigger: "scheduled",
+      started_at: "2026-10-31T13:00:00Z",
+      finished_at: "2026-10-31T13:00:00Z",
+      duration_ms: 0,
+      error_class: null,
+      detail: "en_ejecucion",
+    },
+  ],
+  total: 3,
+  page: 1,
+  page_size: 20,
+  has_more: false,
+};
+
 export const RESPUESTAS: Record<string, unknown> = {
   "/admin/datos-cliente/politica": politicaDatosCliente,
   "/admin/datos-cliente/aviso": avisoDatos,
@@ -1367,4 +1490,10 @@ export const RESPUESTAS: Record<string, unknown> = {
   "/pack/pack_subscriptions/cargos/test-cargo-1/avisos": avisosDelCargo,
   "/pack/pack_subscriptions/clientes": clientesConSuscripcion,
   "/pack/pack_subscriptions/metricas": metricasSuscripciones,
+  "/admin/platform/crons": cronsListado,
+  "/admin/platform/crons/summary": cronsResumen,
+  "/admin/platform/crons/core.billing_renovacion": cronRenovacion,
+  "/admin/platform/crons/core.billing_renovacion/runs": ejecucionesDeCron,
+  "/admin/platform/crons/core.worker_heartbeat": cronLatido,
+  "/admin/platform/crons/core.worker_heartbeat/runs": { ...ejecucionesDeCron, items: [], total: 0 },
 };

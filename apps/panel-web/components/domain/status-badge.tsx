@@ -66,6 +66,27 @@ export const CHARGE_STATUS: StatusMap = {
   anulado: { label: "Anulado", variant: "neutral" },
 };
 
+/**
+ * Estado de un cron de la plataforma (ADR-0183). «Sin historial» = el cron no guarda sus
+ * ejecuciones exitosas (latido, outbox): no es «nunca corrió».
+ */
+export const CRON_STATUS: StatusMap = {
+  ok: { label: "Al día", variant: "success" },
+  running: { label: "Ejecutando", variant: "accent" },
+  failing: { label: "Con fallo", variant: "danger" },
+  paused: { label: "Pausado", variant: "warning" },
+  never: { label: "Sin ejecutar", variant: "neutral" },
+  untracked: { label: "Sin historial", variant: "neutral" },
+};
+
+/** Resultado de una ejecución de un cron (`cron_runs.status`). */
+export const CRON_RUN_STATUS: StatusMap = {
+  success: { label: "Exitosa", variant: "success" },
+  failed: { label: "Fallida", variant: "danger" },
+  running: { label: "En curso", variant: "accent" },
+  skipped: { label: "Omitida", variant: "neutral" },
+};
+
 /** Estado de una conexión de Meta (`meta_connections.status`, SPEC-08). */
 export const META_CONNECTION_STATUS: StatusMap = {
   draft: { label: "Borrador", variant: "neutral" },
