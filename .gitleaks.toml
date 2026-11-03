@@ -1,0 +1,16 @@
+# Configuración de gitleaks para el panel.
+#
+# El único hallazgo conocido es el valor ficticio de los ejemplos de la Wiki (`/ayuda`), que
+# `npm run wiki:sync` copia en `contenido.generado.json`. Se permite por path Y por valor exacto:
+# un secreto real, con otro valor o en otro archivo, sigue siendo detectado.
+title = "panel gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Token ficticio de los ejemplos de la Wiki (apps/panel-web/lib/ayuda/contenido.generado.json)"
+condition = "AND"
+regexTarget = "match"
+paths = ['''apps/panel-web/lib/ayuda/contenido\.generado\.json''']
+regexes = ['''tok_ficticio_0123456789abcdef''']
