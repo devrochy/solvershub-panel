@@ -1,0 +1,3 @@
+# Falso positivo: valor ficticio (TOKEN=tok_ficticio_…) del ejemplo de la API en la Wiki (/ayuda),
+# copiado por `npm run wiki:sync` en contenido.generado.json. Huella exacta: solo este hallazgo.
+ad691e1ef37f52945baf223329e8e9c3be4e0d53:apps/panel-web/lib/ayuda/contenido.generado.json:generic-api-key:408
