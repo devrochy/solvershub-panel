@@ -181,10 +181,17 @@ describe("reporte del negocio (master)", () => {
     expect(screen.queryByRole("list")).toBeNull();
   });
 
+  it("quien no es master no ve el bloque ni un error (la API responde 403)", async () => {
+    responder({ error: "Solo master." }, 403);
+    const { container } = render(<ReferenciasRetiradas tenantId={NEGOCIO} />);
+    await waitFor(() => expect(container.innerHTML).toBe(""));
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("si la API falla muestra el motivo", async () => {
-    responder({ error: "No tienes permiso." }, 403);
+    responder({ error: "No se pudo revisar el negocio." }, 500);
     render(<ReferenciasRetiradas tenantId={NEGOCIO} />);
-    expect((await screen.findByRole("alert")).textContent).toBe("No tienes permiso.");
+    expect((await screen.findByRole("alert")).textContent).toBe("No se pudo revisar el negocio.");
   });
 });
 

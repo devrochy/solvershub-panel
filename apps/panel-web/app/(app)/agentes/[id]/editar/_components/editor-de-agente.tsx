@@ -261,6 +261,7 @@ export function EditorDeAgente({
       setErrores({});
       setLimite(null);
       setPublicado(json as EditorPublishOut);
+      void recargarAvisos();
       return { ok: true, success: `Versión ${json.version?.version} publicada. Actívala cuando quieras que tus clientes la vean.` };
     });
   }

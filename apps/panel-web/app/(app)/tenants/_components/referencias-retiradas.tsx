@@ -12,10 +12,12 @@ import {
   resumenDelReporte,
 } from "@/lib/referencias-retiradas";
 
-type Lectura = { reporte: RetiredReferencesReport } | { error: string };
+type Lectura = { reporte: RetiredReferencesReport } | { error: string } | { sinPermiso: true };
 
 async function leer(url: string): Promise<Lectura> {
   const res = await fetch(url, { cache: "no-store" });
+  // Solo master: para quien no lo es, el bloque no existe (nunca un 403 por diseño).
+  if (res.status === 403) return { sinPermiso: true };
   const json = (await res.json().catch(() => ({}))) as RetiredReferencesReport & { error?: string };
   return res.ok ? { reporte: json } : { error: json.error ?? "No se pudo revisar las referencias retiradas." };
 }
@@ -104,6 +106,7 @@ export function ReferenciasRetiradas({ tenantId }: { tenantId: string }) {
     };
   }, [url]);
 
+  if (lectura && "sinPermiso" in lectura) return null;
   const titulo = `retiradas-${tenantId}`;
   return (
     <section className="flex flex-col gap-3 border-t border-border-soft pt-4" aria-labelledby={titulo}>
