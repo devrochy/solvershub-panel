@@ -234,7 +234,7 @@ export function Catalogo() {
         />
       </Seccion>
 
-      <Seccion titulo="KPIs" nota="El delta dice contra qué compara; con polarity up-bad subir es malo.">
+      <Seccion titulo="KPIs" nota="El delta dice contra qué compara; con polarity up-bad subir es malo. size «hero» es la cifra principal de una sección (una por pantalla) y pone la tendencia al lado.">
         <div className="grid gap-4 sm:grid-cols-2">
           <KpiTile label="Conversaciones (7 días)" value="1.284" delta={{ value: 12, versus: "los 7 días anteriores" }} />
           <KpiTile
@@ -242,6 +242,14 @@ export function Catalogo() {
             value="8"
             delta={{ value: 14.5, versus: "la semana pasada" }}
             polarity="up-bad"
+          />
+          <KpiTile
+            className="sm:col-span-2"
+            size="hero"
+            label="Conversaciones (7 días) · hero"
+            value="1.284"
+            delta={{ value: 12, versus: "los 7 días anteriores" }}
+            sparkline={<Sparkline values={SPARK} height={56} area label={`Conversaciones: ${resumenSerie(SPARK)}`} />}
           />
           <KpiTile label="Recaudo de hoy" loading />
           <KpiTile label="Consumo del plan" error="No se pudo calcular el consumo." />

@@ -106,6 +106,15 @@ describe("KpiTile", () => {
     expect(screen.getByText(/\+10 % frente a la semana pasada/).className).toMatch(/text-status-danger-fg/);
   });
 
+  it("la variante hero pone la tendencia al lado de la cifra", () => {
+    const { container } = render(
+      <KpiTile label="Conversaciones" value="40" size="hero" sparkline={<span data-testid="tendencia" />} />,
+    );
+    expect(screen.getByTestId("tendencia")).toBeTruthy();
+    expect(container.firstElementChild?.className).toMatch(/p-6/);
+    expect(container.querySelector(".sm\\:flex-row")).not.toBeNull();
+  });
+
   it("muestra carga, error y enlace a la lista", () => {
     const { container, rerender } = render(<KpiTile label="Recaudo" loading />);
     expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();

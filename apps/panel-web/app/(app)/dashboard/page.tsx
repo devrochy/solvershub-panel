@@ -5,6 +5,7 @@ import { Bienvenida } from "@/components/domain/bienvenida";
 import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
 import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ResumenAgentes } from "@/components/dashboard/resumen-agentes";
@@ -14,7 +15,7 @@ import { apiFetch } from "@/lib/api/server";
 import type { Dashboard, Me, PrimerosPasos, ResumenPorAgente } from "@/lib/api/types";
 import { formatNumber, formatUsd } from "@/lib/format";
 import { PASOS_PLEGADOS_COOKIE, hayPasosParaActuar } from "@/lib/primeros-pasos";
-import { diasValidos } from "@/lib/resumen/periodos";
+import { DIAS_DEL_RESUMEN, diasValidos, etiquetaDeDias } from "@/lib/resumen/periodos";
 import { TOUR_COOKIE, debeOfrecerTour } from "@/lib/tour";
 
 export const metadata = { title: "Resumen" };
@@ -85,11 +86,22 @@ export default async function DashboardPage({
         title="Resumen"
         description={DESCRIPCION}
         actions={
-          d.billing?.has_plan ? (
-            <Badge variant={d.billing.operational ? "success" : "danger"}>
-              {d.billing.plan_name}
-            </Badge>
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-3">
+            {/* El período gobierna todo el Resumen (cifras, evolución y tarjetas): vive en el encabezado. */}
+            {agentesRes.ok && tieneResumen(agentesRes.data) && (
+              <FilterChips
+                label="Período del resumen"
+                items={DIAS_DEL_RESUMEN.map((n) => ({
+                  label: etiquetaDeDias(n),
+                  href: `/dashboard?dias=${n}`,
+                  active: n === dias,
+                }))}
+              />
+            )}
+            {d.billing?.has_plan && (
+              <Badge variant={d.billing.operational ? "success" : "danger"}>{d.billing.plan_name}</Badge>
+            )}
+          </div>
         }
         helpSection="dashboard"
       />
@@ -126,7 +138,7 @@ export default async function DashboardPage({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Estado del sistema</CardTitle>

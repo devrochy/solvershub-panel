@@ -9104,6 +9104,11 @@ export interface components {
         BloqueGeneral: {
             /** Kpis */
             kpis: components["schemas"]["KpiOut"][];
+            /**
+             * Serie
+             * @description Serie diaria cero-rellena de todo el negocio (todos los agentes, el Coordinador y lo no atribuido); vacía sin la sección `agents`.
+             */
+            serie?: components["schemas"]["PuntoActividadOut"][];
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
