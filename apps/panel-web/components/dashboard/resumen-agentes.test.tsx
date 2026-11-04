@@ -33,6 +33,7 @@ const DATOS: ResumenPorAgente = {
       k({ id: "conversaciones", label: "Conversaciones", valor: 40, previo: 20, delta_pct: 100, destino: { ruta: "conversaciones", params: {} } }),
       k({ id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } }),
     ],
+    serie: serie([7, 11, 1, 16, 12, 18, 15]),
   },
   agentes: [
     {
@@ -63,13 +64,14 @@ const DATOS: ResumenPorAgente = {
       kpis: [k({ id: "turnos", label: "Turnos atendidos", valor: 20, destino: { ruta: "agente", params: { ref: "general", pestana: "conversaciones" } } })],
       serie: serie([2, 3, 1, 4, 3, 4, 3]),
       ultima_actividad: "2026-10-27T17:10:00Z",
-      modulos: [],
+      modulos: [{ id: "pack_calendar", nombre: "Agenda", error: null, kpis: [k({ id: "citas_hoy", label: "Citas de hoy", valor: 4 })] }],
     },
+    { ref: "id-coord", key: "coordinador", name: "Coordinador", kind: "core", kpis: [k({ id: "turnos", label: "Turnos atendidos", valor: 9 })], serie: serie([1, 1, 1, 2, 1, 1, 2]), ultima_actividad: null, modulos: [] },
     {
       ref: "id-cobranza",
       key: "cobranza",
       name: "Cobranza",
-      kind: "specialist",
+      kind: "backoffice",
       kpis: [],
       serie: serie([0, 0, 0, 0, 0, 0, 0]),
       ultima_actividad: null,
@@ -80,39 +82,80 @@ const DATOS: ResumenPorAgente = {
 };
 
 describe("ResumenAgentes (ADR-0171)", () => {
-  it("muestra el negocio, la evolución diaria y los módulos por agente", () => {
+  it("ordena el Resumen en secciones: agente general, evolución diaria y agentes", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    expect(screen.getByRole("heading", { name: "Negocio" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Evolución diaria" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Módulos por agente" })).toBeTruthy();
-    const modulo = screen.getByRole("region", { name: "Módulo Ventas" });
-    expect(within(modulo).getByText("Pedidos")).toBeTruthy();
+    const titulos = ["Agente general", "Evolución diaria", "Agentes"].map((n) => screen.getByRole("heading", { name: n }));
+    // El orden del documento es el orden de lectura.
+    titulos.slice(1).forEach((h, i) => {
+      expect(titulos[i].compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  it("el agente general lleva la cifra principal con la tendencia del negocio", () => {
+    render(<ResumenAgentes datos={DATOS} />);
+    const general = screen.getByRole("region", { name: "Agente general" });
+    expect(within(general).getByText("Conversaciones")).toBeTruthy();
+    expect(within(general).getByRole("img", { name: /Conversaciones por día, últimos 7 días/ })).toBeTruthy();
+    expect(within(general).getByText(/\+100 % frente a los 7 días anteriores/)).toBeTruthy();
+  });
+
+  it("los módulos sin agente se muestran bajo el agente general", () => {
+    render(<ResumenAgentes datos={DATOS} />);
+    const general = screen.getByRole("region", { name: "Agente general" });
+    const modulo = within(general).getByRole("region", { name: "Módulo Agenda" });
+    expect(within(modulo).getByText("Citas de hoy")).toBeTruthy();
+  });
+
+  it("cada agente es una tarjeta plegable y solo la primera arranca abierta", () => {
+    const { container } = render(<ResumenAgentes datos={DATOS} />);
+    const tarjetas = container.querySelectorAll("details");
+    expect(tarjetas).toHaveLength(3);
+    expect(Array.from(tarjetas).map((d) => d.open)).toEqual([true, false, false]);
+  });
+
+  it("no hay tarjeta del Coordinador ni del General; la insignia es solo del back-office", () => {
+    render(<ResumenAgentes datos={DATOS} />);
+    const agentes = screen.getByRole("region", { name: "Agentes" });
+    expect(within(agentes).queryByText("Coordinador")).toBeNull();
+    expect(within(agentes).queryByText("General")).toBeNull();
+    expect(within(agentes).getAllByText("Back-office")).toHaveLength(1);
+    expect(within(agentes).queryByText("Especialista")).toBeNull();
+  });
+
+  it("plegada resume el módulo en dos cifras y enlaza al agente; abierta enseña el módulo", () => {
+    render(<ResumenAgentes datos={DATOS} />);
+    const ventas = screen.getByRole("link", { name: "Ver el agente Ventas" }).closest("details") as HTMLElement;
+    expect(ventas.getAttribute("open")).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Ver el agente Ventas" }).getAttribute("href")).toBe("/agentes/id-ventas");
+    expect(within(ventas).getByRole("region", { name: "Módulo Ventas" })).toBeTruthy();
+    // «Pedidos» aparece en el título plegado y en el módulo.
+    expect(within(ventas).getAllByText("Pedidos").length).toBeGreaterThan(0);
   });
 
   it("cada cifra enlaza a la pantalla que la explica", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const negocio = screen.getByRole("region", { name: "Negocio" });
+    const general = screen.getByRole("region", { name: "Agente general" });
     const hrefDe = (contenedor: HTMLElement, texto: string) =>
       within(contenedor).getByText(texto).closest("a")?.getAttribute("href");
-    expect(hrefDe(negocio, "Conversaciones")).toBe("/conversaciones");
-    expect(hrefDe(negocio, "Escalaciones pendientes")).toBe("/escalaciones");
-    const modulos = screen.getByRole("region", { name: "Módulos por agente" });
-    expect(hrefDe(modulos, "Tareas abiertas")).toBe("/agentes/id-ventas?tab=tareas");
-    expect(hrefDe(modulos, "Pedidos")).toBe("/comercio/pedidos");
+    expect(hrefDe(general, "Conversaciones")).toBe("/conversaciones");
+    expect(hrefDe(general, "Escalaciones pendientes")).toBe("/escalaciones");
+    const agentes = screen.getByRole("region", { name: "Agentes" });
+    expect(hrefDe(agentes, "Tareas abiertas")).toBe("/agentes/id-ventas?tab=tareas");
+    expect(
+      within(screen.getByRole("region", { name: "Módulo Ventas" })).getByText("Pedidos").closest("a")?.getAttribute("href"),
+    ).toBe("/comercio/pedidos");
   });
 
-  it("la tabla de actividad enlaza al agente y distingue al General", () => {
+  it("dice «Sin actividad» en el agente que no tuvo y muestra la última actividad del que sí", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const enlacesVentas = screen.getAllByRole("link", { name: "Ventas" });
-    expect(enlacesVentas.some((a) => a.getAttribute("href")?.startsWith("/agentes/id-ventas"))).toBe(true);
-    expect(screen.getByText("Coordinación y sin asignar")).toBeTruthy();
-    expect(screen.getAllByText(/Sin actividad/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Sin actividad en el período/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Última actividad/).length).toBeGreaterThan(0);
   });
 
-  it("el delta dice contra qué compara y el formulario de período está en la URL", () => {
+  it("la tabla «Actividad por agente» y el selector de período ya no están aquí", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    expect(screen.getByText(/\+100 % frente a los 7 días anteriores/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "15 días" }).getAttribute("href")).toBe("/dashboard?dias=15");
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByRole("link", { name: "15 días" })).toBeNull();
   });
 
   it("el selector de métrica cambia la serie de la gráfica sin recargar", () => {
@@ -124,13 +167,17 @@ describe("ResumenAgentes (ADR-0171)", () => {
     expect(screen.getByRole("group", { name: /Costo IA por agente y día/ })).toBeTruthy();
   });
 
-  it("un módulo que falló lo dice sin tumbar el resto; un agente sin nada no ocupa lugar", () => {
+  it("un módulo que falló lo dice sin tumbar el resto", () => {
     render(<ResumenAgentes datos={DATOS} />);
     expect(screen.getByRole("alert").textContent).toBe("No se pudo cargar este módulo.");
-    const modulos = screen.getByRole("region", { name: "Módulos por agente" });
-    expect(within(modulos).queryByText("Agenda")).toBeNull();
-    // La tabla sí lista a todos los agentes configurados, aunque no tengan actividad.
-    expect(screen.getByRole("link", { name: "Agenda" })).toBeTruthy();
+  });
+
+  it("tolera un backend sin la serie del negocio (aún no desplegado)", () => {
+    const sinSerie = { ...DATOS, general: { kpis: DATOS.general.kpis } } as ResumenPorAgente;
+    render(<ResumenAgentes datos={sinSerie} />);
+    const general = screen.getByRole("region", { name: "Agente general" });
+    expect(within(general).queryByRole("img")).toBeNull();
+    expect(within(general).getByText("Conversaciones")).toBeTruthy();
   });
 
   it("no tiene violaciones graves de accesibilidad", async () => {

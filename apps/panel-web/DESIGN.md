@@ -65,7 +65,7 @@ SVG propio sobre `d3-scale`/`d3-shape` (ADR-0002, D-SPEC-29-2); nada de Recharts
 tailwind-merge las tomaba por colores y las descartaba.
 
 
-- Contenedor de contenido: `max-w-[1200px]` centrado, padding `px-6 py-8`.
+- Contenedor de contenido: `max-w-[1600px]` centrado (`app/(app)/layout.tsx`), padding `px-6 py-8`.
 - Barra lateral adaptativa (HU-DS-04, ADR-0003): expandida 256 px, plegada 72 px (íconos)
   o cajón en celular. Sin preferencia se pliega entre 768 y 1279 px. La preferencia del
   usuario va en la cookie `panel_sidebar`; se alterna con el botón del pie o con `[`.
@@ -187,6 +187,24 @@ versión de spec.
 
 `IconAction` y `ChannelIcon` usan tonos semánticos del tema (sin pasteles fijos
 ni `hover:scale`).
+
+## Resumen (SPEC-29, ADR-0171)
+
+El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
+
+| Sección | Qué lleva |
+|---|---|
+| Agente general | La cifra principal (`KpiTile size="hero"`: conversaciones con la tendencia diaria de todo el negocio), las demás cifras del negocio y, si hay, los módulos que ningún agente gestiona |
+| Evolución diaria | Una gráfica de líneas por agente con actividad; el selector de métrica (turnos, conversaciones, costo) va en el encabezado de la tarjeta |
+| Agentes | Una tarjeta plegable por agente (`<details>` nativo, la primera abierta). Plegada: nombre, dos cifras de su módulo y «Última actividad». Abierta: enlace «Ver agente», sus cifras y su módulo |
+
+- El período (7, 15 o 30 días) gobierna todo y va en el encabezado de la página (`FilterChips`), no dentro de una tarjeta.
+- Un agente gestiona **un solo módulo**. El Coordinador y el agente «General» no son tarjetas.
+- La insignia de tipo solo sale para **back-office**; «especialista» es lo normal y no se rotula.
+- Las cifras del título plegado salen de `lib/resumen/resumen-agente.ts`; un módulo que el panel no conoce muestra sus dos primeras.
+- El enlace al agente va **dentro del cuerpo**, nunca en el `<summary>` (un enlace dentro del control que pliega falla `nested-interactive`).
+- Todo delta dice contra qué compara («+12 % frente a los 7 días anteriores»); las fotos de hoy (escalaciones, tareas, citas de hoy) no llevan delta.
+- Cargando: esqueleto con la forma de la página (`app/(app)/dashboard/loading.tsx`), sin spinner.
 
 ## Onboarding (HU-SH-06)
 

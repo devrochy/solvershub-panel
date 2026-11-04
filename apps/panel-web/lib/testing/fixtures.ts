@@ -125,6 +125,16 @@ export const resumenPorAgente: ResumenPorAgente = {
       { id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } },
       { id: "tasa_escalamiento", label: "Tasa de escalamiento", valor: null, unidad: "pct", previo: null, delta_pct: null, polaridad: "up-bad", hint: "Sin datos suficientes", destino: { ruta: "agente", params: { ref: "general", pestana: "consumo" } } },
     ],
+    // Todo el negocio por día: la suma de las series de los agentes.
+    serie: [
+      { fecha: "2026-10-21", turnos: 7, conversaciones: 3, costo: 0.02 },
+      { fecha: "2026-10-22", turnos: 11, conversaciones: 4, costo: 0.03 },
+      { fecha: "2026-10-23", turnos: 1, conversaciones: 1, costo: 0 },
+      { fecha: "2026-10-24", turnos: 16, conversaciones: 6, costo: 0.05 },
+      { fecha: "2026-10-25", turnos: 12, conversaciones: 4, costo: 0.03 },
+      { fecha: "2026-10-26", turnos: 18, conversaciones: 7, costo: 0.06 },
+      { fecha: "2026-10-27", turnos: 15, conversaciones: 6, costo: 0.04 },
+    ],
   },
   agentes: [
     {
