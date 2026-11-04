@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type {
   AgentDetail,
+  AgentRetiredNotices,
   LlmModelCatalog,
   Me,
   PublishTargetPage,
@@ -29,13 +30,15 @@ export default async function EditarAgentePage({
   // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
   const pasoInicial = paso === "publicar" ? "publicar" : undefined;
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me, requisitos] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
     apiFetch<PublishTargetPage>(`/admin/agents/${id}/publish-targets?page_size=100`),
     apiFetch<Me>("/admin/me"),
     apiFetch<RequirementPage>(`/admin/agents/${id}/requirements?page_size=100`),
+    // Aviso de referencias retiradas (HU-AOS-59): si no responde, el editor abre sin el aviso.
+    apiFetch<AgentRetiredNotices>(`/admin/agents/${id}/retired-references`),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -76,6 +79,7 @@ export default async function EditarAgentePage({
         puedeActivar={puedeActivar}
         requisitos={requisitos.ok ? requisitos.data.items : []}
         pasoInicial={pasoInicial}
+        avisosRetirados={retiradas.ok ? retiradas.data : null}
       />
     </div>
   );

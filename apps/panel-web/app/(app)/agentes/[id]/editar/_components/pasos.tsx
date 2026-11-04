@@ -26,6 +26,7 @@ import {
   type EstadoDelEditor,
 } from "@/lib/agentes-editor";
 import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
+import { erroresDeAcciones } from "@/lib/referencias-retiradas";
 import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
 import type { Pendiente } from "@/lib/frases-pendientes";
 import { formatUsd } from "@/lib/format";
@@ -266,6 +267,9 @@ export function PasoSuperpoderes({
         reconocerlo: las de la habilidad ya cuentan y puedes sumar las tuyas.
       </p>
       <ErrorDeCampo id="superpoderes-error" mensaje={errores.procedures} />
+      {erroresDeAcciones(errores).map((mensaje, i) => (
+        <ErrorDeCampo key={mensaje} id={`acciones-error-${i}`} mensaje={mensaje} />
+      ))}
       <AvisoDeRequisitos requisitos={requisitos} />
       {fuera.length > 0 && (
         <ul className="flex flex-col gap-3" aria-label="Superpoderes que no corresponden a este agente">
