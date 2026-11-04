@@ -153,6 +153,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/retired-references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Retired References
+         * @description Avisos del negocio (HU-AOS-59, ADR-0184): por agente, lo que nombra y ya no existe, en palabras
+         *     simples. Solo lectura; solo ve los agentes de su negocio. Solo salen los agentes con avisos.
+         */
+        get: operations["list_retired_references_api_v1_admin_agents_retired_references_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agents/{agent_id}": {
         parameters: {
             query?: never;
@@ -182,6 +203,27 @@ export interface paths {
         get: operations["get_draft_api_v1_admin_agents__agent_id__draft_get"];
         /** Save Draft */
         put: operations["save_draft_api_v1_admin_agents__agent_id__draft_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/retired-references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Retired References
+         * @description Aviso de un agente para el editor y el flujo de publicar (mismo texto que el 422 de publicar).
+         *     Sin avisos, `notices` viene vacío y `blocks_publish` en false. 404 si no es un agente del negocio.
+         */
+        get: operations["get_retired_references_api_v1_admin_agents__agent_id__retired_references_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -3234,6 +3276,28 @@ export interface paths {
          *     backfills, ni releases, ni banderas). 422 `agent_os_orden` si el objetivo viola el orden.
          */
         post: operations["simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/retired-references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Retired References
+         * @description Agentes, versiones, rutas, códigos y releases activas de este negocio que nombran algo que el
+         *     binario ya retiró: el mismo contenido que `agent-core db auditar-referencias --tenant <slug>`.
+         *     Solo lectura: no escribe nada ni corrige. Solo el master (ni el tester ni un colaborador).
+         */
+        get: operations["get_retired_references_api_v1_admin_platform_tenants__tenant_id__retired_references_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -14282,6 +14346,173 @@ export interface components {
             /** Agentes */
             agentes: components["schemas"]["AgenteResumen"][];
         };
+        /** RetiredAffectedConnection */
+        RetiredAffectedConnection: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /**
+             * Release
+             * @description Número de la release activa afectada.
+             */
+            release: number;
+        };
+        /**
+         * RetiredAsideConnection
+         * @description Conexión borrada o que no produce conversaciones: se reporta aparte y no cuenta como falla.
+         */
+        RetiredAsideConnection: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "borrada" | "playground" | "integracion";
+            /** Release */
+            release: number | null;
+            /** Rows */
+            rows: components["schemas"]["RetiredReferenceRow"][];
+        };
+        /**
+         * RetiredNotice
+         * @description Una cosa que el agente nombra y ya no existe, con el texto para el dueño (sin códigos internos).
+         */
+        RetiredNotice: {
+            /**
+             * Scope
+             * @description `draft`: está en el borrador (publicar falla hasta corregirlo). `published`: está en la última versión publicada. `in_use`: lo que corre hoy en una conexión lo nombra, aunque el borrador y la última versión ya estén limpios.
+             * @enum {string}
+             */
+            scope: "draft" | "published" | "in_use";
+            /**
+             * Field
+             * @description Dónde del contenido del agente está (p. ej. `tools[3].tool`), para señalar el control en el editor. Es un localizador técnico: no se muestra al dueño.
+             */
+            field: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "action" | "procedure";
+            /**
+             * Name
+             * @description Cómo se llamaba lo retirado (p. ej. `informar_plan`).
+             */
+            name: string;
+            /**
+             * Message
+             * @description Qué ya no existe y qué hacer, en palabras simples. Es el texto que se muestra.
+             */
+            message: string;
+        };
+        /**
+         * RetiredReferenceRow
+         * @description Una referencia retirada, con el mismo contenido que una fila de `auditar-referencias`.
+         */
+        RetiredReferenceRow: {
+            /**
+             * Scope
+             * @description `version`: la última versión publicada del agente. `draft`: el borrador, si difiere de esa versión (se avisa, no cuenta como falla). `release`: el manifiesto de una release activa.
+             * @enum {string}
+             */
+            scope: "version" | "draft" | "release";
+            /**
+             * Agent
+             * @description Key del agente.
+             */
+            agent: string;
+            /**
+             * Version
+             * @description Número de versión (null en el borrador).
+             */
+            version: number | null;
+            /**
+             * Path
+             * @description Ruta en el contenido (p. ej. `tools[3].tool`).
+             */
+            path: string;
+            /**
+             * Code
+             * @description `accion_inexistente` o `procedimiento_inexistente` (código interno: solo para el equipo).
+             */
+            code: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "action" | "procedure";
+            /** Name */
+            name: string;
+            /**
+             * Destination
+             * @description Lo que haría `migrar-referencias`: «quitar» o «reemplazar por <id> <rango>».
+             */
+            destination: string;
+            /**
+             * Message
+             * @description El mismo aviso en palabras simples que ve el dueño.
+             */
+            message: string;
+            /**
+             * Where
+             * @description Releases activas que lo contienen («conexión <id> release #n»).
+             */
+            where: string[];
+        };
+        /** RetiredReferencesOut */
+        RetiredReferencesOut: {
+            /** Affected Agents */
+            affected_agents: number;
+            /**
+             * Agents
+             * @description Solo los agentes con al menos un aviso.
+             */
+            agents: components["schemas"]["AgentRetiredNotices"][];
+        };
+        /** RetiredReferencesReport */
+        RetiredReferencesReport: {
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Affected
+             * @description Hay versiones o releases activas con referencias retiradas (lo que pone el exit code del CLI).
+             */
+            affected: boolean;
+            /** Agents Affected */
+            agents_affected: number;
+            /** Releases Affected */
+            releases_affected: number;
+            /**
+             * Rows
+             * @description Versiones publicadas y releases activas: lo que cuenta.
+             */
+            rows: components["schemas"]["RetiredReferenceRow"][];
+            /**
+             * Drafts
+             * @description Borradores con referencias retiradas: se avisan, no cuentan.
+             */
+            drafts: components["schemas"]["RetiredReferenceRow"][];
+            /** Affected Connections */
+            affected_connections: components["schemas"]["RetiredAffectedConnection"][];
+            /** Aside */
+            aside: components["schemas"]["RetiredAsideConnection"][];
+            /**
+             * Error
+             * @description Si la auditoría de este negocio falló, por qué; el resto del informe puede estar vacío.
+             */
+            error: string | null;
+        };
         /** RevokeRequest */
         RevokeRequest: {
             /** Section */
@@ -17219,6 +17450,35 @@ export interface components {
             p95_ms: number | null;
             /** Cost Usd */
             cost_usd: number | null;
+        };
+        /** AgentRetiredNotices */
+        AgentRetiredNotices: {
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Published Version
+             * @description Número de la última versión publicada (null si nunca se publicó).
+             */
+            published_version: number | null;
+            /**
+             * In Use
+             * @description Una conexión viva de tu negocio corre hoy algo que nombra lo retirado.
+             */
+            in_use: boolean;
+            /**
+             * Blocks Publish
+             * @description El borrador nombra algo retirado: publicar da 422 hasta corregirlo.
+             */
+            blocks_publish: boolean;
+            /** Notices */
+            notices: components["schemas"]["RetiredNotice"][];
         };
         /** AgentTask */
         AgentTask: {
@@ -22032,6 +22292,38 @@ export interface operations {
             };
         };
     };
+    list_retired_references_api_v1_admin_agents_retired_references_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetiredReferencesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_agent_api_v1_admin_agents__agent_id__get: {
         parameters: {
             query?: never;
@@ -22169,6 +22461,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgentDraft"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_retired_references_api_v1_admin_agents__agent_id__retired_references_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentRetiredNotices"];
                 };
             };
             /** @description Validation Error */
@@ -28248,6 +28574,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgentOSResultado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_retired_references_api_v1_admin_platform_tenants__tenant_id__retired_references_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetiredReferencesReport"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
             /** @description Validation Error */
