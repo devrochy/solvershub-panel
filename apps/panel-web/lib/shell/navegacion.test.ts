@@ -93,6 +93,14 @@ describe("menú v2 (HU-UX-02)", () => {
     expect(soloCostos[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Costos"]);
   });
 
+  it("Probar asistente ya no es pestaña de Agentes (HU-UX-09) pero /asistente sigue protegida por connections", () => {
+    const agentes = pestanasPara("/agentes", grupos);
+    expect(agentes.pestanas.map((p) => p.label)).not.toContain("Probar asistente");
+    expect(agentes.ocultas).toContain("/asistente");
+    expect(puedeVerRuta("/asistente", { permisos: { connections: "read" }, esMaster: false, negocioId: "t" })).toBe(true);
+    expect(puedeVerRuta("/asistente", { permisos: { connections: null }, esMaster: false, negocioId: "t" })).toBe(false);
+  });
+
   it("cada entrada del menú tiene su propio ícono (la barra plegada se lee por íconos)", () => {
     const entradas = NAV_GROUPS.flatMap((g) => g.items);
     expect(new Set(entradas.map((i) => i.icon)).size).toBe(entradas.length);
