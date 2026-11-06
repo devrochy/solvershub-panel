@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/** Carga del Resumen: la forma de la página (pasos, agente general, evolución y tarjetas), sin spinner. */
+/** Carga del Resumen: la forma de la página (agente general, pasos, evolución y tarjetas), sin spinner. */
 export default function DashboardLoading() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Cargando el Resumen">
@@ -11,6 +11,16 @@ export default function DashboardLoading() {
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
         <Skeleton className="h-8 w-56 rounded-md" />
+      </div>
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-52" />
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
       <Card>
         <CardHeader className="gap-3">
@@ -28,16 +38,6 @@ export default function DashboardLoading() {
           ))}
         </CardContent>
       </Card>
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-5 w-36" />
-        <Skeleton className="h-4 w-52" />
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
       <Card>
         <CardHeader className="gap-2">
           <Skeleton className="h-5 w-40" />

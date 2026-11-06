@@ -197,7 +197,10 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 | Agente general | La cifra principal (`KpiTile size="hero"`: conversaciones con la tendencia diaria de todo el negocio), las demás cifras del negocio y, si hay, los módulos que ningún agente gestiona |
 | Evolución diaria | Una gráfica de líneas por agente con actividad; el selector de métrica (turnos, conversaciones, costo) va en el encabezado de la tarjeta |
 | Agentes | Una tarjeta plegable por agente (`<details>` nativo, la primera abierta). Plegada: nombre, dos cifras de su módulo y «Última actividad». Abierta: enlace «Ver agente», sus cifras y su módulo |
+| Conversaciones recientes · Estado del sistema | Dos tarjetas lado a lado, en ese orden. Recientes: avatar con iniciales (o el ícono del canal si el visitante no dio nombre), nombre, «hace X» y estado. Estado: agente, modelo, habilidades y «Costo IA · 30 días» con los días que le quedan al plan |
 
+- Con el Resumen por agente, «Agente general» va **primero**; los primeros pasos y el recorrido (HU-SH-06) se intercalan justo debajo (`despuesDelGeneral`). Sin él, los pasos siguen arriba: es un negocio recién creado.
+- El nombre de un cliente sale de `lib/conversaciones/nombre.ts`, el mismo de la bandeja de Conversaciones: un visitante del chat web se lee «Visitante web · cf78», no `web:cf78…`.
 - El período (7, 15 o 30 días) gobierna todo y va en el encabezado de la página (`FilterChips`), no dentro de una tarjeta.
 - Un agente gestiona **un solo módulo**. El Coordinador y el agente «General» no son tarjetas.
 - La insignia de tipo solo sale para **back-office**; «especialista» es lo normal y no se rotula.

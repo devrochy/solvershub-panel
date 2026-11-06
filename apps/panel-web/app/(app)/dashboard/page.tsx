@@ -1,13 +1,13 @@
-import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { Bienvenida } from "@/components/domain/bienvenida";
 import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
-import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { FilterChips } from "@/components/ui/filter-chips";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ConversacionesRecientes } from "@/components/dashboard/conversaciones-recientes";
+import { EstadoDelSistema } from "@/components/dashboard/estado-del-sistema";
 import { ResumenAgentes } from "@/components/dashboard/resumen-agentes";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -80,6 +80,21 @@ export default async function DashboardPage({
       ? `${d.billing.days_left} días restantes`
       : null;
 
+  const conResumen = agentesRes.ok && tieneResumen(agentesRes.data);
+  // Primeros pasos y recorrido (HU-SH-06). Si no cargan, el Resumen sigue igual.
+  const bienvenida = (
+    <>
+      {pasos && (
+        <Bienvenida
+          datos={pasos}
+          ofrecerRecorrido={ofrecerRecorrido}
+          pasosPlegados={store.get(PASOS_PLEGADOS_COOKIE)?.value === "1"}
+        />
+      )}
+      <MissingTemplatesBanner />
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -105,19 +120,13 @@ export default async function DashboardPage({
         }
         helpSection="dashboard"
       />
-      {/* Primeros pasos y recorrido (HU-SH-06). Si no cargan, el Resumen sigue igual. */}
-      {pasos && (
-        <Bienvenida
-          datos={pasos}
-          ofrecerRecorrido={ofrecerRecorrido}
-          pasosPlegados={store.get(PASOS_PLEGADOS_COOKIE)?.value === "1"}
-        />
-      )}
-      <MissingTemplatesBanner />
+      {/* Con el Resumen por agente, «Agente general» va primero y los pasos iniciales debajo; sin él,
+          los pasos siguen arriba, que es lo que necesita un negocio recién creado. */}
+      {!conResumen && bienvenida}
 
       {/* KPIs por agente (ADR-0171). Si no cargan, el Resumen sigue con las cifras del negocio. */}
-      {agentesRes.ok && tieneResumen(agentesRes.data) ? (
-        <ResumenAgentes datos={agentesRes.data} />
+      {agentesRes.ok && conResumen ? (
+        <ResumenAgentes datos={agentesRes.data} despuesDelGeneral={bienvenida} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} href="/conversaciones" />
@@ -139,66 +148,8 @@ export default async function DashboardPage({
       )}
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Estado del sistema</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1 text-sm">
-            <Link
-              href="/agentes"
-              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
-            >
-              <span className="text-body">Agente</span>
-              <Badge variant={d.bot_paused ? "danger" : "success"}>
-                {d.bot_paused ? "Pausado" : "Activo"}
-              </Badge>
-            </Link>
-            <Link
-              href="/configuracion?tab=advanced"
-              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
-            >
-              <span className="text-body">Proveedor LLM</span>
-              <span className="font-mono text-xs tabular-nums text-headline">{d.llm_label}</span>
-            </Link>
-            <Link
-              href="/habilidades"
-              className="-mx-2 flex items-center justify-between rounded-md px-2 py-2 transition-colors hover:bg-hover"
-            >
-              <span className="text-body">Habilidades activas</span>
-              <Badge variant="accent">{d.kpi.active_plugins}</Badge>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between gap-3">
-            <CardTitle>Conversaciones recientes</CardTitle>
-            <Link href="/conversaciones" className="text-sm text-link hover:underline">
-              Ver todas
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {d.recent.length === 0 ? (
-              <p className="text-sm text-text-soft">Aún no hay conversaciones.</p>
-            ) : (
-              <ul className="flex flex-col divide-y divide-border-soft text-sm">
-                {d.recent.map((conv) => (
-                  <li key={conv.id}>
-                    <Link
-                      href={`/conversaciones/${encodeURIComponent(conv.id)}`}
-                      className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-hover"
-                    >
-                      <span className="truncate text-headline">
-                        {conv.customer_name ?? conv.external_id ?? "Cliente"}
-                      </span>
-                      <StatusBadge value={conv.status} map={CONVERSATION_STATUS} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <ConversacionesRecientes recientes={d.recent} />
+        <EstadoDelSistema d={d} />
       </div>
     </div>
   );

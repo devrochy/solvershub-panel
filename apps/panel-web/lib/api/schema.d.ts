@@ -14174,6 +14174,13 @@ export interface components {
             external_id: string | null;
             /** Status */
             status: string;
+            /** Channel */
+            channel?: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at?: string | null;
         };
         /** RecentOrder */
         RecentOrder: {

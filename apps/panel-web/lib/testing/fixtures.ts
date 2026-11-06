@@ -94,8 +94,8 @@ export const dashboard: Dashboard = {
   bot_paused: false,
   llm_label: "deepseek-chat",
   recent: [
-    { id: "test-conv-1", customer_name: "Ana Prueba", external_id: "573000000001", status: "open" },
-    { id: "test-conv-2", customer_name: null, external_id: "573000000002", status: "resolved" },
+    { id: "test-conv-1", customer_name: "Ana Prueba", external_id: "573000000001", status: "open", channel: "whatsapp", started_at: "2026-10-27T10:00:00Z" },
+    { id: "test-conv-2", customer_name: null, external_id: "web:cf7834ced6544a9190c389b73865c13f", status: "resolved", channel: "web", started_at: "2026-10-26T10:00:00Z" },
   ],
   billing: { plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
 };
