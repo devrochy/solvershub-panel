@@ -146,6 +146,9 @@ describe("pestaña Superpoderes del agente (HU-UX-09)", () => {
     montar();
     fireEvent.click(screen.getByRole("switch", { name: "Agendar citas" }));
     await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+    // El cambio no se guardó: el interruptor vuelve a como estaba.
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Agendar citas" }).getAttribute("aria-checked")).toBe("false"));
     expect(screen.queryByRole("link", { name: "Publicar cambios" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Guardar frases" })).toBeNull();
   });
 });

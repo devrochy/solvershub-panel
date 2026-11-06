@@ -77,7 +77,9 @@ export function SuperpoderesDelAgente({
       });
       const json = (await res.json().catch(() => ({}))) as Respuesta;
       if (!res.ok) {
+        // Con errores por campo el cambio queda a la vista para corregirlo; si el servidor falló, vuelve a lo guardado.
         if (json.fields) setErrores(json.fields);
+        else setEstado(guardado);
         const error =
           json.code === "stale_lock_version"
             ? "Otra persona guardó este agente mientras lo editabas. Recarga la página para ver sus cambios."
