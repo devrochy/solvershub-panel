@@ -14176,10 +14176,7 @@ export interface components {
             status: string;
             /** Channel */
             channel?: string | null;
-            /**
-             * Started At
-             * Format: date-time
-             */
+            /** Started At */
             started_at?: string | null;
         };
         /** RecentOrder */
