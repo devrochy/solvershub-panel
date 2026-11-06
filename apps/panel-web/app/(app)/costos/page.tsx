@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { MetaCosts } from "@/app/(app)/costos/_components/meta-costs";
+import { MetaCosts } from "@/components/domain/meta-costs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
 import type { CostsResponse } from "@/lib/api/types";
 import { formatDateTime, formatLatency, formatNumber, formatUsd } from "@/lib/format";
+import { enlaceSaludMeta } from "@/lib/conexion-ficha";
 
 export const metadata = { title: "Costos LLM" };
 
@@ -130,7 +131,7 @@ export default async function CostsPage() {
             Cambios de facturación de Meta
           </h2>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/conexiones/meta">Salud de Meta →</Link>
+            <Link href={enlaceSaludMeta(metaConnections.map((c) => c.id))}>Salud de Meta →</Link>
           </Button>
         </div>
         <div className="rounded-lg border border-border-soft bg-bg-deep p-4 text-sm text-body">

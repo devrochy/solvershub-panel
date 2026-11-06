@@ -22,7 +22,7 @@ describe("primeros pasos (HU-SH-06)", () => {
 
   it("el WhatsApp a medias explica qué falta según el motivo", () => {
     const sinVerificar = copiaDelPaso(paso({ clave: "whatsapp", estado: "en_curso", motivo: "sin_verificar" }));
-    expect(sinVerificar.href).toBe("/conexiones/meta");
+    expect(sinVerificar.href).toBe("/conexiones"); // HU-UX-09: sin «Salud de Meta» global
     expect(sinVerificar.descripcion).toContain("diagnóstico");
     const sinTerminar = copiaDelPaso(paso({ clave: "whatsapp", estado: "en_curso", motivo: "sin_terminar" }));
     expect(sinTerminar.accion).toBe("Terminar conexión");

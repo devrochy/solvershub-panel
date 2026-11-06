@@ -6,6 +6,7 @@
  * app de Meta de la plataforma.
  */
 import type { ReadinessItem } from "@/lib/api/types";
+import { enlaceSaludMeta } from "@/lib/conexion-ficha";
 
 export type EstadoCorrida = "never" | "queued" | "running" | "done" | "failed";
 
@@ -73,7 +74,7 @@ export function enlaceReparacion(
     case "refresh_token":
     case "subscribe_waba":
     case "resubscribe_app":
-      return { href: "/conexiones/meta", label: "Ir a la salud" };
+      return { href: enlaceSaludMeta([connectionId]), label: "Ir a la salud" };
     default:
       return null;
   }

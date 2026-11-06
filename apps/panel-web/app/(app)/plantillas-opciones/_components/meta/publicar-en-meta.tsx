@@ -34,6 +34,7 @@ import {
 } from "@/lib/plantillas-opciones-meta";
 
 import { VistaPreviaMeta } from "./vista-previa-meta";
+import { enlaceSaludMeta } from "@/lib/conexion-ficha";
 
 type Falla = { texto: string; reintentable: boolean };
 
@@ -197,7 +198,7 @@ export function PublicarEnMeta({
                 Cancelar
               </Button>
               <Button asChild variant="accent">
-                <Link href={noListas.length > 0 ? "/conexiones/meta" : "/conexiones/whatsapp"}>
+                <Link href={noListas.length > 0 ? enlaceSaludMeta(noListas.map(({ conexion }) => conexion.id)) : "/conexiones/whatsapp"}>
                   {noListas.length > 0 ? "Revisar la salud de las conexiones" : "Conectar WhatsApp"}
                 </Link>
               </Button>

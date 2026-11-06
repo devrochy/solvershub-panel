@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   destinoDeAlta,
+  RUTA_DE_ALTA,
   esChatWeb,
   etiquetaRuteo,
-  gestionDeConexion,
-  metaTabs,
   puedePausar,
   resumenConsumo,
   saludDeConexion,
@@ -113,37 +112,6 @@ describe("consola de conexiones", () => {
 });
 
 describe("gestión y alta de conexiones", () => {
-  it("Gestionar lleva al hub según el tipo de conexión", () => {
-    expect(gestionDeConexion(conexion({}))).toEqual({
-      tipo: "enlace",
-      href: "/conexiones/meta/m1",
-      label: "Gestionar",
-    });
-    expect(
-      gestionDeConexion(conexion({ meta_connection_id: null, type_id: "whatsapp_waweb" })),
-    ).toEqual({ tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" });
-    expect(
-      gestionDeConexion(conexion({ meta_connection_id: null, type_id: "google_calendar" })),
-    ).toEqual({ tipo: "enlace", href: "/conexiones/c1", label: "Gestionar" });
-    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: "webchat" }))).toEqual({
-      tipo: "enlace",
-      href: "/configuracion",
-      label: "Gestionar",
-    });
-    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: "email_smtp" }))).toEqual({
-      tipo: "editar",
-    });
-    expect(gestionDeConexion(conexion({ meta_connection_id: null, type_id: null }))).toBeNull();
-  });
-
-  it("Messenger se gestiona en su propia pantalla, no en el hub de WhatsApp aunque comparta la cuenta de Meta", () => {
-    expect(gestionDeConexion(conexion({ channel: "messenger", type_id: "messenger_meta" }))).toEqual({
-      tipo: "enlace",
-      href: "/conexiones/messenger",
-      label: "Gestionar",
-    });
-  });
-
   it("el alta de Messenger navega a su pantalla cuando el tipo está disponible", () => {
     expect(
       destinoDeAlta({ id: "messenger_meta", available: true, setup_kind: "wizard", has_schema: false }),
@@ -153,12 +121,7 @@ describe("gestión y alta de conexiones", () => {
     ).toBeNull();
   });
 
-  it("Instagram se gestiona y se conecta en su propia pantalla", () => {
-    expect(gestionDeConexion(conexion({ channel: "instagram", type_id: "instagram_meta" }))).toEqual({
-      tipo: "enlace",
-      href: "/conexiones/instagram",
-      label: "Gestionar",
-    });
+  it("Instagram se conecta en su propia pantalla", () => {
     expect(
       destinoDeAlta({ id: "instagram_meta", available: true, setup_kind: "wizard", has_schema: false }),
     ).toEqual({ tipo: "navegar", href: "/conexiones/instagram" });
@@ -188,17 +151,12 @@ describe("gestión y alta de conexiones", () => {
     ).toBeNull();
   });
 
-  it("el hub de Meta agrupa las pestañas de gestión (sin webhook: es del negocio)", () => {
-    expect(metaTabs("m1").map((t) => t.label)).toEqual([
-      "Resumen",
-      "Credenciales",
-      "Salud de Meta",
-      "Números",
-      "Plantillas",
-      "Producción",
-      "Webhook",
-      "Requisitos",
-    ]);
-    expect(metaTabs("m1").map((t) => t.href)).toContain("/conexiones/requisitos");
+  it("cada tipo lleva a su flujo del panel nuevo, incluido el chat web (HU-UX-09)", () => {
+    const alta = (id: string) => destinoDeAlta({ id, available: true, setup_kind: "wizard", has_schema: false });
+    expect(alta("webchat")).toEqual({ tipo: "navegar", href: "/conexiones/chat-web" });
+    for (const [id, href] of Object.entries(RUTA_DE_ALTA)) expect(alta(id)).toEqual({ tipo: "navegar", href });
+    // Ninguna ruta es del panel clásico (`setup_url()` del backend devuelve `/admin/...`).
+    for (const href of Object.values(RUTA_DE_ALTA)) expect(href.startsWith("/conexiones/")).toBe(true);
+    expect(alta("playground")).toBeNull();
   });
 });

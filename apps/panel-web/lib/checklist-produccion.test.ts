@@ -38,6 +38,8 @@ describe("checklist de producción (HU-CONN-07)", () => {
     expect(enlaceReparacion("add_number", "c1")?.href).toBe("/conexiones/meta/c1/numeros");
     expect(enlaceReparacion("manage_templates", "c1")?.href).toBe("/conexiones/meta/c1/plantillas");
     expect(enlaceReparacion("reauthorize", "c1")?.href).toBe("/conexiones/whatsapp");
+    // HU-UX-09: sin «Salud de Meta» global; la salud es la pestaña de la ficha del número.
+    expect(enlaceReparacion("refresh_token", "c1")?.href).toBe("/conexiones/meta/c1/salud");
     expect(enlaceReparacion(null, "c1")).toBeNull();
     expect(enlaceReparacion("desconocida", "c1")).toBeNull();
   });
