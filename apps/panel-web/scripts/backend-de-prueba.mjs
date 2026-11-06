@@ -44,6 +44,53 @@ if (process.env.BOT_PAUSADO === "1") {
   respuestas["/admin/settings"] = { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } };
 }
 
+// Conexiones (HU-UX-09): un número de cada tipo para mirar la lista y la ficha por tipo. Los dos WhatsApp
+// oficiales comparten la cuenta de Meta `…aaaa` (aviso «esta cuenta tiene 2 números»).
+{
+  const META = "00000000-0000-4000-8000-00000000aaaa";
+  const uso = { turns: 42, conversations: 9, input_tokens: 12000, output_tokens: 4000, cost_usd: 0.12 };
+  const sinUso = { turns: 0, conversations: 0, input_tokens: 0, output_tokens: 0, cost_usd: null };
+  const ag = (n, nombre, extra = {}) => ({
+    instance_id: `00000000-0000-4000-8000-0000000001f${n}`, agent_id: `00000000-0000-4000-8000-00000000000${n}`, key: nombre.toLowerCase(),
+    name: nombre, role: "specialist", is_default: false, enabled: true, priority: 100, release_version: 2, latest_version: 2, ...extra,
+  });
+  const coord = ag(1, "General", { role: "core", priority: 0 });
+  const ventas = ag(2, "Ventas", { is_default: true, release_version: 3, latest_version: 4 });
+  const agenda = ag(3, "Agenda", { priority: 200 });
+  const fila = (id, extra) => ({
+    id, channel: "whatsapp", type_id: "whatsapp_meta", label: "", external_id: "", conversational: true, active: true, is_primary: false,
+    created_at: "2026-10-01T12:00:00Z", meta_connection_id: null, health: "ok", pause_scope: "connection", pausable: true,
+    coordinator: coord, agents: [], active_release: { id: "00000000-0000-4000-8000-000000000701", number: 7, created_at: "2026-11-01T12:00:00Z" },
+    canary_release: null, usage_7d: uso, ...extra,
+  });
+  const items = [
+    fila("00000000-0000-4000-8000-0000000000c1", { label: "WhatsApp ventas", external_id: "+57 300 555 0101", meta_connection_id: META, pause_scope: "meta_account", is_primary: true, agents: [ventas, agenda] }),
+    fila("00000000-0000-4000-8000-0000000000c2", { label: "WhatsApp soporte", external_id: "+57 300 555 0102", meta_connection_id: META, pause_scope: "meta_account", health: "degraded", agents: [ag(2, "Ventas", { is_default: true })] }),
+    fila("00000000-0000-4000-8000-0000000000c3", { label: "WhatsApp Web", type_id: "whatsapp_waweb", external_id: "573005550103", agents: [ag(3, "Agenda", { is_default: true })] }),
+    fila("00000000-0000-4000-8000-0000000000c5", { label: "Chat del sitio", type_id: "webchat", channel: "web", external_id: "cafeaurora.co", agents: [ag(2, "Ventas", { is_default: true })] }),
+    fila("00000000-0000-4000-8000-0000000000c6", { label: "Instagram @cafeaurora", type_id: "instagram_meta", channel: "instagram", external_id: "17841400000000000", meta_connection_id: "00000000-0000-4000-8000-00000000dddd", pause_scope: "meta_account", agents: [] , active_release: null, coordinator: null, usage_7d: sinUso }),
+    fila("00000000-0000-4000-8000-0000000000c4", { label: "Agenda de Google", type_id: "google_calendar", channel: "", conversational: false, pausable: false, external_id: "agenda@test.example", coordinator: null, active_release: null, usage_7d: sinUso }),
+    fila("00000000-0000-4000-8000-0000000000c7", { label: "Correo del negocio", type_id: "email_smtp", channel: "email", conversational: false, pausable: false, external_id: "hola@cafeaurora.co", coordinator: null, active_release: null, usage_7d: sinUso }),
+  ];
+  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, runtime: "v3", routing: "active", consistency: { pass_k: 0.92, k: 4 } };
+  const instancia = (a) => ({ id: a.instance_id, agent_id: a.agent_id, key: a.key, name: a.name, role: a.role, is_default: a.is_default, priority: a.priority, enabled: a.enabled, latest_version: a.latest_version });
+  for (const c of items.filter((x) => x.conversational)) {
+    respuestas[`/admin/connections/${c.id}/agents`] = [...(c.coordinator ? [c.coordinator] : []), ...c.agents].map(instancia);
+  }
+  respuestas["/admin/connections/00000000-0000-4000-8000-0000000000c7/credentials"] = {
+    fields: [
+      { name: "host", label: "Servidor SMTP", value: "smtp.cafeaurora.co", secret: false, configured: true },
+      { name: "username", label: "Usuario", value: "hola@cafeaurora.co", secret: false, configured: true },
+      { name: "password", label: "Contraseña", value: null, secret: true, configured: true },
+    ],
+  };
+  respuestas[`/admin/meta/connections/${META}/test-message`] = {
+    connection_id: META, status: "connected", phone_number_id: "100200300", display_phone_number: "+57 300 555 0101",
+    templates: [], can_send: false, blocked_reason: "Sincroniza las plantillas para elegir una aprobada.",
+  };
+  respuestas["/admin/meta/waweb"] = { status: "conectado", risk_ok: true, jid: "573005550103@s.whatsapp.net", qr_image: null, last_error: null };
+}
+
 // AGENDAS=2: el negocio tiene dos agendas (HU-CAL-08) y el calendario trae una cita de cada una.
 if (process.env.AGENDAS === "2") {
   respuestas["/pack/calendar/calendars"] = dosAgendas;

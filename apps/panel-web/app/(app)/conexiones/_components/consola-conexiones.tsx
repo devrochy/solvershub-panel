@@ -1,47 +1,59 @@
 import Link from "next/link";
 
-import { GestionConexion } from "@/app/(app)/conexiones/_components/gestion-conexion";
 import { PausarConexion } from "@/app/(app)/conexiones/_components/pausar-conexion";
-import { ChannelBadge, ChannelIcon } from "@/components/domain/channel-icon";
+import { ChannelIcon } from "@/components/domain/channel-icon";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionsConsole } from "@/lib/api/types";
+import { estadoDeConexion, iconoDeConexion, muestraSalud, rutaDeFicha, tipoDeFicha, tipoLegible } from "@/lib/conexion-ficha";
 import {
-  esChatWeb,
   etiquetaRuteo,
   puedePausar,
   resumenConsumo,
   saludDeConexion,
-  TEXTO_ALCANCE_PAUSA,
   textoConfirmarPausa,
   versionDeAgente,
   type ConexionConsola,
 } from "@/lib/conexiones";
 
-/** Consola de conexiones (HU-AOS-23, SPEC-26 §6.2 a). Recibe los datos; no hace fetch. */
-export function ConsolaConexiones({ consola }: { consola: ConnectionsConsole }) {
+/**
+ * Lista de conexiones (HU-AOS-23, compactada en HU-UX-09): una fila por conexión que abre su
+ * ficha. Arriba, en una franja, el webhook del negocio, el enrutamiento y la consistencia.
+ * Recibe los datos; no hace fetch.
+ */
+export function ConsolaConexiones({ consola, webhookUrl }: { consola: ConnectionsConsole; webhookUrl: string | null }) {
   return (
     <section aria-labelledby="consola-titulo" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="consola-titulo" className="font-display text-lg font-semibold text-headline">
-          Tus conexiones
-        </h2>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-body">
-          <span title="Reparto entre especialistas (solo lo cambia el administrador)">
-            Enrutamiento: <Badge variant="neutral">{etiquetaRuteo(consola.routing)}</Badge>
-          </span>
-          {consola.consistency && (
-            <span title="pass^k del último run de pruebas del negocio">
-              Consistencia del negocio:{" "}
-              <Badge variant="accent">
-                {consola.consistency.pass_k.toLocaleString("es-CO", { maximumFractionDigits: 2 })} en{" "}
-                {consola.consistency.k} intentos
-              </Badge>
-            </span>
-          )}
+      <h2 id="consola-titulo" className="sr-only">
+        Tus conexiones
+      </h2>
+
+      <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-border-soft bg-surface px-4 py-3 text-xs text-body">
+        {webhookUrl && (
+          <div className="flex min-w-0 flex-wrap items-center gap-2" title="Regístralo en Meta con su verify token: sin esto los mensajes no llegan al asistente.">
+            <dt className="font-medium text-headline">Webhook del negocio</dt>
+            <dd className="min-w-0">
+              <code className="break-all rounded bg-bg-deep px-2 py-0.5 font-mono text-link">{webhookUrl}</code>
+            </dd>
+          </div>
+        )}
+        <div className="flex items-center gap-2" title="Reparto entre especialistas (solo lo cambia el administrador)">
+          <dt className="font-medium text-headline">Enrutamiento</dt>
+          <dd>
+            <Badge variant="neutral">{etiquetaRuteo(consola.routing)}</Badge>
+          </dd>
         </div>
-      </div>
+        {consola.consistency && (
+          <div className="flex items-center gap-2" title="pass^k del último run de pruebas del negocio">
+            <dt className="font-medium text-headline">Consistencia</dt>
+            <dd>
+              <Badge variant="accent">
+                {consola.consistency.pass_k.toLocaleString("es-CO", { maximumFractionDigits: 2 })} en {consola.consistency.k}{" "}
+                intentos
+              </Badge>
+            </dd>
+          </div>
+        )}
+      </dl>
 
       {consola.unassigned_agents.length > 0 && (
         <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
@@ -60,14 +72,10 @@ export function ConsolaConexiones({ consola }: { consola: ConnectionsConsole }) 
       {consola.items.length === 0 ? (
         <p className="text-sm text-text-soft">Sin conexiones todavía.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2" aria-label="Conexiones del negocio">
           {consola.items.map((c) => (
             <li key={c.id}>
-              {c.conversational ? (
-                <TarjetaConexion conexion={c} canEdit={consola.can_edit} />
-              ) : (
-                <TarjetaIntegracion conexion={c} canEdit={consola.can_edit} />
-              )}
+              <FilaConexion conexion={c} canEdit={consola.can_edit} />
             </li>
           ))}
         </ul>
@@ -76,97 +84,74 @@ export function ConsolaConexiones({ consola }: { consola: ConnectionsConsole }) 
   );
 }
 
-/** Integraciones (Google Calendar, etc.): compactas, sin agentes ni consumo. */
-function TarjetaIntegracion({ conexion: c, canEdit }: { conexion: ConexionConsola; canEdit: boolean }) {
+/**
+ * Una conexión: ícono, nombre (enlace a la ficha que cubre toda la fila), detalle, tipo, estado,
+ * salud solo en las Meta, agentes con ★ en el principal y Pausar. Pausar queda por encima del
+ * enlace para no anidar controles.
+ */
+function FilaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; canEdit: boolean }) {
+  const tipo = tipoDeFicha(c);
+  const estado = estadoDeConexion(c);
   const salud = saludDeConexion(c.health);
+  const pausable = puedePausar(c, canEdit);
+
   return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center gap-3 p-4">
-        <ChannelIcon id={c.type_id ?? c.channel} />
+    <div className="relative grid items-center gap-x-4 gap-y-2 rounded-lg border border-border-soft bg-surface px-4 py-3 transition-colors focus-within:border-focus hover:border-focus/50 hover:bg-focus/5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)_6rem]">
+      <div className="flex min-w-0 items-center gap-3">
+        <ChannelIcon id={iconoDeConexion(c)} />
         <div className="flex min-w-0 flex-col">
-          <span className="text-sm font-medium text-headline">{c.label}</span>
+          <Link
+            href={rutaDeFicha(c)}
+            className="truncate text-sm font-medium text-headline after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none"
+          >
+            {c.label}
+          </Link>
           <span className="truncate font-mono text-xs text-text-soft">{c.external_id}</span>
         </div>
-        <Badge variant={salud.tono === "neutral" ? "neutral" : salud.tono} className="ml-auto">
-          {salud.label}
-        </Badge>
-        <GestionConexion conexion={c} canEdit={canEdit} />
-      </CardContent>
-    </Card>
-  );
-}
+      </div>
 
-function TarjetaConexion({ conexion: c, canEdit }: { conexion: ConexionConsola; canEdit: boolean }) {
-  const salud = saludDeConexion(c.health);
-  return (
-    <Card>
-      <CardHeader className="gap-2 pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex flex-wrap items-center gap-2">
-            <ChannelBadge id={c.channel} />
-            <span>{c.label}</span>
-            <span className="font-mono text-xs font-normal text-body">{c.external_id}</span>
-          </CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            {salud.tono === "neutral" ? (
-              <Badge variant="neutral">{salud.label}</Badge>
-            ) : (
-              <Badge variant={salud.tono}>{salud.label}</Badge>
-            )}
-            <Badge variant="neutral">
+      <span className="text-sm text-body">{tipoLegible(tipo)}</span>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={estado.tono}>{estado.label}</Badge>
+        {muestraSalud(c) && salud.tono !== "neutral" && (
+          <Badge variant={salud.tono} title="Salud de la cuenta de Meta">
+            {salud.label}
+          </Badge>
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-1 text-xs text-body">
+        {c.conversational ? (
+          <>
+            <span className="truncate">
+              {c.agents.length > 0
+                ? c.agents
+                    .map((a) => `${a.name}${a.is_default ? " ★" : ""} ${versionDeAgente(a)}${a.enabled ? "" : " (deshabilitado)"}`)
+                    .join(" · ")
+                : "Sin agentes"}
+            </span>
+            <span className="text-text-soft">
+              {c.coordinator ? `Coordinador ${versionDeAgente(c.coordinator)}` : "Sin Coordinador todavía"} ·{" "}
               {c.active_release ? `Versión ${c.active_release.number}` : "Sin versión activa"}
-            </Badge>
-            {c.canary_release && <Badge variant="info">Prueba v{c.canary_release.number}</Badge>}
-            {puedePausar(c, canEdit) && (
-              <PausarConexion
-                id={c.meta_connection_id ?? c.id}
-                tipo={c.meta_connection_id ? "meta_connection" : "channel"}
-                pausada={c.health === "paused"}
-                textoConfirmacion={textoConfirmarPausa(c)}
-              />
-            )}
-          </div>
-        </div>
-        {puedePausar(c, canEdit) && (
-          <p className="text-xs text-text-soft sm:text-right">
-            {TEXTO_ALCANCE_PAUSA}
-            {esChatWeb(c) ? " Es el mismo interruptor de Configuración → Chat web." : ""}
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2 text-sm">
-        <p className="text-body">
-          <span className="font-medium text-headline">Coordinador</span>{" "}
-          {c.coordinator ? versionDeAgente(c.coordinator) : "sin Coordinador todavía"}
-        </p>
-        {c.agents.length > 0 ? (
-          <ul className="flex flex-wrap gap-2" aria-label={`Agentes de ${c.label}`}>
-            {c.agents.map((a) => (
-              <li key={a.instance_id}>
-                <Badge variant={a.enabled ? "accent" : "neutral"}>
-                  {a.name}
-                  {a.is_default ? " ★" : ""} · {versionDeAgente(a)}
-                  {a.enabled ? "" : " · deshabilitado"}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+              {c.canary_release ? ` · prueba v${c.canary_release.number}` : ""} · 7 días: {resumenConsumo(c.usage_7d)}
+            </span>
+          </>
         ) : (
-          <p className="text-text-soft">Sin agentes en esta conexión.</p>
+          <span className="text-text-soft">Integración del negocio</span>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <p className="text-xs text-body">7 días: {resumenConsumo(c.usage_7d)}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* HU-AOS-27: versiones de la conexión (diferencias, publicar, volver atrás). */}
-            {c.conversational && (c.active_release || c.canary_release) && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/conexiones/${c.id}/versiones`}>Versiones</Link>
-              </Button>
-            )}
-            <GestionConexion conexion={c} canEdit={canEdit} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="relative z-10 flex justify-end">
+        {pausable && (
+          <PausarConexion
+            id={c.meta_connection_id ?? c.id}
+            tipo={c.meta_connection_id ? "meta_connection" : "channel"}
+            pausada={c.health === "paused"}
+            textoConfirmacion={textoConfirmarPausa(c)}
+          />
+        )}
+      </div>
+    </div>
   );
 }

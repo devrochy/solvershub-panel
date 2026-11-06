@@ -20,10 +20,13 @@ export function WebChatForm({
   webChat,
   catalogo = null,
   puedeEditar = true,
+  conFragmento = true,
 }: {
   webChat: WebChatSettings;
   catalogo?: CatalogoConfig | null;
   puedeEditar?: boolean;
+  /** La ficha de la conexión (HU-UX-09) muestra el fragmento en su pestaña Instalación. */
+  conFragmento?: boolean;
 }) {
   const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
   const [enabled, setEnabled] = useState(webChat.enabled);
@@ -137,7 +140,7 @@ export function WebChatForm({
           </label>
           </ControlesEditables>
 
-          {snippet ? (
+          {conFragmento && snippet ? (
             <div className="flex flex-col gap-2">
               <p className="text-[13px] font-medium text-body">Fragmento para tu sitio</p>
               <Textarea readOnly rows={2} value={snippet} className="font-mono text-xs" />

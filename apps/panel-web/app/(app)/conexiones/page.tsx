@@ -1,6 +1,5 @@
 import { ConsolaConexiones } from "@/app/(app)/conexiones/_components/consola-conexiones";
 import { NewConnectionDialog } from "@/app/(app)/conexiones/_components/new-connection-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
@@ -40,24 +39,8 @@ export default async function ConnectionsPage({
         actions={consola.can_edit ? <NewConnectionDialog /> : undefined}
       />
 
-      {webhookUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Webhook del negocio</CardTitle>
-            <p className="text-xs text-text-soft">
-              Registralo en Meta con la URL y el verify token que se muestran abajo; sin esto los
-              mensajes no llegan al asistente.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <code className="block break-all rounded-md bg-bg-deep px-3 py-2 font-mono text-xs text-link">
-              {webhookUrl}
-            </code>
-          </CardContent>
-        </Card>
-      )}
 
-      <ConsolaConexiones consola={consola} />
+      <ConsolaConexiones consola={consola} webhookUrl={webhookUrl} />
 
       {(consola.has_more || pagina > 1) && (
         <Pagination

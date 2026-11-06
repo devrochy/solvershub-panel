@@ -76,7 +76,7 @@ describe("PrimerosPasos (HU-SH-06)", () => {
   it("cada paso pendiente lleva a donde se resuelve", () => {
     render(<PrimerosPasos datos={datos(PASOS)} />);
     expect(within(fila("Conecta tu WhatsApp")).getByRole("link", { name: "Revisar conexión" }).getAttribute("href")).toBe(
-      "/conexiones/meta",
+      "/conexiones",
     );
     expect(within(fila("Carga tu catálogo")).getByRole("link", { name: "Cargar productos" }).getAttribute("href")).toBe(
       "/comercio/productos",
