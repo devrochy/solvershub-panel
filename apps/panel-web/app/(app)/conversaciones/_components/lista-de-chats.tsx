@@ -9,15 +9,14 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ConversationSummary } from "@/lib/api/types";
+import { nombreDelChat } from "@/lib/conversaciones/nombre";
 import { contadorPendientes, formatHoraChat, textoPendientes } from "@/lib/format";
 import { CANAL, canalLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const PREFIJO: Record<string, string> = { agent: "Agente: ", human: "Equipo: " };
 
-export function nombreDelChat(chat: Pick<ConversationSummary, "customer_name" | "external_id">): string {
-  return chat.customer_name || chat.external_id || "Cliente";
-}
+export { nombreDelChat };
 
 /** Tipo para el ícono y la etiqueta: el de la conexión si el panel lo conoce (p. ej.
  * `whatsapp_waweb`), si no el canal de la conversación. */

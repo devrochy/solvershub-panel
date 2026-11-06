@@ -139,7 +139,11 @@ function TarjetaDeAgente({ agente, dias, abierta }: { agente: AgenteResumen; dia
   );
 }
 
-export function ResumenAgentes({ datos }: { datos: ResumenPorAgente }) {
+/**
+ * `despuesDelGeneral`: lo que se intercala entre «Agente general» y lo demás (los primeros pasos
+ * del negocio): el Resumen abre con las cifras del negocio y no queda debajo de las bienvenidas.
+ */
+export function ResumenAgentes({ datos, despuesDelGeneral }: { datos: ResumenPorAgente; despuesDelGeneral?: ReactNode }) {
   const dias = datos.periodo.dias ?? 7;
   const conSerie = datos.agentes.some((a) => (a.serie?.length ?? 0) > 0);
   const agentes = agentesConTarjeta(datos);
@@ -149,6 +153,7 @@ export function ResumenAgentes({ datos }: { datos: ResumenPorAgente }) {
       {(datos.general.kpis.length > 0 || modulosSinAgente(datos).length > 0) && (
         <AgenteGeneral datos={datos} dias={dias} />
       )}
+      {despuesDelGeneral}
       {conSerie && <ActividadDeAgentes datos={datos} />}
       {agentes.length > 0 && (
         <Seccion
