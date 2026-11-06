@@ -8,11 +8,19 @@ export const PESTANAS = [
   { id: "tareas", label: "Tareas" },
   { id: "registros", label: "Clientes y registros" },
   { id: "consumo", label: "Consumo y calidad" },
+  // HU-UX-09: dónde atiende (rol, prioridad y principal) y qué sabe hacer. Solo agentes con id.
+  { id: "conexiones", label: "Conexiones" },
+  { id: "superpoderes", label: "Superpoderes" },
   // HU-AOS-49: documentos del negocio con los que responde. Solo especialistas con id.
   { id: "conocimiento", label: "Conocimiento" },
+  // HU-UX-09: el chat de prueba del asistente, por una conexión donde está el agente.
+  { id: "probar", label: "Probar" },
 ] as const;
 
 export type Pestana = (typeof PESTANAS)[number]["id"];
+
+/** Pestañas sin filtros de período ni conexión (no muestran `AgentFilters`). */
+export const PESTANAS_SIN_FILTROS: ReadonlySet<Pestana> = new Set(["conexiones", "superpoderes", "conocimiento", "probar"]);
 
 export const PERIODOS = [
   { dias: 7, label: "Últimos 7 días" },
@@ -143,6 +151,16 @@ export function consistencia(mediciones: { pass_k: number; k: number }[]): {
 /** ¿La pestaña Conocimiento aplica? Solo a especialistas (el Coordinador no tiene documentos). */
 export function tieneConocimiento(agente: { id?: string | null; kind: string }): boolean {
   return Boolean(agente.id) && agente.kind === "specialist";
+}
+
+/** ¿La pestaña Superpoderes aplica? Igual que el editor por pasos: especialistas con id. */
+export function tieneSuperpoderes(agente: { id?: string | null; kind: string }): boolean {
+  return Boolean(agente.id) && agente.kind === "specialist";
+}
+
+/** Conexiones y Probar: cualquier agente real (el General virtual no tiene id ni conexiones propias). */
+export function tieneConexiones(agente: { id?: string | null }): boolean {
+  return Boolean(agente.id);
 }
 
 /** Subir, borrar y reprocesar documentos: escritura en la sección `agents` (o master). */

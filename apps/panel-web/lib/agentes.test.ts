@@ -6,14 +6,46 @@ import {
   filtrosDe,
   hrefDeAgente,
   nombreDeProcedimiento,
+  PESTANAS,
+  PESTANAS_SIN_FILTROS,
   pestanaValida,
   puedeEditarAgentes,
   queryDeApi,
   refValido,
+  tieneConexiones,
+  tieneSuperpoderes,
   tipoDeRegistro,
 } from "@/lib/agentes";
 
 const ID = "3f1c2a4b-1111-4222-8333-944455556666";
+
+describe("pestañas de la ficha del agente (HU-UX-09)", () => {
+  it("van en el orden acordado", () => {
+    expect(PESTANAS.map((p) => p.label)).toEqual([
+      "Conversaciones",
+      "Tareas",
+      "Clientes y registros",
+      "Consumo y calidad",
+      "Conexiones",
+      "Superpoderes",
+      "Conocimiento",
+      "Probar",
+    ]);
+    expect(pestanaValida("probar")).toBe("probar");
+  });
+
+  it("las pestañas nuevas no llevan filtros de período", () => {
+    expect([...PESTANAS_SIN_FILTROS].sort()).toEqual(["conexiones", "conocimiento", "probar", "superpoderes"]);
+  });
+
+  it("Superpoderes solo para especialistas con id; Conexiones para cualquier agente real", () => {
+    expect(tieneSuperpoderes({ id: ID, kind: "specialist" })).toBe(true);
+    expect(tieneSuperpoderes({ id: ID, kind: "backoffice" })).toBe(false);
+    expect(tieneSuperpoderes({ id: null, kind: "specialist" })).toBe(false);
+    expect(tieneConexiones({ id: ID })).toBe(true);
+    expect(tieneConexiones({ id: null })).toBe(false);
+  });
+});
 
 describe("sección Agentes (HU-AOS-47)", () => {
   it("acepta solo un id o `general` como ref", () => {

@@ -33,7 +33,7 @@
 
 import { createServer } from "node:http";
 
-const { RESPUESTAS, accionesDeOpciones, ajustes, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
+const { RESPUESTAS, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
 
 const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts");
@@ -184,6 +184,81 @@ if (retiradas) {
   respuestas["/admin/agent-models"] = { items: [{ provider: "deepseek", model: "deepseek-flash", input_usd_per_mtok: 0.14, output_usd_per_mtok: 0.28, selectable: true, retired: false }], total: 1, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
   respuestas[`/admin/agents/${VENTAS_ID}/publish-targets`] = pagina([{ connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: true, covers_skills: true, missing_skills: [], active_release_id: null }]);
   respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
+}
+// FICHA_AGENTE=1 (HU-UX-09): la ficha de Ventas con sus conexiones (rol, prioridad y principal), indicadores de
+// 7 días, superpoderes de dos habilidades y el chat de prueba por su conexión principal.
+if (process.env.FICHA_AGENTE === "1") {
+  const GENERAL_ID = "00000000-0000-4000-8000-000000000001";
+  const instancia = (agentId, key, name, extra) => ({
+    instance_id: `${key}-${extra.conexion}`, agent_id: agentId, key, name, role: "specialist", is_default: false, enabled: true,
+    priority: 100, release_version: 3, latest_version: 3, ...extra,
+  });
+  const base = RESPUESTAS["/admin/connections/console"];
+  const conexion = (id, label, type_id, channel, agents, extra = {}) => ({
+    ...base.items[0], id, label, type_id, channel, external_id: id, meta_connection_id: null, is_primary: false, agents, ...extra,
+  });
+  respuestas["/admin/connections/console"] = {
+    ...base,
+    items: [
+      conexion("00000000-0000-4000-8000-0000000000c1", "Chat de la tienda", "webchat", "web", [
+        instancia(VENTAS_ID, "ventas", "Ventas", { conexion: "c1", is_default: true, priority: 10 }),
+        instancia(GENERAL_ID, "general", "General", { conexion: "c1", priority: 100 }),
+      ]),
+      conexion("00000000-0000-4000-8000-0000000000c2", "WhatsApp ventas", "whatsapp_meta", "whatsapp", [
+        instancia(VENTAS_ID, "ventas", "Ventas", { conexion: "c2", priority: 50 }),
+      ], { health: "degraded", is_primary: true }),
+      conexion("00000000-0000-4000-8000-0000000000c3", "WhatsApp Web bodega", "whatsapp_waweb", "whatsapp", [
+        instancia(VENTAS_ID, "ventas", "Ventas", { conexion: "c3", priority: 200, enabled: false, release_version: null }),
+      ]),
+    ],
+  };
+  respuestas[`/admin/agents/${VENTAS_ID}`] = {
+    id: VENTAS_ID, key: "ventas", kind: "specialist", contract: "agentspec/3", name: "Ventas",
+    description: "Toma pedidos, resuelve dudas de productos y agenda entregas.",
+    status: "active", latest_version: 3, created_at: "2026-10-20T12:00:00Z",
+    draft: {
+      lock_version: 1, base_version_id: null, updated_at: "2026-11-05T12:00:00Z",
+      content: {
+        contract: "agentspec/3", description: "Ventas",
+        persona: { inheritConnectionVoice: true, maxLength: 500, forbiddenPhrases: [] },
+        model: { primary: "deepseek-flash", temperature: 0.3 },
+        procedures: [{ id: "pack_commerce.tomar_pedido", version: "^1.0", overrides: { examples: ["me separas dos cajas"] } }],
+        memory: { shortTermTurns: 30, readScopes: ["customer", "connection", "tenant"], writeNamespaces: [] },
+      },
+    },
+    versions: [{ id: "v3", version: 3, label: "", contract: "agentspec/3", content_hash: "x", notes: "", legacy: false, created_at: "2026-11-04T12:00:00Z" }],
+  };
+  const pagina = (items) => ({ items, total: items.length, page: 1, page_size: 100, has_more: false });
+  respuestas["/admin/agent-superpowers"] = pagina([
+    { id: "pack_commerce.tomar_pedido", version: "1.2.0", skill: "pack_commerce", title: "Tomar un pedido", description: "Arma el pedido con el cliente y lo confirma.", phrases: ["quiero comprar", "hacer un pedido", "me lo vendes"] },
+    { id: "pack_commerce.consultar_catalogo", version: "1.0.0", skill: "pack_commerce", title: "Consultar el catálogo", description: "Busca productos, precios y existencias.", phrases: ["qué tienen", "cuánto vale", "hay en talla M"] },
+    { id: "pack_calendar.agendar_cita", version: "2.1.0", skill: "pack_calendar", title: "Agendar una entrega", description: "Busca un espacio libre en la agenda.", phrases: ["cuándo me llega", "agéndame la entrega", "tienen turno mañana"] },
+  ]);
+  respuestas["/admin/agent-models"] ??= { items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
+  respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
+  respuestas["/admin/reliability"] = {
+    period: { desde: "2026-10-30T00:00:00Z", hasta: "2026-11-06T00:00:00Z" }, minimum_sample: { turns: 30, tasks: 5 },
+    operational: {
+      turns: 260, conversations: 61, escalated: 14, escalated_conversations: 9, failed: 1, without_outcome: 3, escalation_rate: 0.054,
+      p95_ms: 2100, cost_usd: 2.4, cost_per_conversation_usd: 0.04,
+      by_agent: [
+        { instance_id: "ventas-c1", name: "Ventas", turns: 140, escalated: 8, escalation_rate: 0.057, p95_ms: 2000, cost_usd: 1.3 },
+        { instance_id: "ventas-c2", name: "Ventas", turns: 60, escalated: 2, escalation_rate: 0.033, p95_ms: 2200, cost_usd: 0.6 },
+        { instance_id: "general-c1", name: "General", turns: 60, escalated: 4, escalation_rate: 0.067, p95_ms: 1900, cost_usd: 0.5 },
+      ],
+    },
+    verifier: [], completion: [], consistency: [], can_see_costs: true, can_see_conversations: true,
+  };
+  respuestas[`/admin/agents/${VENTAS_ID}/usage`] = {
+    periodo: { desde: "2026-10-30T00:00:00Z", hasta: "2026-11-06T00:00:00Z" }, incluye_sin_atribuir: false,
+    total: { turns: 200, input_tokens: 180000, output_tokens: 42000, cost_usd: 1.9 },
+    by_connection: [], by_day: [], consistency: { scope: "negocio", measurements: [] },
+  };
+  respuestas[`/admin/agents/${VENTAS_ID}/conversations`] = { ...conversacionesDeAgente, total: 48 };
+  respuestas["/admin/playground"] = { turns: [
+    { role: "user", text: "Hola, ¿tienen la chaqueta azul en talla M?" },
+    { role: "assistant", text: "¡Hola! Sí, nos quedan 3 en talla M a $189.900. ¿Te separo una?" },
+  ] };
 }
 const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
