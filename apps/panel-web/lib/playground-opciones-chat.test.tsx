@@ -187,3 +187,19 @@ describe("Probar plantilla con opciones", () => {
     expect(screen.queryByRole("button", { name: /Ver mis citas/ })).toBeNull();
   });
 });
+
+describe("historial del chat de prueba (HU-UX-09)", () => {
+  it("al cargar baja solo la caja de mensajes, sin mover la página (la ficha del agente queda arriba)", async () => {
+    fetchMock.mockImplementation(async () => json({ turns: [{ role: "user", text: "Hola" }, { role: "assistant", text: "¡Hola! ¿En qué te ayudo?" }] }));
+    const alto = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(640);
+    try {
+      render(<ChatPrueba />);
+      const respuesta = await screen.findByText("¡Hola! ¿En qué te ayudo?");
+      const caja = respuesta.closest(".overflow-y-auto") as HTMLElement;
+      await waitFor(() => expect(caja.scrollTop).toBe(640));
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      alto.mockRestore();
+    }
+  });
+});
