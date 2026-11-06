@@ -31,6 +31,7 @@ import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda }
 import type { Pendiente } from "@/lib/frases-pendientes";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
 /** Enlaza una lista de frases (por su id) con el texto pendiente del editor (`usePendientes`). */
@@ -242,6 +243,9 @@ export function PasoSuperpoderes({
   minFrases,
   requisitos = [],
   registrarPendiente,
+  nombreDeHabilidad = habilidadLabel,
+  interruptor = false,
+  soloLectura = false,
 }: {
   estado: EstadoDelEditor;
   cambiar: Cambiar;
@@ -251,6 +255,12 @@ export function PasoSuperpoderes({
   minFrases: number;
   requisitos?: Requirement[];
   registrarPendiente?: RegistrarPendiente;
+  /** Nombre legible del pack de origen (`Superpower.skill`), para «De la habilidad …» (HU-UX-09). */
+  nombreDeHabilidad?: (skill: string) => string;
+  /** Interruptor en lugar de casilla: la pestaña Superpoderes de la ficha (HU-UX-09). */
+  interruptor?: boolean;
+  /** Sin permiso de edición: se ve qué tiene, sin cambiarlo. */
+  soloLectura?: boolean;
 }) {
   function poner(id: string, cambio: Partial<{ activo: boolean; frases: string[] }>) {
     const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
@@ -281,7 +291,7 @@ export function PasoSuperpoderes({
               </p>
               <ErrorDeCampo id={`poder-${id}-error`} mensaje={erroresPorPoder[id]} />
               <div>
-                <Button type="button" variant="outline" size="sm" onClick={() => poner(id, { activo: false })}>
+                <Button type="button" variant="outline" size="sm" disabled={soloLectura} onClick={() => poner(id, { activo: false })}>
                   Quitar
                 </Button>
               </div>
@@ -297,15 +307,41 @@ export function PasoSuperpoderes({
           const idError = `poder-${poder.id}-error`;
           return (
             <li key={poder.id} className="rounded-md border border-border-soft p-4">
-              <Checkbox
-                id={`poder-${poder.id}`}
-                label={poder.title}
-                checked={enEditor.activo}
-                onCheckedChange={(activo) => poner(poder.id, { activo })}
-              />
-              {poder.description && <p className="mt-1 pl-7 text-sm text-text-soft">{poder.description}</p>}
-              {enEditor.activo && (
-                <div className="mt-3 flex flex-col gap-3 pl-7">
+              {interruptor ? (
+                <div className="flex items-start gap-3">
+                  <Switch
+                    id={`poder-${poder.id}`}
+                    aria-label={poder.title}
+                    checked={enEditor.activo}
+                    disabled={soloLectura}
+                    onCheckedChange={(activo) => poner(poder.id, { activo })}
+                  />
+                  <p className="text-sm font-medium text-headline">{poder.title}</p>
+                </div>
+              ) : (
+                <Checkbox
+                  id={`poder-${poder.id}`}
+                  label={poder.title}
+                  checked={enEditor.activo}
+                  disabled={soloLectura}
+                  onCheckedChange={(activo) => poner(poder.id, { activo })}
+                />
+              )}
+              {poder.description && <p className={cn("mt-1 text-sm text-text-soft", interruptor ? "pl-12" : "pl-7")}>{poder.description}</p>}
+              <p className={cn("mt-1 text-xs text-text-soft", interruptor ? "pl-12" : "pl-7")}>
+                De la habilidad {nombreDeHabilidad(poder.skill)}
+              </p>
+              {enEditor.activo && soloLectura && (
+                <ul className={cn("mt-3 flex flex-wrap gap-2", interruptor ? "pl-12" : "pl-7")} aria-label={`Frases de ${poder.title}`}>
+                  {[...new Set([...poder.phrases, ...enEditor.frases])].map((frase) => (
+                    <li key={frase} className="rounded-sm border border-border-soft px-2 py-1 text-sm text-body">
+                      {frase}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {enEditor.activo && !soloLectura && (
+                <div className={cn("mt-3 flex flex-col gap-3", interruptor ? "pl-12" : "pl-7")}>
                   <div className="flex flex-col gap-1.5">
                     <p className="text-sm font-medium text-headline">Frases sugeridas de la habilidad</p>
                     <ul className="flex flex-wrap gap-2">

@@ -37,6 +37,7 @@ import type {
   Superpower,
 } from "@/lib/api/types";
 import { usePendientes } from "@/lib/frases-pendientes";
+import { habilidadLabel } from "@/lib/labels";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
@@ -67,6 +68,7 @@ export function EditorDeAgente({
   requisitos = [],
   pasoInicial = "identidad",
   avisosRetirados = null,
+  nombresDeHabilidades = {},
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -80,6 +82,8 @@ export function EditorDeAgente({
   pasoInicial?: PasoId;
   /** Lo que el agente nombra y ya no existe (HU-AOS-59): solo avisa, en palabras simples. */
   avisosRetirados?: AgentRetiredNotices | null;
+  /** Nombre legible del pack de cada superpoder (`Superpower.skill`), para «De la habilidad …» (HU-UX-09). */
+  nombresDeHabilidades?: Record<string, string>;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -316,6 +320,7 @@ export function EditorDeAgente({
         catalogo={superpoderes}
         minFrases={minFrases}
         requisitos={requisitos}
+        nombreDeHabilidad={(skill) => nombresDeHabilidades[skill] ?? habilidadLabel(skill)}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
