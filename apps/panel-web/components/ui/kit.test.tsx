@@ -92,6 +92,58 @@ describe("TabLinks", () => {
     expect(screen.getByRole("link", { name: "Citas" }).getAttribute("aria-current")).toBeNull();
     expect(screen.queryByRole("tablist")).toBeNull();
   });
+
+  const OCHO = ["Conversaciones", "Tareas", "Clientes y registros", "Consumo y calidad", "Conexiones", "Superpoderes", "Conocimiento", "Probar"];
+
+  it("la compacta (HU-UX-09) tiene menos relleno, los mismos enlaces y pasa axe", async () => {
+    const { container } = render(
+      <TabLinks
+        label="Secciones de Ventas"
+        size="compact"
+        current="/agentes/v?tab=probar"
+        items={OCHO.map((nombre, i) => ({ label: nombre, href: i === 7 ? "/agentes/v?tab=probar" : `/agentes/v?tab=${i}` }))}
+      />,
+    );
+    const nav = screen.getByRole("navigation", { name: "Secciones de Ventas" });
+    expect(within(nav).getAllByRole("link")).toHaveLength(8);
+    expect(screen.getByRole("link", { name: "Probar" }).getAttribute("aria-current")).toBe("page");
+    for (const enlace of within(nav).getAllByRole("link")) expect(enlace.className).toMatch(/\bpx-3\b/);
+    expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("la normal no cambia: px-4 y sin desplazar la fila", () => {
+    render(<TabLinks label="Agenda" current="/b" items={[{ href: "/a", label: "A" }, { href: "/b", label: "B" }]} />);
+    expect(screen.getByRole("link", { name: "B" }).className).toMatch(/\bpx-4\b/);
+  });
+
+  it("la compacta desplaza solo la fila hasta la pestaña activa, y no la página", () => {
+    const caja = (left: number, right: number) => ({ left, right, top: 0, bottom: 44, width: right - left, height: 44, x: left, y: 0, toJSON: () => ({}) });
+    const anchoFila = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(1100);
+    const visible = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(900);
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      return (this.tagName === "NAV" ? caja(0, 900) : caja(1000, 1080)) as DOMRect;
+    });
+    const scrollIntoView = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    try {
+      render(
+        <TabLinks
+          label="Secciones"
+          size="compact"
+          current="/p"
+          items={[{ href: "/c", label: "Conversaciones" }, { href: "/p", label: "Probar" }]}
+        />,
+      );
+      expect(screen.getByRole("navigation").scrollLeft).toBe(180);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      anchoFila.mockRestore();
+      visible.mockRestore();
+      rect.mockRestore();
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
 });
 
 describe("KpiTile", () => {
@@ -113,6 +165,20 @@ describe("KpiTile", () => {
     expect(screen.getByTestId("tendencia")).toBeTruthy();
     expect(container.firstElementChild?.className).toMatch(/p-6/);
     expect(container.querySelector(".sm\\:flex-row")).not.toBeNull();
+  });
+
+  it("la compacta (HU-UX-09) es una fila en móvil y la normal desde sm; carga y error no cambian", async () => {
+    const { container, rerender } = render(<KpiTile label="Consumo · 7 días" value="US$ 1,50" hint="120 respuestas." size="compact" />);
+    const tarjeta = container.firstElementChild as HTMLElement;
+    expect(tarjeta.className).toMatch(/\bgrid\b/);
+    expect(tarjeta.className).toMatch(/sm:block/);
+    expect(tarjeta.className).toMatch(/\bp-3\b.*sm:p-5/);
+    expect(screen.getByText("US$ 1,50").className).toMatch(/text-sh-block.*sm:text-sh-hero/);
+    expect(screen.getByText("120 respuestas.")).toBeTruthy();
+    expect(await violacionesGraves(container)).toEqual([]);
+    rerender(<KpiTile label="Consumo · 7 días" size="compact" error="Sin datos por ahora." />);
+    expect(screen.getByRole("alert").textContent).toBe("Sin datos por ahora.");
+    expect((container.firstElementChild as HTMLElement).className).not.toMatch(/\bgrid\b/);
   });
 
   it("muestra carga, error y enlace a la lista", () => {

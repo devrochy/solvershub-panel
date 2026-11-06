@@ -127,7 +127,7 @@ describe("ficha del agente", () => {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
       [`/pack/pack_knowledge/agents/${AGENTE}/documents`]: [documento()],
-      [`/admin/agents/${AGENTE}`]: { draft: { content: { tools: [] } } },
+      [`/admin/agents/${AGENTE}`]: { description: "", latest_version: 1, versions: [], draft: { content: { tools: [] } } },
     });
     const { container } = await abrir(VENTAS.ref, { tab: "conocimiento" });
     expect(screen.getByRole("link", { name: "Conocimiento" })).toBeTruthy();
