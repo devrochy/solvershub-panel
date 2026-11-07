@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 
 import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
 import { PageHeader } from "@/components/ui/page-header";
+import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { apiFetch } from "@/lib/api/server";
 import type {
   AgentDetail,
   AgentRetiredNotices,
   LlmModelCatalog,
   Me,
+  PluginSummary,
   PublishTargetPage,
   RequirementPage,
   SuperpowerPage,
@@ -30,7 +32,7 @@ export default async function EditarAgentePage({
   // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
   const pasoInicial = paso === "publicar" ? "publicar" : undefined;
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
@@ -39,6 +41,8 @@ export default async function EditarAgentePage({
     apiFetch<RequirementPage>(`/admin/agents/${id}/requirements?page_size=100`),
     // Aviso de referencias retiradas (HU-AOS-59): si no responde, el editor abre sin el aviso.
     apiFetch<AgentRetiredNotices>(`/admin/agents/${id}/retired-references`),
+    // Nombre de la habilidad de cada superpoder (HU-UX-09); sin respuesta queda la etiqueta conocida.
+    apiFetch<PluginSummary[]>("/admin/plugins"),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -61,6 +65,7 @@ export default async function EditarAgentePage({
       </div>
     );
   }
+  const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
   const puedeActivar = me.ok && (me.data.role === "master" || me.data.tenant?.role === "owner");
 
   return (
@@ -80,6 +85,7 @@ export default async function EditarAgentePage({
         requisitos={requisitos.ok ? requisitos.data.items : []}
         pasoInicial={pasoInicial}
         avisosRetirados={retiradas.ok ? retiradas.data : null}
+        nombresDeHabilidades={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
       />
     </div>
   );

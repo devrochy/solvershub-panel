@@ -316,6 +316,7 @@ export type CanaryIn = components["schemas"]["CanaryIn"];
 
 // Tablero de fiabilidad (HU-AOS-29).
 export type ReliabilityResponse = components["schemas"]["ReliabilityResponse"];
+export type AgentReliability = components["schemas"]["AgentReliability"];
 export type VerifierRejections = components["schemas"]["VerifierRejections"];
 export type VerifierRejection = components["schemas"]["VerifierRejection"];
 export type ReliabilityUsage = components["schemas"]["UsageResponse"];
