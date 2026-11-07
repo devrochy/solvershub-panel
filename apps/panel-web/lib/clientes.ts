@@ -328,9 +328,19 @@ export function enlaceWhatsApp(perfil: Telefono): string | null {
   return digitos ? `https://wa.me/${digitos}` : null;
 }
 
-/** Quién puede enviar plantillas desde la lista: el propietario del negocio, la plataforma y el tester (D-SPEC-33-8). */
-export function puedeEnviarPlantilla(me: { role?: string | null; tenant?: { role?: string | null } | null } | null | undefined): boolean {
+type SesionConRol = { role?: string | null; tenant?: { role?: string | null } | null } | null | undefined;
+
+/**
+ * ¿Propietario del negocio activo o admin de plataforma (master, o tester en su negocio de pruebas)?
+ * Misma regla que `es_owner_o_master` del servidor: el permiso de sección no alcanza para estas acciones.
+ */
+export function esPropietarioOPlataforma(me: SesionConRol): boolean {
   return Boolean(me && (me.role === "master" || me.role === "tester" || me.tenant?.role === "owner"));
+}
+
+/** Quién puede enviar plantillas desde la lista: el propietario del negocio, la plataforma y el tester (D-SPEC-33-8). */
+export function puedeEnviarPlantilla(me: SesionConRol): boolean {
+  return esPropietarioOPlataforma(me);
 }
 
 /** «Hace 3 min», «Hace 2 h», «Hace 5 días» o la fecha si pasó más de un mes; «Sin mensajes» si nunca escribió. */

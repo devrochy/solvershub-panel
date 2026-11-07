@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { ConsentimientoDatosDelCliente } from "@/components/domain/cliente/consentimiento-datos";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { ConsentimientoDatos } from "@/lib/aviso-datos";
+import { esPropietarioOPlataforma } from "@/lib/clientes";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
@@ -20,10 +21,10 @@ const otorgado: ConsentimientoDatos = {
   ],
 };
 
-function montar() {
+function montar(puedeRetirar = true) {
   return render(
     <FeedbackProviders>
-      <ConsentimientoDatosDelCliente leadId="lead-1" />
+      <ConsentimientoDatosDelCliente leadId="lead-1" puedeRetirar={puedeRetirar} />
     </FeedbackProviders>,
   );
 }
@@ -76,5 +77,56 @@ describe("ConsentimientoDatosDelCliente", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Cancelar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // agent-core#692: retirar datos es solo del propietario o la plataforma. La ficha recibe `puedeRetirar`
+  // de `esPropietarioOPlataforma(me)`; aquí se prueba cada sesión de punta a punta (sesión → botón).
+  describe("quién ve «Retirar sus datos»", () => {
+    const sesiones = {
+      propietario: { role: "user", tenant: { role: "owner" }, permissions: { leads: "write" } },
+      master: { role: "master", permissions: {} },
+      tester: { role: "tester", permissions: {} },
+      colaboradorConClientesEnEscritura: { role: "user", tenant: { role: "colaborador" }, permissions: { leads: "write" } },
+    };
+
+    it.each([
+      ["propietario", sesiones.propietario, true],
+      ["master", sesiones.master, true],
+      ["tester", sesiones.tester, true],
+      ["colaborador con Clientes en escritura", sesiones.colaboradorConClientesEnEscritura, false],
+    ] as const)("%s", async (_nombre, me, visible) => {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify(otorgado), { status: 200 }));
+      montar(esPropietarioOPlataforma(me));
+      // El estado del consentimiento se lee igual para todos.
+      expect(await screen.findByText("Aceptó el tratamiento de datos")).toBeTruthy();
+      expect(screen.getByText(/en el chat, por el cliente/)).toBeTruthy();
+      expect(Boolean(screen.queryByRole("button", { name: "Retirar sus datos" }))).toBe(visible);
+    });
+
+    it("sin la prop, por defecto no se ofrece (cerrado ante la duda)", async () => {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify(otorgado), { status: 200 }));
+      render(
+        <FeedbackProviders>
+          <ConsentimientoDatosDelCliente leadId="lead-1" />
+        </FeedbackProviders>,
+      );
+      expect(await screen.findByText("Aceptó el tratamiento de datos")).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Retirar sus datos" })).toBeNull();
+    });
+
+    it("si el servidor responde 403 se muestra su mensaje y los datos no cambian", async () => {
+      fetchMock
+        .mockResolvedValueOnce(new Response(JSON.stringify(otorgado), { status: 200 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "Solo el propietario del negocio puede retirar los datos de un cliente." }), { status: 403 }),
+        );
+      montar(true);
+      fireEvent.click(await screen.findByRole("button", { name: "Retirar sus datos" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Retirar datos" }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText("Solo el propietario del negocio puede retirar los datos de un cliente.")).toBeTruthy();
+      expect(screen.queryByText(/Se retiraron/)).toBeNull();
+      expect(screen.getByText("Aceptó el tratamiento de datos")).toBeTruthy();
+    });
   });
 });

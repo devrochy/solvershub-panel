@@ -102,6 +102,7 @@ export function FichaCliente({
   editarInicial = false,
   hrefBase,
   puedeEditar = true,
+  esPropietario = false,
 }: {
   detalle: LeadDetail;
   closeHref: string;
@@ -109,6 +110,8 @@ export function FichaCliente({
   editarInicial?: boolean;
   /** La sesión puede cambiar datos de clientes (HU-CRM-21: sin permiso el seguimiento se ve, no se edita). */
   puedeEditar?: boolean;
+  /** Propietario del negocio o admin de plataforma: puede retirar los datos del cliente (agent-core#692). */
+  esPropietario?: boolean;
   /** URL de `/leads` con los filtros actuales, sin `cliente`/`agente`/`editar`. */
   hrefBase: string;
 }) {
@@ -279,7 +282,7 @@ export function FichaCliente({
             </section>
 
             {detalle.canal === "whatsapp" && <ConsentimientoDelCliente leadId={detalle.id} />}
-            <ConsentimientoDatosDelCliente leadId={detalle.id} />
+            <ConsentimientoDatosDelCliente leadId={detalle.id} puedeRetirar={esPropietario} />
             <NotasDelCliente leadId={detalle.id} onCambio={() => setVersionHistoria((v) => v + 1)} />
             <HistoriaDelCliente key={versionHistoria} leadId={detalle.id} />
           </div>

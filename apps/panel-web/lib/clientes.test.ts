@@ -9,6 +9,7 @@ import {
   enlaceWhatsApp,
   etiquetaClasificacion,
   etiquetaDeDato,
+  esPropietarioOPlataforma,
   etiquetaTipoDocumento,
   filtrosCon,
   filtrosDePacks,
@@ -237,6 +238,17 @@ describe("filtrosCon", () => {
   it("un valor vacío quita la clave", () => {
     expect(filtrosCon("estado_lead:nuevo", "estado_lead", "")).toEqual([]);
     expect(filtrosCon(undefined, "estado_lead", "")).toEqual([]);
+  });
+});
+
+describe("esPropietarioOPlataforma", () => {
+  it("propietario, master y tester sí; un colaborador no, aunque tenga Clientes en escritura", () => {
+    expect(esPropietarioOPlataforma({ role: "user", tenant: { role: "owner" } })).toBe(true);
+    expect(esPropietarioOPlataforma({ role: "master" })).toBe(true);
+    expect(esPropietarioOPlataforma({ role: "tester" })).toBe(true);
+    expect(esPropietarioOPlataforma({ role: "user", tenant: { role: "colaborador" }, permissions: { leads: "write" } } as never)).toBe(false);
+    expect(esPropietarioOPlataforma({ role: "user", tenant: null })).toBe(false);
+    expect(esPropietarioOPlataforma(undefined)).toBe(false);
   });
 });
 

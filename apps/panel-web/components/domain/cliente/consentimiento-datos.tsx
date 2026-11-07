@@ -18,11 +18,19 @@ import { useAction } from "@/lib/use-action";
 
 /**
  * Tratamiento de datos del cliente (HU-CRM-16): si ya se le mostró el aviso y qué respondió, con quién y
- * cuándo. Solo aparece cuando el negocio tiene el aviso activo o el cliente ya tiene historia. El dueño
- * puede retirar los datos del cliente: se anota que no autoriza guardarlos y se borran de su perfil; los
+ * cuándo. Solo aparece cuando el negocio tiene el aviso activo o el cliente ya tiene historia. Solo el
+ * propietario (o la plataforma) puede retirar los datos del cliente; el servidor lo exige igual (agent-core#692),
+ * así que a un colaborador se le muestra el estado sin el botón: se anota que no autoriza guardarlos y se borran de su perfil; los
  * pedidos, citas y demás registros de los módulos no se tocan desde aquí.
  */
-export function ConsentimientoDatosDelCliente({ leadId }: { leadId: string }) {
+export function ConsentimientoDatosDelCliente({
+  leadId,
+  puedeRetirar = false,
+}: {
+  leadId: string;
+  /** Propietario o admin de plataforma. Sin esto no se ofrece «Retirar sus datos». */
+  puedeRetirar?: boolean;
+}) {
   const [datos, setDatos] = useState<ConsentimientoDatos | null>(null);
   const [retirados, setRetirados] = useState<string[] | null>(null);
   const confirm = useConfirm();
@@ -86,7 +94,7 @@ export function ConsentimientoDatosDelCliente({ leadId }: { leadId: string }) {
             : "No había datos del perfil por retirar. Los registros de los módulos se conservan."}
         </p>
       )}
-      {puedeRetirarDatos(datos) && (
+      {puedeRetirar && puedeRetirarDatos(datos) && (
         <Button size="sm" variant="outline" onClick={() => void retirar()} disabled={accion.pending}>
           Retirar sus datos
         </Button>
