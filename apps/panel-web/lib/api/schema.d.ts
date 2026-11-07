@@ -7272,11 +7272,13 @@ export interface paths {
          * @description Marca que el cliente aceptó (o ya no acepta) recibir promociones. Se guarda cómo se obtuvo
          *     y quién lo marcó; nunca se edita una fila anterior (ADR-0150).
          *
-         *     Registrar que **aceptó** es solo del propietario o el master (D-SPEC-33-9): es la autorización
+         *     Registrar que **aceptó** exige evidencia con cualquier forma de obtenerlo (400 `evidencia_requerida`
+         *     si viene vacía o solo con espacios) y es solo del propietario o el master (D-SPEC-33-9): es la autorización
          *     que responde ante Meta y la Ley 1581 y la que gasta créditos del propietario. Y nadie la
          *     registra sobre una baja pedida por el cliente (`palabra_de_baja`) o impuesta por Meta
-         *     (`meta_131050`): 409 `baja_del_cliente`. Registrar que **ya no acepta** sigue abierto a quien
-         *     tiene Clientes en escritura (es el sentido seguro).
+         *     (`meta_131050`): 409 `baja_del_cliente` (y registrar que ya no acepta sobre esa baja no agrega
+         *     fila). Registrar que **ya no acepta** sigue abierto a quien tiene Clientes en escritura (es el
+         *     sentido seguro).
          */
         post: operations["registrar_consentimiento_api_v1_admin_leads__lead_id__consentimiento_post"];
         delete?: never;
