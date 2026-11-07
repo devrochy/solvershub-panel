@@ -119,6 +119,9 @@ describe("cabecera de la ficha del agente (HU-UX-09)", () => {
     expect(seccion.textContent).toContain("Conversaciones · 7 días42");
     expect(seccion.textContent).toContain("92,5 %");
     expect(seccion.textContent).toMatch(/US\$\s?1,50|1,50\s?US\$/);
+    // En móvil van compactos (una fila cada uno) para que las pestañas queden en el primer pantallazo.
+    expect(seccion.className).toMatch(/gap-2/);
+    expect(Array.from(seccion.children).every((t) => /\bp-3\b/.test(t.className))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
   });
 

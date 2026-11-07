@@ -331,6 +331,7 @@ export default async function AgentePage({
               />
               <TabLinks
                 label={`Secciones de ${agente.name}`}
+                size="compact"
                 current={hrefDeAgente(ref, vigente, { tab: actual })}
                 items={pestanas.map((p) => ({ label: p.label, href: hrefDeAgente(ref, vigente, { tab: p.id }) }))}
               />

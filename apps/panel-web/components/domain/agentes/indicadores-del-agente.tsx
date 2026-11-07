@@ -21,6 +21,7 @@ export function IndicadoresDelAgente({
   const tiles = [
     conversaciones && (
       <KpiTile
+        size="compact"
         key="conversaciones"
         label="Conversaciones · 7 días"
         {...("error" in conversaciones ? { error: conversaciones.error } : { value: formatNumber(conversaciones.valor) })}
@@ -28,6 +29,7 @@ export function IndicadoresDelAgente({
     ),
     resueltas && (
       <KpiTile
+        size="compact"
         key="resueltas"
         label="Resueltas sin una persona · 7 días"
         {...("error" in resueltas
@@ -48,6 +50,7 @@ export function IndicadoresDelAgente({
     ),
     consumo && (
       <KpiTile
+        size="compact"
         key="consumo"
         label="Consumo · 7 días"
         {...("error" in consumo
@@ -60,7 +63,7 @@ export function IndicadoresDelAgente({
   ].filter(Boolean);
   if (tiles.length === 0) return null;
   return (
-    <section aria-label="Indicadores de los últimos 7 días" className="grid gap-3 sm:grid-cols-3">
+    <section aria-label="Indicadores de los últimos 7 días" className="grid gap-2 sm:grid-cols-3 sm:gap-3">
       {tiles}
     </section>
   );

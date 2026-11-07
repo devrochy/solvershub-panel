@@ -83,8 +83,11 @@ export function ChatPrueba({
     };
   }, [conexionId]);
 
+  // Baja solo la caja de mensajes: con `scrollIntoView` la página saltaba hasta el chat al abrir la
+  // pestaña Probar de la ficha del agente y la cabecera y las pestañas quedaban fuera de la vista.
   useEffect(() => {
-    fin.current?.scrollIntoView({ behavior: "smooth" });
+    const caja = fin.current?.parentElement;
+    if (caja) caja.scrollTop = caja.scrollHeight;
   }, [turnos]);
 
   async function enviar(frase?: string) {

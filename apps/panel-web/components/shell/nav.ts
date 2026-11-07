@@ -125,7 +125,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "settings", label: "Colaboración", href: "/agentes/colaboracion", icon: Network, ready: true },
         // HU-AOS-29: tablero de fiabilidad (escalamiento, verificador, completitud y consistencia).
         { section: "agents", label: "Calidad", href: "/agentes/calidad", icon: Gauge, ready: true },
-        { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true },
+        // HU-UX-09: probar va en la pestaña Probar de cada agente. La página queda oculta (sin pestaña) pero
+        // viva para los enlaces de Primeros pasos y de «Probar plantilla con opciones».
+        { section: "connections", label: "Probar asistente", href: "/asistente", icon: PlayCircle, ready: true, oculta: true },
         // ADR-0178 (pista D0): catálogo de solo lectura de los mensajes al cliente. El backend filtra cada tipo por la
         // sección de su fuente (connections, settings, plugins); la entrada se ve con `connections`, como las plantillas.
         { section: "connections", label: "Mensajes", href: "/mensajes", icon: MessagesSquare, ready: true },
