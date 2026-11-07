@@ -9,6 +9,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/lib/toast-store";
 
 /**
  * Renderer de formularios desde JSON Schema v2 (HU-FWK-08).
@@ -22,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
  *   - `x-widget` → fuerza el control (`textarea` | `list` | `json`).
  *   - `x-group` → agrupa campos bajo un encabezado.
  *   - Errores por campo del backend (`error.fields`).
+ *   - Validación propia en español (obligatorio, rango, entero), sin la burbuja nativa del
+ *     navegador, que sale en el idioma del navegador (HU-UX-13). Por eso el `<form>` lleva `noValidate`.
  */
 type JsonSchema = {
   title?: string;
@@ -78,6 +81,32 @@ export function parseJsonField(value: string): { ok: true; data: unknown } | { o
   } catch {
     return { ok: false };
   }
+}
+
+/**
+ * Error de un campo en español, o `null` si el valor es válido. Reemplaza la validación nativa
+ * (`required`/`min`/`max`/`step`), cuyo mensaje depende del idioma del navegador.
+ *
+ * `obligatorio` ya descuenta los campos nullables. Los booleanos, listas, objetos JSON y secretos se
+ * validan por otro camino (o no tienen reglas locales).
+ */
+export function errorDeCampo(prop: JsonSchema, valor: unknown, obligatorio: boolean, nombre = ""): string | null {
+  const { type, source } = effType(prop);
+  if (type === "boolean" || type === "array" || type === "object" || isSecret(prop)) return null;
+  const etiqueta = `«${prop.title ?? humanize(nombre)}»`;
+  const vacio = valor === undefined || valor === null || (typeof valor === "string" && valor.trim() === "");
+  if (vacio) return obligatorio ? `${etiqueta} es obligatorio.` : null;
+  if (type !== "number" && type !== "integer") return null;
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return `${etiqueta} debe ser un número.`;
+  if (type === "integer" && !Number.isInteger(n)) return `${etiqueta} debe ser un número entero.`;
+  const { minimum, maximum } = source;
+  if (minimum != null && maximum != null && (n < minimum || n > maximum)) {
+    return `${etiqueta} debe estar entre ${minimum} y ${maximum}.`;
+  }
+  if (minimum != null && n < minimum) return `${etiqueta} debe ser mayor o igual a ${minimum}.`;
+  if (maximum != null && n > maximum) return `${etiqueta} debe ser menor o igual a ${maximum}.`;
+  return null;
 }
 
 export function JsonSchemaForm({
@@ -138,11 +167,16 @@ export function JsonSchemaForm({
     setFieldErrors({});
     setSuccess(null);
 
-    // Validación local de objetos JSON antes de enviar.
+    // Validación local (obligatorios, rangos, objetos JSON) antes de enviar.
     const locales: Record<string, string> = {};
     const enviados: Record<string, unknown> = { ...values };
     for (const [name, prop] of Object.entries(properties)) {
-      const { type } = effType(prop);
+      const { type, nullable } = effType(prop);
+      const errorLocal = errorDeCampo(prop, enviados[name], required.has(name) && !nullable, name);
+      if (errorLocal) {
+        locales[name] = errorLocal;
+        continue;
+      }
       if (type === "object" && typeof enviados[name] === "string") {
         const parsed = parseJsonField(enviados[name] as string);
         if (parsed.ok) enviados[name] = parsed.data;
@@ -152,6 +186,9 @@ export function JsonSchemaForm({
     if (Object.keys(locales).length > 0) {
       setFieldErrors(locales);
       setLoading(false);
+      toast.error("Revisa los campos marcados antes de guardar.");
+      const primero = Object.keys(locales)[0];
+      document.getElementById(`field-${primero}`)?.focus();
       return;
     }
 
@@ -210,7 +247,10 @@ export function JsonSchemaForm({
           onChange={(e) => update(name, e.target.value)}
           className="h-10 w-full rounded-md border border-control-border bg-bg-deep px-3 text-sm text-headline"
         >
-          {!required.has(name) && <option value="">—</option>}
+          {/* Sin valor, el select muestra esta opción (no la primera): lo que se ve es lo que se valida. */}
+          {(!required.has(name) || !values[name]) && (
+            <option value="">{required.has(name) ? "Elige una opción" : "—"}</option>
+          )}
           {(source.enum ?? []).map((opt) => (
             <option key={String(opt)} value={String(opt)}>
               {etiqueta(opt)}
@@ -341,8 +381,9 @@ export function JsonSchemaForm({
     );
   }
 
+  // noValidate: los errores salen en español junto a cada campo, no en la burbuja del navegador.
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       {grupos.map(({ grupo, campos }, i) => (
         <fieldset key={`${grupo ?? "sin-grupo"}-${i}`} className="flex flex-col gap-4">
           {grupo && (
