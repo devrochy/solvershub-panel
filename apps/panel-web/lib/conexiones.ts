@@ -96,55 +96,11 @@ export function puedePausar(
   return c.pause_scope === "connection";
 }
 
-/** ¿A dónde lleva «Gestionar» según el tipo de conexión? */
-export type GestionConexion =
-  | { tipo: "enlace"; href: string; label: string }
-  | { tipo: "editar" };
-
-export function gestionDeConexion(
-  c: Pick<ConexionConsola, "id" | "meta_connection_id" | "type_id">,
-): GestionConexion | null {
-  // Las Páginas de Messenger comparten la cuenta de Meta, pero su hub no es el de WhatsApp (números, plantillas).
-  if (c.type_id === "messenger_meta") {
-    return { tipo: "enlace", href: "/conexiones/messenger", label: "Gestionar" };
-  }
-  if (c.type_id === "instagram_meta") {
-    return { tipo: "enlace", href: "/conexiones/instagram", label: "Gestionar" };
-  }
-  if (c.meta_connection_id) {
-    return { tipo: "enlace", href: `/conexiones/meta/${c.meta_connection_id}`, label: "Gestionar" };
-  }
-  if (!c.type_id) return null;
-  if (c.type_id === "whatsapp_waweb") {
-    return { tipo: "enlace", href: "/conexiones/waweb", label: "WhatsApp Web" };
-  }
-  if (c.type_id === "google_calendar") {
-    // HU-CAL-08: la cuenta de Google tiene su propia ficha (antes era la pestaña de Agenda).
-    return { tipo: "enlace", href: `/conexiones/${c.id}`, label: "Gestionar" };
-  }
-  if (c.type_id === "webchat") {
-    return { tipo: "enlace", href: "/configuracion", label: "Gestionar" };
-  }
-  // Correo y demás tipos manuales: se gestionan con el formulario de credenciales.
-  return { tipo: "editar" };
-}
-
-/** Pestañas del hub de una conexión Meta (el QR no tiene WABA ni plantillas). */
-export function metaTabs(connectionId: string): { href: string; label: string }[] {
-  const base = `/conexiones/meta/${connectionId}`;
-  return [
-    { href: base, label: "Resumen" },
-    { href: `${base}/credenciales`, label: "Credenciales" },
-    { href: `${base}/salud`, label: "Salud de Meta" },
-    { href: `${base}/numeros`, label: "Números" },
-    { href: `${base}/plantillas`, label: "Plantillas" },
-    { href: `${base}/produccion`, label: "Producción" },
-    { href: `${base}/webhook`, label: "Webhook" },
-    { href: "/conexiones/requisitos", label: "Requisitos" },
-  ];
-}
-
-/** Qué hace el alta al elegir una tarjeta del catálogo. */
+/**
+ * Qué hace el alta al elegir una tarjeta del catálogo. El destino sale de un mapa por `type.id`
+ * del panel y no de `type.url`: `setup_url()` del backend devuelve rutas del panel clásico
+ * (`/admin/...`) o nada (Instagram, Messenger), y el clásico todavía las usa (HU-UX-09).
+ */
 export type DestinoAlta =
   | { tipo: "formulario" }
   | { tipo: "navegar"; href: string }
@@ -154,6 +110,15 @@ export type DestinoAlta =
 /** Alta de una cuenta de Google Calendar: vuelve a la Agenda con sus agendas abiertas (HU-CAL-08). */
 export const ALTA_GOOGLE_CALENDAR = `/api/calendar/oauth?next=${encodeURIComponent("/calendario?ajustes=agendas")}`;
 
+/** Flujo de alta del panel nuevo por tipo (los manuales con formulario no necesitan ruta). */
+export const RUTA_DE_ALTA: Record<string, string> = {
+  whatsapp_meta: "/conexiones/whatsapp",
+  whatsapp_waweb: "/conexiones/waweb",
+  messenger_meta: "/conexiones/messenger",
+  instagram_meta: "/conexiones/instagram",
+  webchat: "/conexiones/chat-web",
+};
+
 export function destinoDeAlta(type: {
   id: string;
   available: boolean;
@@ -162,12 +127,9 @@ export function destinoDeAlta(type: {
 }): DestinoAlta | null {
   if (!type.available) return null;
   if (type.setup_kind === "manual" && type.has_schema) return { tipo: "formulario" };
-  if (type.id === "whatsapp_waweb") return { tipo: "navegar", href: "/conexiones/waweb" };
-  if (type.id === "whatsapp_meta") return { tipo: "navegar", href: "/conexiones/whatsapp" };
-  if (type.id === "messenger_meta") return { tipo: "navegar", href: "/conexiones/messenger" };
-  if (type.id === "instagram_meta") return { tipo: "navegar", href: "/conexiones/instagram" };
   if (type.id === "google_calendar") return { tipo: "externo", href: ALTA_GOOGLE_CALENDAR };
-  return null;
+  const href = RUTA_DE_ALTA[type.id];
+  return href ? { tipo: "navegar", href } : null;
 }
 
 export function resumenConsumo(u: ConexionConsola["usage_7d"]): string {

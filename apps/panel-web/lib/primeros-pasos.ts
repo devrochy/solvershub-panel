@@ -47,7 +47,8 @@ const WHATSAPP_EN_CURSO: Record<string, { descripcion: string; accion: string; h
   sin_verificar: {
     descripcion: "Tu número está conectado. Falta que el diagnóstico confirme que puede enviar mensajes.",
     accion: "Revisar conexión",
-    href: "/conexiones/meta",
+    // HU-UX-09: la salud vive en la ficha de cada número; la lista la muestra en cada fila Meta.
+    href: "/conexiones",
   },
   con_problemas: {
     descripcion: "La conexión tiene un problema. Revisa el diagnóstico para repararla.",

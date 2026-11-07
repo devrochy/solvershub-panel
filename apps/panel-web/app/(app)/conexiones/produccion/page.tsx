@@ -1,61 +1,11 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
-import type { components } from "@/lib/api/schema";
+import { unicaDeTipo } from "@/lib/conexion-ficha";
+import { cargarConsola } from "@/lib/conexion-ficha-servidor";
 
-export const metadata = { title: "Producción" };
-
-type HealthConnection = components["schemas"]["HealthConnection"];
-
-/**
- * Producción (HU-CONN-07): el checklist es de cada conexión, así que aquí se elige cuál
- * revisar. Los pasos manuales de la app de Meta están en "Requisitos de Meta".
- */
-export default async function ProduccionPage() {
-  const res = await apiFetch<{ connections: HealthConnection[] }>("/admin/meta/health");
-  if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las conexiones: {res.error}
-      </p>
-    );
-  }
-  const connections = res.data.connections.filter((c) => c.status !== "revoked" && c.status !== "draft");
-
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Producción"
-        description="Cada conexión tiene su checklist de producción, revisado con sus propias credenciales."
-      />
-      {connections.length === 0 ? (
-        <EmptyState
-          title="Sin conexiones de Meta"
-          description="Conecta WhatsApp Business para revisar qué le falta para producción."
-        />
-      ) : (
-        <div className="flex flex-col gap-2">
-          {connections.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="flex flex-wrap items-center gap-3 pt-5">
-                <span className="text-headline">{c.channel}</span>
-                <Badge variant={c.environment === "sandbox" ? "warning" : "neutral"}>
-                  {c.environment === "sandbox" ? "Prueba" : "Producción"}
-                </Badge>
-                <span className="font-mono text-xs text-text-soft">{c.meta_app_id}</span>
-                <Button asChild className="ml-auto" size="sm" variant="outline">
-                  <Link href={`/conexiones/meta/${c.id}/produccion`}>Ver checklist</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+/** Producción global (HU-UX-09): con un solo WhatsApp oficial, su pestaña; si no, la lista. */
+export default async function ProduccionGlobal() {
+  const res = await cargarConsola();
+  const unica = res.ok ? unicaDeTipo(res.data.items, "whatsapp_meta") : null;
+  redirect(unica ? `/conexiones/${unica.id}/produccion` : "/conexiones");
 }

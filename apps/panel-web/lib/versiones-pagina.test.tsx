@@ -85,7 +85,7 @@ async function abrir(extra: Record<string, unknown> = {}, medicion: Evaluation |
     },
     extra,
   );
-  const Pagina = (await import("@/app/(app)/conexiones/[id]/versiones/page")).default as (p: {
+  const Pagina = (await import("@/app/(app)/conexiones/[id]/(ficha)/versiones/page")).default as (p: {
     params: Promise<{ id: string }>;
   }) => Promise<ReactNode>;
   const arbol = await resolverServidor(await Pagina({ params: Promise.resolve({ id: CONEXION }) }));
@@ -95,7 +95,8 @@ async function abrir(extra: Record<string, unknown> = {}, medicion: Evaluation |
 describe("versiones de la conexión", () => {
   it("muestra la activa con volver atrás, la candidata de la plataforma con su aviso y es accesible", async () => {
     const { container } = await abrir();
-    expect(screen.getByRole("heading", { level: 1, name: "Versiones de WhatsApp principal" })).toBeTruthy();
+    // HU-UX-09: es una pestaña de la ficha; el `h1` (nombre de la conexión) lo pone el layout.
+    expect(screen.getByRole("heading", { level: 2, name: "Versiones" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Volver a la versión 2" })).toBeTruthy();
     expect(screen.getByText(/SolversHub preparó esta versión/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Publicar a todos" })).toBeTruthy();

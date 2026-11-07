@@ -308,7 +308,10 @@ describe("diálogo «Publicar en Meta»", () => {
       abrir();
       expect(screen.getByText(/Ninguna de tus conexiones de WhatsApp está lista/)).toBeTruthy();
       expect(screen.getByText(/Tiene un error/)).toBeTruthy();
-      expect(screen.getByRole("link", { name: /Revisar la salud/ }).getAttribute("href")).toBe("/conexiones/meta");
+      // HU-UX-09: una sola cuenta → su pestaña Salud (la ruta de la cuenta resuelve el número).
+      expect(screen.getByRole("link", { name: /Revisar la salud/ }).getAttribute("href")).toBe(
+        `/conexiones/meta/${CONEXIONES[2].id}/salud`,
+      );
     });
   });
 

@@ -47,6 +47,15 @@ beforeEach(() => {
                 has_schema: false,
               },
               {
+                id: "webchat",
+                label: "Chat web",
+                description: "Widget para tu sitio",
+                available: true,
+                setup_kind: "wizard",
+                url: "/admin/configuracion",
+                has_schema: false,
+              },
+              {
                 id: "instagram_meta",
                 label: "Instagram",
                 description: "Mensajes directos vía Meta",
@@ -93,6 +102,12 @@ describe("alta de conexión", () => {
     await abrir();
     fireEvent.click(await screen.findByRole("button", { name: /Número propio por QR/ }));
     await waitFor(() => expect(push).toHaveBeenCalledWith("/conexiones/waweb"));
+  });
+
+  it("el chat web navega a su alta del panel nuevo, no al clásico (HU-UX-09)", async () => {
+    await abrir();
+    fireEvent.click(await screen.findByRole("button", { name: /Widget para tu sitio/ }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/conexiones/chat-web"));
   });
 
   it("las no disponibles solo muestran Próximamente y no navegan", async () => {
