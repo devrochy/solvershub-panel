@@ -2,7 +2,8 @@ import { Bandeja } from "@/app/(app)/conversaciones/_components/bandeja";
 import { FichaCliente } from "@/components/domain/cliente/ficha-cliente";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { ConversationConnection, ConversationDetail, ConversationPage, LeadDetail } from "@/lib/api/types";
+import type { ConversationConnection, ConversationDetail, ConversationPage, LeadDetail, Me } from "@/lib/api/types";
+import { esPropietarioOPlataforma } from "@/lib/clientes";
 
 export const metadata = { title: "Conversaciones" };
 
@@ -25,11 +26,13 @@ export default async function ConversationsPage({ searchParams }: { searchParams
   if (sp.connection_id) qs.set("connection_id", sp.connection_id);
   if (sp.page) qs.set("page", sp.page);
 
-  const [res, conexiones, detalle, ficha] = await Promise.all([
+  const [res, conexiones, detalle, ficha, me] = await Promise.all([
     apiFetch<ConversationPage>(`/admin/conversations${qs.size ? `?${qs.toString()}` : ""}`),
     apiFetch<ConversationConnection[]>("/admin/conversations/connections"),
     sp.c ? apiFetch<ConversationDetail>(`/admin/conversations/${encodeURIComponent(sp.c)}`) : null,
     sp.cliente ? apiFetch<LeadDetail>(`/admin/leads/${encodeURIComponent(sp.cliente)}`) : null,
+    // Solo para decidir si la ficha ofrece retirar los datos del cliente; el servidor lo exige igual.
+    sp.cliente ? apiFetch<Me>("/admin/me") : null,
   ]);
   if (!res.ok) {
     return (
@@ -81,6 +84,7 @@ export default async function ConversationsPage({ searchParams }: { searchParams
           agenteInicial={sp.agente}
           editarInicial={sp.editar === "1"}
           hrefBase={hrefBase}
+          esPropietario={me?.ok ? esPropietarioOPlataforma(me.data) : false}
         />
       )}
       {ficha && !ficha.ok && (

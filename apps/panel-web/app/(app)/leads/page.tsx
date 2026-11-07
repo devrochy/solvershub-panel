@@ -19,6 +19,7 @@ import { apiFetch } from "@/lib/api/server";
 import type { ConversationConnection, LeadAgent, LeadDetail, LeadsResponse, Me } from "@/lib/api/types";
 import {
   consultaClientes,
+  esPropietarioOPlataforma,
   etiquetaClasificacion,
   hrefFicha,
   puedeEditarClientes,
@@ -271,6 +272,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           editarInicial={sp.editar === "1"}
           hrefBase={hrefFicha(undefined, { qs })}
           puedeEditar={me.ok ? puedeEditarClientes(me.data) : false}
+          esPropietario={me.ok ? esPropietarioOPlataforma(me.data) : false}
         />
       )}
       {ficha && !ficha.ok && (
