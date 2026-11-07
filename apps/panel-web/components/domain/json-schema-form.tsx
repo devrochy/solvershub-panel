@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast-store";
+import { mensajeDeRango, mensajeEntero, mensajeNumero, mensajeObligatorio } from "@/lib/validacion-nativa";
 
 /**
  * Renderer de formularios desde JSON Schema v2 (HU-FWK-08).
@@ -95,18 +96,12 @@ export function errorDeCampo(prop: JsonSchema, valor: unknown, obligatorio: bool
   if (type === "boolean" || type === "array" || type === "object" || isSecret(prop)) return null;
   const etiqueta = `«${prop.title ?? humanize(nombre)}»`;
   const vacio = valor === undefined || valor === null || (typeof valor === "string" && valor.trim() === "");
-  if (vacio) return obligatorio ? `${etiqueta} es obligatorio.` : null;
+  if (vacio) return obligatorio ? mensajeObligatorio(etiqueta) : null;
   if (type !== "number" && type !== "integer") return null;
   const n = Number(valor);
-  if (!Number.isFinite(n)) return `${etiqueta} debe ser un número.`;
-  if (type === "integer" && !Number.isInteger(n)) return `${etiqueta} debe ser un número entero.`;
-  const { minimum, maximum } = source;
-  if (minimum != null && maximum != null && (n < minimum || n > maximum)) {
-    return `${etiqueta} debe estar entre ${minimum} y ${maximum}.`;
-  }
-  if (minimum != null && n < minimum) return `${etiqueta} debe ser mayor o igual a ${minimum}.`;
-  if (maximum != null && n > maximum) return `${etiqueta} debe ser menor o igual a ${maximum}.`;
-  return null;
+  if (!Number.isFinite(n)) return mensajeNumero(etiqueta);
+  if (type === "integer" && !Number.isInteger(n)) return mensajeEntero(etiqueta);
+  return mensajeDeRango(etiqueta, n, source.minimum, source.maximum);
 }
 
 export function JsonSchemaForm({
