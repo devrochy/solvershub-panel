@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
+import { getToasts, resetToasts as limpiarToasts } from "@/lib/toast-store";
 import { violacionesGraves } from "@/lib/testing/axe";
 
 import { JsonSchemaForm } from "./json-schema-form";
@@ -39,6 +40,7 @@ const respuesta = (status: number, body: unknown) =>
 
 beforeEach(() => {
   refresh.mockClear();
+  limpiarToasts();
 });
 
 afterEach(() => {
@@ -94,6 +96,60 @@ describe("JsonSchemaForm (HU-UI-04)", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(JSON.parse(String(init.body)).values.nombre).toBe("Tienda de prueba");
+  });
+
+  it("valida en español sin la burbuja nativa del navegador (HU-UX-13)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = render(
+      <JsonSchemaForm
+        resourcePath="/api/prueba"
+        schema={{
+          type: "object",
+          required: ["nombre"],
+          properties: {
+            nombre: { type: "string", title: "Nombre del negocio" },
+            dias_tolerancia: { type: "integer", title: "Días de tolerancia de cobro", minimum: 0, maximum: 30 },
+          },
+        }}
+        initialValues={{ nombre: "", dias_tolerancia: -1 }}
+        configuredSecrets={[]}
+      />,
+    );
+
+    // Sin `noValidate` el navegador frena el envío con su burbuja (en inglés) y el panel nunca valida.
+    expect(container.querySelector("form")?.noValidate).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(await screen.findByText("«Nombre del negocio» es obligatorio.")).toBeTruthy();
+    expect(screen.getByText("«Días de tolerancia de cobro» debe estar entre 0 y 30.")).toBeTruthy();
+    // Aviso rojo del kit (con ícono y botón de cierre), no solo el texto junto al campo.
+    expect(getToasts().some((t) => t.kind === "error" && /Revisa los campos marcados/.test(t.message))).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("un select obligatorio sin valor muestra «Elige una opción» y avisa si no se elige", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <JsonSchemaForm
+        resourcePath="/api/prueba"
+        schema={{
+          type: "object",
+          required: ["canal"],
+          properties: { canal: { type: "string", title: "Canal", enum: ["whatsapp", "web"] } },
+        }}
+        initialValues={{}}
+        configuredSecrets={[]}
+      />,
+    );
+
+    expect((screen.getByLabelText(/Canal/) as HTMLSelectElement).selectedOptions[0].textContent).toBe("Elige una opción");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(await screen.findByText("«Canal» es obligatorio.")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("no tiene violaciones graves de accesibilidad", async () => {
