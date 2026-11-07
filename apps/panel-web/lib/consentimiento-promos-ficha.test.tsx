@@ -98,10 +98,26 @@ describe("quién ofrece «Aceptó recibir promociones» (D-SPEC-33-9)", () => {
     fetchMock.mockResolvedValueOnce(responde(sinRegistro)).mockResolvedValueOnce(responde(otorgado, 201)).mockResolvedValueOnce(responde(otorgado));
     montar(true);
     fireEvent.click(await screen.findByRole("button", ACEPTO));
+    fireEvent.change(await screen.findByLabelText(/Detalle/), { target: { value: "Firmó la planilla" } });
     fireEvent.click(await screen.findByRole("button", { name: "Guardar" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ estado: "otorgado", como: "en_el_local" });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ estado: "otorgado", como: "en_el_local", evidencia: "Firmó la planilla" });
     expect(await screen.findByText("Acepta promociones")).toBeTruthy();
+  });
+
+  it("el detalle es obligatorio con cualquier «Cómo lo obtuviste»: Guardar sigue apagado si está vacío o en blanco", async () => {
+    fetchMock.mockResolvedValue(responde(sinRegistro));
+    montar(true);
+    fireEvent.click(await screen.findByRole("button", ACEPTO));
+    const guardar = (await screen.findByRole("button", { name: "Guardar" })) as HTMLButtonElement;
+    for (const como of ["en_el_local", "por_telefono", "por_escrito", "otro"]) {
+      fireEvent.change(screen.getByLabelText("Cómo lo obtuviste"), { target: { value: como } });
+      fireEvent.change(screen.getByLabelText(/Detalle|Cuéntalo/), { target: { value: "   " } });
+      expect(guardar.disabled).toBe(true);
+      fireEvent.change(screen.getByLabelText(/Detalle|Cuéntalo/), { target: { value: "Dijo que sí" } });
+      expect(guardar.disabled).toBe(false);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("el propietario puede reactivar una baja que dejó un colaborador en la ficha", async () => {
@@ -146,6 +162,7 @@ describe("errores del servidor", () => {
     fetchMock.mockResolvedValueOnce(responde(sinRegistro)).mockResolvedValueOnce(respuesta).mockResolvedValue(responde(despues));
     montar(true);
     fireEvent.click(await screen.findByRole("button", ACEPTO));
+    fireEvent.change(await screen.findByLabelText(/Detalle/), { target: { value: "Firmó la planilla" } });
     fireEvent.click(await screen.findByRole("button", { name: "Guardar" }));
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3));
   }

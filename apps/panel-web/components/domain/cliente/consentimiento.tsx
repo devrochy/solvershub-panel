@@ -133,7 +133,12 @@ export function ConsentimientoDelCliente({
                 <option value="otro">Otro</option>
               </Select>
             </Field>
-            <Field label={como === "otro" ? "Cuéntalo" : "Detalle (opcional)"} htmlFor="cons-evidencia">
+            <Field
+              label={como === "otro" ? "Cuéntalo" : "Detalle"}
+              htmlFor="cons-evidencia"
+              help="Obligatorio: queda como prueba de que el cliente aceptó."
+              required
+            >
               <Input
                 id="cons-evidencia"
                 value={evidencia}
@@ -151,7 +156,7 @@ export function ConsentimientoDelCliente({
               size="sm"
               variant="accent"
               onClick={() => void guardar("otorgado")}
-              disabled={accion.pending || (como === "otro" && !evidencia.trim())}
+              disabled={accion.pending || !evidencia.trim()}
             >
               Guardar
             </Button>
