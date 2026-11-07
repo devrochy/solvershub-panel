@@ -281,7 +281,7 @@ export function FichaCliente({
               )}
             </section>
 
-            {detalle.canal === "whatsapp" && <ConsentimientoDelCliente leadId={detalle.id} />}
+            {detalle.canal === "whatsapp" && <ConsentimientoDelCliente leadId={detalle.id} esPropietario={esPropietario} />}
             <ConsentimientoDatosDelCliente leadId={detalle.id} puedeRetirar={esPropietario} />
             <NotasDelCliente leadId={detalle.id} onCambio={() => setVersionHistoria((v) => v + 1)} />
             <HistoriaDelCliente key={versionHistoria} leadId={detalle.id} />

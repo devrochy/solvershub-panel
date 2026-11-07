@@ -26,6 +26,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     method: "POST",
     body: { estado, como, evidencia },
   });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+  // `code` deja distinguir la baja del cliente (409 `baja_del_cliente`, D-SPEC-33-9) de otros errores.
+  if (!res.ok) return NextResponse.json({ error: res.error, ...(res.code ? { code: res.code } : {}) }, { status: res.status });
   return NextResponse.json(res.data, { status: 201 });
 }
