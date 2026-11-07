@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { Consentimiento } from "@/lib/api/types";
+import { AVISO_BAJA_DEL_CLIENTE, AVISO_SOLO_PROPIETARIO, esBajaDelCliente, mensajeDeErrorAlGuardarConsentimiento } from "@/lib/consentimiento-promos";
 import { formatDateTime } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
@@ -27,8 +28,19 @@ const ORIGEN: Record<string, string> = {
  * Consentimiento del cliente para recibir promociones (HU-CRM-06, D-SPEC-33-5). Solo quien aceptó
  * recibe un envío a un segmento. Se marca con cómo se obtuvo y queda quién lo marcó; nunca se
  * edita lo anterior, se agrega.
+ *
+ * D-SPEC-33-9: registrar que aceptó es solo del propietario (o la plataforma) y nunca sobre una baja que
+ * pidió el cliente o impuso Meta; registrar que ya no acepta sigue abierto a quien tiene Clientes en
+ * escritura. El servidor lo exige igual (403 / 409 `baja_del_cliente`); aquí no se ofrece lo que no se puede.
  */
-export function ConsentimientoDelCliente({ leadId }: { leadId: string }) {
+export function ConsentimientoDelCliente({
+  leadId,
+  esPropietario = false,
+}: {
+  leadId: string;
+  /** Propietario o admin de plataforma. Sin esto no se ofrece «Aceptó recibir promociones». */
+  esPropietario?: boolean;
+}) {
   const [datos, setDatos] = useState<Consentimiento | null>(null);
   const [marcando, setMarcando] = useState(false);
   const [como, setComo] = useState("en_el_local");
@@ -52,11 +64,11 @@ export function ConsentimientoDelCliente({ leadId }: { leadId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado, como: estado === "revocado" ? "otro" : como, evidencia }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
       return {
         ok: res.ok,
         status: res.status,
-        error: json.error,
+        error: mensajeDeErrorAlGuardarConsentimiento(res.status, json.error, json.code),
         success: estado === "otorgado" ? "Consentimiento guardado." : "Quedó dado de baja.",
       };
     });
@@ -64,11 +76,16 @@ export function ConsentimientoDelCliente({ leadId }: { leadId: string }) {
       setMarcando(false);
       setEvidencia("");
       await cargar();
+    } else if (estado === "otorgado") {
+      // Pudo llegar una baja del cliente mientras estaba el formulario abierto: se vuelve a leer el estado.
+      await cargar();
     }
   }
 
   const estado = ESTADO[datos?.estado ?? "sin_registro"] ?? ESTADO.sin_registro;
   const ultimo = datos?.historial[0];
+  const bajaDelCliente = esBajaDelCliente(datos);
+  const puedeMarcarQueAcepto = esPropietario && !bajaDelCliente;
 
   return (
     <section aria-labelledby="ficha-consentimiento" className="space-y-3">
@@ -84,9 +101,13 @@ export function ConsentimientoDelCliente({ leadId }: { leadId: string }) {
           {ultimo.evidencia ? ` · ${ultimo.evidencia}` : ""}
         </p>
       )}
+      {bajaDelCliente && <p className="text-xs text-text-soft">{AVISO_BAJA_DEL_CLIENTE}</p>}
+      {!bajaDelCliente && !esPropietario && datos && datos.estado !== "otorgado" && (
+        <p className="text-xs text-text-soft">{AVISO_SOLO_PROPIETARIO}</p>
+      )}
       {!marcando && (
         <div className="flex flex-wrap gap-2">
-          {datos?.estado !== "otorgado" && (
+          {datos && datos.estado !== "otorgado" && puedeMarcarQueAcepto && (
             <Button size="sm" variant="outline" onClick={() => setMarcando(true)}>
               Aceptó recibir promociones
             </Button>
@@ -98,7 +119,7 @@ export function ConsentimientoDelCliente({ leadId }: { leadId: string }) {
           )}
         </div>
       )}
-      {marcando && (
+      {marcando && puedeMarcarQueAcepto && (
         <div className="space-y-3 rounded-md border border-border p-3">
           <p className="text-xs text-text-soft">
             Márcalo solo si el cliente aceptó. Queda registrado con tu nombre y cómo lo obtuviste.
