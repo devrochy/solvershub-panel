@@ -4,7 +4,7 @@ import { Bot, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { AgentOverviewItem } from "@/lib/api/types";
-import { tipoDeAgente } from "@/lib/agentes";
+import { estaArchivado, tipoDeAgente } from "@/lib/agentes";
 import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
 
 /** Tarjeta de un agente en la lista: qué es, dónde atiende y qué hizo en 30 días. */
@@ -32,6 +32,8 @@ export function AgentCard({ agent, conAviso = false }: { agent: AgentOverviewIte
         <div className="flex flex-wrap gap-2">
           {agent.virtual ? (
             <Badge variant="info">Historial del asistente</Badge>
+          ) : estaArchivado(agent) ? (
+            <Badge variant="neutral">Archivado</Badge>
           ) : agent.published ? (
             <Badge variant="success">Atendiendo</Badge>
           ) : (

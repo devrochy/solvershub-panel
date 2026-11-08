@@ -178,3 +178,20 @@ export function puedeEditarAgentes(
   if (me.role === "master") return true;
   return runtime === "v3" && me.permissions?.settings === "write";
 }
+
+/** Agentes que crea el sistema con el negocio: la API no deja archivarlos (409 `agent_reserved`). */
+export const KEYS_RESERVADAS: ReadonlySet<string> = new Set(["general", "coordinador"]);
+
+export function estaArchivado(agente: { status?: string | null }): boolean {
+  return agente.status === "archived";
+}
+
+/** Archivar o reactivar: solo agentes reales (con id) que no sean el General ni el Coordinador. */
+export function puedeArchivar(agente: { id?: string | null; key: string; virtual?: boolean }): boolean {
+  return Boolean(agente.id) && !agente.virtual && !KEYS_RESERVADAS.has(agente.key);
+}
+
+/** Los archivados van al final de la lista, sin cambiar el orden del resto. */
+export function archivadosAlFinal<T extends { status?: string | null }>(agentes: T[]): T[] {
+  return [...agentes.filter((a) => !estaArchivado(a)), ...agentes.filter(estaArchivado)];
+}
