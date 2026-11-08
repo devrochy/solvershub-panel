@@ -103,6 +103,54 @@ describe("tarjeta del usuario", () => {
     expect(iDocs).toBeLessThan(iSalir);
   });
 
+  it("no muestra Grafana ni Kibana sin destinos (lo que recibe quien no es master)", async () => {
+    render(<UserCard me={ME} initialTheme="sh-dark" observabilidad={{ grafanaUrl: null, kibanaUrl: null }} />);
+    await abrirMenu();
+    expect(screen.queryByRole("menuitem", { name: /Grafana/ })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /Kibana/ })).toBeNull();
+  });
+
+  it("muestra Grafana y Kibana como enlaces a pestaña nueva, después de «Documentación»", async () => {
+    render(
+      <UserCard
+        me={ME}
+        initialTheme="sh-dark"
+        docsUrl="/ayuda"
+        observabilidad={{ grafanaUrl: "https://solvershub.grafana.net/", kibanaUrl: "https://kibana.solvershub.site/" }}
+      />,
+    );
+    await abrirMenu();
+    const grafana = screen.getByRole("menuitem", { name: /Observabilidad \(Grafana\)/ });
+    const kibana = screen.getByRole("menuitem", { name: /Logs \(Kibana\)/ });
+    for (const [item, href] of [
+      [grafana, "https://solvershub.grafana.net/"],
+      [kibana, "https://kibana.solvershub.site/"],
+    ] as const) {
+      expect(item.tagName).toBe("A");
+      expect(item.getAttribute("href")).toBe(href);
+      expect(item.getAttribute("target")).toBe("_blank");
+      expect(item.getAttribute("rel")).toBe("noopener noreferrer");
+      expect(item.textContent).toContain("se abre en una pestaña nueva");
+    }
+    const items = screen.getAllByRole("menuitem").map((el) => el.textContent ?? "");
+    const iDocs = items.findIndex((t) => /Documentación/.test(t));
+    const iGrafana = items.findIndex((t) => /Grafana/.test(t));
+    const iKibana = items.findIndex((t) => /Kibana/.test(t));
+    const iSalir = items.findIndex((t) => /Cerrar sesión/.test(t));
+    expect(iDocs).toBeLessThan(iGrafana);
+    expect(iGrafana).toBeLessThan(iKibana);
+    expect(iKibana).toBeLessThan(iSalir);
+  });
+
+  it("muestra solo el destino configurado", async () => {
+    render(
+      <UserCard me={ME} initialTheme="sh-dark" observabilidad={{ grafanaUrl: null, kibanaUrl: "https://kibana.solvershub.site/" }} />,
+    );
+    await abrirMenu();
+    expect(screen.queryByRole("menuitem", { name: /Grafana/ })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: /Kibana/ })).toBeTruthy();
+  });
+
   it("avisa al cajón móvil para que se cierre al abrir la documentación", async () => {
     const onNavigate = vi.fn();
     render(<UserCard me={ME} initialTheme="sh-dark" docsUrl="https://docs.ejemplo.test/" onNavigate={onNavigate} />);

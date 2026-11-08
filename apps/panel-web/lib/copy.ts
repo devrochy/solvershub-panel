@@ -111,3 +111,9 @@ export const DOCUMENTACION = {
   etiqueta: "Documentación",
   avisoNuevaPestana: "se abre en una pestaña nueva",
 } as const;
+
+/** Enlaces de observabilidad de la tarjeta del usuario (solo master, si hay `GRAFANA_URL`/`KIBANA_URL`). */
+export const OBSERVABILIDAD = {
+  grafana: "Observabilidad (Grafana)",
+  kibana: "Logs (Kibana)",
+} as const;

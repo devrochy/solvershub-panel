@@ -61,6 +61,13 @@ admin creado (`python scripts/init_db.py` en agent-core).
     `WIKI_URL` (se lee en runtime). **`WIKI_URL=/ayuda`** muestra el ítem y lo lleva a la
     Wiki; vacía, el ítem no aparece. Déjala vacía en un entorno hasta que ese despliegue
     lleve `/ayuda`.
+  - **Enlaces «Observabilidad (Grafana)» y «Logs (Kibana)» de la tarjeta del avatar**: los
+    activan las variables de servidor `GRAFANA_URL` y `KIBANA_URL` (se leen en runtime) y
+    solo los ve el **master** (el tester no). Solo aceptan una URL absoluta `https://`
+    (p. ej. `KIBANA_URL=https://kibana.solvershub.site`); vacía o con otro valor, el ítem no
+    aparece. Abren en una pestaña nueva (sin iframe, así que no tocan la CSP); el acceso lo
+    protege cada herramienta (Grafana Cloud, Cloudflare Access en Kibana). A quien no es
+    master la URL ni siquiera le llega en el HTML.
   - **Probar los niveles sin agent-core**: `node scripts/backend-de-prueba.mjs` (dueño),
     con `COLABORADOR=1` (nivel usuario), `MASTER=1` o `TESTER=1` (nivel técnico).
 
