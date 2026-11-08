@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, ChevronUp, LogOut, Palette, UserRound } from "lucide-react";
+import { Activity, BookOpen, ChevronUp, LogOut, Palette, ScrollText, UserRound } from "lucide-react";
 
 import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import {
@@ -19,13 +19,15 @@ import { Avatar } from "@/components/ui/avatar";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
-import { DOCUMENTACION } from "@/lib/copy";
+import { DOCUMENTACION, OBSERVABILIDAD } from "@/lib/copy";
+import { SIN_OBSERVABILIDAD, type EnlacesObservabilidad } from "@/lib/observabilidad-url";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
  * Tarjeta del usuario al pie del menú (D-SPEC-34): avatar + nombre en una tarjeta resaltada y
- * un submenú con el perfil, la documentación (si hay `WIKI_URL`), un interruptor de tema y cerrar sesión. En la barra plegada queda
+ * un submenú con el perfil, la documentación (si hay `WIKI_URL`), Grafana y Kibana (solo master, si hay
+ * `GRAFANA_URL`/`KIBANA_URL`), un interruptor de tema y cerrar sesión. En la barra plegada queda
  * solo el avatar.
  */
 export function UserCard({
@@ -34,11 +36,14 @@ export function UserCard({
   collapsed = false,
   onNavigate,
   docsUrl = null,
+  observabilidad = SIN_OBSERVABILIDAD,
 }: {
   me: Me;
   initialTheme: ThemeName;
   /** Destino de «Documentación» (`WIKI_URL` resuelta en el servidor); sin él, el ítem no aparece. */
   docsUrl?: string | null;
+  /** Destinos de Grafana y Kibana (resueltos en el servidor, `null` si no es master); sin URL, el ítem no aparece. */
+  observabilidad?: EnlacesObservabilidad;
   collapsed?: boolean;
   /** El cajón móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -114,6 +119,26 @@ export function UserCard({
           >
             <BookOpen className="h-4 w-4 text-text-soft" aria-hidden />
             {DOCUMENTACION.etiqueta}
+          </DropdownMenuExternalLinkItem>
+        )}
+        {observabilidad.grafanaUrl && (
+          <DropdownMenuExternalLinkItem
+            href={observabilidad.grafanaUrl}
+            avisoNuevaPestana={DOCUMENTACION.avisoNuevaPestana}
+            onClick={onNavigate}
+          >
+            <Activity className="h-4 w-4 text-text-soft" aria-hidden />
+            {OBSERVABILIDAD.grafana}
+          </DropdownMenuExternalLinkItem>
+        )}
+        {observabilidad.kibanaUrl && (
+          <DropdownMenuExternalLinkItem
+            href={observabilidad.kibanaUrl}
+            avisoNuevaPestana={DOCUMENTACION.avisoNuevaPestana}
+            onClick={onNavigate}
+          >
+            <ScrollText className="h-4 w-4 text-text-soft" aria-hidden />
+            {OBSERVABILIDAD.kibana}
           </DropdownMenuExternalLinkItem>
         )}
         <div className="flex items-center justify-between gap-3 px-2 py-1.5">

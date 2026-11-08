@@ -12,6 +12,7 @@ import { Marca } from "@/components/ui/marca";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Me } from "@/lib/api/types";
 import { gruposVisibles, itemActivo } from "@/lib/shell/navegacion";
+import { SIN_OBSERVABILIDAD, type EnlacesObservabilidad } from "@/lib/observabilidad-url";
 import { esCampoEditable } from "@/lib/shell/paleta";
 import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 import { cookieModoSidebar, type ModoSidebar } from "@/lib/shell/preferencias";
@@ -158,6 +159,7 @@ export function Sidebar({
   modo: modoInicial = "auto",
   initialTheme = DEFAULT_THEME,
   docsUrl = null,
+  observabilidad = SIN_OBSERVABILIDAD,
   className,
   onNavigate,
 }: {
@@ -169,6 +171,8 @@ export function Sidebar({
   initialTheme?: ThemeName;
   /** Destino de «Documentación» para la tarjeta del usuario (`WIKI_URL`); sin él no se muestra. */
   docsUrl?: string | null;
+  /** Grafana y Kibana para la tarjeta del usuario; el layout solo los llena para el master. */
+  observabilidad?: EnlacesObservabilidad;
   className?: string;
   /** El menú móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -323,6 +327,7 @@ export function Sidebar({
           me={me}
           initialTheme={initialTheme}
           docsUrl={docsUrl}
+          observabilidad={observabilidad}
           collapsed={!expandidaAhora && !esMovil}
           onNavigate={onNavigate}
         />
