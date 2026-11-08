@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  archivadosAlFinal,
   consistencia,
+  estaArchivado,
   estadoDeTarea,
   filtrosDe,
   hrefDeAgente,
@@ -9,6 +11,7 @@ import {
   PESTANAS,
   PESTANAS_SIN_FILTROS,
   pestanaValida,
+  puedeArchivar,
   puedeEditarAgentes,
   queryDeApi,
   refValido,
@@ -108,5 +111,26 @@ describe("sección Agentes (HU-AOS-47)", () => {
     expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "v3")).toBe(true);
     expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "legacy")).toBe(false);
     expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "read" } }, "v3")).toBe(false);
+  });
+});
+
+describe("archivar agentes", () => {
+  it("el General, el Coordinador y el General virtual no se archivan", () => {
+    expect(puedeArchivar({ id: ID, key: "general" })).toBe(false);
+    expect(puedeArchivar({ id: ID, key: "coordinador" })).toBe(false);
+    expect(puedeArchivar({ id: null, key: "general", virtual: true })).toBe(false);
+    expect(puedeArchivar({ id: ID, key: "ventas" })).toBe(true);
+  });
+
+  it("los archivados van al final sin reordenar el resto", () => {
+    const lista = [
+      { key: "a", status: "archived" },
+      { key: "b", status: "active" },
+      { key: "c", status: "archived" },
+      { key: "d", status: "active" },
+    ];
+    expect(archivadosAlFinal(lista).map((a) => a.key)).toEqual(["b", "d", "a", "c"]);
+    expect(estaArchivado({ status: "archived" })).toBe(true);
+    expect(estaArchivado({ status: "active" })).toBe(false);
   });
 });

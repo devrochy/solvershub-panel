@@ -11,6 +11,7 @@ import {
   RegistrosDelAgente,
   TareasDelAgente,
 } from "@/app/(app)/agentes/_components/agent-tabs";
+import { ArchivarAgente } from "@/components/domain/agentes/archivar-agente";
 import { ConexionesDelAgente } from "@/components/domain/agentes/conexiones-del-agente";
 import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agentes/indicadores-del-agente";
 import { ProbarAgente } from "@/components/domain/agentes/probar-agente";
@@ -42,11 +43,13 @@ import type {
   SuperpowerPage,
 } from "@/lib/api/types";
 import {
+  estaArchivado,
   filtrosDe,
   hrefDeAgente,
   PESTANAS,
   PESTANAS_SIN_FILTROS,
   pestanaValida,
+  puedeArchivar,
   puedeEditarAgentes,
   puedeEscribirConocimiento,
   queryDeApi,
@@ -288,6 +291,7 @@ export default async function AgentePage({
   const proposito = detalle?.description.trim();
   const descripcion = [tipoDeAgente(agente.kind), proposito || null].filter(Boolean).join(" · ");
   const publicacion = estadoDePublicacion(agente.published, detalle?.latest_version);
+  const archivado = estaArchivado(agente);
 
   return (
     <div className="flex flex-col gap-4">
@@ -302,22 +306,30 @@ export default async function AgentePage({
           breadcrumbs: [{ label: "Agentes", href: "/agentes" }, { label: agente.name }],
           actions: (
             <>
-              {!agente.virtual &&
+              {archivado ? (
+                <Badge variant="neutral">Archivado</Badge>
+              ) : (
+                !agente.virtual &&
                 (publicacion.tono === "success" ? (
                   <Badge variant="success">{publicacion.label}</Badge>
                 ) : (
                   <Badge variant="neutral">{publicacion.label}</Badge>
-                ))}
+                ))
+              )}
               {agente.id && importacion?.ok && (
                 <ImportarDatosDelAgente agenteId={agente.id} nombre={agente.name} estado={importacion.data} />
               )}
               {agente.id && datosDePrueba?.ok && (
                 <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
               )}
-              {puedeEditar && agente.kind === "specialist" && (
+              {/* Archivado no se edita (la API responde 409): primero se reactiva. */}
+              {puedeEditar && agente.kind === "specialist" && !archivado && (
                 <Button asChild variant="outline">
                   <Link href={`/agentes/${agente.id}/editar`}>Editar</Link>
                 </Button>
+              )}
+              {puedeEditar && agente.id && puedeArchivar(agente) && (
+                <ArchivarAgente agenteId={agente.id} nombre={agente.name} archivado={archivado} />
               )}
             </>
           ),

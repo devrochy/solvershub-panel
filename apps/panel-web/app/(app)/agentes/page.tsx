@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { AgentsOverview, EstadoDatosDePrueba, Me, RetiredReferencesOut } from "@/lib/api/types";
-import { puedeEditarAgentes, puedeEscribirConocimiento } from "@/lib/agentes";
+import { archivadosAlFinal, estaArchivado, puedeEditarAgentes, puedeEscribirConocimiento } from "@/lib/agentes";
 
 export const metadata = { title: "Agentes" };
 
@@ -28,10 +28,12 @@ export default async function AgentesPage() {
   }
   const { runtime } = res.data;
   // El General «virtual» (negocio sin el agente General) solo se muestra si tiene algo que ver.
-  const items = res.data.items.filter((a) => !a.virtual || runtime !== "v3" || a.turns > 0);
+  const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || runtime !== "v3" || a.turns > 0));
   // «Generar datos de prueba» para todos (HU-QA-11): solo en test, donde la API de un especialista
   // responde (fuera de test es 404), y con escritura en `agents`.
-  const especialistas = items.flatMap((a) => (a.id && a.kind === "specialist" ? [{ id: a.id, name: a.name }] : []));
+  const especialistas = items.flatMap((a) =>
+    a.id && a.kind === "specialist" && !estaArchivado(a) ? [{ id: a.id, name: a.name }] : [],
+  );
   const enTest =
     especialistas.length > 0 && meRes.ok && puedeEscribirConocimiento(meRes.data)
       ? (await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${especialistas[0].id}/datos-de-prueba`)).ok
