@@ -1500,7 +1500,8 @@ export interface paths {
         };
         /**
          * Connections Catalog
-         * @description Catálogo de tipos de conexión agrupado por categoría (ADR-0069).
+         * @description Catálogo de tipos de conexión agrupado por categoría (ADR-0069). Un tipo que se abre por negocio
+         *     (`bandera_negocio`, ADR-0186 §12) está disponible solo si el negocio tiene su bandera encendida.
          */
         get: operations["connections_catalog_api_v1_admin_connections_catalog_get"];
         put?: never;
@@ -7182,7 +7183,7 @@ export interface paths {
         };
         /**
          * Conexiones Para Envio
-         * @description Conexiones de WhatsApp Cloud del negocio con sus plantillas de marketing aprobadas.
+         * @description Conexiones de WhatsApp del negocio (Cloud o Twilio) con sus plantillas de marketing aprobadas.
          */
         get: operations["conexiones_para_envio_api_v1_admin_leads_acciones_plantilla_conexiones_get"];
         put?: never;
@@ -8519,6 +8520,318 @@ export interface paths {
          */
         post: operations["seguimiento_hecho_api_v1_pack_commerce_leads__customer_id__seguimiento_hecho_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Descubrir
+         * @description Valida las credenciales contra Twilio y lista los números de WhatsApp de la cuenta. No guarda nada.
+         */
+        post: operations["descubrir_api_v1_admin_connections_twilio_discover_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Conectar
+         * @description Conecta el número elegido: guarda la conexión, registra los webhooks del sender en Twilio y los relee.
+         *     201 si se creó; 200 si el número ya estaba conectado en este negocio. Si registrar los webhooks falla, la
+         *     conexión queda en `error` (con `last_error_code`) y se reintenta con el mismo pedido.
+         */
+        post: operations["conectar_api_v1_admin_connections_twilio_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver
+         * @description Resumen de una conexión de Twilio del negocio: número, estado y webhooks registrados.
+         */
+        get: operations["ver_api_v1_admin_connections_twilio__connection_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/canales/{canal}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Canal Bandera
+         * @description Bandera de un canal que se abre por negocio (apagada por defecto). Solo el master.
+         */
+        get: operations["get_canal_bandera_api_v1_admin_platform_tenants__tenant_id__canales__canal__get"];
+        /**
+         * Put Canal Bandera
+         * @description Abre o cierra un canal para el negocio (auditado como `canal_bandera`). Idempotente. Solo el master; es por
+         *     negocio y no toca ningún otro.
+         */
+        put: operations["put_canal_bandera_api_v1_admin_platform_tenants__tenant_id__canales__canal__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refrescar
+         * @description Revisa ahora la cuenta, el número y los webhooks contra Twilio (lo mismo que el chequeo de cada 15 min).
+         */
+        post: operations["refrescar_api_v1_admin_connections_twilio__connection_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reregistrar
+         * @description Vuelve a apuntar los webhooks del número a solvershub (si alguien los cambió en la consola de Twilio).
+         */
+        post: operations["reregistrar_api_v1_admin_connections_twilio__connection_id__webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/test-message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mensaje De Prueba
+         * @description Manda un texto de prueba. WhatsApp exige que ese número le haya escrito al negocio en las últimas 24 h.
+         */
+        post: operations["mensaje_de_prueba_api_v1_admin_connections_twilio__connection_id__test_message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Rotar Credenciales
+         * @description Cambia el Auth Token (o la cuenta) del número ya conectado. Pide la contraseña; se valida contra Twilio antes
+         *     de guardar. Una conexión pausada no se rota (409 `conexion_pausada`): rotar no debe reactivarla.
+         */
+        put: operations["rotar_credenciales_api_v1_admin_connections_twilio__connection_id__credentials_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desconectar
+         * @description Desconecta el número (borrado lógico, libera el número) y, si se pide, le devuelve sus webhooks anteriores.
+         */
+        post: operations["desconectar_api_v1_admin_connections_twilio__connection_id__disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Costos
+         * @description Lo que Twilio cobró por los mensajes de esta conexión, por moneda.
+         */
+        get: operations["costos_api_v1_admin_connections_twilio__connection_id__costs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Plantillas
+         * @description Plantillas de la conexión, con el estado de su aprobación.
+         */
+        get: operations["listar_plantillas_api_v1_admin_connections_twilio__connection_id__templates_get"];
+        put?: never;
+        /**
+         * Crear Plantilla
+         * @description Crea la plantilla en la cuenta de Twilio (sin enviarla a aprobación). Repetirla tras un corte la reconcilia.
+         */
+        post: operations["crear_plantilla_api_v1_admin_connections_twilio__connection_id__templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/templates/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sincronizar Plantillas
+         * @description Trae todas las plantillas de la cuenta de Twilio (también las creadas en su consola). Uno por minuto.
+         */
+        post: operations["sincronizar_plantillas_api_v1_admin_connections_twilio__connection_id__templates_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/templates/{template_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enviar Plantilla A Aprobacion
+         * @description Pide la aprobación de WhatsApp. Idempotente.
+         */
+        post: operations["enviar_plantilla_a_aprobacion_api_v1_admin_connections_twilio__connection_id__templates__template_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/templates/{template_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refrescar Plantilla
+         * @description Consulta ahora el estado de la aprobación.
+         */
+        post: operations["refrescar_plantilla_api_v1_admin_connections_twilio__connection_id__templates__template_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Borrar Plantilla
+         * @description Borra la plantilla (también en Twilio, si se puede).
+         */
+        delete: operations["borrar_plantilla_api_v1_admin_connections_twilio__connection_id__templates__template_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -22045,6 +22358,292 @@ export interface components {
             siguiente_en?: string | null;
             /** Siguiente Nota */
             siguiente_nota?: string | null;
+        };
+        /** CanalBandera */
+        CanalBandera: {
+            /**
+             * Canal
+             * @description Canal que se abre por negocio (hoy solo `whatsapp_twilio`, ADR-0186).
+             */
+            canal: string;
+            /**
+             * Habilitado
+             * @description Si el tipo de conexión del canal está disponible en el catálogo del negocio. Apagado: «Próximamente» y su alta responde 404.
+             */
+            habilitado: boolean;
+        };
+        /** CanalBanderaIn */
+        CanalBanderaIn: {
+            /** Habilitado */
+            habilitado: boolean;
+        };
+        /** ConexionTwilioOut */
+        ConexionTwilioOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Label */
+            label: string;
+            /** Sender E164 */
+            sender_e164: string;
+            /** Sender Sid */
+            sender_sid: string;
+            /** Sender Status */
+            sender_status: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Status
+             * @description `pending`, `connected`, `degraded`, `revoked` o `error`.
+             */
+            status: string;
+            /** Account Sid */
+            account_sid: string;
+            /** Webhook Inbound Url */
+            webhook_inbound_url: string;
+            /** Webhook Status Url */
+            webhook_status_url: string;
+            /** Tenia Webhook Previo */
+            tenia_webhook_previo: boolean;
+            /** Last Error Code */
+            last_error_code: number | null;
+            /** Active */
+            active: boolean;
+        };
+        /** TwilioAltaIn */
+        TwilioAltaIn: {
+            /**
+             * Account Sid
+             * @description Account SID de Twilio (`AC…`).
+             */
+            account_sid: string;
+            /**
+             * Auth Token
+             * @description Auth Token de la cuenta. No se devuelve nunca.
+             */
+            auth_token: string;
+            /**
+             * Sender Sid
+             * @description SID del sender elegido (`XE…`).
+             */
+            sender_sid: string;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+            /**
+             * Confirm Overwrite Webhook
+             * @description Reemplazar los webhooks que el sender ya tenía hacia otra dirección (se guardan para restaurarlos al desconectar).
+             * @default false
+             */
+            confirm_overwrite_webhook: boolean;
+        };
+        /** TwilioCredencialesIn */
+        TwilioCredencialesIn: {
+            /**
+             * Account Sid
+             * @description Account SID de Twilio (`AC…`).
+             */
+            account_sid: string;
+            /**
+             * Auth Token
+             * @description Auth Token de la cuenta. No se devuelve nunca.
+             */
+            auth_token: string;
+        };
+        /** TwilioCuentaOut */
+        TwilioCuentaOut: {
+            /** Friendly Name */
+            friendly_name: string;
+            /** Status */
+            status: string;
+            /** Type */
+            type: string;
+        };
+        /** TwilioDescubrirOut */
+        TwilioDescubrirOut: {
+            account: components["schemas"]["TwilioCuentaOut"];
+            /** Senders */
+            senders: components["schemas"]["TwilioSenderOut"][];
+        };
+        /** TwilioSenderOut */
+        TwilioSenderOut: {
+            /** Sender Sid */
+            sender_sid: string;
+            /** E164 */
+            e164: string;
+            /** Status */
+            status: string;
+            /** Display Name */
+            display_name: string;
+            /** Quality Rating */
+            quality_rating: string;
+            /** Seleccionable */
+            seleccionable: boolean;
+            /**
+             * Motivo
+             * @description `""`, `no_online` o `ya_conectado_aqui`.
+             */
+            motivo: string;
+            /**
+             * Webhook Ajeno
+             * @description El sender ya envía sus mensajes a otra dirección.
+             */
+            webhook_ajeno: boolean;
+        };
+        /** TwilioCostoMoneda */
+        TwilioCostoMoneda: {
+            /** Moneda */
+            moneda: string;
+            /** Mensajes */
+            mensajes: number;
+            /** Total */
+            total: string;
+        };
+        /** TwilioCostosOut */
+        TwilioCostosOut: {
+            /** Dias */
+            dias: number;
+            /** Por Moneda */
+            por_moneda: components["schemas"]["TwilioCostoMoneda"][];
+            /**
+             * Nota
+             * @description Twilio no documenta si su precio incluye el cargo de Meta: puede ser solo la tarifa de Twilio.
+             */
+            nota: string;
+        };
+        /** TwilioDesconectarIn */
+        TwilioDesconectarIn: {
+            /**
+             * Password
+             * @description Contraseña del usuario (confirmación).
+             */
+            password?: string | null;
+            /**
+             * Restore Webhooks
+             * @description Devolverle al número de Twilio los webhooks que tenía antes de conectarlo.
+             * @default false
+             */
+            restore_webhooks: boolean;
+            /**
+             * Continuar Si Falla
+             * @description Desconectar aunque no se puedan devolver los webhooks (si no, 502 `webhooks_no_restaurados` y no se borra nada).
+             * @default false
+             */
+            continuar_si_falla: boolean;
+        };
+        /** TwilioDesconectarOut */
+        TwilioDesconectarOut: {
+            /** Webhooks Restaurados */
+            webhooks_restaurados: boolean;
+        };
+        /** TwilioPruebaIn */
+        TwilioPruebaIn: {
+            /**
+             * To
+             * @description Número de WhatsApp de destino, en formato +E164.
+             */
+            to: string;
+        };
+        /** TwilioPruebaOut */
+        TwilioPruebaOut: {
+            /** Message Sid */
+            message_sid: string;
+        };
+        /** TwilioRotarIn */
+        TwilioRotarIn: {
+            /**
+             * Account Sid
+             * @description Account SID de Twilio (`AC…`).
+             */
+            account_sid: string;
+            /**
+             * Auth Token
+             * @description Auth Token de la cuenta. No se devuelve nunca.
+             */
+            auth_token: string;
+            /**
+             * Password
+             * @description Contraseña del usuario (confirmación).
+             */
+            password?: string | null;
+            /**
+             * Confirm Overwrite Webhook
+             * @description Si el número ya manda sus mensajes a otra dirección (cambiada en la consola de Twilio), reemplazarla. Sin esto, la rotación responde 422 `webhook_overwrite_not_confirmed`.
+             * @default false
+             */
+            confirm_overwrite_webhook: boolean;
+        };
+        /** TwilioPlantillaIn */
+        TwilioPlantillaIn: {
+            /**
+             * Nombre
+             * @description Minúsculas, números y guion bajo.
+             */
+            nombre: string;
+            /**
+             * Idioma
+             * @description `es`, `es_CO`…
+             */
+            idioma: string;
+            /**
+             * Categoria
+             * @description `UTILITY`, `MARKETING` o `AUTHENTICATION`.
+             */
+            categoria: string;
+            /**
+             * Cuerpo
+             * @description Texto con variables `{{1}}`, `{{2}}`…
+             */
+            cuerpo: string;
+            /**
+             * Ejemplos
+             * @description Valor de ejemplo de cada variable: `{"1": "Ana"}`.
+             */
+            ejemplos?: {
+                [key: string]: string;
+            };
+        };
+        /** TwilioPlantillaOut */
+        TwilioPlantillaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Content Sid */
+            content_sid: string | null;
+            /** Nombre */
+            nombre: string;
+            /** Idioma */
+            idioma: string;
+            /** Categoria */
+            categoria: string;
+            /** Cuerpo */
+            cuerpo: string;
+            /** Ejemplos */
+            ejemplos: {
+                [key: string]: string;
+            };
+            /**
+             * Estado
+             * @description `creating`, `unsubmitted`, `received`, `pending`, `approved`, `rejected`, `paused` o `disabled`.
+             */
+            estado: string;
+            /** Motivo Rechazo */
+            motivo_rechazo: string;
+            /** Enviada At */
+            enviada_at: string | null;
+            /** Aprobada At */
+            aprobada_at: string | null;
         };
     };
     responses: never;
@@ -40313,6 +40912,901 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    descubrir_api_v1_admin_connections_twilio_discover_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioCredencialesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioDescubrirOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sender_ya_conectado`, `cuenta_en_otro_negocio`, `twilio_account_suspended` o `conflicto`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_credentials_invalid`, `sender_not_found`, `sender_not_online` o `webhook_overwrite_not_confirmed` (con `details.previous_webhook`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    conectar_api_v1_admin_connections_twilio_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioAltaIn"];
+            };
+        };
+        responses: {
+            /** @description El número ya estaba conectado en este negocio: se actualizó. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sender_ya_conectado`, `cuenta_en_otro_negocio`, `twilio_account_suspended` o `conflicto`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_credentials_invalid`, `sender_not_found`, `sender_not_online` o `webhook_overwrite_not_confirmed` (con `details.previous_webhook`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ver_api_v1_admin_connections_twilio__connection_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_canal_bandera_api_v1_admin_platform_tenants__tenant_id__canales__canal__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+                canal: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_canal_bandera_api_v1_admin_platform_tenants__tenant_id__canales__canal__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+                canal: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CanalBanderaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalBandera"];
+                };
+            };
+            /** @description No es el admin master (tampoco el tester ni un colaborador). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description El negocio no existe o está borrado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpcionesErrorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refrescar_api_v1_admin_connections_twilio__connection_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reregistrar_api_v1_admin_connections_twilio__connection_id__webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mensaje_de_prueba_api_v1_admin_connections_twilio__connection_id__test_message_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioPruebaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPruebaOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `fuera_de_ventana` o `conexion_pausada`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `numero_invalido`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `too_many_tests` (1 cada 30 s) o `daily_limit` (10 al día). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rotar_credenciales_api_v1_admin_connections_twilio__connection_id__credentials_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioRotarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sender_ya_conectado`, `cuenta_en_otro_negocio`, `twilio_account_suspended` o `conflicto`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_credentials_invalid`, `sender_not_found`, `sender_not_online` o `webhook_overwrite_not_confirmed` (con `details.previous_webhook`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    desconectar_api_v1_admin_connections_twilio__connection_id__disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioDesconectarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioDesconectarOut"];
+                };
+            };
+            /** @description `password_required`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `password_incorrect`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    costos_api_v1_admin_connections_twilio__connection_id__costs_get: {
+        parameters: {
+            query?: {
+                dias?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioCostosOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_plantillas_api_v1_admin_connections_twilio__connection_id__templates_get: {
+        parameters: {
+            query?: {
+                solo_aprobadas?: boolean;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPlantillaOut"][];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    crear_plantilla_api_v1_admin_connections_twilio__connection_id__templates_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioPlantillaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPlantillaOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_invalido`, `idioma_invalido`, `categoria_invalida`, `cuerpo_invalido` o `variables_invalidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sync_rate_limited` (sync manual, uno por minuto). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    sincronizar_plantillas_api_v1_admin_connections_twilio__connection_id__templates_sync_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPlantillaOut"][];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_invalido`, `idioma_invalido`, `categoria_invalida`, `cuerpo_invalido` o `variables_invalidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sync_rate_limited` (sync manual, uno por minuto). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enviar_plantilla_a_aprobacion_api_v1_admin_connections_twilio__connection_id__templates__template_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPlantillaOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_invalido`, `idioma_invalido`, `categoria_invalida`, `cuerpo_invalido` o `variables_invalidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sync_rate_limited` (sync manual, uno por minuto). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refrescar_plantilla_api_v1_admin_connections_twilio__connection_id__templates__template_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPlantillaOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `nombre_invalido`, `idioma_invalido`, `categoria_invalida`, `cuerpo_invalido` o `variables_invalidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sync_rate_limited` (sync manual, uno por minuto). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    borrar_plantilla_api_v1_admin_connections_twilio__connection_id__templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
