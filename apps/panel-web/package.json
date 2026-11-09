@@ -17,6 +17,7 @@
     "wiki:sync": "node scripts/sync-wiki.mjs",
     "api:types": "node scripts/api-types.mjs",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "api:types:check": "node scripts/api-types.mjs --check"
   },
   "dependencies": {
@@ -45,6 +46,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.3",
     "@types/d3-scale": "^4.0.9",
