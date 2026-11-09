@@ -46,6 +46,8 @@ export function leerFrontmatter(texto: string): Record<string, string> {
 
 export const PREFIJO_AYUDA = "/ayuda";
 
+const ETIQUETA_DE_MERMAID = "diagrama (mermaid)";
+
 /** Tipos de admonición (`!!! tipo "Título"`) y cómo se anuncian en español. */
 export const ADMONICIONES = {
   info: "Información",
@@ -66,7 +68,12 @@ export type OpcionesRender = {
   resolverImagen?: (rutaEnDocs: string) => string | null;
   /** Rutas (`x/y.md`) de las páginas que existen: un enlace a otra se anota en `avisos`. */
   paginas?: ReadonlySet<string>;
+  /** Fuente de un bloque `mermaid` → su imagen. Sin imagen, el bloque se queda como código. */
+  dibujarDiagrama?: (fuente: string) => Promise<DiagramaDibujado | null>;
 };
+
+/** Un diagrama ya dibujado. `huella` identifica lo dibujado: permite reutilizarlo sin volver a dibujarlo. */
+export type DiagramaDibujado = { huella: string; src: string; ancho: number; alto: number };
 
 export type ResultadoRender = {
   html: string;
@@ -195,7 +202,7 @@ function retoques(opciones: OpcionesRender, salida: { enlaces: Set<string>; avis
         const clase = code && Array.isArray(code.properties.className) ? String(code.properties.className[0] ?? "") : "";
         const lenguaje = clase.replace(/^language-/, "");
         nodo.properties.tabIndex = 0;
-        if (lenguaje) nodo.properties.dataLang = lenguaje === "mermaid" ? "diagrama (mermaid)" : lenguaje;
+        if (lenguaje) nodo.properties.dataLang = lenguaje === "mermaid" ? ETIQUETA_DE_MERMAID : lenguaje;
         return "skip";
       }
     });
@@ -249,6 +256,63 @@ function imagenes(opciones: OpcionesRender, salida: { avisos: string[] }) {
   };
 }
 
+function textoDe(nodo: Element | Element["children"][number]): string {
+  if (nodo.type === "text") return nodo.value;
+  return nodo.type === "element" ? nodo.children.map(textoDe).join("") : "";
+}
+
+/**
+ * Sustituye cada bloque `mermaid` por su imagen, en una zona desplazable porque estos diagramas
+ * son más anchos que la columna. El código sigue debajo, plegado: es el equivalente en texto.
+ */
+function diagramas(opciones: OpcionesRender) {
+  return () => async (arbol: Root) => {
+    if (!opciones.dibujarDiagrama) return;
+    const bloques: { pre: Element; padre: Parent; titulo: string }[] = [];
+    let titulo = "";
+    visit(arbol, "element", (nodo: Element, _indice, padre) => {
+      if (/^h[1-6]$/.test(nodo.tagName)) titulo = textoDe(nodo);
+      if (nodo.tagName === "pre" && nodo.properties.dataLang === ETIQUETA_DE_MERMAID && padre) {
+        bloques.push({ pre: nodo, padre: padre as Parent, titulo });
+        return "skip";
+      }
+    });
+    for (const { pre, padre, titulo } of bloques) {
+      const imagen = await opciones.dibujarDiagrama(textoDe(pre).trimEnd());
+      if (!imagen) continue;
+      const lienzo: Element = {
+        type: "element",
+        tagName: "div",
+        properties: { className: ["ayuda-diagrama-lienzo"], tabIndex: 0, role: "region", ariaLabel: "Diagrama desplazable" },
+        children: [
+          {
+            type: "element",
+            tagName: "img",
+            properties: {
+              dataDiagrama: imagen.huella,
+              src: imagen.src,
+              alt: titulo ? `Diagrama de la sección ${titulo}` : "Diagrama",
+              width: imagen.ancho,
+              height: imagen.alto,
+              loading: "lazy",
+            },
+            children: [],
+          },
+        ],
+      };
+      const codigo: Element = {
+        type: "element",
+        tagName: "details",
+        properties: {},
+        children: [{ type: "element", tagName: "summary", properties: {}, children: [{ type: "text", value: "Ver el código del diagrama" }] }, pre],
+      };
+      enHijos(padre, padre.children.indexOf(pre), [
+        { type: "element", tagName: "figure", properties: { className: ["ayuda-diagrama"] }, children: [lienzo, codigo] },
+      ]);
+    }
+  };
+}
+
 export async function renderizarMarkdown(markdown: string, opciones: OpcionesRender): Promise<ResultadoRender> {
   const salida = { enlaces: new Set<string>(), avisos: [] as string[] };
   const texto = expandirAdmoniciones(quitarFrontmatter(markdown));
@@ -261,6 +325,7 @@ export async function renderizarMarkdown(markdown: string, opciones: OpcionesRen
     .use(rehypeSanitize, ESQUEMA)
     .use(imagenes(opciones, salida))
     .use(retoques(opciones, salida))
+    .use(diagramas(opciones))
     .use(rehypeSlug)
     .use(rehypeStringify)
     .process(texto);

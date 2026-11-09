@@ -58,4 +58,13 @@
 .ayuda-contenido .ayuda-captura-pendiente figcaption { margin-top: 0.25rem; color: var(--sh-text-muted); }
 .ayuda-contenido img.ayuda-imagen { max-width: 100%; height: auto; border: 1px solid var(--sh-border); border-radius: 8px; margin: 1.25rem 0; }
 
-@media print { .ayuda-contenido pre { white-space: pre-wrap; } }
+/* El fondo es blanco en los dos temas: la imagen trae los colores del modelo C4 sobre blanco. */
+.ayuda-contenido .ayuda-diagrama { margin: 1.25rem 0; }
+.ayuda-contenido .ayuda-diagrama-lienzo { overflow-x: auto; background: #fff; border: 1px solid var(--sh-border); border-radius: 8px; }
+.ayuda-contenido .ayuda-diagrama-lienzo img { max-width: none; height: auto; }
+.ayuda-contenido .ayuda-diagrama summary { margin-top: 0.5rem; cursor: pointer; font-size: 0.875rem; color: var(--sh-text-muted); }
+
+@media print {
+  .ayuda-contenido pre { white-space: pre-wrap; }
+  .ayuda-contenido .ayuda-diagrama-lienzo img { max-width: 100%; }
+}

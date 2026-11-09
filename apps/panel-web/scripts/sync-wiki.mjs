@@ -16,10 +16,17 @@
 // `--check` necesita la wiki en disco, por eso no corre en el CI del panel (no la tiene): se corre
 // a mano o desde el flujo de la wiki antes de abrir el PR.
 //
+// Los bloques `mermaid` se dibujan a PNG y se incrustan. Solo hace falta dibujar los que cambiaron
+// (mermaid-cli y Chrome): el resto se reutiliza del JSON por su huella, y `--check` nunca dibuja.
+// Si Puppeteer no tiene su Chrome, apunta PUPPETEER_EXECUTABLE_PATH al del sistema.
+//
 // Falla (código 1) si una página no tiene `titulo` o `acceso` válido, si un enlace .md no existe, o
 // si una página enlaza a otra de nivel superior (el lector no la vería).
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +48,12 @@ if (!existsSync(docs)) {
 const NIVELES = { usuario: 0, administrador: 1, tecnico: 2 };
 const TIPOS_DE_IMAGEN = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp" };
 const MAX_IMAGEN = 400 * 1024;
+
+// Con npx y versión fija, no como devDependency: arrastra un Chromium que `npm ci` bajaría en el CI y
+// en la imagen Docker, que no dibujan nada.
+const MERMAID_CLI = "@mermaid-js/mermaid-cli@12.2.0";
+// Tamaño natural: con `useMaxWidth` el diagrama se encogería al ancho de la ventana de Chrome.
+const CONFIG_MERMAID = JSON.stringify({ flowchart: { useMaxWidth: false }, sequence: { useMaxWidth: false }, er: { useMaxWidth: false } });
 
 function listarMarkdown(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -80,6 +93,48 @@ function imagen(rutaEnDocs, avisos) {
   return `data:${tipo};base64,${bytes.toString("base64")}`;
 }
 
+/** Huella → data URI de los diagramas que ya están en el JSON versionado. */
+function diagramasVersionados() {
+  if (!existsSync(destino)) return new Map();
+  const { paginas } = JSON.parse(readFileSync(destino, "utf8"));
+  const html = paginas.map((p) => p.html).join("");
+  return new Map([...html.matchAll(/<img data-diagrama="([0-9a-f]+)" src="(data:image\/png;base64,[^"]+)"/g)].map((m) => [m[1], m[2]]));
+}
+
+function dibujarConMermaid(fuente) {
+  const dir = mkdtempSync(join(tmpdir(), "wiki-mermaid-"));
+  try {
+    const salida = join(dir, "diagrama.png");
+    writeFileSync(join(dir, "diagrama.mmd"), fuente);
+    writeFileSync(join(dir, "config.json"), CONFIG_MERMAID);
+    execFileSync("npx", ["--yes", MERMAID_CLI, "-i", join(dir, "diagrama.mmd"), "-o", salida, "-c", join(dir, "config.json"), "-b", "white", "-q"], {
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    return `data:image/png;base64,${readFileSync(salida).toString("base64")}`;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const dibujados = diagramasVersionados();
+
+async function dibujarDiagrama(fuente) {
+  const huella = createHash("sha256").update(`${MERMAID_CLI}\n${CONFIG_MERMAID}\n${fuente}`).digest("hex").slice(0, 16);
+  if (!dibujados.has(huella)) {
+    if (comprobar) return null;
+    try {
+      dibujados.set(huella, dibujarConMermaid(fuente));
+    } catch (e) {
+      errores.push(`no se pudo dibujar un diagrama (${fuente.split("\n", 1)[0]}): ${e.stderr?.toString().trim() || e.message}`);
+      return null;
+    }
+  }
+  const src = dibujados.get(huella);
+  const png = Buffer.from(src.slice(src.indexOf(",") + 1), "base64");
+  if (png.length > MAX_IMAGEN) avisosGlobales.push(`diagrama pesado (${Math.round(png.length / 1024)} KB): ${huella}`);
+  return { huella, src, ancho: png.readUInt32BE(16), alto: png.readUInt32BE(20) };
+}
+
 const archivos = listarMarkdown(docs).sort();
 const rutas = new Set(archivos.map((a) => relative(docs, a).split("\\").join("/")));
 const nav = leerNav();
@@ -98,6 +153,7 @@ for (const archivo of archivos) {
     ruta,
     paginas: rutas,
     resolverImagen: (r) => imagen(r, avisos),
+    dibujarDiagrama,
   });
   for (const a of [...deRender, ...avisos]) (a.startsWith("enlace") ? errores : avisosGlobales).push(`${ruta}: ${a}`);
   paginas.push({ ruta, fm, html, enlaces });

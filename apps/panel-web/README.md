@@ -56,7 +56,10 @@ admin creado (`python scripts/init_db.py` en agent-core).
     cambiar la wiki: sincroniza y sube el JSON. `npm run wiki:sync -- --check` falla si
     lo versionado no coincide (necesita la wiki en disco, por eso no corre en el CI).
     No edites el JSON a mano; el script también falla si hay un enlace roto o una
-    página que enlaza a otra de nivel superior.
+    página que enlaza a otra de nivel superior. Los bloques `mermaid` se incrustan como
+    PNG: si cambió alguno, el sync lo dibuja con mermaid-cli (por `npx`) y necesita
+    Chrome, con `PUPPETEER_EXECUTABLE_PATH` si Puppeteer no tiene el suyo. Los que no
+    cambiaron se reutilizan y `--check` nunca dibuja.
   - **Enlace «Documentación» de la tarjeta del avatar**: lo activa la variable de servidor
     `WIKI_URL` (se lee en runtime). **`WIKI_URL=/ayuda`** muestra el ítem y lo lleva a la
     Wiki; vacía, el ítem no aparece. Déjala vacía en un entorno hasta que ese despliegue
