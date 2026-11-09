@@ -96,6 +96,39 @@ jobs:
           path: apps/panel-web/coverage
           if-no-files-found: ignore
 
+  # Recorridos críticos en un navegador real contra una API falsa, sobre la build de producción.
+  e2e:
+    needs: changes
+    if: ${{ needs.changes.outputs.panel == 'true' }}
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # Igual que el Dockerfile (node:22-alpine). jsdom 30 exige >= 22.22.2:
+          # check-latest evita que el caché del runner sirva una 22.x más vieja.
+          node-version: "22"
+          check-latest: true
+      - name: Instalar
+        working-directory: apps/panel-web
+        run: npm ci
+      - name: Navegador de Playwright
+        working-directory: apps/panel-web
+        run: npx playwright install chromium
+      - name: Build
+        working-directory: apps/panel-web
+        run: npm run build
+      - name: Recorridos E2E
+        working-directory: apps/panel-web
+        run: npm run test:e2e
+      - name: Publicar el reporte de E2E
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reporte-e2e-panel
+          path: apps/panel-web/playwright-report
+          if-no-files-found: ignore
+
   # Deriva de tipos (HU-UI-04): lib/api/schema.d.ts debe coincidir con el OpenAPI de
   # `develop` de agent-core. agent-core es privado: el checkout usa el secreto
   # AGENT_CORE_READ_TOKEN (token de solo lectura del contenido de ese repo). Sin el
