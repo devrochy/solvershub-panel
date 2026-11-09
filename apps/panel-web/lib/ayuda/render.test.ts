@@ -98,6 +98,38 @@ describe("tablas y código", () => {
     expect(html).toContain("A --> B");
   });
 
+  describe("mermaid con imagen dibujada", () => {
+    const imagen = { huella: "abc123", src: "data:image/png;base64,AAAA", ancho: 1200, alto: 800 };
+    const md = "## 2.3 Contenedores\n\n```mermaid\nflowchart LR\n  A[\"<div style='x'>Uno</div>\"] --> B\n```\n";
+
+    it("muestra la imagen en una zona desplazable y deja el código plegado", async () => {
+      const fuentes: string[] = [];
+      const { html } = await render(md, {
+        dibujarDiagrama: async (fuente) => {
+          fuentes.push(fuente);
+          return imagen;
+        },
+      });
+      expect(fuentes).toEqual(["flowchart LR\n  A[\"<div style='x'>Uno</div>\"] --> B"]);
+      expect(html).toContain('<div class="ayuda-diagrama-lienzo" tabindex="0" role="region" aria-label="Diagrama desplazable">');
+      expect(html).toContain('<img data-diagrama="abc123" src="data:image/png;base64,AAAA" alt="Diagrama de la sección 2.3 Contenedores" width="1200" height="800" loading="lazy">');
+      expect(html).toContain('<details><summary>Ver el código del diagrama</summary><pre tabindex="0" data-lang="diagrama (mermaid)">');
+      expect(html).not.toContain("<div style");
+    });
+
+    it("sin imagen se queda como bloque de código", async () => {
+      const { html } = await render(md, { dibujarDiagrama: async () => null });
+      expect(html).toContain('data-lang="diagrama (mermaid)"');
+      expect(html).not.toContain("ayuda-diagrama");
+      expect(html).not.toContain("<details>");
+    });
+
+    it("no toca otros bloques de código", async () => {
+      const { html } = await render("```bash\nnpm ci\n```\n", { dibujarDiagrama: async () => imagen });
+      expect(html).not.toContain("ayuda-diagrama");
+    });
+  });
+
   it("los títulos reciben un id estable que coincide con los enlaces #… de la Wiki", async () => {
     const { html } = await render("## 2.2 Comportamiento esperado\n\n[ver](#22-comportamiento-esperado)\n");
     expect(html).toContain('<h2 id="22-comportamiento-esperado">');
