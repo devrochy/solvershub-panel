@@ -1,0 +1,16 @@
+<!-- @dsCard group="Moléculas" height=230 subtitle="components/ui/popover.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Popover — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var a=u(true),b=u(false);return h(S.Popover,{defaultOpen:true,modal:false},h(S.PopoverTrigger,{asChild:true},h(S.Button,{variant:'outline',size:'sm'},'Filtros')),
+ h(S.PopoverContent,{label:'Filtros'},h('div',{className:'flex flex-col gap-3'},h('p',{className:'text-[13px] font-medium text-body'},'Canal'),
+  h(S.Checkbox,{id:'pw',label:'WhatsApp',checked:a[0],onCheckedChange:a[1]}),h(S.Checkbox,{id:'pc',label:'Chat web',checked:b[0],onCheckedChange:b[1]}),
+  h(S.Button,{size:'sm',className:'self-end'},'Aplicar'))));}
+mount(h(A));
+</script>
+</body>
+</html>

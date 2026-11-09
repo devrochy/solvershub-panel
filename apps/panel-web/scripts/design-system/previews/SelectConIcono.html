@@ -1,0 +1,16 @@
+<!-- @dsCard group="Moléculas" height=280 subtitle="components/ui/select-con-icono.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SelectConIcono — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var v=u('supervisor');return h('div',{className:'w-72'},h(S.Field,{label:'Rol',htmlFor:'rol'},h(S.SelectConIcono,{id:'rol',label:'Rol',value:v[0],onChange:v[1],options:[
+ {value:'dueno',label:'Dueño',descripcion:'Todo, incluida la facturación.',icono:ic(I.UserRound)},
+ {value:'supervisor',label:'Supervisor',descripcion:'Equipo, agentes y reportes.',icono:ic(I.ShieldCheck)},
+ {value:'asesor',label:'Asesor',descripcion:'Conversaciones asignadas.',icono:ic(I.Headset)}]})));}
+mount(h(A));setTimeout(function(){var t=document.querySelector('[aria-haspopup=listbox]');t&&t.click();},400);
+</script>
+</body>
+</html>

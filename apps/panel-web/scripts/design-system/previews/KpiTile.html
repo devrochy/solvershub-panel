@@ -1,0 +1,15 @@
+<!-- @dsCard group="Moléculas" height=230 subtitle="components/ui/kpi-tile.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>KpiTile — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'grid grid-cols-3 gap-4'},
+ h(S.KpiTile,{label:'Conversaciones',value:'1.284',icon:h(I.MessageSquare,{className:'h-4 w-4'}),delta:{value:12,versus:'los 7 días anteriores'},sparkline:h(S.Sparkline,{values:[12,15,13,18,17,22,20,26]})}),
+ h(S.KpiTile,{label:'Escalaciones',value:'37',delta:{value:8,versus:'ayer'},polarity:'up-bad',hint:'Subir es malo: polarity="up-bad"'}),
+ h(S.KpiTile,{label:'Recaudo del mes',value:'$ 18.450.000',delta:{value:-3.5,versus:'el mes anterior'}})));
+</script>
+</body>
+</html>

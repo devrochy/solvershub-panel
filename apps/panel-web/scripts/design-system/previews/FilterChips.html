@@ -1,0 +1,14 @@
+<!-- @dsCard group="Moléculas" height=72 subtitle="components/ui/filter-chips.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>FilterChips — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex flex-wrap gap-6'},
+ h(S.FilterChips,{label:'Período',items:[{label:'7 días',href:'?p=7',active:true},{label:'15 días',href:'?p=15'},{label:'30 días',href:'?p=30'}]}),
+ h(S.FilterChips,{label:'Estado',items:[{label:'Todos',href:'?'},{label:'Abiertas',href:'?e=a',active:true},{label:'Escaladas',href:'?e=e'},{label:'Resueltas',href:'?e=r'}]})));
+</script>
+</body>
+</html>

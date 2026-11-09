@@ -1,0 +1,15 @@
+<!-- @dsCard group="Organismos" height=380 subtitle="components/ui/sheet.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sheet — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.Sheet,{defaultOpen:true},h(S.SheetContent,{title:'Laura Gómez',description:'Cliente desde marzo · WhatsApp',
+ footer:[h(S.SheetClose,{asChild:true,key:'c'},h(S.Button,{variant:'ghost'},'Cancelar')),h(S.Button,{key:'g'},'Guardar cliente')]},
+ h('div',{className:'flex flex-col gap-4'},h(S.Field,{label:'Nombre',htmlFor:'sn'},h(S.Input,{id:'sn',defaultValue:'Laura Gómez'})),
+  h(S.Field,{label:'Etapa',htmlFor:'se'},h(S.Select,{id:'se',defaultValue:'Interesada'},h('option',null,'Interesada'),h('option',null,'Cotizada')))))));
+</script>
+</body>
+</html>

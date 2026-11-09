@@ -1,0 +1,15 @@
+<!-- @dsCard group="Átomos" height=140 subtitle="components/ui/tooltip.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tooltip — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex items-center gap-12 pt-14'},
+ h('span',{className:'inline-flex items-center gap-1 text-sm text-body'},'Conversaciones',h(S.Tooltip,{label:'Conversaciones que tu agente atendió en el período.'},h(I.Info,{className:'h-3.5 w-3.5 text-text-soft','aria-hidden':true}))),
+ h(S.Tooltip,{label:'Escalaciones',focusable:false},h(S.Button,{variant:'ghost',size:'icon','aria-label':'Escalaciones'},ic(I.Shield)))));
+setTimeout(function(){var t=document.querySelector('[data-tooltip]');t&&t.focus();},400);
+</script>
+</body>
+</html>

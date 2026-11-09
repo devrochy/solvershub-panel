@@ -1,0 +1,14 @@
+<!-- @dsCard group="Plantillas" height=460 subtitle="components/templates/settings-page.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SettingsPage — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.SettingsPage,{header:{title:'Configuración',description:'Tu negocio, tu equipo y cómo se ve el panel.',breadcrumbs:[],tabs:false},
+ tabs:h(S.TabLinks,{label:'Configuración',current:'/c/negocio',items:[{href:'/c/negocio',label:'Negocio'},{href:'/c/equipo',label:'Equipo'},{href:'/c/accesibilidad',label:'Accesibilidad'}]})},
+ h(S.Card,null,h(S.CardContent,{className:'flex flex-col gap-5 pt-5'},h(S.Field,{label:'Nombre del negocio',htmlFor:'sb'},h(S.Input,{id:'sb',defaultValue:'Panadería La Espiga'})),h('div',{className:'flex justify-end'},h(S.Button,null,'Guardar negocio'))))));
+</script>
+</body>
+</html>

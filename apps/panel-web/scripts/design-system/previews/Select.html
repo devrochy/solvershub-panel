@@ -1,0 +1,16 @@
+<!-- @dsCard group="Átomos" height=110 subtitle="components/ui/select.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Select — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function F(p){return h(S.Field,{label:p.label,htmlFor:p.id,className:'w-56'},h(S.Select,Object.assign({id:p.id},p.x),p.o.map(function(t){return h('option',{key:t},t);})));}
+mount(h('div',{className:'flex flex-wrap items-start gap-4'},
+ h(F,{label:'Canal',id:'s1',o:['WhatsApp','Chat web','Instagram']}),
+ h(F,{label:'Período',id:'s2',o:['Elige un período'],x:{'aria-invalid':true}}),
+ h(F,{label:'Moneda',id:'s3',o:['COP'],x:{disabled:true}})));
+</script>
+</body>
+</html>

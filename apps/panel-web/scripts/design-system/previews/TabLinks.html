@@ -1,0 +1,14 @@
+<!-- @dsCard group="Moléculas" height=140 subtitle="components/ui/tab-links.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>TabLinks — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex flex-col gap-4'},
+ h(S.TabLinks,{label:'Agenda',current:'/calendario',items:[{href:'/calendario',label:'Citas'},{href:'/calendario/tipos',label:'Tipos'},{href:'/calendario/bloqueos',label:'Bloqueos'}]}),
+ h(S.TabLinks,{label:'Embudo',size:'compact',current:'/e/2',items:[{href:'/e/1',label:'Nuevos',count:48},{href:'/e/2',label:'Interesados',count:23},{href:'/e/3',label:'Cotizados',count:9},{href:'/e/4',label:'Ganados',count:1204}]})));
+</script>
+</body>
+</html>

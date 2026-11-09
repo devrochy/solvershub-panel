@@ -1,0 +1,15 @@
+<!-- @dsCard group="Plantillas" height=480 subtitle="components/templates/detail-page.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>DetailPage — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var t=u('pedidos');return h(S.DetailPage,{header:{title:'Laura Gómez',description:'+57 300 123 4567 · WhatsApp',breadcrumbs:[{label:'Clientes',href:'/leads'},{label:'Laura Gómez'}],tabs:false,actions:h(S.Button,{variant:'outline'},'Abrir conversación')},
+ summary:h('div',{className:'grid grid-cols-3 gap-4'},h(S.KpiTile,{label:'Compras',value:'4',size:'compact'}),h(S.KpiTile,{label:'Total comprado',value:'$ 980.000',size:'compact'}),h(S.KpiTile,{label:'Saldo',value:'$ 0',size:'compact'}))},
+ h(S.Tabs,{value:t[0],onValueChange:t[1],items:[{id:'pedidos',label:'Pedidos'},{id:'citas',label:'Citas'},{id:'notas',label:'Notas'}]}));}
+mount(h(A));
+</script>
+</body>
+</html>

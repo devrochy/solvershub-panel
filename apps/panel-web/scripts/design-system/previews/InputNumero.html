@@ -1,0 +1,15 @@
+<!-- @dsCard group="Átomos" height=120 subtitle="components/ui/input-numero.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>InputNumero — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var s=u(30),d=u(12.5);return h('div',{className:'grid grid-cols-2 gap-4'},
+ h(S.Field,{label:'Minutos por cita',htmlFor:'n1',help:'Entre 5 y 240. ↑ ↓ suben o bajan de a 5.'},h(S.InputNumero,{id:'n1',value:s[0],onValueChange:s[1],min:5,max:240,step:5})),
+ h(S.Field,{label:'Descuento (%)',htmlFor:'n2'},h(S.InputNumero,{id:'n2',value:d[0],onValueChange:d[1],min:0,max:100,decimal:true})));}
+mount(h(A));
+</script>
+</body>
+</html>

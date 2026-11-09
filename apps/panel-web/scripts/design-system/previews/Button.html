@@ -1,0 +1,24 @@
+<!-- @dsCard group="Átomos" height=150 subtitle="components/ui/button.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Button — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex flex-col gap-4'},
+ h('div',{className:'flex flex-wrap items-center gap-3'},
+  h(S.Button,{variant:'accent'},ic(I.Plus),'Crear agente'),
+  h(S.Button,null,'Guardar identidad'),
+  h(S.Button,{variant:'outline'},'Cancelar'),
+  h(S.Button,{variant:'ghost'},'Ver detalle'),
+  h(S.Button,{variant:'danger'},'Desactivar colaborador')),
+ h('div',{className:'flex flex-wrap items-center gap-3'},
+  h(S.Button,{loading:true},'Guardando…'),
+  h(S.Button,{variant:'outline',size:'sm'},'Pequeño'),
+  h(S.Button,{size:'lg'},'Grande'),
+  h(S.Button,{variant:'ghost',size:'icon','aria-label':'Más acciones'},ic(I.Ellipsis)),
+  h(S.Button,{disabled:true},'Deshabilitado'))));
+</script>
+</body>
+</html>

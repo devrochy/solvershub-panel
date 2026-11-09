@@ -1,0 +1,16 @@
+<!-- @dsCard group="Moléculas" height=260 subtitle="components/ui/dropdown-menu.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>DropdownMenu — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex justify-start'},h(S.DropdownMenu,{defaultOpen:true,modal:false},h(S.DropdownMenuTrigger,{asChild:true},h(S.Button,{variant:'ghost',size:'icon','aria-label':'Acciones'},ic(I.Ellipsis))),
+ h(S.DropdownMenuContent,{align:'start'},h(S.DropdownMenuLabel,null,'Conversación'),
+  h(S.DropdownMenuItem,{icon:h(I.UserRound)},'Asignar a mí'),h(S.DropdownMenuItem,{icon:h(I.Pencil)},'Renombrar'),
+  h(S.DropdownMenuExternalLinkItem,{href:'#',avisoNuevaPestana:'se abre en una pestaña nueva'},'Ver en la ayuda'),
+  h(S.DropdownMenuSeparator),h(S.DropdownMenuItem,{icon:h(I.Trash2),tone:'danger'},'Resolver conversación')))));
+</script>
+</body>
+</html>

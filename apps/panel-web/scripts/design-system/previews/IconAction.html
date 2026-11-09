@@ -1,0 +1,15 @@
+<!-- @dsCard group="Átomos" height=90 subtitle="components/ui/icon-action.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>IconAction — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex items-center gap-2'},
+ h(S.IconAction,{tone:'ver',label:'Ver'},ic(I.Eye)),h(S.IconAction,{tone:'editar',label:'Editar'},ic(I.Pencil)),
+ h(S.IconAction,{tone:'permisos',label:'Permisos'},ic(I.ShieldCheck)),h(S.IconAction,{tone:'aprobar',label:'Aprobar'},ic(I.Check)),
+ h(S.IconAction,{tone:'eliminar',label:'Eliminar'},ic(I.Trash2)),h(S.IconAction,{tone:'neutro',label:'Descargar'},ic(I.Download))));
+</script>
+</body>
+</html>

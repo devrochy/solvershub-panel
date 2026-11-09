@@ -1,0 +1,14 @@
+<!-- @dsCard group="Moléculas" height=140 subtitle="components/ui/tabs.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tabs — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var v=u('identidad');var items=[{id:'identidad',label:'Identidad'},{id:'habilidades',label:'Habilidades'},{id:'conexiones',label:'Conexiones'},{id:'horario',label:'Horario'}];
+ return h('div',null,h(S.Tabs,{items:items,value:v[0],onValueChange:v[1]}),h('p',{className:'pt-4 text-sm text-body'},'Contenido de «'+items.find(function(i){return i.id===v[0];}).label+'». Usa ← → con el foco en las pestañas.'));}
+mount(h(A));
+</script>
+</body>
+</html>

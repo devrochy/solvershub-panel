@@ -1,0 +1,15 @@
+<!-- @dsCard group="Moléculas" height=200 subtitle="components/ui/usage-bar.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>UsageBar — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'flex max-w-md flex-col gap-5'},
+ h(S.UsageBar,{label:'Conversaciones',used:1240,limit:2000,percent:62,unit:'conversaciones al mes'}),
+ h(S.UsageBar,{label:'Colaboradores',used:9,limit:10,percent:90,unit:'personas'}),
+ h(S.UsageBar,{label:'Crédito IA',used:null,limit:50000,percent:null,unit:'COP',nota:'se mide desde el próximo ciclo'})));
+</script>
+</body>
+</html>
