@@ -1,0 +1,17 @@
+<!-- @dsCard group="Plantillas" height=460 subtitle="components/templates/list-page.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>ListPage — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function Tabla(){return h(S.DataTable,{caption:'Clientes',rows:[{id:1,c:'Laura Gómez',e:'Interesada',v:'$ 245.000'},{id:2,c:'Andrés Ruiz',e:'Cotizado',v:'$ 1.120.000'}],getRowKey:function(r){return String(r.id);},columns:[
+ {key:'c',header:'Cliente',cell:function(r){return r.c;}},{key:'e',header:'Etapa',cell:function(r){return h('span',{className:'text-body'},r.e);}},{key:'v',header:'Valor',align:'right',cell:function(r){return h('span',{className:'tabular-nums'},r.v);}}]});}
+function A(){var q=u('');return h(S.ListPage,{header:{title:'Clientes',description:'Las personas que escribieron a tu agente.',breadcrumbs:[],tabs:false,actions:h(S.Button,{variant:'accent'},ic(I.Plus),'Nuevo cliente')},
+ filters:[h(S.SearchInput,{key:'s',label:'Buscar clientes',value:q[0],onChange:q[1],placeholder:'Buscar',shortcut:'/',className:'w-72'}),h(S.FilterChips,{key:'f',label:'Etapa',items:[{label:'Todos',href:'?',active:true},{label:'Interesados',href:'?e=i'},{label:'Cotizados',href:'?e=c'}]})]},
+ h(Tabla),h(S.Pagination,{page:1,hasMore:true,total:48,label:'clientes',makeHref:function(p){return '?pagina='+p;}}));}
+mount(h(A));
+</script>
+</body>
+</html>

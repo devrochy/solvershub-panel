@@ -1,0 +1,18 @@
+<!-- @dsCard group="Organismos" height=300 subtitle="components/ui/data-table.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>DataTable — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+var B={pagado:['success','Pagado'],pendiente:['warning','Pendiente'],rechazado:['danger','Rechazado']};
+var rows=[{id:1,c:'Laura Gómez',k:'WhatsApp',e:'pagado',t:'$ 245.000'},{id:2,c:'Visitante web · cf78',k:'Chat web',e:'pendiente',t:'$ 89.900'},{id:3,c:'Ferretería El Tornillo',k:'WhatsApp',e:'rechazado',t:'$ 1.120.000'}];
+mount(h(S.DataTable,{caption:'Pedidos recientes',rows:rows,getRowKey:function(r){return String(r.id);},columns:[
+ {key:'c',header:'Cliente',cell:function(r){return r.c;}},
+ {key:'k',header:'Canal',cell:function(r){return h('span',{className:'text-body'},r.k);},info:'Por dónde llegó el pedido.'},
+ {key:'e',header:'Estado',cell:function(r){return h(S.Badge,{variant:B[r.e][0]},B[r.e][1]);}},
+ {key:'t',header:'Total',align:'right',cell:function(r){return h('span',{className:'tabular-nums'},r.t);}}]}));
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<!-- @dsCard group="Organismos" height=330 subtitle="components/ui/dialog.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Dialog — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.Dialog,{defaultOpen:true},h(S.DialogContent,{title:'Nuevo tipo de cita',description:'Tu agente lo ofrecerá al agendar.'},
+ h(S.Field,{label:'Nombre',htmlFor:'dn'},h(S.Input,{id:'dn',defaultValue:'Corte y barba'})),
+ h('div',{className:'mt-6 flex justify-end gap-2'},h(S.DialogClose,{asChild:true},h(S.Button,{variant:'ghost'},'Cancelar')),h(S.Button,null,'Crear tipo de cita')))));
+</script>
+</body>
+</html>

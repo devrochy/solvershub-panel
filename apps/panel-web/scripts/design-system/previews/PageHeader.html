@@ -1,0 +1,15 @@
+<!-- @dsCard group="Organismos" height=200 subtitle="components/ui/page-header.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>PageHeader — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.PageHeader,{title:'Pedidos',description:'Lo que tus clientes compraron por WhatsApp y el chat web.',
+ breadcrumbs:[{label:'Comercio',href:'/comercio'},{label:'Pedidos'}],
+ actions:[h(S.Button,{variant:'outline',key:'x'},ic(I.Download),'Exportar'),h(S.Button,{variant:'accent',key:'n'},ic(I.Plus),'Nuevo pedido')],
+ tabs:h(S.TabLinks,{label:'Comercio',current:'/comercio/pedidos',items:[{href:'/comercio',label:'Resumen'},{href:'/comercio/productos',label:'Productos'},{href:'/comercio/pedidos',label:'Pedidos'},{href:'/comercio/promociones',label:'Promociones'}]})}));
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!-- @dsCard group="Átomos" height=100 subtitle="components/ui/switch.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Switch — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function W(p){var c=u(p.on);return h('label',{className:'inline-flex items-center gap-3 text-sm text-body'},h(S.Switch,{checked:c[0],onCheckedChange:c[1],tone:p.tone,disabled:p.dis,'aria-label':p.t}),p.t);}
+mount(h('div',{className:'flex flex-wrap items-center gap-6'},h(W,{on:true,t:'Responder 24/7'}),h(W,{on:false,t:'Modo silencio'}),h(W,{on:true,tone:'success',t:'Cobranza activa'}),h(W,{on:true,tone:'danger',t:'Bloquear número'}),h(W,{on:false,dis:true,t:'Sin permiso'})));
+</script>
+</body>
+</html>

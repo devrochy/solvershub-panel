@@ -1,0 +1,17 @@
+<!-- @dsCard group="Plantillas" height=500 subtitle="components/templates/dashboard-page.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>DashboardPage — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.DashboardPage,{header:{title:'Resumen',description:'Cómo va tu negocio y qué hizo cada agente.',breadcrumbs:[],tabs:false,actions:h(S.FilterChips,{label:'Período',items:[{label:'7 días',href:'?p=7',active:true},{label:'15 días',href:'?p=15'},{label:'30 días',href:'?p=30'}]})}},
+ h(S.KpiTile,{className:'col-span-6',size:'hero',label:'Conversaciones',value:'1.284',delta:{value:12,versus:'los 7 días anteriores'},sparkline:h(S.Sparkline,{values:[12,15,13,18,17,22,20,26],area:true})}),
+ h(S.KpiTile,{className:'col-span-3',label:'Ventas',value:'86',delta:{value:4,versus:'los 7 días anteriores'}}),
+ h(S.KpiTile,{className:'col-span-3',label:'Escalaciones hoy',value:'3'}),
+ h(S.Card,{className:'col-span-8'},h(S.CardHeader,null,h(S.CardTitle,null,'Evolución diaria')),h(S.CardContent,null,h(S.Skeleton,{className:'h-24 w-full'}))),
+ h(S.Card,{className:'col-span-4'},h(S.CardHeader,null,h(S.CardTitle,null,'Estado del sistema'),h(S.CardDescription,null,'Agente activo · 3 habilidades')))));
+</script>
+</body>
+</html>

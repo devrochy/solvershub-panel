@@ -1,0 +1,17 @@
+<!-- @dsCard group="Átomos" height=110 subtitle="components/ui/checkbox.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Checkbox — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+function A(){var a=u(true),b=u(false);return h('div',{className:'flex flex-wrap items-center gap-6'},
+ h(S.Checkbox,{id:'c1',label:'Recibir resumen diario',checked:a[0],onCheckedChange:a[1]}),
+ h(S.Checkbox,{id:'c2',label:'Silenciar fines de semana',checked:b[0],onCheckedChange:b[1]}),
+ h(S.Checkbox,{id:'c3',label:'Seleccionar todo',checked:'indeterminate'}),
+ h(S.Checkbox,{id:'c4',label:'Sin permiso',checked:false,disabled:true}));}
+mount(h(A));
+</script>
+</body>
+</html>

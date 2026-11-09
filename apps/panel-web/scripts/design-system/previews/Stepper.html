@@ -1,0 +1,17 @@
+<!-- @dsCard group="Moléculas" height=320 subtitle="components/ui/stepper.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Stepper — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h(S.Stepper,{label:'Pasar a producción',className:'max-w-lg',steps:[
+ {id:'1',title:'Conectar WhatsApp',description:'Número verificado por Meta.',state:'complete',stateLabel:'Listo'},
+ {id:'2',title:'Probar con 5 conversaciones',description:'El agente responde sin escalar.',state:'current',content:h(S.Button,{size:'sm'},'Abrir el asistente')},
+ {id:'3',title:'Plantillas aprobadas',state:'error',stateLabel:'Rechazada'},
+ {id:'4',title:'Catálogo',state:'skipped',stateLabel:'Omitido'},
+ {id:'5',title:'Activar',state:'upcoming'}]}));
+</script>
+</body>
+</html>

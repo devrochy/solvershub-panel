@@ -1,0 +1,23 @@
+// Íconos de Lucide que usan las vistas previas (window.SolversHub.Icons). Solo estos: todo Lucide pesaría varios MB.
+export {
+  Plus,
+  Download,
+  MessageSquare,
+  Eye,
+  Pencil,
+  Trash2,
+  Shield,
+  ShieldCheck,
+  Check,
+  Ellipsis,
+  User,
+  UserRound,
+  Headset,
+  Bell,
+  Info,
+  Bot,
+  CalendarDays,
+  Users,
+  Upload,
+  Copy,
+} from "lucide-react";

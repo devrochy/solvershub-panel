@@ -1,0 +1,14 @@
+<!-- @dsCard group="Gráficos" height=340 subtitle="components/dataviz/bar-chart.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>BarChart — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+var m=['Ene','Feb','Mar','Abr','May'],a=[120,180,150,210,190],b=[90,110,140,160,175];
+mount(h(S.BarChart,{title:'Pedidos y cotizaciones por mes',xFormat:function(x){return x;},xHeader:'Mes',series:[{key:'pedidos',label:'Pedidos'},{key:'cotizaciones',label:'Cotizaciones'}],
+ data:m.map(function(x,i){return {x:x,values:{pedidos:a[i],cotizaciones:b[i]}};})}));
+</script>
+</body>
+</html>

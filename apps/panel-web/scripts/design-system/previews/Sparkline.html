@@ -1,0 +1,13 @@
+<!-- @dsCard group="Gráficos" height=110 subtitle="components/dataviz/sparkline.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sparkline — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'grid grid-cols-3 gap-8'},h(S.Sparkline,{values:[12,15,13,18,17,22,20,26]}),h(S.Sparkline,{values:[30,28,29,24,25,21,19,17],area:true}),
+ h(S.Sparkline,{values:[30,28,29,24,25,21,19,17],label:'Escalaciones: bajaron de 30 a 17 en 8 días'})));
+</script>
+</body>
+</html>

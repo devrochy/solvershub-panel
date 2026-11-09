@@ -1,0 +1,14 @@
+<!-- @dsCard group="Átomos" height=170 subtitle="components/ui/textarea.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Textarea — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,I=S.Icons,u=React.useState,e=React.useEffect;function ic(C){return h(C,{className:'h-4 w-4','aria-hidden':true});}function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+mount(h('div',{className:'grid grid-cols-2 gap-4'},
+ h(S.Field,{label:'Mensaje de bienvenida',htmlFor:'t1',help:'Lo primero que lee tu cliente al escribir.'},h(S.Textarea,{id:'t1',defaultValue:'Hola, soy el asistente de Panadería La Espiga. ¿En qué te ayudo hoy?'})),
+ h(S.Field,{label:'Notas internas',htmlFor:'t2'},h(S.Textarea,{id:'t2',placeholder:'Solo las ve tu equipo'}))));
+</script>
+</body>
+</html>
