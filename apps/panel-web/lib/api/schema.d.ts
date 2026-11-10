@@ -18112,8 +18112,16 @@ export interface components {
             type_id: string | null;
             /** Label */
             label: string;
-            /** External Id */
+            /**
+             * External Id
+             * @description Clave de ruteo del canal; en WhatsApp oficial es el phone_number_id de Meta, no el número.
+             */
             external_id: string;
+            /**
+             * Display Phone Number
+             * @description WhatsApp oficial: el número como lo sincronizó Meta (p. ej. «+57 300 1234567»). Null en los demás canales o si el número aún no se sincronizó.
+             */
+            display_phone_number?: string | null;
             /** Conversational */
             conversational: boolean;
             /** Active */

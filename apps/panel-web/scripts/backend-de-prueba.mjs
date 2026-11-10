@@ -97,14 +97,14 @@ if (process.env.BOT_PAUSADO === "1") {
   const ventas = ag(2, "Ventas", { is_default: true, release_version: 3, latest_version: 4 });
   const agenda = ag(3, "Agenda", { priority: 200 });
   const fila = (id, extra) => ({
-    id, channel: "whatsapp", type_id: "whatsapp_meta", label: "", external_id: "", conversational: true, active: true, is_primary: false,
+    id, channel: "whatsapp", type_id: "whatsapp_meta", label: "", external_id: "", display_phone_number: null, conversational: true, active: true, is_primary: false,
     created_at: "2026-10-01T12:00:00Z", meta_connection_id: null, health: "ok", pause_scope: "connection", pausable: true,
     coordinator: coord, agents: [], active_release: { id: "00000000-0000-4000-8000-000000000701", number: 7, created_at: "2026-11-01T12:00:00Z" },
     canary_release: null, usage_7d: uso, ...extra,
   });
   const items = [
-    fila("00000000-0000-4000-8000-0000000000c1", { label: "WhatsApp ventas", external_id: "+57 300 555 0101", meta_connection_id: META, pause_scope: "meta_account", is_primary: true, agents: [ventas, agenda] }),
-    fila("00000000-0000-4000-8000-0000000000c2", { label: "WhatsApp soporte", external_id: "+57 300 555 0102", meta_connection_id: META, pause_scope: "meta_account", health: "degraded", agents: [ag(2, "Ventas", { is_default: true })] }),
+    fila("00000000-0000-4000-8000-0000000000c1", { label: "WhatsApp ventas", external_id: "100200300400500", display_phone_number: "+57 300 5550101", meta_connection_id: META, pause_scope: "meta_account", is_primary: true, agents: [ventas, agenda] }),
+    fila("00000000-0000-4000-8000-0000000000c2", { label: "WhatsApp soporte", external_id: "100200300400501", display_phone_number: "+57 300 5550102", meta_connection_id: META, pause_scope: "meta_account", health: "degraded", agents: [ag(2, "Ventas", { is_default: true })] }),
     fila("00000000-0000-4000-8000-0000000000c3", { label: "WhatsApp Web", type_id: "whatsapp_waweb", external_id: "573005550103", agents: [ag(3, "Agenda", { is_default: true })] }),
     fila("00000000-0000-4000-8000-0000000000c5", { label: "Chat del sitio", type_id: "webchat", channel: "web", external_id: "cafeaurora.co", agents: [ag(2, "Ventas", { is_default: true })] }),
     fila("00000000-0000-4000-8000-0000000000c6", { label: "Instagram @cafeaurora", type_id: "instagram_meta", channel: "instagram", external_id: "17841400000000000", meta_connection_id: "00000000-0000-4000-8000-00000000dddd", pause_scope: "meta_account", agents: [] , active_release: null, coordinator: null, usage_7d: sinUso }),
