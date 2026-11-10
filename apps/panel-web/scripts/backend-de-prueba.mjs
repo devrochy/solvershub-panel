@@ -267,6 +267,15 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
     { ...base, id: "g-3", email: "desconocido@test.example", username: null, nombre: null, pack_profiles: [perfil("gp-3", { estatus: "suspendido", carteras: [], permisos_activos: 0, permisos_total: 14 }, { kind: "otro_pack_otro_kind", ref_id: "z" })] },
   ];
   respuestas["/pack/cobranza/collectors/gp-1/permissions"] = { catalogo: ["registrar_pago", "ver_cartera", "generar_reporte"], activos: ["registrar_pago", "ver_cartera"] };
+  // Permisos por sección (lo del rol y un cambio propio en Conversaciones) e invitación pendiente.
+  const delRol = { dashboard: "read", agents: "read", conversations: "read", escalations: "write", leads: "write", "pack_calendar:citas": "write", "pack_calendar:tipos": "read", "pack_calendar:bloqueos": "write", "pack_calendar:conexion": "none", "pack_subscriptions:suscripciones": "read" };
+  const permisos = (propios) =>
+    Object.keys(respuestas["/admin/me"].permissions ?? {}).map((section) =>
+      section in propios ? { section, access: propios[section], heredado: false } : { section, access: delRol[section] ?? "none", heredado: true },
+    );
+  respuestas["/admin/collaborators/test-admin-2/permissions"] = permisos({ conversations: "write" });
+  for (const id of ["g-1", "g-2", "g-3"]) respuestas[`/admin/collaborators/${id}/permissions`] = permisos({});
+  respuestas["/admin/invitations/outgoing"] = [{ id: "inv-1", email: "carla@correo.co", rol: "colaborador", creadaEn: "2026-11-08T15:00:00Z" }];
 }
 
 // SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol.

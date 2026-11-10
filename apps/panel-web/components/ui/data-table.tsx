@@ -53,6 +53,7 @@ export function DataTable<T>({
   serverPaginated = false,
   getRowHref,
   getRowLabel,
+  scrollAlAbrir = true,
   className,
 }: {
   columns: Column<T>[];
@@ -61,6 +62,8 @@ export function DataTable<T>({
   getRowHref?: (row: T) => string;
   /** Nombre accesible del enlace de la fila («Abrir el chat de Ana»). */
   getRowLabel?: (row: T) => string;
+  /** false: la fila abre algo encima de la misma página (un cajón por `?param=`) y la lista no sube. */
+  scrollAlAbrir?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
@@ -154,6 +157,7 @@ export function DataTable<T>({
                     <TableCell className={cn(celda, "w-10 text-right")}>
                       <Link
                         href={getRowHref(row)}
+                        scroll={scrollAlAbrir ? undefined : false}
                         aria-label={getRowLabel?.(row) ?? "Abrir"}
                         className="inline-flex text-text-soft outline-none after:absolute after:inset-0 after:content-[''] hover:text-headline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
                       >

@@ -43,6 +43,7 @@ export function TablaResponsiva<T>({
                 {fila.href ? (
                   <Link
                     href={fila.href}
+                    scroll={tabla.scrollAlAbrir === false ? false : undefined}
                     className="truncate text-sm font-medium text-headline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
                   >
                     {fila.titulo}

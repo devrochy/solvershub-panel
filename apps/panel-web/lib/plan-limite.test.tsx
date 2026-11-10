@@ -243,7 +243,7 @@ describe("409 de tope del plan", () => {
         <NewCollaboratorDialog />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Nuevo colaborador/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Invitar a alguien" }));
     const dialogo = await screen.findByRole("dialog");
     fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
     fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
@@ -251,7 +251,7 @@ describe("409 de tope del plan", () => {
     fireEvent.change(within(dialogo).getByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
     await within(dialogo).findByText("Disponible");
     fireEvent.change(within(dialogo).getByLabelText(/^Contraseña/), { target: { value: "clave-larga-1" } });
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear colaborador" }));
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear la cuenta" }));
     const aviso = await within(dialogo).findByText(/permite 2 colaborador/);
     const caja = aviso.closest("[role=alert]") as HTMLElement;
     expect(within(caja).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(RUTA_MEJORAR_PLAN);

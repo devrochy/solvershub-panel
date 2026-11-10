@@ -236,6 +236,14 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Una cita se abre en un resumen con «¿Vino?» arriba; editar es un paso aparte. El formulario pide el cliente, el tipo, el día y la hora en formato de Colombia (`lib/calendario/formulario.ts`), y el fin sale de la duración.
 - Los ajustes van en pestañas dentro del cajón. Un `MenuDeFila` dentro del cajón funciona igual que en una página, y Escape con el menú abierto cierra solo el menú. Para eso todos los paquetes de Radix tienen que compartir una sola copia de `react-dismissable-layer` y `react-focus-scope` (revisarlo con `npm ls` al subir uno).
 
+## Equipo (SPEC-29)
+
+- Una fila por persona (`TablaResponsiva`): rol y estado en palabras (`rolDeCuenta`), un resumen de permisos (`resumenDePermisos`) y de Cobranza (`resumenDePerfiles`), y un menú con las acciones escritas. Nada de interruptores ni íconos sueltos en la fila.
+- La fila abre la ficha en un cajón; la ficha viaja en la URL (`?persona=`, `pestana=permisos`, `abrir=contrasena`), así el menú lleva directo a lo que nombra. Dos pestañas: Acceso (si entra, rol, negocios, Cobranza y contraseña) y Permisos, solo para quien tiene permisos propios (un dueño o el master ya lo ven todo).
+- Los permisos se agrupan y se nombran como el menú (`gruposDePermisos`, a partir de `NAV_GROUPS`): una sección que vive en varias pestañas toma su lugar más directo y lo que no está en el menú queda en «Otras». Un `SegmentedControl` por sección; solo lo cambiado para la persona se marca, con «Volver a lo de su rol».
+- Se guarda solo lo cambiado (`permisosAGuardar`): lo que no se manda vuelve a lo que da su rol. Guardar va fijo al pie del cajón y dice cuántos cambios hay sin guardar.
+- Las invitaciones pendientes van antes de la tabla. «Invitar a alguien» elige el rol por lo que hará la persona; a quien no tiene cuenta se le crea con contraseña (la API solo invita cuentas que existen).
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

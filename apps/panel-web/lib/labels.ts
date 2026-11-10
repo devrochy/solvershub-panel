@@ -32,6 +32,7 @@ export const ROL: Record<string, string> = {
   propietario: "Propietario",
   gestor: "Gestor",
   colaborador: "Colaborador",
+  collaborator: "Colaborador",
   tester: "Tester",
 };
 

@@ -10,11 +10,16 @@ import { resetToasts } from "@/lib/toast-store";
 
 import {
   filtrarPorNegocio,
+  gruposDePermisos,
   mensajeDeAlta,
   negociosDeFilas,
   perfilDePack,
   permisoLegible,
+  permisosAGuardar,
   puedeActuarSobre,
+  resumenDePerfiles,
+  resumenDePermisos,
+  rolDeCuenta,
   seccionesOtorgables,
 } from "./colaboradores";
 
@@ -60,6 +65,23 @@ const OPERADOR = cuenta({
 });
 const DEL_SUR = cuenta({ id: "sur", email: "sur@test", links: [{ role: "colaborador", ...SUR }] });
 
+const PERFIL_GESTOR: PackProfile = {
+  pack: "pack_cobranza",
+  role_id: "gestor",
+  ref_id: "g-1",
+  etiqueta: "Gestor",
+  resumen: {
+    estatus: "activo",
+    carteras: [
+      { id: "c1", nombre: "Ruta A" },
+      { id: "c2", nombre: "Ruta B" },
+    ],
+    permisos_activos: 3,
+    permisos_total: 14,
+  },
+  edit: { kind: "cobranza_gestor_permisos", ref_id: "g-1" },
+};
+
 describe("reglas de Colaboradores (lógica pura)", () => {
   it("permisos en texto claro, con el negocio solo para quien ve varios", () => {
     const permiso = { section: "conversations", access: "write", scope: "tienda-norte" };
@@ -95,26 +117,78 @@ describe("reglas de Colaboradores (lógica pura)", () => {
     expect(mensajeDeAlta("invitado")).toMatch(/se le envió una invitación/);
     expect(mensajeDeAlta("creado")).toMatch(/Cuenta creada/);
   });
+
+  it("rol y permisos en palabras (EQU-02, EQU-06)", () => {
+    expect(rolDeCuenta(cuenta({ role: "collaborator" }))).toBe("Colaborador");
+    expect(rolDeCuenta(OTRO_DUENO)).toBe("Dueño");
+    expect(rolDeCuenta(MASTER)).toBe("Master");
+    expect(resumenDePermisos(YO)).toBe("Acceso total");
+    expect(resumenDePermisos(cuenta({}))).toBe("Según su rol");
+    expect(resumenDePermisos(OPERADOR)).toBe("Según su rol, con 2 cambios");
+  });
+
+  it("permisos agrupados y nombrados como el menú (EQU-05)", () => {
+    const grupos = gruposDePermisos([
+      "costs",
+      "leads",
+      "pack_cobranza:clientes",
+      "pack_calendar:tipos",
+      "pack_calendar:citas",
+      "settings",
+      "dashboard",
+      "algo_nuevo",
+    ]);
+    expect(grupos.map((g) => g.label)).toEqual(["Operación", "Negocio", "Cuenta", "Otras"]);
+    expect(grupos[0].filas.map((f) => f.label)).toEqual(["Resumen", "Clientes"]);
+    expect(grupos[1].filas.map((f) => f.label)).toEqual(["Agenda", "Agenda · Tipos de cita", "Cobranza · Clientes"]);
+    expect(grupos[2].filas.map((f) => f.label)).toEqual(["Consumo y plan · Costos", "Configuración"]);
+    expect(grupos[3].filas.map((f) => f.label)).toEqual(["Algo nuevo"]);
+  });
+
+  it("solo se guarda lo cambiado para la persona: lo demás vuelve a su rol", () => {
+    const estado = {
+      conversations: { access: "write", heredado: false },
+      leads: { access: "read", heredado: true },
+      plugins: { access: "", heredado: true },
+    };
+    expect(permisosAGuardar(estado, ["conversations", "leads", "plugins"])).toEqual({ conversations: "write" });
+  });
+
+  it("perfil de cobranza resumido para la fila (EQU-09)", () => {
+    expect(resumenDePerfiles(cuenta({ pack_profiles: [PERFIL_GESTOR] }))).toBe("Gestor · 2 carteras");
+    expect(resumenDePerfiles(cuenta({ pack_profiles: [{ ...PERFIL_GESTOR, resumen: { estatus: "suspendido", carteras: [] } }] }))).toBe(
+      "Gestor · suspendido · sin carteras",
+    );
+    expect(resumenDePerfiles(cuenta({ pack_profiles: [{ ...PERFIL_GESTOR, resumen: null }] }))).toBe("Gestor");
+    expect(resumenDePerfiles(cuenta({}))).toBeNull();
+  });
 });
 
 describe("tabla de colaboradores", () => {
   afterEach(cleanup);
 
-  it("para un dueño: avatar, sin acciones sobre el otro dueño ni cuentas de plataforma, permisos como badge", () => {
+  it("para un dueño: rol y estado en palabras, la fila abre la ficha y sin acciones sobre otro dueño ni el master", () => {
     render(
       <FeedbackProviders>
         <TablaDeColaboradores filas={[YO, OTRO_DUENO, MASTER, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("switch", { name: "Desactivar a operador@test" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Restablecer contraseña de duena@test" })).toBeTruthy();
-    expect(screen.queryByRole("switch", { name: "Desactivar a socio@test" })).toBeNull();
-    expect(screen.queryByRole("switch", { name: "Desactivar a master@test" })).toBeNull();
-    // Permisos como chip clicable con su conteo, no como texto plano.
-    expect(screen.getByRole("button", { name: "Permisos de operador@test" })).toBeTruthy();
-    expect(screen.getAllByText("Gestionar").length).toBeGreaterThan(0);
-    // Sin filtro por negocio (la sección es del negocio activo).
-    expect(screen.queryByRole("combobox", { name: "Negocio" })).toBeNull();
+    const tabla = screen.getByRole("table");
+    expect(within(tabla).getByRole("link", { name: "Abrir la ficha de operador@test" }).getAttribute("href")).toBe(
+      "/colaboradores?persona=op",
+    );
+    expect(within(tabla).getByRole("button", { name: "Más acciones de operador@test" })).toBeTruthy();
+    expect(within(tabla).getByRole("button", { name: "Más acciones de duena@test" })).toBeTruthy();
+    expect(within(tabla).queryByRole("button", { name: "Más acciones de socio@test" })).toBeNull();
+    expect(within(tabla).queryByRole("button", { name: "Más acciones de master@test" })).toBeNull();
+    // Sin interruptores ni íconos sueltos en la fila (EQU-04, EQU-08).
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(within(tabla).getAllByText("Activa").length).toBe(4);
+    expect(within(tabla).getByText("Según su rol, con 2 cambios")).toBeTruthy();
+    expect(within(tabla).getAllByText("Acceso total").length).toBe(3);
+    // En el celular, una fila por persona con su rol y su estado (EQU-01).
+    const lista = screen.getByRole("list", { name: "Personas del equipo" });
+    expect(within(lista).getByText("Colaborador · Activa")).toBeTruthy();
   });
 
   it("para el master: conmutador «Todas las cuentas» que recarga la lista", async () => {
@@ -130,17 +204,15 @@ describe("tabla de colaboradores", () => {
         <TablaDeColaboradores filas={[OTRO_DUENO]} secciones={["conversations"]} esMaster />
       </FeedbackProviders>,
     );
-    expect(screen.getByRole("checkbox", { name: "Todas las cuentas" })).toBeTruthy();
     fireEvent.click(screen.getByRole("checkbox", { name: "Todas las cuentas" }));
-    await waitFor(() => expect(screen.getByText("master@test")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("master@test").length).toBeGreaterThan(0));
     vi.unstubAllGlobals();
   });
 
-  it("la grilla muestra el heredado y guarda el mapa completo (HU-UI-10)", async () => {
+  it("la ficha agrupa los permisos, marca lo cambiado y guarda solo eso (EQU-05 a EQU-07)", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       void init;
-      const url = String(input);
-      if (url.includes("/permissions")) {
+      if (String(input).includes("/permissions")) {
         return new Response(
           JSON.stringify([
             { section: "conversations", access: "read", heredado: true },
@@ -154,70 +226,107 @@ describe("tabla de colaboradores", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[OPERADOR]} secciones={["conversations", "leads"]} esMaster={false} />
+        <TablaDeColaboradores
+          filas={[OPERADOR]}
+          secciones={["conversations", "leads"]}
+          esMaster={false}
+          abierta={{ id: "op", pestana: "permisos", contrasena: false }}
+        />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Permisos de operador@test" }));
+    const ficha = await screen.findByRole("dialog", { name: "operador@test" });
+    expect(within(ficha).getByRole("tab", { name: "Permisos", selected: true })).toBeTruthy();
+    expect(await within(ficha).findByRole("heading", { name: "Operación" })).toBeTruthy();
+    const conversaciones = within(ficha).getByRole("group", { name: "Acceso a Conversaciones" });
+    expect(within(conversaciones).getByRole("button", { name: "Ver" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(ficha).getAllByText(/Cambiado para esta persona/)).toHaveLength(1);
+    expect((within(ficha).getByRole("button", { name: "Guardar permisos" }) as HTMLButtonElement).disabled).toBe(true);
 
-    expect(await screen.findByText("heredado")).toBeTruthy();
-    expect((screen.getByRole("radio", { name: "Conversaciones: Ver" }) as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByRole("radio", { name: "Clientes: Editar" }) as HTMLInputElement).checked).toBe(true);
-
-    fireEvent.click(screen.getByRole("radio", { name: "Conversaciones: Editar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Guardar permisos" }));
+    fireEvent.click(within(conversaciones).getByRole("button", { name: "Editar" }));
+    fireEvent.click(within(ficha).getByRole("button", { name: "Volver a lo de su rol en Clientes" }));
+    expect(within(ficha).getByText("2 cambios sin guardar")).toBeTruthy();
+    fireEvent.click(within(ficha).getByRole("button", { name: "Guardar permisos" }));
 
     await waitFor(() => {
       const guardado = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
       expect(guardado).toBeTruthy();
       const body = JSON.parse(String(guardado?.[1]?.body));
       expect(body.action).toBe("permissions");
-      expect(body.permissions).toEqual({ conversations: "write", leads: "write" });
+      expect(body.permissions).toEqual({ conversations: "write" });
     });
     vi.unstubAllGlobals();
   });
 
-  it("el estado se cambia con un interruptor y pide confirmación al desactivar", async () => {
+  it("desde la ficha se desactiva el acceso, con confirmación", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      void input;
       void init;
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     });
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[OPERADOR]} secciones={["conversations"]} esMaster={false} />
+        <TablaDeColaboradores
+          filas={[OPERADOR]}
+          secciones={["conversations"]}
+          esMaster={false}
+          abierta={{ id: "op", pestana: "acceso", contrasena: false }}
+        />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("switch", { name: "Desactivar a operador@test" }));
-    const dialogo = await screen.findByRole("alertdialog");
-    expect(within(dialogo).getByText(/sin acceso al panel/)).toBeTruthy();
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Desactivar" }));
+    const ficha = await screen.findByRole("dialog", { name: "operador@test" });
+    fireEvent.click(within(ficha).getByRole("switch", { name: "Acceso de operador@test al panel" }));
+    const confirmacion = await screen.findByRole("alertdialog");
+    expect(within(confirmacion).getByText(/Deja de entrar al panel enseguida/)).toBeTruthy();
+    fireEvent.click(within(confirmacion).getByRole("button", { name: "Desactivar el acceso" }));
     await waitFor(() => {
       const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
-      expect(post).toBeTruthy();
       expect(JSON.parse(String(post?.[1]?.body)).action).toBe("toggle");
     });
-    // El interruptor refleja el nuevo estado (optimista).
-    await waitFor(() => expect(screen.getByRole("switch", { name: "Activar a operador@test" })).toBeTruthy());
     vi.unstubAllGlobals();
   });
-});
 
-const PERFIL_GESTOR: PackProfile = {
-  pack: "pack_cobranza",
-  role_id: "gestor",
-  ref_id: "g-1",
-  etiqueta: "Gestor",
-  resumen: {
-    estatus: "activo",
-    carteras: [
-      { id: "c1", nombre: "Ruta A" },
-      { id: "c2", nombre: "Ruta B" },
-    ],
-    permisos_activos: 3,
-    permisos_total: 14,
-  },
-  edit: { kind: "cobranza_gestor_permisos", ref_id: "g-1" },
-};
+  it("restablecer la contraseña abre el campo en la ficha y la cambia", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      void input;
+      void init;
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores
+          filas={[OPERADOR]}
+          secciones={["conversations"]}
+          esMaster={false}
+          abierta={{ id: "op", pestana: "acceso", contrasena: true }}
+        />
+      </FeedbackProviders>,
+    );
+    const ficha = await screen.findByRole("dialog", { name: "operador@test" });
+    fireEvent.change(within(ficha).getByLabelText(/Nueva contraseña/), { target: { value: "clave-larga-1" } });
+    fireEvent.click(within(ficha).getByRole("button", { name: "Cambiar la contraseña" }));
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(JSON.parse(String(post?.[1]?.body))).toEqual({ action: "password", password: "clave-larga-1" });
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it("un dueño no tiene pestaña de permisos: ya lo ve todo", async () => {
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores filas={[YO]} secciones={["conversations"]} esMaster={false} abierta={{ id: "yo", pestana: "permisos", contrasena: false }} />
+      </FeedbackProviders>,
+    );
+    const ficha = await screen.findByRole("dialog", { name: "duena@test" });
+    expect(within(ficha).queryByRole("tab")).toBeNull();
+    expect(within(ficha).getByText("Ve y cambia todo el negocio.")).toBeTruthy();
+    // Una misma no se desvincula ni se desactiva.
+    expect(within(ficha).queryByRole("switch")).toBeNull();
+    expect(within(ficha).queryByRole("button", { name: /Desvincular/ })).toBeNull();
+  });
+});
 
 describe("perfil de pack en la fila (ADR-0176)", () => {
   afterEach(cleanup);
@@ -255,19 +364,19 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     expect(p.edicion).toBeNull();
   });
 
-  it("la fila muestra «Gestor», estatus, carteras y el conteo; quien no es gestor no muestra nada", () => {
+  it("la fila resume «Gestor · 2 carteras» y la ficha trae carteras, permisos de campo y asignar", async () => {
     const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} />
+        <TablaDeColaboradores filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
-    expect(screen.getByText("Gestor")).toBeTruthy();
-    expect(screen.getByText("activo")).toBeTruthy();
-    expect(screen.getByText("2 carteras")).toBeTruthy();
-    expect(screen.getByText(/3 de 14/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Permisos de campo de gestor@test" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Asignar" }).getAttribute("href")).toBe("/cobranza/gestores");
+    expect(screen.getByText("Gestor · 2 carteras")).toBeTruthy();
+    const ficha = await screen.findByRole("dialog", { name: "gestor@test" });
+    expect(within(ficha).getByText(/Ruta A, Ruta B/)).toBeTruthy();
+    expect(within(ficha).getByText(/3 de 14 permisos de campo/)).toBeTruthy();
+    expect(within(ficha).getByRole("button", { name: "Permisos de campo de gestor@test" })).toBeTruthy();
+    expect(within(ficha).getByRole("link", { name: "Asignar carteras" }).getAttribute("href")).toBe("/cobranza/gestores");
   });
 
   it("sin ningún perfil la columna no existe", () => {
@@ -276,10 +385,10 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
         <TablaDeColaboradores filas={[YO, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
-    expect(screen.queryByRole("columnheader", { name: /Perfil/ })).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: /En Cobranza/ })).toBeNull();
   });
 
-  it("con el detalle recortado se ve que es gestor pero sin carteras ni permisos", () => {
+  it("con el detalle recortado se ve que es gestor pero sin carteras ni permisos", async () => {
     const gestor = cuenta({
       id: "g",
       email: "gestor@test",
@@ -287,12 +396,13 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} />
+        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
-    expect(screen.getByText("Gestor")).toBeTruthy();
-    expect(screen.queryByText(/permisos de campo/)).toBeNull();
-    expect(screen.queryByRole("link", { name: "Asignar" })).toBeNull();
+    const ficha = await screen.findByRole("dialog", { name: "gestor@test" });
+    expect(within(ficha).getByText("Gestor")).toBeTruthy();
+    expect(within(ficha).queryByText(/permisos de campo/)).toBeNull();
+    expect(within(ficha).queryByRole("link", { name: "Asignar carteras" })).toBeNull();
   });
 
   it("editar los permisos usa el PUT existente y refresca la lista", async () => {
@@ -305,11 +415,11 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} />
+        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Permisos de campo de gestor@test" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Permisos de campo de gestor@test" }));
     fireEvent.click(await screen.findByRole("button", { name: "Guardar permisos" }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalled());
@@ -319,7 +429,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
   });
 });
 
-describe("alta de colaborador (dos pasos)", () => {
+describe("invitar a alguien (EQU-11)", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
@@ -357,7 +467,7 @@ describe("alta de colaborador (dos pasos)", () => {
         <NewCollaboratorDialog esMaster={esMaster} />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Nuevo colaborador/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Invitar a alguien" }));
     return await screen.findByRole("dialog");
   }
 
@@ -390,7 +500,7 @@ describe("alta de colaborador (dos pasos)", () => {
     fireEvent.change(within(dialogo).getByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
     expect(await within(dialogo).findByText("Disponible")).toBeTruthy();
     fireEvent.change(within(dialogo).getByLabelText(/Contraseña/), { target: { value: "clave-larga-1" } });
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear colaborador" }));
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Crear la cuenta" }));
 
     await waitFor(() => {
       const llamada = fetchMock.mock.calls.find(
@@ -420,6 +530,25 @@ describe("alta de colaborador (dos pasos)", () => {
     fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
     fireEvent.change(await within(dialogo).findByLabelText(/^Usuario/), { target: { value: "ana.perez" } });
     expect(await within(dialogo).findByText(/ya está en uso/)).toBeTruthy();
+  });
+
+  it("los roles dicen qué hará la persona y se cambia el correo con un enlace", async () => {
+    fetchPorRuta({ "/existe": { existe: false } });
+    render(
+      <FeedbackProviders>
+        <NewCollaboratorDialog packRoles={[{ value: "gestor", label: "Gestor de cobranza" }]} />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Invitar a alguien" }));
+    const dialogo = await screen.findByRole("dialog");
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "ana@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+    expect(await within(dialogo).findByRole("radio", { name: /Ayudar en el panel/ })).toBeTruthy();
+    expect(within(dialogo).getByRole("radio", { name: /Salir a cobrar.*app del celular/ })).toBeTruthy();
+    expect(within(dialogo).queryByText(/Rol de habilidad/)).toBeNull();
+    expect(within(dialogo).queryByRole("button", { name: "Volver" })).toBeNull();
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Cambiar el correo" }));
+    expect(within(dialogo).getByRole("button", { name: "Continuar" })).toBeTruthy();
   });
 
   it("un dueño no ve el rol Master; el master sí", async () => {

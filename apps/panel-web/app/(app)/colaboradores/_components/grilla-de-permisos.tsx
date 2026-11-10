@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { CollaboratorItem } from "@/lib/api/types";
-import { seccionLabel } from "@/lib/labels";
+import { gruposDePermisos, permisosAGuardar } from "@/lib/colaboradores";
 import { useAction } from "@/lib/use-action";
 
-type Acceso = "none" | "read" | "write";
-
-const COLUMNAS: { valor: Acceso; label: string }[] = [
-  { valor: "none", label: "Sin acceso" },
-  { valor: "read", label: "Ver" },
-  { valor: "write", label: "Editar" },
+const NIVELES = [
+  { value: "none", label: "Sin acceso" },
+  { value: "read", label: "Ver" },
+  { value: "write", label: "Editar" },
 ];
 
-type EstadoDeSeccion = { access: Acceso; heredado: boolean };
+/** `access` vacío: se pidió volver a lo de su rol y su valor se sabrá al guardar. */
+type EstadoDeSeccion = { access: string; heredado: boolean };
 
 /**
- * Grilla de permisos (HU-UI-10): una fila por sección, tres estados (sin acceso/ver/editar)
- * y el heredado del rol señalado. Guarda el mapa completo de una vez con `set_permissions`.
+ * Permisos de una persona (EQU-05 a EQU-07): agrupados como el menú, un control Sin acceso · Ver ·
+ * Editar por sección y solo lo cambiado para esta persona marcado, con «Volver a lo de su rol».
+ * Guarda solo los cambios: una sección que no se manda vuelve a lo que da su rol.
  * El master elige el negocio (o el alcance global); un dueño edita su negocio activo.
  */
 export function GrillaDePermisos({
@@ -35,8 +37,13 @@ export function GrillaDePermisos({
 }) {
   const { run, pending } = useAction();
   const [estado, setEstado] = useState<Record<string, EstadoDeSeccion>>({});
+  const [original, setOriginal] = useState<Record<string, EstadoDeSeccion>>({});
   const [cargando, setCargando] = useState(true);
+  const [fallo, setFallo] = useState(false);
   const [negocio, setNegocio] = useState("");
+  const [intento, setIntento] = useState(0);
+  const grupos = useMemo(() => gruposDePermisos(secciones), [secciones]);
+  const nombre = collaborator.nombre || collaborator.email;
 
   useEffect(() => {
     let activo = true;
@@ -44,16 +51,19 @@ export function GrillaDePermisos({
       try {
         const query = negocio ? `?tenant=${encodeURIComponent(negocio)}` : "";
         const res = await fetch(`/api/collaborators/${collaborator.id}/permissions${query}`);
-        const json = (await res.json().catch(() => null)) as
-          | { section: string; access: string; heredado: boolean }[]
-          | { error?: string }
-          | null;
+        const json = (await res.json().catch(() => null)) as { section: string; access: string; heredado: boolean }[] | null;
         if (!activo) return;
-        const mapa: Record<string, EstadoDeSeccion> = {};
-        if (Array.isArray(json)) {
-          for (const e of json) mapa[e.section] = { access: (e.access as Acceso) ?? "none", heredado: e.heredado };
+        if (!res.ok || !Array.isArray(json)) {
+          setFallo(true);
+          return;
         }
+        const mapa: Record<string, EstadoDeSeccion> = {};
+        for (const e of json) mapa[e.section] = { access: e.access || "none", heredado: e.heredado };
+        setFallo(false);
         setEstado(mapa);
+        setOriginal(mapa);
+      } catch {
+        if (activo) setFallo(true);
       } finally {
         if (activo) setCargando(false);
       }
@@ -61,38 +71,66 @@ export function GrillaDePermisos({
     return () => {
       activo = false;
     };
-  }, [collaborator.id, negocio]);
+  }, [collaborator.id, negocio, intento]);
 
-  function cambiarNegocio(valor: string) {
-    setNegocio(valor);
+  const recargar = useCallback(() => {
     setCargando(true);
+    setIntento((n) => n + 1);
+  }, []);
+
+  /** Lo que da su rol, si se sabe: solo de las secciones que venían sin cambios. */
+  const delRol = (section: string) => (original[section]?.heredado ? original[section].access : undefined);
+
+  function fijar(section: string, access: string) {
+    setEstado((prev) => ({ ...prev, [section]: { access, heredado: delRol(section) === access } }));
   }
 
-  function fijar(section: string, access: Acceso) {
-    setEstado((prev) => ({ ...prev, [section]: { access, heredado: false } }));
+  function volverAlRol(section: string) {
+    setEstado((prev) => ({ ...prev, [section]: { access: delRol(section) ?? "", heredado: true } }));
   }
+
+  function volverTodoAlRol() {
+    setEstado((prev) =>
+      Object.fromEntries(Object.entries(prev).map(([s, e]) => [s, e.heredado ? e : { access: delRol(s) ?? "", heredado: true }])),
+    );
+  }
+
+  const aGuardar = permisosAGuardar(estado, secciones);
+  const cambios = secciones.filter(
+    (s) => estado[s] && (estado[s].access !== original[s]?.access || estado[s].heredado !== original[s]?.heredado),
+  ).length;
+  const hayPropios = Object.keys(aGuardar).length > 0;
 
   async function guardar() {
-    const permisos = Object.fromEntries(secciones.map((s) => [s, estado[s]?.access ?? "none"]));
-    await run(async () => {
+    const ok = await run(async () => {
       const res = await fetch(`/api/collaborators/${collaborator.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "permissions", tenant: negocio, permissions: permisos }),
+        body: JSON.stringify({ action: "permissions", tenant: negocio, permissions: aGuardar }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       return { ok: res.ok, status: res.status, error: json.error, success: "Permisos guardados." };
     });
+    // Vuelve a leer: lo que pasó a «su rol» muestra ahora su valor.
+    if (ok) recargar();
   }
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-sm text-body">
+        Empieza con lo que da su rol. Lo que cambies aquí aplica solo a {nombre}
+        {esMaster ? "." : " en este negocio."}
+      </p>
+
       {esMaster && (
         <Field label="Negocio" htmlFor={`grilla-negocio-${collaborator.id}`} className="max-w-xs">
           <Select
             id={`grilla-negocio-${collaborator.id}`}
             value={negocio}
-            onChange={(e) => cambiarNegocio(e.target.value)}
+            onChange={(e) => {
+              setNegocio(e.target.value);
+              setCargando(true);
+            }}
           >
             <option value="">Global (todos los negocios)</option>
             {collaborator.links.map((l) => (
@@ -105,59 +143,90 @@ export function GrillaDePermisos({
       )}
 
       {cargando ? (
-        <p className="text-sm text-text-soft">Cargando permisos…</p>
+        <div role="status" aria-label="Cargando los permisos" className="flex flex-col gap-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 py-1">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-8 w-52" />
+            </div>
+          ))}
+        </div>
+      ) : fallo ? (
+        <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-border-soft bg-surface-2 p-4 text-sm">
+          <p className="text-headline">No pudimos cargar sus permisos.</p>
+          <p className="text-body">Revisa tu conexión y vuelve a intentarlo.</p>
+          <Button variant="outline" size="sm" onClick={recargar}>
+            Reintentar
+          </Button>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border-soft text-left text-xs text-text-soft">
-                <th className="py-2 pr-3 font-medium">Sección</th>
-                {COLUMNAS.map((c) => (
-                  <th key={c.valor} className="px-2 py-2 text-center font-medium">
-                    {c.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {secciones.map((section) => {
-                const actual = estado[section]?.access ?? "none";
-                const heredado = estado[section]?.heredado ?? true;
+        grupos.map((grupo) => (
+          <section key={grupo.id} aria-labelledby={`permisos-${grupo.id}`} className="flex flex-col">
+            <h3 id={`permisos-${grupo.id}`} className="mb-1 text-xs font-medium tracking-[0.06em] text-text-soft uppercase">
+              {grupo.label}
+            </h3>
+            <ul className="flex flex-col">
+              {grupo.filas.map(({ section, label }) => {
+                const actual = estado[section] ?? { access: "none", heredado: true };
+                const pendienteDelRol = actual.heredado && !actual.access;
                 return (
-                  <tr key={section} className="border-b border-border-soft">
-                    <td className="py-2 pr-3">
-                      <span className="text-headline">{seccionLabel(section)}</span>
-                      {heredado && (
-                        <span className="ml-2 rounded bg-bg-deep px-1.5 py-0.5 text-[11px] text-text-soft">
-                          heredado
+                  <li
+                    key={section}
+                    className="flex flex-col gap-2 border-t border-border-soft py-2.5 first:border-t-0 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+                  >
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-sm text-headline">{label}</span>
+                      {!actual.heredado && (
+                        <span className="text-xs text-text-soft">
+                          Cambiado para esta persona ·{" "}
+                          <button
+                            type="button"
+                            onClick={() => volverAlRol(section)}
+                            className="text-link hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+                            aria-label={`Volver a lo de su rol en ${label}`}
+                          >
+                            Volver a lo de su rol
+                          </button>
                         </span>
                       )}
-                    </td>
-                    {COLUMNAS.map((c) => (
-                      <td key={c.valor} className="px-2 py-2 text-center">
-                        <input
-                          type="radio"
-                          name={`grilla-${section}`}
-                          aria-label={`${seccionLabel(section)}: ${c.label}`}
-                          checked={actual === c.valor}
-                          onChange={() => fijar(section, c.valor)}
-                          className="h-4 w-4 accent-[var(--sh-blue-500)]"
-                        />
-                      </td>
-                    ))}
-                  </tr>
+                      {pendienteDelRol && <span className="text-xs text-text-soft">Vuelve a lo de su rol al guardar</span>}
+                    </div>
+                    <SegmentedControl
+                      label={`Acceso a ${label}`}
+                      options={NIVELES}
+                      value={actual.access}
+                      onChange={(v) => fijar(section, v)}
+                      className="w-full sm:w-auto"
+                    />
+                  </li>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          </section>
+        ))
       )}
 
-      <div className="flex justify-end">
-        <Button variant="accent" size="sm" onClick={() => void guardar()} disabled={pending || cargando}>
-          {pending ? "Guardando…" : "Guardar permisos"}
-        </Button>
-      </div>
+      {!cargando && !fallo && (
+        <div className="sticky -bottom-5 -mx-5 -mb-5 mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-border-soft bg-surface px-5 py-4">
+          {hayPropios ? (
+            <Button variant="ghost" size="sm" onClick={volverTodoAlRol} disabled={pending}>
+              Volver todo a lo de su rol
+            </Button>
+          ) : (
+            <span className="text-xs text-text-soft">Todo según su rol.</span>
+          )}
+          <div className="flex items-center gap-3">
+            {cambios > 0 && (
+              <span className="text-xs text-text-soft" aria-live="polite">
+                {cambios === 1 ? "1 cambio sin guardar" : `${cambios} cambios sin guardar`}
+              </span>
+            )}
+            <Button variant="accent" size="sm" onClick={() => void guardar()} disabled={pending || cambios === 0} loading={pending}>
+              Guardar permisos
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
