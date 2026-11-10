@@ -21,6 +21,8 @@ export function SheetContent({
   children,
   footer,
   hero,
+  antesDelTitulo,
+  despuesDelTitulo,
   className,
   onOpenAutoFocus,
   onCloseAutoFocus,
@@ -31,6 +33,9 @@ export function SheetContent({
   footer?: ReactNode;
   /** Contenido fijo entre el encabezado y el área desplazable (p. ej. avatar + pestañas). */
   hero?: ReactNode;
+  /** En la franja del título: un avatar a la izquierda o una etiqueta a la derecha. */
+  antesDelTitulo?: ReactNode;
+  despuesDelTitulo?: ReactNode;
   className?: string;
   /** A dónde va el foco al abrir (por defecto, el primer control). */
   onOpenAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onOpenAutoFocus"];
@@ -48,8 +53,9 @@ export function SheetContent({
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border-soft p-5">
-          <div>
+        <div className={cn("flex justify-between gap-4 border-b border-border-soft p-5", antesDelTitulo ? "items-center" : "items-start")}>
+          {antesDelTitulo}
+          <div className="min-w-0 flex-1">
             <DialogPrimitive.Title className="font-display text-sh-block text-headline">{title}</DialogPrimitive.Title>
             {description ? (
               <DialogPrimitive.Description className="mt-1 text-sm text-body">{description}</DialogPrimitive.Description>
@@ -57,6 +63,7 @@ export function SheetContent({
               <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>
             )}
           </div>
+          {despuesDelTitulo}
           <DialogPrimitive.Close
             aria-label="Cerrar"
             className="rounded-md p-1 text-text-soft transition-colors hover:bg-hover hover:text-headline"

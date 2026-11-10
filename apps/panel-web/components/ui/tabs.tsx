@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,13 +11,23 @@ export function Tabs({
   items,
   value,
   onValueChange,
+  size = "default",
   className,
 }: {
   items: TabItem[];
   value: string;
   onValueChange: (id: string) => void;
+  /** `compact`: menos relleno, para que quepan más pestañas en el celular. */
+  size?: "default" | "compact";
   className?: string;
 }) {
+  const activaRef = useRef<HTMLButtonElement>(null);
+
+  // Si no caben todas, la fila se desplaza sola hasta la activa.
+  useEffect(() => {
+    activaRef.current?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+  }, [value]);
+
   function onKeyDown(event: KeyboardEvent) {
     const index = items.findIndex((item) => item.id === value);
     if (event.key === "ArrowRight") {
@@ -41,13 +51,15 @@ export function Tabs({
         return (
           <button
             key={item.id}
+            ref={active ? activaRef : undefined}
             type="button"
             role="tab"
             aria-selected={active}
             tabIndex={active ? 0 : -1}
             onClick={() => onValueChange(item.id)}
             className={cn(
-              "-mb-px shrink-0 border-b-2 px-4 py-2 text-sm whitespace-nowrap transition-colors duration-150",
+              "-mb-px shrink-0 border-b-2 py-2 text-sm whitespace-nowrap transition-colors duration-150",
+              size === "compact" ? "px-3" : "px-4",
               active
                 ? "border-focus text-headline"
                 : "border-transparent text-body hover:text-headline",

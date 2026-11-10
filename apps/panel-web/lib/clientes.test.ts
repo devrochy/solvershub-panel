@@ -27,6 +27,7 @@ import {
   segmentoDelFiltro,
   textoDeValor,
   valorEstimadoValido,
+  identificadorVisible,
   telefonoVisible,
   textoDeActividad,
   textoDeDato,
@@ -133,9 +134,13 @@ describe("segmentoDelFiltro", () => {
 
 describe("perfil base (tanda 1A)", () => {
   it("muestra el teléfono con indicativo y la ubicación corta", () => {
-    expect(telefonoVisible({ phone_indicativo: "+57", phone_local: "3001234567" })).toBe("+57 3001234567");
-    expect(telefonoVisible({ phone_e164: "+573001234567" })).toBe("+573001234567");
+    expect(telefonoVisible({ phone_indicativo: "+57", phone_local: "3001234567" })).toBe("+57 300 123 4567");
+    expect(telefonoVisible({ phone_e164: "+573001234567" })).toBe("+57 300 123 4567");
+    expect(telefonoVisible({ phone_indicativo: "+52", phone_local: "5512345678" })).toBe("+52 5512345678");
     expect(telefonoVisible({})).toBe("—");
+    expect(identificadorVisible("573001234567")).toBe("+57 300 123 4567");
+    expect(identificadorVisible("web:cf7834ce")).toBeNull();
+    expect(identificadorVisible("webchat:test")).toBeNull();
     expect(ubicacionVisible({ municipio: "Cali", departamento: "Valle" })).toBe("Cali, Valle");
     expect(ubicacionVisible({ address: "Calle 1" })).toBe("Calle 1");
     expect(ubicacionVisible({})).toBe("—");
