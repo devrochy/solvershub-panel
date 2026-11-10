@@ -10,6 +10,8 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { formatCop, formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type Cuota = { id: string; numero: number; valor: number; vence: string; estatus: string };
 
@@ -141,6 +143,33 @@ export function InstallmentEditor({
   );
 }
 
+/** Una cuota del plan: su estado va en texto y en color, y al tocarla se edita. */
+export function CuotaDelPlan({ cuota }: { cuota: Cuota }) {
+  const pagada = cuota.estatus === "pagada";
+  const atrasada = cuota.estatus === "atrasada";
+  return (
+    <InstallmentEditor
+      installment={cuota}
+      trigger={
+        <button
+          type="button"
+          aria-label={`Cuota ${cuota.numero}: ${formatCop(cuota.valor)}, ${ESTATUS[cuota.estatus] ?? cuota.estatus}, vence ${formatDate(cuota.vence)}`}
+          className={cn(
+            "flex min-h-15 flex-col gap-0.5 rounded-md border px-2.5 py-2 text-left text-xs text-body transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus",
+            pagada && "border-status-success-border bg-status-success-bg",
+            atrasada && "border-status-danger-border bg-status-danger-bg",
+            !pagada && !atrasada && "border-border-soft",
+          )}
+        >
+          <span>Cuota {cuota.numero}</span>
+          <span className="text-sm font-semibold tabular-nums text-headline">{formatCop(cuota.valor)}</span>
+          <span>{pagada || atrasada || cuota.estatus === "parcial" ? ESTATUS[cuota.estatus] : formatDate(cuota.vence)}</span>
+        </button>
+      }
+    />
+  );
+}
+
 /** Borrado de un abono (los pagos no se borran desde la ficha). */
 export function CreditDelete({ creditId }: { creditId: string }) {
   const router = useRouter();
@@ -177,7 +206,7 @@ export function CreditDelete({ creditId }: { creditId: string }) {
           <Button onClick={() => setConfirmando(false)} aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
         </>
       ) : (
-        <Button onClick={() => setConfirmando(true)} aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
+        <Button onClick={() => setConfirmando(true)} aria-label="Eliminar abono" size="icon" title="Eliminar abono" variant="ghost" className="pointer-coarse:h-11 pointer-coarse:w-11"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
       )}
       {error && (
         <span className="text-xs text-status-danger-fg" role="alert">

@@ -197,7 +197,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
           { label: "Reportes", href: "/cobranza/reportes", section: "pack_cobranza:reportes", icon: BarChart3, sub: "Actividad", ready: true },
           { label: "Gestores", href: "/cobranza/gestores", section: "pack_cobranza:gestores", icon: UserCog, sub: "Equipo", ready: true },
           { label: "Auditoría", href: "/cobranza/auditoria", section: "pack_cobranza:auditoria", icon: ScrollText, sub: "Equipo", ready: true },
-          { label: "Monitoreo IA", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Asistente", ready: true },
+          { label: "Actividad del agente", href: "/cobranza/monitoreo", section: "pack_cobranza:monitoreo", icon: Activity, sub: "Asistente", ready: true },
           { label: "Reglas de negociación", href: "/cobranza/reglas", section: "pack_cobranza:reglas", icon: Scale, sub: "Asistente", ready: true },
         ],
         { pack: "pack_cobranza" },

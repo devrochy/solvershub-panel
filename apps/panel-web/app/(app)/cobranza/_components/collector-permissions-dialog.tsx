@@ -30,14 +30,21 @@ export function CollectorPermissionsDialog({
   nombre,
   trigger,
   onSaved,
+  abierto,
+  onAbiertoChange,
 }: {
   collectorId: string;
   nombre: string;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   /** Se llama tras guardar (p. ej. para refrescar el conteo en Equipo). */
   onSaved?: () => void;
+  /** Controlado: el diálogo se abre desde un menú, sin disparador propio. */
+  abierto?: boolean;
+  onAbiertoChange?: (abierto: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [abiertoPropio, setAbiertoPropio] = useState(false);
+  const open = abierto ?? abiertoPropio;
+  const setOpen = onAbiertoChange ?? setAbiertoPropio;
   const [catalogo, setCatalogo] = useState<string[]>([]);
   const [activos, setActivos] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
@@ -91,7 +98,7 @@ export function CollectorPermissionsDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         title={`Permisos de ${nombre}`}
         description="Lo que este gestor puede hacer en la app de campo."

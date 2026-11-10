@@ -102,7 +102,6 @@ export function CashDayActions({ portfolioId }: { portfolioId: string }) {
       <Button
         disabled={Boolean(status.loading)}
         onClick={() => void run("closing")}
-        size="sm"
         variant="outline"
       >
         {status.loading === "closing" ? "Cerrando…" : "Cerrar el día"}
@@ -110,7 +109,6 @@ export function CashDayActions({ portfolioId }: { portfolioId: string }) {
       <Button
         disabled={Boolean(status.loading)}
         onClick={() => void run("opening")}
-        size="sm"
         variant="outline"
       >
         {status.loading === "opening" ? "Registrando…" : "Registrar apertura"}
@@ -151,7 +149,7 @@ export function InjectionDialog({ portfolioId }: { portfolioId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button variant="outline">
           Registrar inyección
         </Button>
       </DialogTrigger>
@@ -206,7 +204,7 @@ export function LiquidationDialog({ portfolioId }: { portfolioId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button variant="outline">
           Generar liquidación
         </Button>
       </DialogTrigger>

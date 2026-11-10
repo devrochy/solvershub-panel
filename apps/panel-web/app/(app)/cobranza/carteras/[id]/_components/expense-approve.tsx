@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -87,7 +88,7 @@ export function ExpenseFormDialog({
   );
 }
 
-/** Editar (si no está aprobado) y aprobar el gasto (descuenta de la caja una vez). */
+/** Acciones de un gasto sin aprobar: aprobarlo, con confirmación, y corregirlo. */
 export function ExpenseRowActions({
   portfolioId,
   expense,
@@ -96,15 +97,20 @@ export function ExpenseRowActions({
   expense: Gasto;
 }) {
   const router = useRouter();
-  const [confirmando, setConfirmando] = useState(false);
+  const confirmar = useConfirm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
-  if (expense.aprobado) {
-    return <span className="text-xs text-body">—</span>;
-  }
+  if (expense.aprobado) return null;
 
   async function aprobar() {
+    const ok = await confirmar({
+      title: "¿Aprobar este gasto?",
+      description: `${expense.descripcion} se descuenta de la caja de la cartera.`,
+      confirmLabel: "Aprobar gasto",
+      destructive: false,
+    });
+    if (!ok) return;
     setLoading(true);
     setError(undefined);
     const res = await fetch(`/api/pack/cobranza/expenses/${expense.id}/approve`, { method: "POST" });
@@ -119,54 +125,23 @@ export function ExpenseRowActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      <ExpenseFormDialog
-        expense={expense}
-        portfolioId={portfolioId}
-        trigger={
-          <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
-            <Pencil className="h-4 w-4" aria-hidden />
-          </Button>
-        }
-      />
-      {confirmando ? (
-        <>
-          <Button
-            aria-label="Confirmar aprobación"
-            className="text-status-danger-fg"
-            disabled={loading}
-            onClick={aprobar}
-            size="icon"
-            title="Confirmar aprobación"
-            variant="outline"
-          >
-            <Check className="h-4 w-4" aria-hidden />
-          </Button>
-          <Button
-            aria-label="Cancelar"
-            onClick={() => setConfirmando(false)}
-            size="icon"
-            title="Cancelar"
-            variant="ghost"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </Button>
-        </>
-      ) : (
-        <Button
-          aria-label="Aprobar gasto"
-          onClick={() => setConfirmando(true)}
-          size="icon"
-          title="Aprobar gasto"
-          variant="outline"
-        >
-          <Check className="h-4 w-4" aria-hidden />
-        </Button>
-      )}
       {error && (
         <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}
+      <ExpenseFormDialog
+        expense={expense}
+        portfolioId={portfolioId}
+        trigger={
+          <Button aria-label={`Editar el gasto ${expense.descripcion}`} size="icon" title="Editar" variant="ghost" className="pointer-coarse:h-11 pointer-coarse:w-11">
+            <Pencil className="h-4 w-4" aria-hidden />
+          </Button>
+        }
+      />
+      <Button size="sm" variant="outline" disabled={loading} onClick={() => void aprobar()} className="pointer-coarse:h-11">
+        {loading ? "Aprobando…" : "Aprobar"}
+      </Button>
     </div>
   );
 }

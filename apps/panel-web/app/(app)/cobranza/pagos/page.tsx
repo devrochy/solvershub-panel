@@ -1,7 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ListPage } from "@/components/templates/list-page";
+import { type Column } from "@/components/ui/data-table";
 import { apiFetch } from "@/lib/api/server";
+import { metodoDePago } from "@/lib/cobranza/presentacion";
 import { formatCop, formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Pagos de clientes" };
@@ -17,40 +19,38 @@ type Payment = {
 
 export default async function CobrosPage() {
   const res = await apiFetch<Payment[]>("/pack/cobranza/payments");
+  const header = { title: "Pagos de clientes", description: "Últimos pagos registrados por los gestores (hasta 100)." };
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los pagos: {res.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudieron cargar los pagos" detalle={res.error} />
+      </ListPage>
     );
   }
 
   const columns: Column<Payment>[] = [
-    { key: "cliente", header: "Cliente", cell: (p) => <span className="text-headline">{p.cliente}</span> },
+    { key: "cliente", header: "Cliente", cell: (p) => <span className="font-medium text-headline">{p.cliente}</span> },
+    { key: "fecha", header: "Fecha", cell: (p) => <span className="whitespace-nowrap text-body">{formatDateTime(p.fecha_hora)}</span> },
+    { key: "metodo", header: "Método", cell: (p) => <span className="text-body">{metodoDePago(p.metodo_pago)}</span> },
+    { key: "registrado", header: "Registrado por", cell: (p) => <span className="text-body">{p.registrado_por ?? "—"}</span> },
     { key: "valor", header: "Valor", align: "right", cell: (p) => formatCop(p.valor) },
-    { key: "metodo", header: "Método", cell: (p) => <Badge variant="neutral">{p.metodo_pago}</Badge> },
-    {
-      key: "registrado",
-      header: "Registrado por",
-      cell: (p) => <span className="text-body">{p.registrado_por ?? "—"}</span>,
-    },
-    {
-      key: "fecha",
-      header: "Fecha",
-      cell: (p) => <span className="text-body">{formatDateTime(p.fecha_hora)}</span>,
-    },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Pagos de clientes" description="Últimos pagos registrados por los gestores (hasta 100)." />
-      <DataTable
+    <ListPage header={header}>
+      <TablaCobranza
+        etiqueta="Pagos"
         columns={columns}
         rows={res.data}
         getRowKey={(p) => p.id}
         emptyTitle="Sin cobros registrados"
         emptyDescription="Los pagos de la app de campo y del agente aparecerán aquí."
+        filaCelular={(p) => ({
+          titulo: p.cliente,
+          detalle: `${formatDateTime(p.fecha_hora)} · ${metodoDePago(p.metodo_pago)}`,
+          fin: formatCop(p.valor),
+        })}
       />
-    </div>
+    </ListPage>
   );
 }

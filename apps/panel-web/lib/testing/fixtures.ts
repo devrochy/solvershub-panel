@@ -698,8 +698,13 @@ export const ajustesAvanzados = {
 
 export const resumenCobranza = {
   kpis: [
-    { label: "Recaudo de hoy", value: "$ 1.250.000" },
-    { label: "Clientes en mora", value: "8" },
+    { label: "Carteras", value: "3" },
+    { label: "Clientes", value: "142" },
+    { label: "Préstamos vigentes", value: "118" },
+    { label: "Saldo en cartera", value: "48.350.000" },
+    { label: "Mora", value: "6.120.000" },
+    { label: "Cobrado (7 días)", value: "9.840.000" },
+    { label: "Gastos (30 días)", value: "1.230.000" },
   ],
 };
 

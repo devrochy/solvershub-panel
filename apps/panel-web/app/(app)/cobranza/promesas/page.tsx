@@ -1,22 +1,42 @@
 import { PromiseStatus } from "@/app/(app)/cobranza/promesas/_components/promise-status";
-import { Badge } from "@/components/ui/badge";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { FilterChips } from "@/components/ui/filter-chips";
-import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
-import { formatCop, formatDate } from "@/lib/format";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { SeccionPlegada } from "@/components/domain/cobranza/seccion-plegada";
+import { StatusBadge } from "@/components/domain/status-badge";
+import { ListPage } from "@/components/templates/list-page";
+import { Contador } from "@/components/ui/contador";
+import { EmptyState } from "@/components/ui/empty-state";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
+import {
+  TITULO_DE_GRUPO,
+  agruparPromesas,
+  cuandoEs,
+  fechaDeHoy,
+  type GrupoDeAgenda,
+  type PromesaDeAgenda,
+} from "@/lib/cobranza/agenda";
+import { PROMESA_STATUS, loQueCubre, quienPacto } from "@/lib/cobranza/presentacion";
+import { formatCop } from "@/lib/format";
 
 export const metadata = { title: "Promesas" };
 
-type PromesaRow = {
-  id: string;
-  cliente: string;
-  fecha_prometida: string;
-  valor_prometido: number;
-  estado: string;
-  tipo: string;
-  creado_por: string;
-};
+const ORDEN: GrupoDeAgenda[] = ["vencidas", "hoy", "semana", "despues"];
+
+function FilaDePromesa({ promesa: p, cuando }: { promesa: PromesaDeAgenda; cuando?: string }) {
+  const detalle = [cuando, loQueCubre(p.alcance, p.tipo), `Pactó ${quienPacto(p.creado_por)}`].filter(Boolean).join(" · ");
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border-soft py-3 first:border-t-0">
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-sm font-medium text-headline">{p.cliente}</span>
+        <span className="text-xs text-text-soft">{detalle}</span>
+      </div>
+      <div className="flex items-center gap-3 max-sm:w-full max-sm:justify-between">
+        <span className="text-sm font-medium tabular-nums text-headline">{formatCop(p.valor_prometido)}</span>
+        {p.estado !== "pendiente" && <StatusBadge value={p.estado} map={PROMESA_STATUS} />}
+        <PromiseStatus promiseId={p.id} estado={p.estado} cliente={p.cliente} />
+      </div>
+    </li>
+  );
+}
 
 export default async function PromisesPage({
   searchParams,
@@ -24,65 +44,65 @@ export default async function PromisesPage({
   searchParams: Promise<{ estado?: string }>;
 }) {
   const sp = await searchParams;
-  const res = await apiFetch<PromesaRow[]>("/pack/cobranza/promises");
+  const [res, zona] = await Promise.all([
+    apiFetch<PromesaDeAgenda[]>("/pack/cobranza/promises"),
+    getBusinessTimezone(),
+  ]);
+  const header = { title: "Promesas", description: "Promesas de pago del agente y de los gestores." };
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las promesas: {res.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudieron cargar las promesas" detalle={res.error} />
+      </ListPage>
     );
   }
 
-  const estado = sp.estado && sp.estado !== "todas" ? sp.estado : null;
-  const filas = estado ? res.data.filter((p) => p.estado === estado) : res.data;
-  const columns: Column<PromesaRow>[] = [
-    { key: "cliente", header: "Cliente", cell: (p) => <span className="text-headline">{p.cliente}</span> },
-    {
-      key: "fecha",
-      header: "Fecha prometida",
-      cell: (p) => <span className="text-body">{formatDate(p.fecha_prometida)}</span>,
-    },
-    { key: "valor", header: "Valor", align: "right", cell: (p) => formatCop(p.valor_prometido) },
-    { key: "tipo", header: "Tipo", cell: (p) => <Badge variant="neutral">{p.tipo}</Badge> },
-    {
-      key: "origen",
-      header: "Creada por",
-      cell: (p) => <span className="text-body">{p.creado_por}</span>,
-    },
-    {
-      key: "estado",
-      header: "Estado",
-      align: "right",
-      cell: (p) => <PromiseStatus promiseId={p.id} estado={p.estado} />,
-    },
-  ];
+  const hoy = fechaDeHoy(zona);
+  const { grupos, decididas } = agruparPromesas(res.data, hoy);
+  const conPendientes = ORDEN.filter((grupo) => grupos[grupo].length > 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Promesas"
-        description="Promesas de pago del asistente y de los gestores."
-      />
-      <FilterChips
-        label="Filtros de promesas"
-        items={[
-          { label: "Todas", href: "/cobranza/promesas", active: !estado },
-          { label: "Pendientes", href: "/cobranza/promesas?estado=pendiente", active: estado === "pendiente" },
-          { label: "Cumplidas", href: "/cobranza/promesas?estado=cumplida", active: estado === "cumplida" },
-          { label: "Incumplidas", href: "/cobranza/promesas?estado=incumplida", active: estado === "incumplida" },
-        ]}
-      />
-      <DataTable
-        columns={columns}
-        rows={filas}
-        getRowKey={(p) => p.id}
-        emptyTitle={estado ? "Sin promesas con este estado" : "Sin promesas"}
-        emptyDescription={
-          estado
-            ? "Prueba con otro estado o quita el filtro."
-            : "Cuando el agente pacte una promesa, aparecerá aquí con su estado."
-        }
-      />
-    </div>
+    <ListPage header={header}>
+      {res.data.length === 0 && (
+        <div className="rounded-lg border border-border-soft bg-surface">
+          <EmptyState title="Sin promesas" description="Cuando el agente pacte una promesa, aparecerá aquí con su fecha." />
+        </div>
+      )}
+      {res.data.length > 0 && conPendientes.length === 0 && (
+        <p className="rounded-lg border border-border-soft bg-surface px-4 py-3 text-sm text-body">No hay promesas pendientes.</p>
+      )}
+      {conPendientes.map((grupo) => (
+        <section key={grupo} aria-labelledby={`grupo-${grupo}`} className="rounded-lg border border-border-soft bg-surface px-5 py-4">
+          <div className="flex items-center gap-2 pb-1">
+            <h2 id={`grupo-${grupo}`} className="font-display text-sh-block text-headline">
+              {TITULO_DE_GRUPO[grupo]}
+            </h2>
+            <Contador
+              valor={grupos[grupo].length}
+              tono={grupo === "vencidas" ? "alerta" : "normal"}
+              etiqueta={`${grupos[grupo].length} ${grupos[grupo].length === 1 ? "promesa" : "promesas"}`}
+            />
+          </div>
+          <ul>
+            {grupos[grupo].map((p) => (
+              <FilaDePromesa key={p.id} promesa={p} cuando={grupo === "hoy" ? undefined : cuandoEs(p.fecha_prometida, hoy)} />
+            ))}
+          </ul>
+        </section>
+      ))}
+      {decididas.length > 0 && (
+        <SeccionPlegada
+          titulo="Cumplidas e incumplidas"
+          conteo={decididas.length}
+          abierta={sp.estado === "cumplida" || sp.estado === "incumplida"}
+        >
+          <ul>
+            {decididas.map((p) => (
+              <FilaDePromesa key={p.id} promesa={p} cuando={cuandoEs(p.fecha_prometida, hoy)} />
+            ))}
+          </ul>
+        </SeccionPlegada>
+      )}
+    </ListPage>
   );
 }

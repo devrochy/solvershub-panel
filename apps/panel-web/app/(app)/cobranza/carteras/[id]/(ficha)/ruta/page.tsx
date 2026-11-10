@@ -1,36 +1,33 @@
 import { notFound } from "next/navigation";
 
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { apiFetch } from "@/lib/api/server";
+import { SeccionPlegada } from "@/components/domain/cobranza/seccion-plegada";
+import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { StatusBadge } from "@/components/domain/status-badge";
+import { type Column } from "@/components/ui/data-table";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
+import { fechaDeHoy } from "@/lib/cobranza/agenda";
+import { RIESGO_STATUS, cifrasDelCierre, diasDeMora, etiquetaDeRiesgo } from "@/lib/cobranza/presentacion";
 import { formatCop, formatDate, formatNumber } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { RouteOptimizeButton } from "../../_components/route-actions";
 import { cargarCartera, type ReporteDiario, type RutaCliente, type RutaOut } from "../../_lib/cartera";
 
 export const metadata = { title: "Ruta de la cartera" };
 
-/** Resumen legible de un snapshot de cierre (aplana `conteos` y similares). */
-function resumenDatos(datos: Record<string, unknown>): string {
-  const partes: string[] = [];
-  for (const [clave, valor] of Object.entries(datos)) {
-    if (valor === null || valor === undefined) continue;
-    if (typeof valor === "object") {
-      const sub = Object.entries(valor as Record<string, unknown>)
-        .filter(([, interno]) => typeof interno !== "object")
-        .map(([k, v]) => `${k}: ${String(v)}`)
-        .join(", ");
-      if (sub) partes.push(`${clave}: ${sub}`);
-    } else {
-      partes.push(`${clave}: ${String(valor)}`);
-    }
-  }
-  return partes.join(" · ") || "—";
+function Posicion({ valor }: { valor: number | null }) {
+  return (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-sm font-semibold tabular-nums text-body">
+      {valor ?? "—"}
+    </span>
+  );
 }
 
 export default async function CarteraRutaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [res, rutaRes] = await Promise.all([
+  const [res, rutaRes, zona] = await Promise.all([
     cargarCartera(id),
     apiFetch<RutaOut>(`/pack/cobranza/portfolios/${id}/route`),
+    getBusinessTimezone(),
   ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
@@ -41,36 +38,40 @@ export default async function CarteraRutaPage({ params }: { params: Promise<{ id
   // Tolerante a una API vieja (despliegue desfasado): sin campos nuevos no rompe.
   const reportesDiarios = c.reportes_diarios ?? [];
 
-  const rutaColumns = (orden: string[]): Column<RutaCliente>[] => [
-    {
-      key: "orden",
-      header: "#",
-      cell: (r) => {
-        const pos = orden.indexOf(r.id);
-        return <span className="text-body">{pos >= 0 ? pos + 1 : "—"}</span>;
-      },
-    },
-    { key: "cliente", header: "Cliente", cell: (r) => <span className="text-headline">{r.cliente}</span> },
+  // La lista se recorre en el orden del plan; quien no está en él va al final.
+  const orden = ruta.plan?.orden ?? [];
+  const posicion = (r: RutaCliente) => {
+    const indice = orden.indexOf(r.id);
+    return indice >= 0 ? indice + 1 : null;
+  };
+  const clientes = [...ruta.clientes].sort((a, b) => (posicion(a) ?? Infinity) - (posicion(b) ?? Infinity));
+  const hrefCliente = (r: RutaCliente) => `/cobranza/carteras/${c.id}/clientes/${r.id}`;
+
+  const resumenDelPlan = ruta.plan
+    ? [
+        `${formatNumber(ruta.plan.orden.length)} visitas`,
+        `${ruta.plan.distancia_km.toLocaleString("es-CO")} km`,
+        `unos ${formatNumber(ruta.plan.tiempo_min)} minutos`,
+        ruta.plan.fecha === fechaDeHoy(zona) ? "plan de hoy" : `plan del ${formatDate(ruta.plan.fecha)}`,
+      ].join(" · ")
+    : "Todavía no hay un plan. Optimiza la ruta para ordenar las visitas.";
+
+  const rutaColumns: Column<RutaCliente>[] = [
+    { key: "orden", header: "Orden", className: "w-16", cell: (r) => <Posicion valor={posicion(r)} /> },
+    { key: "cliente", header: "Cliente", cell: (r) => <span className="font-medium text-headline">{r.cliente}</span> },
+    { key: "riesgo", header: "Riesgo", cell: (r) => <StatusBadge value={r.riesgo} map={RIESGO_STATUS} /> },
     { key: "saldo", header: "Saldo", align: "right", cell: (r) => formatCop(r.saldo) },
     {
       key: "mora",
-      header: "Mora (días)",
+      header: "Mora",
       align: "right",
-      cell: (r) => <span className={r.mora > 0 ? "text-status-danger-fg" : "text-body"}>{r.mora}</span>,
+      cell: (r) => <span className={cn("whitespace-nowrap", r.mora > 0 ? "text-status-danger-fg" : "text-body")}>{diasDeMora(r.mora)}</span>,
     },
   ];
 
   const estadisticaColumns: Column<{ fecha: string; datos: Record<string, unknown> }>[] = [
-    { key: "fecha", header: "Fecha", cell: (e) => formatDate(e.fecha) },
-    {
-      key: "datos",
-      header: "Datos del cierre",
-      cell: (e) => (
-        <span className="text-body text-xs" title={JSON.stringify(e.datos)}>
-          {resumenDatos(e.datos)}
-        </span>
-      ),
-    },
+    { key: "fecha", header: "Fecha", className: "w-28", cell: (e) => formatDate(e.fecha) },
+    { key: "datos", header: "Cifras del cierre", cell: (e) => <span className="text-body">{cifrasDelCierre(e.datos)}</span> },
   ];
 
   const reporteColumns: Column<ReporteDiario>[] = [
@@ -101,48 +102,67 @@ export default async function CarteraRutaPage({ params }: { params: Promise<{ id
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
+      <section aria-labelledby="ruta-de-hoy" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold text-headline">Trayectoria del día</h2>
+          <div className="flex flex-col">
+            <h2 id="ruta-de-hoy" className="font-display text-sh-block text-headline">
+              Ruta de hoy
+            </h2>
+            <p className="text-sm text-body">{resumenDelPlan}</p>
+          </div>
           <RouteOptimizeButton portfolioId={c.id} />
         </div>
-        {ruta.plan && (
-          <p className="text-sm text-body">
-            Último plan ({ruta.plan.fecha}): <strong>{ruta.plan.orden.length}</strong> visitas ·{" "}
-            <strong>{ruta.plan.distancia_km} km</strong> · ~{ruta.plan.tiempo_min} min
-          </p>
-        )}
-        <DataTable
-          columns={rutaColumns(ruta.plan?.orden ?? [])}
-          rows={ruta.clientes}
+        <TablaCobranza
+          etiqueta="Clientes de la ruta"
+          columns={rutaColumns}
+          rows={clientes}
           getRowKey={(r) => r.id}
+          getRowHref={hrefCliente}
+          getRowLabel={(r) => `Abrir la ficha de ${r.cliente}`}
           emptyTitle="Sin clientes para visitar"
           emptyDescription="Aparecen los clientes con préstamo vigente y cuotas pendientes."
+          filaCelular={(r) => ({
+            inicio: <Posicion valor={posicion(r)} />,
+            titulo: r.cliente,
+            detalle: `${etiquetaDeRiesgo(r.riesgo)} · ${r.mora > 0 ? `${diasDeMora(r.mora)} de mora` : "Al día"}`,
+            fin: formatCop(r.saldo),
+            href: hrefCliente(r),
+          })}
         />
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Reportes diarios</h2>
-        <DataTable
-          columns={reporteColumns}
-          rows={reportesDiarios}
-          getRowKey={(r) => r.fecha}
-          emptyTitle="Sin reportes diarios"
-          emptyDescription="Los cierres que genera la app de campo aparecerán aquí."
-        />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">
-          Cierres del día (estadísticas)
+      <section aria-labelledby="historial-ruta" className="flex flex-col gap-3">
+        <h2 id="historial-ruta" className="font-display text-sh-block text-headline">
+          Historial de la ruta
         </h2>
-        <DataTable
-          columns={estadisticaColumns}
-          rows={c.estadisticas}
-          getRowKey={(e, i) => `${e.fecha}-${i}`}
-          emptyTitle="Sin cierres"
-          emptyDescription="Genera el cierre del día desde la tarjeta Caja para ver aquí sus números."
-        />
+        <SeccionPlegada titulo="Reportes diarios" conteo={reportesDiarios.length} nivel="h3">
+          <TablaCobranza
+            etiqueta="Reportes diarios"
+            columns={reporteColumns}
+            rows={reportesDiarios}
+            getRowKey={(r) => r.fecha}
+            density="compact"
+            emptyTitle="Sin reportes diarios"
+            emptyDescription="Los cierres que genera la app de campo aparecerán aquí."
+            filaCelular={(r) => ({
+              titulo: formatDate(r.fecha),
+              detalle: `${formatNumber(r.visitados)} visitados · ${formatNumber(r.sin_pago)} sin pago`,
+              fin: formatCop(r.cobrado),
+            })}
+          />
+        </SeccionPlegada>
+        <SeccionPlegada titulo="Cierres del día" conteo={c.estadisticas.length} nivel="h3">
+          <TablaCobranza
+            etiqueta="Cierres del día"
+            columns={estadisticaColumns}
+            rows={c.estadisticas}
+            getRowKey={(e, i) => `${e.fecha}-${i}`}
+            density="compact"
+            emptyTitle="Sin cierres"
+            emptyDescription="Genera el cierre del día desde la pestaña Caja para ver aquí sus números."
+            filaCelular={(e) => ({ titulo: formatDate(e.fecha), detalle: cifrasDelCierre(e.datos) })}
+          />
+        </SeccionPlegada>
       </section>
     </div>
   );

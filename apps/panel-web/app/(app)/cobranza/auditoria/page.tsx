@@ -1,13 +1,11 @@
-import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/page-header";
-import { Select } from "@/components/ui/select";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { StatusBadge, estadoLegible } from "@/components/domain/status-badge";
+import { ListPage } from "@/components/templates/list-page";
+import { type Column } from "@/components/ui/data-table";
 import { apiFetch } from "@/lib/api/server";
+import { OPERACION_STATUS, cambiosDeAuditoria, entidadLegible, fechaHoraDeApi } from "@/lib/cobranza/presentacion";
+import { FiltrosAuditoria, type FiltrosDeAuditoria } from "./_components/filtros-auditoria";
 
 export const metadata = { title: "Auditoría" };
 
@@ -24,120 +22,78 @@ type AuditRow = {
 
 type AuditLog = { entidades: string[]; operaciones: string[]; filas: AuditRow[] };
 
-const OPERATION_TONE: Record<string, "success" | "danger" | "warning"> = {
-  crear: "success",
-  editar: "warning",
-  eliminar: "danger",
-};
-
-function cambios(row: AuditRow): string {
-  if (!row.despues && !row.antes) return "—";
-  const partes: string[] = [];
-  if (row.antes) partes.push(`antes: ${JSON.stringify(row.antes)}`);
-  if (row.despues) partes.push(`después: ${JSON.stringify(row.despues)}`);
-  return partes.join(" · ");
+function etiquetaDeOperacion(operacion: string): string {
+  return OPERACION_STATUS[operacion]?.label ?? estadoLegible(operacion);
 }
 
 export default async function AuditoriaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ entidad?: string; operacion?: string; desde?: string; hasta?: string }>;
+  searchParams: Promise<FiltrosDeAuditoria>;
 }) {
   const sp = await searchParams;
   const qs = new URLSearchParams();
   for (const key of ["entidad", "operacion", "desde", "hasta"] as const) {
-    if (sp[key]) qs.set(key, sp[key]);
+    const valor = sp[key];
+    if (valor) qs.set(key, valor);
   }
   const res = await apiFetch<AuditLog>(`/pack/cobranza/audit${qs.size ? `?${qs}` : ""}`);
+  const header = {
+    title: "Auditoría",
+    description: "Cambios sobre cuotas, abonos, pagos, promesas y préstamos (hasta 200).",
+  };
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la auditoría: {res.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudo cargar la auditoría" detalle={res.error} />
+      </ListPage>
     );
   }
   const { entidades, operaciones, filas } = res.data;
 
   const columns: Column<AuditRow>[] = [
-    { key: "fecha", header: "Fecha", cell: (r) => <span className="text-body">{r.fecha || "—"}</span> },
-    {
-      key: "entidad",
-      header: "Entidad",
-      cell: (r) => (
-        <span className="text-headline">
-          {r.entidad} <span className="text-body">#{r.entidad_id}</span>
-        </span>
-      ),
-    },
-    {
-      key: "operacion",
-      header: "Operación",
-      cell: (r) => <Badge variant={OPERATION_TONE[r.operacion] ?? "neutral"}>{r.operacion}</Badge>,
-    },
-    { key: "actor", header: "Actor", cell: (r) => <span className="text-body">{r.actor}</span> },
-    { key: "motivo", header: "Motivo", cell: (r) => <span className="text-body">{r.motivo || "—"}</span> },
+    { key: "fecha", header: "Fecha", cell: (r) => <span className="whitespace-nowrap text-body">{fechaHoraDeApi(r.fecha)}</span> },
+    { key: "entidad", header: "Qué cambió", cell: (r) => <span className="font-medium text-headline">{entidadLegible(r.entidad)}</span> },
+    { key: "operacion", header: "Operación", cell: (r) => <StatusBadge value={r.operacion} map={OPERACION_STATUS} /> },
     {
       key: "cambios",
       header: "Cambios",
+      className: "w-full",
       cell: (r) => (
-        <span className="text-body text-xs break-all" title={cambios(r)}>
-          {cambios(r)}
-        </span>
+        <ul className="flex flex-col gap-0.5 text-body">
+          {cambiosDeAuditoria(r.antes, r.despues).map((cambio) => (
+            <li key={cambio}>{cambio}</li>
+          ))}
+        </ul>
       ),
     },
+    { key: "actor", header: "Quién", cell: (r) => <span className="text-body">{estadoLegible(r.actor)}</span> },
+    { key: "motivo", header: "Motivo", cell: (r) => <span className="text-body">{r.motivo || "—"}</span> },
   ];
 
-  const hayFiltros = Boolean(sp.entidad || sp.operacion || sp.desde || sp.hasta);
-
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Auditoría"
-        description="Cambios sobre cuotas, abonos, pagos, promesas y préstamos (hasta 200)."
-      />
-      <form method="get" className="flex flex-wrap items-end gap-3">
-        <Field label="Entidad" htmlFor="entidad" className="w-40">
-          <Select id="entidad" name="entidad" defaultValue={sp.entidad ?? ""}>
-            <option value="">Todas</option>
-            {entidades.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Operación" htmlFor="operacion" className="w-40">
-          <Select id="operacion" name="operacion" defaultValue={sp.operacion ?? ""}>
-            <option value="">Todas</option>
-            {operaciones.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Desde" htmlFor="desde" className="w-44">
-          <Input id="desde" name="desde" type="date" defaultValue={sp.desde ?? ""} />
-        </Field>
-        <Field label="Hasta" htmlFor="hasta" className="w-44">
-          <Input id="hasta" name="hasta" type="date" defaultValue={sp.hasta ?? ""} />
-        </Field>
-        <Button type="submit" variant="outline">
-          Filtrar
-        </Button>
-        {hayFiltros && (
-          <Link href="/cobranza/auditoria" className="pb-2.5 text-sm text-link hover:underline">
-            Limpiar
-          </Link>
-        )}
-      </form>
-      <DataTable
+    <ListPage
+      header={header}
+      filters={
+        <FiltrosAuditoria
+          sp={sp}
+          entidades={entidades.map((valor) => ({ valor, etiqueta: entidadLegible(valor) }))}
+          operaciones={operaciones.map((valor) => ({ valor, etiqueta: etiquetaDeOperacion(valor) }))}
+        />
+      }
+    >
+      <TablaCobranza
+        etiqueta="Movimientos auditados"
         columns={columns}
         rows={filas}
         getRowKey={(r, i) => `${r.fecha}-${r.entidad_id}-${i}`}
         emptyTitle="Sin movimientos"
         emptyDescription="Los cambios auditados de la cartera aparecerán aquí."
+        filaCelular={(r) => ({
+          titulo: `${entidadLegible(r.entidad)} · ${etiquetaDeOperacion(r.operacion)}`,
+          detalle: [cambiosDeAuditoria(r.antes, r.despues).join(" · "), `${estadoLegible(r.actor)}, ${fechaHoraDeApi(r.fecha)}`].filter(Boolean).join(" · "),
+        })}
       />
-    </div>
+    </ListPage>
   );
 }

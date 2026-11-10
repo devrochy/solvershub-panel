@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
+import { formatCop } from "@/lib/format";
 
 type Rules = {
   max_dias_prorroga: number;
@@ -16,24 +17,25 @@ type Rules = {
   umbral_saldo_autonomo: number;
 };
 
-/** Reglas deterministas de negociación del asistente. */
+/** Los límites que el agente respeta al negociar. Cada campo se acota mientras se escribe. */
 export function RulesForm({ rules }: { rules: Rules }) {
   const router = useRouter();
+  const [valores, setValores] = useState({
+    max_dias_prorroga: rules.max_dias_prorroga,
+    min_abono_pct: rules.min_abono_pct,
+    max_reprogramaciones: rules.max_reprogramaciones,
+    umbral_saldo_autonomo: rules.umbral_saldo_autonomo,
+  });
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const cambiar = (campo: keyof Rules) => (valor: number) => setValores((previo) => ({ ...previo, [campo]: valor }));
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
     setStatus({ loading: true });
     const res = await fetch("/api/pack/cobranza/rules", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        max_dias_prorroga: Number(data.get("max_dias_prorroga") ?? 15),
-        min_abono_pct: Number(data.get("min_abono_pct") ?? 10),
-        max_reprogramaciones: Number(data.get("max_reprogramaciones") ?? 2),
-        umbral_saldo_autonomo: Number(data.get("umbral_saldo_autonomo") ?? 0),
-      }),
+      body: JSON.stringify(valores),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
@@ -49,21 +51,25 @@ export function RulesForm({ rules }: { rules: Rules }) {
       <CardContent className="pt-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Máx. días de prórroga" htmlFor="max_dias_prorroga">
-              <Input id="max_dias_prorroga" name="max_dias_prorroga" type="number" min={0} defaultValue={rules.max_dias_prorroga} />
+            <Field label="Días máximos de prórroga" htmlFor="max_dias_prorroga" help="Hasta cuántos días puede correr una fecha de pago.">
+              <InputNumero id="max_dias_prorroga" min={0} value={valores.max_dias_prorroga} onValueChange={cambiar("max_dias_prorroga")} />
             </Field>
-            <Field label="Abono mínimo (%)" htmlFor="min_abono_pct">
-              <Input id="min_abono_pct" name="min_abono_pct" type="number" step="0.1" min={0} defaultValue={rules.min_abono_pct} />
+            <Field label="Abono mínimo (%)" htmlFor="min_abono_pct" help="Parte de la cuota que debe pagar como mínimo.">
+              <InputNumero id="min_abono_pct" min={0} max={100} step={0.5} decimal value={valores.min_abono_pct} onValueChange={cambiar("min_abono_pct")} />
             </Field>
-            <Field label="Máx. reprogramaciones" htmlFor="max_reprogramaciones">
-              <Input id="max_reprogramaciones" name="max_reprogramaciones" type="number" min={0} defaultValue={rules.max_reprogramaciones} />
+            <Field label="Reprogramaciones máximas" htmlFor="max_reprogramaciones" help="Cuántas veces se puede reprogramar un mismo pago.">
+              <InputNumero id="max_reprogramaciones" min={0} value={valores.max_reprogramaciones} onValueChange={cambiar("max_reprogramaciones")} />
             </Field>
             <Field
-              label="Umbral de saldo autónomo"
+              label="Saldo máximo para negociar solo"
               htmlFor="umbral_saldo_autonomo"
-              help="Por debajo de este saldo el agente negocia solo. 0 = sin límite (negocia sin tope). Regla determinista: una fila por negocio."
+              help={
+                valores.umbral_saldo_autonomo > 0
+                  ? `El agente negocia solo si el saldo es menor a ${formatCop(valores.umbral_saldo_autonomo)}.`
+                  : "Con 0 no hay tope: el agente negocia cualquier saldo."
+              }
             >
-              <Input id="umbral_saldo_autonomo" name="umbral_saldo_autonomo" type="number" step="1" min={0} defaultValue={rules.umbral_saldo_autonomo} />
+              <InputNumero id="umbral_saldo_autonomo" min={0} step={10000} value={valores.umbral_saldo_autonomo} onValueChange={cambiar("umbral_saldo_autonomo")} />
             </Field>
           </div>
 

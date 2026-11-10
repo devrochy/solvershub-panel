@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 
 /**
@@ -12,9 +14,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el cliente: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Cliente" tabs={false} />
+        <ErrorDeCobranza titulo="No se pudo cargar el cliente" detalle={res.error} />
+      </div>
     );
   }
   redirect(`/cobranza/carteras/${res.data.cliente.cartera_id}/clientes/${res.data.cliente.id}`);

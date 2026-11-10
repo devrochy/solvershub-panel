@@ -1,5 +1,6 @@
 import { RulesForm } from "@/app/(app)/cobranza/reglas/_components/rules-form";
-import { PageHeader } from "@/components/ui/page-header";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ListPage } from "@/components/templates/list-page";
 import { apiFetch } from "@/lib/api/server";
 
 export const metadata = { title: "Reglas de negociación" };
@@ -13,21 +14,23 @@ type Rules = {
 
 export default async function RulesPage() {
   const res = await apiFetch<Rules>("/pack/cobranza/rules");
+  const header = {
+    title: "Reglas de negociación",
+    description: "Los límites que el agente respeta al negociar prórrogas, abonos y reprogramaciones.",
+  };
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las reglas: {res.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudieron cargar las reglas" detalle={res.error} />
+      </ListPage>
     );
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader
-        title="Reglas de negociación"
-        description="Límites deterministas que el asistente respeta al negociar (prórrogas, abonos y reprogramaciones)."
-      />
-      <RulesForm rules={res.data} />
-    </div>
+    <ListPage header={header}>
+      <div className="max-w-2xl">
+        <RulesForm rules={res.data} />
+      </div>
+    </ListPage>
   );
 }

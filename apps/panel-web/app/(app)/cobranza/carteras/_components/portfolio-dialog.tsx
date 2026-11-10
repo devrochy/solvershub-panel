@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { MenuDeFila } from "@/components/domain/cobranza/menu-de-fila";
 import { Button } from "@/components/ui/button";
-import { IconAction } from "@/components/ui/icon-action";
+import { useConfirm } from "@/components/ui/confirm";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -32,13 +34,20 @@ export function PortfolioFormDialog({
   gestores,
   cartera,
   trigger,
+  abierto,
+  onAbiertoChange,
 }: {
   gestores: Gestor[];
   cartera?: Cartera;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  /** Controlado: el diálogo se abre desde un menú, sin disparador propio. */
+  abierto?: boolean;
+  onAbiertoChange?: (abierto: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [abiertoPropio, setAbiertoPropio] = useState(false);
+  const open = abierto ?? abiertoPropio;
+  const setOpen = onAbiertoChange ?? setAbiertoPropio;
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
   const editando = Boolean(cartera);
 
@@ -74,7 +83,7 @@ export function PortfolioFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         title={editando ? "Editar cartera" : "Nueva cartera"}
         description="El gestor y el interés se aplican a los préstamos que se creen en la cartera."
@@ -142,7 +151,7 @@ export function PortfolioFormDialog({
   );
 }
 
-/** Acciones por fila: editar y eliminar (con confirmación en dos pasos). */
+/** Acciones por fila: editar y eliminar, con confirmación. */
 export function PortfolioRowActions({
   cartera,
   gestores,
@@ -151,15 +160,20 @@ export function PortfolioRowActions({
   gestores: Gestor[];
 }) {
   const router = useRouter();
-  const [confirmando, setConfirmando] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const confirmar = useConfirm();
+  const [editando, setEditando] = useState(false);
   const [error, setError] = useState<string>();
 
   async function eliminar() {
-    setLoading(true);
+    const ok = await confirmar({
+      title: `¿Eliminar la cartera ${cartera.nombre}?`,
+      description: "Sus clientes y préstamos dejan de verse en Cobranza.",
+      confirmLabel: "Eliminar cartera",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(undefined);
     const res = await fetch(`/api/pack/cobranza/portfolios/${cartera.id}`, { method: "DELETE" });
-    setLoading(false);
     if (!res.ok) {
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       setError(json.error ?? "No se pudo eliminar la cartera.");
@@ -170,34 +184,20 @@ export function PortfolioRowActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      <PortfolioFormDialog
-        cartera={cartera}
-        gestores={gestores}
-        trigger={
-          <IconAction label="Editar" tone="editar">
-            <Pencil className="h-4 w-4" aria-hidden />
-          </IconAction>
-        }
-      />
-      {confirmando ? (
-        <>
-          <IconAction disabled={loading} label="Confirmar eliminación" onClick={eliminar} tone="eliminar">
-            <Check className="h-4 w-4" aria-hidden />
-          </IconAction>
-          <IconAction label="Cancelar" onClick={() => setConfirmando(false)} tone="neutro">
-            <X className="h-4 w-4" aria-hidden />
-          </IconAction>
-        </>
-      ) : (
-        <IconAction label="Eliminar" onClick={() => setConfirmando(true)} tone="eliminar">
-          <Trash2 className="h-4 w-4" aria-hidden />
-        </IconAction>
-      )}
       {error && (
         <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}
+      <MenuDeFila etiqueta={`Más acciones de ${cartera.nombre}`}>
+        <DropdownMenuItem icon={<Pencil />} onSelect={() => setEditando(true)}>
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem icon={<Trash2 />} tone="danger" onSelect={() => void eliminar()}>
+          Eliminar
+        </DropdownMenuItem>
+      </MenuDeFila>
+      <PortfolioFormDialog cartera={cartera} gestores={gestores} abierto={editando} onAbiertoChange={setEditando} />
     </div>
   );
 }

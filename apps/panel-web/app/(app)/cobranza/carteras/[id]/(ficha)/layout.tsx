@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { StatusBadge } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import { CARTERA_STATUS } from "@/lib/cobranza/presentacion";
 import { CashAdjustDialog } from "../_components/cash-actions";
 import { FichaTabs } from "../_components/ficha-tabs";
 import { PortfolioConfigDialog } from "../_components/portfolio-config-dialog";
@@ -12,8 +14,9 @@ import { cargarCartera } from "../_lib/cartera";
 
 /**
  * Ficha de la cartera: encabezado y pestañas por ruta (Resumen, Clientes, Caja, Ruta del día,
- * Notas). La ficha de un cliente cuelga de la cartera pero tiene su propio encabezado, por
- * eso vive fuera de este grupo de rutas.
+ * Notas), que reemplazan a las áreas de Cobranza: las migas llevan de vuelta. La ficha de un
+ * cliente cuelga de la cartera pero tiene su propio encabezado, por eso vive fuera de este
+ * grupo de rutas.
  */
 export default async function FichaDeCarteraLayout({
   children,
@@ -30,41 +33,44 @@ export default async function FichaDeCarteraLayout({
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la cartera: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Cartera" tabs={false} />
+        <ErrorDeCobranza titulo="No se pudo cargar la cartera" detalle={res.error} />
+      </div>
     );
   }
   const c = res.data;
   const configValues = configRes.ok ? configRes.data.values : {};
+  const condiciones = [
+    c.descripcion,
+    `Gestor: ${c.gestor ?? "sin asignar"}`,
+    `${c.num_cuotas} cuotas`,
+    `interés ${c.tipo_interes} %`,
+    c.moneda !== "COP" ? c.moneda : null,
+  ];
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={c.nombre}
-        description={c.descripcion ?? `Cartera en ${c.moneda} · ${c.num_cuotas} cuotas · interés ${c.tipo_interes}%`}
+        despuesDelTitulo={<StatusBadge value={c.estatus} map={CARTERA_STATUS} />}
+        description={condiciones.filter(Boolean).join(" · ")}
+        tabs={<FichaTabs carteraId={c.id} />}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <CashAdjustDialog
-              portfolioId={c.id}
-              saldoActual={c.caja.saldo_actual}
-              trigger={<Button variant="accent">Ajustar caja</Button>}
-            />
+          <>
             <PortfolioConfigDialog
               portfolioId={c.id}
               values={configValues}
               trigger={<Button variant="outline">Configuración</Button>}
             />
-          </div>
+            <CashAdjustDialog
+              portfolioId={c.id}
+              saldoActual={c.caja.saldo_actual}
+              trigger={<Button variant="accent">Ajustar caja</Button>}
+            />
+          </>
         }
       />
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={c.estatus === "activa" ? "success" : "neutral"}>{c.estatus}</Badge>
-        <span className="text-[13px] text-body">Gestor: {c.gestor ?? "—"}</span>
-      </div>
-
-      <FichaTabs carteraId={c.id} />
 
       {children}
     </div>

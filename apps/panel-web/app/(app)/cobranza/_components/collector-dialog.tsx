@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Pencil, Trash2, Check, X, ShieldCheck } from "lucide-react";
+import { Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { MenuDeFila } from "@/components/domain/cobranza/menu-de-fila";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -28,12 +31,19 @@ export type Collector = {
 export function CollectorFormDialog({
   collector,
   trigger,
+  abierto,
+  onAbiertoChange,
 }: {
   collector?: Collector;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  /** Controlado: el diálogo se abre desde un menú, sin disparador propio. */
+  abierto?: boolean;
+  onAbiertoChange?: (abierto: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [abiertoPropio, setAbiertoPropio] = useState(false);
+  const open = abierto ?? abiertoPropio;
+  const setOpen = onAbiertoChange ?? setAbiertoPropio;
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
   const editando = Boolean(collector);
   const [nombre = "", apellido = ""] = (collector?.nombre ?? "").split(" ");
@@ -79,7 +89,7 @@ export function CollectorFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         title={editando ? "Editar gestor" : "Nuevo gestor"}
         description={
@@ -125,18 +135,24 @@ export function CollectorFormDialog({
   );
 }
 
-/** Acciones por fila: editar y eliminar (con confirmación en dos pasos). */
+/** Acciones por fila: permisos, editar y eliminar con confirmación. */
 export function CollectorRowActions({ collector }: { collector: Collector }) {
   const router = useRouter();
-  const [confirmando, setConfirmando] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const confirmar = useConfirm();
+  const [editando, setEditando] = useState(false);
+  const [permisos, setPermisos] = useState(false);
   const [error, setError] = useState<string>();
 
   async function eliminar() {
-    setLoading(true);
+    const ok = await confirmar({
+      title: `¿Eliminar a ${collector.nombre}?`,
+      description: "Deja de ser gestor del negocio y pierde el acceso a la app de campo.",
+      confirmLabel: "Eliminar gestor",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(undefined);
     const res = await fetch(`/api/pack/cobranza/collectors/${collector.id}`, { method: "DELETE" });
-    setLoading(false);
     if (!res.ok) {
       const json = (await res.json().catch(() => ({}))) as { error?: string };
       setError(json.error ?? "No se pudo eliminar el gestor.");
@@ -147,62 +163,24 @@ export function CollectorRowActions({ collector }: { collector: Collector }) {
 
   return (
     <div className="flex items-center justify-end gap-1">
-      <CollectorPermissionsDialog
-        collectorId={collector.id}
-        nombre={collector.nombre}
-        trigger={
-          <Button aria-label="Permisos" size="icon" title="Permisos" variant="outline">
-            <ShieldCheck className="h-4 w-4" aria-hidden />
-          </Button>
-        }
-      />
-      <CollectorFormDialog
-        collector={collector}
-        trigger={
-          <Button aria-label="Editar" size="icon" title="Editar" variant="outline">
-            <Pencil className="h-4 w-4" aria-hidden />
-          </Button>
-        }
-      />
-      {confirmando ? (
-        <>
-          <Button
-            aria-label="Confirmar eliminación"
-            className="text-status-danger-fg"
-            disabled={loading}
-            onClick={eliminar}
-            size="icon"
-            title="Confirmar eliminación"
-            variant="outline"
-          >
-            <Check className="h-4 w-4" aria-hidden />
-          </Button>
-          <Button
-            aria-label="Cancelar"
-            onClick={() => setConfirmando(false)}
-            size="icon"
-            title="Cancelar"
-            variant="ghost"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </Button>
-        </>
-      ) : (
-        <Button
-          aria-label="Eliminar"
-          onClick={() => setConfirmando(true)}
-          size="icon"
-          title="Eliminar"
-          variant="ghost"
-        >
-          <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
-        </Button>
-      )}
       {error && (
         <span className="text-xs text-status-danger-fg" role="alert">
           {error}
         </span>
       )}
+      <MenuDeFila etiqueta={`Más acciones de ${collector.nombre}`}>
+        <DropdownMenuItem icon={<ShieldCheck />} onSelect={() => setPermisos(true)}>
+          Permisos
+        </DropdownMenuItem>
+        <DropdownMenuItem icon={<Pencil />} onSelect={() => setEditando(true)}>
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem icon={<Trash2 />} tone="danger" onSelect={() => void eliminar()}>
+          Eliminar
+        </DropdownMenuItem>
+      </MenuDeFila>
+      <CollectorPermissionsDialog collectorId={collector.id} nombre={collector.nombre} abierto={permisos} onAbiertoChange={setPermisos} />
+      <CollectorFormDialog collector={collector} abierto={editando} onAbiertoChange={setEditando} />
     </div>
   );
 }

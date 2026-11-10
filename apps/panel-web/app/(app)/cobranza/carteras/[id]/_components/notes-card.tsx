@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
+import { fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 
 type Nota = { id: string; nota: string; fecha: string; autor: string };
 
@@ -54,13 +55,13 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Notas de la cartera</CardTitle>
+        <CardTitle as="h2">Notas de la cartera</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pt-0">
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           <Textarea name="nota" rows={2} placeholder="Ej.: revisar cupo del cliente X" required />
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={status.loading} size="sm">
+            <Button type="submit" disabled={status.loading}>
               {status.loading ? "Guardando…" : "Guardar nota"}
             </Button>
             <FormFeedback error={status.error} success={status.success} />
@@ -79,7 +80,7 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                 <div>
                   <p className="text-sm text-body whitespace-pre-wrap">{n.nota}</p>
                   <p className="text-xs text-text-soft">
-                    {n.fecha} · {n.autor || "—"}
+                    {fechaHoraDeApi(n.fecha)} · {n.autor || "—"}
                   </p>
                 </div>
                 {confirmando === n.id ? (
@@ -112,6 +113,7 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                     size="icon"
                     title="Eliminar nota"
                     variant="ghost"
+                    className="pointer-coarse:h-11 pointer-coarse:w-11"
                   >
                     <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
                   </Button>

@@ -1,18 +1,26 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { StatusBadge } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { type Column } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatCard } from "@/components/ui/stat-card";
 import { apiFetch } from "@/lib/api/server";
-import { formatCop, formatDate } from "@/lib/format";
-import { RIESGO_LABEL } from "../../../../clientes/_components/client-dialog";
+import {
+  MOVIMIENTO_STATUS,
+  PRESTAMO_STATUS,
+  RIESGO_STATUS,
+  fechaHoraDeApi,
+  metodoDePago,
+} from "@/lib/cobranza/presentacion";
+import { formatCop, formatFechaLarga } from "@/lib/format";
 import { LoanFormDialog, MovementDialog } from "./_components/loan-dialogs";
 import { ChangeActions } from "./_components/change-actions";
-import { CreditDelete, InstallmentEditor } from "./_components/installment-dialog";
+import { CreditDelete, CuotaDelPlan } from "./_components/installment-dialog";
 
 export const metadata = { title: "Ficha del cliente" };
 
@@ -51,11 +59,66 @@ type ClientDetail = {
   }[];
 };
 
-const RIESGO_TONE: Record<string, "neutral" | "accent" | "danger"> = {
-  blanco: "neutral",
-  azul: "accent",
-  rojo: "danger",
-};
+const CUOTAS_A_LA_VISTA = 6;
+
+/** Las cuotas que importan hoy: dos pagadas de contexto y las que siguen. El resto se pliega. */
+function repartirCuotas(cuotas: Cuota[]): { aLaVista: Cuota[]; resto: Cuota[] } {
+  const ordenadas = [...cuotas].sort((a, b) => a.numero - b.numero);
+  const siguiente = ordenadas.findIndex((c) => c.estatus !== "pagada");
+  const inicio = siguiente < 0 ? Math.max(0, ordenadas.length - CUOTAS_A_LA_VISTA) : Math.max(0, siguiente - 2);
+  const fin = inicio + CUOTAS_A_LA_VISTA;
+  return { aLaVista: ordenadas.slice(inicio, fin), resto: [...ordenadas.slice(0, inicio), ...ordenadas.slice(fin)] };
+}
+
+const REJILLA_DE_CUOTAS = "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6";
+
+function TarjetaDePrestamo({ prestamo: p }: { prestamo: Prestamo }) {
+  const pagadas = p.cuotas.filter((c) => c.estatus === "pagada").length;
+  const { aLaVista, resto } = repartirCuotas(p.cuotas);
+  return (
+    <Card>
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle as="h2">Préstamo del {formatFechaLarga(p.fecha_otorgado)}</CardTitle>
+            {p.estatus !== "vigente" && <StatusBadge value={p.estatus} map={PRESTAMO_STATUS} />}
+          </div>
+          <p className="text-xs text-text-soft">
+            {formatCop(p.valor)} · interés {p.tipo_interes} % · Saldo {formatCop(p.saldo)} · {pagadas} de {p.num_cuotas} cuotas pagadas
+          </p>
+        </div>
+        {p.estatus === "vigente" && (
+          <div className="flex items-center gap-2">
+            <MovementDialog cuotas={p.cuotas} loanId={p.id} tipo="abono" trigger={<Button variant="ghost">Abono</Button>} />
+            <MovementDialog cuotas={p.cuotas} loanId={p.id} tipo="pago" trigger={<Button variant="accent">Registrar pago</Button>} />
+          </div>
+        )}
+      </CardHeader>
+      {p.cuotas.length > 0 && (
+        <CardContent className="flex flex-col gap-3">
+          <div className={REJILLA_DE_CUOTAS}>
+            {aLaVista.map((c) => (
+              <CuotaDelPlan key={c.id} cuota={c} />
+            ))}
+          </div>
+          {resto.length > 0 && (
+            <details className="group flex flex-col gap-2">
+              <summary className="flex min-h-11 w-fit cursor-pointer list-none items-center gap-1 rounded-sm text-sm font-medium text-link focus-visible:outline-2 focus-visible:outline-focus [&::-webkit-details-marker]:hidden">
+                <ChevronRight aria-hidden className="h-4 w-4 transition-transform group-open:rotate-90 motion-reduce:transition-none" />
+                Ver las otras {resto.length} cuotas
+              </summary>
+              <div className={REJILLA_DE_CUOTAS}>
+                {resto.map((c) => (
+                  <CuotaDelPlan key={c.id} cuota={c} />
+                ))}
+              </div>
+            </details>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
 
 export default async function ClienteFichaPage({ params }: { params: Promise<{ id: string; cid: string }> }) {
   const { id, cid } = await params;
@@ -63,87 +126,30 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el cliente: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Cliente" tabs={false} />
+        <ErrorDeCobranza titulo="No se pudo cargar el cliente" detalle={res.error} />
+      </div>
     );
   }
   const { cliente, prestamos, movimientos, cambios } = res.data;
   // El cliente cuelga de una sola cartera: si la URL trae otra, la ficha canónica es la suya.
   if (cliente.cartera_id !== id) redirect(`/cobranza/carteras/${cliente.cartera_id}/clientes/${cliente.id}`);
-  const saldoTotal = prestamos.reduce((acc, p) => acc + p.saldo, 0);
-  const vencidas = prestamos.reduce(
-    (acc, p) => acc + p.cuotas.filter((c) => c.estatus !== "pagada").length,
-    0,
-  );
 
-  const loanColumns: Column<Prestamo>[] = [
-    {
-      key: "otorgado",
-      header: "Otorgado",
-      cell: (p) => <span className="text-body">{formatDate(p.fecha_otorgado)}</span>,
-    },
-    { key: "valor", header: "Valor", align: "right", cell: (p) => formatCop(p.valor) },
-    { key: "saldo", header: "Saldo", align: "right", cell: (p) => formatCop(p.saldo) },
-    {
-      key: "cuotas",
-      header: "Cuotas",
-      align: "right",
-      cell: (p) => (
-        <span className="text-body">
-          {p.cuotas.filter((c) => c.estatus === "pagada").length}/{p.num_cuotas}
-        </span>
-      ),
-    },
-    {
-      key: "interes",
-      header: "Interés",
-      align: "right",
-      cell: (p) => <span className="text-body">{p.tipo_interes}%</span>,
-    },
-    {
-      key: "acciones",
-      header: "Registrar",
-      align: "right",
-      cell: (p) => (
-        <div className="flex items-center justify-end gap-1">
-          <MovementDialog
-            cuotas={p.cuotas}
-            loanId={p.id}
-            tipo="pago"
-            trigger={
-              <Button size="sm" variant="outline">
-                Pago
-              </Button>
-            }
-          />
-          <MovementDialog
-            cuotas={p.cuotas}
-            loanId={p.id}
-            tipo="abono"
-            trigger={
-              <Button size="sm" variant="ghost">
-                Abono
-              </Button>
-            }
-          />
-        </div>
-      ),
-    },
+  const datos = [
+    cliente.negocio,
+    cliente.telefono,
+    cliente.tope_maximo_deuda > 0 ? `Tope de deuda: ${formatCop(cliente.tope_maximo_deuda)}` : null,
   ];
 
   const movementColumns: Column<Movimiento>[] = [
-    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-body">{m.fecha || "—"}</span> },
-    {
-      key: "tipo",
-      header: "Tipo",
-      cell: (m) => <Badge variant={m.tipo === "pago" ? "success" : "accent"}>{m.tipo}</Badge>,
-    },
+    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-body">{fechaHoraDeApi(m.fecha)}</span> },
+    { key: "tipo", header: "Tipo", cell: (m) => <StatusBadge value={m.tipo} map={MOVIMIENTO_STATUS} /> },
+    { key: "metodo", header: "Método", cell: (m) => <span className="text-body">{metodoDePago(m.metodo)}</span> },
     { key: "valor", header: "Valor", align: "right", cell: (m) => formatCop(m.valor) },
-    { key: "metodo", header: "Método", cell: (m) => <span className="text-body">{m.metodo || "—"}</span> },
     {
       key: "acciones",
-      header: "Acciones",
+      header: <span className="sr-only">Acciones</span>,
       align: "right",
       cell: (m) => (m.tipo === "abono" ? <CreditDelete creditId={m.id} /> : null),
     },
@@ -153,102 +159,43 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
     <div className="flex flex-col gap-6">
       <PageHeader
         title={`${cliente.nombre} ${cliente.apellido}`.trim()}
+        despuesDelTitulo={<StatusBadge value={cliente.color_riesgo} map={RIESGO_STATUS} />}
         migasIntermedias={[
           { label: cliente.cartera, href: `/cobranza/carteras/${cliente.cartera_id}` },
           { label: "Clientes", href: `/cobranza/carteras/${cliente.cartera_id}/clientes` },
         ]}
-        description={`${cliente.cartera}${cliente.negocio ? ` · ${cliente.negocio}` : ""}${
-          cliente.telefono ? ` · ${cliente.telefono}` : ""
-        }`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <LoanFormDialog
-              clientId={cliente.id}
-              trigger={<Button variant="accent">Nuevo préstamo</Button>}
-            />
-            <Button asChild variant="outline">
-              <Link href={`/cobranza/carteras/${cliente.cartera_id}/clientes`}>← {cliente.cartera}</Link>
-            </Button>
-          </div>
-        }
+        description={datos.filter(Boolean).join(" · ") || undefined}
+        tabs={false}
+        actions={<LoanFormDialog clientId={cliente.id} trigger={<Button variant="accent">Nuevo préstamo</Button>} />}
       />
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={RIESGO_TONE[cliente.color_riesgo] ?? "neutral"}>
-          {RIESGO_LABEL[cliente.color_riesgo] ?? cliente.color_riesgo}
-        </Badge>
-        {cliente.tope_maximo_deuda > 0 && (
-          <span className="text-[13px] text-body">Tope de deuda: {formatCop(cliente.tope_maximo_deuda)}</span>
-        )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Préstamos" value={prestamos.length} />
-        <StatCard label="Saldo total" value={formatCop(saldoTotal)} />
-        <StatCard
-          label="Cuotas por pagar"
-          value={vencidas}
-          tone={vencidas > 0 ? "warning" : "success"}
-        />
-      </div>
 
       <ChangeActions cambios={cambios} />
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Préstamos</h2>
-        <DataTable
-          columns={loanColumns}
-          rows={prestamos}
-          getRowKey={(p) => p.id}
-          emptyTitle="Sin préstamos"
-          emptyDescription="Crea el primero con «Nuevo préstamo»."
-        />
-      </section>
-
-      {prestamos.some((p) => p.cuotas.length > 0) && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-semibold text-headline">Plan de cuotas</h2>
-          {prestamos.map((p) => (
-            <Card key={p.id}>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Préstamo del {formatDate(p.fecha_otorgado)} · {formatCop(p.valor)} ·{" "}
-                  {p.num_cuotas} cuotas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2 pt-0">
-                {p.cuotas.map((c) => (
-                  <InstallmentEditor
-                    key={c.id}
-                    installment={c}
-                    trigger={
-                      <button
-                        className="flex items-center gap-2 rounded-md border border-border-soft px-3 py-1.5 text-xs hover:bg-hover"
-                        type="button"
-                      >
-                        <Badge variant={c.estatus === "pagada" ? "success" : "neutral"}>
-                          {`#${c.numero}`}
-                        </Badge>
-                        <span className="text-body">{formatDate(c.vence)}</span>
-                        <span className="text-headline">{formatCop(c.valor)}</span>
-                      </button>
-                    }
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </section>
+      {prestamos.length === 0 ? (
+        <div className="rounded-lg border border-border-soft bg-surface">
+          <EmptyState title="Sin préstamos" description="Crea el primero con «Nuevo préstamo»." />
+        </div>
+      ) : (
+        prestamos.map((p) => <TarjetaDePrestamo key={p.id} prestamo={p} />)
       )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Movimientos</h2>
-        <DataTable
+      <section aria-labelledby="movimientos" className="flex flex-col gap-3">
+        <h2 id="movimientos" className="font-display text-sh-block text-headline">
+          Movimientos
+        </h2>
+        <TablaCobranza
+          etiqueta="Movimientos"
           columns={movementColumns}
           rows={movimientos}
           getRowKey={(m) => m.id}
           emptyTitle="Sin movimientos"
           emptyDescription="Los pagos y abonos registrados aparecerán aquí."
+          filaCelular={(m) => ({
+            titulo: MOVIMIENTO_STATUS[m.tipo]?.label ?? m.tipo,
+            detalle: `${fechaHoraDeApi(m.fecha)} · ${metodoDePago(m.metodo)}`,
+            fin: formatCop(m.valor),
+            accion: m.tipo === "abono" ? <CreditDelete creditId={m.id} /> : undefined,
+          })}
         />
       </section>
     </div>

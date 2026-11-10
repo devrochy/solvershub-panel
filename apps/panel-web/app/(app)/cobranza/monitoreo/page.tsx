@@ -1,11 +1,10 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
-import { StatCard } from "@/components/ui/stat-card";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ListPage } from "@/components/templates/list-page";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import { apiFetch } from "@/lib/api/server";
+import { formatNumber } from "@/lib/format";
 
-export const metadata = { title: "Monitoreo IA" };
+export const metadata = { title: "Actividad del agente" };
 
 type Monitoring = {
   conversaciones: number;
@@ -17,33 +16,42 @@ type Monitoring = {
 
 export default async function MonitoreoPage() {
   const res = await apiFetch<Monitoring>("/pack/cobranza/monitoring");
+  const header = { title: "Actividad del agente", description: "Lo que atendió el agente y cómo van las promesas de pago." };
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el monitoreo: {res.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudo cargar la actividad del agente" detalle={res.error} />
+      </ListPage>
     );
   }
   const m = res.data;
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Monitoreo IA"
-        description="Actividad del agente y estado de las promesas de pago."
-        actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/cobranza/promesas">Ver promesas</Link>
-          </Button>
-        }
-      />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="Conversaciones" value={m.conversaciones} />
-        <StatCard label="Escalaciones" value={m.escalaciones} tone={m.escalaciones > 0 ? "warning" : "default"} />
-        <StatCard label="Promesas pendientes" value={m.promesas_pendientes} />
-        <StatCard label="Promesas cumplidas" value={m.promesas_cumplidas} tone="success" />
-        <StatCard label="Promesas incumplidas" value={m.promesas_incumplidas} tone={m.promesas_incumplidas > 0 ? "danger" : "default"} />
-      </div>
-    </div>
+    <ListPage header={header}>
+      <section aria-label="Conversaciones" className="grid gap-4 sm:grid-cols-2">
+        <KpiTile label="Conversaciones" value={formatNumber(m.conversaciones)} href="/conversaciones" />
+        <KpiTile
+          label="Escalaciones"
+          value={formatNumber(m.escalaciones)}
+          tone={m.escalaciones > 0 ? "warning" : "default"}
+          href="/escalaciones?estado=pendiente"
+        />
+      </section>
+      <section aria-labelledby="promesas" className="flex flex-col gap-3">
+        <h2 id="promesas" className="font-display text-sh-block text-headline">
+          Promesas de pago
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <KpiTile label="Pendientes" value={formatNumber(m.promesas_pendientes)} href="/cobranza/promesas" />
+          <KpiTile label="Cumplidas" value={formatNumber(m.promesas_cumplidas)} tone="success" href="/cobranza/promesas?estado=cumplida" />
+          <KpiTile
+            label="Incumplidas"
+            value={formatNumber(m.promesas_incumplidas)}
+            tone={m.promesas_incumplidas > 0 ? "danger" : "default"}
+            href="/cobranza/promesas?estado=incumplida"
+          />
+        </div>
+      </section>
+    </ListPage>
   );
 }
