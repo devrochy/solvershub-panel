@@ -10,8 +10,10 @@ import {
   type ChartDatum,
   type ChartSeries,
 } from "@/components/dataviz";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { AgenteResumen, PuntoActividad, ResumenPorAgente } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
 import { rangoDePeriodo } from "@/lib/resumen/periodos";
@@ -20,7 +22,7 @@ import { cn } from "@/lib/utils";
 type Metrica = "turnos" | "conversaciones" | "costo";
 
 const METRICAS: { id: Metrica; label: string }[] = [
-  { id: "turnos", label: "Turnos" },
+  { id: "turnos", label: "Respuestas" },
   { id: "conversaciones", label: "Conversaciones" },
   { id: "costo", label: "Costo IA" },
 ];
@@ -49,6 +51,8 @@ export function ActividadDeAgentes({ datos }: { datos: ResumenPorAgente }) {
   const [metricaElegida, setMetricaElegida] = useState<Metrica>("turnos");
   const metrica: Metrica = metricaElegida === "costo" && !verCosto ? "turnos" : metricaElegida;
   const [ocultas, setOcultas] = useState<ReadonlySet<string>>(new Set());
+  // En el celular el gráfico arranca plegado: la evolución es para quien la busca.
+  const [verGrafico, setVerGrafico] = useState(false);
 
   const conActividad = useMemo(
     () =>
@@ -99,41 +103,38 @@ export function ActividadDeAgentes({ datos }: { datos: ResumenPorAgente }) {
     metrica === "costo"
       ? (v: number) => formatUsd(v, 2)
       : ("number" as const);
-  const etiquetaMetrica = METRICAS.find((m) => m.id === metrica)?.label ?? "Turnos";
+  const etiquetaMetrica = METRICAS.find((m) => m.id === metrica)?.label ?? "Respuestas";
 
   return (
     <section aria-labelledby="actividad-agentes" className="flex flex-col gap-3">
       <Card>
         <CardHeader className="gap-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle id="actividad-agentes">Evolución diaria</CardTitle>
-            <div role="group" aria-label="Métrica de la actividad" className="flex items-center gap-1">
-              {METRICAS.filter((m) => m.id !== "costo" || verCosto).map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-pressed={metrica === m.id}
-                  onClick={() => setMetricaElegida(m.id)}
-                  className={cn(
-                    "h-9 rounded-md px-3 text-sm transition-colors",
-                    metrica === m.id
-                      ? "bg-hover text-headline"
-                      : "text-body hover:bg-hover hover:text-headline",
-                  )}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
+            <CardTitle as="h2" id="actividad-agentes">Evolución diaria</CardTitle>
+            <SegmentedControl
+              label="Métrica de la actividad"
+              className={cn("w-full sm:w-96", !verGrafico && "max-md:hidden")}
+              value={metrica}
+              onChange={(valor) => setMetricaElegida(valor as Metrica)}
+              options={METRICAS.filter((m) => m.id !== "costo" || verCosto).map((m) => ({ value: m.id, label: m.label }))}
+            />
           </div>
           <CardDescription>
             <span className="font-mono text-xs tabular-nums">{rangoDePeriodo(datos.periodo)}</span> ·{" "}
-            {metrica === "costo"
-              ? "Costo de IA por día. El General incluye el Coordinador y lo no asignado."
-              : `${etiquetaMetrica} por día. El General incluye lo no asignado; los turnos del Coordinador van en el bloque del negocio.`}
+            {metrica === "costo" ? "Costo de IA por día." : `${etiquetaMetrica} por día.`}
           </CardDescription>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2 self-start md:hidden"
+            aria-expanded={verGrafico}
+            onClick={() => setVerGrafico((actual) => !actual)}
+          >
+            {verGrafico ? "Ocultar gráfico" : "Ver gráfico"}
+          </Button>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent className={cn("flex flex-col gap-3", !verGrafico && "max-md:hidden")}>
           {conActividad.length === 0 ? (
             <EmptyState
               title="Sin actividad en este período"
@@ -173,7 +174,7 @@ export function ActividadDeAgentes({ datos }: { datos: ResumenPorAgente }) {
               )}
               {conActividad.length > 4 && (
                 <p className="text-xs text-text-soft">
-                  Se dibujan los 4 agentes con más turnos; el resto se suma en «Otros» y sigue en su
+                  Se dibujan los 4 agentes con más respuestas; el resto se suma en «Otros» y sigue en su
                   tarjeta.
                 </p>
               )}

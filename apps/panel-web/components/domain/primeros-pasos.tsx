@@ -19,7 +19,7 @@ function IconoDeEstado({ estado }: { estado: PasoPrimerosPasos["estado"] }) {
   return <Circle className="h-5 w-5 shrink-0 text-text-soft" aria-hidden />;
 }
 
-function FilaDePaso({ paso }: { paso: PasoPrimerosPasos }) {
+function FilaDePaso({ paso, principal }: { paso: PasoPrimerosPasos; principal: boolean }) {
   const copia = copiaDelPaso(paso);
   const completo = paso.estado === "completo";
   return (
@@ -36,7 +36,7 @@ function FilaDePaso({ paso }: { paso: PasoPrimerosPasos }) {
         {completo ? (
           <Badge variant="success">{estadoPasoLabel(paso.estado)}</Badge>
         ) : paso.puede_actuar && copia.href ? (
-          <Button asChild size="sm" variant="outline">
+          <Button asChild size="sm" variant={principal ? "accent" : "outline"}>
             <Link href={copia.href}>{copia.accion}</Link>
           </Button>
         ) : paso.estado === "en_curso" ? (
@@ -68,6 +68,8 @@ export function PrimerosPasos({
   const [plegado, setPlegado] = useState(plegadoInicial);
   const listaId = useId();
   const porcentaje = porcentajeDeAvance(datos.completos, datos.total);
+  // Un solo botón principal: el siguiente paso que la persona puede resolver.
+  const siguiente = datos.pasos.find((p) => p.estado !== "completo" && p.puede_actuar && copiaDelPaso(p).href);
 
   function alternar() {
     const siguiente = !plegado;
@@ -82,16 +84,16 @@ export function PrimerosPasos({
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle id={`${listaId}-titulo`}>Primeros pasos</CardTitle>
+            <CardTitle as="h2" id={`${listaId}-titulo`}>Primeros pasos</CardTitle>
             <CardDescription>
               Deja tu asistente listo para atender. {datos.completos} de {datos.total} listos.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             {onVerRecorrido && (
               <Button id={idVerRecorrido} variant="ghost" size="sm" onClick={onVerRecorrido} type="button">
                 <Compass className="h-4 w-4" aria-hidden />
-                Ver recorrido
+                Ver recorrido del panel
               </Button>
             )}
             <Button
@@ -128,7 +130,7 @@ export function PrimerosPasos({
       <CardContent id={listaId} hidden={plegado}>
         <ol className="flex flex-col divide-y divide-border-soft">
           {datos.pasos.map((paso) => (
-            <FilaDePaso key={paso.clave} paso={paso} />
+            <FilaDePaso key={paso.clave} paso={paso} principal={paso === siguiente} />
           ))}
         </ol>
       </CardContent>

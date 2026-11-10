@@ -114,7 +114,7 @@ describe("PrimerosPasos (HU-SH-06)", () => {
   it("ofrece volver a ver el recorrido", () => {
     const verRecorrido = vi.fn();
     render(<PrimerosPasos datos={datos(PASOS)} onVerRecorrido={verRecorrido} />);
-    fireEvent.click(screen.getByRole("button", { name: "Ver recorrido" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ver recorrido del panel" }));
     expect(verRecorrido).toHaveBeenCalledOnce();
   });
 });

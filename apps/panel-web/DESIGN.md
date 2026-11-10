@@ -194,14 +194,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 
 | Sección | Qué lleva |
 |---|---|
-| Agente general | La cifra principal (`KpiTile size="hero"`: conversaciones con la tendencia diaria de todo el negocio), las demás cifras del negocio y, si hay, los módulos que ningún agente gestiona |
-| Evolución diaria | Una gráfica de líneas por agente con actividad; el selector de métrica (turnos, conversaciones, costo) va en el encabezado de la tarjeta |
-| Agentes | Una tarjeta plegable por agente (`<details>` nativo, la primera abierta). Plegada: nombre, dos cifras de su módulo y «Última actividad». Abierta: enlace «Ver agente», sus cifras y su módulo |
-| Conversaciones recientes · Estado del sistema | Dos tarjetas lado a lado, en ese orden. Recientes: avatar con iniciales (o el ícono del canal si el visitante no dio nombre), nombre, «hace X» y estado. Estado: agente, modelo, habilidades y «Costo IA · 30 días» con los días que le quedan al plan |
+| Te esperan | Columna fija a la derecha (desde 1280 px; en el celular va arriba de todo): quién espera a una persona, por qué y hace cuánto. Sin nadie esperando, en el celular no ocupa lugar |
+| Todo el negocio | La cifra principal (`KpiTile size="hero"`: conversaciones con la tendencia diaria de todo el negocio), las demás cifras del negocio y, si hay, los módulos que ningún agente gestiona. Una cifra sin datos no ocupa tarjeta: se dice en una línea |
+| Evolución diaria | Una gráfica de líneas por agente con actividad; el selector de métrica (respuestas, conversaciones, costo) va en el encabezado de la tarjeta; en el celular el gráfico arranca plegado |
+| Agentes | Una tarjeta plegable por agente (`<details>` nativo, la primera abierta en escritorio y todas plegadas en el celular). Plegada: nombre, dos cifras de su módulo y «Última actividad». Abierta: enlace «Ver agente», sus cifras y su módulo |
+| Conversaciones recientes · Tu asistente | Debajo de «Te esperan», en la columna derecha. Recientes: avatar con iniciales (o el ícono del canal si el visitante no dio nombre), nombre, «hace X» y estado. Tu asistente: agente, habilidades, «Costo IA, 30 días» y plan con sus días restantes; el modelo solo lo ve la plataforma |
 
-- Con el Resumen por agente, «Agente general» va **primero**; los primeros pasos y el recorrido (HU-SH-06) se intercalan justo debajo (`despuesDelGeneral`). Sin él, los pasos siguen arriba: es un negocio recién creado.
+- Con el Resumen por agente, «Todo el negocio» va **primero**; los primeros pasos y el recorrido (HU-SH-06) se intercalan justo debajo (`despuesDelGeneral`). Sin él, los pasos siguen arriba: es un negocio recién creado.
 - El nombre de un cliente sale de `lib/conversaciones/nombre.ts`, el mismo de la bandeja de Conversaciones: un visitante del chat web se lee «Visitante web · cf78», no `web:cf78…`.
-- El período (7, 15 o 30 días) gobierna todo y va en el encabezado de la página (`FilterChips`), no dentro de una tarjeta.
+- El período (7, 15 o 30 días) gobierna todo y va en el encabezado de la página (`SegmentedControl`), no dentro de una tarjeta.
 - Un agente gestiona **un solo módulo**. El Coordinador y el agente «General» no son tarjetas.
 - La insignia de tipo solo sale para **back-office**; «especialista» es lo normal y no se rotula.
 - Las cifras del título plegado salen de `lib/resumen/resumen-agente.ts`; un módulo que el panel no conoce muestra sus dos primeras.
@@ -214,8 +215,8 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 | Pieza | Regla |
 |---|---|
 | `components/domain/primeros-pasos.tsx` | Checklist del Resumen. El estado lo calcula el backend (`GET /admin/onboarding`); el panel solo traduce con `lib/primeros-pasos.ts` (sin claves ni motivos crudos). La acción de un paso se muestra solo si `puede_actuar`. Se pliega (`aria-expanded`); la preferencia va en la cookie `panel_pasos_plegados`, que lee el servidor: sin salto al cargar |
-| `components/domain/tour-guiado.tsx` + `lib/tour.ts` | Recorrido propio de 5 pasos (D-SPEC-12-1 = A, sin librerías). Diálogo sin fondo oscuro, abajo a la derecha, para que se vea lo resaltado (`data-tour` → outline cyan de 2 px, sin animación). Teclado: Tab dentro del diálogo, ← y → cambian de paso, Escape lo salta. Cada paso se anuncia (`role="status"`) y el foco vuelve a quien lo abrió. Cómo terminó queda en la cookie `panel_tour` |
-| `components/domain/bienvenida.tsx` | Primera visita: ofrece el recorrido («Empezar recorrido» / «Ahora no») mientras queden pasos |
+| `components/domain/tour-guiado.tsx` + `lib/tour.ts` | Recorrido propio de 5 pasos (D-SPEC-12-1 = A, sin librerías). Diálogo sin fondo oscuro, abajo a la derecha, para que se vea lo resaltado (`data-tour` → outline cyan de 2 px, sin animación). Teclado: Tab dentro del diálogo, ← y → cambian de paso, Escape lo salta. Cada paso se anuncia (`role="status"`) y el foco vuelve a quien lo abrió. |
+| `components/domain/bienvenida.tsx` | Un solo bloque mientras queden pasos: los primeros pasos, con «Ver recorrido del panel». El único botón principal es el siguiente paso |
 | `components/domain/invitaciones-pendientes.tsx` | Invitaciones que esperan respuesta, en el layout de `(app)`: aceptar deja el negocio activo; rechazar pide confirmación |
 | `components/domain/tarjeta-de-acceso.tsx` | Marco a fondo completo de las pantallas sin sesión: logo vertical, umbral degradado, formulario de 420 px y cambio de tema al pie. `/login`, `/invitacion` (el token llega en el fragmento `#` y se borra de la barra) y `/recuperar` |
 

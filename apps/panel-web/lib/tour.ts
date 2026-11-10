@@ -50,19 +50,7 @@ export const PASOS_DEL_TOUR: readonly PasoDelTour[] = [
   },
 ];
 
-/** Cookie no secreta: el recorrido ya se hizo o se saltó (se lee en el servidor, sin parpadeo). */
-export const TOUR_COOKIE = "panel_tour";
-
 export type FinDelTour = "completado" | "saltado";
-
-/** Se ofrece en la primera visita mientras queden primeros pasos. */
-export function debeOfrecerTour(cookie: string | null | undefined, hayPasosPendientes: boolean): boolean {
-  return hayPasosPendientes && cookie !== "completado" && cookie !== "saltado";
-}
-
-export function cookieDelTour(fin: FinDelTour): string {
-  return `${TOUR_COOKIE}=${fin}; path=/; max-age=31536000; samesite=lax`;
-}
 
 /** Índice siguiente; null al pasar del último (el recorrido termina). */
 export function pasoSiguiente(actual: number, total: number): number | null {

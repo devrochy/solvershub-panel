@@ -15,15 +15,22 @@ function con(parcial: Partial<Dashboard>): Dashboard {
 }
 
 describe("EstadoDelSistema", () => {
-  it("muestra el agente, el modelo, las habilidades y el costo de IA con los días del plan", () => {
-    render(<EstadoDelSistema d={con({ bot_paused: false, llm_label: "deepseek · deepseek-chat" })} />);
+  it("el modelo solo lo ve la plataforma", () => {
+    const d = con({ llm_label: "deepseek · deepseek-chat" });
+    const { rerender } = render(<EstadoDelSistema d={d} />);
+    expect(screen.queryByText("deepseek · deepseek-chat")).toBeNull();
+    rerender(<EstadoDelSistema d={d} esPlataforma />);
+    expect(screen.getByText("deepseek · deepseek-chat")).toBeTruthy();
+  });
+
+  it("muestra el agente, las habilidades, el costo de IA y el plan con sus días", () => {
+    render(<EstadoDelSistema d={con({ bot_paused: false })} />);
 
     expect(within(screen.getByRole("link", { name: /Agente/ })).getByText("Activo")).toBeTruthy();
-    expect(screen.getByText("deepseek · deepseek-chat")).toBeTruthy();
-    const costo = screen.getByRole("link", { name: /Costo IA · 30 días/ });
+    const costo = screen.getByRole("link", { name: /Costo IA, 30 días/ });
     expect(costo.getAttribute("href")).toBe("/costos");
     expect(within(costo).getByText(/12,40/)).toBeTruthy();
-    expect(within(costo).getByText("11 días restantes del plan")).toBeTruthy();
+    expect(within(screen.getByRole("link", { name: /Plan/ })).getByText("11 días restantes")).toBeTruthy();
   });
 
   it("un asistente pausado se marca como tal", () => {
@@ -33,8 +40,8 @@ describe("EstadoDelSistema", () => {
 
   it("sin plan o sin días restantes, no inventa el texto", () => {
     render(<EstadoDelSistema d={con({ billing: null })} />);
-    expect(screen.getByRole("link", { name: /Costo IA · 30 días/ })).toBeTruthy();
-    expect(screen.queryByText(/restantes del plan/)).toBeNull();
+    expect(screen.getByRole("link", { name: /Costo IA, 30 días/ })).toBeTruthy();
+    expect(screen.queryByText(/restantes/)).toBeNull();
   });
 
   it("dice «1 día» en singular", () => {
@@ -43,7 +50,7 @@ describe("EstadoDelSistema", () => {
         d={con({ billing: { plan_name: "Básico", status: "active", operational: true, days_left: 1, has_plan: true } })}
       />,
     );
-    expect(screen.getByText("1 día restante del plan")).toBeTruthy();
+    expect(screen.getByText("1 día restante")).toBeTruthy();
   });
 
   it("no tiene violaciones graves de accesibilidad", async () => {

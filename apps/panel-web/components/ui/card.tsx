@@ -20,11 +20,13 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardHeader.displayName = "CardHeader";
 
-const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("font-display text-base font-semibold", className)} {...props} />
-  ),
-);
+/** `as`: el nivel real del título en la página; por defecto, h3 dentro de una sección. */
+const CardTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & { as?: "h2" | "h3" }
+>(({ className, as: Titulo = "h3", ...props }, ref) => (
+  <Titulo ref={ref} className={cn("font-display text-sh-block", className)} {...props} />
+));
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<
