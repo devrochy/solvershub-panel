@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,6 @@ export function TourGuiado({
   const [volverA] = useState<HTMLElement | null>(() =>
     typeof document !== "undefined" && document.activeElement instanceof HTMLElement ? document.activeElement : null,
   );
-  const textoId = useId();
   const paso = pasos[indice];
   const ultimo = indice === pasos.length - 1;
   useResaltado(paso?.objetivo ?? null);
@@ -78,7 +77,6 @@ export function TourGuiado({
     <DialogPrimitive.Root open onOpenChange={(abierto) => !abierto && onTerminar("saltado")}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Content
-          aria-describedby={textoId}
           onKeyDown={onKeyDown}
           // El recorrido no se cierra por un clic suelto fuera: se salta a propósito.
           onPointerDownOutside={(event) => event.preventDefault()}
@@ -105,7 +103,7 @@ export function TourGuiado({
           <DialogPrimitive.Title className="mt-1 font-display text-base font-semibold text-headline">
             {paso.titulo}
           </DialogPrimitive.Title>
-          <DialogPrimitive.Description id={textoId} className="mt-2 text-sm leading-6 text-body">
+          <DialogPrimitive.Description className="mt-2 text-sm leading-6 text-body">
             {paso.texto}
           </DialogPrimitive.Description>
           <p className="sr-only" role="status" aria-live="polite">
