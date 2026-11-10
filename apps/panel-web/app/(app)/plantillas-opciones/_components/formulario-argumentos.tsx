@@ -5,8 +5,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionesAccion, OpcionesAccionDelCatalogo, OpcionesHallazgo, OpcionesVariable } from "@/lib/api/types";
 import { apuntaA, hallazgosDe, sinArgumento, sinVacios } from "@/lib/plantillas-opciones";
@@ -25,10 +25,15 @@ type ReportarError = (clave: string, mensaje: string | null) => void;
 
 const mismoValor = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
+const ORIGENES = [
+  { value: "fijo", label: "Lo escribo yo" },
+  { value: "contexto", label: "De la conversación" },
+];
+
 /**
  * Formulario de `args_fijos` generado desde el JSON Schema de la tool elegida (HU-OPC-06). Cada argumento
- * se marca como «valor fijo» (lo escribe el dueño) o «dato del contexto» (lo arma el servidor desde la
- * conversación): nunca sale del texto del cliente. Un schema que no sabe pintar cae a un editor JSON validado.
+ * dice de dónde sale (PLA-06): «Lo escribo yo» (valor fijo) o «De la conversación» (lo arma el servidor):
+ * nunca sale del texto del cliente. Un schema que no sabe pintar cae a un editor JSON validado.
  */
 export function FormularioArgumentos({
   ficha,
@@ -125,15 +130,14 @@ export function FormularioArgumentos({
                   {campo.requerido && <span className="text-status-danger-fg"> *<span className="sr-only">(obligatorio)</span></span>}
                 </label>
               )}
-              <span className="flex items-center gap-2 text-xs text-text-soft">
-                <span aria-hidden>{enContexto ? "Dato del contexto" : "Valor fijo"}</span>
-                <Switch
-                  checked={enContexto}
-                  disabled={disabled}
-                  aria-label={`${campo.titulo}: tomar el valor de un dato del contexto en vez de un valor fijo`}
-                  onCheckedChange={(v) => (v ? pasarAContexto(campo.nombre) : pasarAFijo(campo.nombre))}
+              {!disabled && (
+                <SegmentedControl
+                  label={`De dónde sale ${campo.titulo}`}
+                  options={ORIGENES}
+                  value={enContexto ? "contexto" : "fijo"}
+                  onChange={(v) => (v === "contexto" ? pasarAContexto(campo.nombre) : pasarAFijo(campo.nombre))}
                 />
-              </span>
+              )}
             </div>
             {campo.ayuda && <p className="text-xs text-text-soft">{campo.ayuda}</p>}
             {enContexto ? (
@@ -183,7 +187,7 @@ function SelectorDeVariable({
       <option value="">Elige el dato…</option>
       {variables.map((v) => (
         <option key={v.ruta} value={v.ruta}>
-          {v.descripcion} ({v.ruta})
+          {v.descripcion}
         </option>
       ))}
       {!conocida && <option value={value}>{value} (ya no está disponible)</option>}
@@ -511,7 +515,7 @@ function FilasDeContexto({
             <option value="">Elige el dato…</option>
             {variables.map((v) => (
               <option key={v.ruta} value={v.ruta}>
-                {v.descripcion} ({v.ruta})
+                {v.descripcion}
               </option>
             ))}
           </Select>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { HealthConnectionMeta, Me, OpcionesAccionDelCatalogo, OpcionesPlantilla, OpcionesVariable } from "@/lib/api/types";
@@ -33,16 +33,12 @@ export default async function EditorDePlantillaPage({ params }: { params: Promis
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Plantilla con opciones"
-          breadcrumbs={[{ label: "Plantillas de WhatsApp", href: "/plantillas" }, { label: "Plantillas con opciones", href: "/plantillas-opciones" }, { label: clave }]}
+          breadcrumbs={[{ label: "Mensajes", href: "/mensajes" }, { label: "Plantillas con opciones", href: "/plantillas-opciones" }]}
         />
         {esBanderaApagada(falla) ? (
           <SinBandera enlaceActivar={enlaceActivar} />
         ) : (
-          <Card>
-            <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-              No se pudo cargar la plantilla: {falla.error}
-            </CardContent>
-          </Card>
+          <ErrorDeCarga titulo="No pudimos cargar la plantilla" detalle={falla.error} />
         )}
       </div>
     );

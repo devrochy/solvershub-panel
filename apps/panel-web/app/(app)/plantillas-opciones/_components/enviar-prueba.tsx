@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SearchInput } from "@/components/ui/search-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ConversationSummary, OpcionesPrueba } from "@/lib/api/types";
 import { canalLabel } from "@/lib/labels";
 import { claveDeIdempotencia, mensajeDeEnvio, resumenDePrueba } from "@/lib/plantillas-opciones";
@@ -16,19 +17,21 @@ type Conversaciones = { items: ConversationSummary[] };
 
 /**
  * Enviar prueba (HU-OPC-06): manda la versión publicada a UNA conversación del propio negocio. Es un mensaje
- * real a un cliente real, así que pide una confirmación explícita. La clave de idempotencia nace al abrir el
- * diálogo: reintentar tras un fallo no duplica el envío; abrirlo de nuevo es otro intento.
+ * real a un cliente real, así que pide una confirmación explícita. Quien lo usa lo monta al abrirlo («Más acciones»)
+ * y lo desmonta al cerrar (`onCerrar`): la clave de idempotencia nace con el diálogo, así reintentar tras un fallo
+ * no duplica el envío y abrirlo de nuevo es otro intento.
  */
 export function EnviarPrueba({
   clave,
   version,
   hayCambiosSinPublicar,
+  onCerrar,
 }: {
   clave: string;
   version: number | null;
   hayCambiosSinPublicar: boolean;
+  onCerrar: () => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
   const [q, setQ] = useState("");
   const [lista, setLista] = useState<ConversationSummary[] | null>(null);
   const [errorLista, setErrorLista] = useState<string | null>(null);
@@ -37,20 +40,9 @@ export function EnviarPrueba({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<OpcionesPrueba | null>(null);
-  const intento = useRef<string>("");
-
-  function abrir() {
-    intento.current = claveDeIdempotencia();
-    setQ("");
-    setElegida(null);
-    setEntendido(false);
-    setError(null);
-    setResultado(null);
-    setAbierto(true);
-  }
+  const [intento] = useState(() => claveDeIdempotencia());
 
   useEffect(() => {
-    if (!abierto) return;
     const control = new AbortController();
     const espera = setTimeout(async () => {
       try {
@@ -70,27 +62,22 @@ export function EnviarPrueba({
       clearTimeout(espera);
       control.abort();
     };
-  }, [abierto, q]);
+  }, [q]);
 
   const enviar = useCallback(async () => {
     if (!elegida || !entendido) return;
     setEnviando(true);
     setError(null);
-    const res = await opcionesApi.enviarPrueba(clave, { conversation_id: elegida, clave_idempotencia: intento.current });
+    const res = await opcionesApi.enviarPrueba(clave, { conversation_id: elegida, clave_idempotencia: intento });
     setEnviando(false);
     if (res.ok) setResultado(res.data);
     else setError(mensajeDeEnvio(res));
-  }, [clave, elegida, entendido]);
+  }, [clave, elegida, entendido, intento]);
 
   const elegidaFila = lista?.find((c) => c.id === elegida);
 
   return (
-    <>
-      <Button type="button" variant="outline" onClick={abrir}>
-        <Send className="h-4 w-4" aria-hidden />
-        Enviar prueba
-      </Button>
-      <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog open onOpenChange={(o) => !o && onCerrar()}>
         <DialogContent
           title="Enviar una prueba"
           description={`Se envía la versión${version ? ` ${version}` : ""} publicada a una conversación de tu negocio.`}
@@ -102,7 +89,7 @@ export function EnviarPrueba({
                 {resultado.ya_enviado ? "Listo." : "Mensaje enviado."} {resumenDePrueba(resultado)}
               </p>
               <div className="flex justify-end">
-                <Button type="button" onClick={() => setAbierto(false)}>
+                <Button type="button" onClick={onCerrar}>
                   Cerrar
                 </Button>
               </div>
@@ -123,7 +110,13 @@ export function EnviarPrueba({
                   </p>
                 )}
                 {lista && lista.length === 0 && !errorLista && <p className="text-sm text-text-soft">No hay conversaciones que coincidan.</p>}
-                {lista === null && !errorLista && <p className="text-sm text-text-soft">Cargando conversaciones…</p>}
+                {lista === null && !errorLista && (
+                  <div role="status" aria-label="Cargando las conversaciones" className="flex flex-col gap-2">
+                    {[0, 1, 2].map((i) => (
+                      <Skeleton key={i} className="h-14 w-full rounded-md" />
+                    ))}
+                  </div>
+                )}
                 {lista?.map((c) => (
                   <label
                     key={c.id}
@@ -171,7 +164,7 @@ export function EnviarPrueba({
                 </p>
               )}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>
+                <Button type="button" variant="ghost" onClick={onCerrar}>
                   Cancelar
                 </Button>
                 <Button type="button" variant="accent" loading={enviando} disabled={!elegida || !entendido} onClick={enviar}>
@@ -181,7 +174,6 @@ export function EnviarPrueba({
             </div>
           )}
         </DialogContent>
-      </Dialog>
-    </>
+    </Dialog>
   );
 }

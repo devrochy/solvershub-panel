@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -11,8 +11,12 @@ import { Input } from "@/components/ui/input";
 import { CLAVE_VALIDA, claveDesdeNombre, esBanderaApagada, esLimiteDePlantillas } from "@/lib/plantillas-opciones";
 import { opcionesApi } from "@/lib/plantillas-opciones-cliente";
 import { toast } from "@/lib/toast-store";
+import { cn } from "@/lib/utils";
 
-/** «Nueva plantilla»: pide el nombre (la clave sale de él) y abre el editor con un borrador vacío. */
+/**
+ * «Nueva plantilla»: pide el nombre y abre el editor con un borrador vacío. La clave sale del nombre y queda
+ * plegada en «Avanzado» (PLA-04); se abre sola si hay que corregirla.
+ */
 export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => void }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -22,6 +26,7 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
   const [error, setError] = useState<string | null>(null);
   const [errorClave, setErrorClave] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);
+  const [avanzado, setAvanzado] = useState(false);
 
   function abrir() {
     setNombre("");
@@ -29,6 +34,7 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
     setClaveEditada(false);
     setError(null);
     setErrorClave(null);
+    setAvanzado(false);
     setAbierto(true);
   }
 
@@ -47,6 +53,7 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
     }
     if (!CLAVE_VALIDA.test(clave)) {
       setErrorClave("La clave admite minúsculas, números y guion bajo (hasta 40).");
+      setAvanzado(true);
       return;
     }
     setCreando(true);
@@ -62,7 +69,10 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
       onBanderaApagada?.();
       return;
     }
-    if (res.code === "clave_repetida") setErrorClave("Ya tienes una plantilla con esa clave. Cámbiala para continuar.");
+    if (res.code === "clave_repetida") {
+      setErrorClave("Ya tienes una plantilla con esa clave. Cámbiala para continuar.");
+      setAvanzado(true);
+    }
     else if (esLimiteDePlantillas(res)) setError(`${res.mensaje} Elimina o retira alguna que ya no uses.`);
     else setError(res.mensaje);
   }
@@ -74,29 +84,43 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
         Nueva plantilla
       </Button>
       <Dialog open={abierto} onOpenChange={setAbierto}>
-        <DialogContent title="Nueva plantilla con opciones" description="Después armas el mensaje, sus botones y lo que hace cada uno.">
+        <DialogContent title="Nueva plantilla con opciones" description="Ponle un nombre. Después armas el mensaje, sus botones y lo que hace cada uno.">
           <form onSubmit={crear} className="flex flex-col gap-4" noValidate>
             <Field label="Nombre" htmlFor="nueva-nombre" required help="Es para ti: tus clientes no lo ven.">
               <Input id="nueva-nombre" value={nombre} maxLength={120} autoFocus placeholder="Ej.: Confirmar cita" onChange={(e) => cambiarNombre(e.target.value)} />
             </Field>
-            <Field
-              label="Clave"
-              htmlFor="nueva-clave"
-              required
-              help="La usa el sistema para identificarla. No se puede cambiar después."
-              error={errorClave ?? undefined}
+            <button
+              type="button"
+              aria-expanded={avanzado}
+              aria-controls="nueva-avanzado"
+              onClick={() => setAvanzado((v) => !v)}
+              className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2.5 text-left text-sm text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <Input
-                id="nueva-clave"
-                className="font-mono"
-                value={clave}
-                maxLength={40}
-                onChange={(e) => {
-                  setClaveEditada(true);
-                  setClave(e.target.value.toLowerCase());
-                }}
-              />
-            </Field>
+              Avanzado: clave de la plantilla
+              <ChevronDown aria-hidden className={cn("h-4 w-4 text-text-soft transition-transform duration-150", avanzado && "rotate-180")} />
+            </button>
+            {avanzado && (
+              <div id="nueva-avanzado">
+                <Field
+                  label="Clave"
+                  htmlFor="nueva-clave"
+                  required
+                  help="Sale del nombre y la usa el sistema para identificarla. No se puede cambiar después."
+                  error={errorClave ?? undefined}
+                >
+                  <Input
+                    id="nueva-clave"
+                    className="font-mono"
+                    value={clave}
+                    maxLength={40}
+                    onChange={(e) => {
+                      setClaveEditada(true);
+                      setClave(e.target.value.toLowerCase());
+                    }}
+                  />
+                </Field>
+              </div>
+            )}
             {error && (
               <p role="alert" className="text-sm text-status-danger-fg">
                 {error}

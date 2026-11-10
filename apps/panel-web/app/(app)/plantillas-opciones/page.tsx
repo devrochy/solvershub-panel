@@ -1,5 +1,5 @@
 import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
-import { Card, CardContent } from "@/components/ui/card";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, OpcionesPlantillaResumen } from "@/lib/api/types";
@@ -11,7 +11,7 @@ import { SinBandera } from "./_components/sin-bandera";
 
 export const metadata = { title: "Plantillas con opciones" };
 
-const MIGAS = [{ label: "Plantillas de WhatsApp", href: "/plantillas" }, { label: "Plantillas con opciones" }];
+const MIGAS = [{ label: "Mensajes", href: "/mensajes" }, { label: "Plantillas con opciones" }];
 
 export default async function PlantillasConOpcionesPage() {
   const [res, me] = await Promise.all([
@@ -28,11 +28,7 @@ export default async function PlantillasConOpcionesPage() {
         {esBanderaApagada(res) ? (
           <SinBandera enlaceActivar={enlaceActivar} />
         ) : (
-          <Card>
-            <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-              No se pudieron cargar las plantillas: {res.error}
-            </CardContent>
-          </Card>
+          <ErrorDeCarga titulo="No pudimos cargar las plantillas" detalle={res.error} />
         )}
       </div>
     );
@@ -43,7 +39,7 @@ export default async function PlantillasConOpcionesPage() {
       plantillas={res.data.plantillas}
       puedeEscribir={me.ok && puedeEscribirOpciones(me.data)}
       enlaceActivar={enlaceActivar}
-      banner={<MissingTemplatesBanner />}
+      banner={<MissingTemplatesBanner enLaPagina="opciones" />}
     />
   );
 }

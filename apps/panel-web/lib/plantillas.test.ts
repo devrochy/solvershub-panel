@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   CANALES_DE_TEXTO,
   admiteTextoPorCanal,
+  avisosPorModulo,
   claveDePlantilla,
+  datosEnPalabras,
+  estadoDeAviso,
   eventoLabel,
   faltantes,
   mapeoParaApi,
@@ -83,5 +86,38 @@ describe("texto por canal de los avisos por evento (ADR-0178 D2)", () => {
     });
     expect(textosPorCanalParaApi("subscription.paused", textos)).toEqual({ messenger_meta: "Hola" });
     expect(textosPorCanalParaApi("subscription.paused", {})).toEqual({});
+  });
+});
+
+describe("lista de avisos por evento (PLA-07 y PLA-08)", () => {
+  const vacio = { plantilla: "", respaldo: "", porCanal: {} };
+
+  it("dice qué le llega al cliente con lo configurado", () => {
+    expect(estadoDeAviso({ ...vacio, plantilla: "cobro_nuevo|es" })).toMatchObject({ etiqueta: "Con plantilla", tono: "success" });
+    expect(estadoDeAviso({ ...vacio, respaldo: "Hola" })).toMatchObject({ etiqueta: "Solo dentro de 24 horas", tono: "warning" });
+    expect(estadoDeAviso({ ...vacio, porCanal: { webchat: "  " } })).toMatchObject({ etiqueta: "Sin aviso", tono: "neutral" });
+  });
+
+  it("cuenta los canales con texto propio", () => {
+    expect(estadoDeAviso({ ...vacio, porCanal: { webchat: "Hola" } }).detalle).toBe("Fuera de las 24 horas no sale · 1 canal con texto propio");
+    expect(estadoDeAviso({ ...vacio, plantilla: "x|es", porCanal: { webchat: "a", instagram_meta: "b" } }).detalle).toMatch(/2 canales con texto propio$/);
+  });
+
+  it("agrupa por módulo en el orden en que llegan", () => {
+    const grupos = avisosPorModulo([
+      { event: "appointment.reminder" },
+      { event: "subscription.charge_created" },
+      { event: "appointment.no_show" },
+      { event: "otro.evento" },
+    ]);
+    expect(grupos.map((g) => [g.modulo, g.eventos.length])).toEqual([
+      ["Agenda", 2],
+      ["Suscripciones", 1],
+      ["Otros avisos", 1],
+    ]);
+  });
+
+  it("nombra los datos del aviso en palabras", () => {
+    expect(datosEnPalabras({ "cliente.nombre": "Nombre del cliente", "cita.fecha": "Fecha de la cita" })).toBe("Nombre del cliente, Fecha de la cita");
   });
 });

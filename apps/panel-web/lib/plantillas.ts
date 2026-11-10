@@ -146,3 +146,45 @@ export function textosPorCanalParaApi(evento: string, textos: Record<string, str
   }
   return salida;
 }
+
+/** Módulo de cada aviso, para agruparlos como el menú (PLA-08). */
+export function moduloDeEvento(evento: string): string {
+  if (evento.startsWith("subscription.")) return "Suscripciones";
+  if (evento.startsWith("appointment.")) return "Agenda";
+  return "Otros avisos";
+}
+
+/** Los avisos en grupos por módulo, en el orden en que llegan. */
+export function avisosPorModulo<T extends { event: string }>(eventos: readonly T[]): { modulo: string; eventos: T[] }[] {
+  const grupos: { modulo: string; eventos: T[] }[] = [];
+  for (const ev of eventos) {
+    const modulo = moduloDeEvento(ev.event);
+    let grupo = grupos.find((g) => g.modulo === modulo);
+    if (!grupo) {
+      grupo = { modulo, eventos: [] };
+      grupos.push(grupo);
+    }
+    grupo.eventos.push(ev);
+  }
+  return grupos;
+}
+
+export type EstadoDeAviso = { etiqueta: string; tono: "success" | "warning" | "neutral"; detalle: string };
+
+/**
+ * Qué le llega al cliente con lo configurado (PLA-07): con plantilla aprobada sale siempre; con solo texto,
+ * únicamente a quien escribió en las últimas 24 horas; sin nada, no sale.
+ */
+export function estadoDeAviso(aviso: { plantilla: string; respaldo: string; porCanal: Record<string, string> }): EstadoDeAviso {
+  const canales = Object.values(aviso.porCanal).filter((t) => t.trim()).length;
+  const conCanales = canales > 0 ? ` · ${canales === 1 ? "1 canal" : `${canales} canales`} con texto propio` : "";
+  if (aviso.plantilla) return { etiqueta: "Con plantilla", tono: "success", detalle: `Sale también fuera de las 24 horas${conCanales}` };
+  if (aviso.respaldo.trim() || canales > 0)
+    return { etiqueta: "Solo dentro de 24 horas", tono: "warning", detalle: `Fuera de las 24 horas no sale${conCanales}` };
+  return { etiqueta: "Sin aviso", tono: "neutral", detalle: "Sin plantilla ni texto" };
+}
+
+/** «Nombre del cliente, Monto del cargo»: los datos que admite un aviso, en palabras (PLA-05). */
+export function datosEnPalabras(variables: Record<string, string>): string {
+  return Object.values(variables).join(", ");
+}

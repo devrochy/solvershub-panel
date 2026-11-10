@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FlaskConical, Plus } from "lucide-react";
+import { ChevronDown, Eye, Plus } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenuExternalLinkItem, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
@@ -40,6 +43,7 @@ import {
   sincronizarVariables,
 } from "@/lib/plantillas-opciones";
 import { opcionesApi } from "@/lib/plantillas-opciones-cliente";
+import { nombreEnMeta } from "@/lib/plantillas-opciones-meta";
 import { toast } from "@/lib/toast-store";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +65,10 @@ const esAborto = (e: unknown) => e instanceof DOMException && e.name === "AbortE
  * Editor de una plantilla con opciones (HU-OPC-06): cuerpo y pie con variables, opciones reordenables con su
  * acción y su formulario de argumentos, y una vista previa viva. Valida en vivo con `POST /validar`: los
  * hallazgos salen junto al campo de su `path` y mientras haya errores no se puede publicar.
+ *
+ * Rediseño A (PLA-01 a PLA-04): Publicar es la acción principal y lo demás va en «Más acciones»; las opciones
+ * se pliegan y se abren de a una; la vista previa queda fija al lado (en el celular, «Ver cómo queda»); la
+ * clave y los nombres en Meta quedan en «Avanzado».
  */
 export function EditorDePlantilla({
   inicial,
@@ -91,6 +99,10 @@ export function EditorDePlantilla({
   const [guardada, setGuardada] = useState(() => firma(inicial.nombre, def));
   const [ocupado, setOcupado] = useState<Ocupado>(null);
   const [banderaApagada, setBanderaApagada] = useState(false);
+  const [abierta, setAbierta] = useState<string | null>(() => def.opciones[0]?.id ?? null);
+  const [probando, setProbando] = useState(false);
+  const [verVista, setVerVista] = useState(false);
+  const [avanzado, setAvanzado] = useState(false);
 
   // Validación y vista previa en vivo.
   const [hallazgos, setHallazgos] = useState<OpcionesHallazgo[]>([]);
@@ -275,20 +287,53 @@ export function EditorDePlantilla({
   const sinPublicar = plantilla.estado === "published" && plantilla.tiene_borrador_sin_publicar;
   const titulo = nombre.trim() || clave;
   const deshabilitado = !puedeEscribir || ocupado !== null;
+  const publicada = plantilla.estado === "published";
+
+  function agregarOpcion() {
+    const nueva = opcionNueva(def.opciones);
+    cambiarDef((d) => ({ ...d, opciones: [...d.opciones, nueva] }));
+    setAbierta(nueva.id);
+  }
+
+  const vistaPrevia = (
+    <VistaPreviaTelefono
+      vista={vista}
+      cargando={cargandoVista || validando}
+      desactualizada={vistaVieja && errores}
+      motivoSinVista={errores ? "Corrige los errores marcados para ver cómo se verá." : undefined}
+    />
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={titulo}
-        description="Un mensaje con botones: cada opción ejecuta una acción de tu asistente al tocarla, sin esperar una respuesta del asistente."
         breadcrumbs={[
-          { label: "Plantillas de WhatsApp", href: "/plantillas" },
+          { label: "Mensajes", href: "/mensajes" },
           { label: "Plantillas con opciones", href: "/plantillas-opciones" },
-          { label: titulo },
         ]}
         actions={
           puedeEscribir ? (
             <>
+              <MenuDeFila etiqueta="Más acciones">
+                {publicada && <DropdownMenuItem onSelect={() => setProbando(true)}>Enviar una prueba</DropdownMenuItem>}
+                {publicada && (
+                  // Pestaña nueva: no se pierden los cambios sin guardar. Prueba la versión publicada, como «Enviar una prueba».
+                  <DropdownMenuExternalLinkItem href={`/asistente?plantilla=${encodeURIComponent(clave)}`} avisoNuevaPestana="se abre en una pestaña nueva">
+                    Probar con el asistente
+                  </DropdownMenuExternalLinkItem>
+                )}
+                {publicada && <DropdownMenuSeparator />}
+                {publicada ? (
+                  <DropdownMenuItem tone="danger" disabled={deshabilitado} onSelect={() => void retirar()}>
+                    Retirar la plantilla
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem tone="danger" disabled={deshabilitado} onSelect={() => void eliminar()}>
+                    Eliminar la plantilla
+                  </DropdownMenuItem>
+                )}
+              </MenuDeFila>
               <Button type="button" variant="outline" loading={ocupado === "guardando"} disabled={deshabilitado || !dirty} onClick={() => guardar()}>
                 Guardar borrador
               </Button>
@@ -301,32 +346,13 @@ export function EditorDePlantilla({
               >
                 Publicar
               </Button>
-              {plantilla.estado === "published" && (
-                <EnviarPrueba clave={clave} version={plantilla.version_vigente} hayCambiosSinPublicar={sinPublicar || dirty} />
-              )}
-              {plantilla.estado === "published" && (
-                // Pestaña nueva: no se pierden los cambios sin guardar. Prueba la versión publicada, como «Enviar prueba».
-                <Button asChild variant="outline">
-                  <Link href={`/asistente?plantilla=${encodeURIComponent(clave)}`} target="_blank" rel="noopener">
-                    <FlaskConical className="h-4 w-4" aria-hidden />
-                    Probar en el playground
-                  </Link>
-                </Button>
-              )}
-              {plantilla.estado === "published" && (
-                <Button type="button" variant="ghost" loading={ocupado === "retirando"} disabled={deshabilitado} onClick={retirar}>
-                  Retirar
-                </Button>
-              )}
-              {plantilla.estado !== "published" && (
-                <Button type="button" variant="ghost" loading={ocupado === "eliminando"} disabled={deshabilitado} onClick={eliminar}>
-                  Eliminar
-                </Button>
-              )}
             </>
           ) : undefined
         }
       />
+      {probando && (
+        <EnviarPrueba clave={clave} version={plantilla.version_vigente} hayCambiosSinPublicar={sinPublicar || dirty} onCerrar={() => setProbando(false)} />
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={plantilla.estado === "published" ? "success" : plantilla.estado === "retired" ? "warning" : "neutral"}>
@@ -340,7 +366,16 @@ export function EditorDePlantilla({
             {motivoNoPublicar}
           </p>
         )}
+        <Button type="button" variant="outline" size="sm" className="ml-auto lg:hidden" onClick={() => setVerVista(true)}>
+          <Eye className="h-4 w-4" aria-hidden />
+          Ver cómo queda
+        </Button>
       </div>
+      <Dialog open={verVista} onOpenChange={setVerVista}>
+        <DialogContent title="Cómo queda" description="Así lo verá el cliente.">
+          {vistaPrevia}
+        </DialogContent>
+      </Dialog>
 
       {!puedeEscribir && (
         <p className="rounded-md bg-surface-2 p-3 text-sm text-body">
@@ -358,10 +393,7 @@ export function EditorDePlantilla({
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardContent className="flex flex-col gap-5 pt-5">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="nombre-plantilla" className="text-[13px] font-medium text-body">
-                  Nombre
-                </label>
+              <Field label="Nombre" htmlFor="nombre-plantilla" help="Es para ti: tus clientes no lo ven.">
                 <Input
                   id="nombre-plantilla"
                   value={nombre}
@@ -370,10 +402,7 @@ export function EditorDePlantilla({
                   placeholder="Ej.: Confirmar cita"
                   onChange={(e) => setNombre(e.target.value)}
                 />
-                <p className="text-xs text-text-soft">
-                  Es para ti: tus clientes no lo ven. Clave: <span className="font-mono">{clave}</span>
-                </p>
-              </div>
+              </Field>
 
               <TextoConChips
                 label="Mensaje"
@@ -383,10 +412,10 @@ export function EditorDePlantilla({
                 rows={5}
                 disabled={!puedeEscribir}
                 chips={variables.map((v) => ({ etiqueta: v.descripcion, texto: `{${v.ruta}}`, ayuda: `Se reemplaza por: ${v.descripcion}` }))}
-                chipsLabel="Insertar dato del cliente"
+                chipsLabel="Agregar un dato"
                 hallazgos={[...grupos.cuerpo, ...grupos.variables]}
                 placeholder="Ej.: Hola {cliente.nombre}, ¿confirmas tu cita de mañana?"
-                help="Escribe el mensaje y toca un dato para insertarlo donde está el cursor."
+                help="Toca un dato para ponerlo donde está el cursor; en la vista previa se ve con un ejemplo."
               />
 
               <div className="flex flex-col gap-1.5">
@@ -413,20 +442,22 @@ export function EditorDePlantilla({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="vigencia-plantilla" className="text-[13px] font-medium text-body">
-                    Horas que pueden tocarse las opciones
-                  </label>
-                  <Input
-                    id="vigencia-plantilla"
-                    type="number"
-                    min={1}
-                    max={MAX_TTL_HORAS}
-                    value={def.ttl_horas}
-                    disabled={!puedeEscribir}
-                    aria-invalid={grupos.vigencia.some((h) => h.severity === "error") || undefined}
-                    onChange={(e) => cambiarDef((d) => ({ ...d, ttl_horas: Number(e.target.value) || 0 }))}
-                  />
-                  <p className="text-xs text-text-soft">De 1 a {MAX_TTL_HORAS} horas desde que se envía. Después, el cliente recibe «vencido».</p>
+                  <Field
+                    label="Horas que pueden tocarse las opciones"
+                    htmlFor="vigencia-plantilla"
+                    help={`De 1 a ${MAX_TTL_HORAS} horas desde que se envía. Después, el cliente recibe «vencido».`}
+                  >
+                    <Input
+                      id="vigencia-plantilla"
+                      type="number"
+                      min={1}
+                      max={MAX_TTL_HORAS}
+                      value={def.ttl_horas}
+                      disabled={!puedeEscribir}
+                      aria-invalid={grupos.vigencia.some((h) => h.severity === "error") || undefined}
+                      onChange={(e) => cambiarDef((d) => ({ ...d, ttl_horas: Number(e.target.value) || 0 }))}
+                    />
+                  </Field>
                   <MensajesDeCampo hallazgos={grupos.vigencia} />
                 </div>
                 <div className="flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
@@ -451,12 +482,12 @@ export function EditorDePlantilla({
             </CardContent>
           </Card>
 
-          <section aria-label="Opciones" className="flex flex-col gap-4">
+          <section aria-label="Opciones" className="flex flex-col gap-3">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="font-display text-base font-semibold text-headline">
-                Opciones <span className="font-sans text-sm font-normal text-text-soft tabular-nums">({def.opciones.length}/{MAX_OPCIONES})</span>
+              <h2 className="font-display text-sh-block text-headline">
+                Opciones <span className="font-sans text-sm font-normal text-text-soft tabular-nums">{def.opciones.length} de {MAX_OPCIONES}</span>
               </h2>
-              <p className="text-xs text-text-soft">Hasta 3 salen como botones; de 4 a 10, como una lista.</p>
+              <p className="text-xs text-text-soft">Hasta 3 salen como botones; de 4 a 10, como una lista. Toca una para editarla.</p>
             </div>
             <MensajesDeCampo hallazgos={grupos.lista} />
             {def.opciones.map((opcion, i) => (
@@ -473,6 +504,8 @@ export function EditorDePlantilla({
                 onChange={(o) => cambiarOpcion(i, o)}
                 onMover={(dir) => cambiarDef((d) => ({ ...d, opciones: moverOpcion(d.opciones, i, i + dir) }))}
                 onQuitar={() => cambiarDef((d) => ({ ...d, opciones: d.opciones.filter((_, j) => j !== i) }))}
+                abierta={abierta === opcion.id}
+                onAlternar={() => setAbierta((actual) => (actual === opcion.id ? null : opcion.id))}
               />
             ))}
             {puedeEscribir && (
@@ -481,7 +514,7 @@ export function EditorDePlantilla({
                   type="button"
                   variant="outline"
                   disabled={def.opciones.length >= MAX_OPCIONES}
-                  onClick={() => cambiarDef((d) => ({ ...d, opciones: [...d.opciones, opcionNueva(d.opciones)] }))}
+                  onClick={agregarOpcion}
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Agregar opción
@@ -497,19 +530,45 @@ export function EditorDePlantilla({
             puedeEscribir={puedeEscribir}
             onActualizar={recargar}
             onBanderaApagada={() => setBanderaApagada(true)}
+            etiquetasDeDatos={Object.fromEntries(variables.map((v) => [v.ruta, v.descripcion]))}
           />
+
+          <section className="flex flex-col gap-3">
+            <button
+              type="button"
+              aria-expanded={avanzado}
+              aria-controls="avanzado-plantilla"
+              onClick={() => setAvanzado((v) => !v)}
+              className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2.5 text-left text-sm text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              Avanzado: clave y nombres en Meta
+              <ChevronDown aria-hidden className={cn("h-4 w-4 text-text-soft transition-transform duration-150", avanzado && "rotate-180")} />
+            </button>
+            {avanzado && (
+              <dl id="avanzado-plantilla" className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+                <dt className="text-text-soft">Clave</dt>
+                <dd className="m-0 font-mono text-body">{clave}</dd>
+                <dt className="text-text-soft">Nombres en Meta</dt>
+                <dd className="m-0 text-body">
+                  {plantilla.versiones.length === 0 ? (
+                    <>Cada versión tendrá el suyo, como <span className="font-mono">{nombreEnMeta(clave, 1)}</span>.</>
+                  ) : (
+                    plantilla.versiones.map((v) => (
+                      <span key={v.version_n} className="block">
+                        Versión {v.version_n}: <span className="font-mono">{v.meta?.nombre ?? nombreEnMeta(clave, v.version_n)}</span>
+                      </span>
+                    ))
+                  )}
+                </dd>
+              </dl>
+            )}
+          </section>
         </div>
 
-        <aside className="flex flex-col gap-3 lg:sticky lg:top-24">
-          <VistaPreviaTelefono
-            vista={vista}
-            cargando={cargandoVista || validando}
-            desactualizada={vistaVieja && errores}
-            motivoSinVista={errores ? "Corrige los errores marcados para ver cómo se verá." : undefined}
-          />
+        <aside className="flex flex-col gap-3 max-lg:hidden lg:sticky lg:top-4" aria-label="Vista previa">
+          {vistaPrevia}
           <p className="text-xs text-text-soft">
-            Al publicar sale como mensaje interactivo: lo ven los clientes que escribieron en las últimas 24 horas. Para escribir fuera de ese plazo,
-            publica la versión también como plantilla de Meta en «Versiones y plantilla de Meta».
+            Sale con botones a quien escribió en las últimas 24 horas. Para los demás hace falta la plantilla de Meta: está en «Fuera de las 24 horas».
           </p>
           {valida && !errores && hallazgos.length === 0 && (
             <p role="status" className="text-xs text-status-success-fg">
