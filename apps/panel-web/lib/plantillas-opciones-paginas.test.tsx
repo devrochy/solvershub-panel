@@ -70,7 +70,7 @@ describe("lista de plantillas con opciones", () => {
   it("otro error de la API sí se muestra como error", async () => {
     responder({ "/plantillas-opciones": { ok: false, status: 502, error: "No se pudo contactar el backend." }, "/admin/me": bien(me) });
     await pintar(ListaPage());
-    expect(screen.getByRole("alert").textContent).toMatch(/No se pudieron cargar las plantillas: No se pudo contactar/);
+    expect(screen.getByRole("alert").textContent).toMatch(/No pudimos cargar las plantillas.*No se pudo contactar/);
   });
 
   it("lista con estado, versión vigente y el botón de crear para el propietario", async () => {
@@ -86,12 +86,15 @@ describe("lista de plantillas con opciones", () => {
     });
     await pintar(ListaPage());
     expect(screen.getByText("Activa")).toBeTruthy();
-    expect(screen.getByText("Borrador")).toBeTruthy();
+    expect(screen.getAllByText("Borrador").length).toBeGreaterThan(0);
     expect(screen.getByText("Versión 2")).toBeTruthy();
     expect(screen.getByText("Cambios sin publicar")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Confirmar cita/ }).getAttribute("href")).toBe("/plantillas-opciones/confirmar_cita");
-    // Sin nombre se muestra la clave.
-    expect(screen.getByRole("link", { name: /recordar_pago/ })).toBeTruthy();
+    // La fila entera abre la plantilla (PLA-11) y la clave no se muestra (PLA-04), salvo si no tiene nombre.
+    expect(screen.getAllByRole("link", { name: /Confirmar cita/ })[0].getAttribute("href")).toBe("/plantillas-opciones/confirmar_cita");
+    expect(screen.queryByText("confirmar_cita")).toBeNull();
+    expect(screen.getAllByRole("link", { name: /recordar_pago/ }).length).toBeGreaterThan(0);
+    // En el celular, una fila de un toque con el estado y la versión.
+    expect(screen.getByRole("list", { name: "Plantillas con opciones" }).textContent).toMatch(/Activa · versión 2 · cambios sin publicar/);
     expect(screen.getByRole("button", { name: /Nueva plantilla/ })).toBeTruthy();
   });
 

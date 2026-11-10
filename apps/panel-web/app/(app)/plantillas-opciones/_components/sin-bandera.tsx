@@ -17,7 +17,7 @@ export function SinBandera({ enlaceActivar }: { enlaceActivar?: string | null })
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-text-soft" aria-hidden>
           <Lock className="h-5 w-5" />
         </span>
-        <p className="text-sm font-medium text-headline">Las plantillas con opciones no están activadas en tu negocio</p>
+        <h2 className="font-display text-sh-block text-headline">Las plantillas con opciones no están activadas en tu negocio</h2>
         <p className="max-w-md text-sm text-text-soft">
           Te permiten enviar un mensaje con botones que ejecutan una acción al tocarlos, sin esperar a que el asistente responda. Las activa el equipo de
           SolversHub negocio por negocio: pídele a tu contacto de SolversHub que la habilite y vuelve a entrar aquí.
@@ -29,7 +29,7 @@ export function SinBandera({ enlaceActivar }: { enlaceActivar?: string | null })
             </Button>
           )}
           <Button asChild variant="outline" size="sm">
-            <Link href="/plantillas">Volver a Plantillas de WhatsApp</Link>
+            <Link href="/mensajes">Volver a Mensajes</Link>
           </Button>
         </div>
       </CardContent>

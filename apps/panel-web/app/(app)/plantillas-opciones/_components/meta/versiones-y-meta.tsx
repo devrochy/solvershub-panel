@@ -13,7 +13,6 @@ import {
   avisoDeDegradacion,
   enlacePlantillasMeta,
   estadoDeVersion,
-  nombreEnMeta,
 } from "@/lib/plantillas-opciones-meta";
 
 import { EstadoDeMeta } from "./estado-de-meta";
@@ -32,6 +31,7 @@ export function VersionesYMeta({
   puedeEscribir,
   onActualizar,
   onBanderaApagada,
+  etiquetasDeDatos,
 }: {
   plantilla: OpcionesPlantilla;
   conexiones: readonly HealthConnectionMeta[];
@@ -39,6 +39,8 @@ export function VersionesYMeta({
   /** Vuelve a leer la plantilla: el estado de Meta cambia por webhook, no por esta pantalla. */
   onActualizar: () => void | Promise<void>;
   onBanderaApagada?: () => void;
+  /** Nombre en palabras de cada dato del mensaje (`cliente.nombre` → «Nombre del cliente»), para los ejemplos. */
+  etiquetasDeDatos?: Record<string, string>;
 }) {
   // Respuesta del último intento por versión: trae `outcome` y `reintentable`, que la API no guarda.
   const [ultimos, setUltimos] = useState<Record<number, OpcionesMetaResultado>>({});
@@ -58,10 +60,10 @@ export function VersionesYMeta({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Versiones y plantilla de Meta</CardTitle>
+          <CardTitle>Fuera de las 24 horas</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-text-soft">
-          Cuando publiques la plantilla podrás enviarla también a Meta, para que el mensaje salga con botones fuera de las 24 horas.
+          Cuando publiques la plantilla podrás enviarla a Meta, para que el mensaje también llegue a quien no escribió en el último día.
         </CardContent>
       </Card>
     );
@@ -70,10 +72,10 @@ export function VersionesYMeta({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Versiones y plantilla de Meta</CardTitle>
+        <CardTitle>Fuera de las 24 horas</CardTitle>
         <p className="text-sm text-text-soft">
-          Cada versión se envía a Meta como una plantilla distinta (<span className="font-mono text-xs">{plantilla.clave}_v1</span>,{" "}
-          <span className="font-mono text-xs">{plantilla.clave}_v2</span>…). Una plantilla aprobada no se edita: un cambio es una versión nueva.
+          Para llegar a quien no escribió en el último día, cada versión publicada pasa por Meta. Una aprobada no se edita: un cambio es una versión
+          nueva.
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -97,7 +99,6 @@ export function VersionesYMeta({
                   <span className="text-xs text-text-soft">{fecha(v.publicada_en)}</span>
                   {v.vigente && !retirada && <Badge variant="success">Vigente</Badge>}
                   {retirada && <Badge variant="neutral">Retirada</Badge>}
-                  <span className="font-mono text-xs text-text-soft">{v.meta?.nombre ?? nombreEnMeta(plantilla.clave, v.version_n)}</span>
                 </div>
 
                 {retirada && !estado.enMeta ? (
@@ -157,6 +158,7 @@ export function VersionesYMeta({
           onResultado={alResultado(abierta.version)}
           onCerrar={cerrar}
           onBanderaApagada={onBanderaApagada}
+          etiquetasDeDatos={etiquetasDeDatos}
         />
       )}
     </Card>

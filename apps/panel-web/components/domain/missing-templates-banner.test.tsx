@@ -41,8 +41,8 @@ describe("MissingTemplatesBanner (SPEC-40)", () => {
     const alerta = screen.getByRole("alert");
     expect(alerta.textContent).toMatch(/2 avisos no se enviaron/);
     expect(alerta.textContent).toMatch(/el evento no tiene una plantilla aprobada/);
-    expect(screen.getByRole("link", { name: "Configurar plantillas por evento" }).getAttribute("href")).toBe("/plantillas/eventos");
-    expect(screen.queryByRole("link", { name: "Ver plantillas con opciones" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Revisar los avisos por evento" }).getAttribute("href")).toBe("/plantillas/eventos");
+    expect(screen.queryByRole("link", { name: "Ver las plantillas con opciones" })).toBeNull();
   });
 
   it("solo opciones: no dice «el evento» y enlaza a la sección nueva", async () => {
@@ -51,8 +51,8 @@ describe("MissingTemplatesBanner (SPEC-40)", () => {
     expect(alerta.textContent).toMatch(/1 mensaje con opciones no se envió/);
     expect(alerta.textContent).not.toMatch(/el evento no tiene/);
     expect(alerta.textContent).toMatch(/confirmar_cita/);
-    expect(screen.getByRole("link", { name: "Ver plantillas con opciones" }).getAttribute("href")).toBe("/plantillas-opciones");
-    expect(screen.queryByRole("link", { name: "Configurar plantillas por evento" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Ver las plantillas con opciones" }).getAttribute("href")).toBe("/plantillas-opciones");
+    expect(screen.queryByRole("link", { name: "Revisar los avisos por evento" })).toBeNull();
   });
 
   it("mixto: separa los totales, cada uno con su enlace, en una sola alerta", async () => {
@@ -70,7 +70,7 @@ describe("MissingTemplatesBanner (SPEC-40)", () => {
     apiFetch.mockResolvedValue({ ok: true, status: 200, data: { total_7d: 4, recent: [] } });
     render(await resolverServidor(await MissingTemplatesBanner()));
     expect(screen.getByRole("alert").textContent).toMatch(/4 avisos no se enviaron/);
-    expect(screen.queryByRole("link", { name: "Ver plantillas con opciones" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Ver las plantillas con opciones" })).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ArrowDown, ArrowUp, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ShieldCheck, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,22 @@ function corto(texto: string, max = 90): string {
   return una.length > max ? `${una.slice(0, max - 1)}…` : una;
 }
 
+/** «Confirma la próxima cita · pide confirmación · responde «Listo…»»: la opción plegada en una línea (PLA-01). */
+function resumenDeOpcion(opcion: OpcionesOpcion, ficha: OpcionesAccionDelCatalogo | undefined, variables: OpcionesVariable[]): string {
+  const partes = [ficha ? corto(ficha.descripcion || ficha.tool, 60) : "Todavía no elegiste qué hace"];
+  if (opcion.accion.confirmar) partes.push("pide confirmación");
+  if (opcion.respuesta_ok.trim()) {
+    const enPalabras = opcion.respuesta_ok.replace(/\{ctx\.([^{}]+)\}/g, (m, ruta: string) => variables.find((v) => v.ruta === ruta)?.descripcion ?? m);
+    partes.push(`responde «${corto(enPalabras, 50)}»`);
+  }
+  return partes.join(" · ");
+}
+
 /**
  * Una opción de la plantilla (HU-OPC-06): título (20 caracteres), la acción que ejecuta con su formulario de
- * argumentos, si pide confirmación y lo que responde el sistema al terminar. Los hallazgos del lint salen
- * junto al campo de su `path`.
+ * argumentos, si pide confirmación y lo que responde el sistema al terminar. Plegada es una fila con su resumen
+ * y se abre para editarla, de a una (PLA-01). Los hallazgos del lint salen junto al campo de su `path`; con un
+ * error, la fila plegada lo avisa.
  */
 export function TarjetaOpcion({
   indice,
@@ -47,6 +59,8 @@ export function TarjetaOpcion({
   onMover,
   onQuitar,
   reportarError,
+  abierta,
+  onAlternar,
 }: {
   indice: number;
   total: number;
@@ -59,8 +73,12 @@ export function TarjetaOpcion({
   onMover: (direccion: -1 | 1) => void;
   onQuitar: () => void;
   reportarError: (clave: string, mensaje: string | null) => void;
+  abierta: boolean;
+  onAlternar: () => void;
 }) {
   const id = useId();
+  const [avanzado, setAvanzado] = useState((opcion.result_keys ?? []).length > 0);
+  const conErrores = hallazgos.some((h) => h.severity === "error");
   const base = `opciones[${indice}]`;
   const ficha = acciones.find((a) => a.tool === opcion.accion.tool);
   const fija = confirmacionFija(ficha);
@@ -102,13 +120,27 @@ export function TarjetaOpcion({
 
   return (
     <Card data-opcion={opcion.id} aria-label={`Opción ${indice + 1}`}>
-      <CardContent className="flex flex-col gap-5 pt-5">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-display text-base font-semibold text-headline">
-            Opción {indice + 1}
-            {opcion.titulo && <span className="ml-2 font-sans text-sm font-normal text-text-soft">{opcion.titulo}</span>}
-          </h3>
-          {!disabled && (
+      <div className="flex items-center gap-3 p-4">
+        <span aria-hidden className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs text-body">
+          {indice + 1}
+        </span>
+        <h3 className="min-w-0 flex-1">
+          <button
+            type="button"
+            aria-expanded={abierta}
+            aria-controls={`${id}-cuerpo`}
+            onClick={onAlternar}
+            className="flex w-full min-w-0 flex-col rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <span className="truncate text-sm font-medium text-headline">
+              <span className="sr-only">Opción {indice + 1}: </span>
+              {opcion.titulo || "Sin texto todavía"}
+            </span>
+            {!abierta && <span className="truncate text-xs text-text-soft">{resumenDeOpcion(opcion, ficha, variables)}</span>}
+          </button>
+        </h3>
+        {conErrores && !abierta && <Badge variant="danger">Revisar</Badge>}
+        {!disabled && (
             <div className="flex items-center gap-1">
               <Button type="button" variant="ghost" size="icon" aria-label={`Subir la opción ${indice + 1}`} disabled={indice === 0} onClick={() => onMover(-1)}>
                 <ArrowUp className="h-4 w-4" aria-hidden />
@@ -121,7 +153,11 @@ export function TarjetaOpcion({
               </Button>
             </div>
           )}
-        </div>
+        <ChevronDown aria-hidden className={cn("h-4 w-4 shrink-0 text-text-soft transition-transform duration-150", abierta && "rotate-180")} />
+      </div>
+
+      {abierta && (
+      <CardContent id={`${id}-cuerpo`} className="flex flex-col gap-5 border-t border-border-soft pt-5">
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3">
@@ -160,7 +196,7 @@ export function TarjetaOpcion({
             {herramientaPerdida && <option value={opcion.accion.tool}>{opcion.accion.tool} (no disponible)</option>}
             {acciones.map((a) => (
               <option key={a.tool} value={a.tool}>
-                {corto(a.descripcion || a.tool, 70)} · {a.tool}
+                {corto(a.descripcion || a.tool, 90)}
               </option>
             ))}
           </Select>
@@ -184,9 +220,7 @@ export function TarjetaOpcion({
         {ficha && conTool && (
           <div className="flex flex-col gap-2">
             <p className="text-[13px] font-medium text-body">Datos de la acción</p>
-            <p className="text-xs text-text-soft">
-              Cada dato es un valor fijo que escribes aquí o un dato de la conversación que arma el servidor. Nunca sale de lo que escriba el cliente.
-            </p>
+            <p className="text-xs text-text-soft">Cada dato lo escribes tú o sale de la conversación; nunca de lo que escriba el cliente.</p>
             <FormularioArgumentos
               key={ficha.tool}
               ficha={ficha}
@@ -243,13 +277,6 @@ export function TarjetaOpcion({
           help="Es un texto fijo: el asistente no lo reescribe."
         />
 
-        <ResultKeys
-          valor={opcion.result_keys ?? []}
-          disabled={disabled}
-          onChange={(result_keys) => onChange({ ...opcion, result_keys })}
-          hallazgos={mResultado}
-        />
-
         <TextoConChips
           label="Qué responde si algo falla"
           value={opcion.respuesta_error}
@@ -263,8 +290,34 @@ export function TarjetaOpcion({
           placeholder="Ej.: No pudimos confirmarla. Te escribe una persona del equipo."
         />
 
+        {conTool && (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              aria-expanded={avanzado}
+              aria-controls={`${id}-avanzado`}
+              onClick={() => setAvanzado((v) => !v)}
+              className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2.5 text-left text-sm text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              Avanzado: datos que devuelve la acción
+              <ChevronDown aria-hidden className={cn("h-4 w-4 text-text-soft transition-transform duration-150", avanzado && "rotate-180")} />
+            </button>
+            {avanzado && (
+              <div id={`${id}-avanzado`}>
+                <ResultKeys
+                  valor={opcion.result_keys ?? []}
+                  disabled={disabled}
+                  onChange={(result_keys) => onChange({ ...opcion, result_keys })}
+                  hallazgos={mResultado}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         <MensajesDeCampo hallazgos={sueltos} />
       </CardContent>
+      )}
     </Card>
   );
 }
@@ -295,7 +348,7 @@ function ResultKeys({
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[13px] font-medium text-body">
-        Datos del resultado que puedes citar (opcional)
+        Datos de la respuesta que quieres citar
       </label>
       <Input
         id={id}
@@ -306,7 +359,7 @@ function ResultKeys({
         onChange={(e) => aplicar(e.target.value)}
       />
       <p className="text-xs text-text-soft">
-        Nombres de lo que devuelve la acción, separados por coma (hasta {MAX_RESULT_KEYS}). Después aparecen como botones para citarlos arriba.
+        Escribe sus nombres separados por coma (hasta {MAX_RESULT_KEYS}), por ejemplo «numero, fecha». Aparecen como datos para citar en «Si sale bien».
       </p>
       <MensajesDeCampo hallazgos={hallazgos} />
     </div>

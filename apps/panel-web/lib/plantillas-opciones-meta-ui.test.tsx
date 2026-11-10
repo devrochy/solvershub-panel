@@ -394,7 +394,7 @@ describe("versiones y estado de Meta", () => {
 
   it("sin versiones publicadas explica que podrá enviarla a Meta", () => {
     pintar(plantilla({ versiones: [], estado: "draft", version_vigente: null }));
-    expect(screen.getByText(/podrás enviarla también a Meta/)).toBeTruthy();
+    expect(screen.getByText(/podrás enviarla a Meta/)).toBeTruthy();
   });
 
   it("tras un intento reintentable que falló, la fila ofrece Reintentar y la versión sigue publicada", async () => {
@@ -488,7 +488,7 @@ describe("integrado en el editor", () => {
   it("muestra la sección y cambia a «no activada» si la bandera se apaga al publicar", async () => {
     simular({ status: 404, cuerpo: { error: "No habilitadas.", code: "opciones_directas_no_habilitadas" } });
     editor(plantilla());
-    expect(screen.getByRole("heading", { name: "Versiones y plantilla de Meta" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Fuera de las 24 horas" })).toBeTruthy();
     expect(screen.queryByText(/llegará en una próxima actualización/)).toBeNull();
     fireEvent.click(screen.getAllByRole("button", { name: /Publicar en Meta/ })[0]);
     elegir(/Conectada con Facebook/);

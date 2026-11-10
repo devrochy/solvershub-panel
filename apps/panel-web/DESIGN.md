@@ -244,6 +244,14 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Se guarda solo lo cambiado (`permisosAGuardar`): lo que no se manda vuelve a lo que da su rol. Guardar va fijo al pie del cajón y dice cuántos cambios hay sin guardar.
 - Las invitaciones pendientes van antes de la tabla. «Invitar a alguien» elige el rol por lo que hará la persona; a quien no tiene cuenta se le crea con contraseña (la API solo invita cuentas que existen).
 
+## Plantillas (SPEC-29)
+
+- Se llega desde Agentes › Mensajes: las migas de Plantillas con opciones y de Avisos por evento vuelven a Mensajes.
+- El editor tiene una acción principal (Publicar) y Guardar borrador; enviar una prueba, probar con el asistente y retirar o eliminar van en «Más acciones». Las opciones se pliegan en filas con su resumen y se abren de a una; con un error, la fila dice «Revisar».
+- Nada técnico a la vista: la clave, los nombres en Meta y los datos que devuelve una acción quedan en «Avanzado»; las acciones y los datos se nombran en palabras. Cada dato de la acción dice de dónde sale con «Lo escribo yo / De la conversación».
+- La vista previa queda fija al lado en escritorio; en el celular se abre con «Ver cómo queda».
+- Avisos por evento: una lista por módulo con lo que le llega al cliente («Con plantilla», «Solo dentro de 24 horas», «Sin aviso»). Cada aviso se edita en un cajón con su propio Guardar; el texto por canal va plegado. La API guarda el mapa completo, así que guardar un aviso manda también lo guardado de los demás.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

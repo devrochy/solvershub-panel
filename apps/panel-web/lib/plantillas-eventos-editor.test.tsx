@@ -77,39 +77,83 @@ const campo = (evento: string, tipo: string) =>
 function canalDe(etiqueta: string): string {
   return { "WhatsApp por QR": "whatsapp_waweb", "Chat web": "webchat", Messenger: "messenger_meta", Instagram: "instagram_meta" }[etiqueta]!;
 }
-const guardar = () => fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+const NOMBRE = { "appointment.reminder": /^Recordatorio de cita/, "subscription.charge_reminder": /^Recordatorio de pago/ } as const;
+
+/** Abre el aviso en su cajón y despliega el texto por canal si está plegado (PLA-07 y PLA-09). */
+async function abrir(evento: keyof typeof NOMBRE) {
+  fireEvent.click(screen.getByRole("button", { name: NOMBRE[evento] }));
+  const cajon = await screen.findByRole("dialog");
+  const plegable = within(cajon).getByRole("button", { name: /^Texto por canal/ });
+  if (plegable.getAttribute("aria-expanded") === "false") fireEvent.click(plegable);
+  return cajon;
+}
+const guardar = () => fireEvent.click(screen.getByRole("button", { name: "Guardar aviso" }));
+
+describe("avisos por evento: la lista (PLA-07 y PLA-08)", () => {
+  it("agrupa por módulo y dice qué le llega al cliente", () => {
+    pintar(ajustes({ "appointment.reminder": entrada({ fallback_text: "Hola" }) }));
+    expect(screen.getByRole("heading", { name: "Agenda" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Suscripciones" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Recordatorio de cita.*Solo dentro de 24 horas/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Recordatorio de pago.*Sin aviso/ })).toBeTruthy();
+    // Nada de campos abiertos en la lista.
+    expect(screen.queryByRole("textbox")).toBeNull();
+  });
+
+  it("cancelar descarta lo escrito en el cajón", async () => {
+    pintar(ajustes());
+    await abrir("appointment.reminder");
+    fireEvent.change(campo("appointment.reminder", "Chat web"), { target: { value: "Hola" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    // Con cambios pregunta antes de descartarlos.
+    const pregunta = await screen.findByRole("alertdialog");
+    fireEvent.click(within(pregunta).getByRole("button", { name: "Descartar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("button", { name: /^Recordatorio de cita.*Sin aviso/ })).toBeTruthy();
+    expect(cuerpos).toHaveLength(0);
+  });
+});
 
 describe("editor de avisos por evento: texto por canal", () => {
-  it("muestra un campo por canal en cada evento, con el límite y las variables del evento", () => {
+  it("muestra un campo por canal, con el límite y los datos del evento en palabras", async () => {
     pintar(ajustes());
+    await abrir("appointment.reminder");
     for (const etiqueta of ["WhatsApp por QR", "Chat web", "Messenger", "Instagram"]) {
       const c = campo("appointment.reminder", etiqueta) as HTMLTextAreaElement;
       expect(c.maxLength).toBe(1000);
       expect(c.disabled).toBe(false);
     }
     expect(screen.getAllByText(/0\/1000 caracteres/).length).toBeGreaterThanOrEqual(4);
-    expect(screen.getAllByText(/\{cliente\.nombre\}, \{cita\.fecha\}/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Datos que puedes usar: Nombre del cliente, Fecha de la cita/)).toBeTruthy();
     // Aviso de que depende de la bandera del negocio.
-    expect(screen.getByText(/solo se envían cuando el equipo de SolversHub activa los avisos por canal/)).toBeTruthy();
+    expect(screen.getByText(/Solo se envían cuando SolversHub activa los avisos por canal/)).toBeTruthy();
   });
 
-  it("deshabilita y explica el QR en los eventos de cobranza, pero no los demás canales", () => {
+  it("deshabilita y explica el QR en los eventos de cobranza, pero no los demás canales", async () => {
     pintar(ajustes());
+    await abrir("subscription.charge_reminder");
     const qr = campo("subscription.charge_reminder", "WhatsApp por QR") as HTMLTextAreaElement;
     expect(qr.disabled).toBe(true);
     expect(screen.getByText(/Los avisos de cobro no salen por QR/)).toBeTruthy();
     expect((campo("subscription.charge_reminder", "Chat web") as HTMLTextAreaElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await abrir("appointment.reminder");
     expect((campo("appointment.reminder", "WhatsApp por QR") as HTMLTextAreaElement).disabled).toBe(false);
   });
 
-  it("carga los textos guardados y cuenta los caracteres", () => {
+  it("carga los textos guardados, abre el texto por canal y cuenta los caracteres", async () => {
     pintar(ajustes({ "appointment.reminder": entrada({ fallback_text_by_channel: { webchat: "Hola {cliente.nombre}" } }) }));
+    fireEvent.click(screen.getByRole("button", { name: NOMBRE["appointment.reminder"] }));
+    await screen.findByRole("dialog");
+    expect(screen.getByRole("button", { name: /^Texto por canal.*1 de 4 con texto/ }).getAttribute("aria-expanded")).toBe("true");
     expect((campo("appointment.reminder", "Chat web") as HTMLTextAreaElement).value).toBe("Hola {cliente.nombre}");
     expect(screen.getByText(/21\/1000 caracteres/)).toBeTruthy();
   });
 
   it("guarda el texto escrito por canal junto al resto del evento", async () => {
     pintar(ajustes());
+    await abrir("appointment.reminder");
     fireEvent.change(campo("appointment.reminder", "WhatsApp por QR"), { target: { value: "  Te esperamos el {cita.fecha}  " } });
     fireEvent.change(campo("appointment.reminder", "Instagram"), { target: { value: "Hola {cliente.nombre}" } });
     guardar();
@@ -121,7 +165,7 @@ describe("editor de avisos por evento: texto por canal", () => {
     });
   });
 
-  it("guardar sin tocar nada reenvía los textos guardados: no se pierden", async () => {
+  it("guardar un aviso reenvía lo guardado de los demás: no se pierde nada", async () => {
     const guardados = { whatsapp_waweb: "Te esperamos", webchat: "Hola" };
     pintar(
       ajustes({
@@ -129,6 +173,7 @@ describe("editor de avisos por evento: texto por canal", () => {
         "subscription.charge_reminder": entrada({ fallback_text_by_channel: { messenger_meta: "Pagá aquí" } }),
       }),
     );
+    await abrir("appointment.reminder");
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].mapping).toEqual({
@@ -139,6 +184,7 @@ describe("editor de avisos por evento: texto por canal", () => {
 
   it("vaciar los textos de un evento sin plantilla ni respaldo lo manda con {} para que la API los borre", async () => {
     pintar(ajustes({ "appointment.reminder": entrada({ fallback_text_by_channel: { webchat: "Hola" } }) }));
+    await abrir("appointment.reminder");
     fireEvent.change(campo("appointment.reminder", "Chat web"), { target: { value: "" } });
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
@@ -147,6 +193,7 @@ describe("editor de avisos por evento: texto por canal", () => {
 
   it("un evento sin nada escrito no viaja", async () => {
     pintar(ajustes());
+    await abrir("appointment.reminder");
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].mapping).toEqual({});
@@ -154,25 +201,28 @@ describe("editor de avisos por evento: texto por canal", () => {
 
   it("no manda texto de QR en un evento de cobranza", async () => {
     pintar(ajustes());
+    await abrir("subscription.charge_reminder");
     fireEvent.change(campo("subscription.charge_reminder", "Chat web"), { target: { value: "Paga aquí" } });
     guardar();
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     expect(cuerpos[0].mapping["subscription.charge_reminder"].fallback_text_by_channel).toEqual({ webchat: "Paga aquí" });
   });
 
-  it("una variable que el evento no permite se marca y bloquea el guardado", async () => {
+  it("un dato que el evento no admite se marca y bloquea el guardado", async () => {
     pintar(ajustes());
+    await abrir("appointment.reminder");
     fireEvent.change(campo("appointment.reminder", "Chat web"), { target: { value: "Debes {cargo.monto}" } });
-    expect(screen.getByRole("alert").textContent).toMatch(/Variables no permitidas en este aviso: \{cargo\.monto\}/);
-    expect((screen.getByRole("button", { name: "Guardar" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole("alert").textContent).toMatch(/Este aviso no admite: \{cargo\.monto\}/);
+    expect((screen.getByRole("button", { name: "Guardar aviso" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(campo("appointment.reminder", "Chat web"), { target: { value: "Cita el {cita.fecha}" } });
     expect(screen.queryByRole("alert")).toBeNull();
-    expect((screen.getByRole("button", { name: "Guardar" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Guardar aviso" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it("sin violaciones graves de accesibilidad", async () => {
-    const { container } = pintar(ajustes());
+  it("sin violaciones graves de accesibilidad, en la lista y en el cajón", async () => {
+    const { container, baseElement } = pintar(ajustes());
     expect(await violacionesGraves(container)).toEqual([]);
-    expect(within(container).getAllByRole("group").length).toBe(2);
+    await abrir("appointment.reminder");
+    expect(await violacionesGraves(baseElement)).toEqual([]);
   });
 });

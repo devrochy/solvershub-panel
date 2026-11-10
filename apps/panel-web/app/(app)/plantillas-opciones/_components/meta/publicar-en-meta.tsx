@@ -56,6 +56,7 @@ export function PublicarEnMeta({
   onResultado,
   onCerrar,
   onBanderaApagada,
+  etiquetasDeDatos = {},
 }: {
   clave: string;
   version: number;
@@ -66,6 +67,8 @@ export function PublicarEnMeta({
   onResultado: (r: OpcionesMetaResultado) => void;
   onCerrar: () => void;
   onBanderaApagada?: () => void;
+  /** Nombre en palabras de cada dato del mensaje, para rotular sus ejemplos. */
+  etiquetasDeDatos?: Record<string, string>;
 }) {
   const nombre = nombreEnMeta(clave, version);
   const { listas, noListas } = useMemo(() => conexionesParaPublicar(conexiones), [conexiones]);
@@ -253,7 +256,7 @@ export function PublicarEnMeta({
                 <legend className="text-[13px] font-medium text-body">Ejemplo de cada dato del mensaje</legend>
                 <p className="text-xs text-text-soft">Meta pide un ejemplo por cada dato variable y lo revisa. Usa datos inventados, nunca los de un cliente.</p>
                 {variables.map((v) => (
-                  <Field key={v} label={`{${v}}`} htmlFor={`ejemplo-${v}`}>
+                  <Field key={v} label={etiquetasDeDatos[v] ?? v} htmlFor={`ejemplo-${v}`}>
                     <Input
                       id={`ejemplo-${v}`}
                       value={ejemplos[v] ?? ""}

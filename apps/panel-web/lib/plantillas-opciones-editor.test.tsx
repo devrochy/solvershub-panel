@@ -129,6 +129,18 @@ function pintar(inicial: OpcionesPlantilla = plantilla(), puedeEscribir = true, 
   );
 }
 
+/** Abre «Más acciones» (PLA-03): enviar una prueba, probar con el asistente y retirar o eliminar. */
+async function abrirMenu() {
+  const disparador = await screen.findByRole("button", { name: "Más acciones" });
+  disparador.focus();
+  fireEvent.pointerDown(disparador, { button: 0, ctrlKey: false, pointerType: "mouse" });
+}
+async function elegirDelMenu(nombre: string) {
+  await abrirMenu();
+  const item = await screen.findByRole("menuitem", { name: nombre });
+  item.focus();
+  fireEvent.click(item);
+}
 const botonPublicar = () => screen.getByRole("button", { name: "Publicar" }) as HTMLButtonElement;
 const esperarValidacion = () => waitFor(() => expect(screen.queryByText("Revisando el borrador…")).toBeNull());
 
@@ -293,9 +305,15 @@ describe("editor · guardar y publicar", () => {
     };
     pintar(plantilla({ borrador: dos }));
     await screen.findByLabelText("Opción 2");
+    // Plegadas (PLA-01): la primera abierta, la segunda en una fila con su resumen.
+    expect(screen.getAllByLabelText("Texto del botón")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Subir la opción 2" }));
-    const titulos = () => screen.getAllByLabelText("Texto del botón").map((el) => (el as HTMLInputElement).value);
+    const titulos = () =>
+      screen.getAllByRole("button", { name: /^Opción \d+:/ }).map((b) => (b.firstElementChild?.textContent ?? "").replace(/^Opción \d+: /, ""));
     expect(titulos()).toEqual(["Segunda", "Primera"]);
+    // Abrir una cierra la otra.
+    fireEvent.click(screen.getByRole("button", { name: /^Opción 1:\s*Segunda/ }));
+    expect((screen.getByLabelText("Texto del botón") as HTMLInputElement).value).toBe("Segunda");
     expect(screen.getByText("Cambios sin guardar")).toBeTruthy();
   });
 
@@ -303,7 +321,7 @@ describe("editor · guardar y publicar", () => {
     const llamadas = simular((l) => (l.metodo === "PUT" ? { status: 200, cuerpo: plantilla() } : undefined));
     pintar(plantilla({ borrador: { ...DEFINICION, body: "Hola ", variables: [] } }));
     await esperarValidacion();
-    fireEvent.click(within(screen.getByRole("group", { name: "Insertar dato del cliente" })).getByRole("button", { name: "Nombre del negocio" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Agregar un dato" })).getByRole("button", { name: "Nombre del negocio" }));
     expect((screen.getByLabelText(/^Mensaje/) as HTMLTextAreaElement).value).toBe("Hola {negocio.nombre}");
     fireEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
     await waitFor(() => expect(llamadas.some((l) => l.metodo === "PUT")).toBe(true));
@@ -316,7 +334,7 @@ describe("editor · enviar prueba", () => {
   const CONVERSACIONES = { items: [{ id: "11111111-1111-4111-8111-111111111111", customer_name: "Ana Pérez", external_id: "57300", channel: "whatsapp", status: "open", bot_paused: false, started_at: "2026-10-27T10:00:00Z", last_message: "Hola" }] };
 
   async function abrirDialogo() {
-    fireEvent.click(await screen.findByRole("button", { name: "Enviar prueba" }));
+    await elegirDelMenu("Enviar una prueba");
     const dialogo = await screen.findByRole("dialog");
     fireEvent.click(await within(dialogo).findByLabelText(/Ana Pérez/));
     return dialogo;
@@ -381,12 +399,13 @@ describe("editor · enviar prueba", () => {
   });
 });
 
-describe("Probar en el playground (SPEC-40, pista B2)", () => {
+describe("Probar con el asistente (SPEC-40, pista B2)", () => {
   it("con la plantilla publicada enlaza al chat de prueba con su clave, en una pestaña nueva", async () => {
     simular(() => undefined);
     pintar(plantilla({ estado: "published", version_vigente: 1, definicion_vigente: DEFINICION }));
     await esperarValidacion();
-    const enlace = screen.getByRole("link", { name: /Probar en el playground/ });
+    await abrirMenu();
+    const enlace = await screen.findByRole("menuitem", { name: /Probar con el asistente/ });
     expect(enlace.getAttribute("href")).toBe("/asistente?plantilla=confirmar_cita");
     expect(enlace.getAttribute("target")).toBe("_blank");
   });
@@ -395,11 +414,12 @@ describe("Probar en el playground (SPEC-40, pista B2)", () => {
     simular(() => undefined);
     pintar(plantilla());
     await esperarValidacion();
-    expect(screen.queryByRole("link", { name: /Probar en el playground/ })).toBeNull();
+    await abrirMenu();
+    expect(screen.queryByRole("menuitem", { name: /Probar con el asistente/ })).toBeNull();
     cleanup();
     pintar(plantilla({ estado: "published", version_vigente: 1 }), false);
     await esperarValidacion();
-    expect(screen.queryByRole("link", { name: /Probar en el playground/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Más acciones" })).toBeNull();
   });
 });
 
@@ -415,7 +435,7 @@ describe("formulario de argumentos generado", () => {
 
   it("un campo pasa de valor fijo a dato del contexto y no queda en los dos mapas", () => {
     const { onChange } = formulario(CONFIRMAR_CITA, accion({ args_fijos: { motivo: "x", minutos: 5 } }));
-    fireEvent.click(screen.getByRole("switch", { name: /Motivo: tomar el valor de un dato del contexto/ }));
+    fireEvent.click(within(screen.getByRole("group", { name: "De dónde sale Motivo" })).getByRole("button", { name: "De la conversación" }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ args_fijos: { minutos: 5 }, args_contexto: { motivo: "" } }));
   });
 

@@ -101,7 +101,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ id: 
       descripcion={
         <>
           Los mensajes que Meta aprueba para escribirle a un cliente fuera de la conversación. Los que se envían solos
-          están en <Link className="text-link underline-offset-4 hover:underline" href="/plantillas/eventos">Plantillas por evento</Link> y{" "}
+          están en <Link className="text-link underline-offset-4 hover:underline" href="/plantillas/eventos">Avisos por evento</Link> y{" "}
           <Link className="text-link underline-offset-4 hover:underline" href="/plantillas-opciones">Plantillas con opciones</Link>.
         </>
       }

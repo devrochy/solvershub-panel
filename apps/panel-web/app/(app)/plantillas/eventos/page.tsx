@@ -1,12 +1,12 @@
 import { MissingTemplatesBanner } from "@/components/domain/missing-templates-banner";
-import { Card, CardContent } from "@/components/ui/card";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { MessageTemplatesSettings } from "@/lib/api/types";
 
 import { EventTemplatesEditor } from "./_components/event-templates-editor";
 
-export const metadata = { title: "Plantillas por evento" };
+export const metadata = { title: "Avisos por evento" };
 
 export default async function PlantillasPorEventoPage() {
   const res = await apiFetch<MessageTemplatesSettings>("/admin/settings/message-templates");
@@ -14,17 +14,12 @@ export default async function PlantillasPorEventoPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Plantillas por evento"
-        description="Qué plantilla aprobada se envía en cada aviso cuando el cliente lleva más de 24 horas sin escribir. Dentro de las 24 horas se envía el texto de respaldo. En QR, chat web, Messenger e Instagram puedes escribir un texto propio por canal."
+        title="Avisos por evento"
+        description="Lo que le llega al cliente cuando pasa algo. Fuera de las 24 horas solo sale con una plantilla aprobada por Meta."
+        breadcrumbs={[{ label: "Mensajes", href: "/mensajes" }, { label: "Avisos por evento" }]}
       />
-      <MissingTemplatesBanner />
-      {res.ok ? (
-        <EventTemplatesEditor initial={res.data} />
-      ) : (
-        <Card>
-          <CardContent className="pt-5 text-sm text-status-danger-fg">{res.error}</CardContent>
-        </Card>
-      )}
+      <MissingTemplatesBanner enLaPagina="eventos" />
+      {res.ok ? <EventTemplatesEditor initial={res.data} /> : <ErrorDeCarga titulo="No pudimos cargar los avisos" detalle={res.error} />}
     </div>
   );
 }
