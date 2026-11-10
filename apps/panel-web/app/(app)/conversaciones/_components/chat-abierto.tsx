@@ -5,19 +5,26 @@ import Link from "next/link";
 import { ArrowDown, ArrowLeft } from "lucide-react";
 
 import { ChannelIcon } from "@/components/domain/channel-icon";
-import { MotivoBadge } from "@/components/domain/escalacion";
-import { BinaryBadge, CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { motivoDe } from "@/components/domain/escalacion";
+import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import type { ConversationDetail, ConversationNote } from "@/lib/api/types";
 import { useHiloEnVivo } from "@/lib/conversaciones/en-vivo";
-import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
+import { formatearIdentificador } from "@/lib/conversaciones/nombre";
+import { formatDateTime } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
+import { cn } from "@/lib/utils";
 
 import { conexionDelChat, nombreDelChat, tipoDelChat } from "./lista-de-chats";
-import { AccionesDeCabecera, ComposerDeRespuesta } from "./conversation-actions";
+import {
+  AccionesDeCabecera,
+  ComposerDeRespuesta,
+  DevolverAlAgente,
+  TomarConversacion,
+} from "./conversation-actions";
 import { DetalleDelTurno } from "./detalle-del-turno";
 import { EnCurso } from "./en-curso";
 import { MessageThread } from "./message-thread";
@@ -35,26 +42,43 @@ async function accion(conversationId: string, action: string, body?: Record<stri
   return { ok: res.ok, error: json.error, status: res.status };
 }
 
-/** Ticket de la escalación: motivo, resumen y quién la atiende. Las acciones viven en la cabecera. */
-function Ticket({ detalle }: { detalle: ConversationDetail }) {
+/** Aviso de la escalación: el motivo, quién la atiende y, una vez tomada, cómo devolverla. */
+function Ticket({ detalle, miCorreo }: { detalle: ConversationDetail; miCorreo?: string }) {
   const esc = detalle.escalation;
   if (!esc) return null;
   const atendida = esc.status === "asignada";
+  const { etiqueta } = motivoDe({ reason: "", reason_code: esc.reason_code, reason_label: esc.reason_label });
+  const atiende =
+    miCorreo && esc.assigned_admin_email === miCorreo
+      ? "La atiendes tú"
+      : `La atiende ${esc.assigned_admin_email ?? "una persona del equipo"}`;
 
   return (
     <section
       aria-label="Escalación"
-      className="flex flex-col gap-1.5 rounded-xl border border-status-warning-border bg-status-warning-bg px-4 py-3"
+      className={cn(
+        "flex flex-col gap-3 rounded-md border px-4 py-3 sm:flex-row sm:items-center sm:gap-4",
+        atendida ? "border-border bg-surface-2" : "border-status-warning-border bg-status-warning-bg",
+      )}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <MotivoBadge esc={{ reason: "", reason_code: esc.reason_code, reason_label: esc.reason_label }} />
-        <span className="text-sm text-headline">
-          {atendida
-            ? `La atiende ${esc.assigned_admin_email ?? "una persona del equipo"}`
-            : "Esperando a una persona del equipo"}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className={cn("text-xs font-medium", atendida ? "text-body" : "text-status-warning-fg")}>{etiqueta}</span>
+        <span className="text-sm font-medium text-headline">
+          {atendida ? atiende : "Esperando a una persona del equipo"}
         </span>
+        <p className="text-sm text-body">
+          {atendida ? (
+            "El agente está en pausa. Cuando termines, devuélvesela para que siga atendiendo."
+          ) : (
+            <>
+              {esc.summary}
+              {esc.summary && detalle.bot_paused ? " " : ""}
+              {detalle.bot_paused ? "El agente está en pausa." : ""}
+            </>
+          )}
+        </p>
       </div>
-      {esc.summary && <p className="text-sm text-body">{esc.summary}</p>}
+      {atendida && <DevolverAlAgente conversationId={detalle.id} />}
     </section>
   );
 }
@@ -147,10 +171,12 @@ export function ChatAbierto({
   detalle,
   query,
   hrefVolver,
+  miCorreo,
 }: {
   detalle: ConversationDetail;
   query: string;
   hrefVolver: string;
+  miCorreo?: string;
 }) {
   const mensajes = useHiloEnVivo(detalle.id, detalle.messages);
   const nombre = nombreDelChat(detalle);
@@ -158,7 +184,14 @@ export function ChatAbierto({
   const puedeResponder =
     detalle.status !== "closed" && (atiendePersona || (detalle.bot_paused && detalle.escalation == null));
   const uso = detalle.usage ?? { cost_usd: 0, input_tokens: 0, output_tokens: 0, turns: 0 };
-  const tokens = uso.input_tokens + uso.output_tokens;
+  // El identificador se omite si ya es el nombre, y el hash de un visitante web no le dice nada a nadie.
+  const identificador =
+    detalle.external_id && !detalle.external_id.startsWith("web:")
+      ? formatearIdentificador(detalle.external_id)
+      : null;
+  const subtitulo = [conexionDelChat(detalle), identificador !== nombre ? identificador : null]
+    .filter(Boolean)
+    .join(" · ");
   const [turnoAbierto, setTurnoAbierto] = useState<string | null>(null);
   const [notasAbiertas, setNotasAbiertas] = useState(false);
   const notas = detalle.notes ?? [];
@@ -223,53 +256,47 @@ export function ChatAbierto({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex shrink-0 flex-wrap items-start gap-3 border-b border-border-soft px-4 py-3">
+      <header className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border-soft px-4 py-3 lg:gap-x-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2 lg:hidden">
           <Link href={hrefVolver} scroll={false}>
             <ArrowLeft aria-hidden className="h-4 w-4" />
             Volver
           </Link>
         </Button>
-        <Avatar name={nombre} size="md" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <h2 className="truncate font-display text-sh-block text-headline">{nombre}</h2>
-            <span
-              className="ml-auto shrink-0 text-xs tabular-nums text-text-soft"
-              title="Costo y tokens de la conversación"
-            >
-              {formatUsd(uso.cost_usd)} · {formatNumber(tokens)} tokens
-            </span>
+        {/* En el celular las acciones van arriba con «Volver» y el cliente ocupa su propia fila. */}
+        <div className="order-3 grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 lg:order-none lg:w-auto lg:flex-1 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+          <div className="row-span-2 lg:row-span-1">
+            {detalle.customer_name ? <Avatar name={nombre} size="md" /> : <ChannelIcon id={tipoDelChat(detalle)} size="avatar" />}
           </div>
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 break-all text-xs text-text-soft">
-            <ChannelIcon id={tipoDelChat(detalle)} size="sm" />
-            {conexionDelChat(detalle)}
-            {detalle.external_id ? ` · ${detalle.external_id}` : ""}
-          </span>
-          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <div className="min-w-0">
+            <h2 className="truncate font-display text-sh-block text-headline">{nombre}</h2>
+            <p className="truncate text-xs text-text-soft" title={subtitulo}>
+              {subtitulo}
+            </p>
+          </div>
+          <div className="col-start-2 lg:col-start-3">
             <StatusBadge value={detalle.status} map={CONVERSATION_STATUS} />
-            <BinaryBadge
-              active={!detalle.bot_paused}
-              activeLabel="Agente activo"
-              inactiveLabel="Agente pausado"
-            />
           </div>
         </div>
-        <AccionesDeCabecera
-          conversationId={detalle.id}
-          botPaused={detalle.bot_paused}
-          status={detalle.status}
-          escalation={detalle.escalation}
-          hrefFicha={hrefFicha}
-          notas={notas.length}
-          onAbrirNotas={() => setNotasAbiertas(true)}
-        />
+        <div className="order-2 ml-auto lg:order-none lg:ml-0">
+          <AccionesDeCabecera
+            conversationId={detalle.id}
+            botPaused={detalle.bot_paused}
+            status={detalle.status}
+            escalation={detalle.escalation}
+            hrefFicha={hrefFicha}
+            notas={notas.length}
+            onAbrirNotas={() => setNotasAbiertas(true)}
+            externalId={detalle.external_id}
+            uso={uso}
+          />
+        </div>
       </header>
 
       {detalle.escalation && (
         <div className="max-h-[32%] shrink-0 overflow-y-auto border-b border-border-soft px-4 py-3">
-          <Ticket detalle={detalle} />
-          <div className="mt-3">
+          <Ticket detalle={detalle} miCorreo={miCorreo} />
+          <div className="mt-3 empty:hidden">
             <EnCurso conversationId={detalle.id} estadoEscalacion={detalle.escalation.status} />
           </div>
         </div>
@@ -299,27 +326,32 @@ export function ChatAbierto({
           <MessageThread messages={visibles} onVerTurno={setTurnoAbierto} />
         </div>
         {hayNuevos && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={irAlFinal}
-            className="absolute bottom-3 right-4 inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1.5 text-xs font-medium text-headline shadow-elev-2 transition-colors hover:bg-hover focus-visible:outline-2"
+            className="absolute bottom-3 right-4 bg-surface shadow-elev-2"
           >
             <ArrowDown aria-hidden className="h-3.5 w-3.5" />
             Mensajes nuevos
-          </button>
+          </Button>
         )}
       </div>
 
       <div className="shrink-0 border-t border-border-soft px-4 py-3">
         {puedeResponder ? (
           <ComposerDeRespuesta conversationId={detalle.id} />
+        ) : detalle.status !== "closed" && detalle.escalation?.status === "pendiente" ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <p className="text-sm text-body">Toma la conversación para responder como persona.</p>
+            <TomarConversacion conversationId={detalle.id} />
+          </div>
         ) : (
           <p className="text-sm text-text-soft">
             {detalle.status === "closed"
               ? "Esta conversación está cerrada."
-              : detalle.escalation?.status === "pendiente"
-                ? "Toma la conversación para responder como persona."
-                : "El agente está atendiendo esta conversación. Pausa el agente para escribir como persona."}
+              : "El agente está atendiendo esta conversación. Pausa el agente para escribir como persona."}
           </p>
         )}
       </div>

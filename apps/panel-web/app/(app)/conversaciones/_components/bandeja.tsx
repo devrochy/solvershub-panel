@@ -2,8 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquare } from "lucide-react";
+import { ArrowLeft, MessageSquare, MessageSquareX } from "lucide-react";
+import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+import { EstadoDeError } from "@/components/ui/estado-de-error";
 import type {
   ConversationConnection,
   ConversationDetail,
@@ -31,6 +34,8 @@ export function Bandeja({
   hayMas,
   filtros,
   connections,
+  errorDeChat,
+  miCorreo,
 }: {
   chats: ConversationSummary[];
   /** Filtros de la página (sin `c`), los mismos que repite el polling de la lista. */
@@ -41,6 +46,9 @@ export function Bandeja({
   hayMas: boolean;
   filtros: { q?: string; status?: string; connectionId?: string };
   connections: ConversationConnection[];
+  /** El chat pedido (`?c=`) no se pudo abrir: `detalle` es el error técnico, si lo hay. */
+  errorDeChat?: { titulo: string; descripcion: string; detalle?: string } | null;
+  miCorreo?: string;
 }) {
   const router = useRouter();
   const {
@@ -53,6 +61,7 @@ export function Bandeja({
   } = useBandejaEnVivo(query, iniciales, { page: pagina, total, has_more: hayMas });
   const { marcar, visto } = useVistos();
   const seleccion = detalle?.id ?? null;
+  const panelAbierto = seleccion != null || errorDeChat != null;
 
   const hrefDe = (id: string) => {
     const qs = new URLSearchParams(query);
@@ -85,12 +94,12 @@ export function Bandeja({
   }, [detalle, actividadAbierta, marcar]);
 
   return (
-    <div className="grid min-h-0 flex-1 overflow-hidden rounded-xl border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[minmax(19rem,22rem)_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
       <nav
         aria-label="Lista de conversaciones"
         className={cn(
           "flex min-h-0 flex-col border-border-soft lg:border-r",
-          seleccion && "hidden lg:flex",
+          panelAbierto && "hidden lg:flex",
         )}
       >
         <div className="shrink-0 border-b border-border-soft p-3">
@@ -121,17 +130,33 @@ export function Bandeja({
         aria-label="Conversación"
         className={cn(
           "min-h-0",
-          seleccion ? "flex flex-col" : "hidden lg:flex lg:items-center lg:justify-center",
+          seleccion ? "flex flex-col" : panelAbierto ? "flex items-center justify-center" : "hidden lg:flex lg:items-center lg:justify-center",
         )}
       >
         {detalle ? (
-          <ChatAbierto key={detalle.id} detalle={detalle} query={query} hrefVolver={hrefVolver} />
+          <ChatAbierto key={detalle.id} detalle={detalle} query={query} hrefVolver={hrefVolver} miCorreo={miCorreo} />
+        ) : errorDeChat ? (
+          <EstadoDeError
+            tono="neutro"
+            icono={<MessageSquareX aria-hidden className="h-5 w-5" />}
+            titulo={errorDeChat.titulo}
+            descripcion={errorDeChat.descripcion}
+            detalle={errorDeChat.detalle}
+            accion={
+              <Button asChild variant="outline" className="lg:hidden">
+                <Link href={hrefVolver} scroll={false}>
+                  <ArrowLeft aria-hidden className="h-4 w-4" />
+                  Volver a la bandeja
+                </Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-text-soft">
               <MessageSquare aria-hidden className="h-5 w-5" />
             </span>
-            <p className="text-sm font-medium text-headline">Elige una conversación</p>
+            <p className="font-display text-sh-block text-headline">Elige una conversación</p>
             <p className="max-w-sm text-sm text-text-soft">
               Los mensajes nuevos llegan solos y el conteo desaparece al abrir el chat.
             </p>

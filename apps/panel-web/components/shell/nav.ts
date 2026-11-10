@@ -79,6 +79,8 @@ export type NavItem = {
    * por su clave de permiso y las migas la ubican.
    */
   oculta?: boolean;
+  /** Texto en la fila de pestañas, si difiere del nombre de la página (menú, paleta y migas). */
+  pestana?: string;
 };
 
 export type NavGroupDef = {
@@ -109,7 +111,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
     items: [
       { section: "dashboard", label: "Resumen", href: "/dashboard", icon: LayoutDashboard, ready: true },
       entrada("Conversaciones", MessageSquare, [
-        { section: "conversations", label: "Conversaciones", href: "/conversaciones", icon: MessageSquare, ready: true },
+        { section: "conversations", label: "Conversaciones", pestana: "Chats", href: "/conversaciones", icon: MessageSquare, ready: true },
         { section: "escalations", label: "Escalaciones", href: "/escalaciones", icon: ShieldAlert, ready: true },
       ]),
       { section: "leads", label: "Clientes", href: "/leads", icon: Users, ready: true },

@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { EscalationItem } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
 import { ESCALACION, ESCALACION_RIESGO, escalacionCodigo, escalacionLabel } from "@/lib/labels";
 
 type Motivo = Pick<EscalationItem, "reason"> & Partial<Pick<EscalationItem, "reason_code" | "reason_label">>;
@@ -46,65 +43,43 @@ export function MotivoBadge({ esc }: { esc: Motivo }) {
   return <Badge variant={tono} className="whitespace-nowrap">{etiqueta}</Badge>;
 }
 
-type Fila = Motivo & Pick<EscalationItem, "summary" | "conversation_id" | "created_at"> & {
-  customer_name?: string | null;
-  external_id?: string | null;
-};
+const ESTADOS = [
+  { value: "", label: "Todas" },
+  { value: "pendiente", label: "Pendientes" },
+  { value: "asignada", label: "Asignadas" },
+  { value: "resuelta", label: "Resueltas" },
+];
 
-/** Resumen de una escalación: una línea en la tabla y, al hacer clic, el texto completo. */
-export function ResumenEscalacion({ esc }: { esc: Fila }) {
-  if (!esc.summary) return <span className="text-body">—</span>;
-  const cliente = esc.customer_name ?? esc.external_id ?? "Cliente";
-  const { codigo } = motivoDe(esc);
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          title="Ver el resumen completo"
-          className="block max-w-md truncate rounded-sm text-left text-body underline-offset-2 hover:text-headline hover:underline focus-visible:outline-2 focus-visible:outline-focus"
-        >
-          {esc.summary}
-        </button>
-      </SheetTrigger>
-      <SheetContent
-        title={`Escalación de ${cliente}`}
-        description={formatDateTime(esc.created_at)}
-        footer={
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/conversaciones?c=${esc.conversation_id}`}>Ver conversación</Link>
-          </Button>
-        }
-      >
-        <dl className="space-y-4 text-sm">
-          <div>
-            <dt className="text-text-soft">Motivo</dt>
-            <dd className="mt-1">
-              <MotivoBadge esc={esc} />
-            </dd>
-          </div>
-          {codigo === "otro" && esc.reason && (
-            <div>
-              <dt className="text-text-soft">Motivo registrado</dt>
-              <dd className="mt-1 break-words text-body">{esc.reason}</dd>
-            </div>
-          )}
-          <div>
-            <dt className="text-text-soft">Resumen</dt>
-            <dd className="mt-1 whitespace-pre-wrap break-words text-headline">{esc.summary}</dd>
-          </div>
-        </dl>
-      </SheetContent>
-    </Sheet>
-  );
+function hrefDeFiltros(motivo?: string, estado?: string): string {
+  const qs = new URLSearchParams();
+  if (motivo) qs.set("reason_code", motivo);
+  if (estado) qs.set("estado", estado);
+  return `/escalaciones${qs.size ? `?${qs}` : ""}`;
 }
 
-/** Filtro por motivo (`?reason_code=`). Form GET, como el de conversaciones. */
+/** Filtros de Escalaciones: el estado con el mismo control de la bandeja y el motivo en un selector. */
 export function EscalacionFilters({ motivo, estado }: { motivo?: string; estado?: string }) {
+  const router = useRouter();
   return (
-    <form method="get" className="flex flex-wrap items-end gap-3">
-      <Field label="Motivo" htmlFor="reason_code" className="w-64">
-        <Select id="reason_code" name="reason_code" defaultValue={motivo ?? ""}>
+    <div className="flex flex-wrap items-center gap-4">
+      <SegmentedControl
+        label="Filtrar por estado"
+        className="w-full sm:w-96"
+        value={estado ?? ""}
+        options={ESTADOS.map((opcion) => ({ ...opcion, href: hrefDeFiltros(motivo, opcion.value) }))}
+      />
+      <span aria-hidden className="h-6 w-px bg-border max-sm:hidden" />
+      <div className="flex items-center gap-2">
+        <label htmlFor="reason_code" className="text-sh-label text-body">
+          Motivo
+        </label>
+        <Select
+          key={motivo ?? ""}
+          id="reason_code"
+          className="w-56"
+          defaultValue={motivo ?? ""}
+          onChange={(e) => router.push(hrefDeFiltros(e.target.value, estado))}
+        >
           <option value="">Todos los motivos</option>
           {Object.entries(ESCALACION).map(([value, label]) => (
             <option key={value} value={value}>
@@ -112,23 +87,7 @@ export function EscalacionFilters({ motivo, estado }: { motivo?: string; estado?
             </option>
           ))}
         </Select>
-      </Field>
-      <Field label="Estado" htmlFor="estado" className="w-48">
-        <Select id="estado" name="estado" defaultValue={estado ?? ""}>
-          <option value="">Todos los estados</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="asignada">Asignada</option>
-          <option value="resuelta">Resuelta</option>
-        </Select>
-      </Field>
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
-      {(motivo || estado) && (
-        <Link href="/escalaciones" className="pb-2.5 text-sm text-link hover:underline">
-          Limpiar
-        </Link>
-      )}
-    </form>
+      </div>
+    </div>
   );
 }

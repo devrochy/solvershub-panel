@@ -82,7 +82,8 @@ describe("bandeja de conversaciones", () => {
 
     const chat = screen.getByRole("region", { name: "Conversación" });
     expect(within(chat).getByText("Usó 2 herramientas")).toBeTruthy();
-    expect(within(chat).getByText(/1\.500 tokens/)).toBeTruthy();
+    // El costo ya no compite con el nombre: está en los detalles del menú.
+    expect(within(chat).queryByText(/1\.500 tokens/)).toBeNull();
     // Las notas internas viven en una modal que se abre desde la cabecera.
     fireEvent.click(within(chat).getByRole("button", { name: /Notas internas/ }));
     expect(screen.getByText("Cliente frecuente")).toBeTruthy();
@@ -111,6 +112,39 @@ describe("bandeja de conversaciones", () => {
     expect(href.startsWith("/conversaciones?")).toBe(true);
     expect(href).toContain("c=test-conv-1");
     expect(href).toContain("cliente=test-lead-1");
+  });
+
+  it("el costo y los tokens están en «Detalles de la conversación»", async () => {
+    await renderBandeja({ c: "test-conv-1" });
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Más acciones de la conversación" }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: "mouse",
+    });
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Detalles de la conversación/ }));
+    const detalles = await screen.findByRole("dialog", { name: "Detalles de la conversación" });
+    expect(within(detalles).getByText(/1\.500 tokens/)).toBeTruthy();
+  });
+
+  it("si la bandeja no carga, la página conserva su cabecera y ofrece reintentar", async () => {
+    const original = respuestas["/admin/conversations"];
+    delete respuestas["/admin/conversations"];
+    try {
+      await renderBandeja({});
+      expect(screen.getByRole("heading", { level: 1, name: "Conversaciones" })).toBeTruthy();
+      expect(screen.getByText("No pudimos cargar las conversaciones")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Reintentar" })).toBeTruthy();
+    } finally {
+      respuestas["/admin/conversations"] = original;
+    }
+  });
+
+  it("el chat que no existe avisa dentro del panel y deja la lista al lado", async () => {
+    await renderBandeja({ c: "no-existe" });
+    const panel = screen.getByRole("region", { name: "Conversación" });
+    expect(within(panel).getByText("Esa conversación no existe o es de otro negocio.")).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Volver a la bandeja" }).getAttribute("href")).toBe("/conversaciones");
+    expect(screen.getByRole("navigation", { name: "Lista de conversaciones" })).toBeTruthy();
   });
 
   it("abre la ficha del cliente dentro de conversaciones, sin salir a Clientes", async () => {
@@ -184,7 +218,8 @@ describe("bandeja de conversaciones", () => {
 
   it("escalada sin atender: se puede tomar y no hay caja de respuesta", async () => {
     await renderBandeja({ c: "test-conv-1" });
-    expect(screen.getByRole("button", { name: "Tomar la conversación" })).toBeTruthy();
+    // Un solo botón principal, con texto, en el pie del chat.
+    expect(screen.getAllByRole("button", { name: "Tomar conversación" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Devolver al agente" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: "Mensaje para el cliente" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Notas internas/ }));
@@ -199,8 +234,9 @@ describe("bandeja de conversaciones", () => {
     try {
       await renderBandeja({ c: "test-conv-1" });
       expect(screen.getByText("La atiende ana@negocio.co")).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Tomar la conversación" })).toBeNull();
-      expect(screen.getByRole("button", { name: "Devolver al agente" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Tomar conversación" })).toBeNull();
+      const aviso = screen.getByRole("region", { name: "Escalación" });
+      expect(within(aviso).getByRole("button", { name: "Devolver al agente" })).toBeTruthy();
       expect(screen.getByRole("textbox", { name: "Mensaje para el cliente" })).toBeTruthy();
     } finally {
       respuestas["/admin/conversations/test-conv-1"] = conversacionAbierta;
@@ -214,7 +250,7 @@ describe("bandeja de conversaciones", () => {
       const lista = screen.getByRole("navigation", { name: "Lista de conversaciones" });
       const enlaces = within(lista).getAllByRole("link");
       expect(enlaces[0].textContent).toContain("Ana Prueba");
-      expect(enlaces[1].textContent).toContain("573000000002");
+      expect(enlaces[1].textContent).toContain("+57 300 000 0002");
     } finally {
       respuestas["/admin/conversations"] = conversaciones;
     }

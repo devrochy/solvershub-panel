@@ -1,4 +1,4 @@
-import { MessageSquare, SearchCode, Wrench } from "lucide-react";
+import { Bot, MessageSquare, SearchCode, Wrench } from "lucide-react";
 
 import type { MessageItem } from "@/lib/api/types";
 import { formatDate, formatHoraChat } from "@/lib/format";
@@ -127,6 +127,7 @@ function MensajeDelHilo({
 }) {
   const inbound = message.direction === "inbound";
   const remitente = SENDER_LABEL[message.sender_type] ?? message.sender_type;
+  const esAgente = !inbound && message.sender_type !== "human";
 
   return (
     <div
@@ -137,16 +138,17 @@ function MensajeDelHilo({
       )}
     >
       {!continuo && (
-        <span className="px-1 text-xs text-text-soft">
+        <span className="inline-flex items-center gap-1 px-1 text-xs text-text-soft">
+          {esAgente && <Bot aria-hidden className="h-3 w-3" />}
           {remitente} · {formatHoraChat(message.created_at)}
         </span>
       )}
       <div
         className={cn(
           "whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm shadow-elev-0",
-          inbound
-            ? "rounded-tl-md bg-surface-2 text-headline"
-            : "rounded-tr-md bg-cta text-white",
+          inbound && "rounded-bl-md bg-surface-2 text-headline",
+          esAgente && "rounded-tr-md bg-surface-raised text-headline ring-1 ring-inset ring-border",
+          !inbound && !esAgente && "rounded-tr-md bg-action text-white",
         )}
       >
         {message.content || <span className="italic opacity-70">(sin texto)</span>}
@@ -160,7 +162,7 @@ function MensajeDelHilo({
             <button
               type="button"
               onClick={() => onVerTurno(message.turn_id as string)}
-              className="inline-flex items-center gap-1 rounded-sm text-xs text-text-soft hover:text-headline focus-visible:outline-2"
+              className="inline-flex items-center gap-1 rounded-sm text-xs font-medium text-link hover:underline focus-visible:outline-2"
             >
               <SearchCode aria-hidden className="h-3 w-3" />
               Ver turno

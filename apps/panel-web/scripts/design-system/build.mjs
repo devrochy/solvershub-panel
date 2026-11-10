@@ -33,7 +33,7 @@ const ORDEN = [
   "Checkbox", "RadioGroup", "Switch", "ThemeSwitch", "Tooltip", "Separator", "IconAction",
   "Field", "SearchInput", "Breadcrumbs", "Tabs", "TabLinks", "FilterChips", "DropdownMenu", "Popover", "KpiTile",
   "EmptyState", "Pagination", "FormFeedback", "UsageBar", "Progress", "Stepper", "Dropzone", "ListaDeFrases",
-  "SelectConIcono", "CampoTelefono",
+  "SelectConIcono", "CampoTelefono", "SegmentedControl", "Contador", "EstadoDeError",
   "DataTable", "Dialog", "Confirm", "Sheet", "Toaster", "PageHeader",
   "Sparkline", "LineChart", "BarChart", "ProgressRing",
   "ListPage", "DetailPage", "DashboardPage", "SettingsPage",

@@ -1,23 +1,21 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { violacionesGraves } from "@/lib/testing/axe";
 
-import { EscalacionFilters, MotivoBadge, ResumenEscalacion, motivoDe } from "./escalacion";
+import { EscalacionFilters, MotivoBadge, motivoDe } from "./escalacion";
 
-afterEach(cleanup);
+const push = vi.fn();
 
-const LARGO =
-  "El cliente quiere comprar 40 unidades con entrega en Medellín y pide factura a nombre de otra empresa; " +
-  "ya preguntó dos veces por el descuento por volumen y no quiere seguir con el asistente.";
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push }),
+}));
 
-const BASE = {
-  conversation_id: "00000000-0000-0000-0000-000000000001",
-  created_at: "2026-10-13T15:00:00Z",
-  customer_name: "Ana",
-  external_id: null,
-};
+afterEach(() => {
+  cleanup();
+  push.mockClear();
+});
 
 describe("motivos de escalación (HU-UX-17)", () => {
   it("usa la etiqueta de la API y, sin ella, el respaldo de lib/labels", () => {
@@ -42,32 +40,24 @@ describe("motivos de escalación (HU-UX-17)", () => {
     expect(container.querySelector("svg")).not.toBeNull();
   });
 
-  it("muestra el resumen completo en un panel al hacer clic, sin violaciones de axe", async () => {
-    render(
-      <ResumenEscalacion
-        esc={{ ...BASE, reason: "tool:el cliente quiere al gerente", reason_code: "otro", reason_label: "Otro", summary: LARGO }}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: LARGO }));
-    const panel = screen.getByRole("dialog", { name: "Escalación de Ana" });
-    expect(panel.textContent).toContain(LARGO);
-    // El texto libre de antes se ve como «motivo registrado».
-    expect(panel.textContent).toContain("el cliente quiere al gerente");
-    expect(await violacionesGraves(document.body)).toEqual([]);
-  });
-
-  it("sin resumen no hay botón", () => {
-    render(<ResumenEscalacion esc={{ ...BASE, reason: "keyword", summary: "" }} />);
-    expect(screen.queryByRole("button")).toBeNull();
-  });
-
-  it("el filtro ofrece todos los motivos y marca el elegido", async () => {
+  it("el filtro ofrece todos los motivos, marca el elegido y navega sin botón", async () => {
     const { container } = render(<EscalacionFilters motivo="queja" />);
     const select = screen.getByLabelText("Motivo") as HTMLSelectElement;
-    expect(select.name).toBe("reason_code");
     expect(select.value).toBe("queja");
     expect(screen.getByRole("option", { name: "Monto alto" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Limpiar" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
+    fireEvent.change(select, { target: { value: "monto_alto" } });
+    expect(push).toHaveBeenCalledWith("/escalaciones?reason_code=monto_alto");
     expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("el estado es el control segmentado en modo enlace y conserva el motivo", () => {
+    render(<EscalacionFilters motivo="queja" estado="asignada" />);
+    const filtro = screen.getByRole("navigation", { name: "Filtrar por estado" });
+    const actual = within(filtro).getByRole("link", { current: "page" });
+    expect(actual.textContent).toBe("Asignadas");
+    expect(within(filtro).getByRole("link", { name: "Resueltas" }).getAttribute("href")).toBe(
+      "/escalaciones?reason_code=queja&estado=resuelta",
+    );
   });
 });

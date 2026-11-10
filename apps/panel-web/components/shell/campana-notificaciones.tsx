@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Bell, X } from "lucide-react";
 
 import { CentroDeNotificaciones } from "@/components/notificaciones/centro-de-notificaciones";
+import { Contador } from "@/components/ui/contador";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNotificaciones } from "@/lib/notificaciones/use-notificaciones";
 import { cn } from "@/lib/utils";
@@ -52,14 +53,14 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
     >
       <Bell className="h-5 w-5" aria-hidden />
       {n.noLeidas > 0 && (
-        <span
+        <Contador
           // `key`: al cambiar el número el globo hace un «pop» corto (un cambio de estado).
           key={n.noLeidas}
-          aria-hidden
-          className="sh-notif-globo absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-danger-strong px-1 text-[10px] font-semibold leading-none text-white"
-        >
-          {textoDelContador(n.noLeidas)}
-        </span>
+          valor={n.noLeidas}
+          tono="alerta"
+          tamano="sm"
+          className="sh-notif-globo absolute -right-0.5 -top-0.5"
+        />
       )}
     </button>
   );

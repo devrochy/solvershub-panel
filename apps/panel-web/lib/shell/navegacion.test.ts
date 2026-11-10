@@ -113,6 +113,7 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(soloAtencion.map((g) => g.group.id)).toEqual(["operacion"]);
     expect(etiquetas(soloAtencion)).toEqual(["Conversaciones"]);
     expect(soloAtencion[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Conversaciones", "Escalaciones"]);
+    expect(soloAtencion[0].visible[0].tabs?.[0].pestana).toBe("Chats");
   });
 
   it("un tester (ADR-0134) ve Pruebas y Equipo; sin la sección, Equipo se oculta", () => {
@@ -139,6 +140,16 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(itemActivo("/conexiones/requisitos", grupos)).toMatchObject({ item: { label: "Conexiones" }, tab: null });
     expect(itemActivo("/dashboard", grupos)).toMatchObject({ item: { label: "Resumen" }, tab: null });
     expect(itemActivo("/no-existe", grupos)).toBeNull();
+  });
+
+  it("la pestaña que se llama como su entrada no se repite en las migas", () => {
+    expect(migasPara("/conversaciones", grupos)).toEqual([{ label: "Operación" }, { label: "Conversaciones" }]);
+    expect(migasPara("/agentes", grupos)).toEqual([{ label: "Tu asistente" }, { label: "Agentes" }]);
+    expect(migasPara("/agentes/ventas", grupos, "Ventas").at(-2)).toEqual({ label: "Agentes", href: "/agentes" });
+  });
+
+  it("una pestaña puede tener un texto más corto que el nombre de su página", () => {
+    expect(pestanasPara("/conversaciones", grupos).pestanas.map((p) => p.label)).toEqual(["Chats", "Escalaciones"]);
   });
 
   it("migas: grupo › entrada › pestaña, y el título en un detalle", () => {
