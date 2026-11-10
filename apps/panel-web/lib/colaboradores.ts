@@ -1,3 +1,4 @@
+import { NAV_GROUPS, type NavGroupDef } from "@/components/shell/nav";
 import type { CollaboratorItem, Me, PackProfile } from "@/lib/api/types";
 import { rolLabel, seccionLabel } from "@/lib/labels";
 
@@ -153,4 +154,115 @@ export function perfilDePack(perfil: PackProfile): PerfilDePack {
     },
     edicion,
   };
+}
+
+/** ¿La cuenta es dueña de algún negocio (en su cuenta o en un vínculo)? */
+export function esDueno(fila: Pick<CollaboratorItem, "role" | "links">): boolean {
+  return fila.role === "owner" || fila.links.some((link) => link.role === "owner");
+}
+
+/** Rol de la fila en palabras (EQU-02): Master, Dueño o el rol de su cuenta. */
+export function rolDeCuenta(fila: CollaboratorItem): string {
+  if (fila.is_platform_master) return rolLabel("master");
+  return rolLabel(esDueno(fila) ? "owner" : fila.role);
+}
+
+/** Qué puede ver, en una frase (EQU-06): lo da su rol, con los cambios hechos a esta persona. */
+export function resumenDePermisos(fila: CollaboratorItem): string {
+  if (fila.is_platform_master || fila.role === "master" || esDueno(fila)) return "Acceso total";
+  const cambios = fila.permissions.length;
+  if (cambios === 0) return "Según su rol";
+  return `Según su rol, con ${cambios} ${cambios === 1 ? "cambio" : "cambios"}`;
+}
+
+/** Perfil de cobranza resumido para la fila (EQU-09): «Gestor · 2 carteras». `null` si no tiene. */
+export function resumenDePerfiles(fila: CollaboratorItem): string | null {
+  const partes = (fila.pack_profiles ?? []).map(perfilDePack).map((perfil) => {
+    const trozos = [perfil.etiqueta];
+    const detalle = perfil.detalle;
+    if (detalle?.estatus && detalle.estatus !== "activo") trozos.push(detalle.estatus);
+    if (detalle) {
+      const n = detalle.carteras.length;
+      trozos.push(n === 0 ? "sin carteras" : n === 1 ? detalle.carteras[0].nombre : `${n} carteras`);
+    }
+    return trozos.join(" · ");
+  });
+  return partes.length ? partes.join("; ") : null;
+}
+
+export type FilaDePermiso = { section: string; label: string };
+export type GrupoDePermisos = { id: string; label: string; filas: FilaDePermiso[] };
+
+type Lugar = { grupo: number; orden: number; label: string; prioridad: number };
+
+/**
+ * Dónde vive cada sección en el menú: una entrada suelta o la primera pestaña de una entrada
+ * llevan el nombre de la entrada; las demás pestañas, «Entrada · Pestaña». Si una sección aparece
+ * en varios sitios gana el más directo (Configuración y no Agentes · Colaboración).
+ */
+function lugaresDelMenu(grupos: NavGroupDef[]) {
+  const lugares = new Map<string, Lugar>();
+  const packs = new Map<string, Omit<Lugar, "prioridad">>();
+  let orden = 0;
+  const poner = (section: string, lugar: Lugar) => {
+    const previo = lugares.get(section);
+    if (!previo || lugar.prioridad < previo.prioridad) lugares.set(section, lugar);
+  };
+  grupos.forEach((grupo, gi) => {
+    for (const item of grupo.items) {
+      if (!item.tabs) {
+        poner(item.section, { grupo: gi, orden: orden++, label: item.label, prioridad: 0 });
+        continue;
+      }
+      if (item.pack) packs.set(item.pack, { grupo: gi, orden, label: item.label });
+      item.tabs.forEach((tab, ti) => {
+        const label = ti === 0 ? item.label : `${item.label} · ${tab.pestana ?? tab.label}`;
+        poner(tab.section, { grupo: gi, orden: orden++, label, prioridad: ti === 0 ? 1 : 2 });
+      });
+    }
+  });
+  return { lugares, packs };
+}
+
+/**
+ * Secciones de permisos agrupadas y nombradas como el menú (EQU-05): Operación, Tu asistente,
+ * Negocio, Cuenta. Una sección de un pack que no es pestaña (p. ej. los tipos de cita) va bajo
+ * la entrada del pack; lo que no está en el menú queda en «Otras».
+ */
+export function gruposDePermisos(secciones: string[], grupos: NavGroupDef[] = NAV_GROUPS): GrupoDePermisos[] {
+  const { lugares, packs } = lugaresDelMenu(grupos);
+  const ubicadas = secciones.map((section) => {
+    const lugar = lugares.get(section);
+    if (lugar) return { section, ...lugar };
+    const [pack, sub] = section.split(":");
+    const entrada = packs.get(pack);
+    if (entrada) {
+      const nombre = sub ? (seccionLabel(section).split(" · ").pop() ?? sub) : "";
+      return { section, ...entrada, orden: entrada.orden + 0.5, label: nombre ? `${entrada.label} · ${nombre}` : entrada.label };
+    }
+    return { section, grupo: grupos.length, orden: 0, label: seccionLabel(section) };
+  });
+  ubicadas.sort((a, b) => a.grupo - b.grupo || a.orden - b.orden || a.label.localeCompare(b.label, "es"));
+  const salida: GrupoDePermisos[] = [];
+  for (const u of ubicadas) {
+    const def = grupos[u.grupo];
+    const id = def?.id ?? "otras";
+    let grupo = salida.find((g) => g.id === id);
+    if (!grupo) {
+      grupo = { id, label: def?.label ?? "Otras", filas: [] };
+      salida.push(grupo);
+    }
+    grupo.filas.push({ section: u.section, label: u.label });
+  }
+  return salida;
+}
+
+/**
+ * Mapa que se guarda con `set_permissions`: solo lo cambiado para esta persona. Una sección
+ * ausente vuelve a lo que da su rol (así «Volver a lo de su rol» es quitarla del mapa).
+ */
+export function permisosAGuardar(estado: Record<string, { access: string; heredado: boolean }>, secciones: string[]) {
+  return Object.fromEntries(
+    secciones.filter((s) => estado[s] && !estado[s].heredado).map((s) => [s, estado[s].access]),
+  );
 }

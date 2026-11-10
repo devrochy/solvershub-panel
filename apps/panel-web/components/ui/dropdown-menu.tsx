@@ -69,18 +69,22 @@ export function DropdownMenuLinkItem({
   children,
   current = false,
   disabled = false,
+  scroll,
   onClick,
 }: {
   href: string;
   children: ReactNode;
   current?: boolean;
   disabled?: boolean;
+  /** false: abre algo encima de la misma página (`?param=`) sin subir la lista. */
+  scroll?: boolean;
   onClick?: () => void;
 }) {
   return (
     <Menu.Item asChild disabled={disabled}>
       <Link
         href={href}
+        scroll={scroll}
         onClick={onClick}
         aria-current={current ? "page" : undefined}
         className={cn(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Loader2, Search } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -90,7 +90,7 @@ export function SelectorDeNegocio({
         <ul role="listbox" aria-label={label} className="max-h-64 overflow-y-auto p-1">
           {cargando && (
             <li className="flex items-center gap-2 px-3 py-4 text-sm text-text-soft">
-              <Loader2 aria-hidden className="h-4 w-4 animate-spin" /> Buscando…
+              Buscando…
             </li>
           )}
           {!cargando && opciones.length === 0 && (
