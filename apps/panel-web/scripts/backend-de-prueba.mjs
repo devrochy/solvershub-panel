@@ -7,6 +7,7 @@
 //
 //   node scripts/backend-de-prueba.mjs            # escucha en :8765
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
+//   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -40,6 +41,43 @@ const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts"
 
 const puerto = Number(process.env.PUERTO ?? 8765);
 const respuestas = { ...RESPUESTAS, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
+// COBRANZA=1: un negocio con Cobranza en marcha (carteras, ruta, cliente con préstamo, promesas, auditoría).
+if (process.env.COBRANZA === "1") {
+  const dia = (n) => new Date(Date.now() - 5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
+  const C = "/pack/cobranza";
+  const perms = respuestas["/admin/me"].permissions ?? {};
+  respuestas["/admin/me"] = { ...respuestas["/admin/me"], permissions: { ...perms, "pack_cobranza:resumen": "write", "pack_cobranza:carteras": "write", "pack_cobranza:clientes": "write", "pack_cobranza:cobros": "write", "pack_cobranza:promesas": "write", "pack_cobranza:reportes": "write", "pack_cobranza:gestores": "write", "pack_cobranza:auditoria": "write", "pack_cobranza:monitoreo": "write", "pack_cobranza:reglas": "write" } };
+  respuestas["/admin/plugins"] = [...respuestas["/admin/plugins"], { ...respuestas["/admin/plugins"][0], id: "pack_cobranza", name: "pack_cobranza", display_name: "Cobranza", enabled_for_tenant: true }];
+  const carteras = [
+    { id: "c1", nombre: "Ruta Centro", descripcion: null, gestor: "Pedro Gestor", gestor_id: "g1", tipo_interes: 20, num_cuotas: 24, moneda: "COP", estatus: "activo", costo_cobro: 0 },
+    { id: "c2", nombre: "Ruta Norte", descripcion: "Barrios del norte", gestor: "Marta Gestora", gestor_id: "g2", tipo_interes: 18, num_cuotas: 30, moneda: "COP", estatus: "activo", costo_cobro: 0 },
+    { id: "c3", nombre: "Comerciantes Plaza", descripcion: null, gestor: null, gestor_id: null, tipo_interes: 15, num_cuotas: 12, moneda: "COP", estatus: "inactivo", costo_cobro: 0 },
+  ];
+  respuestas[`${C}/portfolios`] = carteras;
+  respuestas[`${C}/collectors`] = [{ id: "g1", nombre: "Pedro Gestor", correo: "pedro@prueba.example", telefono: "+57 300 000 0011", codigo: "G01", estatus: "activo" }, { id: "g2", nombre: "Marta Gestora", correo: null, telefono: "+57 300 000 0012", codigo: "G02", estatus: "activo" }, { id: "g3", nombre: "Julián Suplente", correo: "julian@prueba.example", telefono: null, codigo: "G03", estatus: "inactivo" }];
+  const liq = [{ cartera: "Ruta Centro", fecha: "2026-11-01", periodo: "Octubre 2026", cobrado: 8120000, gastos: 410000, comision: 812000 }, { cartera: "Ruta Centro", fecha: "2026-10-01", periodo: "Septiembre 2026", cobrado: 7640000, gastos: 380000, comision: 764000 }];
+  respuestas[`${C}/portfolios/c1`] = { ...carteras[0], clientes: 64, prestamos: 52, saldo: 21400000, mora: 2680000, cobrado_30d: 8120000, gastos_total: 410000, reportes_diarios: [{ fecha: "2026-11-08", cobrado: 420000, prestado: 300000, visitados: 18, sin_pago: 4, inicio: "08:12", fin: "16:40" }, { fecha: "2026-11-07", cobrado: 515000, prestado: 0, visitados: 21, sin_pago: 2, inicio: "07:55", fin: "17:05" }], caja: { saldo_inicial: 2000000, saldo_actual: 3185000, actualizado: "2026-11-08 17:10" }, liquidaciones: liq, inyecciones: [{ fecha: "2026-10-12", valor: 1000000, comentario: "Aporte del dueño", estado: "activa" }], gastos: [{ id: "e1", fecha: "2026-11-08", descripcion: "Gasolina", valor: 45000, aprobado: false }, { id: "e2", fecha: "2026-11-05", descripcion: "Almuerzo de ruta", valor: 18000, aprobado: true }], estadisticas: [{ fecha: "2026-11-08", datos: { conteos: { visitas: 18, pagos: 14 }, cobrado: 420000, caja_final: 3185000 } }] };
+  respuestas[`${C}/portfolios/c1/config`] = { values: {} };
+  respuestas[`${C}/portfolios/c1/notes`] = [{ id: "n1", nota: "Revisar a los clientes del barrio Prado antes del viernes.", fecha: "2026-11-07 14:00", autor: "Dueña" }];
+  respuestas[`${C}/portfolios/c1/route`] = { clientes: [{ id: "k1", cliente: "Ana Pérez", saldo: 450000, mora: 12, riesgo: "rojo" }, { id: "k2", cliente: "Luis Gómez", saldo: 280000, mora: 0, riesgo: "blanco" }, { id: "k3", cliente: "Marta Ruiz", saldo: 910000, mora: 3, riesgo: "azul" }, { id: "k4", cliente: "Carlos Díaz", saldo: 120000, mora: 0, riesgo: "blanco" }], plan: { orden: ["k3", "k1", "k4", "k2"], distancia_km: 14.2, tiempo_min: 95, fecha: dia(0) } };
+  const cli = (id, nombre, apellido, t, nro, neg, tope, r) => ({ id, nombre, apellido, telefono: t, tipo_documento: "CC", numero_documento: nro, negocio: neg, tope_maximo_deuda: tope, color_riesgo: r, cartera: "Ruta Centro", cartera_id: "c1" });
+  respuestas[`${C}/clients`] = [cli("k1", "Ana", "Pérez", "+57 300 000 0001", "1.020.333", "Tienda La Esquina", 1500000, "rojo"), cli("k2", "Luis", "Gómez", "+57 300 000 0002", "79.455.120", "", 0, "blanco"), cli("k3", "Marta", "Ruiz", "+57 300 000 0003", "43.100.782", "Peluquería Marta", 2000000, "azul"), cli("k4", "Carlos", "Díaz", "", "", "", 0, "blanco")];
+  const cuotas = Array.from({ length: 12 }, (_, i) => ({ id: `q${i + 1}`, numero: i + 1, valor: 50000, vence: `2026-${String((i % 12) + 1).padStart(2, "0")}-15`, estatus: i < 7 ? "pagada" : i < 9 ? "atrasada" : "pendiente" }));
+  respuestas[`${C}/clients/k1`] = { cliente: { ...cli("k1", "Ana", "Pérez", "+57 300 000 0001", "1.020.333", "Tienda La Esquina", 1500000, "rojo") }, prestamos: [{ id: "p1", valor: 500000, saldo: 250000, num_cuotas: 12, tipo_interes: 20, fecha_otorgado: "2026-01-10", estatus: "vigente", cuotas }], movimientos: [{ id: "m1", tipo: "pago", fecha: "2026-10-15 15:00", valor: 50000, metodo: "efectivo" }, { id: "m2", tipo: "abono", fecha: "2026-09-20 16:20", valor: 20000, metodo: "nequi" }], cambios: [{ id: "x1", campos_propuestos: { telefono_whatsapp: "+57 300 000 0099" }, estado: "pendiente", solicitado_por: "Pedro Gestor", fecha: "2026-11-08 17:10" }] };
+  respuestas[`${C}/payments`] = [{ id: "pg1", cliente: "Ana Pérez", valor: 50000, metodo_pago: "efectivo", registrado_por: "Pedro Gestor", fecha_hora: "2026-11-09T15:12:00Z" }, { id: "pg2", cliente: "Marta Ruiz", valor: 120000, metodo_pago: "nequi", registrado_por: null, fecha_hora: "2026-11-09T14:02:00Z" }, { id: "pg3", cliente: "Luis Gómez", valor: 30000, metodo_pago: "efectivo", registrado_por: "Marta Gestora", fecha_hora: "2026-11-08T20:40:00Z" }];
+  respuestas[`${C}/promises`] = [
+    { id: "pr1", cliente: "Ana Pérez", fecha_prometida: dia(0), valor_prometido: 250000, estado: "pendiente", tipo: "promesa", creado_por: "ia", alcance: "vencido" },
+    { id: "pr2", cliente: "Marta Ruiz", fecha_prometida: dia(1), valor_prometido: 120000, estado: "pendiente", tipo: "promesa", creado_por: "gestor", alcance: "saldo_total" },
+    { id: "pr5", cliente: "Elena Vargas", fecha_prometida: dia(30), valor_prometido: 200000, estado: "pendiente", tipo: "refinanciacion", creado_por: "propietario", alcance: null },
+    { id: "pr3", cliente: "Luis Gómez", fecha_prometida: dia(-7), valor_prometido: 80000, estado: "pendiente", tipo: "promesa", creado_por: "ia", alcance: "vencido" },
+    { id: "pr4", cliente: "Carlos Díaz", fecha_prometida: dia(-10), valor_prometido: 60000, estado: "cumplida", tipo: "promesa", creado_por: "ia", alcance: "vencido" },
+    { id: "pr6", cliente: "Jorge Ríos", fecha_prometida: dia(-12), valor_prometido: 90000, estado: "incumplida", tipo: "promesa", creado_por: "gestor", alcance: null },
+  ];
+  respuestas[`${C}/reports`] = { filas: [{ cartera: "Ruta Centro", clientes: 64, prestamos: 52, saldo: 21400000, vencidas: 31, cobrado: 8120000, caja: 3185000, gastos: 410000 }, { cartera: "Ruta Norte", clientes: 58, prestamos: 49, saldo: 19250000, vencidas: 22, cobrado: 6480000, caja: 1940000, gastos: 520000 }, { cartera: "Comerciantes Plaza", clientes: 20, prestamos: 17, saldo: 7700000, vencidas: 9, cobrado: 1890000, caja: 610000, gastos: 300000 }], liquidaciones: liq };
+  respuestas[`${C}/audit`] = { entidades: ["cuota", "pago", "promesa"], operaciones: ["crear", "editar", "eliminar"], filas: [{ fecha: "2026-11-09 10:12", entidad: "cuota", entidad_id: "a1f3c2d4", operacion: "editar", antes: { valor_esperado: 50000, estatus: "pendiente" }, despues: { valor_esperado: 45000, estatus: "pendiente" }, actor: "propietario", motivo: "Acuerdo con el cliente" }, { fecha: "2026-11-08 18:30", entidad: "pago", entidad_id: "77bb91e0", operacion: "eliminar", antes: { valor: 30000 }, despues: null, actor: "gestor", motivo: "" }] };
+  respuestas[`${C}/monitoring`] = { conversaciones: 86, escalaciones: 3, promesas_pendientes: 12, promesas_cumplidas: 34, promesas_incumplidas: 5 };
+  respuestas[`${C}/rules`] = { max_dias_prorroga: 7, min_abono_pct: 20, max_reprogramaciones: 2, umbral_saldo_autonomo: 500000, alcance_promesa: "ambos" };
+}
 if (process.env.BOT_PAUSADO === "1") {
   respuestas["/admin/settings"] = { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } };
 }

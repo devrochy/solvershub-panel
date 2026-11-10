@@ -22,6 +22,7 @@ export function PageHeader({
   migasIntermedias,
   tabs,
   densidad = "normal",
+  despuesDelTitulo,
   className,
 }: {
   title: string;
@@ -33,9 +34,11 @@ export function PageHeader({
   breadcrumbs?: Miga[];
   /** Padres de datos entre la pestaña y el título (la cartera de un cliente). */
   migasIntermedias?: Miga[];
-  /** Pestañas propias. Sin esta prop, las de la sección del pack salen solas (HU-DS-04). */
+  /** Pestañas propias. Sin esta prop, las de la sección del pack salen solas (HU-DS-04); con `false`, ninguna. */
   tabs?: ReactNode;
   densidad?: "normal" | "compacta";
+  /** Lo que se lee con el título: el estado de una cartera, el riesgo de un cliente. */
+  despuesDelTitulo?: ReactNode;
   className?: string;
 }) {
   if (densidad === "compacta") {
@@ -47,6 +50,7 @@ export function PageHeader({
         <div className="flex flex-wrap items-end justify-between gap-x-6 border-border-soft has-[nav[aria-label=Secciones]]:border-b md:justify-start">
           <div className="flex items-center gap-2 pb-2.5">
             <TituloDePagina title={title} compacto />
+            {despuesDelTitulo}
             <SectionHelpPopover section={helpSection} description={description} className="max-sm:hidden" />
           </div>
           <div className="-mb-px min-w-0">{tabs ?? <PestanasDeShell compactas />}</div>
@@ -61,8 +65,9 @@ export function PageHeader({
       {breadcrumbs ? breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} /> : <MigasDeShell titulo={title} intermedias={migasIntermedias} />}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <TituloDePagina title={title} />
+            {despuesDelTitulo}
             {helpSection && <SectionHelpButton section={helpSection} />}
           </div>
           {description && <p className="mt-1 max-w-2xl text-sm text-body">{description}</p>}

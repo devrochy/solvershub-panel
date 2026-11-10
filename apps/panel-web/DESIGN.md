@@ -210,6 +210,14 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Todo delta dice contra qué compara («+12 % frente a los 7 días anteriores»); las fotos de hoy (escalaciones, tareas, citas de hoy) no llevan delta.
 - Cargando: esqueleto con la forma de la página (`app/(app)/dashboard/loading.tsx`), sin spinner.
 
+## Cobranza (SPEC-29)
+
+- Dentro de una ficha (cartera, cliente) la fila propia de pestañas reemplaza a las áreas de Cobranza; las migas llevan de vuelta. `PageHeader` recibe `tabs` y, junto al título, el estado en `despuesDelTitulo`.
+- Las listas usan `TablaCobranza`: tabla en escritorio y filas de un toque en el celular. Las acciones de una fila van en `MenuDeFila`.
+- El historial que no hace falta a diario va en `SeccionPlegada`, con su conteo.
+- Promesas es una agenda: Vencidas, Hoy, Esta semana y Más adelante, con la decisión a un toque.
+- Los enums del backend se leen desde `lib/cobranza/presentacion.ts`; una página de servidor no importa constantes de un módulo `"use client"`.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

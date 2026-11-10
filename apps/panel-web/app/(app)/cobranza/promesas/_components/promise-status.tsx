@@ -2,55 +2,94 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Select } from "@/components/ui/select";
 
-const STATUSES = ["pendiente", "cumplida", "incumplida"];
+const OTROS_ESTADOS: Record<string, { estado: string; label: string }[]> = {
+  cumplida: [
+    { estado: "pendiente", label: "Volver a pendiente" },
+    { estado: "incumplida", label: "Marcar incumplida" },
+  ],
+  incumplida: [
+    { estado: "pendiente", label: "Volver a pendiente" },
+    { estado: "cumplida", label: "Marcar cumplida" },
+  ],
+};
 
-/** Cambia el estado de una promesa de pago. */
-export function PromiseStatus({ promiseId, estado }: { promiseId: string; estado: string }) {
+/** Decide una promesa de un toque; una ya decidida se corrige desde su menú. */
+export function PromiseStatus({ promiseId, estado, cliente }: { promiseId: string; estado: string; cliente: string }) {
   const router = useRouter();
-  const [value, setValue] = useState(estado);
-  const [state, setState] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const [state, setState] = useState<{ loading?: string; error?: string }>({});
 
-  async function save() {
-    setState({ loading: true });
+  async function guardar(nuevo: string) {
+    setState({ loading: nuevo });
     const res = await fetch(`/api/pack/cobranza/promises/${promiseId}/status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: value }),
+      body: JSON.stringify({ estado: nuevo }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
       setState({ error: json.error ?? "No se pudo cambiar el estado." });
       return;
     }
-    setState({ success: "Listo." });
+    setState({});
     router.refresh();
   }
 
-  return (
-    <div className="flex flex-col items-end gap-1">
+  if (estado !== "pendiente") {
+    return (
       <div className="flex items-center gap-2">
-        <Select
-          aria-label={`Estado de la promesa ${promiseId}`}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="h-9 w-36"
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </Select>
-        <Button variant="outline" size="sm" onClick={() => void save()} disabled={state.loading}>
-          {state.loading ? "Guardando…" : "Guardar"}
-        </Button>
+        <FormFeedback error={state.error} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="pointer-coarse:h-11 pointer-coarse:w-11"
+              aria-label={`Cambiar el estado de la promesa de ${cliente}`}
+              title="Cambiar el estado"
+              disabled={Boolean(state.loading)}
+            >
+              <MoreHorizontal className="h-4 w-4" aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {(OTROS_ESTADOS[estado] ?? []).map((o) => (
+              <DropdownMenuItem key={o.estado} onSelect={() => void guardar(o.estado)}>
+                {o.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <FormFeedback error={state.error} success={state.success} />
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <FormFeedback error={state.error} />
+      <Button
+        variant="ghost"
+        className="pointer-coarse:h-11"
+        disabled={Boolean(state.loading)}
+        aria-label={`${cliente} no cumplió la promesa`}
+        onClick={() => void guardar("incumplida")}
+      >
+        {state.loading === "incumplida" ? "Guardando…" : "No cumplió"}
+      </Button>
+      <Button
+        variant="outline"
+        className="pointer-coarse:h-11"
+        disabled={Boolean(state.loading)}
+        aria-label={`${cliente} cumplió la promesa`}
+        onClick={() => void guardar("cumplida")}
+      >
+        {state.loading === "cumplida" ? "Guardando…" : "Cumplió"}
+      </Button>
     </div>
   );
 }

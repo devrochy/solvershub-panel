@@ -33,7 +33,7 @@ export function RouteOptimizeButton({ portfolioId }: { portfolioId: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button disabled={status.loading} onClick={optimizar} size="sm" variant="outline">
+      <Button disabled={status.loading} onClick={optimizar} variant="outline">
         {status.loading ? "Optimizando…" : "Optimizar ruta"}
       </Button>
       <FormFeedback error={status.error} success={status.success} />

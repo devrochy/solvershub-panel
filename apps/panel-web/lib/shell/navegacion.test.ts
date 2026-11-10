@@ -199,7 +199,7 @@ describe("navegación del shell (HU-DS-04)", () => {
       { href: "/cobranza/monitoreo", label: "Asistente" },
     ]);
     expect(cobranza.subgrupoActual).toBe("/cobranza/monitoreo");
-    expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Monitoreo IA", "Reglas de negociación"]);
+    expect(cobranza.pestanas.map((p) => p.label)).toEqual(["Actividad del agente", "Reglas de negociación"]);
     // Carteras y Resumen son áreas de una sola sección: sin segunda fila. Clientes es una página oculta.
     expect(pestanasPara("/cobranza/carteras/7", grupos).pestanas).toEqual([]);
     expect(pestanasPara("/cobranza/clientes", grupos)).toMatchObject({ pestanas: [], subgrupoActual: "/cobranza/carteras" });

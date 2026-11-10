@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
-import { StatCard } from "@/components/ui/stat-card";
+import { KpiTile } from "@/components/ui/kpi-tile";
+import { fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 import { formatCop, formatNumber } from "@/lib/format";
 import { cargarCartera } from "../_lib/cartera";
 
@@ -18,20 +19,32 @@ export default async function CarteraResumenPage({ params }: { params: Promise<{
   const mora = c.mora ?? 0;
   const cobrado30d = c.cobrado_30d ?? 0;
   const gastosTotal = c.gastos_total ?? 0;
+  const base = `/cobranza/carteras/${c.id}`;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard label="Clientes" value={formatNumber(c.clientes)} />
-      <StatCard label="Préstamos" value={formatNumber(c.prestamos)} />
-      <StatCard label="Saldo" value={formatCop(c.saldo)} />
-      <StatCard label="Mora" value={formatCop(mora)} hint={mora > 0 ? "Cuotas atrasadas" : undefined} />
-      <StatCard label="Cobrado (30 días)" value={formatCop(cobrado30d)} />
-      <StatCard label="Gastos" value={formatCop(gastosTotal)} />
-      <StatCard
-        label="Caja actual"
-        value={formatCop(c.caja.saldo_actual)}
-        hint={c.caja.actualizado ? `Actualizada ${c.caja.actualizado}` : undefined}
-      />
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <KpiTile label="Saldo" value={formatCop(c.saldo)} hint={`${formatNumber(c.prestamos)} préstamos`} size="hero" />
+        <KpiTile
+          label="Mora"
+          value={formatCop(mora)}
+          hint={mora > 0 ? "Cuotas atrasadas" : undefined}
+          tone={mora > 0 ? "danger" : "default"}
+          size="hero"
+        />
+        <KpiTile label="Cobrado, 30 días" value={formatCop(cobrado30d)} size="hero" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiTile label="Clientes" value={formatNumber(c.clientes)} size="compact" href={`${base}/clientes`} />
+        <KpiTile
+          label="Caja actual"
+          value={formatCop(c.caja.saldo_actual)}
+          hint={c.caja.actualizado ? `Actualizada ${fechaHoraDeApi(c.caja.actualizado)}` : undefined}
+          size="compact"
+          href={`${base}/caja`}
+        />
+        <KpiTile label="Gastos" value={formatCop(gastosTotal)} size="compact" href={`${base}/caja`} />
+      </div>
     </div>
   );
 }

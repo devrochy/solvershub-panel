@@ -31,9 +31,22 @@ export function formatCop(value: number): string {
   return formatMoney(value, "COP");
 }
 
+/** «2026-01-10» es un día, no un instante: leído como UTC, en Colombia caería el día anterior. */
+function aFecha(value: string | Date): Date {
+  const soloFecha = typeof value === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
+  if (soloFecha) return new Date(Number(soloFecha[1]), Number(soloFecha[2]) - 1, Number(soloFecha[3]));
+  return new Date(value);
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("es-CO", { dateStyle: "short" }).format(aFecha(value));
+}
+
+/** «10 de enero de 2026». */
+export function formatFechaLarga(value: string | Date | null | undefined): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(aFecha(value));
 }
 
 export function formatDateTime(value: string | Date | null | undefined): string {

@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { StatusBadge } from "@/components/domain/status-badge";
+import { ListPage } from "@/components/templates/list-page";
 import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { PageHeader } from "@/components/ui/page-header";
+import { type Column } from "@/components/ui/data-table";
 import { apiFetch } from "@/lib/api/server";
+import { GESTOR_STATUS } from "@/lib/cobranza/presentacion";
 import {
   CollectorFormDialog,
   CollectorRowActions,
@@ -24,63 +26,53 @@ type Collector = {
 
 export default async function GestoresPage() {
   const collectorsRes = await apiFetch<Collector[]>("/pack/cobranza/collectors");
+  const nuevoGestor = (
+    <CollectorFormDialog
+      trigger={
+        <Button variant="accent">
+          <Plus className="h-4 w-4" aria-hidden /> Nuevo gestor
+        </Button>
+      }
+    />
+  );
+  const header = { title: "Gestores", description: "Cobradores del negocio, sus datos y permisos.", actions: nuevoGestor };
   if (!collectorsRes.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los gestores: {collectorsRes.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCobranza titulo="No se pudieron cargar los gestores" detalle={collectorsRes.error} />
+      </ListPage>
     );
   }
-  const collectors = collectorsRes.data;
 
   const columns: Column<Collector>[] = [
-    { key: "nombre", header: "Gestor", cell: (g) => <span className="text-headline">{g.nombre}</span> },
+    { key: "nombre", header: "Gestor", cell: (g) => <span className="font-medium text-headline">{g.nombre}</span> },
     { key: "correo", header: "Correo", cell: (g) => <span className="text-body">{g.correo ?? "—"}</span> },
-    { key: "telefono", header: "Teléfono", cell: (g) => <span className="text-body">{g.telefono ?? "—"}</span> },
-    {
-      key: "estatus",
-      header: "Estado",
-      cell: (g) => <Badge variant={g.estatus === "activo" ? "success" : "neutral"}>{g.estatus}</Badge>,
-    },
+    { key: "telefono", header: "Teléfono", cell: (g) => <span className="whitespace-nowrap tabular-nums text-body">{g.telefono ?? "—"}</span> },
+    { key: "estatus", header: "Estado", cell: (g) => <StatusBadge value={g.estatus} map={GESTOR_STATUS} /> },
     {
       key: "acciones",
-      header: "Acciones",
+      header: <span className="sr-only">Acciones</span>,
       align: "right",
+      className: "w-10",
       cell: (g) => <CollectorRowActions collector={g} />,
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Gestores"
-        description="Cobradores del negocio, sus datos y permisos (habilidad Cobranza)."
-        actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/cobranza">← Volver a Cobranza</Link>
-          </Button>
-        }
+    <ListPage header={header}>
+      <TablaCobranza
+        etiqueta="Gestores"
+        columns={columns}
+        rows={collectorsRes.data}
+        getRowKey={(g) => g.id}
+        emptyTitle="Sin gestores"
+        emptyDescription="Crea el primer gestor con «Nuevo gestor»."
+        filaCelular={(g) => ({
+          titulo: g.nombre,
+          detalle: [g.telefono, GESTOR_STATUS[g.estatus]?.label ?? g.estatus].filter(Boolean).join(" · "),
+          accion: <CollectorRowActions collector={g} />,
+        })}
       />
-
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold text-headline">Lista de gestores</h2>
-          <CollectorFormDialog
-            trigger={
-              <Button variant="accent">
-                <Plus className="h-4 w-4" aria-hidden /> Nuevo gestor
-              </Button>
-            }
-          />
-        </div>
-        <DataTable
-          columns={columns}
-          rows={collectors}
-          getRowKey={(g) => g.id}
-          emptyTitle="Sin gestores"
-          emptyDescription="Crea el primer gestor con el botón «Nuevo gestor»."
-        />
-      </section>
-    </div>
+    </ListPage>
   );
 }
