@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { useFocoDevuelto } from "@/lib/foco";
 import { cn } from "@/lib/utils";
 
 export const Sheet = DialogPrimitive.Root;
@@ -39,15 +40,16 @@ export function SheetContent({
   className?: string;
   /** A dónde va el foco al abrir (por defecto, el primer control). */
   onOpenAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onOpenAutoFocus"];
-  /** Devuelve el foco a quien abrió el panel cuando no hay un `SheetTrigger` de Radix. */
+  /** Para mover el foco a otro lado al cerrar (`preventDefault`); si no, vuelve a quien abrió el panel, o al botón del menú si se abrió desde un ítem (`lib/foco.ts`). */
   onCloseAutoFocus?: ComponentProps<typeof DialogPrimitive.Content>["onCloseAutoFocus"];
 }) {
+  const foco = useFocoDevuelto(onOpenAutoFocus, onCloseAutoFocus);
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <DialogPrimitive.Content
-        onOpenAutoFocus={onOpenAutoFocus}
-        onCloseAutoFocus={onCloseAutoFocus}
+        onOpenAutoFocus={foco.onOpenAutoFocus}
+        onCloseAutoFocus={foco.onCloseAutoFocus}
         className={cn(
           "fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-surface shadow-elev-3 focus:outline-none sm:max-w-md",
           className,

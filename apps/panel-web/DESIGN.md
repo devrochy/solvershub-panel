@@ -167,7 +167,7 @@ locales de carga/éxito/error en las páginas migradas.
 | Pieza | Regla |
 |---|---|
 | `components/ui/toaster.tsx` + `lib/toast-store.ts` | `toast.success()` (`role="status"`, se cierra a los 5 s y pausa con hover) y `toast.error()` (`role="alert"`, queda hasta cerrarlo). Animación ≤200 ms, sin animación con `prefers-reduced-motion` |
-| `components/ui/confirm.tsx` · `useConfirm()` | Diálogo `alertdialog` con título, **consecuencia** y botón `danger` para lo destructivo. Devuelve `Promise<boolean>`; Escape/Cancelar = `false`. El foco lo devuelve Radix |
+| `components/ui/confirm.tsx` · `useConfirm()` | Diálogo `alertdialog` con título, **consecuencia** y botón `danger` para lo destructivo. Devuelve `Promise<boolean>`; Escape/Cancelar = `false`. Al cerrar, el foco vuelve a quien la pidió, o al botón del menú si se pidió desde un ítem (`lib/foco.ts`) |
 | `lib/use-action.ts` · `useAction()` | Ejecuta el fetch al BFF, muestra el toast, refresca (`router.refresh`) y ejecuta `rollback` de lo optimista si falla |
 | `lib/labels.ts` | Estados, canales, roles, motivos de escalación y claves de permiso en español claro; **nunca** se muestra el enum crudo |
 | `components/ui/providers.tsx` | `FeedbackProviders` (ConfirmProvider + Toaster), montado en el layout de `(app)` |
@@ -213,7 +213,7 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 ## Cobranza (SPEC-29)
 
 - Dentro de una ficha (cartera, cliente) la fila propia de pestañas reemplaza a las áreas de Cobranza; las migas llevan de vuelta. `PageHeader` recibe `tabs` y, junto al título, el estado en `despuesDelTitulo`.
-- Las listas usan `TablaResponsiva`: tabla en escritorio y filas de un toque en el celular. Las acciones de una fila van en `MenuDeFila`.
+- Las listas usan `TablaResponsiva`: tabla en escritorio y filas de un toque en el celular. Las acciones de una fila van en `MenuDeFila`. Un diálogo, cajón o confirmación abierto desde uno de sus ítems devuelve el foco al botón del menú al cerrarse (`lib/foco.ts`, ya está en `DialogContent`, `SheetContent` y `useConfirm`).
 - El historial que no hace falta a diario va en `SeccionPlegada`, con su conteo.
 - Promesas es una agenda: Vencidas, Hoy, Esta semana y Más adelante, con la decisión a un toque.
 - Los enums del backend se leen desde `lib/cobranza/presentacion.ts`; una página de servidor no importa constantes de un módulo `"use client"`.
