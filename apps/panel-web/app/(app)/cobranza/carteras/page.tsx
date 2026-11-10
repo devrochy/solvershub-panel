@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export default async function CarterasPage() {
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar las carteras" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar las carteras" detalle={res.error} />
       </ListPage>
     );
   }
@@ -95,7 +95,7 @@ export default async function CarterasPage() {
 
   return (
     <ListPage header={header} filters={<BuscarCliente />}>
-      <TablaCobranza
+      <TablaResponsiva
         etiqueta="Carteras"
         columns={columns}
         rows={res.data}

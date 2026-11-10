@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { SeccionPlegada } from "@/components/domain/cobranza/seccion-plegada";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export default async function CarteraCajaPage({ params }: { params: Promise<{ id
             trigger={<Button variant="outline">Registrar gasto</Button>}
           />
         </div>
-        <TablaCobranza
+        <TablaResponsiva
           etiqueta="Gastos"
           columns={expenseColumns}
           rows={gastos}
@@ -105,7 +105,7 @@ export default async function CarteraCajaPage({ params }: { params: Promise<{ id
 
       <div className="flex flex-col gap-3">
         <SeccionPlegada titulo="Liquidaciones" conteo={c.liquidaciones.length}>
-          <TablaCobranza
+          <TablaResponsiva
             etiqueta="Liquidaciones"
             columns={liquidationColumns}
             rows={c.liquidaciones}
@@ -121,7 +121,7 @@ export default async function CarteraCajaPage({ params }: { params: Promise<{ id
           />
         </SeccionPlegada>
         <SeccionPlegada titulo="Inyecciones de capital" conteo={c.inyecciones.length}>
-          <TablaCobranza
+          <TablaResponsiva
             etiqueta="Inyecciones de capital"
             columns={injectionColumns}
             rows={c.inyecciones}

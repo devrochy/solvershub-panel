@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/schema";
-import { KeyRound, Phone, ShieldCheck } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ async function enviar(action: string, payload: Record<string, unknown>) {
     : { ok: false as const, error: json.error ?? "No se pudo completar." };
 }
 
-/** Wizard de WhatsApp: Embedded Signup (SDK de Meta), BYOK y carga manual. */
+/** Alta de WhatsApp (CON-16): con Facebook primero; con tu app de Meta y a mano, plegados debajo. */
 export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Sesion | null }) {
   const router = useRouter();
   const [status, setStatus] = useState<{ loading?: string; error?: string; success?: string }>({});
@@ -78,7 +78,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
     if (alta.needsRegistration) {
       setPorRegistrar(alta);
       setStatus({
-        success: `Conexión ${destino} creada. Falta registrar el número en la Cloud API con su PIN.`,
+        success: `Conexión ${destino} creada. Falta registrar el número con su PIN.`,
       });
     } else {
       setStatus({ success: `Conexión ${destino} creada y conectada.` });
@@ -97,7 +97,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
         token: String(data.get("token") ?? ""),
         business_id: String(data.get("business_id") ?? ""),
       },
-      "Conexión manual creada.",
+      "Conexión creada.",
     );
   }
 
@@ -105,15 +105,11 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
     <div className="flex flex-col gap-5">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-text-soft" aria-hidden />
-            <CardTitle className="text-sm">Producción: conectar con Facebook</CardTitle>
-            {estado.meta_configured ? (
-              <Badge variant="success">recomendado</Badge>
-            ) : (
-              <Badge variant="warning">sin configurar</Badge>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle as="h2">Conectar con Facebook</CardTitle>
+            {estado.meta_configured ? <Badge variant="accent">Recomendado</Badge> : <Badge variant="warning">Sin configurar</Badge>}
           </div>
+          <p className="text-sm text-body">Inicias sesión con Facebook, eliges tu número y listo. Es la forma más rápida.</p>
         </CardHeader>
         <CardContent>
           <EmbeddedSignup estado={estado} inicial={sesion} />
@@ -122,22 +118,23 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
 
       <FormFeedback error={status.error} success={status.success} />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-text-soft" aria-hidden />
-            <CardTitle className="text-sm">Tu propia app de Meta (prueba o producción)</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <details className="group rounded-lg border border-border-soft bg-surface">
+        <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-3">
+          <span className="flex flex-col">
+            <span className="text-sm font-medium text-headline">Con tu propia app de Meta</span>
+            <span className="text-xs text-text-soft">Si ya tienes una app en Meta for Developers y prefieres usarla.</span>
+          </span>
+          <ChevronDown aria-hidden className="h-4 w-4 shrink-0 text-text-soft transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-border-soft px-5 py-5">
           <form className="flex flex-col gap-4" onSubmit={(e) => void onByok(e)}>
             <Field
-              label="Entorno"
+              label="Número"
               htmlFor="byok_environment"
               help={
                 entorno === "production"
-                  ? "Tu número real. Tu app de Meta tiene que estar en modo Live y el token debe ser permanente (usuario del sistema). Si el número no está registrado, después te pedimos su PIN."
-                  : "El número de prueba que Meta crea en tu app (pestaña API Setup). Luego puedes pasarla a producción."
+                  ? "Tu número real. La app tiene que estar en modo Live y el token debe ser permanente. Si el número no está registrado, después te pedimos su PIN."
+                  : "El número de prueba que Meta crea en tu app (en «API Setup»). Después puedes pasarla a producción."
               }
             >
               <Select
@@ -146,39 +143,39 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
                 value={entorno}
                 onChange={(e) => setEntorno(e.target.value === "production" ? "production" : "sandbox")}
               >
-                <option value="sandbox">Prueba (número de prueba de Meta)</option>
-                <option value="production">Producción (mi número real)</option>
+                <option value="sandbox">El número de prueba de Meta</option>
+                <option value="production">Mi número real</option>
               </Select>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="App ID" htmlFor="byok_app_id">
-                <Input id="byok_app_id" name="app_id" required />
+              <Field label="Identificador de la app (App ID)" htmlFor="byok_app_id">
+                <Input id="byok_app_id" name="app_id" required inputMode="numeric" />
               </Field>
-              <Field label="App Secret" htmlFor="byok_app_secret">
-                <InputPassword etiqueta="secreto" id="byok_app_secret" name="app_secret" required />
+              <Field label="Clave secreta de la app (App Secret)" htmlFor="byok_app_secret">
+                <InputPassword etiqueta="clave secreta" id="byok_app_secret" name="app_secret" required />
               </Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="WABA ID" htmlFor="byok_waba_id">
-                <Input id="byok_waba_id" name="waba_id" required />
+              <Field label="Cuenta de WhatsApp Business (WABA ID)" htmlFor="byok_waba_id">
+                <Input id="byok_waba_id" name="waba_id" required inputMode="numeric" />
               </Field>
-              <Field label="Phone Number ID" htmlFor="byok_phone">
-                <Input id="byok_phone" name="phone_number_id" required />
+              <Field label="Identificador del número (Phone number ID)" htmlFor="byok_phone">
+                <Input id="byok_phone" name="phone_number_id" required inputMode="numeric" />
               </Field>
             </div>
-            <Field label="Access token" htmlFor="byok_token">
+            <Field label="Token de acceso" htmlFor="byok_token">
               <Textarea id="byok_token" name="access_token" required rows={2} />
             </Field>
             <Field
-              label="Verify token del webhook"
+              label="Clave de verificación del webhook"
               htmlFor="byok_verify"
-              help="Opcional: si lo dejas vacío, se genera uno propio de esta conexión."
+              help="Opcional: si la dejas vacía, creamos una para esta conexión."
             >
               <Input id="byok_verify" name="verify_token" />
             </Field>
             <div>
-              <Button disabled={status.loading === "byok"} type="submit">
-                {status.loading === "byok" ? "Guardando…" : "Conectar con BYOK"}
+              <Button loading={status.loading === "byok"} type="submit" variant="outline">
+                Conectar con mi app
               </Button>
             </div>
           </form>
@@ -187,8 +184,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
             <div className="mt-6 rounded-lg border border-status-warning-border bg-status-warning-bg p-4">
               <p className="font-medium text-headline">Registra el número con su PIN</p>
               <p className="mb-4 text-sm text-body">
-                Meta todavía no tiene el número {porRegistrar.phoneNumberId} registrado en la Cloud
-                API: hasta registrarlo no envía ni recibe mensajes.
+                Meta todavía no tiene el número registrado: hasta registrarlo no envía ni recibe mensajes.
                 {porRegistrar.registrationError ? ` ${porRegistrar.registrationError}` : ""}
               </p>
               <RegistroPinForm
@@ -202,40 +198,41 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
               />
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-text-soft" aria-hidden />
-            <CardTitle className="text-sm">Carga manual de respaldo</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <details className="group rounded-lg border border-border-soft bg-surface">
+        <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-3">
+          <span className="flex flex-col">
+            <span className="text-sm font-medium text-headline">Con los datos a mano</span>
+            <span className="text-xs text-text-soft">Por si lo anterior falla: pegas los identificadores y el token.</span>
+          </span>
+          <ChevronDown aria-hidden className="h-4 w-4 shrink-0 text-text-soft transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-border-soft px-5 py-5">
           <form className="flex flex-col gap-4" onSubmit={onManual}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="WABA ID" htmlFor="manual_waba">
-                <Input id="manual_waba" name="waba_id" required />
+              <Field label="Cuenta de WhatsApp Business (WABA ID)" htmlFor="manual_waba">
+                <Input id="manual_waba" name="waba_id" required inputMode="numeric" />
               </Field>
-              <Field label="Phone Number ID" htmlFor="manual_phone">
-                <Input id="manual_phone" name="phone_number_id" required />
+              <Field label="Identificador del número (Phone number ID)" htmlFor="manual_phone">
+                <Input id="manual_phone" name="phone_number_id" required inputMode="numeric" />
               </Field>
             </div>
             <Field label="Token de acceso" htmlFor="manual_token">
               <Textarea id="manual_token" name="token" required rows={2} />
             </Field>
-            <Field label="Business ID" htmlFor="manual_business" help="Opcional.">
-              <Input id="manual_business" name="business_id" />
+            <Field label="Portafolio de Meta (Business ID)" htmlFor="manual_business" help="Opcional.">
+              <Input id="manual_business" name="business_id" inputMode="numeric" />
             </Field>
             <div>
-              <Button disabled={status.loading === "manual"} type="submit" variant="outline">
-                {status.loading === "manual" ? "Validando…" : "Crear conexión manual"}
+              <Button loading={status.loading === "manual"} type="submit" variant="outline">
+                Crear la conexión
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
     </div>
   );
 }

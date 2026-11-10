@@ -3,28 +3,31 @@
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { InputPassword } from "@/components/ui/input-password";
 import { parsePin } from "@/lib/meta-pin";
 import { useAction } from "@/lib/use-action";
 
-/** Registro de un número en la Cloud API con el PIN de verificación en dos pasos. */
+/** Registro de un número en la Cloud API con el PIN de verificación en dos pasos; se abre desde el menú del número. */
 export function RegisterNumberDialog({
   connectionId,
   phoneNumberId,
   label,
+  abierto,
+  onAbiertoChange,
 }: {
   connectionId: string;
   phoneNumberId: string;
   label: string;
+  abierto: boolean;
+  onAbiertoChange: (abierto: boolean) => void;
 }) {
   const { run, pending } = useAction();
-  const [open, setOpen] = useState(false);
   const [pinError, setPinError] = useState<string>();
 
   function onOpenChange(next: boolean) {
-    setOpen(next);
+    onAbiertoChange(next);
     if (!next) setPinError(undefined);
   }
 
@@ -57,17 +60,12 @@ export function RegisterNumberDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          Registrar
-        </Button>
-      </DialogTrigger>
+    <Dialog open={abierto} onOpenChange={onOpenChange}>
       <DialogContent title="Registrar número" description={label} className="max-w-md">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <p className="text-sm text-body">
-            Meta pide registrar el número con un PIN de 6 dígitos para que envíe y reciba mensajes
-            por la API.
+            Meta pide registrar el número con un PIN de 6 dígitos antes de que tu agente pueda
+            enviar y recibir mensajes con él.
           </p>
           <Field
             label="PIN de verificación en dos pasos"
@@ -92,8 +90,8 @@ export function RegisterNumberDialog({
                 Cancelar
               </Button>
             </DialogClose>
-            <Button type="submit" variant="accent" disabled={pending}>
-              {pending ? "Registrando…" : "Registrar número"}
+            <Button type="submit" variant="accent" loading={pending}>
+              Registrar número
             </Button>
           </div>
         </form>

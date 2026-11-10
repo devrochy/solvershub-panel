@@ -1,5 +1,6 @@
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { CatalogoConfig, Me, WebChatSettings } from "@/lib/api/types";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
@@ -22,7 +23,7 @@ export default async function AparienciaPage({ params }: { params: Promise<{ id:
   return (
     <SeccionFicha
       titulo="Apariencia"
-      descripcion="Dónde aparece el chat y cómo se protege. Es la misma configuración de Configuración → Chat web."
+      descripcion="Dónde aparece el chat en tu sitio. Es la misma configuración de Configuración → Chat web."
     >
       {res.ok ? (
         <WebChatForm
@@ -32,9 +33,7 @@ export default async function AparienciaPage({ params }: { params: Promise<{ id:
           conFragmento={false}
         />
       ) : (
-        <p role="alert" className="text-status-danger-fg">
-          No se pudo cargar el chat web: {res.error}
-        </p>
+        <ErrorDeCarga titulo="No se pudo cargar el chat web" detalle={res.error} />
       )}
     </SeccionFicha>
   );

@@ -1,5 +1,5 @@
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
 import { type Column } from "@/components/ui/data-table";
 import { KpiTile } from "@/components/ui/kpi-tile";
@@ -36,7 +36,7 @@ export default async function ReportesPage() {
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar los reportes" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar los reportes" detalle={res.error} />
       </ListPage>
     );
   }
@@ -84,7 +84,7 @@ export default async function ReportesPage() {
         <h2 id="por-cartera" className="font-display text-sh-block text-headline">
           Por cartera
         </h2>
-        <TablaCobranza
+        <TablaResponsiva
           etiqueta="Por cartera"
           columns={portfolioColumns}
           rows={filas}
@@ -103,7 +103,7 @@ export default async function ReportesPage() {
         <h2 id="liquidaciones" className="font-display text-sh-block text-headline">
           Liquidaciones recientes
         </h2>
-        <TablaCobranza
+        <TablaResponsiva
           etiqueta="Liquidaciones recientes"
           columns={liquidationColumns}
           rows={liquidaciones}

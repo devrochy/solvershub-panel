@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { MarcaDeRevision } from "@/components/domain/marca-de-revision";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import {
@@ -32,46 +32,39 @@ export function MetaHealthChecks({ connectionId, checks }: { connectionId: strin
       setStatus({ error: json.error ?? "No se pudo completar la reparación." });
       return;
     }
-    setStatus({ success: "Listo. Diagnostica de nuevo para ver el resultado." });
+    setStatus({ success: "Listo. Pulsa «Revisar ahora» para confirmarlo." });
     router.refresh();
   }
 
   if (checks.length === 0) {
-    return <p className="text-xs text-text-soft">Todavía no hay diagnóstico. Pulsa «Diagnosticar».</p>;
+    return <p className="text-sm text-text-soft">Todavía no la revisamos. Pulsa «Revisar ahora».</p>;
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col">
         {checks.map((check) => {
           const arreglo = muestraReparacion(check) ? reparacion(check.repair_action, connectionId) : null;
           const sinDato = check.ok === null || check.ok === undefined;
           return (
-            <li key={check.key} className="flex items-start justify-between gap-3 text-xs">
-              <span className="flex flex-col gap-0.5">
-                <span className="text-body">{nombreDelCheck(check.key)}</span>
-                {check.detail && <span className="text-text-soft">{check.detail}</span>}
+            <li key={check.key} className="flex flex-wrap items-center gap-3 border-t border-border-soft py-3 text-sm first:border-t-0">
+              <MarcaDeRevision ok={check.ok} />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-headline">{nombreDelCheck(check.key)}</span>
+                <span className="text-xs text-text-soft">
+                  {sinDato ? "No se pudo revisar" : check.ok ? "Correcto" : (check.detail ?? "Hay que revisarlo")}
+                </span>
               </span>
-              <span className="flex shrink-0 items-center gap-2">
-                {arreglo?.tipo === "enlace" && (
-                  <Link className="text-link underline" href={arreglo.href}>
-                    {arreglo.label}
-                  </Link>
-                )}
-                {arreglo?.tipo === "accion" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void run(arreglo.accion)}
-                    disabled={status.loading}
-                  >
-                    {arreglo.label}
-                  </Button>
-                )}
-                <Badge variant={sinDato ? "neutral" : check.ok ? "success" : "danger"}>
-                  {sinDato ? "?" : check.ok ? "ok" : "falla"}
-                </Badge>
-              </span>
+              {arreglo?.tipo === "enlace" && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={arreglo.href}>{arreglo.label}</Link>
+                </Button>
+              )}
+              {arreglo?.tipo === "accion" && (
+                <Button variant="outline" size="sm" onClick={() => void run(arreglo.accion)} disabled={status.loading}>
+                  {arreglo.label}
+                </Button>
+              )}
             </li>
           );
         })}

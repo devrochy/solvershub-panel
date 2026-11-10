@@ -19,7 +19,7 @@ export function SeccionFicha({
     <section aria-labelledby="ficha-seccion" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="ficha-seccion" className="font-display text-lg font-semibold text-headline">
+          <h2 id="ficha-seccion" className="font-display text-sh-block text-headline">
             {titulo}
           </h2>
           {descripcion && <p className="mt-1 max-w-2xl text-sm text-body">{descripcion}</p>}

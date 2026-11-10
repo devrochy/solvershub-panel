@@ -100,6 +100,28 @@ export function ListaDeVersiones({
     });
   };
 
+  const estadoDeLa = (v: ReleaseSummary) => estadoDe(v, activa?.number ?? null);
+  // A la vista, lo que se decide hoy: la activa, las candidatas y la que está en prueba. El resto, plegado.
+  const vigentes = versiones.filter((v) => v.canary || ["activa", "candidata"].includes(estadoDeLa(v)));
+  const historial = versiones.filter((v) => !vigentes.includes(v));
+  const tarjeta = (v: ReleaseSummary) => (
+    <li key={v.id}>
+      <TarjetaVersion
+        conexionId={conexionId}
+        version={v}
+        estado={estadoDeLa(v)}
+        medicion={mediciones[v.id] ?? null}
+        puedeOperar={puedeOperar}
+        puedeProbar={puedeProbar && activa !== null}
+        hayPrueba={hayPrueba}
+        pending={pending}
+        run={run}
+        onVolverAtras={v.active && anterior && puedeOperar && !hayPrueba ? volverAtras : undefined}
+        numeroAnterior={anterior?.number}
+      />
+    </li>
+  );
+
   return (
     <div className="flex flex-col gap-4">
       {hayPrueba && puedeOperar && (
@@ -107,25 +129,20 @@ export function ListaDeVersiones({
           Hay una versión en prueba: publícala o detén la prueba antes de publicar otra o volver a la anterior.
         </p>
       )}
-      <ul className="flex flex-col gap-4" aria-label="Versiones de la conexión">
-        {versiones.map((v) => (
-          <li key={v.id}>
-            <TarjetaVersion
-              conexionId={conexionId}
-              version={v}
-              estado={estadoDe(v, activa?.number ?? null)}
-              medicion={mediciones[v.id] ?? null}
-              puedeOperar={puedeOperar}
-              puedeProbar={puedeProbar && activa !== null}
-              hayPrueba={hayPrueba}
-              pending={pending}
-              run={run}
-              onVolverAtras={v.active && anterior && puedeOperar && !hayPrueba ? volverAtras : undefined}
-              numeroAnterior={anterior?.number}
-            />
-          </li>
-        ))}
+      <ul className="flex flex-col gap-4" aria-label="Versión activa y candidatas">
+        {vigentes.map(tarjeta)}
       </ul>
+      {historial.length > 0 && (
+        <details className="group rounded-lg border border-border-soft bg-surface">
+          <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-headline">
+            Versiones anteriores ({historial.length})
+            <ChevronDown aria-hidden className="h-4 w-4 text-text-soft transition-transform group-open:rotate-180" />
+          </summary>
+          <ul className="flex flex-col gap-3 border-t border-border-soft p-4" aria-label="Versiones anteriores">
+            {historial.map(tarjeta)}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }
@@ -231,13 +248,13 @@ function TarjetaVersion({
       aria-labelledby={`version-${v.id}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={`version-${v.id}`} className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-headline">
+        <h3 id={`version-${v.id}`} className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-headline">
           Versión {v.number}
           <Badge variant={TONO[estado]}>{ETIQUETA_ESTADO[estado]}</Badge>
           {deLaPlataforma && <Badge variant="info">De la plataforma</Badge>}
           {v.canary && <Badge variant="info">En prueba con una parte</Badge>}
-        </h2>
-        <span className="text-xs text-soft">{formatDateTime(v.created_at)}</span>
+        </h3>
+        <span className="text-xs text-text-soft">{formatDateTime(v.created_at)}</span>
       </div>
 
       {deLaPlataforma && esCandidata && (
@@ -249,7 +266,7 @@ function TarjetaVersion({
       )}
 
       {esCandidata && (
-        <p className={pub.puede ? "text-sm text-soft" : "text-sm text-body"} role={pub.puede ? undefined : "status"}>
+        <p className={pub.puede ? "text-sm text-text-soft" : "text-sm text-body"} role={pub.puede ? undefined : "status"}>
           {pub.motivo ?? "Pasó las pruebas automáticas."}
         </p>
       )}
@@ -302,7 +319,7 @@ function TarjetaVersion({
       {abierto && (
         <div className="rounded-md border border-border-soft bg-bg-deep p-3 text-sm" aria-live="polite">
           {errorDiff && <p role="alert" className="text-status-danger-fg">{errorDiff}</p>}
-          {!diff && !errorDiff && <p className="text-soft">Cargando las diferencias…</p>}
+          {!diff && !errorDiff && <p className="text-text-soft">Cargando las diferencias…</p>}
           {diff && <Diferencias diff={diff} />}
         </div>
       )}
@@ -315,7 +332,7 @@ function Diferencias({ diff }: { diff: ReleaseDiff }) {
   const medira = recorridosAMedir(diff);
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-soft">
+      <p className="text-text-soft">
         {diff.base ? `Frente a la versión ${diff.base}:` : "Es la primera versión de la conexión:"}
       </p>
       {grupos.length === 0 && <p className="text-body">No cambia nada que se vea en la conversación.</p>}
@@ -330,7 +347,7 @@ function Diferencias({ diff }: { diff: ReleaseDiff }) {
         </section>
       ))}
       {medira.length > 0 && (
-        <p className="text-soft">Recorridos que se prueban antes de publicar: {medira.join(", ")}.</p>
+        <p className="text-text-soft">Recorridos que se prueban antes de publicar: {medira.join(", ")}.</p>
       )}
     </div>
   );

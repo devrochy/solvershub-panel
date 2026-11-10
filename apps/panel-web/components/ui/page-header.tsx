@@ -22,6 +22,7 @@ export function PageHeader({
   migasIntermedias,
   tabs,
   densidad = "normal",
+  antesDelTitulo,
   despuesDelTitulo,
   className,
 }: {
@@ -37,6 +38,8 @@ export function PageHeader({
   /** Pestañas propias. Sin esta prop, las de la sección del pack salen solas (HU-DS-04); con `false`, ninguna. */
   tabs?: ReactNode;
   densidad?: "normal" | "compacta";
+  /** Lo que va antes del título: el ícono del canal de una conexión. */
+  antesDelTitulo?: ReactNode;
   /** Lo que se lee con el título: el estado de una cartera, el riesgo de un cliente. */
   despuesDelTitulo?: ReactNode;
   className?: string;
@@ -66,6 +69,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
+            {antesDelTitulo}
             <TituloDePagina title={title} />
             {despuesDelTitulo}
             {helpSection && <SectionHelpButton section={helpSection} />}

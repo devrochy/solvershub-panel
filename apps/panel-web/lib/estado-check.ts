@@ -7,6 +7,6 @@ export function estadoCheck(ok: boolean | null): {
   label: string;
   variant: "success" | "warning" | "neutral";
 } {
-  if (ok === null) return { label: "info", variant: "neutral" };
-  return ok ? { label: "ok", variant: "success" } : { label: "revisar", variant: "warning" };
+  if (ok === null) return { label: "Informativo", variant: "neutral" };
+  return ok ? { label: "Correcto", variant: "success" } : { label: "Revisar", variant: "warning" };
 }

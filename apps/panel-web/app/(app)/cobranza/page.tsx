@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
 import { type Column } from "@/components/ui/data-table";
 import { KpiTile } from "@/components/ui/kpi-tile";
@@ -33,7 +33,7 @@ export default async function CobranzaPage() {
     return (
       <div className="flex flex-col gap-6">
         {header}
-        <ErrorDeCobranza titulo="No se pudo cargar Cobranza" detalle={summaryRes.error} />
+        <ErrorDeCarga titulo="No se pudo cargar Cobranza" detalle={summaryRes.error} />
       </div>
     );
   }
@@ -143,7 +143,7 @@ export default async function CobranzaPage() {
               </Link>
             )}
           </div>
-          <TablaCobranza
+          <TablaResponsiva
             etiqueta="Carteras"
             columns={columns}
             rows={filas}

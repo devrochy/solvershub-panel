@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { SeccionPlegada } from "@/components/domain/cobranza/seccion-plegada";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { type Column } from "@/components/ui/data-table";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
@@ -112,7 +112,7 @@ export default async function CarteraRutaPage({ params }: { params: Promise<{ id
           </div>
           <RouteOptimizeButton portfolioId={c.id} />
         </div>
-        <TablaCobranza
+        <TablaResponsiva
           etiqueta="Clientes de la ruta"
           columns={rutaColumns}
           rows={clientes}
@@ -136,7 +136,7 @@ export default async function CarteraRutaPage({ params }: { params: Promise<{ id
           Historial de la ruta
         </h2>
         <SeccionPlegada titulo="Reportes diarios" conteo={reportesDiarios.length} nivel="h3">
-          <TablaCobranza
+          <TablaResponsiva
             etiqueta="Reportes diarios"
             columns={reporteColumns}
             rows={reportesDiarios}
@@ -152,7 +152,7 @@ export default async function CarteraRutaPage({ params }: { params: Promise<{ id
           />
         </SeccionPlegada>
         <SeccionPlegada titulo="Cierres del día" conteo={c.estadisticas.length} nivel="h3">
-          <TablaCobranza
+          <TablaResponsiva
             etiqueta="Cierres del día"
             columns={estadisticaColumns}
             rows={c.estadisticas}

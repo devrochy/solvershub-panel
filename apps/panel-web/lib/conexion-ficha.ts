@@ -1,3 +1,4 @@
+import { formatearIdentificador } from "@/lib/conversaciones/nombre";
 import type { ConexionConsola } from "@/lib/conexiones";
 
 /**
@@ -56,8 +57,8 @@ const ETIQUETAS: Record<Pestana, string> = {
 
 /** Pestañas por tipo, en orden. La primera es la que abre `/conexiones/[id]`. */
 export const PESTANAS_POR_TIPO: Record<TipoDeFicha, Pestana[]> = {
-  whatsapp_meta: ["salud", "numeros", "plantillas", "webhook", "produccion", "costos", "agentes", "versiones"],
-  whatsapp_waweb: ["vinculacion", "estado", "agentes", "versiones"],
+  whatsapp_meta: ["salud", "agentes", "numeros", "plantillas", "costos", "webhook", "produccion", "versiones"],
+  whatsapp_waweb: ["estado", "agentes", "versiones"],
   webchat: ["apariencia", "instalacion", "agentes", "versiones"],
   instagram: ["cuenta", "agentes", "versiones"],
   messenger: ["cuenta", "agentes", "versiones"],
@@ -100,8 +101,22 @@ export function tipoDeFicha(c: ConTipo): TipoDeFicha {
   return c.conversational ? "manual" : "smtp";
 }
 
-export function pestanasDeFicha(id: string, tipo: TipoDeFicha): { slug: Pestana; href: string; label: string }[] {
-  return PESTANAS_POR_TIPO[tipo].map((slug) => ({ slug, href: `/conexiones/${id}/${slug}`, label: ETIQUETAS[slug] }));
+/**
+ * Pestañas que van dentro de «Avanzado» en el WhatsApp oficial: así la ficha no pasa de seis
+ * (HIG, tab-views). En los demás tipos caben todas.
+ */
+export const PESTANAS_AVANZADAS: ReadonlySet<Pestana> = new Set(["webhook", "produccion", "versiones"]);
+
+export function pestanasDeFicha(
+  id: string,
+  tipo: TipoDeFicha,
+): { slug: Pestana; href: string; label: string; avanzada: boolean }[] {
+  return PESTANAS_POR_TIPO[tipo].map((slug) => ({
+    slug,
+    href: `/conexiones/${id}/${slug}`,
+    label: ETIQUETAS[slug],
+    avanzada: tipo === "whatsapp_meta" && PESTANAS_AVANZADAS.has(slug),
+  }));
 }
 
 export function tienePestana(tipo: TipoDeFicha, pestana: Pestana): boolean {
@@ -115,12 +130,12 @@ export function rutaDeFicha(c: Pick<ConexionConsola, "id">): string {
 
 const TIPO_LEGIBLE: Record<TipoDeFicha, string> = {
   whatsapp_meta: "WhatsApp oficial",
-  whatsapp_waweb: "WhatsApp Web (QR)",
+  whatsapp_waweb: "WhatsApp con QR",
   webchat: "Chat web",
   instagram: "Instagram",
   messenger: "Messenger",
   google_calendar: "Google Calendar",
-  smtp: "Correo (SMTP)",
+  smtp: "Correo",
   manual: "Canal manual",
 };
 
@@ -130,17 +145,31 @@ export function tipoLegible(tipo: TipoDeFicha): string {
 
 /** «Tipo legible · detalle» de la cabecera; el detalle es el número, la cuenta o el dominio. */
 export function subtituloDeFicha(c: Pick<ConexionConsola, "external_id">, tipo: TipoDeFicha): string {
-  const detalle = c.external_id?.trim();
+  const crudo = c.external_id?.trim();
+  // Un número sin «+» se muestra como teléfono; un id numérico largo de Meta (Instagram) no dice nada al dueño.
+  const detalle = !crudo ? crudo : tipo === "whatsapp_waweb" ? formatearIdentificador(crudo) : /^\d{12,}$/.test(crudo) ? "" : crudo;
   return detalle ? `${tipoLegible(tipo)} · ${detalle}` : tipoLegible(tipo);
 }
 
-/** Estado de la cabecera y de la lista: activa, pausada o con el alta sin terminar. */
+/**
+ * Un solo estado por conexión, en la lista y en la cabecera: une «activa» con la salud de la
+ * cuenta de Meta, para no mostrar dos insignias que hay que interpretar juntas.
+ */
 export function estadoDeConexion(
-  c: Pick<ConexionConsola, "active" | "health">,
-): { label: string; tono: "success" | "neutral" | "info" } {
+  c: Pick<ConexionConsola, "active" | "health" | "meta_connection_id">,
+): { label: string; tono: "success" | "warning" | "danger" | "neutral" | "info" } {
   if (c.health === "paused" || !c.active) return { label: "Pausada", tono: "neutral" };
-  if (c.health === "pending") return { label: "Alta sin terminar", tono: "info" };
-  return { label: "Activa", tono: "success" };
+  // Sin cuenta de Meta el backend solo informa activa o pausada (`consola_conexiones.salud`).
+  if (!muestraSalud(c)) return { label: "Funciona", tono: "success" };
+  if (c.health === "pending") return { label: "Sin terminar", tono: "info" };
+  if (c.health === "error") return { label: "No funciona", tono: "danger" };
+  if (c.health === "degraded") return { label: "Con avisos", tono: "warning" };
+  return { label: "Funciona", tono: "success" };
+}
+
+/** ¿Necesita atención? Se avisa arriba de la lista con un enlace a su Salud. */
+export function necesitaAtencion(c: Pick<ConexionConsola, "active" | "health" | "meta_connection_id">): boolean {
+  return muestraSalud(c) && c.active && (c.health === "degraded" || c.health === "error");
 }
 
 /** ¿La lista muestra la salud? Solo en las conexiones que salen por una cuenta de Meta. */

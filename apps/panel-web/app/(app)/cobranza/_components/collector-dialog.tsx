@@ -4,7 +4,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { MenuDeFila } from "@/components/domain/cobranza/menu-de-fila";
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";

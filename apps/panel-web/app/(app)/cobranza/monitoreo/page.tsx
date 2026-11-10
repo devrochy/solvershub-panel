@@ -1,4 +1,4 @@
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { ListPage } from "@/components/templates/list-page";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { apiFetch } from "@/lib/api/server";
@@ -20,7 +20,7 @@ export default async function MonitoreoPage() {
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudo cargar la actividad del agente" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudo cargar la actividad del agente" detalle={res.error} />
       </ListPage>
     );
   }

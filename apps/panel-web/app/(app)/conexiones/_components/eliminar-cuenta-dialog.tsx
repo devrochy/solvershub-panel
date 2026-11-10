@@ -4,6 +4,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { InputPassword } from "@/components/ui/input-password";
@@ -73,22 +74,19 @@ export function EliminarCuentaDialog({
   return (
     <Dialog open={abierto} onOpenChange={alCambiar}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent title="Eliminar cuenta" description={label} className="max-w-md">
+      <DialogContent title={kind === "meta_connection" ? "Eliminar la cuenta de Meta" : "Eliminar la conexión"} description={label} className="max-w-md">
         <form onSubmit={eliminar} className="flex flex-col gap-4">
           <p className="text-sm text-body">
             {kind === "meta_connection"
-              ? "Se archivará la cuenta, sus números y sus WABAs, y se revocarán sus tokens. Podrás reconectarla después."
+              ? "Se desconecta la cuenta de Meta con todos sus números y pierde su acceso. Podrás volver a conectarla."
               : "El negocio dejará de recibir mensajes por esta conexión. El historial se conserva."}
           </p>
-          <label className="flex items-start gap-2 text-sm text-body">
-            <input
-              type="checkbox"
-              checked={confirmo}
-              onChange={(e) => setConfirmo(e.target.checked)}
-              className="mt-0.5"
-            />
-            <span>Entiendo que la conexión se archivará y sus tokens se revocarán.</span>
-          </label>
+          <Checkbox
+            id={`eliminar-confirmo-${connectionId}`}
+            label="Entiendo que la conexión se desconecta y pierde su acceso."
+            checked={confirmo}
+            onCheckedChange={setConfirmo}
+          />
           <Field label="Contraseña actual" htmlFor={`eliminar-${connectionId}`} required>
             <InputPassword
               id={`eliminar-${connectionId}`}
@@ -115,7 +113,7 @@ export function EliminarCuentaDialog({
               loading={enviando}
               disabled={!confirmo || !password}
             >
-              Eliminar cuenta
+              Eliminar
             </Button>
           </div>
         </form>

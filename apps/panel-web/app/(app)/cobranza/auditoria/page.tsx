@@ -1,5 +1,5 @@
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge, estadoLegible } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
 import { type Column } from "@/components/ui/data-table";
@@ -45,7 +45,7 @@ export default async function AuditoriaPage({
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudo cargar la auditoría" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudo cargar la auditoría" detalle={res.error} />
       </ListPage>
     );
   }
@@ -82,7 +82,7 @@ export default async function AuditoriaPage({
         />
       }
     >
-      <TablaCobranza
+      <TablaResponsiva
         etiqueta="Movimientos auditados"
         columns={columns}
         rows={filas}

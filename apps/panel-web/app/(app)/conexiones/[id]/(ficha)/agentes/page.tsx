@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AgentesDeConexion, type FilaAgente } from "@/app/(app)/conexiones/_components/agentes-de-conexion";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { AgentSummary, Me } from "@/lib/api/types";
 import type { components } from "@/lib/api/schema";
@@ -29,9 +30,9 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
   ]);
   if (!instanciasRes.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los agentes de la conexión: {instanciasRes.error}
-      </p>
+      <SeccionFicha titulo="Agentes">
+        <ErrorDeCarga titulo="No se pudieron cargar los agentes de la conexión" detalle={instanciasRes.error} />
+      </SeccionFicha>
     );
   }
   const runtime = ficha.consola.runtime;
@@ -55,14 +56,14 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
   const tieneCoordinador = c.coordinator != null || instanciasRes.data.some((i) => i.role === "core");
 
   return (
-    <SeccionFicha titulo="Agentes" descripcion="Quién atiende en esta conexión. Cada agente lleva a su ficha.">
+    <SeccionFicha titulo="Agentes" descripcion="Quién atiende a tus clientes por esta conexión.">
       {runtime !== "v3" && (
-        <p role="note" className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-body">
-          Los agentes se activan con el Agent OS de tu negocio: por ahora solo el equipo de SolversHub los cambia.
+        <p role="note" className="rounded-md border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
+          Por ahora el equipo de SolversHub cambia los agentes de tu negocio. Aquí ves quién atiende.
         </p>
       )}
       {!tieneCoordinador && (
-        <p role="note" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+        <p role="note" className="rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3 text-sm text-headline">
           Esta conexión todavía no tiene Coordinador: sin él no se pueden sumar especialistas. Se crea solo con la próxima
           versión.
         </p>

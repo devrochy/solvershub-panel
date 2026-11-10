@@ -1,5 +1,5 @@
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
 import { type Column } from "@/components/ui/data-table";
 import { apiFetch } from "@/lib/api/server";
@@ -23,7 +23,7 @@ export default async function CobrosPage() {
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar los pagos" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar los pagos" detalle={res.error} />
       </ListPage>
     );
   }
@@ -38,7 +38,7 @@ export default async function CobrosPage() {
 
   return (
     <ListPage header={header}>
-      <TablaCobranza
+      <TablaResponsiva
         etiqueta="Pagos"
         columns={columns}
         rows={res.data}

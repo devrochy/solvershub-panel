@@ -1,17 +1,15 @@
 import Link from "next/link";
 
-import { ConnectionActions } from "@/app/(app)/conexiones/_components/connection-actions";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { InstagramCuentas } from "@/app/(app)/conexiones/instagram/_components/instagram-cuentas";
 import { AvisoGoogle } from "@/components/domain/aviso-google";
-import { Badge } from "@/components/ui/badge";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/server";
 import type { ListaDeAgendas, Me } from "@/lib/api/types";
-import { estadoDeConexion } from "@/lib/conexion-ficha";
 import { fichaDePestana, type FichaCargada } from "@/lib/conexion-ficha-servidor";
-import { resumenConsumo } from "@/lib/conexiones";
+import { actividadDeLaSemana } from "@/lib/conexiones";
 import type { CuentaDeInstagram } from "@/lib/instagram-alta";
 
 export const metadata = { title: "Cuenta" };
@@ -46,52 +44,40 @@ async function CuentaGoogle({ ficha, aviso }: { ficha: FichaCargada; aviso?: str
   const vuelta = encodeURIComponent(`/conexiones/${c.id}/cuenta`);
 
   return (
-    <SeccionFicha
-      titulo="Cuenta"
-      descripcion="Cuenta de Google Calendar conectada. Cada cuenta es una agenda del módulo de Agenda."
-      acciones={
-        <Button asChild variant="outline" size="sm">
-          <Link href="/calendario">Ver la Agenda</Link>
-        </Button>
-      }
-    >
+    <SeccionFicha titulo="Cuenta" descripcion="La cuenta de Google donde tu agente agenda las citas.">
       <AvisoGoogle codigo={aviso} />
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+          <CardTitle as="h3">Google Calendar</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>Google Calendar</CardTitle>
-            <Badge variant={c.active ? "success" : "neutral"}>{c.active ? "Conectada" : "Pausada"}</Badge>
-            {c.is_primary && <Badge variant="accent">Principal</Badge>}
+            {puedeEditar && (
+              <Button asChild variant="outline">
+                {/* `<a>` y no `<Link>`: el inicio del OAuth no se pre-carga (HU-CAL-07). */}
+                <a href={`/api/calendar/oauth?connection_id=${c.id}&next=${vuelta}`}>Reconectar</a>
+              </Button>
+            )}
+            <Button asChild variant="ghost">
+              <Link href="/calendario">Ver la Agenda</Link>
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4 text-sm">
-          {correo && (
-            <span className="text-body">
-              Cuenta: <span className="text-headline">{correo}</span>
-            </span>
-          )}
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/habilidades/pack_calendar">Credenciales de Google</Link>
-            </Button>
-            {puedeEditar && (
+        <CardContent>
+          <dl className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+            <dt className="text-text-soft">Cuenta</dt>
+            <dd className="text-body">{correo || "—"}</dd>
+            {c.is_primary && (
               <>
-                <Button asChild variant="outline" size="sm">
-                  {/* `<a>` y no `<Link>`: el inicio del OAuth no se pre-carga (HU-CAL-07). */}
-                  <a href={`/api/calendar/oauth?connection_id=${c.id}&next=${vuelta}`}>Reconectar ↗</a>
-                </Button>
-                <ConnectionActions
-                  connectionId={c.id}
-                  label={c.label}
-                  active={c.active}
-                  primary={c.is_primary}
-                  kind="channel_connection"
-                  typeId={c.type_id}
-                  trigger="button"
-                />
+                <dt className="text-text-soft">Uso</dt>
+                <dd className="text-body">Es la agenda principal del negocio</dd>
               </>
             )}
-          </div>
+            <dt className="text-text-soft">Credenciales</dt>
+            <dd>
+              <Link href="/habilidades/pack_calendar" className="text-link hover:underline">
+                Las de la app de Google, en la habilidad Agenda
+              </Link>
+            </dd>
+          </dl>
         </CardContent>
       </Card>
     </SeccionFicha>
@@ -107,57 +93,31 @@ async function CuentaMeta({ ficha }: { ficha: FichaCargada }) {
   const cuentas = cuentasRes?.ok ? cuentasRes.data.accounts : [];
   // La conexión guarda el id de la cuenta de Instagram; si no coincide, se muestran todas.
   const propias = cuentas.filter((x) => x.ig_user_id === c.external_id);
-  const estado = estadoDeConexion(c);
   const gestion = instagram ? "/conexiones/instagram" : "/conexiones/messenger";
 
   return (
     <SeccionFicha
       titulo="Cuenta"
-      descripcion={
-        instagram
-          ? "La cuenta profesional de Instagram que atiende tu asistente."
-          : "La Página de Facebook cuyos mensajes atiende tu asistente."
-      }
+      descripcion={`${instagram ? "La cuenta profesional de Instagram" : "La Página de Facebook"} que atiende tu agente. Últimos 7 días: ${actividadDeLaSemana(c.usage_7d).toLowerCase()}.`}
       acciones={
-        <Button asChild variant="outline" size="sm">
-          <Link href={gestion}>{instagram ? "Conectar otra cuenta" : "Gestionar Páginas"}</Link>
+        <Button asChild variant="ghost">
+          <Link href={gestion}>{instagram ? "Conectar otra cuenta" : "Conectar otra Página"}</Link>
         </Button>
       }
     >
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>{c.label}</CardTitle>
-            <Badge variant={estado.tono}>{estado.label}</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4 text-sm text-body">
-          <span>
-            {instagram ? "Id de la cuenta" : "Id de la Página"}:{" "}
-            <span className="font-mono text-xs text-headline">{c.external_id || "—"}</span>
-          </span>
-          <span>7 días: {resumenConsumo(c.usage_7d)}</span>
-          {ficha.consola.can_edit && (
-            <span className="ml-auto">
-              <ConnectionActions
-                connectionId={c.id}
-                label={c.label}
-                active={c.active}
-                primary={c.is_primary}
-                kind={c.meta_connection_id ? "meta_connection" : "channel_connection"}
-                typeId={c.type_id}
-                trigger="button"
-              />
-            </span>
-          )}
-        </CardContent>
-      </Card>
       {cuentasRes && !cuentasRes.ok && (
-        <p role="alert" className="text-status-danger-fg">
-          No se pudieron cargar tus cuentas de Instagram: {cuentasRes.error}
-        </p>
+        <ErrorDeCarga titulo="No se pudieron cargar tus cuentas de Instagram" detalle={cuentasRes.error} />
       )}
-      {instagram && <InstagramCuentas cuentas={propias.length > 0 ? propias : cuentas} />}
+      {instagram ? (
+        <InstagramCuentas cuentas={propias.length > 0 ? propias : cuentas} />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle as="h3">{c.label}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-body">Tu agente responde los mensajes que le escriben a esta Página.</CardContent>
+        </Card>
+      )}
     </SeccionFicha>
   );
 }

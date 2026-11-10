@@ -4,6 +4,8 @@ import {
   destinoDeAlta,
   RUTA_DE_ALTA,
   esChatWeb,
+  actividadDeLaSemana,
+  agentesDeLaConexion,
   etiquetaRuteo,
   puedePausar,
   resumenConsumo,
@@ -97,6 +99,15 @@ describe("consola de conexiones", () => {
     ]) {
       expect(textoConfirmarPausa(conexion(parcial))).toContain(TEXTO_ALCANCE_PAUSA);
     }
+  });
+
+  it("actividad de la semana y agentes, en palabras del negocio", () => {
+    expect(actividadDeLaSemana({ turns: 42, conversations: 9, input_tokens: 1, output_tokens: 1, cost_usd: 0.1 })).toBe("9 conversaciones · 42 respuestas");
+    expect(actividadDeLaSemana({ turns: 0, conversations: 0, input_tokens: 0, output_tokens: 0, cost_usd: null })).toBe("Sin actividad");
+    const ag = (name: string, is_default = false, enabled = true) => ({ name, is_default, enabled }) as never;
+    expect(agentesDeLaConexion({ conversational: true, agents: [ag("Agenda"), ag("Ventas", true), ag("Viejo", false, false)] })).toBe("Ventas, Agenda");
+    expect(agentesDeLaConexion({ conversational: true, agents: [] })).toBe("Sin agentes");
+    expect(agentesDeLaConexion({ conversational: false, agents: [] })).toBe("—");
   });
 
   it("salud, ruteo y consumo", () => {

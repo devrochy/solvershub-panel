@@ -1,9 +1,10 @@
 import Link from "next/link";
 
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { MetaCosts } from "@/components/domain/meta-costs";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
 import { apiFetch } from "@/lib/api/server";
 import type { CostsResponse } from "@/lib/api/types";
 import { costosDeLaCuenta, numerosDeLaCuenta } from "@/lib/conexion-ficha";
@@ -15,8 +16,8 @@ export const metadata = { title: "Costos" };
 type CuentaDeCreditos = { id: string; label: string | null; channel: string; business_id: string | null };
 
 /**
- * Costos de WhatsApp de la cuenta de Meta del número (30 días): consumo por número de la cuenta,
- * sincronizar precios y créditos. El resto de los costos del negocio sigue en Consumo → Costos.
+ * Costos de WhatsApp de la cuenta de Meta del número (30 días, CON-17): el total arriba, el
+ * consumo por número y los créditos. El resto de los costos del negocio sigue en Costos.
  */
 export default async function CostosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,9 +30,13 @@ export default async function CostosPage({ params }: { params: Promise<{ id: str
   ]);
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        {res.status === 403 ? "Tu rol no puede ver los costos del negocio." : `No se pudieron cargar los costos: ${res.error}`}
-      </p>
+      <SeccionFicha titulo="Costos">
+        {res.status === 403 ? (
+          <ErrorDeCarga titulo="Tu rol no puede ver los costos del negocio" />
+        ) : (
+          <ErrorDeCarga titulo="No se pudieron cargar los costos" detalle={res.error} />
+        )}
+      </SeccionFicha>
     );
   }
   const numeros = numerosDeLaCuenta(ficha.consola.items, metaId).map((c) => c.external_id);
@@ -41,32 +46,40 @@ export default async function CostosPage({ params }: { params: Promise<{ id: str
   // visible), se muestra el consumo de todo el negocio y se dice.
   const separado = propios.length > 0 || todos.length === 0;
   const porNumero = separado ? propios : todos;
+  const total = porNumero.reduce((suma, r) => suma + r.cost, 0);
+  const mensajes = porNumero.reduce((suma, r) => suma + r.volume, 0);
   const cuentas = creditosRes.ok ? creditosRes.data.connections.filter((c) => c.id === metaId) : [];
 
   return (
     <SeccionFicha
-      titulo="Costos"
-      descripcion="Lo que Meta cobra por los mensajes de esta cuenta en los últimos 30 días."
+      titulo={porNumero.length > 0 ? `${formatUsd(total)} en 30 días` : "Costos"}
+      descripcion={
+        porNumero.length > 0
+          ? `Lo que Meta cobró por ${formatNumber(mensajes)} mensajes de ${separado ? "esta cuenta" : "todo el negocio"} en los últimos 30 días.`
+          : "Lo que Meta cobra por los mensajes de esta cuenta en los últimos 30 días."
+      }
       acciones={
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/costos">Costos del negocio →</Link>
+        <Button asChild variant="ghost">
+          <Link href="/costos">Costos del negocio</Link>
         </Button>
       }
     >
       {!separado && (
-        <p className="text-xs text-text-soft">No pudimos separar los números de esta cuenta: se muestran los de todo el negocio.</p>
+        <p className="text-sm text-text-soft">No pudimos separar los números de esta cuenta: se muestran los de todo el negocio.</p>
       )}
-      <DataTable
+      <TablaResponsiva
+        etiqueta="Costo por número"
         caption={separado ? "Costo de WhatsApp por número de la cuenta (30 días)" : "Costo de WhatsApp por número del negocio (30 días)"}
         columns={[
-          { key: "numero", header: "Número", cell: (r) => <span className="font-mono text-xs">{r.phone_number}</span> },
-          { key: "volumen", header: "Mensajes", align: "right", cell: (r) => <span className="text-body">{formatNumber(r.volume)}</span> },
-          { key: "costo", header: "Costo", align: "right", cell: (r) => formatUsd(r.cost) },
+          { key: "numero", header: "Número", cell: (r) => <span className="tabular-nums text-headline">{r.phone_number}</span> },
+          { key: "volumen", header: "Mensajes", align: "right", cell: (r) => <span className="tabular-nums text-body">{formatNumber(r.volume)}</span> },
+          { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost)}</span> },
         ]}
         rows={porNumero}
         getRowKey={(r, i) => `${r.phone_number}-${i}`}
-        emptyTitle="Sin consumo de Meta"
-        emptyDescription="Sincroniza los costos para traer lo que Meta registró."
+        emptyTitle="Meta todavía no registra consumo"
+        emptyDescription="Trae los costos de Meta para ver lo que cobró."
+        filaCelular={(r) => ({ titulo: r.phone_number, detalle: `${formatNumber(r.volume)} mensajes`, fin: formatUsd(r.cost) })}
       />
       <MetaCosts connections={cuentas} />
     </SeccionFicha>

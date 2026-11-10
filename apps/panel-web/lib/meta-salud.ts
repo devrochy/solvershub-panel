@@ -9,14 +9,14 @@ import type { components } from "@/lib/api/schema";
 export type HealthCheck = components["schemas"]["HealthCheck"];
 
 const NOMBRES: Record<string, string> = {
-  token_valid: "Token de acceso",
-  app_subscription_active: "Suscripción de la app",
-  own_app_subscribed: "WABA suscrita a tu app",
-  webhook_subscribed: "Suscripción de la WABA",
+  token_valid: "Permiso de acceso a Meta",
+  app_subscription_active: "La app de Meta recibe los mensajes",
+  own_app_subscribed: "Tu app de Meta recibe los mensajes",
+  webhook_subscribed: "Recibe mensajes de Meta",
   number_registered: "Número registrado",
-  webhook_override: "Webhook del número",
-  templates: "Plantillas",
-  billing: "Facturación",
+  webhook_override: "Dirección de mensajes del número",
+  templates: "Plantillas aprobadas",
+  billing: "Método de pago en Meta",
 };
 
 /** `number_registered:<id>` (con varios números) → "Número registrado (<id>)". */
@@ -43,15 +43,15 @@ export function reparacion(action: string | null | undefined, connectionId: stri
     case "reauthorize":
       return { tipo: "enlace", href: "/conexiones/whatsapp", label: "Reconectar" };
     case "refresh_token":
-      return { tipo: "accion", accion: "extend_token", label: "Extender token" };
+      return { tipo: "accion", accion: "extend_token", label: "Renovar el permiso" };
     case "subscribe_waba":
-      return { tipo: "accion", accion: "resubscribe", label: "Re-suscribir WABA" };
+      return { tipo: "accion", accion: "resubscribe", label: "Volver a conectar" };
     case "resubscribe_app":
-      return { tipo: "enlace", href: `#${ANCLA_WEBHOOKS}`, label: "Registrar webhook" };
+      return { tipo: "enlace", href: `#${ANCLA_WEBHOOKS}`, label: "Registrar la recepción" };
     case "sync_templates":
       return { tipo: "enlace", href: `/conexiones/meta/${connectionId}/plantillas`, label: "Ver plantillas" };
     case "configure_billing":
-      return { tipo: "enlace", href: `#${anclaFacturacion(connectionId)}`, label: "Marcar facturación" };
+      return { tipo: "enlace", href: `#${anclaFacturacion(connectionId)}`, label: "Marcar el pago" };
     default:
       return null;
   }

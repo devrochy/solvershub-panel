@@ -1,13 +1,11 @@
-import Link from "next/link";
-
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { CredencialesConexion } from "@/components/domain/credenciales-conexion";
-import { Button } from "@/components/ui/button";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
 import type { CampoCredencial } from "@/lib/conexiones";
 
-export const metadata = { title: "Credenciales" };
+export const metadata = { title: "Datos de la cuenta" };
 
 /** Datos de registro de la cuenta de Meta; los secretos se revelan con contraseña (antes `meta/[id]/credenciales`). */
 export default async function CredencialesMetaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,13 +17,8 @@ export default async function CredencialesMetaPage({ params }: { params: Promise
 
   return (
     <SeccionFicha
-      titulo="Credenciales de la cuenta"
-      descripcion="Datos con los que registraste esta cuenta de Meta. Los secretos se revelan con tu contraseña y se ocultan solos."
-      acciones={
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/conexiones/${id}/webhook`}>← Volver a Webhook</Link>
-        </Button>
-      }
+      titulo="Datos de la cuenta de Meta"
+      descripcion="Con estos datos se conectó la cuenta. Para mostrar un secreto te pedimos tu contraseña; se vuelve a ocultar solo."
     >
       {res.ok ? (
         <CredencialesConexion
@@ -33,9 +26,7 @@ export default async function CredencialesMetaPage({ params }: { params: Promise
           revealUrl={`/api/meta/connections/${encodeURIComponent(metaId)}/credentials/reveal`}
         />
       ) : (
-        <p role="alert" className="text-status-danger-fg">
-          No se pudieron cargar las credenciales: {res.error}
-        </p>
+        <ErrorDeCarga titulo="No se pudieron cargar los datos de la cuenta" detalle={res.error} />
       )}
     </SeccionFicha>
   );

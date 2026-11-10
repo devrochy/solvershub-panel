@@ -1,5 +1,6 @@
 import { InstalacionChatWeb } from "@/app/(app)/conexiones/_components/instalacion-chat-web";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { WebChatSettings } from "@/lib/api/types";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
@@ -18,9 +19,7 @@ export default async function InstalacionPage({ params }: { params: Promise<{ id
       {res.ok ? (
         <InstalacionChatWeb snippet={res.data.snippet} />
       ) : (
-        <p role="alert" className="text-status-danger-fg">
-          No se pudo cargar el chat web: {res.error}
-        </p>
+        <ErrorDeCarga titulo="No se pudo cargar el chat web" detalle={res.error} />
       )}
     </SeccionFicha>
   );

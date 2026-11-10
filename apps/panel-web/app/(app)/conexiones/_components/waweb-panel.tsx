@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatearIdentificador } from "@/lib/conversaciones/nombre";
 
 type State = {
   status: string;
@@ -52,32 +53,32 @@ export function WawebPanel({ initial }: { initial: State }) {
     await refresh();
   }
 
-  const connected = state.status.toLowerCase().includes("conect") || Boolean(state.jid);
+  const connected = Boolean(state.jid) || /^(conectad|connected)/i.test(state.status);
+  // El conector guarda el número como «573005550103@s.whatsapp.net»: se muestra como teléfono.
+  const numero = state.jid ? formatearIdentificador(state.jid.split("@")[0].split(":")[0]) : null;
 
   return (
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Vínculo por QR</CardTitle>
-          <Badge variant={connected ? "success" : "warning"}>
-            {state.status || "sin sesión"}
-            {state.last_error ? ` · ${state.last_error}` : ""}
-          </Badge>
+          <CardTitle as="h3">{connected ? "Vinculado" : "Vincula tu teléfono"}</CardTitle>
+          <Badge variant={connected ? "success" : "warning"}>{connected ? "Conectado" : "Sin vincular"}</Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <p className="text-sm text-body">
-          Canal <strong>no oficial</strong>: usa un número propio vinculado por QR, con riesgo de
-          suspensión por parte de WhatsApp. Úsalo solo con un número de repuesto.
+        <p className="rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3 text-sm text-headline">
+          <strong className="font-semibold">Canal no oficial:</strong> WhatsApp puede suspender este número. Úsalo solo
+          con un número de repuesto.
         </p>
+        {state.last_error && <p className="text-sm text-status-danger-fg">Último problema: {state.last_error}</p>}
 
         {!state.risk_ok ? (
           <div className="flex flex-col gap-3 rounded-md border border-status-warning-border bg-status-warning-bg p-4">
             <p className="text-sm text-status-warning-fg">
-              Antes de generar el QR tienes que aceptar el aviso de riesgo.
+              Antes de ver el código, confirma que entiendes el riesgo.
             </p>
             <div>
-              <Button variant="accent" size="sm" onClick={() => void run("accept-risk")} disabled={status.loading}>
+              <Button variant="accent" onClick={() => void run("accept-risk")} disabled={status.loading}>
                 {status.loading ? "Registrando…" : "Acepto el riesgo"}
               </Button>
             </div>
@@ -86,7 +87,7 @@ export function WawebPanel({ initial }: { initial: State }) {
           <div className="flex flex-col items-start gap-4">
             {state.jid ? (
               <p className="text-sm text-body">
-                Vinculado como <span className="font-mono text-xs text-headline">{state.jid}</span>
+                Número: <span className="font-medium tabular-nums text-headline">{numero}</span>
               </p>
             ) : state.qr_image ? (
               <div className="flex flex-col gap-2">
@@ -97,27 +98,25 @@ export function WawebPanel({ initial }: { initial: State }) {
                   className="h-56 w-56 rounded-md border border-border-soft bg-white p-2"
                 />
                 <p className="text-xs text-text-soft">
-                  Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo. El código se
-                  renueva solo.
+                  En tu teléfono abre WhatsApp › Dispositivos vinculados › Vincular dispositivo y apunta la
+                  cámara a este código. Se renueva solo.
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <Skeleton className="h-56 w-56" />
                 <p className="text-xs text-text-soft">
-                  Esperando el QR del conector… Si no aparece en unos segundos, reinicia el vínculo
-                  (el código puede haber expirado).
+                  Preparando el código… Si no aparece en unos segundos, pide uno nuevo.
                 </p>
               </div>
             )}
 
             <Button
               variant={state.qr_image || state.jid ? "outline" : "accent"}
-              size="sm"
               onClick={() => void run("reset")}
               disabled={status.loading}
             >
-              {state.qr_image || state.jid ? "Reiniciar vínculo" : "Generar un QR nuevo"}
+              {state.jid ? "Reiniciar vínculo" : "Pedir un código nuevo"}
             </Button>
           </div>
         )}

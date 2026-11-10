@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ChannelIcon } from "@/components/domain/channel-icon";
 import { JsonSchemaForm } from "@/components/domain/json-schema-form";
@@ -34,6 +34,21 @@ type ManualForm = {
   configured_secrets: string[];
 };
 
+/**
+ * El catálogo llega por categoría técnica (comunicación, correo, calendario); al negocio le sirve
+ * saber para qué es cada una: hablar con sus clientes o darle herramientas al agente (CON-15).
+ */
+const PARA_CLIENTES = new Set(["comunicacion"]);
+
+function agruparPorUso(categorias: Category[]): Category[] {
+  const clientes = categorias.filter((c) => PARA_CLIENTES.has(c.category)).flatMap((c) => c.items);
+  const trabajo = categorias.filter((c) => !PARA_CLIENTES.has(c.category)).flatMap((c) => c.items);
+  return [
+    { category: "clientes", label: "Para hablar con tus clientes", items: clientes },
+    { category: "trabajo", label: "Para que el agente trabaje", items: trabajo },
+  ].filter((g) => g.items.length > 0);
+}
+
 /** Alta de conexión: elegir tipo del catálogo y, si es manual, completar el form. */
 export function NewConnectionDialog() {
   const router = useRouter();
@@ -57,7 +72,7 @@ export function NewConnectionDialog() {
 
   async function openType(type: TypeItem) {
     if (type.setup_kind !== "manual" || !type.has_schema) {
-      setError("Este tipo se configura en el panel clásico (abre el enlace ↗).");
+      setError("Este tipo todavía no se puede conectar desde aquí. Escríbenos y lo conectamos contigo.");
       return;
     }
     setError(null);
@@ -95,7 +110,7 @@ export function NewConnectionDialog() {
   }
 
   const filtro = busqueda.trim().toLowerCase();
-  const categoriasVisibles = (categories ?? [])
+  const categoriasVisibles = agruparPorUso(categories ?? [])
     .map((grupo) => ({
       ...grupo,
       items: filtro
@@ -117,7 +132,7 @@ export function NewConnectionDialog() {
       <DialogContent
         title={form ? `Nueva conexión · ${form.label}` : "Agregar conexión"}
         description={
-          form ? form.description ?? undefined : "Elige el tipo de canal que quieres conectar."
+          form ? form.description ?? undefined : "¿Por dónde quieres que atienda tu agente?"
         }
         className="max-w-2xl"
       >
@@ -128,65 +143,55 @@ export function NewConnectionDialog() {
             <Input
               aria-label="Buscar tipo de conexión"
               className="mb-4"
-              placeholder="Buscar canal… (ej.: WhatsApp, correo, QR)"
+              placeholder="Buscar: WhatsApp, correo, agenda…"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           )}
 
           {!form && categoriasVisibles.map((group) => (
-            <div key={group.category} className="mb-5">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.06em] text-text-soft">
+            <section key={group.category} aria-labelledby={`alta-${group.category}`} className="mb-5">
+              <h3 id={`alta-${group.category}`} className="mb-2 text-sm font-medium text-headline">
                 {group.label}
-              </p>
+              </h3>
               <ul className="flex flex-col gap-2">
                 {group.items.map((type) => (
                   <li key={type.id}>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
                       disabled={!type.available}
                       onClick={() => elegir(type)}
-                      className="flex w-full flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft px-3 py-2 text-left transition-colors hover:border-focus/50 hover:bg-focus/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border-soft disabled:hover:bg-transparent"
+                      className="h-auto min-h-14 w-full justify-between gap-3 whitespace-normal px-3 py-2.5 text-left font-normal"
                     >
-                      <span className="flex items-center gap-3">
+                      <span className="flex min-w-0 items-center gap-3">
                         <ChannelIcon id={type.id} />
-                        <span className="flex flex-col">
+                        <span className="flex min-w-0 flex-col">
                           <span className="text-sm text-headline">{type.label}</span>
-                          {type.description && (
-                            <span className="text-xs text-text-soft">{type.description}</span>
-                          )}
+                          {type.description && <span className="text-xs text-text-soft">{type.description}</span>}
                         </span>
                       </span>
-                      {!type.available && <Badge variant="neutral">Próximamente</Badge>}
-                    </button>
+                      {type.available ? (
+                        <ChevronRight className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
+                      ) : (
+                        <Badge variant="neutral">Próximamente</Badge>
+                      )}
+                    </Button>
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           ))}
 
           {!form && filtro && categoriasVisibles.length === 0 && (
-            <p className="text-sm text-text-soft">Sin canales que coincidan con «{busqueda}».</p>
-          )}
-
-          {!form && categories && (
-            <p className="mt-2 text-xs text-text-soft">
-              ¿El asistente falla?{" "}
-              <Link href="/conexiones/whatsapp" className="text-link hover:underline">
-                Carga manual de respaldo ↗
-              </Link>
-            </p>
+            <p className="text-sm text-text-soft">Ningún canal coincide con «{busqueda}».</p>
           )}
 
           {form && (
             <div className="flex flex-col gap-4">
-              <button
-                type="button"
-                onClick={() => setForm(null)}
-                className="self-start text-sm text-link hover:underline"
-              >
-                ← Elegir otro tipo
-              </button>
+              <Button type="button" variant="ghost" onClick={() => setForm(null)} className="self-start">
+                <ChevronLeft className="h-4 w-4" aria-hidden /> Elegir otro tipo
+              </Button>
               <JsonSchemaForm
                 resourcePath="/api/connections/manual"
                 method="POST"

@@ -132,6 +132,22 @@ export function destinoDeAlta(type: {
   return href ? { tipo: "navegar", href } : null;
 }
 
+/** Lo que atendió en 7 días, en palabras del negocio: «9 conversaciones · 42 respuestas». */
+export function actividadDeLaSemana(u: ConexionConsola["usage_7d"]): string {
+  if (u.turns === 0 && u.conversations === 0) return "Sin actividad";
+  const conversaciones = u.conversations === 1 ? "1 conversación" : `${formatNumber(u.conversations)} conversaciones`;
+  const respuestas = u.turns === 1 ? "1 respuesta" : `${formatNumber(u.turns)} respuestas`;
+  return `${conversaciones} · ${respuestas}`;
+}
+
+/** Quién atiende: el principal primero; las integraciones no llevan agentes. */
+export function agentesDeLaConexion(c: Pick<ConexionConsola, "agents" | "conversational">): string {
+  if (!c.conversational) return "—";
+  const habilitados = c.agents.filter((a) => a.enabled);
+  if (habilitados.length === 0) return "Sin agentes";
+  return [...habilitados].sort((a, b) => Number(b.is_default) - Number(a.is_default)).map((a) => a.name).join(", ");
+}
+
 export function resumenConsumo(u: ConexionConsola["usage_7d"]): string {
   const partes = [
     `${formatNumber(u.turns)} turnos`,

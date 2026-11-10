@@ -8,6 +8,7 @@
 //   node scripts/backend-de-prueba.mjs            # escucha en :8765
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
+//   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -127,6 +128,110 @@ if (process.env.BOT_PAUSADO === "1") {
     templates: [], can_send: false, blocked_reason: "Sincroniza las plantillas para elegir una aprobada.",
   };
   respuestas["/admin/meta/waweb"] = { status: "conectado", risk_ok: true, jid: "573005550103@s.whatsapp.net", qr_image: null, last_error: null };
+}
+
+// CONEXIONES=1: Conexiones con datos en todas sus vistas (rediseño CON-01..28): la cuenta de Meta con dos números
+// (uno sin registrar), plantillas en tres estados, versiones con historial, costos, producción y los catálogos de alta.
+if (process.env.CONEXIONES === "1") {
+  const M = "00000000-0000-4000-8000-00000000aaaa";
+  const C1 = "00000000-0000-4000-8000-0000000000c1";
+  const consola = respuestas["/admin/connections/console"];
+  const base = consola.items.find((x) => x.id === C1);
+  respuestas["/admin/connections/console"] = {
+    ...consola,
+    items: [
+      ...consola.items,
+      { ...base, id: "00000000-0000-4000-8000-0000000000c8", label: "Messenger Café Aurora", type_id: "messenger_meta", channel: "messenger", external_id: "Café Aurora", meta_connection_id: "00000000-0000-4000-8000-00000000eeee", is_primary: false, agents: [] },
+    ],
+  };
+  respuestas["/admin/meta/webhooks"] = { subscriptions: [{ connection_id: M, origin: "embedded_signup", uses_platform_app: true, can_register: true, channel: "whatsapp", object: "whatsapp_business_account", meta_app_id: "1234567890", callback_url: "https://api.test.example/webhook/meta", active: true, fields: ["messages", "message_template_status_update"], last_error: null }] };
+  respuestas[`/admin/meta/connections/${M}/production`] = { run_id: "r1", status: "done", ready: false, environment: "production", channel: "whatsapp", requested_at: "2026-11-09T12:00:00Z", started_at: "2026-11-09T12:00:01Z", finished_at: "2026-11-09T12:00:09Z", error: null, items: [
+    { key: "token_valid", label: "Permiso de acceso a Meta", ok: true, detail: null, repair_action: null, checked_at: "2026-11-09T12:00:05Z" },
+    { key: "webhook_subscribed", label: "Recibe mensajes de Meta", ok: true, detail: null, repair_action: null, checked_at: "2026-11-09T12:00:06Z" },
+    { key: "billing", label: "Método de pago en Meta", ok: false, detail: "Agrega una tarjeta en WhatsApp Manager.", repair_action: null, checked_at: "2026-11-09T12:00:07Z" },
+  ] };
+  respuestas[`/admin/meta/connections/${M}/promotion`] = { connection_id: M, environment: "sandbox", status: "connected", status_reason: null, meta_app_id: "1234567890", production_connection_id: null, production_status: null, production_status_reason: null, phone_number_id: "100200300400500", blocked_reason: null, steps: [
+    { key: "real_number", label: "Número real", done: false, detail: "" },
+    { key: "number_registered", label: "Registro con PIN", done: false, detail: "" },
+    { key: "templates", label: "Plantillas aprobadas", done: false, detail: "1 aprobada" },
+    { key: "verify", label: "Revisar", done: false, detail: "" },
+  ] };
+  respuestas[`/admin/meta/connections/${M}/credentials`] = { fields: [
+    { name: "app_id", label: "App ID", value: "1234567890", secret: false, configured: true },
+    { name: "waba_id", label: "WABA ID", value: "998877", secret: false, configured: true },
+    { name: "access_token", label: "Access token", value: null, secret: true, configured: true },
+    { name: "verify_token", label: "Verify token", value: null, secret: true, configured: true },
+  ] };
+  respuestas[`/admin/meta/connections/${M}/business-numbers`] = { business_id: "55", business_name: "Café Aurora SAS", other_tenants_count: 0, warnings: [], numbers: [
+    { waba_id: "998877", waba_name: "Café Aurora", is_connection_waba: true, phone_number_id: "100200300400500", display_phone_number: "+57 300 555 0101", verified_name: "Café Aurora", status: "CONNECTED", code_verification_status: "VERIFIED", platform_type: "CLOUD_API", quality_rating: "GREEN", name_status: "APPROVED", in_this_connection: true },
+    { waba_id: "998877", waba_name: "Café Aurora", is_connection_waba: true, phone_number_id: "100200300400501", display_phone_number: "+57 300 555 0102", verified_name: "Café Aurora Soporte", status: "PENDING", code_verification_status: "NOT_VERIFIED", platform_type: "CLOUD_API", quality_rating: "UNKNOWN", name_status: "PENDING_REVIEW", in_this_connection: false },
+  ] };
+  respuestas["/admin/costs"] = { today: 0.4, month: 12.4, total_turns: 420, by_model: [], by_conversation: [], by_agent: [], meta: { by_category_country: [], discrepancy: [], service_allowance_hypothesis: false, by_phone: [
+    { phone_number: "+57 300 555 0101", volume: 312, cost: 4.2 },
+    { phone_number: "+57 300 555 0102", volume: 90, cost: 1.1 },
+  ] } };
+  respuestas["/admin/costs/meta/credits"] = { connections: [{ id: M, label: "Café Aurora", channel: "whatsapp", business_id: "55" }] };
+  respuestas[`/admin/connections/${C1}/releases`] = [
+    { id: "r8", number: 8, origin: "owner", manifest_hash: "abc", created_at: "2026-11-08T15:00:00Z", active: false, canary: false, last_event: null, last_event_at: null, lifecycle: null, detenida: false },
+    { id: "r7", number: 7, origin: "owner", manifest_hash: "def", created_at: "2026-11-01T12:00:00Z", active: true, canary: false, last_event: "promoted", last_event_at: "2026-11-01T12:10:00Z", lifecycle: "promoted", detenida: false },
+    { id: "r6", number: 6, origin: "platform", manifest_hash: "ghi", created_at: "2026-10-20T12:00:00Z", active: false, canary: false, last_event: "promoted", last_event_at: "2026-10-20T12:10:00Z", lifecycle: "promoted", detenida: false },
+    { id: "r5", number: 5, origin: "owner", manifest_hash: "jkl", created_at: "2026-10-12T12:00:00Z", active: false, canary: false, last_event: "invalid", last_event_at: "2026-10-12T13:00:00Z", lifecycle: "invalid", detenida: true },
+  ];
+  respuestas[`/admin/connections/${C1}/canary`] = null;
+  // La salud de la cuenta con chequeos de verdad: uno bien, uno por arreglar y uno sin dato.
+  const salud = respuestas["/admin/meta/health"];
+  respuestas["/admin/meta/health"] = {
+    ...salud,
+    connections: salud.connections.map((c) =>
+      c.id === M
+        ? { ...c, checks: [
+            { key: "token_valid", ok: true, detail: null, repair_action: null },
+            { key: "webhook_subscribed", ok: true, detail: null, repair_action: null },
+            { key: "billing", ok: false, detail: "Falta el método de pago en WhatsApp Manager.", repair_action: "configure_billing" },
+            { key: "templates", ok: null, detail: null, repair_action: "sync_templates" },
+          ] }
+        : c,
+    ),
+  };
+  respuestas["/admin/meta/wizard"] = { meta_configured: true, app_id: "1234567890", config_id: "777", environments: ["sandbox", "production"], graph_api_version: "v21.0", missing_settings: [] };
+  respuestas["/admin/meta/wizard/session"] = null;
+  respuestas["/admin/meta/instagram"] = { meta_configured: true, app_id: "1234567890", config_id: "777", graph_api_version: "v21.0", missing_settings: [], plan_includes: true, login_available: true, login_missing: [] };
+  respuestas["/admin/meta/instagram/accounts"] = { accounts: [{ ig_user_id: "17841400000000000", username: "cafeaurora", page_id: "1", page_name: "Café Aurora", eligible: true, reason: null, already_connected: true }] };
+  respuestas["/admin/meta/messenger"] = { meta_configured: true, app_id: "1234567890", config_id: "777", graph_api_version: "v21.0", missing_settings: [], plan_includes: true };
+  respuestas["/admin/meta/checklist/requirements"] = { meta_configured: true, steps: [
+    { key: "app", label: "Crear la app de Meta", link: "https://developers.facebook.com/apps", done: true, notes: "" },
+    { key: "revision", label: "Pedir la revisión de la app (App Review)", link: "https://developers.facebook.com/apps", done: false, notes: "Falta el permiso de mensajes" },
+    { key: "negocio", label: "Verificar el negocio en Meta", link: "https://business.facebook.com/settings", done: false, notes: "" },
+  ], checks: [
+    { key: "webhook_verified", ok: true, detail: "El webhook responde la verificación de Meta" },
+    { key: "templates_approved", ok: false, detail: "No hay plantillas aprobadas" },
+    { key: "rls_tests_pass", ok: null, detail: "Se revisa en cada despliegue" },
+  ] };
+  respuestas[`/admin/meta/connections/${M}/numbers`] = { sync_error: null, numbers: [
+    { id: "n1", phone_number_id: "100200300400500", display_phone_number: "+57 300 555 0101", verified_name: "Café Aurora", status: "CONNECTED", registered: true },
+    { id: "n2", phone_number_id: "100200300400501", display_phone_number: "+57 300 555 0102", verified_name: "Café Aurora Soporte", status: "PENDING", registered: false },
+  ] };
+  respuestas[`/admin/meta/connections/${M}/templates`] = { sync_error: null, at_limit: false, templates: [
+    { id: "t1", name: "confirmacion_pedido", language: "es_CO", category: "UTILITY", status: "APPROVED", quality_score: "GREEN", rejected_reason: null },
+    { id: "t2", name: "recordatorio_cita", language: "es_CO", category: "UTILITY", status: "PENDING", quality_score: null, rejected_reason: null },
+    { id: "t3", name: "promo_noviembre", language: "es", category: "MARKETING", status: "REJECTED", quality_score: null, rejected_reason: "INVALID_FORMAT" },
+  ] };
+  respuestas["/admin/connections/catalog"] = { categories: [
+    { category: "comunicacion", label: "Comunicación", items: [
+      { id: "whatsapp_meta", label: "WhatsApp", description: "Tu número con la API oficial de Meta.", available: true, setup_kind: "wizard", url: "/conexiones/whatsapp", has_schema: false },
+      { id: "whatsapp_waweb", label: "WhatsApp (vincular por QR)", description: "Vincula un teléfono escaneando un código.", available: true, setup_kind: "wizard", url: "/conexiones/waweb", has_schema: false },
+      { id: "instagram_meta", label: "Instagram", description: "Los mensajes directos de tu cuenta profesional.", available: true, setup_kind: "wizard", url: "/conexiones/instagram", has_schema: false },
+      { id: "messenger_meta", label: "Messenger", description: "Los mensajes de tu Página de Facebook.", available: true, setup_kind: "wizard", url: "/conexiones/messenger", has_schema: false },
+      { id: "webchat", label: "Chat web", description: "Un chat en tu sitio.", available: true, setup_kind: "wizard", url: "/conexiones/chat-web", has_schema: false },
+      { id: "whatsapp_twilio", label: "WhatsApp", description: "Por Twilio, con tu propia cuenta.", available: false, setup_kind: "manual", url: null, has_schema: true },
+    ] },
+    { category: "correo", label: "Correo", items: [
+      { id: "email_smtp", label: "Correo (SMTP)", description: "Envía correos desde tu dominio.", available: true, setup_kind: "manual", url: null, has_schema: true },
+    ] },
+    { category: "calendario", label: "Calendario", items: [
+      { id: "google_calendar", label: "Google Calendar", description: "Agenda las citas en tu calendario.", available: true, setup_kind: "wizard", url: "/oauth", has_schema: false },
+    ] },
+  ] };
 }
 
 // AGENDAS=2: el negocio tiene dos agendas (HU-CAL-08) y el calendario trae una cita de cada una.

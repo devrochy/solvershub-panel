@@ -53,9 +53,9 @@ export function estadoItem(ok: boolean | null | undefined): {
   label: string;
   variant: "success" | "danger" | "neutral";
 } {
-  if (ok === true) return { label: "ok", variant: "success" };
-  if (ok === false) return { label: "falta", variant: "danger" };
-  return { label: "sin dato", variant: "neutral" };
+  if (ok === true) return { label: "Correcto", variant: "success" };
+  if (ok === false) return { label: "Falta", variant: "danger" };
+  return { label: "Sin dato", variant: "neutral" };
 }
 
 /** Dónde se arregla un ítem de la conexión. El backend manda un id corto, nunca una ruta. */

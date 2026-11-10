@@ -20,7 +20,7 @@ export type FilaCelular = {
  * Tabla en escritorio y filas de un toque en el celular, donde una tabla ancha se saldría de la
  * pantalla. Sin filas, la tabla dibuja su estado vacío en ambos.
  */
-export function TablaCobranza<T>({
+export function TablaResponsiva<T>({
   etiqueta,
   filaCelular,
   className,
