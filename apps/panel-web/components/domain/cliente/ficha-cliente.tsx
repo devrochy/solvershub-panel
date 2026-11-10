@@ -31,9 +31,11 @@ import {
   etiquetaClasificacion,
   etiquetaDeDato,
   etiquetaTipoDocumento,
+  identificadorVisible,
   MENSAJE_VALOR_INVALIDO,
   normalizarClave,
   origenDelDato,
+  telefonoVisible,
   textoDeDato,
   valorEstimadoValido,
 } from "@/lib/clientes";
@@ -159,15 +161,23 @@ export function FichaCliente({
   return (
     <Sheet open onOpenChange={(abierto) => !abierto && router.push(closeHref, { scroll: false })}>
       <SheetContent
-        title="Ficha del cliente"
-        description={`${canalLabel(detalle.canal)} · ${detalle.identificador}`}
+        title={detalle.perfil.nombre_visible}
+        description={subtituloDeLaFicha(detalle)}
         className="sm:max-w-3xl"
-        hero={
-          <div className="space-y-3">
-            <CabeceraCliente detalle={detalle} />
-            <Tabs items={tabs} value={tab} onValueChange={cambiarTab} />
-          </div>
+        antesDelTitulo={
+          <AvatarCliente
+            leadId={detalle.id}
+            nombre={detalle.perfil.nombre_visible}
+            avatarUrl={detalle.perfil.avatar_url}
+            compacto
+          />
         }
+        despuesDelTitulo={
+          <Badge variant={TONO_CLASIFICACION[detalle.perfil.clasificacion ?? ""] ?? "neutral"} className="shrink-0 whitespace-nowrap max-sm:hidden">
+            {etiquetaClasificacion(detalle.perfil.clasificacion, detalle.perfil.clasificacion_label)}
+          </Badge>
+        }
+        hero={<Tabs items={tabs} value={tab} onValueChange={cambiarTab} size="compact" className="-mt-3" />}
       >
         {tab === "general" ? (
           <div className="space-y-6">
@@ -191,8 +201,12 @@ export function FichaCliente({
                 </dd>
                 <dt className="text-text-soft">Cliente desde</dt>
                 <dd className="text-body">{formatDate(detalle.alta)}</dd>
-                <dt className="text-text-soft">Identificador</dt>
-                <dd className="break-all text-body">{detalle.identificador}</dd>
+                {identificadorVisible(detalle.identificador) && (
+                  <>
+                    <dt className="text-text-soft">Identificador</dt>
+                    <dd className="break-all text-body">{identificadorVisible(detalle.identificador)}</dd>
+                  </>
+                )}
               </dl>
               {detalle.ultima_conversacion_id && (
                 <Link
@@ -294,29 +308,17 @@ export function FichaCliente({
   );
 }
 
-function CabeceraCliente({ detalle }: { detalle: LeadDetail }) {
-  const perfil = detalle.perfil;
-  return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      <AvatarCliente leadId={detalle.id} nombre={perfil.nombre_visible} avatarUrl={perfil.avatar_url} />
-      <div className="space-y-1">
-        <h2 className="font-display text-xl font-semibold tracking-tight text-headline">
-          {perfil.nombre_visible}
-        </h2>
-        {perfil.alias && perfil.alias !== perfil.nombre_visible ? (
-          <p className="text-sm text-text-soft">Alias: {perfil.alias}</p>
-        ) : null}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Badge variant={TONO_CLASIFICACION[perfil.clasificacion ?? ""] ?? "neutral"}>
-            {etiquetaClasificacion(perfil.clasificacion, perfil.clasificacion_label)}
-          </Badge>
-          <span className="text-xs text-text-soft">
-            {canalLabel(detalle.canal)} · {detalle.identificador}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+/** «Alias: Anita · WhatsApp · +57 300 000 0001», sin lo que no aporta. */
+function subtituloDeLaFicha(detalle: LeadDetail): string {
+  const { alias, nombre_visible: nombre } = detalle.perfil;
+  const identificador = identificadorVisible(detalle.identificador);
+  return [
+    alias && alias !== nombre ? `Alias: ${alias}` : null,
+    canalLabel(detalle.canal),
+    identificador !== nombre ? identificador : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function PerfilResumen({
@@ -354,7 +356,7 @@ function PerfilResumen({
             <dl className="grid gap-3 sm:grid-cols-2">
               <CampoPar
                 etiqueta="Teléfono"
-                valor={telefono ? `${pais?.bandera ?? ""} ${telefono}`.trim() : null}
+                valor={telefono ? `${pais?.bandera ?? ""} ${telefonoVisible(perfil)}`.trim() : null}
               />
               <CampoPar etiqueta="Correo" valor={perfil.email} />
             </dl>

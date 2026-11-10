@@ -63,11 +63,55 @@ describe("columna Agentes de Clientes", () => {
     const { container } = render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     const fila = screen.getAllByRole("row")[1];
-    expect(within(fila).getByRole("link", { name: "Abrir General de Ana Prueba" })).toBeTruthy();
-    const ventas = within(fila).getByRole("link", { name: "Abrir Ventas de Ana Prueba" });
-    expect(ventas.getAttribute("href")).toContain("agente=ventas");
-    expect(within(fila).queryByRole("link", { name: /Abrir Agenda/ })).toBeNull();
+    expect(within(fila).getByText("General · Ventas")).toBeTruthy();
+    expect(within(fila).queryByText(/Agenda/)).toBeNull();
     expect(container.querySelector(".opacity-35")).toBeNull();
+  });
+
+  async function pintarClientes(sp: Record<string, string> = {}) {
+    respuestas["/admin/conversations/connections"] = [];
+    respuestas["/admin/me"] = me;
+    const Pagina = (await import("@/app/(app)/leads/page")).default as (p: {
+      searchParams: Promise<Record<string, string>>;
+    }) => Promise<ReactNode>;
+    const arbol = await resolverServidor(await Pagina({ searchParams: Promise.resolve(sp) }));
+    return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
+  }
+
+  it("la fila tiene un solo destino y el agente se opera sin abrir la ficha", async () => {
+    respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [ANA] };
+    await pintarClientes();
+
+    const fila = screen.getAllByRole("row")[1];
+    const enlaces = within(fila).getAllByRole("link");
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0].getAttribute("aria-label")).toBe("Abrir la ficha de Ana Prueba");
+    expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
+    expect(screen.queryByText("Estado del bot")).toBeNull();
+    expect(within(fila).getByText("Activo")).toBeTruthy();
+  });
+
+  it("en el celular cada cliente es una fila de la lista que abre su ficha", async () => {
+    respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [ANA] };
+    await pintarClientes();
+    const lista = screen.getByRole("list", { name: "Clientes" });
+    expect(within(lista).getByRole("link", { name: "Ana Prueba" }).getAttribute("href")).toContain(`cliente=${ANA.id}`);
+  });
+
+  it("con filtros y sin resultados no dice que no hay clientes", async () => {
+    respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [], total: 0 };
+    await pintarClientes({ q: "nadie" });
+    expect(screen.getByText("No hay clientes con estos filtros")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Limpiar filtros" }).getAttribute("href")).toBe("/leads");
+    expect(screen.queryByText("Sin clientes todavía")).toBeNull();
+  });
+
+  it("si la lista no carga conserva la cabecera y ofrece reintentar", async () => {
+    delete respuestas["/admin/leads"];
+    await pintarClientes();
+    expect(screen.getByRole("heading", { level: 1, name: "Clientes" })).toBeTruthy();
+    expect(screen.getByText("No pudimos cargar los clientes")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reintentar" })).toBeTruthy();
   });
 });
 

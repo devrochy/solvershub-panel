@@ -5,6 +5,7 @@
  * (opción «Todos» del select) se descarta antes de llamar a la API.
  */
 
+import { formatearIdentificador } from "@/lib/conversaciones/nombre";
 import { formatCop } from "@/lib/format";
 
 export type FiltrosClientes = {
@@ -223,9 +224,18 @@ type Telefono = {
 
 export function telefonoVisible(perfil: Telefono): string {
   if (perfil.phone_indicativo && perfil.phone_local) {
-    return `${perfil.phone_indicativo} ${perfil.phone_local}`;
+    const junto = `${perfil.phone_indicativo}${perfil.phone_local}`.replace(/\s/g, "");
+    const legible = formatearIdentificador(junto);
+    return legible === junto ? `${perfil.phone_indicativo} ${perfil.phone_local}` : legible;
   }
-  return perfil.phone_e164 || perfil.phone || "—";
+  const telefono = perfil.phone_e164 || perfil.phone;
+  return telefono ? formatearIdentificador(telefono) : "—";
+}
+
+/** El identificador que le sirve a una persona; el técnico de un chat web (`web:…`) no se muestra. */
+export function identificadorVisible(identificador: string | null | undefined): string | null {
+  if (!identificador || /^(web|webchat):/.test(identificador)) return null;
+  return formatearIdentificador(identificador);
 }
 
 type Ubicacion = {
