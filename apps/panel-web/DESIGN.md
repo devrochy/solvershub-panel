@@ -234,7 +234,7 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - La grilla muestra de una hora antes de abrir a una después de cerrar (`horarioAGrilla`) y sombrea lo cerrado. Al cambiar el ancho (la columna Hoy) se llama `updateSize()`.
 - Cada cita lleva el color de su agenda, nunca el de su tipo, y dice el cliente primero; el tipo va en palabras, sin siglas. La hora solo aparece en las citas largas.
 - Una cita se abre en un resumen con «¿Vino?» arriba; editar es un paso aparte. El formulario pide el cliente, el tipo, el día y la hora en formato de Colombia (`lib/calendario/formulario.ts`), y el fin sale de la duración.
-- Los ajustes van en pestañas dentro del cajón. Un `MenuDeFila` dentro de un cajón o diálogo lleva `dentroDeUnCajon`, y Escape con un menú abierto cierra solo el menú (`lib/escape-con-menu.ts`).
+- Los ajustes van en pestañas dentro del cajón. Un `MenuDeFila` dentro del cajón funciona igual que en una página, y Escape con el menú abierto cierra solo el menú. Para eso todos los paquetes de Radix tienen que compartir una sola copia de `react-dismissable-layer` y `react-focus-scope` (revisarlo con `npm ls` al subir uno).
 
 ## Onboarding (HU-SH-06)
 

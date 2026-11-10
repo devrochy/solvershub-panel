@@ -1,36 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ComponentProps, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { ExternalLink } from "lucide-react";
 
-import { CERRAR_MENUS } from "@/lib/escape-con-menu";
 import { cn } from "@/lib/utils";
 
-/**
- * Raíz del menú. Igual que la de Radix, pero se cierra cuando un cajón o diálogo recibe Escape con
- * el menú abierto (`CERRAR_MENUS`, ver `lib/escape-con-menu.ts`).
- */
-export function DropdownMenu({ open, defaultOpen, onOpenChange, ...resto }: ComponentProps<typeof Menu.Root>) {
-  const [interno, setInterno] = useState(defaultOpen ?? false);
-  const controlado = open !== undefined;
-  const abierto = controlado ? open : interno;
-  const cambiar = useCallback(
-    (valor: boolean) => {
-      if (!controlado) setInterno(valor);
-      onOpenChange?.(valor);
-    },
-    [controlado, onOpenChange],
-  );
-  useEffect(() => {
-    if (!abierto) return;
-    const cerrar = () => cambiar(false);
-    window.addEventListener(CERRAR_MENUS, cerrar);
-    return () => window.removeEventListener(CERRAR_MENUS, cerrar);
-  }, [abierto, cambiar]);
-  return <Menu.Root open={abierto} onOpenChange={cambiar} {...resto} />;
-}
+export const DropdownMenu = Menu.Root;
 export const DropdownMenuTrigger = Menu.Trigger;
 
 const SUPERFICIE = "z-50 min-w-44 rounded-md border border-border bg-surface p-1 shadow-elev-2 focus:outline-none";

@@ -215,7 +215,7 @@ function FilaAgenda({
             {agenda.description ? ` · ${agenda.description}` : ""}
           </p>
         </div>
-        <MenuDeFila etiqueta={`Más acciones de ${agenda.name}`} dentroDeUnCajon>
+        <MenuDeFila etiqueta={`Más acciones de ${agenda.name}`}>
           <DropdownMenuItem icon={<Pencil />} onSelect={onEditar}>
             {abierta ? "Cerrar la edición" : puedeEscribir ? "Editar" : "Ver datos"}
           </DropdownMenuItem>

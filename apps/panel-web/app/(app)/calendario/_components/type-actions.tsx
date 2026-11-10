@@ -194,7 +194,7 @@ export function MenuTipo({ tipo, responsables }: { tipo: TipoCita; responsables:
 
   return (
     <>
-      <MenuDeFila etiqueta={`Más acciones de ${tipo.name}`} dentroDeUnCajon>
+      <MenuDeFila etiqueta={`Más acciones de ${tipo.name}`}>
         <DropdownMenuItem icon={<Pencil />} onSelect={() => setEditando(true)}>
           Editar
         </DropdownMenuItem>
