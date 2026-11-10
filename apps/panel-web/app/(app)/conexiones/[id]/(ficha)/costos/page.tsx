@@ -39,11 +39,12 @@ export default async function CostosPage({ params }: { params: Promise<{ id: str
       </SeccionFicha>
     );
   }
-  const numeros = numerosDeLaCuenta(ficha.consola.items, metaId).map((c) => c.external_id);
+  // Meta factura por número visible; `external_id` es el id del número y queda de respaldo.
+  const numeros = numerosDeLaCuenta(ficha.consola.items, metaId).map((c) => c.display_phone_number ?? c.external_id);
   const todos = res.data.meta?.by_phone ?? [];
   const propios = costosDeLaCuenta(todos, numeros);
-  // Si ningún número de la consola coincide (la conexión guarda el id del número, no el número
-  // visible), se muestra el consumo de todo el negocio y se dice.
+  // Si ningún número de la consola coincide (Meta aún no sincronizó el número visible), se muestra
+  // el consumo de todo el negocio y se dice.
   const separado = propios.length > 0 || todos.length === 0;
   const porNumero = separado ? propios : todos;
   const total = porNumero.reduce((suma, r) => suma + r.cost, 0);

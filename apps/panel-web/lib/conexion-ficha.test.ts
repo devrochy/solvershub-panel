@@ -10,6 +10,7 @@ import {
   mensajeErrorAgentes,
   muestraSalud,
   numerosDeLaCuenta,
+  numeroVisible,
   pestanasDeFicha,
   puedeEditarAgentesDeConexion,
   subtituloDeFicha,
@@ -87,6 +88,23 @@ describe("cabecera y lista", () => {
     expect(subtituloDeFicha(conexion({ external_id: "" }), "webchat")).toBe("Chat web");
     expect(subtituloDeFicha(conexion({ external_id: "573005550103" }), "whatsapp_waweb")).toBe("WhatsApp con QR · +57 300 555 0103");
     expect(subtituloDeFicha(conexion({ external_id: "17841400000000000" }), "instagram")).toBe("Instagram");
+  });
+
+  it("WhatsApp oficial: el número visible que sincronizó Meta, nunca el phone_number_id", () => {
+    // Como en producción: `external_id` es el id del número en Meta.
+    const real = { external_id: "100200300400500" };
+    expect(subtituloDeFicha(conexion({ ...real, display_phone_number: "+57 300 5550101" }), "whatsapp_meta")).toBe(
+      "WhatsApp oficial · +57 300 555 0101",
+    );
+    expect(subtituloDeFicha(conexion({ ...real, display_phone_number: "+1 555-010-0199" }), "whatsapp_meta")).toBe(
+      "WhatsApp oficial · +1 555-010-0199",
+    );
+    expect(subtituloDeFicha(conexion({ ...real, display_phone_number: null }), "whatsapp_meta")).toBe("WhatsApp oficial");
+    expect(subtituloDeFicha(conexion({ ...real, display_phone_number: "  " }), "whatsapp_meta")).toBe("WhatsApp oficial");
+    // Otro tipo no lo usa aunque venga.
+    expect(subtituloDeFicha(conexion({ external_id: "", display_phone_number: "+57 300 5550101" }), "webchat")).toBe("Chat web");
+    expect(numeroVisible({ display_phone_number: "573005550101" })).toBe("+57 300 555 0101");
+    expect(numeroVisible({})).toBeNull();
   });
 
   it("un solo estado: funciona, con avisos, no funciona, pausada o sin terminar", () => {

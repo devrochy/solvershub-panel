@@ -143,8 +143,23 @@ export function tipoLegible(tipo: TipoDeFicha): string {
   return TIPO_LEGIBLE[tipo];
 }
 
+/**
+ * Número visible del WhatsApp oficial (lo que sincronizó Meta, `display_phone_number`): un celular
+ * colombiano sale como «+57 300 555 0101»; otro país, como lo escribe Meta. `null` si no se conoce.
+ */
+export function numeroVisible(c: Pick<ConexionConsola, "display_phone_number">): string | null {
+  const numero = c.display_phone_number?.trim();
+  if (!numero) return null;
+  const solo = digitos(numero);
+  const colombiano = formatearIdentificador(solo);
+  return colombiano !== solo ? colombiano : numero;
+}
+
 /** «Tipo legible · detalle» de la cabecera; el detalle es el número, la cuenta o el dominio. */
-export function subtituloDeFicha(c: Pick<ConexionConsola, "external_id">, tipo: TipoDeFicha): string {
+export function subtituloDeFicha(c: Pick<ConexionConsola, "external_id" | "display_phone_number">, tipo: TipoDeFicha): string {
+  // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo.
+  const numero = tipo === "whatsapp_meta" ? numeroVisible(c) : null;
+  if (numero) return `${tipoLegible(tipo)} · ${numero}`;
   const crudo = c.external_id?.trim();
   // Un número sin «+» se muestra como teléfono; un id numérico largo de Meta (Instagram) no dice nada al dueño.
   const detalle = !crudo ? crudo : tipo === "whatsapp_waweb" ? formatearIdentificador(crudo) : /^\d{12,}$/.test(crudo) ? "" : crudo;
