@@ -1,0 +1,14 @@
+<!-- @dsCard group="Moléculas" height=120 subtitle="components/ui/segmented-control.tsx" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SegmentedControl — vista previa</title></head>
+<body>
+<div id="root" class="p-6"></div>
+<script>
+var S=window.SolversHub,h=React.createElement,u=React.useState;function mount(x){ReactDOM.createRoot(document.getElementById('root')).render(x);}
+var O=[{value:'',label:'Todas'},{value:'open',label:'Abiertas'},{value:'escalated',label:'Escaladas'},{value:'closed',label:'Cerradas'}];
+function A(){var v=u('');return h(S.SegmentedControl,{label:'Filtrar por estado',options:O,value:v[0],onChange:v[1],className:'w-96'});}
+mount(h(A));
+</script>
+</body>
+</html>

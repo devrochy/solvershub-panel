@@ -42,21 +42,27 @@ export function channelMeta(id: string | null | undefined) {
   );
 }
 
+const CAJA = {
+  sm: "h-6 w-6 rounded-md",
+  md: "h-8 w-8 rounded-lg",
+  // Ocupa el lugar del avatar cuando el cliente no dio su nombre.
+  avatar: "h-10 w-10 rounded-full",
+} as const;
+
 export function ChannelIcon({
   id,
   size = "md",
 }: {
   id: string | null | undefined;
-  size?: "sm" | "md";
+  size?: keyof typeof CAJA;
 }) {
   const meta = channelMeta(id);
   const Icon = meta.icon;
-  const caja = size === "sm" ? "h-6 w-6 rounded-md" : "h-8 w-8 rounded-lg";
   const icono = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   return (
     <span
       aria-hidden
-      className={`inline-flex shrink-0 items-center justify-center bg-hover ${caja} ${meta.tone}`}
+      className={`inline-flex shrink-0 items-center justify-center bg-hover ${CAJA[size]} ${meta.tone}`}
       title={meta.label}
     >
       <Icon className={icono} />

@@ -26,6 +26,7 @@ export function SelectConIcono({
   options,
   placeholder = "Elige una opción",
   id,
+  compacto = false,
 }: {
   label: string;
   value: string;
@@ -33,6 +34,8 @@ export function SelectConIcono({
   options: Opcion[];
   placeholder?: string;
   id?: string;
+  /** Para una fila de filtros: del ancho de su texto, sin fondo de campo. */
+  compacto?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [filtro, setFiltro] = useState("");
@@ -52,8 +55,10 @@ export function SelectConIcono({
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
-            "flex h-10 w-full items-center gap-2 rounded-md border border-control-border bg-bg-deep px-3 text-sm text-headline",
-            "transition-colors hover:border-border-strong focus-visible:border-focus focus-visible:outline-none",
+            "flex items-center gap-2 rounded-md border px-3 transition-colors hover:border-border-strong focus-visible:border-focus focus-visible:outline-none",
+            compacto
+              ? "h-9 max-w-56 border-border text-sh-label text-body"
+              : "h-10 w-full border-control-border bg-bg-deep text-sm text-headline",
             !elegida && "text-text-soft",
           )}
         >
@@ -62,7 +67,7 @@ export function SelectConIcono({
           <ChevronDown aria-hidden className="h-4 w-4 shrink-0 text-text-soft" />
         </button>
       </PopoverTrigger>
-      <PopoverContent label={label} align="start" className="w-full max-w-[20rem] p-0">
+      <PopoverContent label={label} align={compacto ? "end" : "start"} className={cn("max-w-[20rem] p-0", compacto ? "w-64" : "w-full")}>
         {conBuscador && (
           <div className="relative border-b border-border p-2">
             <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-soft" />

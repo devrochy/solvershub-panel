@@ -122,25 +122,16 @@ describe("/comercio/pedidos", () => {
 describe("/escalaciones", () => {
   const pagina = async () => (await import("@/app/(app)/escalaciones/page")).default as unknown as Pagina;
 
-  it("el nombre abre la ficha y «Ver» sigue abriendo la conversación", async () => {
+  it("la fila tiene un solo destino: abre el chat", async () => {
     respuestas["/admin/escalations"] = { data: escalaciones };
-    respuestas["/admin/me"] = { data: sesionDueno };
     await pintar(await pagina());
 
     const fila = screen.getAllByRole("row")[1];
-    expect(within(fila).getByRole("link", { name: "Ana Prueba" }).getAttribute("href")).toBe("/leads?cliente=test-cliente-1");
-    expect(within(fila).getByRole("link", { name: "Ver" }).getAttribute("href")).toBe("/conversaciones?c=test-conv-1");
-  });
-
-  it("sin acceso a Clientes el nombre no es un enlace pero «Ver» sí", async () => {
-    respuestas["/admin/escalations"] = { data: escalaciones };
-    respuestas["/admin/me"] = { data: SIN_CLIENTES };
-    await pintar(await pagina());
-
-    const fila = screen.getAllByRole("row")[1];
-    expect(within(fila).queryByRole("link", { name: "Ana Prueba" })).toBeNull();
+    const enlaces = within(fila).getAllByRole("link");
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0].getAttribute("aria-label")).toBe("Abrir el chat de Ana Prueba");
+    expect(enlaces[0].getAttribute("href")).toBe("/conversaciones?c=test-conv-1");
     expect(within(fila).getByText("Ana Prueba")).toBeTruthy();
-    expect(within(fila).getByRole("link", { name: "Ver" })).toBeTruthy();
   });
 });
 

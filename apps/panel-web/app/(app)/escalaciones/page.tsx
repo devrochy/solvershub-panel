@@ -1,14 +1,11 @@
-import Link from "next/link";
-
-import { EscalacionFilters, MotivoBadge, ResumenEscalacion } from "@/components/domain/escalacion";
+import { EscalacionFilters, MotivoBadge } from "@/components/domain/escalacion";
 import { ESCALATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
-import { Button } from "@/components/ui/button";
 import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { EscalationPage, Me } from "@/lib/api/types";
-import { hrefFicha, puedeVerClientes } from "@/lib/clientes";
+import type { EscalationPage } from "@/lib/api/types";
+import { nombreDelChat } from "@/lib/conversaciones/nombre";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata = { title: "Escalaciones" };
@@ -25,12 +22,7 @@ export default async function EscalationsPage({
   if (sp.reason_code) qs.set("reason_code", sp.reason_code);
   if (sp.estado) qs.set("estado", sp.estado);
   if (sp.page) qs.set("page", sp.page);
-  const [res, me] = await Promise.all([
-    apiFetch<EscalationPage>(`/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`),
-    apiFetch<Me>("/admin/me"),
-  ]);
-  // HU-CRM-20: el nombre abre la ficha solo si la sesión ve Clientes; si no, es texto.
-  const puedeAbrirFicha = me.ok && puedeVerClientes(me.data);
+  const res = await apiFetch<EscalationPage>(`/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`);
   const { items, page, has_more, total } = res.ok
     ? res.data
     : { items: [], page: 1, has_more: false, total: 0 };
@@ -39,16 +31,7 @@ export default async function EscalationsPage({
     {
       key: "cliente",
       header: "Cliente",
-      cell: (esc) => {
-        const nombre = esc.customer_name ?? esc.external_id ?? "Cliente";
-        return puedeAbrirFicha ? (
-          <Link href={hrefFicha(esc.customer_id)} className="text-link hover:underline">
-            {nombre}
-          </Link>
-        ) : (
-          nombre
-        );
-      },
+      cell: (esc) => <span className="whitespace-nowrap font-medium">{nombreDelChat(esc)}</span>,
     },
     {
       key: "motivo",
@@ -58,7 +41,13 @@ export default async function EscalationsPage({
     {
       key: "resumen",
       header: "Resumen",
-      cell: (esc) => <ResumenEscalacion esc={esc} />,
+      // `w-full max-w-0`: toma solo el ancho que sobra, así el chevron nunca queda fuera de vista.
+      className: "w-full max-w-0",
+      cell: (esc) => (
+        <span className="block min-w-48 truncate text-body" title={esc.summary ?? undefined}>
+          {esc.summary || "—"}
+        </span>
+      ),
     },
     {
       key: "estado",
@@ -68,26 +57,18 @@ export default async function EscalationsPage({
     {
       key: "fecha",
       header: "Fecha",
-      cell: (esc) => <span className="text-body">{formatDateTime(esc.created_at)}</span>,
-    },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (esc) => (
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/conversaciones?c=${esc.conversation_id}`}>Ver</Link>
-        </Button>
-      ),
+      cell: (esc) => <span className="whitespace-nowrap text-body tabular-nums">{formatDateTime(esc.created_at)}</span>,
     },
   ];
 
   return (
     <ListPage
       header={{
-        title: "Escalaciones",
+        title: "Conversaciones",
         description: "Conversaciones que el agente derivó a una persona.",
         helpSection: "escalations",
+        densidad: "compacta",
+        breadcrumbs: [{ label: "Operación" }, { label: "Conversaciones" }],
       }}
       filters={<EscalacionFilters motivo={sp.reason_code} estado={sp.estado} />}
     >
@@ -106,6 +87,8 @@ export default async function EscalationsPage({
         error={res.ok ? null : `No se pudieron cargar las escalaciones: ${res.error}`}
         caption="Escalaciones"
         serverPaginated
+        getRowHref={(esc) => `/conversaciones?c=${esc.conversation_id}`}
+        getRowLabel={(esc) => `Abrir el chat de ${nombreDelChat(esc)}`}
       />
 
       {res.ok && (

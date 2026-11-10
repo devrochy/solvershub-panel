@@ -19,13 +19,13 @@ export function BotonBuscar() {
     <button
       type="button"
       onClick={atajos.abrirPaleta}
-      aria-label="Buscar o ir a una sección"
+      aria-label="Buscar en el panel o ir a una sección"
       aria-keyshortcuts={esMac ? "Meta+K" : "Control+K"}
       aria-haspopup="dialog"
-      className="flex h-9 shrink-0 items-center gap-2 rounded-md p-2 text-text-soft transition-colors duration-150 hover:bg-hover hover:text-headline lg:w-56 lg:border lg:border-control-border lg:px-3"
+      className="flex h-9 shrink-0 items-center gap-2 rounded-md p-2 text-text-soft transition-colors duration-150 hover:bg-hover hover:text-headline lg:w-60 lg:border lg:border-control-border lg:px-3"
     >
       <Search className="h-4 w-4 shrink-0" aria-hidden />
-      <span className="hidden flex-1 text-left text-sh-dense lg:inline">Buscar…</span>
+      <span className="hidden flex-1 text-left text-sh-dense lg:inline">Buscar en el panel</span>
       <Kbd keys={[esMac ? "⌘" : "Ctrl", "K"]} className="hidden lg:inline-flex" />
     </button>
   );

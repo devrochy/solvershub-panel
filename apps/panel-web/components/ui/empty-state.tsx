@@ -8,15 +8,17 @@ export function EmptyState({
   description,
   action,
   className,
+  titleClassName,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
   className?: string;
+  titleClassName?: string;
 }) {
   return (
     <div className={cn("flex flex-col items-center gap-2 px-6 py-12 text-center", className)}>
-      <p className="text-sm font-medium text-headline">{title}</p>
+      <p className={cn("text-sm font-medium text-headline", titleClassName)}>{title}</p>
       {description && <p className="max-w-md text-sm text-text-soft">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>

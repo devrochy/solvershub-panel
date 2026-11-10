@@ -9,12 +9,16 @@ export const CONVERSATION_STATUS: StatusMap = {
   open: { label: "Abierta", variant: "accent" },
   escalated: { label: "Escalada", variant: "warning" },
   closed: { label: "Cerrada", variant: "neutral" },
+  resolved: { label: "Resuelta", variant: "neutral" },
 };
 
 export const ESCALATION_STATUS: StatusMap = {
   pendiente: { label: "Pendiente", variant: "warning" },
   asignada: { label: "Asignada", variant: "accent" },
   resuelta: { label: "Resuelta", variant: "success" },
+  pending: { label: "Pendiente", variant: "warning" },
+  assigned: { label: "Asignada", variant: "accent" },
+  resolved: { label: "Resuelta", variant: "success" },
 };
 
 export const PLUGIN_STATUS: StatusMap = {
@@ -97,6 +101,25 @@ export const META_CONNECTION_STATUS: StatusMap = {
   error: { label: "Error", variant: "danger" },
 };
 
+const ESTADO_COMUN: Record<string, string> = {
+  open: "Abierta",
+  closed: "Cerrada",
+  escalated: "Escalada",
+  resolved: "Resuelta",
+  pending: "Pendiente",
+  assigned: "Asignada",
+  active: "Activa",
+  failed: "Fallida",
+};
+
+/** Texto para un estado fuera del mapa de su dominio: nunca se muestra el enum crudo. */
+export function estadoLegible(value: string): string {
+  const comun = ESTADO_COMUN[value];
+  if (comun) return comun;
+  const texto = value.replace(/[_-]+/g, " ").trim();
+  return texto ? `${texto[0].toUpperCase()}${texto.slice(1)}` : "Sin estado";
+}
+
 export function StatusBadge({
   value,
   map,
@@ -107,7 +130,10 @@ export function StatusBadge({
   fallbackVariant?: Variant;
 }) {
   const entry = map[value];
-  return <Badge variant={entry?.variant ?? fallbackVariant}>{entry?.label ?? value}</Badge>;
+  if (!entry && process.env.NODE_ENV === "development") {
+    console.warn(`StatusBadge: falta «${value}» en el mapa de estados.`);
+  }
+  return <Badge variant={entry?.variant ?? fallbackVariant}>{entry?.label ?? estadoLegible(value)}</Badge>;
 }
 
 /** Estado binario activo/inactivo con etiquetas propias del dominio. */

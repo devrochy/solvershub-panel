@@ -100,7 +100,8 @@ export function migasPara(
   const hoja = tab ?? item;
   const enDetalle = pathname !== hoja.href;
   const migas: Miga[] = [{ label: group.label }];
-  if (tab) {
+  // La pestaña que se llama como su entrada no se repite («Tu asistente › Agentes»).
+  if (tab && tab.label !== item.label) {
     const enPortada = !enDetalle && tab.href === item.href;
     migas.push(enPortada ? { label: item.label } : { label: item.label, href: item.href });
   }
@@ -139,7 +140,7 @@ export function pestanasPara(
   return {
     subgrupos,
     subgrupoActual: subgrupos.length ? (hermanas[0]?.href ?? null) : null,
-    pestanas: hermanas.length > 1 ? hermanas.map((tab) => ({ href: tab.href, label: tab.label })) : [],
+    pestanas: hermanas.length > 1 ? hermanas.map((tab) => ({ href: tab.href, label: tab.pestana ?? tab.label })) : [],
     ocultas: activo.item.tabs.filter((tab) => tab.oculta).map((tab) => tab.href),
   };
 }

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 import { ColumnInfo } from "@/components/ui/column-info";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -30,6 +32,9 @@ const CELDA = {
  * Estados (HU-DS-03): `loading` dibuja filas esqueleto con la forma de la tabla, `error`
  * explica qué pasó (con `errorAction` para reintentar) y sin filas va el estado vacío.
  * Con `maxHeight` la tabla hace scroll propio y el encabezado queda fijo.
+ *
+ * Con `getRowHref` la fila entera abre su detalle: un solo enlace por fila (el chevron del
+ * final, que nombra `getRowLabel`) se extiende sobre ella, así no hace falta un botón «Ver».
  */
 export function DataTable<T>({
   columns,
@@ -46,11 +51,16 @@ export function DataTable<T>({
   maxHeight,
   caption,
   serverPaginated = false,
+  getRowHref,
+  getRowLabel,
   className,
 }: {
   columns: Column<T>[];
   rows: T[];
   getRowKey: (row: T, index: number) => string;
+  getRowHref?: (row: T) => string;
+  /** Nombre accesible del enlace de la fila («Abrir el chat de Ana»). */
+  getRowLabel?: (row: T) => string;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
@@ -106,6 +116,11 @@ export function DataTable<T>({
                 {column.info && <ColumnInfo text={column.info} />}
               </TableHead>
             ))}
+            {getRowHref && (
+              <TableHead className="w-10">
+                <span className="sr-only">Abrir</span>
+              </TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -117,10 +132,11 @@ export function DataTable<T>({
                       <Skeleton className={cn("h-3", column.align === "right" ? "ml-auto w-16" : "w-3/4")} />
                     </TableCell>
                   ))}
+                  {getRowHref && <TableCell className={celda} />}
                 </TableRow>
               ))
             : rows.map((row, index) => (
-                <TableRow key={getRowKey(row, index)}>
+                <TableRow key={getRowKey(row, index)} className={cn(getRowHref && "relative")}>
                   {columns.map((column) => (
                     <TableCell
                       key={column.key}
@@ -134,6 +150,17 @@ export function DataTable<T>({
                       {column.cell(row)}
                     </TableCell>
                   ))}
+                  {getRowHref && (
+                    <TableCell className={cn(celda, "w-10 text-right")}>
+                      <Link
+                        href={getRowHref(row)}
+                        aria-label={getRowLabel?.(row) ?? "Abrir"}
+                        className="inline-flex text-text-soft outline-none after:absolute after:inset-0 after:content-[''] hover:text-headline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
+                      >
+                        <ChevronRight aria-hidden className="h-4 w-4" />
+                      </Link>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
         </TableBody>

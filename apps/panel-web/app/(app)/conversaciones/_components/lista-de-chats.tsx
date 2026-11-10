@@ -7,10 +7,11 @@ import { ChannelIcon } from "@/components/domain/channel-icon";
 import { CONVERSATION_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Contador } from "@/components/ui/contador";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ConversationSummary } from "@/lib/api/types";
 import { nombreDelChat } from "@/lib/conversaciones/nombre";
-import { contadorPendientes, formatHoraChat, textoPendientes } from "@/lib/format";
+import { formatHoraChat, textoPendientes } from "@/lib/format";
 import { CANAL, canalLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,7 @@ export function ListaDeChats({
     return (
       <EmptyState
         title="Sin conversaciones"
+        titleClassName="font-display text-sh-block"
         description="Aparecerán aquí en cuanto un cliente escriba. Revisa los filtros si esperabas ver alguna."
       />
     );
@@ -103,10 +105,10 @@ export function ListaDeChats({
                 {activo && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-focus"
+                    className="absolute inset-y-0 left-0 w-[3px] bg-focus"
                   />
                 )}
-                <Avatar name={nombre} size="md" />
+                {chat.customer_name ? <Avatar name={nombre} size="md" /> : <ChannelIcon id={tipoDelChat(chat)} size="avatar" />}
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="flex items-baseline gap-2">
                     <span
@@ -120,7 +122,7 @@ export function ListaDeChats({
                     <span
                       className={cn(
                         "ml-auto shrink-0 text-xs tabular-nums",
-                        nuevo ? "font-medium text-headline" : "text-text-soft",
+                        nuevo ? "font-medium text-headline" : activo ? "text-body" : "text-text-soft",
                       )}
                       suppressHydrationWarning
                     >
@@ -143,21 +145,12 @@ export function ListaDeChats({
                         <span className="italic text-text-soft">Sin mensajes</span>
                       )}
                     </span>
-                    {nuevo && (
-                      <>
-                        <span
-                          aria-hidden
-                          className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cta px-1.5 text-[11px] font-semibold leading-none tabular-nums text-white"
-                        >
-                          {contadorPendientes(pendientes)}
-                        </span>
-                        <span className="sr-only">{textoPendientes(pendientes)}</span>
-                      </>
-                    )}
+                    {nuevo && <Contador valor={pendientes} etiqueta={textoPendientes(pendientes)} />}
                   </span>
                   <span className="flex items-center gap-2">
-                    <ChannelIcon id={tipoDelChat(chat)} size="sm" />
-                    <span className="truncate text-xs text-text-soft">{conexionDelChat(chat)}</span>
+                    <span className={cn("truncate text-xs", activo ? "text-body" : "text-text-soft")}>
+                      {conexionDelChat(chat)}
+                    </span>
                     <span className="ml-auto shrink-0">
                       <StatusBadge value={chat.status} map={CONVERSATION_STATUS} />
                     </span>

@@ -102,7 +102,7 @@ export function TituloDePaginaProvider({ children }: { children: ReactNode }) {
 }
 
 /** El `h1` de la página: se registra en el contexto para que la topbar pueda repetirlo. */
-export function TituloDePagina({ title }: { title: string }) {
+export function TituloDePagina({ title, compacto = false }: { title: string; compacto?: boolean }) {
   const contexto = useContext(TituloDePaginaContext);
   const registrar = contexto?.registrar;
   const ref = useRef<HTMLHeadingElement>(null);
@@ -114,7 +114,7 @@ export function TituloDePagina({ title }: { title: string }) {
   }, [registrar, title]);
 
   return (
-    <h1 ref={ref} className="font-display text-sh-h1 tracking-tight text-headline">
+    <h1 ref={ref} className={cn("font-display text-sh-h1 tracking-tight text-headline", compacto && "max-md:text-sh-block")}>
       {title}
     </h1>
   );

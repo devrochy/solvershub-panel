@@ -266,7 +266,7 @@ export function Sidebar({
                   type="button"
                   aria-expanded={open}
                   onClick={() => toggle(group.id)}
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium tracking-[0.06em] text-text-soft uppercase transition-colors hover:text-headline"
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sh-caption font-medium tracking-[0.06em] text-text-soft uppercase transition-colors hover:text-headline"
                 >
                   <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} aria-hidden />
                   <span className="flex-1 text-left">{group.label}</span>

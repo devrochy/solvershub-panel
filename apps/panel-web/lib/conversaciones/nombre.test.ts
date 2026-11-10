@@ -8,7 +8,7 @@ describe("nombreDelChat", () => {
   });
 
   it("sin nombre, usa el identificador", () => {
-    expect(nombreDelChat({ customer_name: null, external_id: "573001112233" })).toBe("573001112233");
+    expect(nombreDelChat({ customer_name: null, external_id: "573001112233" })).toBe("+57 300 111 2233");
   });
 
   it("un visitante del chat web se lee corto y estable", () => {

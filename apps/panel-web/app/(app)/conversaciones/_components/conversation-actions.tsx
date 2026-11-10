@@ -5,7 +5,7 @@ import {
   Bot,
   FileText,
   Hand,
-  Loader2,
+  Info,
   MoreVertical,
   NotebookPen,
   Send,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Contador } from "@/components/ui/contador";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -28,6 +29,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { ConversationDetail } from "@/lib/api/types";
+import { formatNumber, formatUsd } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 import { cn } from "@/lib/utils";
 
@@ -43,52 +45,33 @@ async function accion(conversationId: string, action: string, body?: Record<stri
   return { ok: res.ok, error: json.error, status: res.status, code: json.code };
 }
 
-/**
- * Acciones de la conversación en la cabecera (HIG: barra de acciones con iconos y
- * *overflow* para lo secundario): tomar/devolver, interruptor del agente, notas y menú.
- * Cada botón refleja el estado real del chat: «Resolver» solo aparece si está escalada.
- */
-export function AccionesDeCabecera({
-  conversationId,
-  botPaused,
-  status,
-  escalation,
-  hrefFicha,
-  notas,
-  onAbrirNotas,
-}: {
-  conversationId: string;
-  botPaused: boolean;
-  status: string;
-  escalation: ConversationDetail["escalation"];
-  /** Ficha del cliente dentro de Conversaciones (conserva el chat y los filtros). */
-  hrefFicha?: string;
-  notas: number;
-  onAbrirNotas: () => void;
-}) {
+/** La acción principal de una escalación pendiente: va en el pie, donde después se responde. */
+export function TomarConversacion({ conversationId }: { conversationId: string }) {
+  const actuar = useAction();
+  return (
+    <Button
+      type="button"
+      variant="accent"
+      size="lg"
+      className="w-full sm:h-10 sm:w-auto sm:px-4"
+      loading={actuar.pending}
+      onClick={() =>
+        void actuar.run(async () => ({
+          ...(await accion(conversationId, "take")),
+          success: "Tomaste la conversación. El agente queda en pausa en este chat.",
+        }))
+      }
+    >
+      {!actuar.pending && <Hand aria-hidden className="h-4 w-4" />}
+      Tomar conversación
+    </Button>
+  );
+}
+
+/** Con la conversación tomada, devolverla va en el aviso de la escalación. */
+export function DevolverAlAgente({ conversationId }: { conversationId: string }) {
   const confirm = useConfirm();
   const actuar = useAction();
-  const [pausado, setPausado] = useState(botPaused);
-  // Tomar o devolver cambia la pausa desde el servidor: se sigue a la prop.
-  const [pausaDelServidor, setPausaDelServidor] = useState(botPaused);
-  if (pausaDelServidor !== botPaused) {
-    setPausaDelServidor(botPaused);
-    setPausado(botPaused);
-  }
-  const [plantillas, setPlantillas] = useState(false);
-
-  const pendiente = escalation?.status === "pendiente";
-  const asignada = escalation?.status === "asignada";
-  const puedeResponder =
-    status !== "closed" && (asignada || (pausado && escalation == null));
-  const hayMenu = puedeResponder || Boolean(hrefFicha) || status === "escalated";
-
-  async function tomar() {
-    await actuar.run(async () => ({
-      ...(await accion(conversationId, "take")),
-      success: "Tomaste la conversación. El agente queda en pausa en este chat.",
-    }));
-  }
 
   async function devolver() {
     const aceptado = await confirm({
@@ -103,6 +86,56 @@ export function AccionesDeCabecera({
       success: "El agente vuelve a atender esta conversación.",
     }));
   }
+
+  return (
+    <Button type="button" variant="outline" className="shrink-0" loading={actuar.pending} onClick={() => void devolver()}>
+      Devolver al agente
+    </Button>
+  );
+}
+
+/**
+ * Acciones de la conversación en la cabecera (HIG: barra de acciones con iconos y
+ * *overflow* para lo secundario): interruptor del agente, notas y menú.
+ * Cada acción refleja el estado real del chat: «Resolver» solo aparece si está escalada.
+ */
+export function AccionesDeCabecera({
+  conversationId,
+  botPaused,
+  status,
+  escalation,
+  hrefFicha,
+  notas,
+  onAbrirNotas,
+  externalId,
+  uso,
+}: {
+  conversationId: string;
+  botPaused: boolean;
+  status: string;
+  escalation: ConversationDetail["escalation"];
+  /** Ficha del cliente dentro de Conversaciones (conserva el chat y los filtros). */
+  hrefFicha?: string;
+  notas: number;
+  onAbrirNotas: () => void;
+  externalId?: string | null;
+  uso: { cost_usd: number; input_tokens: number; output_tokens: number };
+}) {
+  const confirm = useConfirm();
+  const actuar = useAction();
+  const [pausado, setPausado] = useState(botPaused);
+  // Tomar o devolver cambia la pausa desde el servidor: se sigue a la prop.
+  const [pausaDelServidor, setPausaDelServidor] = useState(botPaused);
+  if (pausaDelServidor !== botPaused) {
+    setPausaDelServidor(botPaused);
+    setPausado(botPaused);
+  }
+  const [plantillas, setPlantillas] = useState(false);
+  const [detalles, setDetalles] = useState(false);
+
+  const asignada = escalation?.status === "asignada";
+  const puedeResponder =
+    status !== "closed" && (asignada || (pausado && escalation == null));
 
   async function alternarAgente() {
     const antes = pausado;
@@ -125,38 +158,6 @@ export function AccionesDeCabecera({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1.5">
-      {pendiente && (
-        <Tooltip label="Tomar la conversación" focusable={false}>
-          <Button
-            type="button"
-            variant="accent"
-            size="icon"
-            className="h-10 w-10 rounded-full"
-            onClick={() => void tomar()}
-            disabled={actuar.pending}
-            aria-label="Tomar la conversación"
-          >
-            <Hand aria-hidden className="h-4 w-4" />
-          </Button>
-        </Tooltip>
-      )}
-
-      {asignada && (
-        <Tooltip label="Devolver al agente" focusable={false}>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-full"
-            onClick={() => void devolver()}
-            disabled={actuar.pending}
-            aria-label="Devolver al agente"
-          >
-            <Bot aria-hidden className="h-4 w-4" />
-          </Button>
-        </Tooltip>
-      )}
-
       {escalation == null && status !== "closed" && (
         <Tooltip label={pausado ? "Reanudar el agente" : "Pausar el agente"} focusable={false}>
           <span className="flex h-10 items-center gap-2 rounded-full border border-border-soft bg-surface px-2.5">
@@ -185,53 +186,60 @@ export function AccionesDeCabecera({
           aria-label={`Notas internas${notas ? ` (${notas})` : ""}`}
         >
           <NotebookPen aria-hidden className="h-4 w-4" />
-          {notas > 0 && (
-            <span
-              aria-hidden
-              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-cta px-1 text-[10px] font-semibold tabular-nums text-white"
-            >
-              {notas}
-            </span>
-          )}
+          {notas > 0 && <Contador valor={notas} tamano="sm" className="absolute -right-0.5 -top-0.5" />}
         </Button>
       </Tooltip>
 
-      {hayMenu && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full"
-              aria-label="Más acciones de la conversación"
-            >
-              <MoreVertical aria-hidden className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {puedeResponder && (
-              <DropdownMenuItem icon={<FileText />} onSelect={() => setPlantillas(true)}>
-                Enviar plantilla
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            aria-label="Más acciones de la conversación"
+          >
+            <MoreVertical aria-hidden className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {puedeResponder && (
+            <DropdownMenuItem icon={<FileText />} onSelect={() => setPlantillas(true)}>
+              Enviar plantilla
+            </DropdownMenuItem>
+          )}
+          {hrefFicha && (
+            <DropdownMenuLinkItem href={hrefFicha}>
+              <UserRound aria-hidden className="h-4 w-4" />
+              Ver ficha del cliente
+            </DropdownMenuLinkItem>
+          )}
+          <DropdownMenuItem icon={<Info />} onSelect={() => setDetalles(true)}>
+            Detalles de la conversación
+          </DropdownMenuItem>
+          {status === "escalated" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem icon={<ShieldCheck />} tone="danger" onSelect={() => void resolver()}>
+                Resolver conversación
               </DropdownMenuItem>
-            )}
-            {hrefFicha && (
-              <DropdownMenuLinkItem href={hrefFicha}>
-                <UserRound aria-hidden className="h-4 w-4" />
-                Ver ficha del cliente
-              </DropdownMenuLinkItem>
-            )}
-            {status === "escalated" && (
-              <>
-                {(puedeResponder || hrefFicha) && <DropdownMenuSeparator />}
-                <DropdownMenuItem icon={<ShieldCheck />} tone="danger" onSelect={() => void resolver()}>
-                  Resolver conversación
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={detalles} onOpenChange={setDetalles}>
+        <DialogContent title="Detalles de la conversación" className="max-w-md">
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 text-sm">
+            <dt className="text-text-soft">Identificador externo</dt>
+            <dd className="break-all text-headline">{externalId ?? "—"}</dd>
+            <dt className="text-text-soft">Costo</dt>
+            <dd className="tabular-nums text-headline">{formatUsd(uso.cost_usd)}</dd>
+            <dt className="text-text-soft">Tokens</dt>
+            <dd className="tabular-nums text-headline">{formatNumber(uso.input_tokens + uso.output_tokens)} tokens</dd>
+          </dl>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={plantillas} onOpenChange={setPlantillas}>
         <DialogContent
@@ -279,7 +287,7 @@ export function ComposerDeRespuesta({ conversationId }: { conversationId: string
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="group/composer flex flex-col gap-1.5">
       {ventanaVencida && (
         <TemplatePicker conversationId={conversationId} onSent={() => setVentanaVencida(false)} />
       )}
@@ -309,17 +317,16 @@ export function ComposerDeRespuesta({ conversationId }: { conversationId: string
           size="icon"
           className="h-11 w-11 shrink-0 rounded-full"
           onClick={mandar}
-          disabled={!contenido.trim() || enviando}
+          disabled={!contenido.trim()}
+          loading={enviando}
           aria-label="Enviar mensaje"
         >
-          {enviando ? (
-            <Loader2 aria-hidden className="h-5 w-5 animate-spin" />
-          ) : (
-            <Send aria-hidden className="h-5 w-5" />
-          )}
+          {!enviando && <Send aria-hidden className="h-5 w-5" />}
         </Button>
       </div>
-      <p className="px-1 text-xs text-text-soft">Enter envía · Shift + Enter hace un salto de línea.</p>
+      <p className="hidden px-1 text-xs text-text-soft group-focus-within/composer:block">
+        Enter envía · Shift + Enter hace un salto de línea.
+      </p>
     </div>
   );
 }

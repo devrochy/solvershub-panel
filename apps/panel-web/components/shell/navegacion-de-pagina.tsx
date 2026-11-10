@@ -31,9 +31,10 @@ function actualDe(pathname: string, items: { href: string }[]): string {
 
 /**
  * Pestañas de la entrada del menú (HU-UX-02). Con subgrupos (Cobranza) van dos filas: los
- * subgrupos y las pestañas del subgrupo actual.
+ * subgrupos y las pestañas del subgrupo actual. `compactas` va en la franja de una cabecera
+ * compacta, que ya trae su propia línea inferior.
  */
-export function PestanasDeShell() {
+export function PestanasDeShell({ compactas = false }: { compactas?: boolean }) {
   const pathname = usePathname();
   const shell = useShell();
   if (!shell) return null;
@@ -45,7 +46,15 @@ export function PestanasDeShell() {
   return (
     <div className="flex flex-col gap-2">
       {subgrupos.length > 0 && <TabLinks label="Grupos de la sección" items={subgrupos} current={subgrupoActual ?? ""} />}
-      {pestanas.length > 0 && <TabLinks label="Secciones" items={pestanas} current={actual} />}
+      {pestanas.length > 0 && (
+        <TabLinks
+          label="Secciones"
+          items={pestanas}
+          current={actual}
+          size={compactas ? "compact" : "default"}
+          className={compactas ? "overflow-y-hidden border-b-0" : undefined}
+        />
+      )}
     </div>
   );
 }

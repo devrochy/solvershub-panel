@@ -37,6 +37,9 @@ import { KpiTile } from "@/components/ui/kpi-tile";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { SearchInput } from "@/components/ui/search-input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Contador } from "@/components/ui/contador";
+import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
@@ -147,6 +150,7 @@ const NOTIFICACIONES_DE_MUESTRA: NotificacionItem[] = [
 export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
+  const [segmento, setSegmento] = useState("");
   const [vende, setVende] = useState("productos");
   const [horario, setHorario] = useState<HorarioElegido | null>(HORARIO_INICIAL);
   const [tipoNegocio, setTipoNegocio] = useState("ventas");
@@ -442,6 +446,14 @@ export function Catalogo() {
 
       <Seccion titulo="Tabla" nota="Densidad compacta, encabezado fijo con scroll propio, carga, vacío y error.">
         <DataTable columns={COLUMNAS} rows={FILAS} getRowKey={(f) => f.id} density="compact" maxHeight="max-h-40" caption="Clientes de prueba" />
+        <DataTable
+          columns={COLUMNAS}
+          rows={FILAS}
+          getRowKey={(f) => f.id}
+          getRowHref={() => "#"}
+          getRowLabel={(f) => `Abrir el detalle de ${f.id}`}
+          caption="Filas que abren su detalle"
+        />
         <DataTable columns={COLUMNAS} rows={[]} getRowKey={(f) => f.id} loading loadingRows={2} />
         <DataTable
           columns={COLUMNAS}
@@ -467,6 +479,41 @@ export function Catalogo() {
           action={<Button size="sm">Conectar WhatsApp</Button>}
         />
         <Skeleton lines={3} />
+      </Seccion>
+
+      <Seccion titulo="Errores" nota="Qué pasó, cómo seguir y una acción; el error técnico va plegado.">
+        <EstadoDeError
+          forma="en-linea"
+          titulo="No pudimos cargar las conversaciones"
+          descripcion="Revisa tu conexión y vuelve a intentarlo."
+          accion={<Button size="sm">Reintentar</Button>}
+        />
+        <EstadoDeError
+          titulo="No pudimos cargar las conversaciones"
+          descripcion="Revisa tu conexión y vuelve a intentarlo. Si sigue pasando, avísanos."
+          detalle="502 · upstream timeout"
+          accion={<Button>Reintentar</Button>}
+        />
+      </Seccion>
+
+      <Seccion titulo="Control segmentado y contador" nota="De 2 a 5 opciones excluyentes; 36 px con mouse y 48 px con puntero táctil. El contador pasa a 99+ desde 100.">
+        <SegmentedControl
+          label="Ejemplo: estado"
+          value={segmento}
+          onChange={setSegmento}
+          options={[
+            { value: "", label: "Todas" },
+            { value: "open", label: "Abiertas" },
+            { value: "escalated", label: "Escaladas" },
+            { value: "closed", label: "Cerradas" },
+          ]}
+        />
+        <div className="flex items-center gap-4">
+          <Contador valor={2} etiqueta="2 mensajes sin leer" />
+          <Contador valor={120} etiqueta="Más de 99 mensajes sin leer" />
+          <Contador valor={1} tamano="sm" etiqueta="1 nota" />
+          <Contador valor={3} tono="alerta" etiqueta="3 avisos" />
+        </div>
       </Seccion>
 
       <Seccion
