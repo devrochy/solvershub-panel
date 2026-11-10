@@ -132,34 +132,37 @@ const pestanas = () =>
     .map((l) => l.textContent);
 
 describe("cabecera y pestañas de la ficha por tipo", () => {
-  it("WhatsApp oficial: migas, tipo · detalle, Pausar, pestañas de la cuenta y aviso de varios números; accesible", async () => {
+  it("WhatsApp oficial: migas, tipo · detalle con sus números, un estado, Pausar y las pestañas con Avanzado; accesible", async () => {
     preparar();
     ruta = `/conexiones/${WA}/salud`;
     const { container } = await ficha(WA);
     expect(screen.getByRole("heading", { level: 1, name: "WhatsApp ventas" })).toBeTruthy();
-    expect(screen.getByText("WhatsApp oficial · +57 300 000 0001")).toBeTruthy();
+    expect(screen.getByText("WhatsApp oficial · +57 300 000 0001 · Cuenta de Meta con 2 números")).toBeTruthy();
+    expect(screen.getByText("Funciona")).toBeTruthy();
     const migas = within(screen.getByRole("navigation", { name: "Migas de pan" }));
     expect(migas.getAllByRole("link", { name: "Conexiones" })[0].getAttribute("href")).toBe("/conexiones");
     expect(screen.getByRole("button", { name: /Pausar/ })).toBeTruthy();
-    expect(pestanas()).toEqual(["Salud", "Números", "Plantillas", "Webhook", "Producción", "Costos", "Agentes", "Versiones"]);
+    expect(pestanas()).toEqual(["Salud", "Agentes", "Números", "Plantillas", "Costos"]);
+    expect(screen.getByRole("button", { name: "Avanzado" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Salud" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("note").textContent).toMatch(/Esta cuenta de Meta tiene 2 números/);
+    expect(screen.getByRole("button", { name: /Más acciones de WhatsApp ventas/ })).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("una subruta deja activa su pestaña (Credenciales de la cuenta → Webhook)", async () => {
+  it("una subruta deja activa su pestaña, también dentro de Avanzado (Datos de la cuenta → Webhook)", async () => {
     preparar();
     ruta = `/conexiones/${WA}/webhook/credenciales`;
     await ficha(WA);
-    expect(screen.getByRole("link", { name: "Webhook" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: "Avanzado: Webhook" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("WhatsApp Web: Vinculación, Estado, Agentes y Versiones, sin aviso de cuenta", async () => {
+  it("WhatsApp con QR: Estado, Agentes y Versiones, sin Avanzado ni cuenta de Meta", async () => {
     preparar();
-    ruta = `/conexiones/${QR}/vinculacion`;
+    ruta = `/conexiones/${QR}/estado`;
     await ficha(QR);
-    expect(pestanas()).toEqual(["Vinculación", "Estado", "Agentes", "Versiones"]);
-    expect(screen.queryByRole("note")).toBeNull();
+    expect(pestanas()).toEqual(["Estado", "Agentes", "Versiones"]);
+    expect(screen.queryByRole("button", { name: /Avanzado/ })).toBeNull();
+    expect(screen.queryByText(/Cuenta de Meta con/)).toBeNull();
   });
 
   it("Google Calendar: Cuenta y Agenda, sin Agentes ni Pausar", async () => {
@@ -203,15 +206,16 @@ describe("pestaña Agentes", () => {
     return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
   }
 
-  it("tabla con enlace a la ficha del agente, rol, prioridad, principal, versión y estado; accesible", async () => {
+  it("tabla con enlace a la ficha del agente, rol, un estado, prioridad y versión; acciones en un menú; accesible", async () => {
     const { container } = await abrir();
     const tabla = screen.getByRole("table");
     expect(within(tabla).getByRole("link", { name: "Ventas" }).getAttribute("href")).toBe(`/agentes/${AG_VENTAS}`);
     expect(within(tabla).getByRole("link", { name: "General" }).getAttribute("href")).toBe(`/agentes/${AG_COORD}`);
     expect(within(tabla).getByText("Coordinador")).toBeTruthy();
-    expect(within(tabla).getByText("★ Principal")).toBeTruthy();
+    expect(within(tabla).getByText("Principal")).toBeTruthy();
     expect(within(tabla).getByText("v3 (hay v4)")).toBeTruthy();
-    expect(within(tabla).getByText("Lo gestiona el sistema")).toBeTruthy();
+    // Ni el Coordinador ni el principal llevan menú: no se quitan ni se deshabilitan.
+    expect(within(tabla).queryByRole("button", { name: /Más acciones/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Asignar agente" }).hasAttribute("disabled")).toBe(false);
     expect(screen.getByText(/aplican con la próxima versión/)).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
@@ -219,7 +223,7 @@ describe("pestaña Agentes", () => {
 
   it("sin el Agent OS: aviso y sin acciones", async () => {
     await abrir({ "/admin/connections/console": { ...CONSOLA, runtime: "legacy" } });
-    expect(screen.getByText(/se activan con el Agent OS/)).toBeTruthy();
+    expect(screen.getByText(/el equipo de SolversHub cambia los agentes/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Asignar agente" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Quitar" })).toBeNull();
   });
@@ -235,7 +239,7 @@ describe("pestaña Agentes", () => {
 });
 
 describe("lista de conexiones", () => {
-  it("una fila clicable por conexión, salud solo en las Meta y ★ en el principal; accesible", async () => {
+  it("una fila clicable por conexión con un solo estado (la salud solo en las Meta) y quién atiende; accesible", async () => {
     const { ConsolaConexiones } = await import("@/app/(app)/conexiones/_components/consola-conexiones");
     const { container } = render(
       <FeedbackProviders>
@@ -245,15 +249,16 @@ describe("lista de conexiones", () => {
     const filas = within(screen.getByRole("list", { name: "Conexiones del negocio" })).getAllByRole("listitem");
     expect(filas).toHaveLength(ITEMS.length);
     expect(within(filas[0]).getByRole("link", { name: "WhatsApp ventas" }).getAttribute("href")).toBe(`/conexiones/${WA}`);
-    expect(within(filas[0]).getByText(/Ventas ★/)).toBeTruthy();
-    expect(within(filas[1]).getByText("Degradada")).toBeTruthy();
+    expect(within(filas[0]).getByText(/^Funciona · /)).toBeTruthy();
+    expect(within(filas[1]).getByText(/^Con avisos/)).toBeTruthy();
     // La salud de Google (error) no se muestra: no es una conexión de Meta.
-    expect(within(filas[4]).queryByText("Con error")).toBeNull();
-    expect(within(filas[4]).getByText("Integración del negocio")).toBeTruthy();
-    expect(within(filas[2]).getByText("WhatsApp Web (QR)")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "WhatsApp Web" })).toBeNull();
-    expect(screen.getByText("https://api.test/webhook/abc")).toBeTruthy();
-    expect(screen.getByText("Enrutamiento")).toBeTruthy();
+    expect(within(filas[4]).getByText("Funciona · Integración")).toBeTruthy();
+    // Arriba, lo que pide atención: solo la de Meta con avisos.
+    expect(screen.getByRole("link", { name: /WhatsApp soporte tiene un aviso de Meta/ }).getAttribute("href")).toBe(`/conexiones/${WA2}`);
+    expect(screen.queryByText(/no está funcionando/)).toBeNull();
+    // Los datos técnicos del negocio solo los ve la plataforma.
+    expect(screen.queryByText("https://api.test/webhook/abc")).toBeNull();
+    expect(screen.queryByText("Enrutamiento")).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 });
@@ -267,7 +272,7 @@ describe("redirecciones", () => {
         searchParams: Promise.resolve(query),
       });
     expect(await abrir(WA)).toBe(`/conexiones/${WA}/salud`);
-    expect(await abrir(QR)).toBe(`/conexiones/${QR}/vinculacion`);
+    expect(await abrir(QR)).toBe(`/conexiones/${QR}/estado`);
     expect(await abrir(WEB)).toBe(`/conexiones/${WEB}/apariencia`);
     expect(await abrir(GOOGLE, { google: "ok" })).toBe(`/conexiones/${GOOGLE}/cuenta?google=ok`);
   });
@@ -305,7 +310,7 @@ describe("redirecciones", () => {
   it("WhatsApp Web y chat web: a la ficha si la conexión existe; si no, el alta", async () => {
     preparar();
     expect(await destino(import("@/app/(app)/conexiones/waweb/page"), { params: Promise.resolve({}) })).toBe(
-      `/conexiones/${QR}/vinculacion`,
+      `/conexiones/${QR}/estado`,
     );
     expect(await destino(import("@/app/(app)/conexiones/chat-web/page"), { params: Promise.resolve({}) })).toBe(
       `/conexiones/${WEB}/apariencia`,
@@ -316,7 +321,7 @@ describe("redirecciones", () => {
     });
     const arbol = await pagina(import("@/app/(app)/conexiones/waweb/page"), { params: Promise.resolve({}) });
     render(<FeedbackProviders>{arbol}</FeedbackProviders>);
-    expect(screen.getByRole("heading", { level: 1, name: "Conectar WhatsApp Web" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Conectar WhatsApp con QR" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Acepto el riesgo" })).toBeTruthy();
   });
 });

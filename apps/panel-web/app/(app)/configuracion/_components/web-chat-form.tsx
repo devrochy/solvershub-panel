@@ -3,9 +3,10 @@
 import { useMemo, useState, type FormEvent } from "react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
-import { Badge } from "@/components/ui/badge";
+import { BotonCopiar } from "@/components/domain/boton-copiar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { InputPassword } from "@/components/ui/input-password";
 import { Switch } from "@/components/ui/switch";
@@ -36,7 +37,6 @@ export function WebChatForm({
   const [turnstile, setTurnstile] = useState("");
   const [rotateKey, setRotateKey] = useState(false);
   const [snippet, setSnippet] = useState(webChat.snippet);
-  const [copied, setCopied] = useState(false);
   const { run, pending } = useAction();
   useAvisarCambios(
     "chat-web",
@@ -71,16 +71,6 @@ export function WebChatForm({
     });
   }
 
-  async function copySnippet() {
-    try {
-      await navigator.clipboard.writeText(snippet);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
-  }
-
   return (
     <Card>
       <CardContent className="pt-5">
@@ -88,18 +78,16 @@ export function WebChatForm({
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[13px] font-medium text-body">Chat web embebible</p>
-              <p className="text-xs text-text-soft">
-                Pega un fragmento en tu sitio y tus visitantes hablan con el mismo agente.
-              </p>
+              <p className="text-sm font-medium text-headline">Mostrar el chat en mi sitio</p>
+              <p className="text-xs text-text-soft">Tus visitantes hablan con el mismo agente que atiende tus otros canales.</p>
             </div>
-            <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Activar chat web" />
+            <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Mostrar el chat en mi sitio" />
           </div>
 
           <Field
-            label="Dominios permitidos"
+            label="Sitios donde aparece"
             htmlFor="allowed_origins"
-            help={ayudaDelCatalogo(indice, "web_chat_allowed_origins", "Uno por línea, con esquema (https://tunegocio.com). Solo estos dominios pueden incrustar el chat.")}
+            help={ayudaDelCatalogo(indice, "web_chat_allowed_origins", "Uno por línea, con https:// adelante. El chat solo aparece en estos sitios.")}
           >
             <Textarea
               id="allowed_origins"
@@ -110,52 +98,52 @@ export function WebChatForm({
             />
           </Field>
 
-          <Field
-            label="Secreto de Turnstile (opcional)"
-            htmlFor="turnstile_secret"
-            help="Deja vacío para no cambiarlo. Si lo defines, el widget exige el anti-bots de Cloudflare."
-          >
-            <InputPassword
-              etiqueta="secreto"
-              id="turnstile_secret"
-              value={turnstile}
-              onChange={(e) => setTurnstile(e.target.value)}
-              autoComplete="off"
-            />
-          </Field>
-
-          {webChat.turnstile_configured ? (
-            <p className="-mt-2 text-xs text-text-soft">
-              <Badge variant="neutral">Turnstile configurado</Badge>
-            </p>
-          ) : null}
-
-          <label className="flex items-center gap-2 text-xs text-text-soft">
-            <input
-              type="checkbox"
-              checked={rotateKey}
-              onChange={(e) => setRotateKey(e.target.checked)}
-            />
-            Rotar la clave pública (el fragmento actual deja de funcionar)
-          </label>
+          <details className="group rounded-md border border-border-soft px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium text-headline">Opciones avanzadas</summary>
+            <div className="mt-4 flex flex-col gap-4">
+              <Field
+                label="Protección contra bots (Turnstile de Cloudflare)"
+                htmlFor="turnstile_secret"
+                help={
+                  webChat.turnstile_configured
+                    ? "Ya está configurada. Escribe una clave nueva solo si quieres cambiarla."
+                    : "Opcional. Con la clave secreta, el chat pide la verificación anti-bots de Cloudflare."
+                }
+              >
+                <InputPassword
+                  etiqueta="clave secreta"
+                  id="turnstile_secret"
+                  value={turnstile}
+                  onChange={(e) => setTurnstile(e.target.value)}
+                  autoComplete="off"
+                />
+              </Field>
+              <Checkbox
+                id="rotar-clave-chat-web"
+                label="Cambiar la clave del chat (el fragmento que ya pegaste deja de funcionar)"
+                checked={rotateKey}
+                onCheckedChange={setRotateKey}
+              />
+            </div>
+          </details>
           </ControlesEditables>
 
           {conFragmento && snippet ? (
             <div className="flex flex-col gap-2">
-              <p className="text-[13px] font-medium text-body">Fragmento para tu sitio</p>
-              <Textarea readOnly rows={2} value={snippet} className="font-mono text-xs" />
-              <div>
-                <Button type="button" variant="outline" onClick={copySnippet}>
-                  {copied ? "Copiado" : "Copiar fragmento"}
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-headline">Fragmento para tu sitio</p>
+                <BotonCopiar texto={snippet} etiqueta="Copiar fragmento" />
               </div>
+              <pre className="overflow-x-auto rounded-md bg-bg-deep px-3 py-3 font-mono text-xs text-body">
+                <code>{snippet}</code>
+              </pre>
             </div>
           ) : null}
 
           {puedeEditar ? (
             <div>
-              <Button type="submit" variant="accent" disabled={pending}>
-                {pending ? "Guardando…" : "Guardar chat web"}
+              <Button type="submit" variant="accent" loading={pending}>
+                Guardar
               </Button>
             </div>
           ) : (

@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export default async function GestoresPage() {
   if (!collectorsRes.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar los gestores" detalle={collectorsRes.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar los gestores" detalle={collectorsRes.error} />
       </ListPage>
     );
   }
@@ -60,7 +60,7 @@ export default async function GestoresPage() {
 
   return (
     <ListPage header={header}>
-      <TablaCobranza
+      <TablaResponsiva
         etiqueta="Gestores"
         columns={columns}
         rows={collectorsRes.data}

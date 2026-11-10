@@ -57,7 +57,7 @@ describe("salud de Meta (HU-CONN-04)", () => {
   });
 
   it("nombra los checks en castellano, también con varios números", () => {
-    expect(nombreDelCheck("token_valid")).toBe("Token de acceso");
+    expect(nombreDelCheck("token_valid")).toBe("Permiso de acceso a Meta");
     expect(nombreDelCheck("number_registered:123")).toBe("Número registrado (123)");
     expect(nombreDelCheck("algo_nuevo")).toBe("algo_nuevo");
   });

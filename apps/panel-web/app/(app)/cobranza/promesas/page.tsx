@@ -1,5 +1,5 @@
 import { PromiseStatus } from "@/app/(app)/cobranza/promesas/_components/promise-status";
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { SeccionPlegada } from "@/components/domain/cobranza/seccion-plegada";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
@@ -52,7 +52,7 @@ export default async function PromisesPage({
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar las promesas" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar las promesas" detalle={res.error} />
       </ListPage>
     );
   }

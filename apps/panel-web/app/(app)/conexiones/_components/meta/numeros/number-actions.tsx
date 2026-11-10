@@ -3,25 +3,68 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { BadgeCheck, KeyRound } from "lucide-react";
+
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
-/** Verificación de un número: enviar código (SMS/llamada) y confirmarlo. */
-export function NumberActions({
+import { RegisterNumberDialog } from "./register-number-dialog";
+
+/** Menú de un número: verificarlo con el código de Meta y, si falta, registrarlo. */
+export function MenuNumero({
   connectionId,
   phoneNumberId,
   label,
+  registrado,
 }: {
   connectionId: string;
   phoneNumberId: string;
   label: string;
+  registrado: boolean;
+}) {
+  const [verificar, setVerificar] = useState(false);
+  const [registrar, setRegistrar] = useState(false);
+  return (
+    <>
+      <MenuDeFila etiqueta={`Más acciones de ${label}`}>
+        <DropdownMenuItem icon={<BadgeCheck />} onSelect={() => setVerificar(true)}>
+          Verificar con código
+        </DropdownMenuItem>
+        {!registrado && (
+          <DropdownMenuItem icon={<KeyRound />} onSelect={() => setRegistrar(true)}>
+            Registrar
+          </DropdownMenuItem>
+        )}
+      </MenuDeFila>
+      <NumberActions connectionId={connectionId} phoneNumberId={phoneNumberId} label={label} abierto={verificar} onAbiertoChange={setVerificar} />
+      {!registrado && (
+        <RegisterNumberDialog connectionId={connectionId} phoneNumberId={phoneNumberId} label={label} abierto={registrar} onAbiertoChange={setRegistrar} />
+      )}
+    </>
+  );
+}
+
+/** Verificación de un número: enviar código (SMS/llamada) y confirmarlo. */
+function NumberActions({
+  connectionId,
+  phoneNumberId,
+  label,
+  abierto,
+  onAbiertoChange,
+}: {
+  connectionId: string;
+  phoneNumberId: string;
+  label: string;
+  abierto: boolean;
+  onAbiertoChange: (abierto: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [method, setMethod] = useState("SMS");
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
 
@@ -52,26 +95,22 @@ export function NumberActions({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          Verificar
-        </Button>
-      </DialogTrigger>
+    <Dialog open={abierto} onOpenChange={onAbiertoChange}>
       <DialogContent
-        title="Verificar número"
+        title="Verificar con código"
         description={label}
         className="max-w-md"
       >
         <div className="flex flex-col gap-5">
+          <p className="text-sm text-body">Meta envía un código al número; escríbelo aquí para confirmar que es tuyo.</p>
           <div className="flex flex-wrap items-end gap-2">
-            <Field label="Método" htmlFor={`method-${phoneNumberId}`} className="w-40">
+            <Field label="Recibirlo por" htmlFor={`method-${phoneNumberId}`} className="w-40">
               <Select
                 id={`method-${phoneNumberId}`}
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
               >
-                <option value="SMS">SMS</option>
+                <option value="SMS">Mensaje de texto</option>
                 <option value="VOICE">Llamada</option>
               </Select>
             </Field>

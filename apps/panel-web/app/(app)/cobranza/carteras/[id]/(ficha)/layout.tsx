@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -35,7 +35,7 @@ export default async function FichaDeCarteraLayout({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Cartera" tabs={false} />
-        <ErrorDeCobranza titulo="No se pudo cargar la cartera" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudo cargar la cartera" detalle={res.error} />
       </div>
     );
   }

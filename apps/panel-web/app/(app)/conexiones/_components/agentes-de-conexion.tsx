@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { Power, Star, UserMinus } from "lucide-react";
+
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { type Column } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { InputNumero } from "@/components/ui/input-numero";
 import { Select } from "@/components/ui/select";
 import { mensajeErrorAgentes, rolLegible } from "@/lib/conexion-ficha";
 import { useAction } from "@/lib/use-action";
@@ -80,94 +85,91 @@ export function AgentesDeConexion({
     });
   }
 
+  const estado = (f: FilaAgente) =>
+    !f.enabled ? (
+      <Badge variant="neutral">Deshabilitado</Badge>
+    ) : f.isDefault ? (
+      <Badge variant="accent">Principal</Badge>
+    ) : (
+      <Badge variant="success">Atiende</Badge>
+    );
+
+  const menu = (f: FilaAgente) =>
+    !puedeEditar || f.role === "core" || f.isDefault ? null : (
+      <MenuDeFila etiqueta={`Más acciones de ${f.name}`}>
+        {f.enabled && (
+          <DropdownMenuItem icon={<Star />} disabled={pending} onSelect={() => void cambiar(f, { is_default: true }, "Agente principal cambiado.")}>
+            Hacerlo el principal
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          icon={<Power />}
+          disabled={pending}
+          onSelect={() => void cambiar(f, { enabled: !f.enabled }, f.enabled ? "Agente deshabilitado." : "Agente habilitado.")}
+        >
+          {f.enabled ? "Deshabilitar" : "Habilitar"}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem icon={<UserMinus />} tone="danger" disabled={pending} onSelect={() => void quitar(f)}>
+          Quitar de la conexión
+        </DropdownMenuItem>
+      </MenuDeFila>
+    );
+
   const columnas: Column<FilaAgente>[] = [
     {
       key: "agente",
       header: "Agente",
       cell: (f) => (
-        <Link href={`/agentes/${f.agentId}`} className="text-link underline-offset-2 hover:underline">
-          {f.name}
-        </Link>
+        <div className="flex flex-col">
+          <Link href={`/agentes/${f.agentId}`} className="font-medium text-link underline-offset-2 hover:underline">
+            {f.name}
+          </Link>
+          <span className="text-xs text-text-soft">{rolLegible(f.role)}</span>
+        </div>
       ),
     },
-    { key: "rol", header: "Rol", cell: (f) => <span className="text-body">{rolLegible(f.role)}</span> },
+    { key: "estado", header: "Estado", info: "El principal atiende cuando ningún especialista aplica.", cell: estado },
     {
       key: "prioridad",
       header: "Prioridad",
       align: "right",
+      className: "max-lg:hidden",
       info: "Con varios especialistas, el de menor número se prueba primero.",
       cell: (f) => <span className="tabular-nums text-body">{f.priority}</span>,
     },
+    { key: "version", header: "Versión", className: "max-lg:hidden", cell: (f) => <span className="text-body">{f.version}</span> },
     {
-      key: "principal",
-      header: "Principal",
-      info: "El agente que atiende cuando ningún especialista aplica.",
-      cell: (f) =>
-        f.isDefault ? (
-          <Badge variant="accent">★ Principal</Badge>
-        ) : (
-          <span className="text-text-soft">—</span>
-        ),
-    },
-    { key: "version", header: "Versión", cell: (f) => <span className="text-body">{f.version}</span> },
-    {
-      key: "estado",
-      header: "Estado",
-      cell: (f) => <Badge variant={f.enabled ? "success" : "neutral"}>{f.enabled ? "Habilitado" : "Deshabilitado"}</Badge>,
+      key: "acciones",
+      header: <span className="sr-only">Acciones</span>,
+      align: "right",
+      className: "w-10",
+      cell: (f) => menu(f) ?? (f.role === "core" && puedeEditar ? <span className="sr-only">Lo gestiona el sistema</span> : null),
     },
   ];
-  if (puedeEditar) {
-    columnas.push({
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (f) =>
-        f.role === "core" ? (
-          <span className="text-xs text-text-soft">Lo gestiona el sistema</span>
-        ) : (
-          <div className="flex flex-wrap justify-end gap-2">
-            {!f.isDefault && f.enabled && (
-              <Button variant="ghost" size="sm" disabled={pending} onClick={() => void cambiar(f, { is_default: true }, "Agente principal cambiado.")}>
-                Hacer principal
-              </Button>
-            )}
-            {!f.isDefault && (
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={pending}
-                onClick={() =>
-                  void cambiar(f, { enabled: !f.enabled }, f.enabled ? "Agente deshabilitado." : "Agente habilitado.")
-                }
-              >
-                {f.enabled ? "Deshabilitar" : "Habilitar"}
-              </Button>
-            )}
-            {!f.isDefault && (
-              <Button variant="ghost" size="sm" disabled={pending} onClick={() => void quitar(f)}>
-                Quitar
-              </Button>
-            )}
-          </div>
-        ),
-    });
-  }
 
   return (
     <div className="flex flex-col gap-4">
       {puedeEditar && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-body">Los cambios aplican con la próxima versión de la conexión (pestaña Versiones).</p>
+          <p className="text-sm text-body">Los cambios aplican con la próxima versión de la conexión.</p>
           <AsignarAgente base={base} asignables={asignables} deshabilitado={!tieneCoordinador} />
         </div>
       )}
-      <DataTable
+      <TablaResponsiva
+        etiqueta="Agentes de la conexión"
         caption="Agentes de la conexión"
         columns={columnas}
         rows={filas}
         getRowKey={(f) => f.instanceId}
         emptyTitle="Sin agentes en esta conexión"
         emptyDescription="Asigna un agente publicado para que atienda por aquí."
+        filaCelular={(f) => ({
+          titulo: f.name,
+          detalle: `${rolLegible(f.role)} · ${!f.enabled ? "Deshabilitado" : f.isDefault ? "Principal" : "Atiende"} · ${f.version}`,
+          href: `/agentes/${f.agentId}`,
+          accion: menu(f),
+        })}
       />
     </div>
   );
@@ -184,12 +186,12 @@ function AsignarAgente({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [agente, setAgente] = useState("");
-  const [prioridad, setPrioridad] = useState("100");
+  const [prioridad, setPrioridad] = useState(100);
   const { run, pending } = useAction();
 
   async function asignar() {
     const ok = await run(async () => {
-      const r = await llamar(base, "POST", { agent_id: agente, priority: Number(prioridad) || 0 });
+      const r = await llamar(base, "POST", { agent_id: agente, priority: prioridad });
       return r.ok ? { ok: true, success: "Agente asignado." } : r;
     });
     if (ok) {
@@ -201,7 +203,7 @@ function AsignarAgente({
   return (
     <Dialog open={abierto} onOpenChange={setAbierto}>
       <DialogTrigger asChild>
-        <Button variant="accent" size="sm" disabled={deshabilitado || asignables.length === 0}>
+        <Button variant="accent" disabled={deshabilitado || asignables.length === 0}>
           Asignar agente
         </Button>
       </DialogTrigger>
@@ -218,14 +220,7 @@ function AsignarAgente({
             </Select>
           </Field>
           <Field label="Prioridad" htmlFor="asignar-prioridad" help="De 0 a 1000; el de menor número se prueba primero.">
-            <Input
-              id="asignar-prioridad"
-              type="number"
-              min={0}
-              max={1000}
-              value={prioridad}
-              onChange={(e) => setPrioridad(e.target.value)}
-            />
+            <InputNumero id="asignar-prioridad" min={0} max={1000} value={prioridad} onValueChange={setPrioridad} className="w-32" />
           </Field>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setAbierto(false)}>

@@ -7,6 +7,10 @@ import {
   escalacionCodigo,
   escalacionLabel,
   estadoNumeroMetaLabel,
+  estadoPlantillaMetaLabel,
+  categoriaPlantillaMetaLabel,
+  idiomaLabel,
+  rechazoPlantillaMetaLabel,
   rolLabel,
   seccionLabel,
   verificacionNumeroLabel,
@@ -82,5 +86,17 @@ describe("labels (HU-UI-02)", () => {
     expect(verificacionNumeroLabel("EXPIRED")).toBe("Código vencido");
     expect(calidadNumeroLabel("GREEN")).toBe("Alta");
     expect(calidadNumeroLabel(undefined)).toBe("Sin datos");
+  });
+
+  it("etiqueta estado, categoría e idioma de plantillas de Meta", () => {
+    expect(estadoPlantillaMetaLabel("APPROVED")).toBe("Aprobada");
+    expect(estadoPlantillaMetaLabel("PENDING")).toBe("En revisión");
+    expect(estadoPlantillaMetaLabel(null)).toBe("Sin estado");
+    expect(categoriaPlantillaMetaLabel("UTILITY")).toBe("Utilidad");
+    expect(idiomaLabel("es")).toBe("Español");
+    expect(idiomaLabel("en_US")).toMatch(/^Inglés/);
+    expect(idiomaLabel(null)).toBe("Sin idioma");
+    expect(rechazoPlantillaMetaLabel("INVALID_FORMAT")).toBe("El formato no es válido");
+    expect(rechazoPlantillaMetaLabel("NONE")).toBeNull();
   });
 });

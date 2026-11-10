@@ -47,13 +47,13 @@ const etiquetas = (c: Partial<ConexionConsola>) => pestanasDeFicha("c1", tipoDeF
 const sinMeta = { meta_connection_id: null };
 
 describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
-  it("WhatsApp oficial: las de su cuenta de Meta, Agentes y Versiones", () => {
-    expect(etiquetas({})).toEqual(["Salud", "Números", "Plantillas", "Webhook", "Producción", "Costos", "Agentes", "Versiones"]);
+  it("WhatsApp oficial: Salud y Agentes primero; Webhook, Producción y Versiones en Avanzado (CON-04)", () => {
+    expect(etiquetas({})).toEqual(["Salud", "Agentes", "Números", "Plantillas", "Costos", "Webhook", "Producción", "Versiones"]);
   });
 
-  it("WhatsApp Web: Vinculación, Estado, Agentes y Versiones, sin Salud, Plantillas ni Producción", () => {
+  it("WhatsApp con QR: Estado (con el vínculo), Agentes y Versiones, sin Salud, Plantillas ni Producción", () => {
     const pestanas = etiquetas({ ...sinMeta, type_id: "whatsapp_waweb" });
-    expect(pestanas).toEqual(["Vinculación", "Estado", "Agentes", "Versiones"]);
+    expect(pestanas).toEqual(["Estado", "Agentes", "Versiones"]);
     for (const p of ["Salud", "Plantillas", "Producción"]) expect(pestanas).not.toContain(p);
   });
 
@@ -77,7 +77,7 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
   });
 
   it("cada pestaña es una ruta de la ficha", () => {
-    expect(pestanasDeFicha("c9", "whatsapp_waweb")[0]).toEqual({ slug: "vinculacion", href: "/conexiones/c9/vinculacion", label: "Vinculación" });
+    expect(pestanasDeFicha("c9", "whatsapp_waweb")[0]).toEqual({ slug: "estado", href: "/conexiones/c9/estado", label: "Estado", avanzada: false });
   });
 });
 
@@ -85,13 +85,24 @@ describe("cabecera y lista", () => {
   it("subtítulo con el tipo legible y el detalle", () => {
     expect(subtituloDeFicha(conexion({}), "whatsapp_meta")).toBe("WhatsApp oficial · +57 300 000 0000");
     expect(subtituloDeFicha(conexion({ external_id: "" }), "webchat")).toBe("Chat web");
+    expect(subtituloDeFicha(conexion({ external_id: "573005550103" }), "whatsapp_waweb")).toBe("WhatsApp con QR · +57 300 555 0103");
+    expect(subtituloDeFicha(conexion({ external_id: "17841400000000000" }), "instagram")).toBe("Instagram");
   });
 
-  it("estado: activa, pausada o con el alta sin terminar", () => {
-    expect(estadoDeConexion(conexion({}))).toEqual({ label: "Activa", tono: "success" });
+  it("un solo estado: funciona, con avisos, no funciona, pausada o sin terminar", () => {
+    expect(estadoDeConexion(conexion({}))).toEqual({ label: "Funciona", tono: "success" });
+    expect(estadoDeConexion(conexion({ health: "degraded" }))).toEqual({ label: "Con avisos", tono: "warning" });
+    expect(estadoDeConexion(conexion({ health: "error" }))).toEqual({ label: "No funciona", tono: "danger" });
     expect(estadoDeConexion(conexion({ health: "paused" }))).toEqual({ label: "Pausada", tono: "neutral" });
-    expect(estadoDeConexion(conexion({ active: false }))).toEqual({ label: "Pausada", tono: "neutral" });
-    expect(estadoDeConexion(conexion({ health: "pending" })).label).toBe("Alta sin terminar");
+    expect(estadoDeConexion(conexion({ active: false, health: "degraded" }))).toEqual({ label: "Pausada", tono: "neutral" });
+    expect(estadoDeConexion(conexion({ health: "pending" })).label).toBe("Sin terminar");
+  });
+
+  it("el WhatsApp oficial deja Webhook, Producción y Versiones en Avanzado", () => {
+    const pestanas = pestanasDeFicha("c1", "whatsapp_meta");
+    expect(pestanas.filter((p) => !p.avanzada).map((p) => p.label)).toEqual(["Salud", "Agentes", "Números", "Plantillas", "Costos"]);
+    expect(pestanas.filter((p) => p.avanzada).map((p) => p.label)).toEqual(["Webhook", "Producción", "Versiones"]);
+    expect(pestanasDeFicha("c5", "webchat").every((p) => !p.avanzada)).toBe(true);
   });
 
   it("la salud solo se muestra en las conexiones de una cuenta de Meta", () => {

@@ -1,4 +1,5 @@
 import { ChecklistMeta } from "@/components/domain/checklist-meta";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 
@@ -12,20 +13,17 @@ type Checklist = {
 
 export default async function RequisitosPage() {
   const res = await apiFetch<Checklist>("/admin/meta/checklist/requirements");
-  if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la checklist: {res.error}
-      </p>
-    );
-  }
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Requisitos de Meta"
-        description="Pasos manuales de la app de Meta y comprobaciones automáticas del negocio."
+        description="Lo que Meta pide antes de atender clientes reales por WhatsApp. Marca cada paso cuando lo termines."
       />
-      <ChecklistMeta checks={res.data.checks} steps={res.data.steps} />
+      {res.ok ? (
+        <ChecklistMeta checks={res.data.checks} steps={res.data.steps} />
+      ) : (
+        <ErrorDeCarga titulo="No se pudieron cargar los requisitos" detalle={res.error} />
+      )}
     </div>
   );
 }

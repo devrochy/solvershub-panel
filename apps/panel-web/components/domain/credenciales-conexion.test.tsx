@@ -51,9 +51,9 @@ describe("credenciales de una conexión", () => {
     expect(screen.getAllByText("••••••••").length).toBe(1);
     expect(screen.getByText("Gestionado por la plataforma")).toBeTruthy();
     expect(screen.getByText("Sin configurar")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Mostrar App Secret" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mostrar Clave secreta de la app" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Mostrar Contraseña SMTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar Contraseña" }));
     fireEvent.change(screen.getByLabelText(/Contraseña actual/), {
       target: { value: "admin123" },
     });
@@ -65,7 +65,7 @@ describe("credenciales de una conexión", () => {
       expect.objectContaining({ method: "POST" }),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Ocultar Contraseña SMTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ocultar Contraseña" }));
     expect(screen.queryByText("secreto-smtp")).toBeNull();
   });
 
@@ -75,7 +75,7 @@ describe("credenciales de una conexión", () => {
     );
     render(<CredencialesConexion campos={CAMPOS} revealUrl="/api/connections/c1/credentials/reveal" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Mostrar Contraseña SMTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar Contraseña" }));
     fireEvent.change(screen.getByLabelText(/Contraseña actual/), {
       target: { value: "mala" },
     });

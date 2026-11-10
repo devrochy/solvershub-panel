@@ -7,6 +7,14 @@ import { FeedbackProviders } from "@/components/ui/providers";
 import type { CatalogoConfig } from "@/lib/api/types";
 import { ajustes, ajustesAvanzados, ajustesMultimedia, chatWeb } from "@/lib/testing/fixtures";
 
+// El chat web lleva una casilla de Radix, que mide su tamaño con ResizeObserver (jsdom no lo trae).
+class ResizeObserverFalso {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver ??= ResizeObserverFalso as unknown as typeof ResizeObserver;
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
   usePathname: () => "/configuracion",

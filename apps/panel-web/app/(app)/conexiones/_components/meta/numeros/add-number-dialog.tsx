@@ -45,18 +45,18 @@ export function AddNumberDialog({ connectionId }: { connectionId: string }) {
       </DialogTrigger>
       <DialogContent
         title="Agregar número"
-        description="Meta dará de alta el número en tu WABA; luego se verifica con un código."
+        description="Meta lo agrega a tu cuenta de WhatsApp Business; después lo verificas con un código."
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-[6rem_1fr]">
-            <Field label="Código país" htmlFor="cc" required>
+            <Field label="País" htmlFor="cc" required help="Solo el código: 57">
               <Input id="cc" name="cc" placeholder="57" required />
             </Field>
             <Field label="Número" htmlFor="phone" required>
               <Input id="phone" name="phone_number" placeholder="3001234567" required />
             </Field>
           </div>
-          <Field label="Nombre verificado" htmlFor="vname" required>
+          <Field label="Nombre que verán tus clientes" htmlFor="vname" required help="Meta lo revisa: usa el nombre de tu negocio">
             <Input id="vname" name="verified_name" required />
           </Field>
 
@@ -66,8 +66,8 @@ export function AddNumberDialog({ connectionId }: { connectionId: string }) {
             <DialogClose asChild>
               <Button type="button" variant="ghost">Cancelar</Button>
             </DialogClose>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Agregando…" : "Agregar"}
+            <Button type="submit" variant="accent" loading={status.loading}>
+              Agregar número
             </Button>
           </div>
         </form>

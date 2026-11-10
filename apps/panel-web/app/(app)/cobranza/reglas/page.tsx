@@ -1,5 +1,5 @@
 import { RulesForm } from "@/app/(app)/cobranza/reglas/_components/rules-form";
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { ListPage } from "@/components/templates/list-page";
 import { apiFetch } from "@/lib/api/server";
 
@@ -21,7 +21,7 @@ export default async function RulesPage() {
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar las reglas" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar las reglas" detalle={res.error} />
       </ListPage>
     );
   }

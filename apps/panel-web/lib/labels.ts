@@ -275,3 +275,60 @@ export function estadoPlantillaOpcionesLabel(estado: string | null | undefined):
   if (!estado) return "Sin estado";
   return ESTADO_PLANTILLA_OPCIONES[estado] ?? capitalizar(estado);
 }
+
+/** Estado de una plantilla de WhatsApp en Meta (`status`). */
+export const ESTADO_PLANTILLA_META: Record<string, string> = {
+  APPROVED: "Aprobada",
+  PENDING: "En revisión",
+  REJECTED: "Rechazada",
+  PAUSED: "Pausada",
+  DISABLED: "Desactivada",
+  IN_APPEAL: "En apelación",
+  PENDING_DELETION: "Eliminándose",
+  DELETED: "Eliminada",
+  LIMIT_EXCEEDED: "Sobre el límite",
+};
+
+export function estadoPlantillaMetaLabel(estado: string | null | undefined): string {
+  if (!estado) return "Sin estado";
+  return ESTADO_PLANTILLA_META[estado] ?? capitalizar(estado.toLowerCase().replaceAll("_", " "));
+}
+
+/** Categoría de una plantilla de WhatsApp en Meta. */
+export const CATEGORIA_PLANTILLA_META: Record<string, string> = {
+  UTILITY: "Utilidad",
+  MARKETING: "Marketing",
+  AUTHENTICATION: "Autenticación",
+};
+
+export function categoriaPlantillaMetaLabel(categoria: string | null | undefined): string {
+  if (!categoria) return "Sin categoría";
+  return CATEGORIA_PLANTILLA_META[categoria] ?? capitalizar(categoria.toLowerCase());
+}
+
+/** Idioma de una plantilla (`es_CO` → «Español (Colombia)»), con el código si el navegador no lo conoce. */
+export function idiomaLabel(codigo: string | null | undefined): string {
+  if (!codigo) return "Sin idioma";
+  try {
+    const nombre = new Intl.DisplayNames(["es"], { type: "language" }).of(codigo.replace("_", "-"));
+    return nombre ? capitalizar(nombre) : codigo;
+  } catch {
+    return codigo;
+  }
+}
+
+/** Motivo de rechazo de una plantilla (`rejected_reason` de Meta), dicho para el dueño. */
+export const RECHAZO_PLANTILLA_META: Record<string, string> = {
+  INVALID_FORMAT: "El formato no es válido",
+  TAG_CONTENT_MISMATCH: "El texto no corresponde a la categoría",
+  INCORRECT_CATEGORY: "La categoría no corresponde",
+  PROMOTIONAL: "Meta la considera publicidad",
+  ABUSIVE_CONTENT: "Meta la considera contenido abusivo",
+  SCAM: "Meta la considera engañosa",
+};
+
+/** `NONE` (sin motivo) o vacío no dicen nada: `null`. Un motivo nuevo se muestra tal cual. */
+export function rechazoPlantillaMetaLabel(motivo: string | null | undefined): string | null {
+  if (!motivo || motivo === "NONE") return null;
+  return RECHAZO_PLANTILLA_META[motivo] ?? motivo;
+}

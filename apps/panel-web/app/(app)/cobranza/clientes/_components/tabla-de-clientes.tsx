@@ -1,4 +1,4 @@
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { type Column } from "@/components/ui/data-table";
 import { RIESGO_STATUS, etiquetaDeRiesgo } from "@/lib/cobranza/presentacion";
@@ -73,7 +73,7 @@ export function TablaDeClientes({
   ];
 
   return (
-    <TablaCobranza
+    <TablaResponsiva
       etiqueta="Clientes"
       columns={columns}
       rows={clientes}

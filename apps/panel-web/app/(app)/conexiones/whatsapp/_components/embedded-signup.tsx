@@ -418,14 +418,9 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
       {vivo && !sesion.expired && !esperaPopup && (
         <div className="flex items-center gap-2 text-xs text-text-soft">
           {sesion.connection_status && <StatusBadge value={sesion.connection_status} map={META_CONNECTION_STATUS} />}
-          <button
-            type="button"
-            className="underline-offset-2 hover:underline"
-            disabled={cargando !== null}
-            onClick={() => void preparar(true)}
-          >
+          <Button type="button" variant="ghost" size="sm" disabled={cargando !== null} onClick={() => void preparar(true)}>
             Empezar de nuevo con Facebook
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -213,10 +213,20 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 ## Cobranza (SPEC-29)
 
 - Dentro de una ficha (cartera, cliente) la fila propia de pestañas reemplaza a las áreas de Cobranza; las migas llevan de vuelta. `PageHeader` recibe `tabs` y, junto al título, el estado en `despuesDelTitulo`.
-- Las listas usan `TablaCobranza`: tabla en escritorio y filas de un toque en el celular. Las acciones de una fila van en `MenuDeFila`.
+- Las listas usan `TablaResponsiva`: tabla en escritorio y filas de un toque en el celular. Las acciones de una fila van en `MenuDeFila`.
 - El historial que no hace falta a diario va en `SeccionPlegada`, con su conteo.
 - Promesas es una agenda: Vencidas, Hoy, Esta semana y Más adelante, con la decisión a un toque.
 - Los enums del backend se leen desde `lib/cobranza/presentacion.ts`; una página de servidor no importa constantes de un módulo `"use client"`.
+
+## Conexiones (SPEC-29)
+
+- Una conexión tiene un solo estado (`estadoDeConexion`): Funciona, Con avisos, No funciona, Sin terminar o Pausada. La salud de Meta solo cuenta en las conexiones con cuenta de Meta.
+- La lista es `TablaResponsiva`; arriba, un enlace por cada conexión que pide atención. Webhook, enrutamiento y consistencia solo los ve la plataforma.
+- En la ficha, el ícono va antes del título y el estado después. Pausar es el único botón; lo demás va en el menú «Más acciones».
+- Pestañas: las de todos los días a la vista; Webhook, Producción y Versiones en «Avanzado», que muestra la elegida («Avanzado: Webhook»).
+- Nada técnico a la vista: estados, categorías, idiomas y motivos de Meta en palabras (`lib/labels.ts`); los identificadores de Meta van en el CSV o entre paréntesis en el campo que los pide.
+- Una revisión se dibuja con `MarcaDeRevision` y siempre con su texto. Los pasos largos (Pasar a producción) van de a uno con `Stepper`.
+- En las altas, el camino recomendado va primero y los otros plegados. No hay botones «← Volver»: las migas y las pestañas llevan de vuelta.
 
 ## Onboarding (HU-SH-06)
 

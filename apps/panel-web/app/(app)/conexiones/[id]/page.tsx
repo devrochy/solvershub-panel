@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { conQuery, pestanasDeFicha } from "@/lib/conexion-ficha";
 import { cargarFicha } from "@/lib/conexion-ficha-servidor";
 
@@ -17,11 +18,7 @@ export default async function AbrirFicha({
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const res = await cargarFicha(id);
   if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la conexión: {res.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No se pudo abrir la conexión" detalle={res.error} />;
   }
   if (!res.ficha) notFound();
   redirect(conQuery(pestanasDeFicha(id, res.ficha.tipo)[0].href, query));

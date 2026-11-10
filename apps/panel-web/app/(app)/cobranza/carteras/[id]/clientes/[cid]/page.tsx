@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
-import { TablaCobranza } from "@/components/domain/cobranza/tabla-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +128,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Cliente" tabs={false} />
-        <ErrorDeCobranza titulo="No se pudo cargar el cliente" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudo cargar el cliente" detalle={res.error} />
       </div>
     );
   }
@@ -183,7 +183,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
         <h2 id="movimientos" className="font-display text-sh-block text-headline">
           Movimientos
         </h2>
-        <TablaCobranza
+        <TablaResponsiva
           etiqueta="Movimientos"
           columns={movementColumns}
           rows={movimientos}

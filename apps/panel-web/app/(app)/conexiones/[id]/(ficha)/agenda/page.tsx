@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { FormularioAgenda } from "@/app/(app)/calendario/_components/formulario-agenda";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/server";
 import type { ListaDeAgendas, Me } from "@/lib/api/types";
@@ -24,20 +25,28 @@ export default async function AgendaPage({ params }: { params: Promise<{ id: str
   return (
     <SeccionFicha
       titulo="Agenda"
-      descripcion="El nombre es el que el asistente le dice al cliente. La descripción y los alias le ayudan a recomendar esta agenda según lo que pide."
+      descripcion="El nombre es el que tu agente le dice al cliente. La descripción y los alias le ayudan a recomendar esta agenda según lo que pide."
     >
       <Card>
         <CardContent className="pt-5">
           {agenda ? (
             <FormularioAgenda agenda={agenda} idBase="ficha" soloLectura={!puedeEditar} />
           ) : (
-            <p className="text-sm text-body">
-              Esta cuenta todavía no tiene una agenda. Se crea sola al reconectarla; también puedes abrir los ajustes de la{" "}
-              <Link href="/calendario?ajustes=agendas" className="text-link underline-offset-2 hover:underline">
-                Agenda
-              </Link>
-              .
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <p className="font-display text-sh-block text-headline">Esta cuenta aún no tiene agenda</p>
+                <p className="text-sm text-body">Se crea sola al reconectarla.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild variant="accent">
+                  {/* `<a>` y no `<Link>`: el inicio del OAuth no se pre-carga (HU-CAL-07). */}
+                  <a href={`/api/calendar/oauth?connection_id=${id}&next=${encodeURIComponent(`/conexiones/${id}/agenda`)}`}>Reconectar</a>
+                </Button>
+                <Button asChild variant="ghost">
+                  <Link href="/calendario?ajustes=agendas">Ajustes de la Agenda</Link>
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

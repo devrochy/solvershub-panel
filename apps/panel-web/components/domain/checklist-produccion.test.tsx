@@ -45,7 +45,7 @@ describe("ChecklistProduccion (HU-CONN-07)", () => {
     expect(screen.getByText("Falta 1")).toBeTruthy();
     expect(screen.getByText(/Última revisión/)).toBeTruthy();
     expect(screen.getByText("Número registrado en la Cloud API")).toBeTruthy();
-    expect(screen.getByText("sin dato")).toBeTruthy();
+    expect(screen.getByText(/^Sin dato · /)).toBeTruthy();
     const enlace = screen.getByRole("link", { name: "Ver números" });
     expect(enlace.getAttribute("href")).toBe("/conexiones/meta/c1/numeros");
   });

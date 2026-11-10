@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
-import { Button } from "@/components/ui/button";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { CatalogoConfig, Me, WebChatSettings } from "@/lib/api/types";
@@ -27,21 +26,14 @@ export default async function ChatWebPage() {
     apiFetch<Me>("/admin/me"),
   ]);
   if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el chat web: {res.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No se pudo cargar el chat web" detalle={res.error} />;
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="self-start">
-        <Link href="/conexiones">← Conexiones</Link>
-      </Button>
       <PageHeader
         title="Conectar el chat web"
-        description="Actívalo, define los dominios donde se puede incrustar y guarda: el fragmento para tu sitio aparece abajo."
+        description="Actívalo, escribe los sitios donde aparece y guarda. Después copias el fragmento y lo pegas en tu sitio."
       />
       <WebChatForm
         webChat={res.data}

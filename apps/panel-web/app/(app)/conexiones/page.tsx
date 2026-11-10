@@ -1,9 +1,10 @@
 import { ConsolaConexiones } from "@/app/(app)/conexiones/_components/consola-conexiones";
 import { NewConnectionDialog } from "@/app/(app)/conexiones/_components/new-connection-dialog";
-import { PageHeader } from "@/components/ui/page-header";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { ListPage } from "@/components/templates/list-page";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
-import type { ConnectionsConsole, ConnectionsResponse } from "@/lib/api/types";
+import type { ConnectionsConsole, ConnectionsResponse, Me } from "@/lib/api/types";
 
 export const metadata = { title: "Conexiones" };
 
@@ -15,32 +16,31 @@ export default async function ConnectionsPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const pagina = Math.max(1, Number.parseInt((await searchParams).page ?? "1", 10) || 1);
-  const [resConsola, res] = await Promise.all([
+  const [resConsola, res, meRes] = await Promise.all([
     apiFetch<ConnectionsConsole>(`/admin/connections/console?page=${pagina}&page_size=${POR_PAGINA}`),
     apiFetch<ConnectionsResponse>("/admin/connections"),
+    apiFetch<Me>("/admin/me"),
   ]);
+  const header = {
+    title: "Conexiones",
+    description: "Los canales por los que tu agente atiende a tus clientes.",
+    helpSection: "connections",
+    actions: resConsola.ok && resConsola.data.can_edit ? <NewConnectionDialog /> : undefined,
+  };
   if (!resConsola.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las conexiones: {resConsola.error}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCarga titulo="No se pudieron cargar las conexiones" detalle={resConsola.error} />
+      </ListPage>
     );
   }
   const consola = resConsola.data;
-  // El webhook es del negocio (uno solo), por eso vive aquí y no en cada conexión.
+  // El webhook es del negocio (uno solo): solo lo ve la plataforma, el dueño lo encuentra en su ficha.
   const webhookUrl = res.ok ? res.data.webhook_url : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Conexiones"
-        description="Canales por los que tu agente atiende. Las credenciales se guardan cifradas (Fernet) y no dependen del .env; cada negocio tiene su propio webhook y verify token."
-        helpSection="connections"
-        actions={consola.can_edit ? <NewConnectionDialog /> : undefined}
-      />
-
-
-      <ConsolaConexiones consola={consola} webhookUrl={webhookUrl} />
+    <ListPage header={header}>
+      <ConsolaConexiones consola={consola} webhookUrl={webhookUrl} esPlataforma={meRes.ok && meRes.data.role === "master"} />
 
       {(consola.has_more || pagina > 1) && (
         <Pagination
@@ -51,6 +51,6 @@ export default async function ConnectionsPage({
           makeHref={(p) => `/conexiones?page=${p}`}
         />
       )}
-    </div>
+    </ListPage>
   );
 }

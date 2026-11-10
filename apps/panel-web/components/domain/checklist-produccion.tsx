@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity } from "lucide-react";
 
+import { MarcaDeRevision } from "@/components/domain/marca-de-revision";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,13 +100,7 @@ export function ChecklistProduccion({
               ? `Pedida: ${formatDateTime(corrida.requested_at)}`
               : "Todavía no se ha revisado."}
         </span>
-        <Button
-          className="ml-auto"
-          disabled={pidiendo || corriendo}
-          onClick={() => void revisar()}
-          size="sm"
-          variant="accent"
-        >
+        <Button className="ml-auto" disabled={pidiendo || corriendo} onClick={() => void revisar()} variant="outline">
           <Activity className="h-4 w-4" aria-hidden />
           {corriendo ? "Revisando…" : "Revisar ahora"}
         </Button>
@@ -131,26 +126,24 @@ export function ChecklistProduccion({
 export function ItemsChecklist({ items, connectionId }: { items: ReadinessItem[]; connectionId?: string }) {
   return (
     <Card>
-      <CardContent className="pt-5">
-        <ul className="flex flex-col divide-y divide-border-soft">
+      <CardContent className="pt-2">
+        <ul className="flex flex-col">
           {items.map((item) => {
             const estado = estadoItem(item.ok);
             const arreglo =
               connectionId && item.ok !== true ? enlaceReparacion(item.repair_action, connectionId) : null;
             return (
-              <li key={item.key} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-                <span className="flex flex-col gap-0.5">
+              <li key={item.key} className="flex flex-wrap items-center gap-3 border-t border-border-soft py-3 text-sm first:border-t-0">
+                <MarcaDeRevision ok={item.ok} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-headline">{item.label}</span>
-                  {item.detail && <span className="text-xs text-text-soft">{item.detail}</span>}
+                  <span className="text-xs text-text-soft">{item.ok !== true && item.detail ? `${estado.label} · ${item.detail}` : estado.label}</span>
                 </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  {arreglo && (
-                    <Link className="text-xs text-link underline" href={arreglo.href}>
-                      {arreglo.label}
-                    </Link>
-                  )}
-                  <Badge variant={estado.variant}>{estado.label}</Badge>
-                </span>
+                {arreglo && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={arreglo.href}>{arreglo.label}</Link>
+                  </Button>
+                )}
               </li>
             );
           })}

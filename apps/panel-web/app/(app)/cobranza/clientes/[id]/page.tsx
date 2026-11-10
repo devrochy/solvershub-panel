@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 
@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Cliente" tabs={false} />
-        <ErrorDeCobranza titulo="No se pudo cargar el cliente" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudo cargar el cliente" detalle={res.error} />
       </div>
     );
   }

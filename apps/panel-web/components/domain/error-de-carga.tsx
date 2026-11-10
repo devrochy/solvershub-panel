@@ -1,7 +1,7 @@
 import { BotonReintentar, EstadoDeError } from "@/components/ui/estado-de-error";
 
-/** Una pantalla de Cobranza que no cargó: la cabecera sigue en pie y se puede reintentar. */
-export function ErrorDeCobranza({ titulo, detalle }: { titulo: string; detalle?: string }) {
+/** Una pantalla que no cargó: la cabecera sigue en pie y se puede reintentar. */
+export function ErrorDeCarga({ titulo, detalle }: { titulo: string; detalle?: string }) {
   return (
     <div className="rounded-lg border border-border-soft bg-surface">
       <EstadoDeError

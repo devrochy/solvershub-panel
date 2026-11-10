@@ -16,6 +16,24 @@ const SEGUNDOS_VISIBLE = 60;
  * tiene su propio ojo; al pulsarlo se pide la contraseña del usuario y se revelan los
  * secretos durante 60 s. Los secretos de la plataforma no se pueden revelar.
  */
+/** Los nombres técnicos de Meta y del correo, dichos como los entiende el dueño. */
+const ETIQUETAS_CREDENCIAL: Record<string, string> = {
+  app_id: "Identificador de la app",
+  app_secret: "Clave secreta de la app",
+  waba_id: "Cuenta de WhatsApp Business",
+  phone_number_id: "Identificador del número",
+  access_token: "Token de acceso",
+  verify_token: "Clave de verificación",
+  host: "Servidor de correo",
+  port: "Puerto",
+  username: "Usuario",
+  password: "Contraseña",
+};
+
+export function etiquetaDeCredencial(campo: { name: string; label: string }): string {
+  return ETIQUETAS_CREDENCIAL[campo.name] ?? campo.label;
+}
+
 export function CredencialesConexion({
   campos,
   revealUrl,
@@ -91,8 +109,8 @@ export function CredencialesConexion({
           const puedeMostrar = campo.secret && campo.configured && !campo.platform;
           return (
             <div key={campo.name} className="flex flex-wrap items-center gap-2 px-4 py-3">
-              <dt className="w-40 shrink-0 text-xs font-medium uppercase tracking-[0.04em] text-text-soft">
-                {campo.label}
+              <dt className="w-48 shrink-0 text-sm text-text-soft">
+                {etiquetaDeCredencial(campo)}
               </dt>
               <dd className="flex min-w-0 flex-1 items-center gap-2 text-sm text-headline">
                 {campo.platform ? (
@@ -110,15 +128,17 @@ export function CredencialesConexion({
                 )}
               </dd>
               {puedeMostrar && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => alternar(campo)}
-                  aria-label={visible ? `Ocultar ${campo.label}` : `Mostrar ${campo.label}`}
+                  aria-label={visible ? `Ocultar ${etiquetaDeCredencial(campo)}` : `Mostrar ${etiquetaDeCredencial(campo)}`}
                   aria-pressed={visible}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-soft transition-colors hover:bg-hover hover:text-headline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  className="shrink-0 pointer-coarse:h-11 pointer-coarse:w-11"
                 >
                   {visible ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
-                </button>
+                </Button>
               )}
             </div>
           );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { ErrorDeCobranza } from "@/components/domain/cobranza/error-de-cobranza";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { ListPage } from "@/components/templates/list-page";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/server";
@@ -47,7 +47,7 @@ export default async function ClientesPage({
   if (!res.ok) {
     return (
       <ListPage header={header}>
-        <ErrorDeCobranza titulo="No se pudieron cargar los clientes" detalle={res.error} />
+        <ErrorDeCarga titulo="No se pudieron cargar los clientes" detalle={res.error} />
       </ListPage>
     );
   }

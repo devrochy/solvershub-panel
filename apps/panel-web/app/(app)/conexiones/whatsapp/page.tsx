@@ -1,3 +1,4 @@
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { components } from "@/lib/api/schema";
@@ -15,17 +16,13 @@ export default async function ConectarWhatsappPage() {
     apiFetch<Sesion | null>("/admin/meta/wizard/session?environment=production"),
   ]);
   if (!res.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el wizard: {res.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No se pudo preparar la conexión de WhatsApp" detalle={res.error} />;
   }
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Conectar WhatsApp"
-        description="Conecta tu número con Facebook (producción), con tu propia app de Meta o con la carga manual."
+        description="Conecta el número de tu negocio para que tu agente atienda por WhatsApp."
       />
       <WhatsappWizard estado={res.data} sesion={sesionRes.ok ? (sesionRes.data ?? null) : null} />
     </div>

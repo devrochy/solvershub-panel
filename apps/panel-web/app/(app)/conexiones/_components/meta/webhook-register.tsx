@@ -24,9 +24,9 @@ export function WebhookRegister({
 
   if (!canRegister) {
     return (
-      <span className="text-xs text-text-soft">
-        {usesPlatformApp ? "Lo gestiona SolversHub" : "Solo el propietario"}
-      </span>
+      <p className="text-xs text-text-soft">
+        {usesPlatformApp ? "SolversHub lo mantiene registrado por ti." : "Solo el propietario del negocio puede registrarlo."}
+      </p>
     );
   }
 
@@ -42,14 +42,14 @@ export function WebhookRegister({
       setStatus({ error: json.error ?? "No se pudo registrar." });
       return;
     }
-    setStatus({ success: "Suscripción registrada." });
+    setStatus({ success: "Webhook registrado en Meta." });
     router.refresh();
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <Button variant="outline" size="sm" onClick={() => void register()} disabled={status.loading}>
-        {status.loading ? "Registrando…" : "Registrar"}
+    <div className="flex flex-col items-start gap-1">
+      <Button variant="outline" onClick={() => void register()} loading={status.loading}>
+        Registrar de nuevo en Meta
       </Button>
       <FormFeedback error={status.error} success={status.success} />
     </div>

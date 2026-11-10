@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, FlaskConical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -106,12 +107,12 @@ export function PruebaConUnaParte({
       className="flex flex-col gap-4 rounded-lg border border-status-info-border bg-surface p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="prueba-titulo" className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-headline">
+        <h3 id="prueba-titulo" className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-headline">
           <FlaskConical aria-hidden className="h-4 w-4 text-status-info-fg" />
           Versión {numero} en prueba con el {prueba.percent} % de los clientes
           <Badge variant={TONO_BADGE[estado.tono]}>{estado.titulo}</Badge>
-        </h2>
-        <span className="text-xs text-soft">Desde {formatDateTime(prueba.started_at)}</span>
+        </h3>
+        <span className="text-xs text-text-soft">Desde {formatDateTime(prueba.started_at)}</span>
       </div>
 
       <p className="text-sm text-body">{estado.detalle}</p>
@@ -124,40 +125,36 @@ export function PruebaConUnaParte({
           valueText={muestra.texto}
           size="sm"
         />
-        <p className="text-xs text-soft">
+        <p className="text-xs text-text-soft">
           {muestra.texto}
           {prueba.base_release_number != null && ` · se compara con la versión ${prueba.base_release_number}`}
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs sm:text-sm">
-          <caption className="sr-only">Comparación entre la versión actual y la versión en prueba</caption>
-          <thead>
-            <tr className="border-b border-border-soft text-left text-xs uppercase tracking-[0.06em] text-soft">
-              <th scope="col" className="py-2 pr-3 font-medium">Métrica</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Actual</th>
-              <th scope="col" className="py-2 pr-3 font-medium">En prueba</th>
-              <th scope="col" className="py-2 font-medium">Cambio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filas.map((f) => (
-              <tr key={f.metrica} className="border-b border-border-soft last:border-0">
-                <th scope="row" className="py-2 pr-2 text-left font-normal text-body sm:pr-3">{f.metrica}</th>
-                <td className="whitespace-nowrap py-2 pr-2 tabular-nums text-body sm:pr-3">{f.actual}</td>
-                <td className="whitespace-nowrap py-2 pr-2 tabular-nums text-body sm:pr-3">{f.nueva}</td>
-                <td className={f.peor ? "whitespace-nowrap py-2 tabular-nums text-status-danger-fg" : "whitespace-nowrap py-2 tabular-nums text-soft"}>
-                  {f.diferencia ?? "—"}
-                  {f.diferencia && f.peor && <span className="sr-only"> (peor)</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        caption="Comparación entre la versión actual y la versión en prueba"
+        columns={[
+          { key: "metrica", header: "Métrica", cell: (f) => <span className="text-body">{f.metrica}</span> },
+          { key: "actual", header: "Actual", align: "right", cell: (f) => <span className="whitespace-nowrap tabular-nums text-body">{f.actual}</span> },
+          { key: "nueva", header: "En prueba", align: "right", cell: (f) => <span className="whitespace-nowrap tabular-nums text-body">{f.nueva}</span> },
+          {
+            key: "cambio",
+            header: "Cambio",
+            align: "right",
+            cell: (f) => (
+              <span className={f.peor ? "whitespace-nowrap tabular-nums text-status-danger-fg" : "whitespace-nowrap tabular-nums text-text-soft"}>
+                {f.diferencia ?? "—"}
+                {f.diferencia && f.peor && <span className="sr-only"> (peor)</span>}
+              </span>
+            ),
+          },
+        ]}
+        rows={filas}
+        getRowKey={(f) => f.metrica}
+        emptyTitle="Todavía no hay datos para comparar"
+      />
 
-      {senal && <p className="text-xs text-soft">{senal}</p>}
+      {senal && <p className="text-xs text-text-soft">{senal}</p>}
 
       {advertencias.length > 0 && (
         <ul className="flex flex-col gap-1">
@@ -182,14 +179,14 @@ export function PruebaConUnaParte({
           )}
           <div className="flex flex-wrap items-center gap-2">
             {prueba.puede_publicar && (
-              <Button variant="accent" size="sm" onClick={publicar} disabled={pending}>
+              <Button variant="accent" onClick={publicar} disabled={pending}>
                 Publicar para todos
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => setCambiando(true)} disabled={pending}>
+            <Button variant="outline" onClick={() => setCambiando(true)} disabled={pending}>
               Cambiar porcentaje
             </Button>
-            <Button variant="ghost" size="sm" onClick={detener} disabled={pending}>
+            <Button variant="ghost" onClick={detener} disabled={pending}>
               Detener la prueba
             </Button>
           </div>

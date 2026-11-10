@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { ListaDeVersiones } from "@/app/(app)/conexiones/[id]/(ficha)/versiones/_components/lista-de-versiones";
 import { PruebaConUnaParte } from "@/app/(app)/conexiones/[id]/(ficha)/versiones/_components/prueba-con-una-parte";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { CanaryState, Evaluation, Me, ReleaseSummary } from "@/lib/api/types";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
@@ -31,9 +32,9 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
   if (!releases.ok) {
     if (releases.status === 404) notFound();
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las versiones: {releases.error}
-      </p>
+      <SeccionFicha titulo="Versiones">
+        <ErrorDeCarga titulo="No se pudieron cargar las versiones" detalle={releases.error} />
+      </SeccionFicha>
     );
   }
   const runtime = ficha?.consola.runtime ?? "legacy";
@@ -57,20 +58,20 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
       titulo="Versiones"
       descripcion="Cada cambio de tus agentes crea una versión. Revisa qué cambia, pruébala y publícala, o vuelve a la anterior."
     >
-    {runtime !== "v3" && (
-      <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-        Las versiones se activan con el Agent OS de tu negocio: por ahora solo el equipo de SolversHub las gestiona.
-      </p>
-    )}
-    {prueba && <PruebaConUnaParte conexionId={id} prueba={prueba} puedeOperar={puedeOperar} />}
-    <ListaDeVersiones
-      conexionId={id}
-      versiones={releases.data}
-      mediciones={mediciones}
-      puedeOperar={puedeOperar}
-      puedeProbar={puedeOperar && runtime === "v3"}
-      hayPrueba={prueba !== null}
-    />
+      {runtime !== "v3" && (
+        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
+          Por ahora el equipo de SolversHub publica las versiones de tu negocio. Aquí ves cuál está activa y qué cambió.
+        </p>
+      )}
+      {prueba && <PruebaConUnaParte conexionId={id} prueba={prueba} puedeOperar={puedeOperar} />}
+      <ListaDeVersiones
+        conexionId={id}
+        versiones={releases.data}
+        mediciones={mediciones}
+        puedeOperar={puedeOperar}
+        puedeProbar={puedeOperar && runtime === "v3"}
+        hayPrueba={prueba !== null}
+      />
     </SeccionFicha>
   );
 }
