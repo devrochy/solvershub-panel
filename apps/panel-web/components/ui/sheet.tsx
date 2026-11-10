@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { escapeConMenuAbierto } from "@/lib/escape-con-menu";
 import { cn } from "@/lib/utils";
 
 export const Sheet = DialogPrimitive.Root;
@@ -48,6 +49,7 @@ export function SheetContent({
       <DialogPrimitive.Content
         onOpenAutoFocus={onOpenAutoFocus}
         onCloseAutoFocus={onCloseAutoFocus}
+        onEscapeKeyDown={escapeConMenuAbierto}
         className={cn(
           "fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-surface shadow-elev-3 focus:outline-none sm:max-w-md",
           className,

@@ -7,7 +7,8 @@ export default async function ClientesDeAgendaPage({ searchParams }: { searchPar
     <ClientesDeModulo
       agente="agenda"
       basePath="/calendario/clientes"
-      titulo="Clientes de Agenda"
+      titulo="Agenda"
+      etiquetaDeLista="Clientes de Agenda"
       descripcion="Las personas que han agendado una cita. Abre una para ver y corregir sus datos de agenda."
       sp={await searchParams}
       helpSection="leads"

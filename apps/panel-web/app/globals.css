@@ -302,33 +302,11 @@ body {
   --fc-button-hover-border-color: var(--sh-border-strong);
   --fc-button-active-bg-color: var(--sh-surface-2);
   --fc-button-active-border-color: var(--sh-focus);
+  /* Las horas cerradas, apenas más oscuras: se ve cuándo se puede agendar (AGE-01). */
+  --fc-non-business-color: color-mix(in oklab, var(--sh-bg-deep) 55%, transparent);
   color: var(--sh-text);
 }
-.agenda-grilla .fc-toolbar-title {
-  font-family: var(--sh-font-display);
-  font-size: 1.125rem;
-}
-/* En pantallas angostas la barra pasa a dos filas: título arriba, navegación y vistas debajo. */
-@media (max-width: 640px) {
-  .agenda-grilla .fc-header-toolbar {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
-    order: -1;
-    flex-basis: 100%;
-    text-align: center;
-  }
-  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(1),
-  .agenda-grilla .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
-    flex: 1 1 auto;
-  }
-  .agenda-grilla .fc-button {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.8rem;
-  }
-}
-/* Franjas de media hora más altas: una cita de 20-30 min deja leer hora, código y cliente. */
+/* Franjas de media hora más altas: una cita de 20 min deja leer el nombre del cliente. */
 .agenda-grilla .fc-timegrid-slot {
   height: 2.5rem;
 }
@@ -338,14 +316,13 @@ body {
   color: var(--sh-text-muted);
 }
 
-/* Cita: fondo apenas teñido con el color de su tipo y borde izquierdo lleno. El texto va en
-   el color de texto, así el contraste no depende del color de la serie (AA en claro y oscuro). */
+/* Cita: fondo teñido con el color de su agenda y un borde del mismo color (AGE-04). El texto va
+   en el color de texto, así el contraste no depende del color de la serie (AA en claro y oscuro). */
 .agenda-grilla .fc-event[class*="evt-cat-"],
 .agenda-grilla .fc-event.evt-sin-tipo {
   --evt-color: var(--sh-border-strong);
-  background: color-mix(in oklab, var(--evt-color) 16%, var(--sh-surface));
-  border: 0;
-  border-left: 4px solid var(--evt-color);
+  background: color-mix(in oklab, var(--evt-color) 22%, var(--sh-surface));
+  border: 1px solid color-mix(in oklab, var(--evt-color) 60%, transparent);
   border-radius: var(--sh-radius-sm);
 }
 .agenda-grilla .fc-event.evt-cat-1 { --evt-color: var(--sh-data-cat-1); }

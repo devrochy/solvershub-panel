@@ -12,6 +12,8 @@ import {
   FONDO_DE_COLOR,
   normalizarCodigo,
   serieDeColor,
+  horarioAGrilla,
+  hoyEn,
   type EventoAgenda,
 } from "./agenda";
 import { desfaseDeHoraDePared, desfaseEn, horaDePared } from "./zona-horaria";
@@ -52,9 +54,10 @@ describe("colores de tipo (HU-UX-08)", () => {
 });
 
 describe("eventos de la grilla", () => {
-  it("la cita lleva la clase de su color y el código delante del título", () => {
-    const ev = aEventoDeGrilla(CITA);
-    expect(ev.title).toBe("VAL · Ana");
+  it("la cita se titula con el cliente y lleva el tipo en palabras, sin sigla (AGE-03)", () => {
+    const ev = aEventoDeGrilla(CITA, { "t-1": "Valoración" });
+    expect(ev.title).toBe("Ana");
+    expect(ev.extendedProps).toMatchObject({ tipoNombre: "Valoración" });
     expect(ev.classNames).toEqual(["evt-cat-2"]);
     expect(ev.editable).toBe(true);
   });
@@ -103,16 +106,10 @@ describe("zona horaria con Intl", () => {
 });
 
 describe("varias agendas (HU-CAL-08)", () => {
-  it("con varias agendas visibles el color es el de la agenda; con una, el del tipo", () => {
+  it("el color es siempre el de la agenda; sin agenda, el del tipo (AGE-04)", () => {
     const cita = { ...CITA, calendar_id: "a-1", calendar_color: "cat-3" };
-    expect(aEventoDeGrilla(cita, "agenda").classNames).toEqual(["evt-cat-3"]);
-    expect(aEventoDeGrilla(cita, "tipo").classNames).toEqual(["evt-cat-2"]);
-    // El título conserva el código del tipo en los dos casos.
-    expect(aEventoDeGrilla(cita, "agenda").title).toBe("VAL · Ana");
-  });
-
-  it("una cita sin agenda se ve neutra al colorear por agenda", () => {
-    expect(aEventoDeGrilla(CITA, "agenda").classNames).toEqual(["evt-sin-tipo"]);
+    expect(aEventoDeGrilla(cita).classNames).toEqual(["evt-cat-3"]);
+    expect(aEventoDeGrilla(CITA).classNames).toEqual(["evt-cat-2"]);
   });
 
   it("la inicial distingue agendas con el mismo color", () => {
@@ -135,5 +132,32 @@ describe("alias de una agenda", () => {
   it("separa por coma, recorta y quita repetidos", () => {
     expect(aliasesDeTexto("doctora, sede norte ,, doctora")).toEqual(["doctora", "sede norte"]);
     expect(aliasesDeTexto("")).toEqual([]);
+  });
+});
+
+describe("horario en la grilla (AGE-01)", () => {
+  it("de una hora antes de abrir a una después de cerrar, con lo cerrado sombreado", () => {
+    const g = horarioAGrilla({ mon: "08:00-18:00", fri: "08:00-17:00", sat: "09:00-13:00", sun: "" });
+    expect(g.slotMinTime).toBe("07:00:00");
+    expect(g.slotMaxTime).toBe("19:00:00");
+    expect(g.scrollTime).toBe("08:00:00");
+    expect(g.businessHours).toEqual([
+      { daysOfWeek: [1], startTime: "08:00", endTime: "18:00" },
+      { daysOfWeek: [5], startTime: "08:00", endTime: "17:00" },
+      { daysOfWeek: [6], startTime: "09:00", endTime: "13:00" },
+    ]);
+  });
+
+  it("sin horario que se entienda, de 6 a 22 y sin sombra", () => {
+    expect(horarioAGrilla({})).toMatchObject({ businessHours: false, slotMinTime: "06:00:00", slotMaxTime: "22:00:00" });
+    expect(horarioAGrilla({ mon: "tarde" }).businessHours).toBe(false);
+  });
+
+  it("media hora se redondea a la hora entera", () => {
+    expect(horarioAGrilla({ tue: "08:30-17:30" })).toMatchObject({ slotMinTime: "07:00:00", slotMaxTime: "19:00:00" });
+  });
+
+  it("hoy en la zona del negocio, no en la del navegador", () => {
+    expect(hoyEn("America/Bogota", new Date(Date.UTC(2026, 10, 11, 3, 0)))).toBe("2026-11-10");
   });
 });

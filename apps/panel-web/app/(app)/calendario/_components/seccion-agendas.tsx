@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { MuestraDeColor } from "@/components/domain/tipo-de-cita";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { DropdownMenuItem, DropdownMenuLinkItem } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { AgendaCalendario, ListaDeAgendas } from "@/lib/api/types";
-import { inicialDeAgenda } from "@/lib/calendario/agenda";
 
 import { FormularioAgenda } from "./formulario-agenda";
 
@@ -58,20 +58,23 @@ export function SeccionAgendas({
       setEstado({ error: "No se pudo guardar el cambio." });
       return;
     }
-    setEstado({ success: encendido ? "El cliente elige la agenda." : "Se agenda siempre en la agenda principal." });
+    setEstado({ success: encendido ? "El cliente elige con quién." : "Todo va a la agenda principal." });
     router.refresh();
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+      <p className="text-sm text-body">
+        Una agenda por persona o sala que atiende. Cada una tiene su disponibilidad y su color en el calendario.
+      </p>
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-border-soft bg-surface-2 p-4">
         <div className="flex flex-col gap-0.5">
           <label htmlFor="multi-agenda" className="text-sm font-medium text-headline">
-            El cliente elige la agenda
+            El cliente elige con quién
           </label>
           <p className="text-sm text-body">
-            Con 2 o más agendas el asistente pregunta con quién quiere la cita, informa la disponibilidad de cada una a la hora
-            deseada y recomienda según lo que pide el cliente. Apagado, agenda siempre en la principal.
+            Tu agente le pregunta con quién quiere la cita y le dice quién tiene espacio a esa hora. Apagado, todo va a la
+            agenda principal.
           </p>
           {activas.length < 2 && modo === "cliente_elige" && (
             <p className="text-sm text-text-soft">Se activa cuando haya al menos 2 agendas activas.</p>
@@ -79,7 +82,7 @@ export function SeccionAgendas({
         </div>
         <Switch
           id="multi-agenda"
-          aria-label="El cliente elige la agenda"
+          aria-label="El cliente elige con quién"
           checked={modo === "cliente_elige"}
           disabled={!puedeEscribir}
           onCheckedChange={(v) => void cambiarModo(v)}
@@ -89,13 +92,13 @@ export function SeccionAgendas({
 
       {datos.calendars.length === 0 ? (
         <EmptyState
-          title="Aún no hay agendas"
-          description="Conecta una cuenta de Google Calendar o crea una agenda interna para empezar."
+          title="Todavía no hay agendas"
+          description="Crea la agenda del negocio o conecta un Google Calendar, y tu agente empieza a agendar."
         />
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col overflow-hidden rounded-lg border border-border-soft">
           {datos.calendars.map((a) => (
-            <li key={a.id} className="rounded-md border border-border">
+            <li key={a.id} className="border-t border-border-soft first:border-t-0">
               <FilaAgenda
                 agenda={a}
                 otras={datos.calendars.filter((o) => o.id !== a.id && o.active)}
@@ -122,23 +125,23 @@ export function SeccionAgendas({
       {puedeEscribir && (
         <div className="flex flex-wrap gap-2">
           {bloqueado ? (
-            <Button variant="outline" size="sm" disabled>
-              Conectar otra cuenta de Google ↗
+            <Button variant="ghost" disabled>
+              Conectar con Google
             </Button>
           ) : (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="ghost">
               {/* `<a>` y no `<Link>`: el prefetch de Next llamaba al inicio del OAuth y renovaba el
                   `state` (HU-CAL-07). */}
-              <a href={CONECTAR_OTRA}>Conectar otra cuenta de Google ↗</a>
+              <a href={CONECTAR_OTRA}>Conectar con Google</a>
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => setEditando(editando === "nueva" ? null : "nueva")}>
-            <Plus className="h-4 w-4" aria-hidden /> Agregar agenda interna
+          <Button variant="outline" onClick={() => setEditando(editando === "nueva" ? null : "nueva")}>
+            <Plus className="h-4 w-4" aria-hidden /> Agregar agenda
           </Button>
         </div>
       )}
       {editando === "nueva" && (
-        <div className="rounded-md border border-border p-3">
+        <div className="rounded-lg border border-border-soft p-4">
           <FormularioAgenda idBase="ag-nueva" onSaved={() => setEditando(null)} onCancel={() => setEditando(null)} />
         </div>
       )}
@@ -193,54 +196,41 @@ function FilaAgenda({
     router.refresh();
   }
 
+  const origen =
+    agenda.source === "google" ? `Conectada con Google${agenda.account_email ? ` · ${agenda.account_email}` : ""}` : "Agenda interna";
+
   return (
-    <div className="flex flex-col gap-2 p-3">
+    <div className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center gap-0.5 rounded-full text-xs font-semibold text-headline ring-1 ring-border"
-        >
-          <MuestraDeColor color={agenda.color} className="h-2 w-2" />
-          {inicialDeAgenda(agenda.name)}
-        </span>
+        <MuestraDeColor color={agenda.color} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-headline">{agenda.name}</p>
-          <p className="truncate text-xs text-body">
-            {agenda.source === "google" ? agenda.account_email || "Google Calendar" : "Agenda interna"}
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-headline">
+            {agenda.name}
+            {agenda.is_default && <Badge variant="info">Principal</Badge>}
+            {!agenda.active && <Badge variant="neutral">Inactiva</Badge>}
+            {agenda.source === "google" && !agenda.connected && <Badge variant="warning">Sin conexión</Badge>}
+          </p>
+          <p className="truncate text-xs text-text-soft">
+            {origen}
             {agenda.description ? ` · ${agenda.description}` : ""}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-          {agenda.is_default && <Badge variant="accent">Principal</Badge>}
-          {!agenda.active && <Badge variant="neutral">Inactiva</Badge>}
-          {agenda.source === "google" && !agenda.connected && <Badge variant="warning">Sin conexión</Badge>}
-          <Button
-            aria-label={`${abierta ? "Cerrar" : "Editar"} ${agenda.name}`}
-            title={`Editar ${agenda.name}`}
-            size="icon"
-            variant="ghost"
-            onClick={onEditar}
-          >
-            <Pencil className="h-4 w-4" aria-hidden />
-          </Button>
-          {puedeEscribir && !agenda.is_default && (
-            <Button
-              aria-label={`Eliminar ${agenda.name}`}
-              title={`Eliminar ${agenda.name}`}
-              size="icon"
-              variant="ghost"
-              onClick={() => void eliminar()}
-            >
-              <Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden />
-            </Button>
+        <MenuDeFila etiqueta={`Más acciones de ${agenda.name}`} dentroDeUnCajon>
+          <DropdownMenuItem icon={<Pencil />} onSelect={onEditar}>
+            {abierta ? "Cerrar la edición" : puedeEscribir ? "Editar" : "Ver datos"}
+          </DropdownMenuItem>
+          {agenda.source === "google" && agenda.connection_id && (
+            <DropdownMenuLinkItem href={`/conexiones/${agenda.connection_id}`}>
+              Ver la conexión de Google
+            </DropdownMenuLinkItem>
           )}
-        </div>
+          {puedeEscribir && !agenda.is_default && (
+            <DropdownMenuItem icon={<Trash2 />} tone="danger" onSelect={() => void eliminar()}>
+              Eliminar
+            </DropdownMenuItem>
+          )}
+        </MenuDeFila>
       </div>
-      {agenda.source === "google" && agenda.connection_id && (
-        <Link href={`/conexiones/${agenda.connection_id}`} className="text-xs text-link underline-offset-2 hover:underline">
-          Ver la conexión de Google
-        </Link>
-      )}
       {error && (
         <p role="alert" className="text-sm text-status-danger-fg">
           {error}
@@ -255,7 +245,7 @@ function FilaAgenda({
               </option>
             ))}
           </Select>
-          <Button size="sm" variant="outline" onClick={() => void eliminar(moverA)}>
+          <Button variant="outline" onClick={() => void eliminar(moverA)}>
             Pasar las citas y eliminar
           </Button>
         </div>

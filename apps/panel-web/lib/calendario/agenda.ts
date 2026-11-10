@@ -97,31 +97,76 @@ export function agendasVisibles(guardadas: string[] | null, todas: string[]): st
   return conocidas.length ? conocidas : todas;
 }
 
-/** Cómo se colorea la grilla: por agenda si se ven varias, por tipo de cita si se ve una. */
-export type ColorPor = "tipo" | "agenda";
-
 /**
- * Evento para FullCalendar. Las citas llevan la clase de su tipo (`evt-cat-N`, sin tipo
- * `evt-sin-tipo`) y su código delante del título; las canceladas, `evt-cancelada`. Los
- * bloqueos son eventos normales (los de `display: "background"` no se pueden arrastrar)
- * con la clase `evt-bloqueo`, que los pinta como fondo rayado de toda la columna.
+ * Evento para FullCalendar (AGE-03/04): el color es siempre el de la agenda (con quién es), y el
+ * tipo va en palabras en `tipoNombre`, no como sigla delante del nombre. Sin agenda, la cita usa
+ * el color de su tipo. Las citas llevan `evt-cat-N` (sin color `evt-sin-tipo`); las canceladas,
+ * `evt-cancelada`. Los bloqueos son eventos normales (los de `display: "background"` no se pueden
+ * arrastrar) con la clase `evt-bloqueo`, que los pinta como franja rayada.
  */
-export function aEventoDeGrilla(e: EventoAgenda, colorPor: ColorPor = "tipo"): EventInput {
-  const base = { id: e.id, start: e.start, end: e.end, extendedProps: e };
+export function aEventoDeGrilla(e: EventoAgenda, tiposPorId: Record<string, string> = {}): EventInput {
   if (e.kind === "block") {
-    return { ...base, title: e.title || "Bloqueo", classNames: ["evt-bloqueo"], display: "block" };
+    return { id: e.id, start: e.start, end: e.end, extendedProps: e, title: e.title || "Bloqueo", classNames: ["evt-bloqueo"], display: "block" };
   }
-  const serie = serieDeColor(colorPor === "agenda" ? e.calendar_color : e.tipo_color);
+  const serie = serieDeColor(e.calendar_color || e.tipo_color);
   const clases = [serie ? `evt-cat-${serie}` : "evt-sin-tipo"];
   if (e.status === "cancelled") clases.push("evt-cancelada");
-  const titulo = e.title || "Cita";
+  const tipoNombre = tiposPorId[e.appointment_type_id] ?? "";
   return {
-    ...base,
-    title: e.tipo_codigo ? `${e.tipo_codigo} · ${titulo}` : titulo,
+    id: e.id,
+    start: e.start,
+    end: e.end,
+    extendedProps: { ...e, tipoNombre },
+    title: e.title || "Cita",
     classNames: clases,
     // Una cita cancelada ya no se mueve.
     editable: e.status !== "cancelled",
   };
+}
+
+const DIAS_FC: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+
+/** Lo que la grilla necesita del horario: qué se sombrea como cerrado y qué horas se muestran. */
+export type HorarioDeGrilla = {
+  businessHours: { daysOfWeek: number[]; startTime: string; endTime: string }[] | false;
+  slotMinTime: string;
+  slotMaxTime: string;
+  scrollTime: string;
+};
+
+const aMinutos = (hhmm: string) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+const aHora = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}:00`;
+
+/**
+ * Horario (`{"mon":"08:00-18:00",…}`, "" = cerrado) → grilla (AGE-01): de una hora antes de abrir a
+ * una después de cerrar, con lo cerrado sombreado. Sin horario que se entienda, de 6 a 22 sin sombra.
+ */
+export function horarioAGrilla(horas: Record<string, string>): HorarioDeGrilla {
+  const franjas: HorarioDeGrilla["businessHours"] = [];
+  let abre = Infinity;
+  let cierra = -Infinity;
+  for (const [dia, rango] of Object.entries(horas)) {
+    const n = DIAS_FC[dia];
+    const [inicio = "", fin = ""] = (rango || "").split("-");
+    const a = aMinutos(inicio);
+    const c = aMinutos(fin);
+    if (n === undefined || a === null || c === null || c <= a) continue;
+    franjas.push({ daysOfWeek: [n], startTime: aHora(a).slice(0, 5), endTime: aHora(c).slice(0, 5) });
+    abre = Math.min(abre, a);
+    cierra = Math.max(cierra, c);
+  }
+  if (!franjas.length) return { businessHours: false, slotMinTime: "06:00:00", slotMaxTime: "22:00:00", scrollTime: "08:00:00" };
+  const desde = Math.max(0, Math.floor(abre / 60) * 60 - 60);
+  const hasta = Math.min(24 * 60, Math.ceil(cierra / 60) * 60 + 60);
+  return { businessHours: franjas, slotMinTime: aHora(desde), slotMaxTime: aHora(hasta), scrollTime: aHora(abre) };
+}
+
+/** Fecha de hoy en `zona` como «AAAA-MM-DD» (para pedir las citas del día). */
+export function hoyEn(zona: string, ahora: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: zona, year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora);
 }
 
 export type Borrador = { start: string; end: string };

@@ -1,6 +1,7 @@
 import { CambiarNegocioAviso } from "@/app/(app)/calendario/_components/cambiar-negocio";
 import { AvisoGoogle } from "@/components/domain/aviso-google";
 import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,9 @@ type Status = { timezone: string };
 type TipoApi = Tipo & { description: string; duration_minutes: number; responsable_admin_id?: string | null; enlace_reunion?: string | null };
 
 /**
- * Agenda en una sola vista (HU-CAL-08, sobre HU-UX-08): el calendario con las citas de todas
- * las agendas y un cajón de ajustes (tipos de cita, horario y agendas). La cuenta de Google
- * de cada agenda se administra en la ficha de su conexión.
+ * Agenda en una sola vista (HU-CAL-08, rediseñada en AGE-00A): las citas de hoy, el calendario
+ * con las de todas las agendas y un cajón de ajustes (tipos de cita, horario y agendas). La cuenta
+ * de Google de cada agenda se administra en la ficha de su conexión.
  */
 export default async function AgendaPage({
   searchParams,
@@ -51,15 +52,14 @@ export default async function AgendaPage({
     return (
       <div className="flex flex-col gap-4">
         <AvisoGoogle codigo={google} />
+        <PageHeader title="Agenda" description="Las citas de tu negocio y quién las atiende." />
         {agendasRes.status === 403 ? (
           <EmptyState
-            title="Aún no tienes acceso a la Agenda"
+            title="Todavía no tienes acceso a la Agenda"
             description="Pídele a un propietario del negocio el permiso de Agenda."
           />
         ) : (
-          <p role="alert" className="text-status-danger-fg">
-            No se pudo cargar la Agenda: {agendasRes.error}
-          </p>
+          <ErrorDeCarga titulo="No se pudo cargar la Agenda" detalle={agendasRes.error} />
         )}
       </div>
     );
@@ -94,27 +94,6 @@ export default async function AgendaPage({
       <AvisoGoogle codigo={google} />
       {negocioPedido && <CambiarNegocioAviso tenantId={negocioPedido} actual={activo?.name ?? null} />}
 
-      <PageHeader
-        title="Agenda"
-        description="Elige un hueco para crear una cita o un bloqueo. Arrastra para mover y estira para cambiar la duración."
-      />
-
-      {datosPruebaRes.ok && (
-        <DatosDePruebaDelModulo modulo="agenda" estado={datosPruebaRes.data} />
-      )}
-
-      {sinAgendas && (
-        <EmptyState
-          title="Aún no hay agendas"
-          description="Conecta una cuenta de Google Calendar o usa la agenda interna del negocio."
-          action={
-            <Button asChild variant="outline" size="sm">
-              <Link href="/calendario?ajustes=agendas">Configurar agendas</Link>
-            </Button>
-          }
-        />
-      )}
-
       <AgendaVista
         tenantId={activo?.id ?? "negocio"}
         tipos={(tipos ?? []).filter((t) => t.active !== false)}
@@ -124,6 +103,22 @@ export default async function AgendaPage({
         ajustes={datosAjustes}
         seccionInicial={ajustes ?? null}
         puedeCrear={permisos["pack_calendar:citas"] === "write"}
+        avisos={
+          <>
+            {datosPruebaRes.ok && <DatosDePruebaDelModulo modulo="agenda" estado={datosPruebaRes.data} />}
+            {sinAgendas && (
+              <EmptyState
+                title="Todavía no hay agendas"
+                description="Crea la agenda del negocio o conecta un Google Calendar, y tu agente empieza a agendar por WhatsApp."
+                action={
+                  <Button asChild variant="outline">
+                    <Link href="/calendario?ajustes=agendas">Crear la agenda</Link>
+                  </Button>
+                }
+              />
+            )}
+          </>
+        }
       />
     </div>
   );
