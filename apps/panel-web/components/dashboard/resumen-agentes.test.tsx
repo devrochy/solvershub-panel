@@ -84,7 +84,7 @@ const DATOS: ResumenPorAgente = {
 describe("ResumenAgentes (ADR-0171)", () => {
   it("ordena el Resumen en secciones: agente general, evolución diaria y agentes", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const titulos = ["Agente general", "Evolución diaria", "Agentes"].map((n) => screen.getByRole("heading", { name: n }));
+    const titulos = ["Todo el negocio", "Evolución diaria", "Agentes"].map((n) => screen.getByRole("heading", { name: n }));
     // El orden del documento es el orden de lectura.
     titulos.slice(1).forEach((h, i) => {
       expect(titulos[i].compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -93,7 +93,7 @@ describe("ResumenAgentes (ADR-0171)", () => {
 
   it("el agente general lleva la cifra principal con la tendencia del negocio", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const general = screen.getByRole("region", { name: "Agente general" });
+    const general = screen.getByRole("region", { name: "Todo el negocio" });
     expect(within(general).getByText("Conversaciones")).toBeTruthy();
     expect(within(general).getByRole("img", { name: /Conversaciones por día, últimos 7 días/ })).toBeTruthy();
     expect(within(general).getByText(/\+100 % frente a los 7 días anteriores/)).toBeTruthy();
@@ -101,16 +101,17 @@ describe("ResumenAgentes (ADR-0171)", () => {
 
   it("los módulos sin agente se muestran bajo el agente general", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const general = screen.getByRole("region", { name: "Agente general" });
+    const general = screen.getByRole("region", { name: "Todo el negocio" });
     const modulo = within(general).getByRole("region", { name: "Módulo Agenda" });
     expect(within(modulo).getByText("Citas de hoy")).toBeTruthy();
   });
 
   it("cada agente es una tarjeta plegable y solo la primera arranca abierta", () => {
     const { container } = render(<ResumenAgentes datos={DATOS} />);
-    const tarjetas = container.querySelectorAll("details");
+    // `.group`: el detalle técnico de un módulo con error también es un `<details>`.
+    const tarjetas = container.querySelectorAll("details.group");
     expect(tarjetas).toHaveLength(3);
-    expect(Array.from(tarjetas).map((d) => d.open)).toEqual([true, false, false]);
+    expect(Array.from(tarjetas).map((d) => (d as HTMLDetailsElement).open)).toEqual([true, false, false]);
   });
 
   it("no hay tarjeta del Coordinador ni del General; la insignia es solo del back-office", () => {
@@ -134,7 +135,7 @@ describe("ResumenAgentes (ADR-0171)", () => {
 
   it("cada cifra enlaza a la pantalla que la explica", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    const general = screen.getByRole("region", { name: "Agente general" });
+    const general = screen.getByRole("region", { name: "Todo el negocio" });
     const hrefDe = (contenedor: HTMLElement, texto: string) =>
       within(contenedor).getByText(texto).closest("a")?.getAttribute("href");
     expect(hrefDe(general, "Conversaciones")).toBe("/conversaciones");
@@ -160,7 +161,7 @@ describe("ResumenAgentes (ADR-0171)", () => {
 
   it("el selector de métrica cambia la serie de la gráfica sin recargar", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    expect(screen.getByRole("group", { name: /Turnos por agente y día/ })).toBeTruthy();
+    expect(screen.getByRole("group", { name: /Respuestas por agente y día/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Conversaciones" }));
     expect(screen.getByRole("group", { name: /Conversaciones por agente y día/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Costo IA" }));
@@ -169,13 +170,15 @@ describe("ResumenAgentes (ADR-0171)", () => {
 
   it("un módulo que falló lo dice sin tumbar el resto", () => {
     render(<ResumenAgentes datos={DATOS} />);
-    expect(screen.getByRole("alert").textContent).toBe("No se pudo cargar este módulo.");
+    const alerta = screen.getByRole("alert");
+    expect(alerta.textContent).toContain("No pudimos cargar estas cifras");
+    expect(alerta.querySelector("details")?.textContent).toContain("No se pudo cargar este módulo.");
   });
 
   it("tolera un backend sin la serie del negocio (aún no desplegado)", () => {
     const sinSerie = { ...DATOS, general: { kpis: DATOS.general.kpis } } as ResumenPorAgente;
     render(<ResumenAgentes datos={sinSerie} />);
-    const general = screen.getByRole("region", { name: "Agente general" });
+    const general = screen.getByRole("region", { name: "Todo el negocio" });
     expect(within(general).queryByRole("img")).toBeNull();
     expect(within(general).getByText("Conversaciones")).toBeTruthy();
   });

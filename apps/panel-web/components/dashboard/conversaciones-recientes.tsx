@@ -19,7 +19,7 @@ export function ConversacionesRecientes({ recientes, ahora }: { recientes: Recie
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>Conversaciones recientes</CardTitle>
+        <CardTitle as="h2">Conversaciones recientes</CardTitle>
         <Link href="/conversaciones" className="text-sm text-link hover:underline">
           Ver todas
         </Link>

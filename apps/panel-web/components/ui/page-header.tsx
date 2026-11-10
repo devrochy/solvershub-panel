@@ -44,7 +44,7 @@ export function PageHeader({
         <div className="max-md:hidden">
           {breadcrumbs ? <Breadcrumbs items={breadcrumbs} /> : <MigasDeShell titulo={title} intermedias={migasIntermedias} />}
         </div>
-        <div className="flex flex-wrap items-end justify-between gap-x-6 border-border-soft has-[nav]:border-b md:justify-start">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 border-border-soft has-[nav[aria-label=Secciones]]:border-b md:justify-start">
           <div className="flex items-center gap-2 pb-2.5">
             <TituloDePagina title={title} compacto />
             <SectionHelpPopover section={helpSection} description={description} className="max-sm:hidden" />
