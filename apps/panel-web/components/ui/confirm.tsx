@@ -10,6 +10,7 @@ import {
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { Button } from "@/components/ui/button";
+import { focoParaDevolver } from "@/lib/foco";
 import { cn } from "@/lib/utils";
 
 export interface ConfirmOptions {
@@ -38,8 +39,8 @@ export function useConfirm(): ConfirmFn {
 interface PendingConfirm {
   options: ConfirmOptions;
   resolve: (result: boolean) => void;
-  // Quién tenía el foco al pedir la confirmación: el diálogo se abre por código
-  // (sin `Trigger` de Radix), así que hay que devolvérselo a mano al cerrar.
+  // Quién tenía el foco al pedir la confirmación (o el botón del menú, si se pidió desde un ítem):
+  // el diálogo se abre por código (sin `Trigger` de Radix), así que hay que devolvérselo a mano al cerrar.
   returnFocus: HTMLElement | null;
 }
 
@@ -47,8 +48,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
 
   const confirm = useCallback<ConfirmFn>((options) => {
-    const activo = typeof document !== "undefined" ? document.activeElement : null;
-    const returnFocus = activo instanceof HTMLElement ? activo : null;
+    const returnFocus = focoParaDevolver();
     return new Promise<boolean>((resolve) => setPending({ options, resolve, returnFocus }));
   }, []);
 
