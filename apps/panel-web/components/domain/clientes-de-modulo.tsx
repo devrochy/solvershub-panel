@@ -139,6 +139,7 @@ export async function ClientesDeModulo({
   helpSection,
   vacioDescripcion,
   operable,
+  etiquetaDeLista,
 }: {
   /** Clave del agente en `agents[].key` (`ventas`, `agenda`…). */
   agente: string;
@@ -150,7 +151,10 @@ export async function ClientesDeModulo({
   helpSection?: string;
   vacioDescripcion: string;
   operable?: OperableDeModulo;
+  /** Nombre de la lista para lectores de pantalla cuando el título es el de la sección («Clientes de Agenda»). */
+  etiquetaDeLista?: string;
 }) {
+  const nombreDeLista = etiquetaDeLista ?? titulo;
   const qs = consultaClientesDeModulo(agente, sp, operable);
   const embudoPedido = pideEmbudo(sp, operable);
   // En el tablero la etapa de la URL no filtra: las columnas ya son las etapas.
@@ -334,11 +338,14 @@ export async function ClientesDeModulo({
     {
       key: "cliente",
       header: "Cliente",
-      cell: (lead) => (
-        <Link href={hrefFicha(lead.id, { agente })} className="truncate font-medium text-link hover:underline">
-          {lead.perfil.nombre_visible}
-        </Link>
-      ),
+      cell: (lead) =>
+        operable ? (
+          <Link href={hrefFicha(lead.id, { agente })} className="truncate font-medium text-link hover:underline">
+            {lead.perfil.nombre_visible}
+          </Link>
+        ) : (
+          <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>
+        ),
     },
     ...(operable?.etapa
       ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
@@ -376,20 +383,16 @@ export async function ClientesDeModulo({
           ),
         }),
       ),
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: operable
-        ? (lead) => accionesDeFila(lead)
-        : (lead) => (
-            <div className="flex items-center justify-end gap-1">
-              <IconAction href={hrefFicha(lead.id, { agente })} label={`Ver la ficha de ${lead.perfil.nombre_visible}`} tone="ver">
-                <Eye className="h-4 w-4" aria-hidden />
-              </IconAction>
-            </div>
-          ),
-    },
+    ...(operable
+      ? [
+          {
+            key: "acciones",
+            header: "Acciones",
+            align: "right",
+            cell: (lead) => accionesDeFila(lead),
+          } satisfies Column<Fila>,
+        ]
+      : []),
   ];
 
   const csv = new URLSearchParams({ agente });
@@ -406,8 +409,8 @@ export async function ClientesDeModulo({
       {etapaComoPestanas && etapaActual && operable?.etapa && (
         <input type="hidden" name="filtro" value={`${operable.etapa}:${etapaActual}`} />
       )}
-      <Field label="Buscar" htmlFor="q" className="w-60">
-        <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre, identificador o teléfono" />
+      <Field label="Buscar" htmlFor="q" className="w-72 max-w-full">
+        <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre o teléfono" />
       </Field>
       {conSeguimiento && seguimientoActual && operable?.seguimiento && (
         <input type="hidden" name="filtro" value={`${operable.seguimiento}:${seguimientoActual}`} />
@@ -443,8 +446,8 @@ export async function ClientesDeModulo({
           </Select>
         </Field>
       )}
-      <Button type="submit" variant="outline">
-        Filtrar
+      <Button type="submit" variant="outline" className={operable ? undefined : "sr-only"}>
+        {operable ? "Filtrar" : "Buscar"}
       </Button>
       {hayFiltros && (
         <Link href={basePath} className="pb-2.5 text-sm text-link hover:underline">
@@ -479,8 +482,10 @@ export async function ClientesDeModulo({
           </Button>
         ) : undefined
       }
-      caption={titulo}
+      caption={nombreDeLista}
       serverPaginated
+      getRowHref={operable ? undefined : (lead) => hrefFicha(lead.id, { agente })}
+      getRowLabel={operable ? undefined : (lead) => `Abrir la ficha de ${lead.perfil.nombre_visible}`}
     />
   );
 
@@ -574,7 +579,7 @@ export async function ClientesDeModulo({
       ) : operable && hayFilas && !modoEmbudo ? (
         <>
           <div className="hidden md:block">{tabla}</div>
-          <ul className="flex flex-col gap-3 md:hidden" aria-label={titulo}>
+          <ul className="flex flex-col gap-3 md:hidden" aria-label={nombreDeLista}>
             {items.map((lead) => (
               <li key={lead.id} className="flex flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -594,6 +599,25 @@ export async function ClientesDeModulo({
             ))}
           </ul>
         </>
+      ) : !operable && hayFilas ? (
+        <>
+          <div className="hidden md:block">{tabla}</div>
+          <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface md:hidden" aria-label={nombreDeLista}>
+            {items.map((lead) => (
+              <li key={lead.id} className="relative flex min-h-16 items-center gap-3 border-b border-border-soft px-4 py-3 last:border-b-0">
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <Link
+                    href={hrefFicha(lead.id, { agente })}
+                    className="truncate text-sm font-medium text-headline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
+                  >
+                    {lead.perfil.nombre_visible}
+                  </Link>
+                  <span className="text-xs text-text-soft">{telefonoVisible(lead.perfil)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : (
         tabla
       )}
@@ -603,7 +627,7 @@ export async function ClientesDeModulo({
           page={page}
           hasMore={has_more}
           total={total}
-          label="clientes"
+          label={total === 1 ? "cliente" : "clientes"}
           makeHref={(target) => {
             const next = new URLSearchParams(qs);
             next.delete("agente");

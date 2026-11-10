@@ -228,6 +228,14 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Una revisión se dibuja con `MarcaDeRevision` y siempre con su texto. Los pasos largos (Pasar a producción) van de a uno con `Stepper`.
 - En las altas, el camino recomendado va primero y los otros plegados. No hay botones «← Volver»: las migas y las pestañas llevan de vuelta.
 
+## Agenda (SPEC-29)
+
+- Una sola vista: la cabecera con Ajustes y Nueva cita, la columna «Hoy» (se muestra u oculta con «Citas de hoy» y se recuerda por negocio en el navegador) y el calendario con su propia barra del kit: flechas, Hoy y Día/Semana/Mes. En el celular abre en el día.
+- La grilla muestra de una hora antes de abrir a una después de cerrar (`horarioAGrilla`) y sombrea lo cerrado. Al cambiar el ancho (la columna Hoy) se llama `updateSize()`.
+- Cada cita lleva el color de su agenda, nunca el de su tipo, y dice el cliente primero; el tipo va en palabras, sin siglas. La hora solo aparece en las citas largas.
+- Una cita se abre en un resumen con «¿Vino?» arriba; editar es un paso aparte. El formulario pide el cliente, el tipo, el día y la hora en formato de Colombia (`lib/calendario/formulario.ts`), y el fin sale de la duración.
+- Los ajustes van en pestañas dentro del cajón. Un `MenuDeFila` dentro de un cajón o diálogo lleva `dentroDeUnCajon`, y Escape con un menú abierto cierra solo el menú (`lib/escape-con-menu.ts`).
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

@@ -237,7 +237,22 @@ if (process.env.CONEXIONES === "1") {
 // AGENDAS=2: el negocio tiene dos agendas (HU-CAL-08) y el calendario trae una cita de cada una.
 if (process.env.AGENDAS === "2") {
   respuestas["/pack/calendar/calendars"] = dosAgendas;
-  respuestas["/pack/calendar/events"] = eventosAgenda();
+  // Una semana con trabajo: además de las tres de hoy, citas de lunes a sábado en las dos agendas.
+  const semana = eventosAgenda();
+  const [base, otra] = semana.events;
+  const lunes = new Date();
+  lunes.setUTCDate(lunes.getUTCDate() - ((lunes.getUTCDay() + 6) % 7));
+  const a = (dia, h, min = 0) => new Date(Date.UTC(lunes.getUTCFullYear(), lunes.getUTCMonth(), lunes.getUTCDate() + dia, h + 5, min)).toISOString();
+  const mas = [
+    [0, 9, 0, 30, "Marta Díaz", base], [0, 11, 0, 20, "Jorge Peña", otra], [1, 14, 30, 30, "Sofía Rivas", base],
+    [2, 9, 30, 20, "Camilo Vega", otra], [2, 16, 0, 30, "Valentina Ortiz", base], [3, 10, 0, 30, "Andrés Mora", base],
+    [3, 10, 0, 20, "Lucía Herrera", otra], [4, 15, 0, 30, "Daniela Castro", base], [5, 9, 0, 20, "Felipe Rojas", otra],
+  ].map(([dia, h, min, dur, nombre, molde], i) => ({ ...molde, id: `appt-s${i}`, title: nombre, start: a(dia, h, min), end: a(dia, h, min + dur) }));
+  respuestas["/pack/calendar/events"] = { ...semana, events: [...semana.events, ...mas] };
+  // El horario como lo guarda el backend: JSON día → «HH:MM-HH:MM» ("" = cerrado).
+  respuestas["/admin/plugins/pack_calendar/config"] = { plugin_id: "pack_calendar", values: { business_hours: JSON.stringify({ mon: "08:00-18:00", tue: "08:00-18:00", wed: "08:00-18:00", thu: "08:00-18:00", fri: "08:00-17:00", sat: "09:00-13:00" }), multi_agenda_modo: "cliente_elige" } };
+  // Un negocio que usa la Agenda la tiene habilitada: sin el aviso de pack bloqueado encima.
+  respuestas["/admin/plugins"] = respuestas["/admin/plugins"].map((p) => (p.id === "pack_calendar" ? { ...p, enabled_for_tenant: true } : p));
 }
 
 // GESTOR_EN_EQUIPO=1: Equipo trae un gestor de cobranza con su perfil (ADR-0176, HU-ACC-07): otro con el

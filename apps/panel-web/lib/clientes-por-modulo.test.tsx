@@ -143,7 +143,7 @@ describe("ClientesDeModulo", () => {
     const fila = screen.getAllByRole("row")[1];
     expect(within(fila).getByText("fiel")).toBeTruthy();
     expect(within(fila).getByText("3")).toBeTruthy();
-    const enlace = within(fila).getByRole("link", { name: "Ana Prueba" });
+    const enlace = within(fila).getByRole("link", { name: "Abrir la ficha de Ana Prueba" });
     expect(enlace.getAttribute("href")).toBe(`/leads?cliente=${ANA.id}&agente=ventas`);
   });
 });

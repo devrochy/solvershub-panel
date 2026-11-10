@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { SelectorDeColor } from "@/components/domain/tipo-de-cita";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ export function FormularioAgenda({
 }) {
   const router = useRouter();
   const [propio, setPropio] = useState(Boolean(agenda?.business_hours));
+  const [activa, setActiva] = useState(agenda?.active ?? true);
   const [horas, setHoras] = useState<BusinessHours>(() => parseBusinessHours(agenda?.business_hours ?? ""));
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
 
@@ -53,7 +55,7 @@ export function FormularioAgenda({
       else cuerpo.inherit_timezone = true;
       if (propio) cuerpo.business_hours = serializeBusinessHours(horas);
       else cuerpo.inherit_business_hours = true;
-      if (!agenda.is_default) cuerpo.active = data.get("active") === "on";
+      if (!agenda.is_default) cuerpo.active = activa;
     } else {
       if (zona) cuerpo.timezone = zona;
       if (propio) cuerpo.business_hours = serializeBusinessHours(horas);
@@ -107,27 +109,23 @@ export function FormularioAgenda({
           <Input id={`${idBase}-tz`} name="timezone" defaultValue={agenda?.own_timezone ?? ""} placeholder="La del negocio" />
         </Field>
         <div className="flex flex-col gap-3">
-          <label className="flex items-center gap-2 text-sm text-headline">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-control-border"
-              checked={propio}
-              onChange={(e) => setPropio(e.target.checked)}
-            />
-            Horario propio (si no, usa el del negocio)
-          </label>
+          <div className="flex items-center justify-between gap-4">
+            <label htmlFor={`${idBase}-propio`} className="flex flex-col">
+              <span className="text-sm font-medium text-headline">Horario propio</span>
+              <span className="text-xs text-text-soft">Apagado, usa el horario del negocio.</span>
+            </label>
+            <Switch id={`${idBase}-propio`} checked={propio} onCheckedChange={setPropio} />
+          </div>
           {propio && <HorarioEditor horas={horas} onChange={setHoras} idBase={`${idBase}-h`} />}
         </div>
         {agenda && !agenda.is_default && (
-          <label className="flex items-center gap-2 text-sm text-headline">
-            <input
-              type="checkbox"
-              name="active"
-              className="h-4 w-4 rounded border-control-border"
-              defaultChecked={agenda.active}
-            />
-            Activa (el asistente la ofrece a los clientes)
-          </label>
+          <div className="flex items-center justify-between gap-4">
+            <label htmlFor={`${idBase}-activa`} className="flex flex-col">
+              <span className="text-sm font-medium text-headline">Activa</span>
+              <span className="text-xs text-text-soft">Tu agente la ofrece a los clientes.</span>
+            </label>
+            <Switch id={`${idBase}-activa`} checked={activa} onCheckedChange={setActiva} />
+          </div>
         )}
       </fieldset>
       <FormFeedback error={status.error} success={status.success} />
@@ -138,8 +136,8 @@ export function FormularioAgenda({
               Cancelar
             </Button>
           )}
-          <Button type="submit" variant="accent" disabled={status.loading}>
-            {status.loading ? "Guardando…" : agenda ? "Guardar agenda" : "Crear agenda"}
+          <Button type="submit" variant="accent" loading={status.loading}>
+            {agenda ? "Guardar agenda" : "Crear agenda"}
           </Button>
         </div>
       )}
