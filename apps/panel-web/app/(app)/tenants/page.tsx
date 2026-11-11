@@ -116,7 +116,7 @@ export default async function TenantsPage({
         page={page}
         hasMore={has_more}
         total={total}
-        label="negocios"
+        label="negocios" singular="negocio"
         makeHref={(target) => hrefDe({ page: String(target), negocio: null })}
       />
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { InputPassword } from "@/components/ui/input-password";
 import { toast } from "@/lib/toast-store";
 
@@ -95,11 +96,7 @@ export function EliminarCuentaDialog({
               autoComplete="current-password"
             />
           </Field>
-          {error && (
-            <p role="alert" className="text-sm text-status-danger-fg">
-              {error}
-            </p>
-          )}
+          <FormFeedback error={error} />
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
               <Button type="button" variant="ghost" size="sm">

@@ -210,7 +210,7 @@ export function PublicarEnMeta({
         ) : (
           <div className="flex flex-col gap-5">
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-[13px] font-medium text-body">Conexión de WhatsApp</legend>
+              <legend className="mb-2 text-sh-label font-medium text-body">Conexión de WhatsApp</legend>
               <RadioGroup
                 label="Conexión de WhatsApp"
                 name="conexion-meta"
@@ -230,7 +230,7 @@ export function PublicarEnMeta({
             </fieldset>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="text-[13px] font-medium text-body">Categoría</legend>
+              <legend className="text-sh-label font-medium text-body">Categoría</legend>
               <RadioGroup
                 label="Categoría de la plantilla"
                 name="categoria-meta"
@@ -253,7 +253,7 @@ export function PublicarEnMeta({
 
             {variables.length > 0 && (
               <fieldset className="flex flex-col gap-2">
-                <legend className="text-[13px] font-medium text-body">Ejemplo de cada dato del mensaje</legend>
+                <legend className="text-sh-label font-medium text-body">Ejemplo de cada dato del mensaje</legend>
                 <p className="text-xs text-text-soft">Meta pide un ejemplo por cada dato variable y lo revisa. Usa datos inventados, nunca los de un cliente.</p>
                 {variables.map((v) => (
                   <Field key={v} label={etiquetasDeDatos[v] ?? v} htmlFor={`ejemplo-${v}`}>
@@ -269,7 +269,7 @@ export function PublicarEnMeta({
             )}
 
             <section aria-label="Cómo quedará en Meta" className="flex flex-col gap-2">
-              <h3 className="text-[13px] font-medium text-body">Así se enviará a Meta</h3>
+              <h3 className="text-sh-label font-medium text-body">Así se enviará a Meta</h3>
               {!definicion ? (
                 <p className="text-xs text-text-soft">
                   No mostramos la vista previa de una versión anterior. Se envía exactamente como se publicó en su momento.

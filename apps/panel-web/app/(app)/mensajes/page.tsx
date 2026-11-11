@@ -1,4 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { CatalogoDeMensajes } from "@/lib/api/types";
@@ -18,13 +19,17 @@ export default async function MensajesPage() {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Mensajes" description={DESCRIPCION} />
-        <Card>
-          <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-            {res.status === 403
-              ? "Tu rol no tiene acceso a ninguna de las secciones donde viven los mensajes."
-              : `No se pudo cargar el catálogo de mensajes: ${res.error}`}
-          </CardContent>
-        </Card>
+        {res.status === 403 ? (
+          <div className="rounded-lg border border-border-soft bg-surface">
+            <EstadoDeError
+              tono="neutro"
+              titulo="No tienes acceso a los mensajes"
+              descripcion="Tu rol no tiene acceso a ninguna de las secciones donde viven los mensajes. Pídele acceso al dueño del negocio."
+            />
+          </div>
+        ) : (
+          <ErrorDeCarga titulo="No pudimos cargar los mensajes" detalle={res.error} />
+        )}
       </div>
     );
   }

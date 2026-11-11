@@ -93,7 +93,7 @@ export function BrainForm({
               />
             </Field>
             <div className="flex flex-col gap-2 md:col-span-2">
-              <span className="text-[13px] font-medium text-body">Cómo salen las respuestas</span>
+              <span className="text-sh-label font-medium text-body">Cómo salen las respuestas</span>
               <SegmentedControl
                 label="Cómo salen las respuestas"
                 options={TEMPERATURAS.map((o) => ({ value: o.value, label: o.label }))}

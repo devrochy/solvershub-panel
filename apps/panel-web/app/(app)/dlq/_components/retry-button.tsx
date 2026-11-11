@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { FormFeedback } from "@/components/ui/form-feedback";
 
 /** Re-encola un evento de la bandeja de fallos. */
 export function RetryButton({ entryId, que }: { entryId: string; /** Qué se reintenta, para el nombre accesible. */ que?: string }) {
@@ -29,11 +30,7 @@ export function RetryButton({ entryId, que }: { entryId: string; /** Qué se rei
       <Button aria-label={que ? `Reintentar ${que}` : undefined} loading={loading} onClick={reintentar} size="sm" variant="outline">
         Reintentar
       </Button>
-      {error && (
-        <span className="text-xs text-status-danger-fg" role="alert">
-          {error}
-        </span>
-      )}
+      <FormFeedback error={error} className="text-xs" />
     </div>
   );
 }

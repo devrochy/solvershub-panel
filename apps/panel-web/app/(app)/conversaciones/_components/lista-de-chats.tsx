@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Contador } from "@/components/ui/contador";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import type { ConversationSummary } from "@/lib/api/types";
 import { nombreDelChat } from "@/lib/conversaciones/nombre";
 import { formatHoraChat, textoPendientes } from "@/lib/format";
@@ -162,11 +163,7 @@ export function ListaDeChats({
         })}
       </ul>
       <div ref={finRef} className="flex flex-col items-center gap-2 px-4 py-4">
-        {errorCarga && (
-          <p role="alert" className="text-xs text-status-danger-fg">
-            {errorCarga}
-          </p>
-        )}
+        <FormFeedback error={errorCarga} className="text-xs" />
         {cargandoMas ? (
           <span role="status" className="text-xs text-text-soft">
             Cargando más…

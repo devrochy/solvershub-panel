@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AsistenteDeAgente } from "@/app/(app)/agentes/nuevo/_components/asistente-de-agente";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { puedeEditarAgentes } from "@/lib/agentes";
 import { apiFetch } from "@/lib/api/server";
@@ -40,9 +41,7 @@ export default async function NuevoAgentePage() {
           <p className="text-sm text-body">Todavía no hay tipos de agente disponibles.</p>
         )
       ) : (
-        <p role="alert" className="text-status-danger-fg">
-          No se pudo cargar el asistente: {plantillas.error}
-        </p>
+        <ErrorDeCarga titulo="No pudimos cargar el asistente" detalle={plantillas.error} />
       )}
     </div>
   );

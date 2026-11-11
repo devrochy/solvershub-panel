@@ -1,11 +1,15 @@
 import { EditorDePermisos } from "@/app/(app)/agentes/colaboracion/_components/editor-de-permisos";
 import { ProbarFrase } from "@/app/(app)/agentes/colaboracion/_components/probar-frase";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { AgentsOverview, AgentSummary, ConnectionsConsole, Graph, Me } from "@/lib/api/types";
 import { desdeEnlaces, puedeEditarPermisos } from "@/lib/colaboracion";
 
 export const metadata = { title: "Colaboración" };
+
+const DESCRIPCION =
+  "Quién puede pasarle la conversación, encargarle o consultarle a quién, y a qué agente le llega cada mensaje.";
 
 /**
  * Colaboración entre agentes (HU-AOS-26): los permisos como lista accesible (con mapa opcional de
@@ -22,9 +26,10 @@ export default async function ColaboracionPage() {
   if (!grafo.ok || !agentesRes.ok) {
     const error = !grafo.ok ? grafo.error : !agentesRes.ok ? agentesRes.error : "";
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los permisos: {error}
-      </p>
+      <div className="flex flex-col gap-8">
+        <PageHeader title="Colaboración" description={DESCRIPCION} helpSection="agents" />
+        <ErrorDeCarga titulo="No pudimos cargar los permisos entre agentes" detalle={error} />
+      </div>
     );
   }
   const runtime = overview.ok ? overview.data.runtime : "legacy";
@@ -44,7 +49,7 @@ export default async function ColaboracionPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Colaboración"
-        description="Quién puede pasarle la conversación, encargarle o consultarle a quién, y a qué agente le llega cada mensaje."
+        description={DESCRIPCION}
         helpSection="agents"
       />
 

@@ -33,15 +33,32 @@ sola, vive en su `_components/`. Ningún componente de `ui/` conoce el negocio.
 
 Antes de escribir markup, busca en el kit. **Catálogo vivo**: `/catalogo` con
 `PANEL_CATALOGO=1` (desarrollo y test; en producción da 404), con cada componente en claro
-y oscuro lado a lado. Una pieza nueva del kit entra al catálogo en el mismo PR.
+y oscuro lado a lado, ordenado por tarea (Mostrar, Pedir, Avisar, Navegar, Marca) y con
+cuándo usar cada pieza. Una pieza nueva del kit entra al catálogo en el mismo PR.
 
 | Nivel | Componentes (`components/ui` salvo indicación) |
 |---|---|
 | Átomos | `Button` (`loading` conserva el ancho y pone `aria-busy`), `Badge` (con tono de estado trae su ícono y el tipo no deja quitarlo), `Avatar`, `Kbd`, `Contador` (`99+` desde 100; `etiqueta` para lectores de pantalla), `Skeleton` (estático, `lines`), `Input`/`Select`/`Textarea` (`aria-invalid` pinta el borde de error), `InputPassword` (ojo de 44 px de ancho dentro del campo), `Checkbox`, `RadioGroup`, `Switch`, `Tooltip` |
-| Moléculas | `Field` (une ayuda o error con el control vía `aria-describedby`), `SearchInput` (atajo opcional, Escape limpia), `Breadcrumbs`, `Tabs` (contenido en la misma página; si no caben, la fila se desplaza sola hasta la activa) y `TabLinks` (pestañas que cambian de ruta; `size="compact"` para filas largas: menos relleno y la fila se desplaza sola hasta la activa), `DropdownMenu`, `Popover`, `KpiTile` (delta escrito + `polarity`; `size="compact"` en cabeceras: una fila baja en móvil, normal desde `sm`; `StatCard` es alias deprecado), `EmptyState`, `Pagination`, `SegmentedControl` (2 a 5 opciones excluyentes; con botones o, si todas llevan `href`, como enlaces), `EstadoDeError` (qué pasó, cómo seguir y una acción, con el detalle técnico plegado; `forma` «pagina» o «en-linea») |
+| Moléculas | `Field` (une ayuda o error con el control vía `aria-describedby`), `SearchInput` (atajo opcional, Escape limpia), `Breadcrumbs`, `Tabs` (contenido en la misma página; si no caben, la fila se desplaza sola hasta la activa) y `TabLinks` (pestañas que cambian de ruta; `size="compact"` para filas largas: menos relleno y la fila se desplaza sola hasta la activa), `DropdownMenu`, `Popover`, `KpiTile` (delta escrito + `polarity`; `size="compact"` en cabeceras: una fila baja en móvil, normal desde `sm`), `EmptyState`, `Pagination`, `SegmentedControl` (2 a 5 opciones excluyentes; con botones o, si todas llevan `href`, como enlaces), `EstadoDeError` (qué pasó, cómo seguir y una acción, con el detalle técnico plegado; `forma` «pagina» o «en-linea») |
 | Organismos | `DataTable` (`density`, `maxHeight` con encabezado fijo, `loading`, `error` + `errorAction`, `caption`; con `getRowHref` la fila entera abre su detalle y no lleva botón «Ver»), `Dialog`, `Confirm`, `Sheet` (panel lateral; `antesDelTitulo` y `despuesDelTitulo` ponen un avatar o una etiqueta en la franja del título), `PageHeader` (migas + título + acciones + pestañas; `densidad="compacta"` para herramientas de pantalla completa: título y pestañas en una franja y la descripción en «¿Qué es esto?») |
 | Gráficos (`components/dataviz`) | `Sparkline` (ranura de `KpiTile`; decorativa o con `label` resumen), `LineChart` (con `area`), `BarChart` (una serie o agrupadas), `ProgressRing` (consumo del plan). Geometría y formato puros en `escalas.ts` (los mismos casos en la app) |
-| Plantillas (`components/templates`) | `ListPage` (cabecera, filtros, contenido), `DetailPage` (cabecera, resumen, contenido), `DashboardPage` (grilla 12/6/1), `SettingsPage` (pestañas, ancho de lectura) |
+| Plantillas (`components/templates`) | `ListPage` (cabecera, filtros, contenido), `DetailPage` (cabecera, resumen, contenido), `DashboardPage` (grilla 12/6/1) |
+
+### Elegir la pieza (rediseño del kit)
+
+- **Cambiar de vista.** `TabLinks` cuando cada vista es su propia ruta (se comparte el enlace:
+  las pestañas de una ficha o de una sección). `SegmentedControl` para filtrar o mostrar lo mismo
+  de otra forma, con 2 a 5 opciones cortas (Todas · Abiertas · Cerradas; Lista · Embudo; la vista
+  previa de una plantilla). `Tabs` para partes distintas de un mismo objeto sin ruta propia, dentro
+  de un panel o diálogo (Acceso · Permisos de una persona, los ajustes de la Agenda), o un filtro
+  con más de 5 opciones o rótulos largos (el catálogo de Mensajes).
+- **Errores.** Una página o un bloque que no cargó: `ErrorDeCarga` (o `EstadoDeError` en línea),
+  con la cabecera en pie y «Reintentar». Dentro de un formulario o un diálogo: `FormFeedback`, con
+  ícono y texto. Nunca una línea roja suelta.
+- **Carga.** `Skeleton` o `CargandoLista` con la forma de lo que viene; nunca «Cargando…» en texto.
+  El botón que espera usa `loading`.
+- **Letra.** Siempre de la escala (`text-sh-*`, `text-xs`, `text-sm`); nada de `text-[13px]`.
+- `IconAction` (botón de solo ícono) queda para acciones sobre una imagen, como la foto del perfil.
 
 ### Gráficos (HU-DS-06)
 

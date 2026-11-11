@@ -96,7 +96,7 @@ export default async function EscalationsPage({
           page={page}
           hasMore={has_more}
           total={total}
-          label="escalaciones"
+          label="escalaciones" singular="escalación"
           makeHref={(target) => {
             const destino = new URLSearchParams(qs);
             destino.set("page", String(target));

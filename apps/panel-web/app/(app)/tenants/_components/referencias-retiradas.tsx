@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import type { RetiredAsideConnection, RetiredReferenceRow, RetiredReferencesReport } from "@/lib/api/types";
 import {
   AYUDA_APARTE,
@@ -136,9 +137,7 @@ function Contenido({ r }: { r: RetiredReferencesReport }) {
         <p className="text-sm text-body">{resumenDelReporte(r)}</p>
       </div>
       {r.error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          No se pudo revisar todo el negocio: {r.error}
-        </p>
+        <FormFeedback error={<>No se pudo revisar todo el negocio: {r.error}</>} />
       )}
 
       {r.rows.length > 0 && <ListaPorAgente filas={r.rows} titulo="Agentes y versiones afectados" />}

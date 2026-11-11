@@ -77,7 +77,7 @@ export function KpiTile({
   const cuerpo = (
     <>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[13px] text-body">{label}</p>
+        <p className="text-sh-label font-normal text-body">{label}</p>
         {icon && <span className="text-text-soft">{icon}</span>}
       </div>
       {compacta && !loading && !error ? (

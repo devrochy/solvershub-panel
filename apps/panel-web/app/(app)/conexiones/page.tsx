@@ -47,7 +47,7 @@ export default async function ConnectionsPage({
           page={pagina}
           hasMore={consola.has_more}
           total={consola.total}
-          label="conexiones"
+          label="conexiones" singular="conexión"
           makeHref={(p) => `/conexiones?page=${p}`}
         />
       )}

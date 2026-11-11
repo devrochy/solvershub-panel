@@ -169,7 +169,7 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
         page={page}
         hasMore={has_more}
         total={total}
-        label="suscripciones"
+        label="suscripciones" singular="suscripción"
         makeHref={(target) => enlaceDePagina("/suscripciones/lista", qs, target)}
       />
     </ListPage>

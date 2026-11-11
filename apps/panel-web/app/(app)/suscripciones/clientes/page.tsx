@@ -138,7 +138,7 @@ export default async function ClientesConSuscripcionPage({
         page={page}
         hasMore={has_more}
         total={total}
-        label="clientes"
+        label="clientes" singular="cliente"
         makeHref={(target) => enlaceDePagina("/suscripciones/clientes", qs, target)}
       />
     </ListPage>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { esReintentable } from "@/lib/opciones-directas-bandera";
 import { useAction } from "@/lib/use-action";
@@ -159,7 +160,10 @@ export function BanderaDeNegocioSection({
           )}
         </div>
       ) : !listo ? (
-        <p className="text-sm text-body">Cargando…</p>
+        <div role="status" aria-busy="true" aria-label={`Cargando ${TITULO.toLowerCase()}`} className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-5 w-9 rounded-full" />
+        </div>
       ) : (
         <>
           <div ref={interruptor} className="flex items-center justify-between gap-3">

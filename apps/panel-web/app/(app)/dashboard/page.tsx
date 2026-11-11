@@ -11,7 +11,7 @@ import { EstadoDelSistema } from "@/components/dashboard/estado-del-sistema";
 import { ResumenAgentes } from "@/components/dashboard/resumen-agentes";
 import { TeEsperan } from "@/components/dashboard/te-esperan";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatCard } from "@/components/ui/stat-card";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import { apiFetch } from "@/lib/api/server";
 import type { Dashboard, EscalationPage, Me, PrimerosPasos, ResumenPorAgente } from "@/lib/api/types";
 import { formatNumber, formatUsd } from "@/lib/format";
@@ -144,9 +144,9 @@ export default async function DashboardPage({
             <ResumenAgentes datos={agentesRes.data} despuesDelGeneral={bienvenida} ocultarEscalaciones={esperanRes.ok} />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              <StatCard label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} href="/conversaciones" />
-              <StatCard label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} href="/conversaciones" />
-              <StatCard
+              <KpiTile label="Conversaciones (7 días)" value={formatNumber(d.kpi.conversations_7d)} href="/conversaciones" />
+              <KpiTile label="Mensajes (7 días)" value={formatNumber(d.kpi.messages_7d)} href="/conversaciones" />
+              <KpiTile
                 label="Escalaciones pendientes"
                 value={formatNumber(d.kpi.pending_escalations)}
                 tone={d.kpi.pending_escalations > 0 ? "warning" : "default"}
@@ -154,7 +154,7 @@ export default async function DashboardPage({
               />
               {/* Rediseño B de Consumo y plan: los costos en dólares son del equipo de SolversHub. */}
               {esPlataforma ? (
-                <StatCard
+                <KpiTile
                   label="Costo LLM (30 días)"
                   value={formatUsd(d.kpi.cost_30d)}
                   tone="accent"
@@ -162,7 +162,7 @@ export default async function DashboardPage({
                   href="/costos"
                 />
               ) : (
-                <StatCard label="Plan" value={d.billing?.plan_name ?? "Sin plan"} hint={planHint} href="/plan" />
+                <KpiTile label="Plan" value={d.billing?.plan_name ?? "Sin plan"} hint={planHint} href="/plan" />
               )}
             </div>
           )}

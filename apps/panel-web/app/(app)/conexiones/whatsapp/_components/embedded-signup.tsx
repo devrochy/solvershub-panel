@@ -336,10 +336,11 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
           <div className="flex flex-wrap items-center gap-3">
             <Button
               variant="accent"
-              disabled={!sdkListo || !sesion.attempt || cargando !== null}
+              loading={!sdkListo}
+              disabled={!sesion.attempt || cargando !== null}
               onClick={abrirPopup}
             >
-              <LogIn className="h-4 w-4" aria-hidden />
+              {sdkListo && <LogIn className="h-4 w-4" aria-hidden />}
               {cargando === "popup"
                 ? "Esperando a Facebook…"
                 : cargando === "canje"
@@ -348,7 +349,6 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
                     ? "Reintentar con Facebook"
                     : "Conectar con Facebook"}
             </Button>
-            {!sdkListo && <span className="text-xs text-text-soft">Cargando Facebook…</span>}
             {!sesion.attempt && sdkListo && cargando === null && (
               <Button variant="ghost" size="sm" onClick={() => void preparar()}>
                 Preparar de nuevo

@@ -246,7 +246,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         page={page}
         hasMore={has_more}
         total={total}
-        label="clientes"
+        label="clientes" singular="cliente"
         makeHref={(target) => {
           const next = new URLSearchParams(qs);
           next.set("page", String(target));

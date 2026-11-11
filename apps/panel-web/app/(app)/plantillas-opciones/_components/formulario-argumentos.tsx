@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
@@ -120,12 +121,12 @@ export function FormularioArgumentos({
           <div key={campo.nombre} data-argumento={campo.nombre} className="flex flex-col gap-2 rounded-md border border-border-soft p-3">
             <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
               {campo.tipo === "grupo" ? (
-                <span className="text-[13px] font-medium text-body">
+                <span className="text-sh-label font-medium text-body">
                   {campo.titulo}
                   {campo.requerido && <span className="text-status-danger-fg"> *<span className="sr-only">(obligatorio)</span></span>}
                 </span>
               ) : (
-                <label htmlFor={id} className="text-[13px] font-medium text-body">
+                <label htmlFor={id} className="text-sh-label font-medium text-body">
                   {campo.titulo}
                   {campo.requerido && <span className="text-status-danger-fg"> *<span className="sr-only">(obligatorio)</span></span>}
                 </label>
@@ -410,9 +411,7 @@ function CampoJson({
         }}
       />
       {invalido && (
-        <p role="alert" className="text-xs text-status-danger-fg">
-          El JSON no es válido: corrígelo para poder guardar y publicar.
-        </p>
+        <FormFeedback error="El JSON no es válido: corrígelo para poder guardar y publicar." className="text-xs" />
       )}
     </div>
   );
@@ -440,7 +439,7 @@ function EditorJsonDelConjunto({
   useEffect(() => () => reportarError(clave, null), [clave, reportarError]);
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13px] font-medium text-body">
+      <label htmlFor={id} className="text-sh-label font-medium text-body">
         Valores fijos (JSON)
       </label>
       <Textarea
@@ -460,11 +459,7 @@ function EditorJsonDelConjunto({
           if (leido.ok) onValor(leido.valor);
         }}
       />
-      {motivo && (
-        <p role="alert" className="text-xs text-status-danger-fg">
-          {motivo}
-        </p>
-      )}
+      <FormFeedback error={motivo} className="text-xs" />
       <MensajesDeCampo hallazgos={hallazgos} />
     </div>
   );
@@ -494,7 +489,7 @@ function FilasDeContexto({
   }
   return (
     <fieldset className="flex flex-col gap-2" disabled={disabled}>
-      <legend className="text-[13px] font-medium text-body">Datos del contexto</legend>
+      <legend className="text-sh-label font-medium text-body">Datos del contexto</legend>
       <p className="text-xs text-text-soft">Argumentos que el servidor arma desde la conversación, en vez de un valor fijo.</p>
       {filas.map((fila, i) => (
         <div key={i} className="flex flex-wrap items-center gap-2">

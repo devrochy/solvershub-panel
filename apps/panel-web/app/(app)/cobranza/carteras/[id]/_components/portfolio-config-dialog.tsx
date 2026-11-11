@@ -157,7 +157,7 @@ export function PortfolioConfigDialog({
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           {SECCIONES.map((seccion) => (
             <fieldset key={seccion} className="flex flex-col gap-3">
-              <legend className="pb-1 text-[11px] font-medium tracking-[0.06em] text-text-soft uppercase">
+              <legend className="pb-1 text-sh-caption font-medium tracking-[0.06em] text-text-soft uppercase">
                 {seccion}
               </legend>
               {DESCRIPCION_SECCION[seccion] && (

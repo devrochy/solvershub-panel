@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { EyeOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TurnDetail } from "@/lib/api/types";
@@ -86,9 +87,7 @@ export function DetalleDelTurno({ turnId, onClose }: { turnId: string | null; on
           </div>
         )}
         {actual?.error && (
-          <p role="alert" className="text-sm text-status-danger-fg">
-            {actual.error}
-          </p>
+          <FormFeedback error={actual.error} />
         )}
         {t && <Contenido t={t} />}
       </SheetContent>

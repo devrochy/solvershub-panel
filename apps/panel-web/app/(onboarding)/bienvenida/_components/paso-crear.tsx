@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, Check, Circle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import {
   ETIQUETAS_DE_SUBPASO,
   MOTIVOS_DE_ESCALAR,
@@ -130,12 +131,7 @@ export function PasoCrear({
           Tu agente quedó creado, pero una persona de SolversHub debe revisarlo antes de que puedas probarlo. Te avisamos cuando esté listo.
         </p>
       )}
-      {error && (
-        <p role="alert" className="flex items-start gap-2 text-sm text-status-danger-fg">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          {error}
-        </p>
-      )}
+      <FormFeedback error={error} />
 
       {fase === "listo" || fase === "en-revision" ? (
         <p className="text-sm text-body">Todo listo. Sigue para probar a {estado.nombreDelAgente.trim() || "tu agente"}.</p>

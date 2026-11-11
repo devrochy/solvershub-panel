@@ -7,7 +7,7 @@ export function Kbd({ keys, className }: { keys: string[]; className?: string })
       {keys.map((tecla) => (
         <kbd
           key={tecla}
-          className="min-w-5 rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 text-center font-sans text-[11px] font-medium text-body"
+          className="min-w-5 rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 text-center font-sans text-sh-caption font-medium text-body"
         >
           {tecla}
         </kbd>

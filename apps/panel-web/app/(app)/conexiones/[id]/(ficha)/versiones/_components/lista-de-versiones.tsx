@@ -8,6 +8,8 @@ import { DialogoPorcentaje } from "@/app/(app)/conexiones/[id]/(ficha)/versiones
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { FormFeedback } from "@/components/ui/form-feedback";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Evaluation, ReleaseDiff, ReleaseSummary } from "@/lib/api/types";
 import { TEXTO_PROBAR } from "@/lib/canary";
 import { formatDateTime } from "@/lib/format";
@@ -318,8 +320,14 @@ function TarjetaVersion({
 
       {abierto && (
         <div className="rounded-md border border-border-soft bg-bg-deep p-3 text-sm" aria-live="polite">
-          {errorDiff && <p role="alert" className="text-status-danger-fg">{errorDiff}</p>}
-          {!diff && !errorDiff && <p className="text-text-soft">Cargando las diferencias…</p>}
+          <FormFeedback error={errorDiff} />
+          {!diff && !errorDiff && (
+            <div role="status" aria-busy="true" aria-label="Cargando las diferencias" className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          )}
           {diff && <Diferencias diff={diff} />}
         </div>
       )}

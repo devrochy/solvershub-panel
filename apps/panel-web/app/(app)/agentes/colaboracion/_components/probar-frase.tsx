@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { RoutePreview } from "@/lib/api/types";
@@ -96,11 +97,7 @@ export function ProbarFrase({
       </form>
 
       <div aria-live="polite">
-        {error && (
-          <p role="alert" className="text-sm text-status-danger-fg">
-            {error}
-          </p>
-        )}
+        <FormFeedback error={error} />
         {explicacion && resultado && (
           <div className="flex flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 text-sm">
             <p className="text-headline">

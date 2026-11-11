@@ -7,6 +7,7 @@ import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { CLAVE_VALIDA, claveDesdeNombre, esBanderaApagada, esLimiteDePlantillas } from "@/lib/plantillas-opciones";
 import { opcionesApi } from "@/lib/plantillas-opciones-cliente";
@@ -121,11 +122,7 @@ export function CrearPlantilla({ onBanderaApagada }: { onBanderaApagada?: () => 
                 </Field>
               </div>
             )}
-            {error && (
-              <p role="alert" className="text-sm text-status-danger-fg">
-                {error}
-              </p>
-            )}
+            <FormFeedback error={error} />
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>
                 Cancelar

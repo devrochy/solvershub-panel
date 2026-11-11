@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { ListaDeFrases } from "@/components/ui/lista-de-frases";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
@@ -578,9 +579,7 @@ export function PasoPublicar({
         elegida; tus clientes no la ven hasta que la actives.
       </p>
       {destinosError ? (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          No se pudieron cargar las conexiones: {destinosError}
-        </p>
+        <FormFeedback error={<>No se pudieron cargar las conexiones: {destinosError}</>} />
       ) : destinos.length === 0 ? (
         <p className="text-sm text-body">
           No tienes conexiones listas para agentes. Conecta un canal en Conexiones y vuelve aquí para publicar.

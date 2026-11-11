@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type {
@@ -188,11 +189,7 @@ export function ImportarDatosDelAgente({
             </Field>
 
             {trabajando === "revisar" && <p className="text-sm text-text-soft">Revisando el archivo…</p>}
-            {error && (
-              <p role="alert" className="text-sm text-status-danger-fg">
-                {error}
-              </p>
-            )}
+            <FormFeedback error={error} />
 
             {vista && (
               <div className="flex flex-col gap-3" aria-live="polite">
@@ -200,9 +197,7 @@ export function ImportarDatosDelAgente({
                 <p className="text-sm text-body">{resumenDeVistaPrevia(vista)}</p>
                 {aviso && <p className="text-xs text-text-soft">{aviso}</p>}
                 {hayFaltantes && (
-                  <p role="alert" className="text-sm text-status-danger-fg">
-                    Al archivo le faltan columnas obligatorias: {vista.columnas_faltantes.join(", ")}.
-                  </p>
+                  <FormFeedback error={<>Al archivo le faltan columnas obligatorias: {vista.columnas_faltantes.join(", ")}.</>} />
                 )}
                 {errores > 0 && (
                   <div className="flex flex-col gap-1">

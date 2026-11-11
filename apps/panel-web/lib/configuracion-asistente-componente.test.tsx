@@ -231,7 +231,7 @@ describe("asistente por preguntas de Configuración", () => {
     await screen.findByRole("heading", { level: 3, name: "¿Hay frases que nunca debe decir?" });
     siguiente("Ver los cambios");
     const alerta = await screen.findByText("Elige solo entre las opciones que se muestran.");
-    expect(alerta.getAttribute("role")).toBe("alert");
+    expect(alerta.closest("[role]")?.getAttribute("role")).toBe("alert");
     expect(screen.getByRole("heading", { level: 3, name: "¿Hay frases que nunca debe decir?" })).toBeTruthy();
     expect(screen.getByText("Paso 2 de 3")).toBeTruthy();
   });
@@ -244,7 +244,7 @@ describe("asistente por preguntas de Configuración", () => {
     siguiente();
     await screen.findByRole("heading", { level: 3, name: "¿Hay frases que nunca debe decir?" });
     siguiente("Ver los cambios");
-    expect((await screen.findByText("No se pudo calcular.")).getAttribute("role")).toBe("alert");
+    expect((await screen.findByText("No se pudo calcular.")).closest("[role]")?.getAttribute("role")).toBe("alert");
     expect(screen.getByRole("button", { name: "Aplicar cambios" }).hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByRole("list", { name: "Cambios propuestos" })).toBeTruthy();

@@ -161,7 +161,7 @@ export function TarjetaOpcion({
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3">
-            <label htmlFor={`${id}-titulo`} className="text-[13px] font-medium text-body">
+            <label htmlFor={`${id}-titulo`} className="text-sh-label font-medium text-body">
               Texto del botón
             </label>
             <span className={cn("text-xs tabular-nums", titulo > MAX_TITULO ? "font-medium text-status-danger-fg" : "text-text-soft")}>
@@ -182,7 +182,7 @@ export function TarjetaOpcion({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${id}-accion`} className="text-[13px] font-medium text-body">
+          <label htmlFor={`${id}-accion`} className="text-sh-label font-medium text-body">
             Qué hace al tocarla
           </label>
           <Select
@@ -219,7 +219,7 @@ export function TarjetaOpcion({
 
         {ficha && conTool && (
           <div className="flex flex-col gap-2">
-            <p className="text-[13px] font-medium text-body">Datos de la acción</p>
+            <p className="text-sh-label font-medium text-body">Datos de la acción</p>
             <p className="text-xs text-text-soft">Cada dato lo escribes tú o sale de la conversación; nunca de lo que escriba el cliente.</p>
             <FormularioArgumentos
               key={ficha.tool}
@@ -239,7 +239,7 @@ export function TarjetaOpcion({
         {conTool && (
           <div className="flex flex-col gap-1.5 rounded-md bg-surface-2 p-3">
             <div className="flex items-start justify-between gap-3">
-              <label htmlFor={`${id}-confirmar`} className="flex items-start gap-2 text-[13px] font-medium text-body">
+              <label htmlFor={`${id}-confirmar`} className="flex items-start gap-2 text-sh-label font-medium text-body">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-link" aria-hidden />
                 Pedir confirmación al cliente antes de ejecutar
               </label>
@@ -347,7 +347,7 @@ function ResultKeys({
   }
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13px] font-medium text-body">
+      <label htmlFor={id} className="text-sh-label font-medium text-body">
         Datos de la respuesta que quieres citar
       </label>
       <Input

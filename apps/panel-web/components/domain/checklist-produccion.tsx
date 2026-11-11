@@ -110,9 +110,7 @@ export function ChecklistProduccion({
       </div>
 
       {corrida.status === "failed" && corrida.error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          {corrida.error}
-        </p>
+        <FormFeedback error={corrida.error} />
       )}
       <FormFeedback error={error} />
 

@@ -242,7 +242,7 @@ export function NewCollaboratorDialog({
             )}
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-medium text-body">¿Qué va a hacer?</span>
+              <span className="text-sh-label font-medium text-body">¿Qué va a hacer?</span>
               <SelectorDeRol packRoles={packRoles} esMaster={esMaster} value={rol} onChange={setRol} />
             </div>
 

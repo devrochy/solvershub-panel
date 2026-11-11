@@ -137,7 +137,7 @@ export function ListaDeHoy({
       ) : (
         grupos.map((g) => (
           <div key={g.titulo}>
-            <p className="px-4 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.06em] text-text-soft">{g.titulo}</p>
+            <p className="px-4 pb-1 pt-2 text-sh-caption font-medium uppercase tracking-[0.06em] text-text-soft">{g.titulo}</p>
             <ul>
               {g.citas.map((c) => {
                 const bloqueo = c.kind === "block";

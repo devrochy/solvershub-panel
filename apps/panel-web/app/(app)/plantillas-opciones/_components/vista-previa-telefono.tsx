@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TriangleAlert } from "lucide-react";
 
 import { BotonDeMensaje, BurbujaDeMensaje } from "@/components/domain/mensaje-interactivo";
-import { Tabs } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { OpcionesVistaPrevia } from "@/lib/api/types";
 import { MAX_BOTONES } from "@/lib/plantillas-opciones";
 import { cn } from "@/lib/utils";
@@ -51,14 +51,15 @@ export function VistaPreviaTelefono({
         <h2 className="font-display text-base font-semibold text-headline">Vista previa</h2>
         {cargando && <span className="text-xs text-text-soft" role="status">Actualizando…</span>}
       </div>
-      <Tabs
-        items={[
-          { id: "interactivo", label: "Interactivo" },
-          { id: "plantilla", label: "Plantilla de Meta" },
-          { id: "respaldo", label: "Texto" },
+      <SegmentedControl
+        label="Cómo se ve el mensaje"
+        options={[
+          { value: "interactivo", label: "Interactivo" },
+          { value: "plantilla", label: "Plantilla de Meta" },
+          { value: "respaldo", label: "Texto" },
         ]}
         value={pestana}
-        onValueChange={setPestana}
+        onChange={setPestana}
       />
       <div
         className={cn(

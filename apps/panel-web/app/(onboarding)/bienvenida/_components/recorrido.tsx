@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Marca } from "@/components/ui/marca";
 import { Progress } from "@/components/ui/progress";
 import type { IdentitySettings, PasoPrimerosPasos } from "@/lib/api/types";
@@ -289,11 +290,7 @@ function Asistente({
               />
             )}
             {pasoActual.id === "probar" && <PasoProbar estado={estado} conexionId={conexionId} onRespuesta={() => setProbado(true)} />}
-            {error && (
-              <p role="alert" className="max-w-xl text-sm text-status-danger-fg">
-                {error}
-              </p>
-            )}
+            <FormFeedback error={error} className="max-w-xl" />
           </main>
           <div className="hidden lg:block">
             <TarjetaDelAgente estado={estado} className="sticky top-6" />

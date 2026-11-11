@@ -63,7 +63,7 @@ export function TextoConChips({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="text-[13px] font-medium text-body">
+        <label htmlFor={id} className="text-sh-label font-medium text-body">
           {label}
         </label>
         <span
