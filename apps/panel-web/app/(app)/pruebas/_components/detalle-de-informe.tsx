@@ -1,15 +1,17 @@
 "use client";
 
-import { Download, Printer } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Download, Printer } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { QaEjecucion } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
-import { ESTADO_PASO, fechaDeCatalogo, porcentaje, segmentosDeProgreso, type EstadoPaso } from "@/lib/qa/estados";
-import { leerInforme } from "@/lib/qa/informe";
+import { ESTADO_PASO, fechaDeCatalogo, fechaEnPalabras, resumenDeAvance, segmentosDeProgreso, type EstadoPaso } from "@/lib/qa/estados";
+import { leerInforme, type PruebaDeInforme, type SeccionDeInforme } from "@/lib/qa/informe";
+import { cn } from "@/lib/utils";
+
 
 import { URL_ADJUNTO } from "./api";
 import { IconoEstado } from "./icono-estado";
@@ -24,6 +26,68 @@ const ENTORNO_DE_INFORME: Record<string, string> = {
   otros: "Sin clasificar",
 };
 
+/** Lo que no salió bien en un entorno, por sección: «1 falla en Agenda › Agendas». */
+function lineaDeSeccion(seccion: SeccionDeInforme): string {
+  const partes: string[] = [];
+  for (const area of seccion.areas) {
+    for (const sub of area.subsecciones.length > 0 ? area.subsecciones : [{ ...area, subseccion: "" }]) {
+      const donde = sub.subseccion ? `${area.area} › ${sub.subseccion}` : area.area;
+      if (sub.falla > 0) partes.push(`${sub.falla} ${sub.falla === 1 ? "falla" : "fallas"} en ${donde}`);
+      if (sub.bloqueada > 0) partes.push(`${sub.bloqueada} ${sub.bloqueada === 1 ? "bloqueada" : "bloqueadas"} en ${donde}`);
+      if (sub.sin_correr > 0) partes.push(`${sub.sin_correr} sin correr en ${donde}`);
+    }
+  }
+  return partes.length > 0 ? partes.join(" · ") : "Todo bien";
+}
+
+function PruebaDelInforme({ prueba }: { prueba: PruebaDeInforme }) {
+  const donde = [...new Set([prueba.modulo, prueba.grupo].filter(Boolean))];
+  return (
+    <Card className="break-inside-avoid">
+      <CardContent className="flex flex-col gap-3 pt-5">
+        <div className="flex flex-wrap items-start gap-2">
+          <IconoEstado estado={prueba.estado} className="mt-1" />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="font-medium text-headline">{prueba.titulo}</span>
+            <span className="text-xs text-text-soft">{[...donde, ...prueba.hu].join(" · ")}</span>
+          </div>
+        </div>
+        {prueba.nota && <p className="text-sm text-body">{prueba.nota}</p>}
+        <ol className="flex flex-col gap-2 text-sm">
+          {prueba.pasos.map((paso) => (
+            <li key={paso.n} className="flex flex-col gap-1 rounded-md bg-surface-2 px-3 py-2">
+              <span className="text-headline">
+                {paso.n}. {paso.accion}{" "}
+                <span className="text-xs text-body">
+                  — {paso.estado ? (ESTADO_PASO[paso.estado as EstadoPaso]?.label ?? paso.estado) : "sin marcar"}
+                </span>
+              </span>
+              {paso.esperado && <span className="text-xs text-text-soft">Esperado: {paso.esperado}</span>}
+              {paso.nota && <span className="text-body">Nota: {paso.nota}</span>}
+              {paso.adjuntos.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {paso.adjuntos.map((a) =>
+                    a.mimetype.startsWith("image/") ? (
+                      <a key={a.id} href={URL_ADJUNTO(a.id)} target="_blank" rel="noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- captura privada servida por el BFF */}
+                        <img src={URL_ADJUNTO(a.id)} alt={`Captura ${a.nombre}`} className="h-32 max-w-full rounded-sm border border-border-soft object-contain" />
+                      </a>
+                    ) : (
+                      <a key={a.id} href={URL_ADJUNTO(a.id)} target="_blank" rel="noreferrer" className="text-xs text-link">
+                        {a.nombre}
+                      </a>
+                    ),
+                  )}
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
+  );
+}
+
 /**
  * Informe de una ejecución (HU-QA-03, D-SPEC-30-5). Si ya se envió muestra la foto congelada;
  * si sigue en curso, el avance en vivo. «Imprimir o guardar PDF» usa la hoja de impresión del
@@ -33,6 +97,10 @@ export function DetalleDeInforme({ run }: { run: QaEjecucion }) {
   const informe = leerInforme(run.informe);
   const p = informe?.progreso ?? run.progreso;
   const segmentos = segmentosDeProgreso(p).map((s) => ({ key: s.clave, value: s.valor, label: s.label, tone: s.tono }));
+  const [verResto, setVerResto] = useState(false);
+  // PRU-07: primero lo que no salió bien; lo aprobado, plegado.
+  const problemas = (informe?.pruebas ?? []).filter((x) => x.estado !== "ok" && x.estado !== "omitida");
+  const resto = (informe?.pruebas ?? []).filter((x) => x.estado === "ok" || x.estado === "omitida");
   return (
     <article className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -42,11 +110,11 @@ export function DetalleDeInforme({ run }: { run: QaEjecucion }) {
           </h2>
           <p className="text-sm text-body">
             {run.ciclo_nombre}
-            {informe ? ` · catálogo v${informe.catalogo.version} (${fechaDeCatalogo(informe.catalogo.fecha)})` : ""}
+            {informe ? ` · catálogo del ${fechaDeCatalogo(informe.catalogo.fecha)}` : ""}
           </p>
           <p className="text-xs text-text-soft">
-            Empezó {formatDateTime(run.iniciada_en)}
-            {run.enviada_en ? ` · enviado ${formatDateTime(run.enviada_en)}` : ""}
+            Empezó el {fechaEnPalabras(run.iniciada_en)}
+            {run.enviada_en ? ` · lo envió el ${fechaEnPalabras(run.enviada_en)}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
@@ -69,25 +137,13 @@ export function DetalleDeInforme({ run }: { run: QaEjecucion }) {
       <Card>
         <CardContent className="flex flex-col gap-3 pt-5">
           <p className="text-sm text-body">
-            <span className="font-display text-sh-hero tabular-nums text-headline">{p.terminadas}</span> de {p.total} pruebas
-            terminadas ({porcentaje(p.terminadas, p.total)} %)
+            <span className="font-medium text-headline">
+              {p.terminadas} de {p.total} pruebas terminadas
+            </span>
+            {" · "}
+            {resumenDeAvance(p)}
           </p>
           <Progress label="Avance" value={p.terminadas} max={p.total || 1} segments={segmentos} />
-          <dl className="grid grid-cols-3 gap-2 text-center text-sm sm:grid-cols-6">
-            {[
-              ["OK", p.ok],
-              ["Falla", p.falla],
-              ["Bloqueada", p.bloqueada],
-              ["Omitida", p.omitida],
-              ["En curso", p.en_curso],
-              ["Sin correr", p.sin_correr],
-            ].map(([label, valor]) => (
-              <div key={label} className="rounded-md bg-surface-2 px-2 py-2">
-                <dt className="text-xs text-text-soft">{label}</dt>
-                <dd className="font-display text-sh-block tabular-nums text-headline">{valor}</dd>
-              </div>
-            ))}
-          </dl>
           {informe?.comentario && (
             <blockquote className="border-l-2 border-focus pl-3 text-sm text-body">{informe.comentario}</blockquote>
           )}
@@ -100,95 +156,57 @@ export function DetalleDeInforme({ run }: { run: QaEjecucion }) {
         </p>
       )}
 
-      {informe?.secciones && informe.secciones.length > 0 && (
-        <section aria-label="Resultados por sección" className="flex flex-col gap-2">
-          <h3 className="font-display text-sh-block text-headline">Resultados por sección</h3>
-          <p className="text-xs text-text-soft">Por entorno, sección y subsección: OK · Falla · Bloqueada · Sin correr.</p>
-          <div className="flex flex-col gap-3">
-            {informe.secciones.map((seccion) => (
-              <Card key={seccion.entorno} className="break-inside-avoid">
-                <CardContent className="flex flex-col gap-2 pt-4">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-medium text-headline">{ENTORNO_DE_INFORME[seccion.entorno] ?? seccion.entorno}</span>
-                    <span className="text-xs tabular-nums text-text-soft">
-                      OK {seccion.ok} · Falla {seccion.falla} · Bloqueada {seccion.bloqueada} · Sin correr {seccion.sin_correr} ·{" "}
-                      {seccion.total} pruebas
-                    </span>
-                  </div>
-                  {seccion.areas.map((area) => (
-                    <div key={area.area} className="flex flex-col gap-1 border-l-2 border-border-soft pl-3">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-sm text-body">{area.area}</span>
-                        <span className="text-xs tabular-nums text-text-soft">
-                          OK {area.ok} · Falla {area.falla} · Bloqueada {area.bloqueada} · Sin correr {area.sin_correr}
-                        </span>
-                      </div>
-                      {area.subsecciones.map((sub) => (
-                        <div key={sub.subseccion || "sin-subseccion"} className="flex items-baseline justify-between gap-2 pl-3">
-                          <span className="text-xs text-text-soft">{sub.subseccion || "Sin subsección"}</span>
-                          <span className="text-xs tabular-nums text-text-soft">
-                            OK {sub.ok} · Falla {sub.falla} · Bloqueada {sub.bloqueada} · Sin correr {sub.sin_correr}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {informe && problemas.length > 0 && (
+        <section aria-label="Fallas y bloqueos" className="flex flex-col gap-3">
+          <h3 className="font-display text-sh-block text-headline">Fallas y bloqueos ({problemas.length})</h3>
+          {problemas.map((prueba) => (
+            <PruebaDelInforme key={prueba.slug} prueba={prueba} />
+          ))}
         </section>
       )}
 
-      {informe && informe.pruebas.length > 0 && (
-        <section aria-label="Pruebas ejecutadas" className="flex flex-col gap-3">
-          <h3 className="font-display text-sh-block text-headline">Pruebas ejecutadas ({informe.pruebas.length})</h3>
-          {informe.pruebas.map((prueba) => (
-            <Card key={prueba.slug} className="break-inside-avoid">
-              <CardContent className="flex flex-col gap-3 pt-5">
-                <div className="flex flex-wrap items-start gap-2">
-                  <IconoEstado estado={prueba.estado} className="mt-1" />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="font-medium text-headline">{prueba.titulo}</span>
-                    <span className="text-xs text-text-soft">
-                      {[prueba.modulo, prueba.grupo, ...prueba.hu].filter(Boolean).join(" · ")}
-                    </span>
-                  </div>
-                </div>
-                {prueba.nota && <p className="text-sm text-body">{prueba.nota}</p>}
-                <ol className="flex flex-col gap-2 text-sm">
-                  {prueba.pasos.map((paso) => (
-                    <li key={paso.n} className="flex flex-col gap-1 rounded-md bg-surface-2 px-3 py-2">
-                      <span className="text-headline">
-                        {paso.n}. {paso.accion}{" "}
-                        <span className="text-xs text-body">
-                          — {paso.estado ? (ESTADO_PASO[paso.estado as EstadoPaso]?.label ?? paso.estado) : "sin marcar"}
-                        </span>
-                      </span>
-                      {paso.esperado && <span className="text-xs text-text-soft">Esperado: {paso.esperado}</span>}
-                      {paso.nota && <span className="text-body">Nota: {paso.nota}</span>}
-                      {paso.adjuntos.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {paso.adjuntos.map((a) =>
-                            a.mimetype.startsWith("image/") ? (
-                              <a key={a.id} href={URL_ADJUNTO(a.id)} target="_blank" rel="noreferrer">
-                                {/* eslint-disable-next-line @next/next/no-img-element -- captura privada servida por el BFF */}
-                                <img src={URL_ADJUNTO(a.id)} alt={`Captura ${a.nombre}`} className="h-32 max-w-full rounded-sm border border-border-soft object-contain" />
-                              </a>
-                            ) : (
-                              <a key={a.id} href={URL_ADJUNTO(a.id)} target="_blank" rel="noreferrer" className="text-xs text-link">
-                                {a.nombre}
-                              </a>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-          ))}
+      {informe?.secciones && informe.secciones.length > 0 && (
+        <section aria-label="Por entorno" className="flex flex-col gap-2">
+          <h3 className="font-display text-sh-block text-headline">Por entorno</h3>
+          <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+            {informe.secciones.map((seccion) => (
+              <li key={seccion.entorno} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-border-soft px-4 py-3 text-sm first:border-t-0">
+                <span className="w-28 font-medium text-headline">{ENTORNO_DE_INFORME[seccion.entorno] ?? seccion.entorno}</span>
+                <span className="w-44 tabular-nums text-body">
+                  {seccion.ok} de {seccion.total} aprobadas
+                </span>
+                <span className="min-w-0 flex-1 text-text-soft">{lineaDeSeccion(seccion)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {informe && resto.length > 0 && (
+        <section aria-label="Aprobadas y omitidas" className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display text-sh-block text-headline">Aprobadas y omitidas ({resto.length})</h3>
+            <Button variant="ghost" size="sm" className="print:hidden" aria-expanded={verResto} onClick={() => setVerResto((v) => !v)}>
+              <ChevronDown aria-hidden className={cn("h-4 w-4 transition-transform duration-150", !verResto && "-rotate-90")} />
+              {verResto ? "Ocultar los pasos" : "Ver los pasos"}
+            </Button>
+          </div>
+          {/* Plegadas en pantalla; en el PDF van completas. */}
+          <div className={cn("flex flex-col gap-3", !verResto && "hidden print:flex")}>
+            {resto.map((prueba) => (
+              <PruebaDelInforme key={prueba.slug} prueba={prueba} />
+            ))}
+          </div>
+          {!verResto && (
+            <ul className="flex flex-col gap-1 text-sm text-body print:hidden">
+              {resto.map((prueba) => (
+                <li key={prueba.slug} className="flex items-center gap-2">
+                  <IconoEstado estado={prueba.estado} />
+                  {prueba.titulo}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

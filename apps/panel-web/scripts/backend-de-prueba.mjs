@@ -11,6 +11,7 @@
 //   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
 //   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
 //   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
+//   PRUEBAS=1 (Plataforma › Pruebas con catálogo, ejecución propia, informes, ciclos, evolución, checklists, datos y testers)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
@@ -284,6 +285,173 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
 // COMERCIO=1 (Ventas): una tienda de ropa con catálogo, variantes, categorías anidadas, promociones, pedidos en todos los
 // estados y dos aliados (el módulo de aliados encendido).
 // Pedidos y promociones con estado (COMERCIO=1): filtros, total y cambios que se ven al refrescar.
+let pruebas = null;
+// PRUEBAS=1 (Plataforma › Pruebas, SPEC-30): catálogo v24 con pruebas de panel, APK y WhatsApp, una ejecución propia en
+// curso (con una falla, una nota y una captura), informes de tres testers, ciclo abierto y uno cerrado, evolución por
+// versión, checklists de test y producción, datos de prueba del tester con escenarios y la gestión de testers. Con
+// MASTER=1 se ve como admin de plataforma (pestaña Testers); con TESTER=1, como tester.
+if (process.env.PRUEBAS === "1") {
+  const hace = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  const progreso = (ok, falla, bloqueada, omitida, en_curso, sin_correr) => ({
+    total: ok + falla + bloqueada + omitida + en_curso + sin_correr, terminadas: ok + falla + bloqueada + omitida,
+    ok, falla, bloqueada, omitida, en_curso, sin_correr,
+  });
+  const conteo = (xs) => ["ok", "falla", "bloqueada", "omitida", "en_curso", "sin_correr", "total"].reduce((a, k) => ({ ...a, [k]: xs.reduce((n, x) => n + x[k], 0) }), {});
+  const subInf = (subseccion, ok, falla, bloqueada) => ({ subseccion, ok, falla, bloqueada, omitida: 0, en_curso: 0, sin_correr: 0, total: ok + falla + bloqueada });
+  const areaInf = (area, subsecciones) => ({ area, subsecciones, ...conteo(subsecciones) });
+  const seccionEvoInf = (entorno, areas) => ({ entorno, areas, ...conteo(areas) });
+  const item = (slug, entorno, area, subseccion, titulo, extra = {}) => ({
+    slug, seccion: "pruebas", orden: 0, modulo: area, grupo: area, area, subseccion, entorno, titulo,
+    resumen: null, contexto: null, prioridad: "P1", plataforma: [entorno], precondiciones: ["Sesión iniciada como dueña del negocio de prueba"],
+    datos: ["Tu negocio de prueba con Agenda y Ventas encendidas"], pasos: [
+      { accion: "Abre la sección desde el menú", esperado: "Se ve la lista con los datos del negocio de prueba" },
+      { accion: "Crea un registro nuevo con los datos de la guía", esperado: "Aparece arriba de la lista con su estado" },
+      { accion: "Ábrelo y cambia un dato", esperado: "El cambio se guarda y se ve al volver a la lista" },
+    ],
+    esperado: null, porque: null, como: null, vars: [], quien: null, hu: ["HU-CAL-08"], origen: [], requiere: [],
+    estado: "sin_correr", ejecuciones: { ok: 2, falla: 0 }, ...extra,
+  });
+  const items = [
+    item("agenda-crear-cita", "panel", "Agenda", "Citas", "Crear una cita desde el calendario", { prioridad: "P0", hu: ["HU-CAL-02"] }),
+    item("agenda-mover-cita", "panel", "Agenda", "Citas", "Mover una cita arrastrándola", { hu: ["HU-CAL-05"] }),
+    item("agenda-varias-agendas", "panel", "Agenda", "Agendas", "Elegir entre dos agendas", { hu: ["HU-CAL-08"], ejecuciones: { ok: 0, falla: 1 } }),
+    item("ventas-pedido-pago", "panel", "Ventas", "Pedidos", "Un pedido pasa a pagado con Wompi", { prioridad: "P0", datos: ["Tarjeta de prueba 4242 4242 4242 4242"], requiere: ["datos-wompi"], hu: ["HU-COM-04"], vars: ["WOMPI_PUBLIC_KEY"] }),
+    item("ventas-vitrina", "panel", "Ventas", "Productos", "Ver los productos en vitrina", { hu: ["VEN-15"] }),
+    item("cobranza-registrar-pago", "apk", "Cobranza", "Ruta", "Registrar un pago en la ruta del gestor", { prioridad: "P0", hu: ["HU-COB-11"] }),
+    item("cobranza-promesa", "apk", "Cobranza", "Promesas", "Anotar una promesa de pago", { hu: ["HU-COB-14"] }),
+    item("wa-tomar-pedido", "whatsapp", "Agentes", "Ventas", "El agente de Ventas toma un pedido por WhatsApp", { prioridad: "P0", datos: ["Tu teléfono con WhatsApp"], requiere: ["datos-whatsapp"], hu: ["HU-AOS-20"] }),
+    item("wa-pasar-persona", "whatsapp", "Agentes", "Escalamiento", "Pedir hablar con una persona", { hu: ["HU-AOS-19"] }),
+    item("wa-agendar", "whatsapp", "Agentes", "Agenda", "Agendar una cita conversando", { datos: ["Tu teléfono con WhatsApp"], requiere: ["datos-whatsapp"], hu: ["HU-CAL-06"] }),
+    item("panel-paleta", "panel", "Panel", "Navegación", "Ir a cualquier sección con Ctrl+K", { hu: ["HU-DS-05"], pasos: [{ accion: "Pulsa Ctrl+K", esperado: "Se abre la paleta" }, { accion: "Escribe «prom»", esperado: "Aparece Promesas" }] }),
+    item("panel-tema", "panel", "Panel", "Navegación", "Cambiar a tema claro y volver", { hu: ["SPEC-29"] }),
+  ].map((it, i) => ({ ...it, orden: i + 1 }));
+  const guia = [
+    { slug: "datos-negocio", titulo: "Negocio y cuentas de prueba", resumen: "Se crean con «Preparar mis datos»." },
+    { slug: "datos-wompi", titulo: "Tarjetas de prueba de Wompi", resumen: "4242 4242 4242 4242 aprueba; 4111 1111 1111 1111 rechaza." },
+    { slug: "datos-whatsapp", titulo: "Número de WhatsApp de prueba", resumen: "Escríbele al número del negocio de prueba desde tu teléfono." },
+  ].map((g, i) => ({ ...item(g.slug, "panel", "Datos", null, g.titulo), seccion: "datos", resumen: g.resumen, orden: i + 1, pasos: [], datos: [], hu: [] }));
+  const punto = (slug, seccion, grupo, titulo, estado, extra = {}) => ({
+    ...item(slug, "panel", grupo, null, titulo), seccion, grupo, estado, pasos: [], datos: [], hu: [], ...extra,
+  });
+  const test = [
+    punto("test-wompi", "test", "Pagos", "Llaves de Wompi en sandbox", "listo", { porque: "Sin ellas los pedidos no pasan a pagado.", como: "Configura las llaves de sandbox en Coolify (test).", vars: ["WOMPI_PUBLIC_KEY", "WOMPI_PRIVATE_KEY"], quien: "Dueño de la plataforma", nota: "Cargadas el 8 de nov.", actualizado_en: hace(60) }),
+    punto("test-meta", "test", "WhatsApp", "Número de Meta verificado", "en_curso", { porque: "Las pruebas de WhatsApp oficial necesitan el número verificado.", como: "Termina la verificación en el Business Manager.", quien: "Dueño de la plataforma", nota: "Falta el documento legal.", actualizado_en: hace(30) }),
+    punto("test-correo", "test", "Correo", "Correo de acceso por Resend", "pendiente", { porque: "Las invitaciones llegan por correo.", como: "Crea la llave de Resend para test.", vars: ["RESEND_API_KEY"] }),
+    punto("test-push", "test", "APK", "Notificaciones push", "no_aplica", { porque: "Solo si se prueba la APK en un teléfono.", como: "Instala la APK de test en un teléfono Android." }),
+  ];
+  const prod = [
+    punto("prod-respaldo", "prod", "Base de datos", "Respaldo reciente de la base", "pendiente", { porque: "Antes del corte hay que poder volver atrás.", como: "Corre el respaldo y comprueba que se restaura.", quien: "Dueño de la plataforma" }),
+    punto("prod-variables", "prod", "Variables", "Variables de producción revisadas", "en_curso", { porque: "Una variable de test en producción rompe pagos o correos.", como: "Compara contra el catálogo de variables.", vars: ["WOMPI_PUBLIC_KEY", "RESEND_API_KEY", "AGENT_CORE_API_URL"] }),
+    punto("prod-dominio", "prod", "Dominio", "Dominio y certificados", "listo", { porque: "El panel y la API responden en el dominio propio.", como: "Revisa los certificados en Cloudflare.", actualizado_en: hace(200) }),
+  ];
+  const ciclo = { id: "ciclo-11", nombre: "Ciclo 2026-11 · rediseño del panel", abierto_en: hace(24 * 6) };
+  const catalogoRef = { version: 24, fecha: "2026-11-04", commit_docs: "a1b2c3d" };
+  const progresoCiclo = progreso(14, 3, 2, 1, 4, 12);
+  const catalogos = {
+    pruebas: { ciclo, catalogo: catalogoRef, progreso: progresoCiclo, items },
+    datos: { ciclo, catalogo: catalogoRef, progreso: progreso(0, 0, 0, 0, 0, 0), items: guia },
+    test: { ciclo, catalogo: catalogoRef, progreso: progreso(0, 0, 0, 0, 0, 0), items: test },
+    prod: { ciclo, catalogo: catalogoRef, progreso: progreso(0, 0, 0, 0, 0, 0), items: prod },
+  };
+  const paso = (estado, nota = null) => ({ estado, nota });
+  const ejecucion = (id, tester, estado, prog, resultados, extra = {}) => ({
+    id, cycle_id: ciclo.id, ciclo_nombre: ciclo.nombre, tester, estado, editable: estado === "en_curso", comentario: null,
+    iniciada_en: hace(24 * 5), actualizada_en: hace(2), enviada_en: estado === "enviada" ? hace(20) : null, progreso: prog, resultados, ...extra,
+  });
+  const mia = ejecucion("8f2b9a3c-1d4e-4f5a-9b6c-7d8e9f0a1b2c", { id: "t1", nombre: "Ana Prueba", email: "ana@prueba.example" }, "en_curso", progreso(3, 1, 0, 0, 1, 7), {
+    "agenda-crear-cita": { estado: "ok", nota: null, pasos: { 1: paso("ok"), 2: paso("ok"), 3: paso("ok") }, adjuntos: [] },
+    "agenda-mover-cita": { estado: "ok", nota: null, pasos: { 1: paso("ok"), 2: paso("ok"), 3: paso("ok") }, adjuntos: [] },
+    "agenda-varias-agendas": { estado: "falla", nota: "Al elegir la segunda agenda se ven las citas de la primera.", pasos: { 1: paso("ok"), 2: paso("falla", "Salen las citas de «Consultorio 1»") }, adjuntos: [{ id: "adj-1", paso: 2, nombre: "agenda-equivocada.png", mimetype: "image/png", tamano: 182_000, subido_en: hace(3) }] },
+    "ventas-pedido-pago": { estado: "en_curso", nota: null, pasos: { 1: paso("ok") }, adjuntos: [] },
+    "ventas-vitrina": { estado: "ok", nota: null, pasos: { 1: paso("ok"), 2: paso("omitido"), 3: paso("ok") }, adjuntos: [] },
+  });
+  const bruno = { id: "t2", nombre: "Bruno Tester", email: "bruno@prueba.example" };
+  const pasosDe = (it, estados, notas = {}) => it.pasos.map((x, i) => ({ n: i + 1, accion: x.accion, esperado: x.esperado, estado: estados[i] ?? null, nota: notas[i] ?? null, adjuntos: [] }));
+  const enInforme = (slug, estado, estados, nota = null, notas = {}) => {
+    const it = items.find((x) => x.slug === slug);
+    return { slug, titulo: it.titulo, grupo: it.grupo, modulo: it.modulo, prioridad: it.prioridad, hu: it.hu, esperado: null, estado, nota, pasos: pasosDe(it, estados, notas) };
+  };
+  const informeBruno = {
+    ciclo: { id: ciclo.id, nombre: ciclo.nombre }, catalogo: { version: catalogoRef.version, fecha: catalogoRef.fecha }, tester: bruno,
+    iniciada_en: hace(24 * 5), enviada_en: hace(20), comentario: "La APK se cerró dos veces al registrar pagos sin señal.", progreso: progreso(9, 2, 1, 0, 0, 0),
+    secciones: [
+      seccionEvoInf("panel", [areaInf("Agenda", [subInf("Citas", 2, 0, 0), subInf("Agendas", 0, 1, 0)]), areaInf("Ventas", [subInf("Pedidos", 1, 0, 0), subInf("Productos", 1, 0, 0)]), areaInf("Panel", [subInf("Navegación", 2, 0, 0)])]),
+      seccionEvoInf("apk", [areaInf("Cobranza", [subInf("Ruta", 0, 1, 0), subInf("Promesas", 0, 0, 1)])]),
+      seccionEvoInf("whatsapp", [areaInf("Agentes", [subInf("Ventas", 1, 0, 0), subInf("Escalamiento", 1, 0, 0), subInf("Agenda", 1, 0, 0)])]),
+    ],
+    pruebas: [
+      enInforme("agenda-crear-cita", "ok", ["ok", "ok", "ok"]),
+      enInforme("agenda-varias-agendas", "falla", ["ok", "falla"], "Se ven las citas de la otra agenda.", { 1: "Salen las de «Consultorio 1»" }),
+      enInforme("cobranza-registrar-pago", "falla", ["ok", "falla"], "La APK se cierra sin señal.", { 1: "Se cerró al guardar" }),
+      enInforme("cobranza-promesa", "bloqueada", ["bloqueado"], "No hay clientes en mora en mi negocio de prueba."),
+      enInforme("wa-tomar-pedido", "ok", ["ok", "ok", "ok"]),
+    ],
+    sin_correr: [],
+  };
+  const otra = ejecucion("2c1d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f", bruno, "enviada", progreso(9, 2, 1, 0, 0, 0), {}, { comentario: informeBruno.comentario, informe: informeBruno });
+  const tercera = ejecucion("3d4e5f6a-7b8c-4d9e-8f0a-1b2c3d4e5f6a", { id: "t3", nombre: "", email: "carla@prueba.example" }, "en_curso", progreso(2, 0, 1, 1, 1, 7), {});
+  const ejecuciones = [mia, otra, tercera];
+  const cicloCerrado = {
+    id: "ciclo-10", nombre: "Ciclo 2026-10 · SPEC-37", abierto_en: hace(24 * 30), cerrado_en: hace(24 * 8), abierto: false,
+    catalogo: { version: 22, fecha: "2026-10-20", commit_docs: null }, progreso: progreso(31, 2, 1, 2, 0, 0),
+    por_prueba: { "agenda-crear-cita": "ok", "wa-tomar-pedido": "falla", "cobranza-registrar-pago": "bloqueada" },
+    ejecuciones: [{ run_id: otra.id, tester: "Bruno Tester", estado: "enviada", enviada_en: hace(24 * 9), progreso: progreso(18, 1, 0, 1, 0, 0) }],
+  };
+  const cicloAbierto = {
+    ...ciclo, cerrado_en: null, abierto: true, catalogo: catalogoRef, progreso: progresoCiclo,
+    por_prueba: { "agenda-crear-cita": "ok", "agenda-varias-agendas": "falla", "cobranza-registrar-pago": "bloqueada", "wa-tomar-pedido": "en_curso" },
+    ejecuciones: ejecuciones.map((e) => ({ run_id: e.id, tester: e.tester.nombre || e.tester.email, estado: e.estado, enviada_en: e.enviada_en, progreso: e.progreso })),
+  };
+  const sub = (subseccion, ok, falla, bloqueada, sin_correr) => ({ subseccion, ok, falla, bloqueada, omitida: 0, en_curso: 0, sin_correr, total: ok + falla + bloqueada + sin_correr });
+  const area = (nombre, subs) => ({ area: nombre, subsecciones: subs, ...["ok", "falla", "bloqueada", "omitida", "en_curso", "sin_correr", "total"].reduce((a, k) => ({ ...a, [k]: subs.reduce((n, x) => n + x[k], 0) }), {}) });
+  const seccionEvo = (entorno, areas) => ({ entorno, areas, ...["ok", "falla", "bloqueada", "omitida", "en_curso", "sin_correr", "total"].reduce((a, k) => ({ ...a, [k]: areas.reduce((n, x) => n + x[k], 0) }), {}) });
+  const evolucion = { versiones: [
+    { version: 20, fecha: "2026-10-06", total_pruebas: 30, ciclo: { id: "ciclo-9", cerrado_en: hace(24 * 32) }, secciones: [seccionEvo("panel", [area("Agenda", [sub("Citas", 3, 1, 0, 0)]), area("Ventas", [sub("Pedidos", 2, 0, 0, 1)])]), seccionEvo("whatsapp", [area("Agentes", [sub("Ventas", 1, 1, 0, 0)])])] },
+    { version: 22, fecha: "2026-10-20", total_pruebas: 36, ciclo: { id: "ciclo-10", cerrado_en: hace(24 * 8) }, secciones: [seccionEvo("panel", [area("Agenda", [sub("Citas", 4, 0, 0, 0), sub("Agendas", 1, 0, 0, 0)]), area("Ventas", [sub("Pedidos", 3, 0, 0, 0)])]), seccionEvo("apk", [area("Cobranza", [sub("Ruta", 1, 0, 1, 0)])]), seccionEvo("whatsapp", [area("Agentes", [sub("Ventas", 1, 1, 0, 0)])])] },
+    { version: 24, fecha: "2026-11-04", total_pruebas: 36, ciclo: { id: ciclo.id, cerrado_en: null }, secciones: [seccionEvo("panel", [area("Agenda", [sub("Citas", 2, 0, 0, 0), sub("Agendas", 0, 1, 0, 0)]), area("Ventas", [sub("Pedidos", 0, 0, 0, 1), sub("Productos", 1, 0, 0, 0)])]), seccionEvo("apk", [area("Cobranza", [sub("Ruta", 0, 0, 1, 0)])]), seccionEvo("whatsapp", [area("Agentes", [sub("Ventas", 0, 0, 0, 1)])])] },
+  ] };
+  const misDatos = {
+    disponible: true,
+    datos: {
+      estado: "listo", error: null, creado_en: hace(24 * 4), actualizado_en: hace(24 * 4),
+      negocio: { id: "neg-qa-ana", slug: "qa-ana", nombre: "Moto Repuestos (prueba de Ana)" },
+      cuentas: [
+        { rol: "dueno", titulo: "Dueña", uso: "Para probar todo el panel y configurar.", email: "qa-ana+dueno@prueba.example", creada: true },
+        { rol: "gestor", titulo: "Gestor de cobranza", uso: "Para la ruta y los pagos en la APK.", email: "qa-ana+gestor@prueba.example", creada: true },
+        { rol: "colaborador", titulo: "Colaborador", uso: "Para probar permisos limitados.", email: "qa-ana+colab@prueba.example", creada: false },
+      ],
+      contenido: [{ habilidad: "pack_calendar", detalle: ["2 agendas", "5 tipos de cita", "12 citas esta semana"] }, { habilidad: "pack_commerce", detalle: ["24 productos", "6 pedidos"] }],
+      agent_os: { estado: "listo", motivo: null, chat_web: { clave: "qa-ana-chat", enlace: "https://chat.prueba.example/qa-ana", activo: true }, agentes: [{ key: "general", nombre: "General", rol: "Coordina", por_defecto: true }, { key: "ventas", nombre: "Ventas", rol: "Especialista", por_defecto: false }] },
+      contrasenas: {},
+    },
+    contenido: [],
+  };
+  const escenarios = { datos_listos: true, escenarios: [
+    { slug: "agenda-semana-llena", titulo: "Una semana llena en la agenda", crea: "20 citas repartidas en dos agendas, con 3 por confirmar.", requiere: "Agenda encendida", donde: "Agenda", ruta: "/calendario", agent_os: false, ultimo: { sufijo: "a7", detalle: ["20 citas", "3 por confirmar"], ruta: "/calendario", creado_en: hace(30) } },
+    { slug: "ventas-pedidos-por-pagar", titulo: "Pedidos esperando pago", crea: "5 pedidos con el link de pago de Wompi sin pagar.", requiere: "Ventas encendida y llaves de Wompi", donde: "Ventas › Pedidos", ruta: "/comercio/pedidos", agent_os: false, ultimo: null },
+    { slug: "cobranza-mora", titulo: "Clientes en mora", crea: "8 clientes con cuotas atrasadas y 2 promesas vencidas.", requiere: "Cobranza encendida", donde: "Cobranza", ruta: "/cobranza", agent_os: false, ultimo: null },
+    { slug: "agente-conversaciones", titulo: "Conversaciones con el agente", crea: "10 conversaciones de clientes con Ventas, una pasada a una persona.", requiere: "Agent OS listo", donde: "Conversaciones", ruta: "/conversaciones", agent_os: true, ultimo: null },
+  ] };
+  const testers = { habilitado: true, testers: [
+    { id: "t1", email: "ana@prueba.example", estado: "activo", creado_en: hace(24 * 20), invitado_en: hace(24 * 20), expira_en: null, aceptado_en: hace(24 * 19) },
+    { id: "t2", email: "bruno@prueba.example", estado: "activo", creado_en: hace(24 * 15), invitado_en: hace(24 * 15), expira_en: null, aceptado_en: hace(24 * 15) },
+    { id: "t3", email: "carla@prueba.example", estado: "invitado", creado_en: hace(30), invitado_en: hace(30), expira_en: hace(-24 * 6), aceptado_en: null },
+    { id: "t4", email: "diego@prueba.example", estado: "vencido", creado_en: hace(24 * 12), invitado_en: hace(24 * 12), expira_en: hace(24 * 5), aceptado_en: null },
+  ] };
+  respuestas["/admin/qa/runs/me"] = mia;
+  respuestas["/admin/qa/runs"] = ejecuciones;
+  for (const e of ejecuciones) respuestas[`/admin/qa/runs/${e.id}`] = e;
+  respuestas["/admin/qa/cycles"] = [cicloAbierto, cicloCerrado];
+  respuestas["/admin/qa/evolution"] = evolucion;
+  respuestas["/admin/qa/datos"] = misDatos;
+  respuestas["/admin/qa/datos/escenarios"] = escenarios;
+  respuestas["/admin/qa/testers"] = testers;
+  pruebas = (metodo, ruta, url) => {
+    if (metodo === "GET" && ruta === "/admin/qa/catalog") return [200, catalogos[url.searchParams.get("seccion") ?? "pruebas"] ?? catalogos.pruebas];
+    if (metodo === "GET" && /^\/admin\/qa\/items\/[^/]+\/history$/.test(ruta)) return [200, [{ campo: "estado", paso: 2, antes: "ok", despues: "falla", por: "Ana Prueba", en: hace(3), run_id: null }, { campo: "nota", paso: 2, antes: null, despues: "Salen las citas de «Consultorio 1»", por: "Ana Prueba", en: hace(3), run_id: null }]];
+    return null;
+  };
+}
 let comercio = null;
 if (process.env.COMERCIO === "1") {
   const C = "/pack/commerce";
@@ -1179,6 +1347,11 @@ function listaDeEmbudo(url) {
   };
 }
 
+// PRUEBAS=1: la sección global `qa` (después de MASTER=1/TESTER=1, que reescriben /admin/me).
+if (process.env.PRUEBAS === "1") {
+  const yo = respuestas["/admin/me"];
+  respuestas["/admin/me"] = { ...yo, permissions: { ...(yo.permissions ?? {}), qa: "write" }, qa_testers_habilitados: true };
+}
 createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const ruta = url.pathname.replace(/^\/api\/v1/, "");
@@ -1247,6 +1420,14 @@ createServer(async (req, res) => {
     let texto = "";
     for await (const trozo of req) texto += trozo;
     const r = plataforma(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
+      return;
+    }
+  }
+  if (pruebas && ruta.startsWith("/admin/qa/")) {
+    const r = pruebas(req.method ?? "GET", ruta, url);
     if (r) {
       res.statusCode = r[0];
       res.end(JSON.stringify(r[1]));

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { QaEjecucion } from "@/lib/api/types";
 
@@ -15,16 +16,12 @@ export default async function InformePage({ params }: { params: Promise<{ id: st
   const res = await apiFetch<QaEjecucion>(`/admin/qa/runs/${encodeURIComponent(id)}`);
   if (!res.ok) {
     if (res.status === 404 || res.status === 422) notFound();
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el informe: {res.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No pudimos cargar el informe" detalle={res.error} />;
   }
   return (
     <div className="flex flex-col gap-4">
       <Link href="/pruebas/informes" className="inline-flex items-center gap-1 text-sm text-link print:hidden">
-        <ArrowLeft aria-hidden className="h-4 w-4" /> Todos los informes
+        <ArrowLeft aria-hidden className="h-4 w-4" /> Informes
       </Link>
       <DetalleDeInforme run={res.data} />
     </div>

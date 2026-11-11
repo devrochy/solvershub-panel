@@ -1,15 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Check, Loader2, PlayCircle, Send } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, PlayCircle, Send } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { QaCatalogo, QaEjecucion, QaProgreso } from "@/lib/api/types";
-import { formatDate, formatDateTime } from "@/lib/format";
-import { fechaDeCatalogo, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
+import { fechaDeCatalogo, fechaEnPalabras, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
+import { cn } from "@/lib/utils";
 
 export type EstadoGuardado = { estado: "idle" | "guardando" | "ok" | "error"; en?: Date };
 
@@ -46,8 +47,9 @@ function barra(progreso: QaProgreso) {
 function Guardado({ guardado }: { guardado: EstadoGuardado }) {
   if (guardado.estado === "guardando") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-body" role="status">
-        <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> Guardando…
+      // Sin animación (PRU-14): el texto dice lo que pasa.
+      <span className="text-xs text-body" role="status">
+        Guardando…
       </span>
     );
   }
@@ -88,6 +90,7 @@ export function CabeceraDeAvance({
   onEmpezar: () => void;
   onEnviar: () => void;
 }) {
+  const [detalle, setDetalle] = useState(false);
   const ciclo = catalogo.ciclo;
   const mio = run?.progreso;
   const delCiclo = catalogo.progreso;
@@ -98,8 +101,7 @@ export function CabeceraDeAvance({
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-sh-block text-headline">{ciclo?.nombre}</h2>
             <p className="text-xs text-text-soft">
-              Catálogo v{catalogo.catalogo?.version} · {fechaDeCatalogo(catalogo.catalogo?.fecha)} · ciclo abierto el{" "}
-              {formatDate(ciclo?.abierto_en)}
+              Catálogo del {fechaDeCatalogo(catalogo.catalogo?.fecha)} · ciclo abierto el {fechaEnPalabras(ciclo?.abierto_en)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -118,7 +120,7 @@ export function CabeceraDeAvance({
             )}
             {run && run.estado === "enviada" && (
               <>
-                <Badge variant="success">Informe enviado {formatDateTime(run.enviada_en)}</Badge>
+                <Badge variant="success">Informe enviado el {fechaEnPalabras(run.enviada_en)}</Badge>
                 <Link href={`/pruebas/informes/${run.id}`} className="text-sm text-link underline-offset-2 hover:underline">
                   Ver mi informe
                 </Link>
@@ -127,7 +129,31 @@ export function CabeceraDeAvance({
           </div>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* PRU-13: en el celular, el avance en una línea; el detalle se abre aparte. */}
+        <button
+          type="button"
+          aria-expanded={detalle}
+          onClick={() => setDetalle((v) => !v)}
+          className="flex items-center justify-between gap-3 text-left text-sm text-body sm:hidden"
+        >
+          <span>
+            {mio ? (
+              <>
+                <span className="font-medium text-headline">
+                  {mio.terminadas} de {mio.total}
+                </span>{" "}
+                terminadas{mio.falla > 0 ? ` · ${mio.falla} con falla` : ""}
+              </>
+            ) : (
+              "Todavía no empezaste"
+            )}
+          </span>
+          <span className="inline-flex items-center gap-1 text-link">
+            {detalle ? "Ocultar" : "Ver detalle"}
+            <ChevronDown aria-hidden className={cn("h-4 w-4 transition-transform duration-150", detalle && "rotate-180")} />
+          </span>
+        </button>
+        <div className={cn("grid gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]", !detalle && "max-sm:hidden")}>
           <section aria-label="Mi avance" className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-sh-label text-headline">Mi avance</span>

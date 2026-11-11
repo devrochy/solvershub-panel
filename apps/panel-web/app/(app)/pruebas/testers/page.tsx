@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, QaTestersOut } from "@/lib/api/types";
 
@@ -13,7 +14,7 @@ export default async function TestersPage() {
   if (!me.ok || me.data.role !== "master") notFound();
   const res = await apiFetch<QaTestersOut>("/admin/qa/testers");
   if (!res.ok) {
-    return <p role="alert" className="text-status-danger-fg">No se pudieron cargar los testers: {res.error}</p>;
+    return <ErrorDeCarga titulo="No pudimos cargar los testers" detalle={res.error} />;
   }
   return <GestionDeTesters inicial={res.data} />;
 }

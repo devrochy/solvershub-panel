@@ -128,7 +128,7 @@ function TarjetaDeEscenario({
         <h3 id={`${anclaDe(escenario.slug)}-titulo`} className="font-medium text-headline">
           {escenario.titulo}
         </h3>
-        {escenario.agent_os && <Badge>Agent OS</Badge>}
+        {escenario.agent_os && <Badge>Usa los agentes</Badge>}
       </div>
       <p className="text-sm text-body">{escenario.crea}</p>
       <dl className="flex flex-col gap-2 text-sm">

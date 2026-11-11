@@ -284,6 +284,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Todo en palabras: etapas con tildes, el motivo de una tarea que falló, «Atiende primero» en vez de prioridades, «9 de cada 10 en menos de 2 s» en vez de p95, permisos como frases («Agenda puede consultarle a Ventas») y claves de mensajes con su nombre.
 - El editor es una tarea enfocada: sin las pestañas de la sección y con «Volver a Ventas». Las plantillas de «Nuevo agente» son tarjetas con lo que saben hacer y lo que falta preparar.
 
+## Pruebas (SPEC-30)
+
+- Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.
+- En palabras (`lib/qa/estados.ts`): «Imprescindible» en vez de «Humo · P0», fechas como «4 de nov.», «En este ciclo: 2 la aprobaron» y resúmenes sin ceros («14 aprobadas · 3 con falla»).
+- La lista de Ejecutar filtra el estado con un control segmentado y lo demás en «Filtros». En el celular el avance va en una línea y el paso ofrece Aprobar y Falla, con lo demás en un menú.
+- El informe empieza por fallas y bloqueos, dice por entorno solo lo que no está bien y pliega las aprobadas (completas al imprimir). Informes van por ciclo y la fila abre el informe.
+- Cerrar un ciclo se hace desde su tarjeta y la confirmación dice cuántas ejecuciones quedan en solo lectura. «Cómo va cada sección» muestra cada catálogo por su fecha y la tendencia en palabras.
+- Las listas de verificación son filas con el estado en un menú; «Por qué», «Cómo», variables y nota se ven al abrir la fila.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |
