@@ -37,7 +37,12 @@ describe("perfil propio", () => {
     render(<PerfilForm me={ME} />);
     expect((screen.getByLabelText("Nombre completo") as HTMLInputElement).value).toBe("Ana Pérez");
     expect((screen.getByLabelText("Usuario") as HTMLInputElement).value).toBe("ana.perez");
-    expect((screen.getByLabelText("Correo") as HTMLInputElement).disabled).toBe(true);
+    // ACP-04/05: el correo no es un campo; va fijo en la sección «Acceso», con la contraseña y los equipos.
+    expect(screen.queryByLabelText("Correo")).toBeNull();
+    const acceso = screen.getByRole("heading", { name: "Acceso" }).closest("section")!;
+    expect(acceso.textContent).toMatch(/No se puede cambiar/);
+    expect(screen.getByRole("heading", { name: "Tus datos" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Cambiar contraseña/ })).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Nombre completo"), { target: { value: "Ana María Pérez" } });
     fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
@@ -77,5 +82,17 @@ describe("perfil propio", () => {
       const body = JSON.parse(String(llamada?.[1]?.body));
       expect(body).toEqual({ actual: "clave-vieja", nueva: "clave-nueva-1" });
     });
+  });
+});
+
+describe("Acceso en el perfil (ACP-05)", () => {
+  it("«Tus equipos» lleva a Seguridad solo a quien puede verla", () => {
+    const dueno = { ...ME, role: "admin", tenant: { ...ME.tenant!, role: "owner" }, permissions: {} } as Me;
+    const { unmount } = render(<PerfilForm me={dueno} />);
+    expect(screen.getByRole("link", { name: "Ver en Seguridad" }).getAttribute("href")).toBe("/seguridad");
+    unmount();
+    const colaborador = { ...ME, role: "admin", tenant: { ...ME.tenant!, role: "colaborador" }, permissions: { conversations: "write" } } as Me;
+    render(<PerfilForm me={colaborador} />);
+    expect(screen.queryByRole("link", { name: "Ver en Seguridad" })).toBeNull();
   });
 });

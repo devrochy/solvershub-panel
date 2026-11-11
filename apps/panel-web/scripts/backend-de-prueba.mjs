@@ -17,6 +17,8 @@
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
+//   SESION_REAL=1 (sin cookie de sesión, `/admin/me` responde 401: deja ver el login)
+//   BIENVENIDA=1 (asistente de primer uso en curso; con AGENTES=1, las plantillas de agente)
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
 //   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
 //   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
@@ -688,6 +690,12 @@ let seguridad = null;
     }
     return null;
   };
+}
+
+// BIENVENIDA=1: el asistente de primer uso a medio camino (con AGENTES=1 trae las plantillas de agente).
+if (process.env.BIENVENIDA === "1") {
+  const pp = respuestas["/admin/onboarding"];
+  respuestas["/admin/onboarding"] = { ...pp, recorrido: { ...pp.recorrido, estado: "en_curso", paso: 1, total_pasos: 6, aplica: true, abrir: true, avisar: true } };
 }
 
 // SOLO_LECTURA=1: quien mira no es el propietario (plantillas con opciones en solo lectura).
@@ -1607,6 +1615,12 @@ createServer(async (req, res) => {
       res.end(JSON.stringify(r[1]));
       return;
     }
+  }
+  // SESION_REAL=1: sin `Authorization` (sin la cookie de sesión) `/admin/me` responde 401, como la API: deja ver el login.
+  if (process.env.SESION_REAL === "1" && ruta === "/admin/me" && !req.headers.authorization) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: { code: "unauthorized", message: "Sin sesión" } }));
+    return;
   }
   if (req.method === "GET" && (ruta === "/access/devices" || ruta === "/access/events")) {
     res.end(JSON.stringify(seguridad(ruta, url)));
