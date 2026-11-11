@@ -22,9 +22,10 @@ export function estadoDeDocumento(estado: string): { label: string; tono: Tono }
 const MOTIVOS: Record<string, string> = {
   sin_texto: "No tiene texto que leer (¿es un PDF escaneado?). Súbelo como PDF con texto o como DOCX.",
   muy_grande: "Es muy largo: pasa de 300 páginas o de 2.000 fragmentos. Divídelo en partes.",
-  formato: "El archivo está dañado o no es del tipo que dice ser.",
+  formato: "El archivo está dañado o no es del tipo que dice ser. Sube un PDF, DOCX, TXT o Markdown.",
+  formato_no_soportado: "No sabemos leer este tipo de archivo. Sube un PDF, DOCX, TXT o Markdown.",
   limite_plan: "Tu plan no admite más documentos.",
-  proveedor: "El servicio que lee los documentos no respondió. Vuelve a procesarlo en unos minutos.",
+  proveedor: "El servicio que lee los documentos no respondió. Vuelve a leerlo en unos minutos.",
   interno: "Algo falló al procesarlo. Vuelve a intentarlo; si se repite, avísanos.",
 };
 

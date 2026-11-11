@@ -10,6 +10,7 @@
 //   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
 //   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
 //   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
+//   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
@@ -603,7 +604,7 @@ if (retiradas) {
 }
 // FICHA_AGENTE=1 (HU-UX-09): la ficha de Ventas con sus conexiones (rol, prioridad y principal), indicadores de
 // 7 días, superpoderes de dos habilidades y el chat de prueba por su conexión principal.
-if (process.env.FICHA_AGENTE === "1") {
+if (process.env.FICHA_AGENTE === "1" || process.env.AGENTES === "1") {
   const GENERAL_ID = "00000000-0000-4000-8000-000000000001";
   const instancia = (agentId, key, name, extra) => ({
     instance_id: `${key}-${extra.conexion}`, agent_id: agentId, key, name, role: "specialist", is_default: false, enabled: true,
@@ -675,6 +676,96 @@ if (process.env.FICHA_AGENTE === "1") {
     { role: "user", text: "Hola, ¿tienen la chaqueta azul en talla M?" },
     { role: "assistant", text: "¡Hola! Sí, nos quedan 3 en talla M a $189.900. ¿Te separo una?" },
   ] };
+}
+// AGENTES=1 (con FICHA_AGENTE=1 y RETIRADAS=limpio): lo que falta para recorrer toda la sección Agentes con datos:
+// conversaciones, tareas, registros y clientes por agente, documentos de Conocimiento y las plantillas del asistente.
+if (process.env.AGENTES === "1") {
+  const GENERAL_ID = "00000000-0000-4000-8000-000000000001";
+  const pagina = (items) => ({ items, total: items.length, page: 1, page_size: 20, has_more: false });
+  const hace = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  const conv = (n, nombre, canal, estado, turnos, costo, horas, conexion = "Chat de la tienda") => ({
+    conversation_id: `00000000-0000-4000-8000-0000000001${String(n).padStart(2, "0")}`, customer_id: `00000000-0000-4000-8000-0000000002${String(n).padStart(2, "0")}`,
+    customer_name: nombre, channel: canal, status: estado, connection_id: "00000000-0000-4000-8000-0000000000c1", connection_label: conexion,
+    agent_version: 3, turns: turnos, cost_usd: costo, last_turn_at: hace(horas),
+  });
+  const conversaciones = pagina([
+    conv(1, "Ana Prueba", "web", "open", 8, 0.06, 1),
+    conv(2, "Camilo Vega", "whatsapp", "open", 14, 0.11, 3, "WhatsApp ventas"),
+    conv(3, null, "web", "resolved", 3, 0.02, 20),
+    conv(4, "Laura Gómez", "whatsapp", "escalated", 22, 0.19, 30, "WhatsApp ventas"),
+    conv(5, "Pedro Ruiz", "whatsapp", "resolved", 6, 0.04, 70, "WhatsApp ventas"),
+  ]);
+  conversaciones.total = 48;
+  const tarea = (n, proc, estado, abierta, etapa, horas, motivo = null) => ({
+    id: `t-${n}`, conversation_id: conversaciones.items[n % 5].conversation_id, procedure_id: proc, procedure_version: "1.2.0", status: estado, open: abierta,
+    status_reason: motivo, stage: etapa, created_at: hace(horas + 1), updated_at: hace(horas), completed_at: abierta ? null : hace(horas), connection_id: "00000000-0000-4000-8000-0000000000c1",
+  });
+  const tareas = pagina([
+    tarea(1, "pack_commerce.tomar_pedido", "active", true, "confirmar_direccion", 1),
+    tarea(2, "pack_commerce.tomar_pedido", "suspended", true, "esperar_pago", 5),
+    tarea(3, "pack_calendar.agendar_cita", "completed", false, "fin", 20),
+    tarea(4, "pack_commerce.tomar_pedido", "failed", false, "cotizar", 30, "El producto ya no tiene stock."),
+    tarea(5, "pack_commerce.tomar_pedido", "escalated", false, "confirmar_direccion", 50, "El cliente pidió hablar con una persona."),
+  ]);
+  const registro = (n, kind, ref, etiqueta, tool, horas) => ({
+    id: `r-${n}`, pack_id: kind === "cita" ? "pack_calendar" : "pack_commerce", kind, record_ref: ref, label: etiqueta, tool,
+    conversation_id: conversaciones.items[n % 5].conversation_id, connection_id: "00000000-0000-4000-8000-0000000000c1", connection_label: "Chat de la tienda", agent_version: 3, created_at: hace(horas),
+  });
+  const registros = pagina([
+    registro(1, "pedido", "o-1", "PED-101 · $ 207.000", "pack_commerce.crear_pedido", 2),
+    registro(2, "pedido", "o-2", "PED-102 · $ 59.000", "pack_commerce.crear_pedido", 5),
+    registro(3, "cita", "e-1", "Entrega · jueves 13 de nov., 10:00 a. m.", "pack_calendar.crear_cita", 20),
+  ]);
+  const clientes = pagina([
+    { customer_id: conversaciones.items[0].customer_id, name: "Ana Prueba", channel: "web", conversations: 2, turns: 12, last_turn_at: hace(1) },
+    { customer_id: conversaciones.items[1].customer_id, name: "Camilo Vega", channel: "whatsapp", conversations: 1, turns: 14, last_turn_at: hace(3) },
+    { customer_id: conversaciones.items[3].customer_id, name: "Laura Gómez", channel: "whatsapp", conversations: 3, turns: 30, last_turn_at: hace(30) },
+  ]);
+  const uso = {
+    periodo: { desde: hace(24 * 30), hasta: hace(0) }, incluye_sin_atribuir: false,
+    total: { turns: 410, input_tokens: 1_240_000, output_tokens: 210_000, cost_usd: 3.4 },
+    by_connection: [
+      { turns: 260, input_tokens: 800_000, output_tokens: 130_000, cost_usd: 2.1, connection_id: "00000000-0000-4000-8000-0000000000c1", connection_label: "Chat de la tienda" },
+      { turns: 150, input_tokens: 440_000, output_tokens: 80_000, cost_usd: 1.3, connection_id: "00000000-0000-4000-8000-0000000000c2", connection_label: "WhatsApp ventas" },
+    ],
+    by_day: Array.from({ length: 14 }, (_, i) => ({ day: hace(24 * (13 - i)).slice(0, 10), turns: 10 + ((i * 7) % 25), input_tokens: 30_000, output_tokens: 5_000, cost_usd: 0.08 + (i % 4) * 0.02 })),
+    consistency: { scope: "negocio", measurements: [] },
+  };
+  for (const ref of [VENTAS_ID, "general", GENERAL_ID]) {
+    respuestas[`/admin/agents/${ref}/conversations`] = conversaciones;
+    respuestas[`/admin/agents/${ref}/tasks`] = tareas;
+    respuestas[`/admin/agents/${ref}/records`] = registros;
+    respuestas[`/admin/agents/${ref}/customers`] = clientes;
+    respuestas[`/admin/agents/${ref}/usage`] = uso;
+  }
+  respuestas[`/pack/pack_knowledge/agents/${VENTAS_ID}/documents`] = [
+    { id: "d-1", agent_id: VENTAS_ID, titulo: "Catálogo de temporada.pdf", mime: "application/pdf", bytes: 2_400_000, estado: "listo", error_codigo: null, paginas: 18, num_fragmentos: 64, pii_detectada: 0, desactualizado: false, created_at: hace(200), processed_at: hace(199) },
+    { id: "d-2", agent_id: VENTAS_ID, titulo: "Políticas de cambios y devoluciones.docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", bytes: 84_000, estado: "listo", error_codigo: null, paginas: 3, num_fragmentos: 9, pii_detectada: 2, desactualizado: true, created_at: hace(900), processed_at: hace(899) },
+    { id: "d-3", agent_id: VENTAS_ID, titulo: "Tabla de envíos.xlsx", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes: 31_000, estado: "fallido", error_codigo: "formato_no_soportado", paginas: null, num_fragmentos: 0, pii_detectada: 0, desactualizado: false, created_at: hace(5), processed_at: null },
+  ];
+  const poder = (id, skill, title, description) => ({ id, version: "1.0.0", skill, title, description, phrases: ["a", "b", "c"] });
+  const plantilla = (key, name, description, section, skills, available, extra = {}) => ({
+    key, name, description, section, tools: [], skills, optional_skills: [], available, missing_skills: available ? [] : skills, will_enable: available ? [] : skills,
+    superpowers: [], requirements: [], questions: [
+      { id: "tono", text: "¿Cómo le habla a tus clientes?", help: "Puedes cambiarlo después.", type: "option", options: [{ id: "cercano", text: "Cercano", help: "Tutea y usa un tono cálido." }, { id: "formal", text: "Formal", help: "Trata de usted." }], default: "cercano" },
+      { id: "objetivo", text: "¿Qué quieres que logre?", help: "", type: "text", options: [], default: null },
+    ], ...extra,
+  });
+  // Propósito de cada agente y sus créditos del mes (AGT-01, AGT-03).
+  respuestas["/admin/agents"] = [
+    { id: GENERAL_ID, key: "general", name: "General", kind: "specialist", contract: "agentspec/3", description: "", status: "active", latest_version: 2, created_at: hace(2000) },
+    { id: VENTAS_ID, key: "ventas", name: "Ventas", kind: "specialist", contract: "agentspec/3", description: "Toma pedidos, resuelve dudas de productos y agenda entregas", status: "active", latest_version: 3, created_at: hace(1500) },
+  ];
+  const plan = RESPUESTAS["/admin/plan"];
+  if (process.env.CONSUMO !== "1") respuestas["/admin/plan"] = {
+    ...plan,
+    credit: { ...plan.credit, used: 4900, by_agent: [{ agent_id: VENTAS_ID, name: "Ventas", used: 3200 }, { agent_id: GENERAL_ID, name: "General", used: 1400 }, { agent_id: null, name: null, used: 300 }] },
+  };
+  respuestas["/admin/agent-templates"] = { items: [
+    plantilla("ventas", "Ventas", "Toma pedidos, cotiza y resuelve dudas del catálogo.", "pack_commerce", ["pack_commerce"], true, { superpowers: [poder("pack_commerce.tomar_pedido", "pack_commerce", "Tomar un pedido", "Arma el pedido y lo confirma.")] }),
+    plantilla("agenda", "Agenda", "Agenda, mueve y confirma citas.", "pack_calendar", ["pack_calendar"], true, { requirements: [{ skill: "pack_calendar", kind: "sin_contenido", title: "Aún no hay servicios", explanation: "Crea al menos un tipo de cita para que pueda agendar.", section: "pack_calendar", content: "servicios" }] }),
+    plantilla("cobranza", "Cobranza", "Recuerda pagos y registra promesas.", "pack_cobranza", ["pack_cobranza"], false),
+  ], total: 3, page: 1, page_size: 100, has_more: false };
 }
 const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).

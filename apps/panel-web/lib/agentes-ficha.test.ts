@@ -72,7 +72,7 @@ describe("ficha del agente · conexiones (HU-UX-09)", () => {
     expect(filas[0]).toMatchObject({ label: "WhatsApp tienda", tipo: "WhatsApp oficial (Meta)", rol: "Especialista", principal: true, atiende: true, version: 2 });
     expect(filas[0].estado).toEqual({ label: "Sana", tono: "success" });
     // Sin nombre, la conexión se nombra por su tipo; deshabilitado aquí no atiende.
-    expect(filas[1]).toMatchObject({ label: "WhatsApp Web (QR)", atiende: false, estado: { label: "Deshabilitado aquí", tono: "neutral" } });
+    expect(filas[1]).toMatchObject({ label: "WhatsApp Web (QR)", atiende: false, estado: { label: "Apagado en esta conexión", tono: "neutral" } });
     expect(filas[2].tipo).toBe("Chat web");
   });
 

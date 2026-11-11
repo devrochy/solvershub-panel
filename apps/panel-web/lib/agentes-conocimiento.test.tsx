@@ -122,7 +122,7 @@ function pestana(props: Partial<Parameters<typeof ConocimientoDelAgente>[0]> = {
 }
 
 describe("ficha del agente", () => {
-  it("un especialista tiene la pestaña Conocimiento, con sus documentos y sin filtros de período", async () => {
+  it("un especialista tiene «Lo que sabe», con sus documentos y sin filtros de período (también desde ?tab=conocimiento)", async () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
@@ -130,7 +130,7 @@ describe("ficha del agente", () => {
       [`/admin/agents/${AGENTE}`]: { description: "", latest_version: 1, versions: [], draft: { content: { tools: [] } } },
     });
     const { container } = await abrir(VENTAS.ref, { tab: "conocimiento" });
-    expect(screen.getByRole("link", { name: "Conocimiento" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Lo que sabe" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByText("Preguntas frecuentes")).toBeTruthy();
     expect(screen.getByText("2 KB · 3 páginas · 5 fragmentos")).toBeTruthy();
     // El borrador no declara la búsqueda: lo dice y lleva al editor.
@@ -143,7 +143,7 @@ describe("ficha del agente", () => {
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("el Coordinador no tiene pestaña Conocimiento", async () => {
+  it("el Coordinador no tiene «Lo que sabe»", async () => {
     const conCoordinador = {
       ...agentes,
       items: agentes.items.map((a, i) => (i === 1 ? { ...a, kind: "core" } : a)),
@@ -154,12 +154,16 @@ describe("ficha del agente", () => {
       [`/admin/agents/${VENTAS.ref}/conversations`]: { items: [], total: 0, page: 1, has_more: false },
     });
     await abrir(VENTAS.ref, { tab: "conocimiento" });
-    expect(screen.queryByRole("link", { name: "Conocimiento" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Lo que sabe" })).toBeNull();
     expect(llamadas.some((r) => r.includes("pack_knowledge"))).toBe(false);
   });
 });
 
-describe("pestaña Conocimiento", () => {
+function abrirMenu(titulo: string) {
+  fireEvent.pointerDown(screen.getByRole("button", { name: `Más acciones de «${titulo}»` }), { button: 0, ctrlKey: false, pointerType: "mouse" });
+}
+
+describe("documentos del agente", () => {
   it("muestra el estado, el motivo de una falla y el aviso de datos personales", () => {
     pestana({
       documentos: [
@@ -170,14 +174,19 @@ describe("pestaña Conocimiento", () => {
     expect(screen.getByText("No se pudo leer")).toBeTruthy();
     expect(screen.getByText(/PDF escaneado/)).toBeTruthy();
     expect(screen.getByText(/datos personales/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Volver a procesar «Escaneado»" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Volver a procesar «Clientes»" })).toBeNull();
+    // Las acciones van en «Más acciones» (AGT-09): volver a leer solo si falló o quedó viejo.
+    abrirMenu("Escaneado");
+    expect(screen.getByRole("menuitem", { name: "Volver a leerlo" })).toBeTruthy();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    abrirMenu("Clientes");
+    expect(screen.queryByRole("menuitem", { name: "Volver a leerlo" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Borrar documento" })).toBeTruthy();
   });
 
   it("sin permiso de escritura no hay subida ni acciones", () => {
     pestana({ puedeEscribir: false, documentos: [documento()] });
     expect(screen.queryByRole("group", { name: /Arrastra o elige/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Borrar/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Más acciones/ })).toBeNull();
   });
 
   it("al tope del plan muestra el aviso para mejorar el plan", async () => {
@@ -208,7 +217,8 @@ describe("pestaña Conocimiento", () => {
   it("borrar pide confirmación y quita el documento de la lista", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     pestana({ documentos: [documento()] });
-    fireEvent.click(screen.getByRole("button", { name: "Borrar «Preguntas frecuentes»" }));
+    abrirMenu("Preguntas frecuentes");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Borrar documento" }));
     fireEvent.click(await screen.findByRole("button", { name: "Borrar documento" }));
     await waitFor(() => expect(screen.queryByText("2 KB · 3 páginas · 5 fragmentos")).toBeNull());
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];

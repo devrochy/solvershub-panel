@@ -5,6 +5,7 @@
  */
 import type { FuenteDeMensaje, MensajeDelCatalogo, MensajeOmitido } from "@/lib/api/types";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
+import { EVENTO } from "@/lib/plantillas";
 
 export type TipoDeMensaje = MensajeDelCatalogo["tipo"];
 
@@ -94,11 +95,79 @@ export function estadoDeMensaje(m: Pick<MensajeDelCatalogo, "tipo" | "estado">):
   return { etiqueta: m.estado.replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase()), tono: "neutral" };
 }
 
+/** ¿Parece una clave técnica? `cobro_nuevo`, `subscription.charge_created`. */
+const CLAVE = /^[a-z0-9]+([._-][a-z0-9]+)+$/;
+
+/**
+ * Una clave técnica en palabras (AGT-15): un evento conocido por su nombre
+ * (`subscription.charge_created` → «Cargo de suscripción generado») y el resto sin guiones
+ * (`cobro_nuevo` → «Cobro nuevo»).
+ */
+export function enPalabras(texto: string): string {
+  if (EVENTO[texto]) return EVENTO[texto];
+  if (!CLAVE.test(texto)) return texto;
+  const plano = texto.replaceAll(/[._-]+/g, " ").trim();
+  return plano.charAt(0).toUpperCase() + plano.slice(1);
+}
+
+const VARIABLES: Record<string, string> = {
+  nombre: "nombre del cliente",
+  name: "nombre del cliente",
+  customer_name: "nombre del cliente",
+  nombre_cliente: "nombre del cliente",
+  cliente: "nombre del cliente",
+  negocio: "nombre del negocio",
+  business_name: "nombre del negocio",
+  monto: "monto",
+  amount: "monto",
+  valor: "monto",
+  fecha: "fecha",
+  date: "fecha",
+  hora: "hora",
+  time: "hora",
+  enlace: "enlace",
+  link: "enlace",
+  url: "enlace",
+  servicio: "servicio",
+  producto: "producto",
+};
+
+/** De quién es un dato con punto: `cliente.nombre` → «nombre del cliente». */
+const DUENOS: Record<string, string> = {
+  cliente: "del cliente",
+  customer: "del cliente",
+  cargo: "del cobro",
+  cobro: "del cobro",
+  charge: "del cobro",
+  cita: "de la cita",
+  appointment: "de la cita",
+  negocio: "del negocio",
+  pedido: "del pedido",
+  order: "del pedido",
+  suscripcion: "de la suscripción",
+  subscription: "de la suscripción",
+  plan: "del plan",
+};
+
+/** Una variable en palabras: `{{1}}` → «dato 1»; `{{nombre}}` y `cliente.nombre` → «nombre del cliente». */
+export function variableEnPalabras(variable: string): string {
+  const limpia = variable.replaceAll(/[{}\s]/g, "");
+  if (/^\d+$/.test(limpia)) return `dato ${limpia}`;
+  const conocida = VARIABLES[limpia.toLowerCase()];
+  if (conocida) return conocida;
+  const [dueno, ...resto] = limpia.split(".");
+  if (resto.length > 0 && DUENOS[dueno.toLowerCase()]) {
+    const campo = resto.join(" ").replaceAll(/[_-]+/g, " ");
+    return `${(VARIABLES[campo] ?? campo).replace(/ del cliente$| del negocio$/, "")} ${DUENOS[dueno.toLowerCase()]}`;
+  }
+  return limpia.replaceAll(/[._-]+/g, " ");
+}
+
 /** Una línea bajo el estado: categoría (Meta), plantilla mapeada (evento), estado en Meta (opciones) o la habilidad. */
 export function detalleDeEstado(m: Pick<MensajeDelCatalogo, "tipo" | "estado_detalle">): string | null {
   if (!m.estado_detalle) return null;
   if (m.tipo === "meta") return `Categoría ${m.estado_detalle.toLowerCase()}`;
-  if (m.tipo === "evento") return `Plantilla: ${m.estado_detalle}`;
+  if (m.tipo === "evento") return `Plantilla: ${enPalabras(m.estado_detalle)}`;
   if (m.tipo === "opciones") return `En Meta: ${estadoDeMensaje({ tipo: "meta", estado: m.estado_detalle }).etiqueta.toLowerCase()}`;
   return m.estado_detalle;
 }
@@ -111,7 +180,7 @@ export function canalesLabel(canales: readonly string[]): string {
 /** Nombre que se le muestra al dueño: la clave técnica de un evento o de un campo no se enseña sola. */
 export function nombreDeMensaje(m: Pick<MensajeDelCatalogo, "tipo" | "nombre" | "clave" | "fuente">): string {
   if (m.tipo === "texto_pack" && m.fuente.plugin_id) return `${habilidadLabel(m.fuente.plugin_id)}: ${m.nombre}`;
-  return m.nombre || m.clave;
+  return enPalabras(m.nombre || m.clave);
 }
 
 // ------------------------------------------------------------------ enlace al editor

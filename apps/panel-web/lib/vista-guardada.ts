@@ -1,6 +1,6 @@
 /**
  * La vista que cada quien prefiere en una lista con dos formas de verse (lista o vitrina, lista o
- * por etapa). Se recuerda en una cookie de este navegador: la página la usa cuando la URL no trae
+ * por etapa, cuadrícula o lista). Se recuerda en una cookie de este navegador: la página la usa cuando la URL no trae
  * `vista`, y los enlaces solo la escriben cuando difiere de la guardada.
  */
 
@@ -8,6 +8,7 @@ export const VISTAS = {
   productos: { cookie: "panel_vista_productos", opciones: ["lista", "vitrina"], porDefecto: "lista" },
   categorias: { cookie: "panel_vista_categorias", opciones: ["lista", "vitrina"], porDefecto: "lista" },
   pedidos: { cookie: "panel_vista_pedidos", opciones: ["lista", "etapas"], porDefecto: "lista" },
+  agentes: { cookie: "panel_vista_agentes", opciones: ["cuadricula", "lista"], porDefecto: "cuadricula" },
 } as const;
 
 export type ListaConVista = keyof typeof VISTAS;

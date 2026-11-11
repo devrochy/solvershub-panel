@@ -62,7 +62,7 @@ export type ConexionDelAgente = {
 
 function estadoDeFila(c: ConexionDeConsola, a: AgenteDeConsola): { label: string; tono: Tono } {
   if (!c.active) return { label: "Conexión inactiva", tono: "neutral" };
-  if (!a.enabled) return { label: "Deshabilitado aquí", tono: "neutral" };
+  if (!a.enabled) return { label: "Apagado en esta conexión", tono: "neutral" };
   return SALUD[c.health] ?? { label: "Sin dato", tono: "neutral" };
 }
 
@@ -119,6 +119,15 @@ export function resueltasSinPersona(
   }
   if (turnos === 0 || turnos < muestraMinima) return { porcentaje: null, turnos };
   return { porcentaje: Math.round((1 - escaladas / turnos) * 1000) / 10, turnos };
+}
+
+/**
+ * Cuándo atiende en la conexión, en palabras (AGT-08): el principal atiende primero; el Coordinador
+ * reparte; los demás entran cuando la conversación es de su tema.
+ */
+export function cuandoAtiende(fila: Pick<ConexionDelAgente, "principal" | "rol">): string {
+  if (fila.rol === "Coordinador") return "Reparte las conversaciones";
+  return fila.principal ? "Atiende primero" : "Cuando la conversación es de su tema";
 }
 
 /** «Publicado · v3» si atiende en alguna conexión; si no, «Borrador». */

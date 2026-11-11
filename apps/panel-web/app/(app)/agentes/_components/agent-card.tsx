@@ -1,76 +1,69 @@
 import Link from "next/link";
-import { Bot, ChevronRight } from "lucide-react";
 
+import { AgentIcon } from "@/components/domain/agent-icon";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { AgentOverviewItem } from "@/lib/api/types";
-import { estaArchivado, tipoDeAgente } from "@/lib/agentes";
-import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
+import { dondeAtiende, estadoDelAgente, papelDelAgente } from "@/lib/agentes";
+import { creditos } from "@/lib/consumo";
+import { formatNumber, formatUsd } from "@/lib/format";
+import { tiempoRelativo } from "@/lib/notificaciones/tipos";
 
-/** Tarjeta de un agente en la lista: qué es, dónde atiende y qué hizo en 30 días. */
-export function AgentCard({ agent, conAviso = false }: { agent: AgentOverviewItem; conAviso?: boolean }) {
-  const conexiones = agent.connections.map((c) => c.label);
+export type AgenteDeLaLista = {
+  agente: AgentOverviewItem;
+  proposito: string | null;
+  /** Créditos del mes (solo si el plan los mide). */
+  creditos: number | null;
+  /** Dólares: solo para el master (el dueño ve créditos, como en Consumo y plan). */
+  verCosto: boolean;
+  conAviso: boolean;
+};
+
+/** Lo que hizo en 30 días en una línea: «48 conversaciones · 3.200 créditos este mes». */
+export function loQueHizo({ agente, creditos: usados, verCosto }: AgenteDeLaLista): string {
+  const partes = [`${formatNumber(agente.conversations)} ${agente.conversations === 1 ? "conversación" : "conversaciones"}`];
+  if (usados !== null) partes.push(`${creditos(usados)} este mes`);
+  if (verCosto && agente.cost_usd !== null) partes.push(formatUsd(agente.cost_usd, 2));
+  return partes.join(" · ");
+}
+
+export function ultimaConversacion(agente: AgentOverviewItem): string {
+  return agente.last_activity_at ? `Última conversación ${tiempoRelativo(agente.last_activity_at)}` : "Sin conversaciones en 30 días";
+}
+
+export function EstadoDelAgente({ agente }: { agente: AgentOverviewItem }) {
+  const estado = estadoDelAgente(agente);
+  return estado.tono === "neutral" ? <Badge variant="neutral">{estado.label}</Badge> : <Badge variant={estado.tono}>{estado.label}</Badge>;
+}
+
+/** Tarjeta de un agente en la cuadrícula (AGT-01): qué hace, dónde atiende y qué hizo en 30 días. */
+export function AgentCard(props: AgenteDeLaLista) {
+  const { agente, proposito, conAviso } = props;
   return (
-    <Card className="flex w-full flex-col">
-      <Link
-        href={`/agentes/${agent.ref}`}
-        className="group flex flex-1 flex-col gap-4 rounded-lg p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-md bg-bg-deep text-link" aria-hidden>
-              <Bot className="size-5" />
-            </span>
-            <div>
-              <p className="font-display text-sh-block text-headline">{agent.name}</p>
-              <p className="text-sh-caption text-text-soft">{tipoDeAgente(agent.kind)}</p>
-            </div>
-          </div>
-          <ChevronRight className="size-4 text-text-soft transition-transform group-hover:translate-x-0.5" aria-hidden />
+    <Card className="relative flex w-full flex-col gap-3 p-5 transition-colors duration-150 hover:border-border-strong">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <AgentIcon agentKey={agente.key} name={agente.name} />
+          <Link
+            href={`/agentes/${agente.ref}`}
+            className="min-w-0 font-display text-sh-block text-headline outline-none after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-focus"
+          >
+            {agente.name}
+          </Link>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {agent.virtual ? (
-            <Badge variant="info">Historial del asistente</Badge>
-          ) : estaArchivado(agent) ? (
-            <Badge variant="neutral">Archivado</Badge>
-          ) : agent.published ? (
-            <Badge variant="success">Atendiendo</Badge>
-          ) : (
-            <Badge variant="neutral">Sin conexión activa</Badge>
-          )}
-          {conAviso && <Badge variant="warning">Nombra algo retirado</Badge>}
-          {conexiones.map((label, i) => (
-            <Badge key={`${label}-${i}`} variant="neutral">
-              {label}
-            </Badge>
-          ))}
+        <EstadoDelAgente agente={agente} />
+      </div>
+      <p className="text-sm text-body">{papelDelAgente(agente, proposito)}</p>
+      <p className="text-sh-caption text-text-soft">{dondeAtiende(agente.connections)}</p>
+      {conAviso && (
+        <div>
+          <Badge variant="warning">Nombra algo retirado</Badge>
         </div>
-
-        <dl className={`grid gap-3 border-t border-border-soft pt-4 ${agent.cost_usd === null ? "grid-cols-2" : "grid-cols-3"}`}>
-          <div>
-            <dt className="text-sh-caption text-text-soft">Conversaciones</dt>
-            <dd className="text-sh-block tabular-nums text-headline">{formatNumber(agent.conversations)}</dd>
-          </div>
-          <div>
-            <dt className="text-sh-caption text-text-soft">Turnos</dt>
-            <dd className="text-sh-block tabular-nums text-headline">{formatNumber(agent.turns)}</dd>
-          </div>
-          {/* El costo solo llega con la sección `costs`. */}
-          {agent.cost_usd !== null && (
-            <div>
-              <dt className="text-sh-caption text-text-soft">Costo</dt>
-              <dd className="text-sh-block tabular-nums text-headline">{formatUsd(agent.cost_usd, 2)}</dd>
-            </div>
-          )}
-        </dl>
-        <p className="text-sh-caption text-text-soft">
-          {agent.last_activity_at
-            ? `Última actividad: ${formatDateTime(agent.last_activity_at)}`
-            : "Sin actividad en los últimos 30 días"}
-          {agent.incluye_sin_atribuir && " · incluye lo que atendió el asistente antes del Agent OS"}
-        </p>
-      </Link>
+      )}
+      <div className="mt-auto flex flex-col gap-1 border-t border-border-soft pt-3">
+        <p className="text-sm tabular-nums text-headline">{loQueHizo(props)}</p>
+        <p className="text-sh-caption text-text-soft">{ultimaConversacion(agente)}</p>
+      </div>
     </Card>
   );
 }

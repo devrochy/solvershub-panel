@@ -6,8 +6,13 @@ import {
   estaArchivado,
   estadoDeTarea,
   filtrosDe,
+  dondeAtiende,
+  estadoDeConversacion,
   hrefDeAgente,
+  nombreDeEtapa,
   nombreDeProcedimiento,
+  papelDelAgente,
+  respuestas,
   PESTANAS,
   PESTANAS_SIN_FILTROS,
   pestanaValida,
@@ -18,27 +23,30 @@ import {
   tieneConexiones,
   tieneSuperpoderes,
   tipoDeRegistro,
+  ubicacionDe,
+  VISTAS_DE_ACTIVIDAD,
 } from "@/lib/agentes";
 
 const ID = "3f1c2a4b-1111-4222-8333-944455556666";
 
-describe("pestañas de la ficha del agente (HU-UX-09)", () => {
-  it("van en el orden acordado", () => {
-    expect(PESTANAS.map((p) => p.label)).toEqual([
-      "Conversaciones",
-      "Tareas",
-      "Clientes y registros",
-      "Consumo y calidad",
-      "Conexiones",
-      "Superpoderes",
-      "Conocimiento",
-      "Probar",
-    ]);
-    expect(pestanaValida("probar")).toBe("probar");
+describe("pestañas de la ficha del agente (HU-UX-09, AGT-04)", () => {
+  it("son cuatro y Actividad agrupa conversaciones, tareas, clientes y registros", () => {
+    expect(PESTANAS.map((p) => p.label)).toEqual(["Actividad", "Lo que sabe", "Dónde atiende", "Consumo"]);
+    expect(VISTAS_DE_ACTIVIDAD.map((v) => v.label)).toEqual(["Conversaciones", "Tareas", "Clientes", "Registros"]);
+    expect([...PESTANAS_SIN_FILTROS].sort()).toEqual(["atiende", "sabe"]);
   });
 
-  it("las pestañas nuevas no llevan filtros de período", () => {
-    expect([...PESTANAS_SIN_FILTROS].sort()).toEqual(["conexiones", "conocimiento", "probar", "superpoderes"]);
+  it("los enlaces de antes siguen abriendo su lugar", () => {
+    expect(ubicacionDe({})).toEqual({ tab: "actividad", ver: "conversaciones", probar: false });
+    expect(ubicacionDe({ tab: "tareas" })).toEqual({ tab: "actividad", ver: "tareas", probar: false });
+    expect(ubicacionDe({ tab: "registros" })).toEqual({ tab: "actividad", ver: "registros", probar: false });
+    expect(ubicacionDe({ tab: "conocimiento" }).tab).toBe("sabe");
+    expect(ubicacionDe({ tab: "superpoderes" }).tab).toBe("sabe");
+    expect(ubicacionDe({ tab: "conexiones" }).tab).toBe("atiende");
+    expect(ubicacionDe({ tab: "probar" })).toEqual({ tab: "actividad", ver: "conversaciones", probar: true });
+    expect(ubicacionDe({ tab: "consumo" }).tab).toBe("consumo");
+    expect(ubicacionDe({ tab: "actividad", ver: "clientes" }).ver).toBe("clientes");
+    expect(ubicacionDe({ tab: "otra", ver: "otra" })).toEqual({ tab: "actividad", ver: "conversaciones", probar: false });
   });
 
   it("Superpoderes solo para especialistas con id; Conexiones para cualquier agente real", () => {
@@ -73,7 +81,7 @@ describe("sección Agentes (HU-AOS-47)", () => {
       estado: null,
     });
     expect(pestanaValida("consumo")).toBe("consumo");
-    expect(pestanaValida("otra")).toBe("conversaciones");
+    expect(pestanaValida("otra")).toBe("actividad");
   });
 
   it("arma la query de la API con el período", () => {
@@ -87,10 +95,12 @@ describe("sección Agentes (HU-AOS-47)", () => {
   });
 
   it("conserva los filtros al cambiar de pestaña y vuelve a la página 1", () => {
-    const actual = { tab: "conversaciones" as const, dias: 7, conexion: ID, pagina: 4, estado: null };
-    expect(hrefDeAgente("general", actual, { tab: "tareas" })).toBe(`/agentes/general?tab=tareas&dias=7&conexion=${ID}`);
+    const actual = { tab: "actividad" as const, ver: "conversaciones" as const, dias: 7, conexion: ID, pagina: 4, estado: null };
+    expect(hrefDeAgente("general", actual, { ver: "tareas" })).toBe(`/agentes/general?ver=tareas&dias=7&conexion=${ID}`);
+    expect(hrefDeAgente("general", actual, { tab: "consumo" })).toBe(`/agentes/general?tab=consumo&dias=7&conexion=${ID}`);
     expect(hrefDeAgente("general", actual, { page: 5 })).toBe(`/agentes/general?dias=7&conexion=${ID}&page=5`);
     expect(hrefDeAgente("general", actual, { conexion: null })).toBe("/agentes/general?dias=7");
+    expect(hrefDeAgente("general", { ...actual, ver: "tareas" }, { estado: "open" })).toBe(`/agentes/general?ver=tareas&dias=7&conexion=${ID}&estado=open`);
   });
 
   it("traduce estados, tipos y procedimientos", () => {
@@ -99,6 +109,12 @@ describe("sección Agentes (HU-AOS-47)", () => {
     expect(tipoDeRegistro("promesa")).toBe("Promesa de pago");
     expect(tipoDeRegistro("reserva_mesa")).toBe("reserva mesa");
     expect(nombreDeProcedimiento("comercio.agendar_cita")).toBe("Agendar cita");
+    expect(nombreDeEtapa("confirmar_direccion")).toBe("Confirmar dirección");
+    expect(nombreDeEtapa("informacion_de_envio")).toBe("Información de envío");
+    expect(nombreDeEtapa("fin")).toBe("Terminó");
+    expect(estadoDeConversacion("escalated")).toEqual({ label: "Pasó a una persona", tono: "warning" });
+    expect(estadoDeConversacion("raro")).toBeNull();
+    expect(respuestas(1)).toBe("1 respuesta");
   });
 
   it("calcula pass^k y su tendencia", () => {
@@ -132,5 +148,20 @@ describe("archivar agentes", () => {
     expect(archivadosAlFinal(lista).map((a) => a.key)).toEqual(["b", "d", "a", "c"]);
     expect(estaArchivado({ status: "archived" })).toBe(true);
     expect(estaArchivado({ status: "active" })).toBe(false);
+  });
+});
+
+describe("lista de agentes en palabras (AGT-01)", () => {
+  it("el General coordina; los demás dicen su propósito", () => {
+    expect(papelDelAgente({ key: "general", kind: "specialist" })).toBe("Coordina a los demás y responde lo que nadie más sabe");
+    expect(papelDelAgente({ key: "coordinador", kind: "core" })).toBe("Reparte cada conversación al agente que sabe");
+    expect(papelDelAgente({ key: "ventas", kind: "specialist" }, "Toma pedidos")).toBe("Toma pedidos");
+    expect(papelDelAgente({ key: "ventas", kind: "specialist" }, "  ")).toBe("Especialista");
+  });
+
+  it("dice dónde atiende", () => {
+    expect(dondeAtiende([])).toBe("Todavía no está en ninguna conexión");
+    expect(dondeAtiende([{ label: "Chat de la tienda" }])).toBe("Atiende en Chat de la tienda");
+    expect(dondeAtiende([{ label: "a" }, { label: "b" }, { label: "c" }])).toBe("Atiende en 3 conexiones");
   });
 });

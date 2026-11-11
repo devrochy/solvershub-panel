@@ -141,7 +141,7 @@ describe("ResumenAgentes (ADR-0171)", () => {
     expect(hrefDe(general, "Conversaciones")).toBe("/conversaciones");
     expect(hrefDe(general, "Escalaciones pendientes")).toBe("/escalaciones");
     const agentes = screen.getByRole("region", { name: "Agentes" });
-    expect(hrefDe(agentes, "Tareas abiertas")).toBe("/agentes/id-ventas?tab=tareas");
+    expect(hrefDe(agentes, "Tareas abiertas")).toBe("/agentes/id-ventas?ver=tareas");
     expect(
       within(screen.getByRole("region", { name: "Módulo Ventas" })).getByText("Pedidos").closest("a")?.getAttribute("href"),
     ).toBe("/comercio/pedidos");

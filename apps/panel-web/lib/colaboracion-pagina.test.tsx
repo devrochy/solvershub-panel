@@ -73,10 +73,12 @@ describe("colaboración entre agentes", () => {
   it("lista los permisos de cada especialista, sin el Coordinador, y es accesible", async () => {
     const { container } = await abrir();
     expect(screen.getByRole("heading", { level: 1, name: "Colaboración" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Ventas puede…" })).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "Coordinador puede…" })).toBeNull();
-    const consultar = screen.getAllByRole("checkbox", { name: "Consultar" });
-    expect(consultar.map((c) => c.getAttribute("aria-checked"))).toEqual(["false", "true"]);
+    expect(screen.getByRole("heading", { name: "Lo que puede hacer Ventas" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Lo que puede hacer Coordinador" })).toBeNull();
+    // AGT-13: cada permiso es una frase.
+    expect(screen.getByRole("checkbox", { name: "Agenda puede consultarle a Ventas" }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("checkbox", { name: "Ventas puede consultarle a Agenda" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.queryByText(/Versión \d+ de los permisos/)).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
@@ -84,7 +86,7 @@ describe("colaboración entre agentes", () => {
     await abrir();
     const guardar = screen.getByRole("button", { name: "Guardar permisos" }) as HTMLButtonElement;
     expect(guardar.disabled).toBe(true);
-    for (const c of screen.getAllByRole("checkbox", { name: "Pasar la conversación" })) fireEvent.click(c);
+    for (const c of screen.getAllByRole("checkbox", { name: /puede pasarle la conversación a/ })) fireEvent.click(c);
     expect(screen.getByRole("status").textContent).toMatch(/Ventas → Agenda → Ventas/);
     expect(guardar.disabled).toBe(false);
   });
@@ -93,7 +95,7 @@ describe("colaboración entre agentes", () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ...grafoA2A, created: true }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     await abrir();
-    fireEvent.click(screen.getAllByRole("checkbox", { name: "Encargar" })[1]);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Ventas puede encargarle un recorrido a Agenda" }));
     fireEvent.click(screen.getByRole("button", { name: "Guardar permisos" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
@@ -108,7 +110,8 @@ describe("colaboración entre agentes", () => {
     await abrir({ "/admin/me": { ...me, role: "colaborador", permissions: { ...me.permissions, settings: "read" } } });
     expect(screen.queryByRole("button", { name: "Guardar permisos" })).toBeNull();
     expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
-    expect(screen.getAllByText("Consultar: sí")).toHaveLength(1);
+    expect(screen.getAllByText("Ventas puede consultarle a Agenda")).toHaveLength(1);
+    expect(screen.getAllByText("Agenda no puede consultarle a Ventas")).toHaveLength(1);
   });
 
   it("sin acceso a las conexiones no ofrece probar una frase", async () => {

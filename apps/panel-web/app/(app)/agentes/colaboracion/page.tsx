@@ -62,7 +62,6 @@ export default async function ColaboracionPage() {
           </h2>
           <p className="text-sm text-soft">
             Los cambios aplican cuando publicas la próxima versión de cada conexión.
-            {grafo.data.version ? ` Versión ${grafo.data.version.version} de los permisos.` : ""}
           </p>
         </div>
         <EditorDePermisos
