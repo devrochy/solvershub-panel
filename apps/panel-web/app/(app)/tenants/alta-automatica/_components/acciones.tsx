@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -221,19 +223,20 @@ export function AccionesDeAlta({ vendedor, referencia }: { vendedor: string; ref
   }
 
   return (
-    <span className="flex justify-end gap-2">
-      <Button size="sm" onClick={() => void aprobar()} disabled={estado.loading}>
+    <span className="flex items-center justify-end gap-1">
+      <Button size="sm" variant="accent" onClick={() => void aprobar()} disabled={estado.loading}>
         Aprobar
       </Button>
+      {/* PLT-06: descartar es la acción secundaria; va en «Más acciones» y pide el motivo. */}
+      <MenuDeFila etiqueta={`Más acciones del alta ${referencia}`}>
+        <DropdownMenuItem tone="danger" disabled={estado.loading} onSelect={() => setOpen(true)}>
+          Descartar el alta
+        </DropdownMenuItem>
+      </MenuDeFila>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" disabled={estado.loading}>
-            Descartar
-          </Button>
-        </DialogTrigger>
         <DialogContent
           title={`Descartar el alta ${referencia}`}
-          description="No se crea el negocio. Conviene escribirle al cliente: ya recibió el aviso de que el acceso llega a su correo."
+          description="No se crea el negocio y el pago no se cobra de nuevo. Conviene escribirle al cliente: ya recibió el aviso de que el acceso llega a su correo."
         >
           <form onSubmit={(e) => void descartar(e)} className="flex flex-col gap-4">
             <Field label="Motivo" htmlFor={`descartar-${referencia}`} help="Queda en el alta y en la auditoría.">
@@ -242,7 +245,7 @@ export function AccionesDeAlta({ vendedor, referencia }: { vendedor: string; ref
             <FormFeedback error={estado.error} />
             <div className="flex justify-end">
               <Button type="submit" variant="danger" disabled={estado.loading}>
-                Descartar
+                Descartar el alta
               </Button>
             </div>
           </form>

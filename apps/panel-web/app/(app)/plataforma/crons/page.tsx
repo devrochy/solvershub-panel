@@ -1,29 +1,30 @@
-import Link from "next/link";
-import { Eye } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { FiltrosDeCrons } from "@/app/(app)/plataforma/crons/_components/filtros";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { CRON_RUN_STATUS, CRON_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
 import { Badge } from "@/components/ui/badge";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { IconAction } from "@/components/ui/icon-action";
-import { KpiTile } from "@/components/ui/kpi-tile";
+import type { Column } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api/server";
-import type { Cron, CronListado, CronResumen, Me } from "@/lib/api/types";
+import type { Cron, CronListado, Me } from "@/lib/api/types";
 import {
   SIN_EXITOS,
   agruparPorModulo,
+  atraso,
   consultaCrons,
   describirCron,
   distanciaRelativa,
   puedeOperarCrons,
+  resumenDeCrons,
   resumenDeGrupo,
   type FiltrosCrons,
 } from "@/lib/crons";
 
 export const metadata = { title: "Crons" };
 
-const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
 
 /**
  * Plataforma → Crons (ADR-0183 de agent-core): las tareas periódicas de la plataforma clasificadas por
@@ -31,31 +32,31 @@ const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
  * pausa, reanuda y reprograma. Solo el master: un tester actúa como master en otras herramientas, pero
  * no gestiona la plataforma.
  */
-export default async function CronsPage({ searchParams }: { searchParams: Promise<FiltrosCrons> }) {
+export default async function CronsPage({ searchParams }: { searchParams: Promise<FiltrosCrons & { vista?: string }> }) {
   const sp = await searchParams;
-  const [me, lista, resumen] = await Promise.all([
+  const [me, lista] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<CronListado>(`/admin/platform/crons${consultaCrons(sp)}`),
-    apiFetch<CronResumen>("/admin/platform/crons/summary"),
   ]);
-  if (!me.ok || !puedeOperarCrons(me.data)) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        {SOLO_MASTER}
-      </p>
-    );
-  }
+  // PLT-04: quien no puede operar crons no ve una página de error.
+  if (!me.ok || !puedeOperarCrons(me.data) || (!lista.ok && lista.status === 403)) redirect("/dashboard");
+  const header = { title: "Crons", helpSection: "crons" };
   if (!lista.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        {lista.status === 403 ? SOLO_MASTER : `No se pudieron cargar los crons: ${lista.error}`}
-      </p>
+      <ListPage header={header}>
+        <ErrorDeCarga titulo="No pudimos cargar los crons" detalle={lista.error} />
+      </ListPage>
     );
   }
 
-  const modulos = lista.data.modules;
-  const grupos = agruparPorModulo(lista.data.items, modulos);
-  const r = resumen.ok ? resumen.data : null;
+  const ahora = new Date();
+  const todos = lista.data.items;
+  const visibles = sp.vista === "atrasados" ? todos.filter((c) => atraso(c, ahora) !== null) : todos;
+  const grupos = agruparPorModulo(visibles, lista.data.modules);
+  const activos = todos.filter((c) => !c.paused && c.next_run_at);
+  // Si todos los que deberían correr están atrasados, el que no corre es el planificador.
+  const planificadorDetenido = activos.length > 0 && activos.every((c) => atraso(c, ahora) !== null);
+  const hrefDe = (c: Cron) => `/plataforma/crons/${encodeURIComponent(c.name)}`;
 
   const columns: Column<Cron>[] = [
     {
@@ -63,43 +64,36 @@ export default async function CronsPage({ searchParams }: { searchParams: Promis
       header: "Cron",
       cell: (c) => (
         <div className="flex min-w-0 flex-col">
-          <Link href={`/plataforma/crons/${encodeURIComponent(c.name)}`} className="font-medium text-link hover:underline">
-            {c.label}
-          </Link>
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-headline">{c.label}</span>
+            {c.critical && <Badge variant="warning">Crítico</Badge>}
+            {c.sensitive && <Badge variant="info">Toca clientes</Badge>}
+          </span>
           <span className="font-mono text-xs text-text-soft">{c.name}</span>
-          {(c.critical || c.sensitive) && (
-            <span className="mt-1 flex flex-wrap gap-1">
-              {c.critical && <Badge variant="warning">Crítico</Badge>}
-              {c.sensitive && <Badge variant="accent">Cobra o avisa a clientes</Badge>}
-            </span>
-          )}
         </div>
       ),
     },
-    { key: "estado", header: "Estado", cell: (c) => <StatusBadge value={c.estado} map={CRON_STATUS} /> },
+    { key: "estado", header: "Estado", cell: (c) => <span className="whitespace-nowrap"><StatusBadge value={c.estado} map={CRON_STATUS} /></span> },
     {
       key: "horario",
       header: "Horario",
-      info: "Cuándo corre. Las horas están en UTC; se indica también la hora de Colombia.",
       cell: (c) => (
         <div className="flex flex-col">
           <span className="text-body">{describirCron(c.schedule, c.interval_s)}</span>
           {c.overridden && (
-            <span className="text-xs text-status-warning-fg">
-              Reprogramado (el del código: {describirCron(c.default_schedule, c.interval_s)})
-            </span>
+            <span className="text-xs text-status-warning-fg">Reprogramado · el del código: {describirCron(c.default_schedule, c.interval_s)}</span>
           )}
         </div>
       ),
     },
     {
       key: "ultima",
-      header: "Última ejecución",
+      header: "Última",
       cell: (c) =>
         c.last_run ? (
           <div className="flex flex-col items-start gap-1">
             <StatusBadge value={c.last_run.status} map={CRON_RUN_STATUS} />
-            <span className="text-xs text-text-soft">{distanciaRelativa(c.last_run.started_at)}</span>
+            <span className="text-xs text-text-soft">{distanciaRelativa(c.last_run.started_at, ahora)}</span>
           </div>
         ) : (
           <span className="text-text-soft" title={c.record_success ? undefined : SIN_EXITOS}>
@@ -110,57 +104,29 @@ export default async function CronsPage({ searchParams }: { searchParams: Promis
     {
       key: "proxima",
       header: "Próxima",
-      cell: (c) => <span className="tabular-nums">{c.paused ? "Pausado" : distanciaRelativa(c.next_run_at)}</span>,
+      cell: (c) => <Proxima cron={c} ahora={ahora} />,
     },
     {
       key: "fallos",
-      header: "Fallos 24 h",
+      header: <span className="whitespace-nowrap">Fallos en 24 h</span>,
       align: "right",
       cell: (c) => (
-        <span className={c.failures_24h > 0 ? "tabular-nums text-status-danger-fg" : "tabular-nums text-text-soft"}>
-          {c.failures_24h}
-        </span>
-      ),
-    },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (c) => (
-        <div className="flex items-center justify-end gap-1">
-          <IconAction href={`/plataforma/crons/${encodeURIComponent(c.name)}`} label={`Ver historial de ${c.label}`} tone="ver">
-            <Eye className="h-4 w-4" aria-hidden />
-          </IconAction>
-        </div>
+        <span className={c.failures_24h > 0 ? "tabular-nums text-status-danger-fg" : "tabular-nums text-text-soft"}>{c.failures_24h}</span>
       ),
     },
   ];
 
   return (
-    <ListPage
-      header={{
-        title: "Crons",
-        description: "Las tareas periódicas de la plataforma por módulo: su estado, el historial de ejecuciones y cómo operarlas.",
-      }}
-      filters={<FiltrosDeCrons sp={sp} modulos={modulos} />}
-    >
-      {r && (
-        <section aria-label="Resumen" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiTile label="Crons" value={r.total} hint={r.ejecutando > 0 ? `${r.ejecutando} ejecutándose ahora` : undefined} />
-          <KpiTile label="Activos" value={r.activos} tone="success" />
-          <KpiTile label="Pausados" value={r.pausados} tone={r.pausados > 0 ? "warning" : "default"} />
-          <KpiTile label="Con fallo" value={r.con_fallo} tone={r.con_fallo > 0 ? "danger" : "default"} hint="Su última ejecución falló" />
-        </section>
+    <ListPage header={header} filters={<FiltrosDeCrons sp={sp} />}>
+      <p className="text-sm text-body">{resumenDeCrons(todos, ahora)}</p>
+      {planificadorDetenido && (
+        <p role="status" className="rounded-md border border-status-danger-border bg-status-danger-bg px-4 py-3 text-sm text-status-danger-fg">
+          Ningún cron corre a tiempo: el planificador parece detenido desde hace {atraso(activos[0], ahora)}. Revisa que el
+          servicio de tareas periódicas (beat) esté corriendo.
+        </p>
       )}
       {grupos.length === 0 && (
-        <DataTable
-          columns={columns}
-          rows={[]}
-          getRowKey={(c) => c.name}
-          emptyTitle="Sin crons"
-          emptyDescription="Ningún cron coincide con los filtros."
-          caption="Crons"
-        />
+        <EmptyState title="Ningún cron coincide" description="Prueba con otra búsqueda o con «Todos»." />
       )}
       {grupos.map((g, i) => {
         const { conFallo, pausados } = resumenDeGrupo(g.crons);
@@ -177,10 +143,32 @@ export default async function CronsPage({ searchParams }: { searchParams: Promis
                 {pausados > 0 && ` · ${pausados} en pausa`}
               </span>
             </div>
-            <DataTable columns={columns} rows={g.crons} getRowKey={(c) => c.name} caption={`Crons de ${g.module}`} />
+            <TablaResponsiva
+              etiqueta={`Crons de ${g.module}`}
+              caption={`Crons de ${g.module}`}
+              columns={columns}
+              rows={g.crons}
+              getRowKey={(c) => c.name}
+              getRowHref={hrefDe}
+              getRowLabel={(c) => `Abrir ${c.label}`}
+              filaCelular={(c) => ({
+                titulo: c.label,
+                detalle: atraso(c, ahora) ? `Atrasado ${atraso(c, ahora)}` : describirCron(c.schedule, c.interval_s),
+                fin: <StatusBadge value={c.estado} map={CRON_STATUS} />,
+                href: hrefDe(c),
+              })}
+            />
           </section>
         );
       })}
     </ListPage>
   );
+}
+
+/** Próxima ejecución: en pausa, atrasada (PLT-10) o «en 3 h». */
+function Proxima({ cron, ahora }: { cron: Cron; ahora: Date }) {
+  if (cron.paused) return <span className="text-text-soft">En pausa</span>;
+  const tarde = atraso(cron, ahora);
+  if (tarde) return <Badge variant="danger" className="whitespace-nowrap">Atrasado {tarde}</Badge>;
+  return <span className="tabular-nums">{distanciaRelativa(cron.next_run_at, ahora)}</span>;
 }

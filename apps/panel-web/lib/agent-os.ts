@@ -28,16 +28,20 @@ export function runtimesOfrecidos(actual: Runtime): readonly Runtime[] {
 
 export const RUTEOS: readonly Ruteo[] = ["off", "shadow", "active"];
 
+/** PLT-03: el motor y el reparto en palabras, sin «legacy», «v3» ni «sombra». */
 export const ETIQUETA_RUNTIME: Record<Runtime, string> = {
-  legacy: "Legacy (motor anterior)",
-  v3: "v3 (releases por conexión)",
+  legacy: "El anterior (un solo agente)",
+  v3: "El nuevo (un agente por tema)",
 };
 
 export const ETIQUETA_RUTEO: Record<Ruteo, string> = {
-  off: "Apagado",
-  shadow: "Sombra (decide y registra, no cambia quién atiende)",
-  active: "Activo (enruta entre especialistas)",
+  off: "No",
+  shadow: "De prueba (decide y lo registra, pero atiende el General)",
+  active: "Sí (cada especialista atiende lo suyo)",
 };
+
+/** Lo mismo, corto, para el estado de la cabecera. */
+export const RUTEO_CORTO: Record<Ruteo, string> = { off: "no", shadow: "de prueba", active: "sí" };
 
 /** Lo que `agent-os` acepta del navegador: valida y descarta cualquier otro campo. */
 export function objetivoValido(cuerpo: unknown): (Banderas & { construir: boolean }) | null {
@@ -65,8 +69,8 @@ export function iguales(a: Banderas, b: Banderas): boolean {
 }
 
 export const NOTA_RUNBOOK =
-  "Runbook: mide el pass^4 del negocio antes de encender los procedimientos; deja el enrutamiento una " +
-  "semana en sombra y revisa `agent-core db reporte-ruteo` antes de pasarlo a activo.";
+  "Antes de encender los recorridos guiados, mide que el negocio responda igual 4 de 4 veces (pass^4). Deja el reparto " +
+  "una semana de prueba y revisa el reporte de ruteo (`agent-core db reporte-ruteo`) antes de pasarlo a «Sí».";
 
 /** Texto de la confirmación: qué cambia y las notas del runbook que aplican. */
 export function resumenDelCambio(actual: Banderas, objetivo: Banderas): string {
@@ -74,21 +78,21 @@ export function resumenDelCambio(actual: Banderas, objetivo: Banderas): string {
   if (actual.runtime !== objetivo.runtime) {
     partes.push(
       objetivo.runtime === "v3"
-        ? "Pasa a v3: se corren los backfills del negocio y las comprobaciones de migrar-a-v3."
-        : "Vuelve a legacy: se apagan también los procedimientos y el enrutamiento.",
+        ? "Pasa al motor nuevo: se preparan los datos del negocio (backfills) y se comprueba que esté listo."
+        : "Vuelve al motor anterior: se apagan también los recorridos guiados y el reparto.",
     );
   }
   if (actual.procedures !== objetivo.procedures) {
     partes.push(
       objetivo.procedures
-        ? "Enciende los procedimientos (¿mediste el pass^4?)."
-        : "Apaga los procedimientos: las tareas abiertas del motor dejan de gobernarse.",
+        ? "Enciende los recorridos guiados (¿mediste que responda igual 4 de 4 veces, pass^4?)."
+        : "Apaga los recorridos guiados: las tareas abiertas dejan de seguir su recorrido.",
     );
   }
   if (actual.routing !== objetivo.routing) {
-    partes.push(`Enrutamiento: ${ETIQUETA_RUTEO[actual.routing]} → ${ETIQUETA_RUTEO[objetivo.routing]}.`);
+    partes.push(`Reparte entre especialistas: ${RUTEO_CORTO[actual.routing]} → ${RUTEO_CORTO[objetivo.routing]}.`);
     if (objetivo.routing === "active" && actual.routing !== "shadow") {
-      partes.push("El runbook pide una semana en sombra con reporte-ruteo antes de activo.");
+      partes.push("Antes de «Sí» conviene una semana de prueba revisando el reporte de ruteo.");
     }
   }
   return partes.join(" ");

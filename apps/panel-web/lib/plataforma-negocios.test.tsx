@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, push: vi.fn() }),
 }));
 
-import { TenantActions } from "@/app/(app)/tenants/_components/tenant-actions";
+import { AccionesDeNegocio } from "@/app/(app)/tenants/_components/tenant-actions";
 import { TenantPlanBadge } from "@/app/(app)/tenants/_components/tenant-plan-badge";
 import { TenantStatusToggle } from "@/app/(app)/tenants/_components/tenant-status-toggle";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -98,12 +98,17 @@ describe("controles de Negocios (master)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("las acciones son iconos con nombre y la purga exige la frase exacta", async () => {
-    montar(<TenantActions tenant={{ ...TENANT, status: "suspended" }} />);
+  function abrirMenu() {
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Más acciones de Negocio Uno" }), { button: 0, ctrlKey: false, pointerType: "mouse" });
+  }
 
-    expect(screen.getByRole("button", { name: "Gestionar Negocio Uno" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar Negocio Uno" }));
-    await screen.findByRole("dialog");
+  it("las acciones van en «Más acciones» (PLT-01) y la purga exige la frase exacta", async () => {
+    montar(<AccionesDeNegocio tenant={{ ...TENANT, status: "suspended" }} abrirHref="/tenants?negocio=t-1" />);
+
+    abrirMenu();
+    expect(screen.getByRole("menuitem", { name: "Abrir" }).getAttribute("href")).toBe("/tenants?negocio=t-1");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Eliminar negocio" }));
+    await screen.findByRole("dialog", { name: "Eliminar Negocio Uno" });
 
     const frase = screen.getByLabelText("Escribe la frase de confirmación");
     fireEvent.change(frase, { target: { value: "ELIMINAR uno" } });
@@ -116,9 +121,10 @@ describe("controles de Negocios (master)", () => {
   });
 
   it("un negocio activo avisa que hay que desactivarlo antes de eliminar", async () => {
-    montar(<TenantActions tenant={TENANT} />);
+    montar(<AccionesDeNegocio tenant={TENANT} abrirHref="/tenants?negocio=t-1" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar Negocio Uno" }));
+    abrirMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Eliminar negocio" }));
     await screen.findByRole("dialog");
     expect(screen.getByText(AVISO_DESACTIVAR_PRIMERO)).toBeTruthy();
     expect((screen.getByLabelText("Escribe la frase de confirmación") as HTMLInputElement).disabled).toBe(true);

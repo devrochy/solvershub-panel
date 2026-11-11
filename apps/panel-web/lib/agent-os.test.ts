@@ -46,9 +46,9 @@ describe("resumen de la confirmación", () => {
     expect(resumenDelCambio(LEGACY, V3)).toContain("backfills");
     const activo = resumenDelCambio(V3, { runtime: "v3", procedures: true, routing: "active" });
     expect(activo).toContain("pass^4");
-    expect(activo).toContain("una semana en sombra");
+    expect(activo).toContain("una semana de prueba");
     expect(resumenDelCambio({ ...V3, routing: "shadow" }, { ...V3, routing: "active" })).not.toContain("una semana");
-    expect(resumenDelCambio({ runtime: "v3", procedures: true, routing: "shadow" }, LEGACY)).toContain("Vuelve a legacy");
+    expect(resumenDelCambio({ runtime: "v3", procedures: true, routing: "shadow" }, LEGACY)).toContain("Vuelve al motor anterior");
   });
 });
 

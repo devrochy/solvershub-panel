@@ -27,3 +27,21 @@ export function resumenRevision(revision: RevisionPlataforma): string {
       return revision.ok ? `La última revisión está en verde${fecha}.` : `La última revisión tiene pendientes${fecha}:`;
   }
 }
+
+/** «Faltan 2 aprobaciones de Meta y 1 chequeo del servidor»; lista, «Lista para que los negocios conecten su WhatsApp». */
+export function faltaEnPalabras(estado: {
+  ready: boolean;
+  manual: { done: boolean }[];
+  platform_check: { expired: boolean; pending: string[] };
+}): string {
+  if (estado.ready) return "Lista para que los negocios conecten su WhatsApp con Facebook.";
+  const aprobaciones = estado.manual.filter((m) => !m.done).length;
+  const revision = estado.platform_check;
+  const chequeos = revision.expired ? 1 : revision.pending.length;
+  const partes = [
+    aprobaciones > 0 ? `${aprobaciones} ${aprobaciones === 1 ? "aprobación" : "aprobaciones"} de Meta` : null,
+    chequeos > 0 ? (revision.expired ? "una revisión del servidor nueva" : `${chequeos} ${chequeos === 1 ? "chequeo" : "chequeos"} del servidor`) : null,
+  ].filter(Boolean);
+  if (partes.length === 0) return "Falta revisar el servidor en «App de Meta».";
+  return `${aprobaciones + chequeos === 1 ? "Falta" : "Faltan"} ${partes.join(" y ")}.`;
+}

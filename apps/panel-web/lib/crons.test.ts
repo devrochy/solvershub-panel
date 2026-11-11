@@ -112,14 +112,14 @@ describe("describirCron", () => {
     ["*/5 * * * *", "Cada 5 minutos"],
     ["0 * * * *", "Cada hora, al minuto 0"],
     ["30 * * * *", "Cada hora, al minuto 30"],
-    ["0 13 * * *", "Todos los días a las 13:00 UTC (08:00 en Colombia)"],
-    ["55 23 * * *", "Todos los días a las 23:55 UTC (18:55 en Colombia)"],
-    ["0 2 * * *", "Todos los días a las 02:00 UTC (21:00 en Colombia)"],
-    ["30 9,15,20 * * *", "Todos los días a las 09:30 UTC (04:30 en Colombia), 15:30 UTC (10:30 en Colombia) y 20:30 UTC (15:30 en Colombia)"],
-    ["0 13 * * 1-5", "De lunes a viernes a las 13:00 UTC (08:00 en Colombia)"],
-    ["0 13 * * 0,6", "Los fines de semana a las 13:00 UTC (08:00 en Colombia)"],
-    ["0 13 * * 1,3", "Los lunes y miércoles a las 13:00 UTC (08:00 en Colombia)"],
-    ["0 13 * * 7", "Los domingos a las 13:00 UTC (08:00 en Colombia)"],
+    ["0 13 * * *", "Todos los días a las 08:00 en Colombia (13:00 UTC)"],
+    ["55 23 * * *", "Todos los días a las 18:55 en Colombia (23:55 UTC)"],
+    ["0 2 * * *", "Todos los días a las 21:00 en Colombia (02:00 UTC)"],
+    ["30 9,15,20 * * *", "Todos los días a las 04:30 en Colombia (09:30 UTC), 10:30 en Colombia (15:30 UTC) y 15:30 en Colombia (20:30 UTC)"],
+    ["0 13 * * 1-5", "De lunes a viernes a las 08:00 en Colombia (13:00 UTC)"],
+    ["0 13 * * 0,6", "Los fines de semana a las 08:00 en Colombia (13:00 UTC)"],
+    ["0 13 * * 1,3", "Los lunes y miércoles a las 08:00 en Colombia (13:00 UTC)"],
+    ["0 13 * * 7", "Los domingos a las 08:00 en Colombia (13:00 UTC)"],
   ])("%s → %s", (expresion, texto) => expect(describirCron(expresion)).toBe(texto));
 
   it("lo que no reconoce lo muestra tal cual", () => {
@@ -150,7 +150,7 @@ describe("confirmaciones", () => {
   it("reprogramar solo pide confirmación en los sensibles", () => {
     expect(confirmacionDeHorario({ label: "x", sensitive: false }, "0 5 * * *")).toBeNull();
     const c = confirmacionDeHorario({ label: "Cobro", sensitive: true }, "0 5 * * *");
-    expect(c?.description).toContain("Todos los días a las 05:00 UTC");
+    expect(c?.description).toContain("Todos los días a las 00:00 en Colombia (05:00 UTC)");
   });
 });
 

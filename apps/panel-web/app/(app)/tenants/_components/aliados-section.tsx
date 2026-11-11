@@ -12,7 +12,7 @@ type Lectura = { estado: EstadoAliados } | { error: string };
 async function leer(url: string): Promise<Lectura> {
   const res = await fetch(url, { cache: "no-store" });
   const json = (await res.json().catch(() => ({}))) as EstadoAliados & { error?: string };
-  return res.ok ? { estado: json } : { error: json.error ?? "No se pudo leer si el negocio tiene aliados." };
+  return res.ok ? { estado: json } : { error: "No pudimos leer si el negocio tiene aliados. Vuelve a abrirlo en un momento." };
 }
 
 /** Aliados (proveedores) del negocio (HU-CRM-03): solo el master los enciende o apaga. */
@@ -64,7 +64,7 @@ export function AliadosSection({ tenantId }: { tenantId: string }) {
         )}
       </div>
       {error ? (
-        <p className="text-sm text-status-danger-fg">{error}</p>
+        <p role="status" className="text-sm text-body">{error}</p>
       ) : !estado ? (
         <p className="text-sm text-body">Cargando…</p>
       ) : (

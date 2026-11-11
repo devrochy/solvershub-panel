@@ -11,6 +11,7 @@
 //   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
 //   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
 //   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
+//   PLATAFORMA=1 (con MASTER=1: App de Meta, requisitos de Embedded Signup y alta automática con documentos y altas en revisión)
 //   PRUEBAS=1 (Plataforma › Pruebas con catálogo, ejecución propia, informes, ciclos, evolución, checklists, datos y testers)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
@@ -1345,6 +1346,52 @@ function listaDeEmbudo(url) {
     ],
     facetas: url.searchParams.getAll("facetas").includes("estado_lead") ? [faceta] : [],
   };
+}
+
+// PLATAFORMA=1 (con MASTER=1): App de Meta con chequeos en verde y en rojo, requisitos de Embedded Signup a medias y
+// el alta automática de SolversHub con sus documentos legales y dos altas en revisión.
+if (process.env.PLATAFORMA === "1") {
+  const hace = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  const chequeo = (key, label, ok, detail = null, repair_action = null) => ({ key, label, ok, detail, repair_action, checked_at: hace(2) });
+  respuestas["/admin/platform/meta-app"] = {
+    run_id: "r-1", status: "done", ready: false, error: null, requested_at: hace(2.1), started_at: hace(2.05), finished_at: hace(2), meta_app_id: "1234567890123456",
+    items: [
+      chequeo("meta_app_configured", "App de Meta configurada", true, "META_APP_ID, META_APP_SECRET y META_CONFIG_ID configurados."),
+      chequeo("prod_secret_differs_from_dev", "Secreto distinto del de desarrollo", true, "Distinto del de desarrollo"),
+      chequeo("webhook_handshake", "Webhook verificado por Meta", true, "Handshake correcto"),
+      chequeo("app_subscriptions_complete", "Suscripciones de la app", true),
+      chequeo("token_keys_configured", "Claves de cifrado de tokens", true),
+      chequeo("worker_heartbeat_and_dlq", "Trabajadores y mensajes fallidos", false, "DLQ con 3 eventos pendientes"),
+      chequeo("connections_health", "Salud de las conexiones", null, "Sin conexiones para este tenant"),
+    ],
+  };
+  const paso = (key, label, done, notes = null) => ({ key, label, help: "Se hace en el panel de Meta for Developers.", link: "https://developers.facebook.com/apps/", done, notes, updated_at: done ? hace(24 * 6) : null });
+  respuestas["/admin/platform/meta-app/embedded-signup"] = {
+    app_id: "1234567890123456", config_id: "987654321098765", graph_api_version: "v21.0", ready: false,
+    platform_check: { status: "done", finished_at: hace(2), ok: false, pending: ["Trabajadores y mensajes fallidos"], expired: false, expires_at: hace(-24 * 3) },
+    manual: [
+      paso("business_verification", "Verificación del negocio en Meta", true),
+      paso("tech_provider", "Registro como Tech Provider", true),
+      paso("app_review", "Revisión de la app (permisos de WhatsApp)", false, "Enviada el 5 de nov.; Meta pidió un video."),
+      paso("live_mode", "App en modo Live", false),
+    ],
+  };
+  const doc = (tipo, nombre, version, dias) => ({ tipo, nombre, version, url: `https://solvershub.site/legal/${tipo}-${version}.pdf`, vigente_desde: hace(24 * dias), publicado_por: "Dueño de la plataforma" });
+  const VENDEDOR = "7c1e0f4a-2b3d-4e5f-8a9b-0c1d2e3f4a5b";
+  respuestas["/admin/platform/altas-automaticas"] = [{
+    id: VENDEDOR, slug: "solvershub-comercial", name: "SolversHub (ventas)", activo: true,
+    interruptor: { pausado: false, motivo: null, por: null, en: null },
+    documentos: [doc("terminos", "Términos y condiciones", "2026-10", 30), doc("privacidad", "Aviso de privacidad", "2026-10", 30)],
+    documentos_faltantes: ["dpa"], en_revision: 2,
+  }];
+  respuestas[`/admin/platform/altas-automaticas/${VENDEDOR}/documentos`] = [
+    doc("terminos", "Términos y condiciones", "2026-10", 30), doc("privacidad", "Aviso de privacidad", "2026-10", 30), doc("terminos", "Términos y condiciones", "2026-08", 90),
+  ];
+  const alta = (ref, plan, motivo, horas) => ({ referencia: ref, estado: "revision", motivo, intentos: 1, plan_id: plan, negocio_slug: null, aprobada: false, created_at: hace(horas), updated_at: hace(horas) });
+  respuestas[`/admin/platform/altas-automaticas/${VENDEDOR}/altas`] = [
+    alta("ALTA-8F2K", "pro", "El correo del cliente ya tiene una cuenta.", 3),
+    alta("ALTA-9Q7M", "basico", "Tres intentos de pago rechazados seguidos.", 20),
+  ];
 }
 
 // PRUEBAS=1: la sección global `qa` (después de MASTER=1/TESTER=1, que reescriben /admin/me).

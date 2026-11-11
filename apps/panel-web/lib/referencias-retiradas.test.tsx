@@ -188,10 +188,12 @@ describe("reporte del negocio (master)", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("si la API falla muestra el motivo", async () => {
-    responder({ error: "No se pudo revisar el negocio." }, 500);
+  it("si la API falla lo dice con nuestras palabras, sin el texto crudo (PLT-04)", async () => {
+    responder({ error: "Sin fixture" }, 500);
     render(<ReferenciasRetiradas tenantId={NEGOCIO} />);
-    expect((await screen.findByRole("alert")).textContent).toBe("No se pudo revisar el negocio.");
+    const aviso = await screen.findByRole("status");
+    expect(aviso.textContent).toMatch(/No pudimos revisar si este negocio nombra algo retirado/);
+    expect(aviso.textContent).not.toMatch(/Sin fixture/);
   });
 });
 

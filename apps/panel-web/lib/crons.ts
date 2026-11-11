@@ -193,7 +193,8 @@ export function describirCron(expresion: string | null | undefined, intervaloSeg
   }
   if (soloDiario && minutos.length === 1 && h !== "*") {
     const minuto = minutos[0];
-    const aLas = horas.map((hh) => `${HORA(hh, minuto)} UTC (${A_COLOMBIA(hh, minuto)} en Colombia)`);
+    // PLT-10: primero la hora de Colombia, que es la que se lee.
+    const aLas = horas.map((hh) => `${A_COLOMBIA(hh, minuto)} en Colombia (${HORA(hh, minuto)} UTC)`);
     const prefijo = diaTexto === "todos los días" ? "Todos los días" : `${diaTexto[0].toUpperCase()}${diaTexto.slice(1)}`;
     return horas.length === 1 ? `${prefijo} a las ${aLas[0]}` : `${prefijo} a las ${unir(aLas)}`;
   }
@@ -276,4 +277,35 @@ export function distanciaRelativa(iso: string | null | undefined, ahora: Date = 
   else if (segundos < 86400) cuerpo = `${Math.round(segundos / 3600)} h`;
   else cuerpo = `${Math.round(segundos / 86400)} d`;
   return futuro ? `en ${cuerpo}` : `hace ${cuerpo}`;
+}
+
+/** Margen antes de llamar «atrasado» a un cron: el planificador revisa cada minuto. */
+const MARGEN_DE_ATRASO_MS = 5 * 60_000;
+
+/**
+ * Un cron atrasado (PLT-10): no está en pausa y su próxima ejecución ya pasó. Devuelve «8 d», «3 h»…
+ * o `null` si va a tiempo.
+ */
+export function atraso(cron: Pick<Cron, "paused" | "next_run_at">, ahora: Date = new Date()): string | null {
+  if (cron.paused || !cron.next_run_at) return null;
+  const dif = ahora.getTime() - new Date(cron.next_run_at).getTime();
+  if (dif <= MARGEN_DE_ATRASO_MS) return null;
+  return distanciaRelativa(cron.next_run_at, ahora).replace(/^hace /, "");
+}
+
+/** «3 crons · 1 con fallo · 1 en pausa · 2 atrasados», sin los ceros. */
+export function resumenDeCrons(crons: Cron[], ahora: Date = new Date()): string {
+  const conFallo = crons.filter((c) => c.estado === "failing").length;
+  const pausados = crons.filter((c) => c.paused).length;
+  const atrasados = crons.filter((c) => atraso(c, ahora) !== null).length;
+  const ejecutando = crons.filter((c) => c.estado === "running").length;
+  return [
+    `${crons.length} ${crons.length === 1 ? "cron" : "crons"}`,
+    conFallo > 0 ? `${conFallo} con fallo` : null,
+    pausados > 0 ? `${pausados} en pausa` : null,
+    atrasados > 0 ? `${atrasados} ${atrasados === 1 ? "atrasado" : "atrasados"}` : null,
+    ejecutando > 0 ? `${ejecutando} ejecutándose` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

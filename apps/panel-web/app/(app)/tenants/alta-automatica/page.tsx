@@ -1,16 +1,19 @@
+import { redirect } from "next/navigation";
+
 import {
   AccionesDeAlta,
   Interruptor,
   PublicarDocumento,
 } from "@/app/(app)/tenants/alta-automatica/_components/acciones";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AltaAutomatica, DocumentoLegal, Me, VendedorAltas } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import type { AltaAutomatica, DocumentoLegal, Me, PlanResponse, VendedorAltas } from "@/lib/api/types";
+import { tiempoRelativo } from "@/lib/notificaciones/tipos";
+import { diaEnPalabras, versionEnPalabras } from "@/lib/plataforma";
 
 export const metadata = { title: "Alta automática" };
 
@@ -20,7 +23,6 @@ const NOMBRES: Record<string, string> = {
   dpa: "Acuerdo de tratamiento de datos (DPA)",
 };
 
-const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
 
 /**
  * Plataforma → Alta automática (HU-SH-07, ADR-0125 de agent-core): la configuración propia
@@ -31,45 +33,58 @@ const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
  * gestiona la plataforma.
  */
 export default async function AltaAutomaticaPage() {
-  const [meRes, res] = await Promise.all([
+  const [meRes, res, planes] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<VendedorAltas[]>("/admin/platform/altas-automaticas"),
+    apiFetch<PlanResponse>("/admin/plan"),
   ]);
-  if (!meRes.ok || meRes.data.role !== "master") {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        {SOLO_MASTER}
-      </p>
-    );
-  }
+  // PLT-04: quien no es master no llega a una página de error, vuelve a Negocios.
+  if (!meRes.ok || meRes.data.role !== "master" || (!res.ok && res.status === 403)) redirect("/tenants");
+  const header = <PageHeader title="Alta automática" helpSection="alta_automatica" />;
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        {res.status === 403 ? SOLO_MASTER : `Error: ${res.error}`}
-      </p>
+      <div className="flex flex-col gap-6">
+        {header}
+        <ErrorDeCarga titulo="No pudimos cargar el alta automática" detalle={res.error} />
+      </div>
     );
   }
-  const vendedores = res.data;
+  const nombreDePlan = (id: string | null) =>
+    (id && planes.ok ? planes.data.plans.find((p) => p.id === id)?.name : null) ?? (id ? id.charAt(0).toUpperCase() + id.slice(1) : "Sin plan");
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Alta automática"
-        description="Configuración propia del agente de ventas de SolversHub: cuando un cliente compra un plan por WhatsApp, el agente crea su negocio solo. Aquí se pausa ante un ataque, se publican los términos que el cliente acepta y se revisan las altas que quedaron frenadas. No es una función de los negocios."
-      />
-      {vendedores.length === 0 ? (
+      {header}
+      {res.data.length === 0 ? (
         <EmptyState
           title="Ningún negocio vende negocios"
-          description="El alta automática está apagada: PROVISIONING_SELLER_TENANTS está vacía en este entorno."
+          description="El alta automática está apagada en este entorno: falta configurar PROVISIONING_SELLER_TENANTS."
         />
       ) : (
-        vendedores.map((v) => <Vendedor key={v.id} vendedor={v} />)
+        res.data.map((v) => <Vendedor key={v.id} vendedor={v} nombreDePlan={nombreDePlan} />)
       )}
     </div>
   );
 }
 
-async function Vendedor({ vendedor }: { vendedor: VendedorAltas }) {
+function Documento({ d }: { d: DocumentoLegal }) {
+  return (
+    <li className="flex flex-wrap items-center gap-3 border-t border-border-soft px-4 py-3 first:border-t-0">
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="font-medium text-headline">{d.nombre}</span>
+        <span className="text-xs text-text-soft">
+          Versión de {versionEnPalabras(d.version)} · desde el {diaEnPalabras(d.vigente_desde)}
+        </span>
+      </span>
+      <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-sm text-link hover:underline">
+        {/\.pdf($|\?)/i.test(d.url) ? "Ver PDF" : "Ver documento"}
+        <span className="sr-only"> de {d.nombre} (se abre en una pestaña nueva)</span>
+      </a>
+    </li>
+  );
+}
+
+async function Vendedor({ vendedor, nombreDePlan }: { vendedor: VendedorAltas; nombreDePlan: (id: string | null) => string }) {
   const base = `/admin/platform/altas-automaticas/${vendedor.id}`;
   const [altasRes, historialRes] = await Promise.all([
     apiFetch<AltaAutomatica[]>(`${base}/altas?estado=revision`),
@@ -77,34 +92,9 @@ async function Vendedor({ vendedor }: { vendedor: VendedorAltas }) {
   ]);
   const altas = altasRes.ok ? altasRes.data : [];
   const historial = historialRes.ok ? historialRes.data : [];
+  const vigentes = new Set(vendedor.documentos.map((d) => `${d.tipo}-${d.version}`));
+  const anteriores = historial.filter((d) => !vigentes.has(`${d.tipo}-${d.version}`));
   const { interruptor } = vendedor;
-
-  const columnasAltas: Column<AltaAutomatica>[] = [
-    { key: "ref", header: "Pedido", cell: (a) => <span className="font-mono text-xs">{a.referencia}</span> },
-    { key: "plan", header: "Plan", cell: (a) => a.plan_id ?? "—" },
-    { key: "motivo", header: "Motivo", cell: (a) => <span className="text-body">{a.motivo ?? "—"}</span> },
-    { key: "creada", header: "Pedida", cell: (a) => <span className="text-body">{formatDateTime(a.created_at)}</span> },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (a) => <AccionesDeAlta vendedor={vendedor.id} referencia={a.referencia} />,
-    },
-  ];
-  const columnasDocs: Column<DocumentoLegal>[] = [
-    { key: "tipo", header: "Documento", cell: (d) => d.nombre },
-    { key: "version", header: "Versión", cell: (d) => <span className="font-mono text-xs">{d.version}</span> },
-    {
-      key: "url",
-      header: "Enlace",
-      cell: (d) => (
-        <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
-          {d.url}
-        </a>
-      ),
-    },
-    { key: "desde", header: "Vigente desde", cell: (d) => <span className="text-body">{formatDateTime(d.vigente_desde)}</span> },
-  ];
 
   return (
     <Card>
@@ -112,19 +102,13 @@ async function Vendedor({ vendedor }: { vendedor: VendedorAltas }) {
         <div className="flex flex-col gap-1">
           <CardTitle className="flex items-center gap-2">
             {vendedor.name || vendedor.slug}
-            {interruptor.pausado ? (
-              <Badge variant="danger">Pausada</Badge>
-            ) : (
-              <Badge variant="success">Activa</Badge>
-            )}
+            {interruptor.pausado ? <Badge variant="danger">Pausada</Badge> : <Badge variant="success">Activa</Badge>}
             {!vendedor.activo && <Badge variant="warning">Negocio suspendido</Badge>}
           </CardTitle>
-          <CardDescription>
-            <span className="font-mono text-xs">{vendedor.slug}</span> · {vendedor.en_revision} en revisión
-          </CardDescription>
+          <CardDescription>Crea el negocio solo cuando un cliente compra un plan por WhatsApp.</CardDescription>
           {interruptor.pausado && (
             <p className="text-sm text-body">
-              Pausada {interruptor.en ? `el ${formatDateTime(interruptor.en)}` : ""}
+              Pausada {interruptor.en ? `el ${diaEnPalabras(interruptor.en)}` : ""}
               {interruptor.por ? ` por ${interruptor.por.replace(/^admin:/, "")}` : ""}
               {interruptor.motivo ? `: ${interruptor.motivo}` : ""}. Las altas nuevas quedan en revisión.
             </p>
@@ -134,48 +118,65 @@ async function Vendedor({ vendedor }: { vendedor: VendedorAltas }) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
-        <section className="flex flex-col gap-3">
+        {/* PLT-06: primero lo que espera una decisión. */}
+        <section aria-labelledby={`revision-${vendedor.id}`} className="flex flex-col gap-3">
+          <h4 id={`revision-${vendedor.id}`} className="text-sm font-medium text-headline">
+            Altas en revisión ({altas.length})
+          </h4>
+          {altas.length === 0 ? (
+            <p className="text-sm text-text-soft">
+              Nada que revisar. Las altas que el agente no pueda terminar solo aparecen aquí.
+            </p>
+          ) : (
+            <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+              {altas.map((a) => (
+                <li key={a.referencia} className="flex flex-wrap items-center gap-3 border-t border-border-soft px-4 py-3 first:border-t-0">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="font-medium text-headline">{a.motivo ?? "Quedó en revisión"}</span>
+                    <span className="text-xs text-text-soft">
+                      Plan {nombreDePlan(a.plan_id)} · pedida {tiempoRelativo(a.created_at)} ·{" "}
+                      {a.intentos === 1 ? "1 intento" : `${a.intentos} intentos`} · {a.referencia}
+                    </span>
+                  </span>
+                  <AccionesDeAlta vendedor={vendedor.id} referencia={a.referencia} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby={`docs-${vendedor.id}`} className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <h4 className="text-sm font-medium text-headline">Documentos legales vigentes</h4>
+            <h4 id={`docs-${vendedor.id}`} className="text-sm font-medium text-headline">
+              Documentos que acepta el cliente
+            </h4>
             <PublicarDocumento vendedor={vendedor.id} tipo={vendedor.documentos_faltantes[0]} />
           </div>
           {vendedor.documentos_faltantes.length > 0 && (
-            <p role="alert" className="rounded-md bg-status-warning-bg p-3 text-sm text-status-warning-fg">
-              Falta publicar: {vendedor.documentos_faltantes.map((t) => NOMBRES[t] ?? t).join(", ")}. Mientras
-              falte alguno, el asistente no pide la aceptación y toda alta queda en revisión.
+            <p role="status" className="rounded-md bg-status-warning-bg p-3 text-sm text-status-warning-fg">
+              Falta publicar: {vendedor.documentos_faltantes.map((t) => NOMBRES[t] ?? t).join(", ")}. Mientras falte alguno,
+              el asistente no pide la aceptación y toda alta queda en revisión.
             </p>
           )}
-          <DataTable
-            columns={columnasDocs}
-            rows={vendedor.documentos}
-            getRowKey={(d) => `${d.tipo}-${d.version}`}
-            emptyTitle="Sin documentos publicados"
-            emptyDescription="Publica términos, privacidad y DPA para que el asistente pida la aceptación."
-          />
-          {historial.length > vendedor.documentos.length && (
+          {vendedor.documentos.length === 0 ? (
+            <p className="text-sm text-text-soft">Publica términos, privacidad y DPA para que el asistente pida la aceptación.</p>
+          ) : (
+            <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+              {vendedor.documentos.map((d) => (
+                <Documento key={`${d.tipo}-${d.version}`} d={d} />
+              ))}
+            </ul>
+          )}
+          {anteriores.length > 0 && (
             <details className="text-sm">
-              <summary className="cursor-pointer text-link">Versiones anteriores</summary>
-              <ul className="mt-2 flex flex-col gap-1 text-body">
-                {historial.map((d) => (
-                  <li key={`${d.tipo}-${d.version}`}>
-                    {d.nombre} · <span className="font-mono text-xs">{d.version}</span> ·{" "}
-                    {formatDateTime(d.vigente_desde)}
-                  </li>
+              <summary className="cursor-pointer text-link">Versiones anteriores ({anteriores.length})</summary>
+              <ul className="mt-2 overflow-hidden rounded-lg border border-border-soft bg-surface">
+                {anteriores.map((d) => (
+                  <Documento key={`${d.tipo}-${d.version}`} d={d} />
                 ))}
               </ul>
             </details>
           )}
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h4 className="text-sm font-medium text-headline">Altas en revisión</h4>
-          <DataTable
-            columns={columnasAltas}
-            rows={altas}
-            getRowKey={(a) => a.referencia}
-            emptyTitle="No hay altas en revisión"
-            emptyDescription="Las altas frenadas por el interruptor, los términos o una señal de riesgo aparecen acá."
-          />
         </section>
       </CardContent>
     </Card>

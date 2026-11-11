@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AccionesCron } from "@/app/(app)/plataforma/crons/_components/acciones-cron";
 import { CRON_RUN_STATUS, CRON_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { DetailPage } from "@/components/templates/detail-page";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -13,6 +14,7 @@ import { formatDateTime } from "@/lib/format";
 import {
   DISPARADOR_LABEL,
   SIN_EXITOS,
+  atraso,
   describirCron,
   distanciaRelativa,
   formatDuracion,
@@ -22,7 +24,6 @@ import {
 
 export const metadata = { title: "Cron" };
 
-const SOLO_MASTER = "Solo el admin de plataforma puede ver esto.";
 const ESTADOS_DE_EJECUCION = ["success", "failed", "running", "skipped"];
 const DISPARADORES = ["scheduled", "manual"];
 
@@ -58,21 +59,13 @@ export default async function CronDetallePage({
     apiFetch<Cron>(ruta),
     apiFetch<CronEjecucionesPage>(`${ruta}/runs?${qs.toString()}`),
   ]);
-  if (!me.ok || !puedeOperarCrons(me.data)) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        {SOLO_MASTER}
-      </p>
-    );
-  }
+  // PLT-04: sin permiso no hay página de error; un cron que no existe es 404.
+  if (!me.ok || !puedeOperarCrons(me.data) || (!res.ok && res.status === 403)) redirect("/dashboard");
   if (!res.ok) {
     if (res.status === 404) notFound();
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        {res.status === 403 ? SOLO_MASTER : `No se pudo cargar el cron: ${res.error}`}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No pudimos cargar el cron" detalle={res.error} />;
   }
+  const tarde = atraso(res.data);
   const c = res.data;
   const { items, page, has_more, total } = ejecuciones.ok
     ? ejecuciones.data
@@ -93,7 +86,16 @@ export default async function CronDetallePage({
       header: "Detalle",
       cell: (r) =>
         r.status === "failed" ? (
-          <span className="font-mono text-xs text-status-danger-fg">{r.error_class ?? "Error"}</span>
+          // PLT-10: la falla en palabras; la clase de la excepción, en el detalle técnico.
+          <span className="flex flex-col gap-0.5">
+            <span className="text-body">{r.detail?.trim() || "Falló sin mensaje: revisa los logs del worker."}</span>
+            {r.error_class && (
+              <details className="text-xs text-text-soft">
+                <summary className="cursor-pointer">Ver detalle técnico</summary>
+                <span className="font-mono">{r.error_class}</span>
+              </details>
+            )}
+          </span>
         ) : r.status === "skipped" ? (
           motivoDeOmision(r.detail)
         ) : (
@@ -114,13 +116,20 @@ export default async function CronDetallePage({
           <KpiTile label="Estado" value={<StatusBadge value={c.estado} map={CRON_STATUS} />} hint={c.module} />
           <KpiTile
             label="Horario"
-            value={<span className="text-base">{describirCron(c.schedule, c.interval_s)}</span>}
+            value={<span className="block text-base leading-snug">{describirCron(c.schedule, c.interval_s)}</span>}
             hint={c.overridden ? `Reprogramado. El del código: ${describirCron(c.default_schedule, c.interval_s)}` : (c.schedule ?? undefined)}
           />
           <KpiTile
             label="Próxima ejecución"
-            value={c.paused ? "Pausado" : distanciaRelativa(c.next_run_at)}
-            hint={c.next_run_at ? formatDateTime(c.next_run_at) : undefined}
+            value={c.paused ? "En pausa" : tarde ? `Atrasado ${tarde}` : distanciaRelativa(c.next_run_at)}
+            tone={tarde ? "danger" : "default"}
+            hint={
+              tarde
+                ? `Debía correr el ${formatDateTime(c.next_run_at)}: revisa que el planificador esté corriendo.`
+                : c.next_run_at
+                  ? formatDateTime(c.next_run_at)
+                  : undefined
+            }
           />
           <KpiTile
             label="Últimas 24 h"
