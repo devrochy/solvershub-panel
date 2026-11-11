@@ -53,7 +53,7 @@ describe("JsonSchemaForm (HU-UI-04)", () => {
     renderFormulario();
     expect((screen.getByLabelText(/Nombre del negocio/) as HTMLInputElement).value).toBe("Tienda de prueba");
     expect((screen.getByLabelText(/Cuotas máximas/) as HTMLInputElement).type).toBe("number");
-    expect((screen.getByLabelText(/Activo/) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole("switch", { name: /Activo/ }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByLabelText(/Canal/).tagName).toBe("SELECT");
     expect(screen.getByLabelText(/Datos extra/).tagName).toBe("TEXTAREA");
   });

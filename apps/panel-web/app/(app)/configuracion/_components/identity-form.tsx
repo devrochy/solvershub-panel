@@ -19,7 +19,6 @@ import {
   type SeccionId,
 } from "@/lib/configuracion-secciones";
 import { usePendientes } from "@/lib/frases-pendientes";
-import { leyendaDias } from "@/lib/horario-atencion";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
@@ -45,6 +44,7 @@ export function IdentityForm({
   seccion,
   puedeEditar = true,
   irASeccion,
+  onGuardado,
 }: {
   identity: IdentitySettings;
   catalogo: CatalogoConfig | null;
@@ -53,6 +53,8 @@ export function IdentityForm({
   puedeEditar?: boolean;
   /** Para llevar a la persona a la sección donde está un error de validación. */
   irASeccion?: (id: SeccionId) => void;
+  /** Tras guardar bien (el cajón se cierra y el resumen muestra el valor nuevo). */
+  onGuardado?: () => void;
 }) {
   const [values, setValues] = useState(identity);
   // Lo último guardado: la comparación con `values` dice si hay cambios sin guardar.
@@ -116,7 +118,7 @@ export function IdentityForm({
     }
     setValues(completos);
     pendiente.limpiar();
-    await run(async () => {
+    const ok = await run(async () => {
       const res = await fetch("/api/settings/identity", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -135,6 +137,7 @@ export function IdentityForm({
       setGuardado(completos);
       return { ok: true, success: "Cambios guardados." };
     });
+    if (ok) onGuardado?.();
   }
 
   /** «Revisa los campos marcados», nombrando la sección si el error está en una que no se ve. */
@@ -218,9 +221,6 @@ export function IdentityForm({
                               : undefined
                         }
                       />
-                      {opcion.clave === "business_ranges" && (
-                        <p className="mt-1.5 text-xs text-text-soft">Días: {leyendaDias()}</p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -231,16 +231,10 @@ export function IdentityForm({
           </ControlesEditables>
 
           {puedeEditar ? (
-            <div className="flex flex-col gap-2">
-              <div>
-                <Button type="submit" variant="accent" disabled={pending}>
-                  {pending ? "Guardando…" : "Guardar cambios"}
-                </Button>
-              </div>
-              <p className="text-xs text-text-soft">
-                Identidad, horario, voz y calidad se guardan juntos: se guarda también lo que cambiaste en las otras
-                secciones.
-              </p>
+            <div>
+              <Button type="submit" variant="accent" loading={pending}>
+                Guardar
+              </Button>
             </div>
           ) : (
             <AvisoSoloLectura />

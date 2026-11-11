@@ -68,8 +68,10 @@ function montar(props: Partial<Parameters<typeof SettingsTabs>[0]> = {}) {
   );
 }
 
-const menu = () => within(screen.getByRole("navigation", { name: "Secciones de Configuración" }));
-const titulo = () => screen.getByRole("heading", { level: 2 });
+/** Fila del resumen (rediseño B): el nombre del ajuste y su valor actual. */
+const fila = (nombre: string | RegExp) => screen.getByRole("button", { name: typeof nombre === "string" ? new RegExp(`^${nombre}`) : nombre });
+const cajon = () => screen.getByRole("dialog");
+const titulo = () => within(cajon()).getByRole("heading", { level: 2 });
 
 beforeAll(() => {
   window.matchMedia ??= ((query: string) => ({
@@ -90,31 +92,46 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("menú de Configuración", () => {
-  it("agrupa las secciones por tarea y marca la actual", () => {
+describe("resumen de Configuración (rediseño B)", () => {
+  it("agrupa los ajustes por tarea y muestra el valor de cada uno", () => {
     montar();
-    const nav = menu();
     for (const grupo of ["Mi negocio", "Cómo responde", "Canales y medios", "Avanzado"]) {
-      expect(nav.getByText(grupo)).toBeTruthy();
+      expect(screen.getByRole("heading", { name: grupo })).toBeTruthy();
     }
-    expect(nav.getByRole("button", { name: "Herramientas del agente" })).toBeTruthy();
-    expect(nav.getByRole("button", { name: "Identidad" }).getAttribute("aria-current")).toBe("page");
-    // WhatsApp Web solo para el master: sin `waweb` no hay entrada.
-    expect(nav.queryByRole("button", { name: /WhatsApp Web/ })).toBeNull();
-    // En celular hay un selector con los mismos grupos.
-    expect(screen.getByLabelText("Sección")).toBeTruthy();
+    // Memoria se lee en palabras.
+    expect(fila("Memoria").textContent).toMatch(/Recuerda \d+ mensajes/);
+    expect(fila("Chat web").textContent).toMatch(/Apagado|Activo en/);
+    // WhatsApp Web y AgentSpec son del equipo de SolversHub: sin master no aparecen (CFG-04).
+    expect(screen.queryByRole("button", { name: /^WhatsApp Web/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^AgentSpec/ })).toBeNull();
+    // Sin sección pedida no hay cajón abierto.
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("elegir una sección muestra su formulario y escribe ?seccion= en la URL", async () => {
+  it("el master ve AgentSpec y proveedor", () => {
+    montar({ esMaster: true });
+    expect(fila("AgentSpec y proveedor")).toBeTruthy();
+  });
+
+  it("habilidades y mensajes fallidos son filas más, con su estado (CFG-11)", () => {
+    montar({
+      habilidades: [{ id: "pack_commerce", name: "pack_commerce", display_name: "Comercio", enabled_for_tenant: true, status: "loaded" } as never],
+      fallidos: 2,
+    });
+    expect(screen.getByRole("link", { name: /^Habilidades.*Comercio activa/ }).getAttribute("href")).toBe("/habilidades");
+    expect(screen.getByRole("link", { name: /^Mensajes fallidos.*2 por reintentar/ }).getAttribute("href")).toBe("/dlq");
+  });
+
+  it("tocar un ajuste lo abre en un cajón y escribe ?seccion= en la URL", async () => {
     montar();
-    fireEvent.click(menu().getByRole("button", { name: "Memoria" }));
-    await waitFor(() => expect(titulo().textContent).toBe("Memoria"));
-    expect(screen.getByLabelText(/Turnos de contexto/)).toBeTruthy();
+    fireEvent.click(fila("Memoria"));
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(titulo().textContent).toBe("Memoria");
+    expect(within(cajon()).getByRole("group", { name: "Cuánto recuerda de la conversación" })).toBeTruthy();
     expect(window.location.search).toBe("?seccion=memoria");
-    expect(menu().getByRole("button", { name: "Memoria" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("?seccion= abre esa sección y le gana a ?tab=", () => {
+  it("?seccion= abre ese ajuste y le gana a ?tab=", () => {
     montar({ defaultSeccion: "cerebro", defaultTab: "memory" });
     expect(titulo().textContent).toBe("Cerebro y modelos");
   });
@@ -126,106 +143,89 @@ describe("menú de Configuración", () => {
     montar({ defaultTab: "web-chat" });
     expect(titulo().textContent).toBe("Chat web");
     cleanup();
-    montar({ defaultTab: "avanzado" });
+    montar({ defaultTab: "avanzado", esMaster: true });
     expect(titulo().textContent).toBe("AgentSpec y proveedor");
   });
 
-  it("Identidad se reparte en secciones que comparten el formulario", () => {
+  it("Horario muestra solo sus campos del formulario de identidad", () => {
     montar({ defaultSeccion: "horario" });
-    expect(screen.getByLabelText("Escalar tras turnos")).toBeTruthy();
-    expect(screen.queryByLabelText("Nombre del asistente")).toBeNull();
-    fireEvent.click(menu().getByRole("button", { name: "Calidad de respuestas" }));
-    expect(screen.getByLabelText("Reintentos")).toBeTruthy();
+    expect(within(cajon()).getByLabelText("Escalar tras turnos")).toBeTruthy();
+    expect(within(cajon()).queryByLabelText("Nombre del asistente")).toBeNull();
   });
 
-  it("la ayuda de la moneda aclara que el cobro usa la de cada habilidad", () => {
-    montar();
+  it("la ayuda de la moneda aclara que el cobro usa la de cada habilidad, y la moneda se elige de una lista", () => {
+    montar({ defaultSeccion: "identidad" });
     expect(screen.getByText(/el cobro usa la moneda de cada habilidad/)).toBeTruthy();
-  });
-
-  it("el selector del celular también cambia de sección", async () => {
-    montar();
-    fireEvent.change(screen.getByLabelText("Sección"), { target: { value: "cerebro" } });
-    await waitFor(() => expect(titulo().textContent).toBe("Cerebro y modelos"));
-    expect(window.location.search).toBe("?seccion=cerebro");
+    expect(within(cajon()).getByLabelText("Moneda").tagName).toBe("SELECT");
   });
 });
 
 describe("cambios sin guardar", () => {
-  it("pide confirmar al salir; «Seguir editando» se queda y conserva lo escrito", async () => {
+  it("cerrar con cambios pregunta; «Seguir editando» se queda y conserva lo escrito", async () => {
     montar({ defaultSeccion: "cerebro" });
     fireEvent.change(screen.getByLabelText(/Modelo primario/), { target: { value: "otro-modelo" } });
-    fireEvent.click(menu().getByRole("button", { name: "Memoria" }));
-    const dialogo = await screen.findByRole("alertdialog").catch(() => screen.findByRole("dialog"));
-    expect(within(dialogo).getByText(/se pierde lo que cambiaste en «Cerebro y modelos»/)).toBeTruthy();
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Seguir editando" }));
-    await waitFor(() => expect(screen.queryByRole("alertdialog") ?? screen.queryByRole("dialog")).toBeNull());
-    expect(titulo().textContent).toBe("Cerebro y modelos");
+    fireEvent.click(within(cajon()).getByRole("button", { name: "Cerrar" }));
+    const pregunta = await screen.findByRole("alertdialog");
+    expect(within(pregunta).getByText(/Si cierras «Cerebro y modelos», se pierde lo que cambiaste/)).toBeTruthy();
+    fireEvent.click(within(pregunta).getByRole("button", { name: "Seguir editando" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect((screen.getByLabelText(/Modelo primario/) as HTMLInputElement).value).toBe("otro-modelo");
+  });
+
+  it("«Descartar cambios» cierra el cajón y la URL vuelve al resumen", async () => {
+    montar({ defaultSeccion: "cerebro" });
+    window.history.replaceState(null, "", "/configuracion?seccion=cerebro");
+    fireEvent.change(screen.getByLabelText(/Modelo primario/), { target: { value: "otro-modelo" } });
+    fireEvent.click(within(cajon()).getByRole("button", { name: "Cerrar" }));
+    fireEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Descartar cambios" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(window.location.search).toBe("");
   });
 
-  it("«Descartar cambios» cambia de sección", async () => {
+  it("sin cambios cierra sin preguntar", async () => {
     montar({ defaultSeccion: "cerebro" });
-    fireEvent.change(screen.getByLabelText(/Modelo primario/), { target: { value: "otro-modelo" } });
-    fireEvent.click(menu().getByRole("button", { name: "Memoria" }));
-    const dialogo = await screen.findByRole("alertdialog").catch(() => screen.findByRole("dialog"));
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Descartar cambios" }));
-    await waitFor(() => expect(titulo().textContent).toBe("Memoria"));
-  });
-
-  it("sin cambios no pregunta nada", async () => {
-    montar({ defaultSeccion: "cerebro" });
-    fireEvent.click(menu().getByRole("button", { name: "Memoria" }));
-    await waitFor(() => expect(titulo().textContent).toBe("Memoria"));
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
-  it("cambiar entre secciones de Identidad no pregunta: el formulario sigue montado y conserva lo escrito", async () => {
-    montar();
-    fireEvent.change(screen.getByLabelText("Nombre del asistente"), { target: { value: "Lucía" } });
-    fireEvent.click(menu().getByRole("button", { name: "Horario y escalamiento" }));
-    await waitFor(() => expect(titulo().textContent).toBe("Horario y escalamiento"));
-    expect(screen.queryByRole("dialog")).toBeNull();
-    fireEvent.click(menu().getByRole("button", { name: "Identidad" }));
-    await waitFor(() => expect(titulo().textContent).toBe("Identidad"));
-    expect((screen.getByLabelText("Nombre del asistente") as HTMLInputElement).value).toBe("Lucía");
-    // Pero salir de la familia con ese cambio sí pregunta.
-    fireEvent.click(menu().getByRole("button", { name: "Memoria" }));
-    expect(await screen.findByText("Tienes cambios sin guardar")).toBeTruthy();
+    fireEvent.click(within(cajon()).getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 });
 
 describe("solo lectura", () => {
   it("quien solo puede ver no tiene botón de guardar y los campos quedan desactivados", () => {
     montar({ defaultSeccion: "memoria", puedeEditar: false });
-    expect(screen.queryByRole("button", { name: "Guardar memoria" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Guardar" })).toBeNull();
     expect(screen.getByText(/Solo puedes ver esta sección/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Avanzado: los números exactos/ }));
     // El `fieldset disabled` apaga el campo aunque el input no tenga `disabled` propio.
-    expect(screen.getByLabelText(/Turnos de contexto/).matches(":disabled")).toBe(true);
+    expect(screen.getByLabelText(/Mensajes que recuerda/).matches(":disabled")).toBe(true);
   });
 });
 
 describe("limpieza de campos", () => {
-  it("la similitud mínima se apaga cuando no se busca conocimiento (top K = 0) y lo explica", () => {
+  it("el parecido mínimo se apaga cuando no se busca conocimiento y lo explica", () => {
     montar({ defaultSeccion: "memoria", settings: { ...ajustes, memory: { short_term_turns: 10, rag_top_k: 0, rag_min_score: 0.3 } } });
-    expect(screen.getByLabelText(/Similitud mínima/)).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getByRole("button", { name: /^Avanzado: los números exactos/ }));
+    expect(screen.getByLabelText(/Parecido mínimo/)).toHaveProperty("disabled", true);
     expect(screen.getByText(/No aplica mientras el conocimiento a buscar sea 0/)).toBeTruthy();
   });
 
   it("el nombre del asistente ya no es `required` (no hacía nada con noValidate)", () => {
-    montar();
+    montar({ defaultSeccion: "identidad" });
     expect((screen.getByLabelText("Nombre del asistente") as HTMLInputElement).required).toBe(false);
   });
 
-  it("avisa de las líneas del horario que no se guardarán", () => {
+  it("el horario se elige por día: encender un día le pone horas y se pueden cambiar (CFG-01)", () => {
     montar({
       defaultSeccion: "horario",
       catalogo: { ...catalogo, opciones: [...catalogo.opciones, opcion("business_ranges", "horario", "franjas", "Franjas de atención")] },
-      settings: { ...ajustes, identity: { ...ajustes.identity, business_ranges: [] } },
+      settings: { ...ajustes, identity: { ...ajustes.identity, business_ranges: [{ day: 0, from: "09:00", to: "18:00" }] } },
     });
-    fireEvent.change(screen.getByLabelText("Franjas de atención"), { target: { value: "0 08:00-18:00\nlunes 8 a 6" } });
-    expect(screen.getByText(/Esta línea no se va a guardar/)).toBeTruthy();
-    expect(screen.getByText(/«lunes 8 a 6»/)).toBeTruthy();
+    expect((screen.getByRole("switch", { name: "Abierto el lunes" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe("true");
+    expect((screen.getByLabelText("Lunes: desde") as HTMLSelectElement).value).toBe("09:00");
+    fireEvent.click(screen.getByRole("switch", { name: "Abierto el sábado" }));
+    expect((screen.getByLabelText("Sábado: hasta") as HTMLSelectElement).value).toBe("18:00");
+    fireEvent.click(screen.getByRole("button", { name: "Copiar el lunes a los demás días" }));
+    expect((screen.getByRole("switch", { name: "Abierto el domingo" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe("true");
+    expect(screen.queryByText(/Días: 0 Lun/)).toBeNull();
   });
 });

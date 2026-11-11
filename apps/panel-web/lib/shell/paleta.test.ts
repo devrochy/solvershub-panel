@@ -67,7 +67,7 @@ describe("filtro", () => {
   it("ignora tildes y mayúsculas", () => {
     expect(normalizar("  Configuración ")).toBe("configuracion");
     const secciones = seccionesDePaleta(TODO);
-    expect(labels(filtrar(secciones, "CONFIGURACION", (s) => [s.nombre, s.grupo]))).toContain("Configuración › General");
+    expect(labels(filtrar(secciones, "CONFIGURACION", (s) => [s.nombre, s.grupo]))).toContain("Cuenta › Configuración");
   });
 
   it("el nombre de la sección gana sobre su grupo", () => {

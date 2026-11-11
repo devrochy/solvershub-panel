@@ -1,4 +1,6 @@
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { PageHeader } from "@/components/ui/page-header";
 import type { AvisoDatos } from "@/lib/aviso-datos";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
@@ -8,6 +10,7 @@ import type {
   BajasSettings,
   CatalogoConfig,
   Me,
+  PluginSummary,
   WawebPolitica,
   MediaSettings,
   SettingsResponse,
@@ -30,7 +33,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string; seccion?: string }>;
 }) {
   const { tab, seccion } = await searchParams;
-  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, avisoRes, meRes] = await Promise.all([
+  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, avisoRes, meRes, habilidadesRes, fallidosRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
     apiFetch<WebChatSettings>("/admin/settings/web-chat"),
@@ -43,20 +46,32 @@ export default async function SettingsPage({
     // Aviso de tratamiento de datos y consentimiento del cliente (HU-CRM-16).
     apiFetch<AvisoDatos>("/admin/datos-cliente/aviso"),
     apiFetch<Me>("/admin/me"),
+    // Filas de Habilidades y Mensajes fallidos del resumen (CFG-11): si no cargan, la fila no aparece.
+    apiFetch<PluginSummary[]>("/admin/plugins"),
+    apiFetch<{ entries: unknown[] }>("/admin/dlq"),
   ]);
+  const cabecera = (
+    <PageHeader title="Configuración" description="Cómo se presenta y cómo responde el asistente de este negocio." helpSection="settings" />
+  );
   if ((!res.ok && res.status === 403) || (!advancedRes.ok && advancedRes.status === 403)) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No tienes permiso para ver la configuración de este negocio. Pídele acceso a quien administra el negocio.
-      </p>
+      <div className="flex flex-col gap-6">
+        {cabecera}
+        <div className="rounded-lg border border-border-soft bg-surface">
+          <EstadoDeError
+            titulo="No tienes acceso a la configuración"
+            descripcion="Pídele acceso a quien administra el negocio."
+          />
+        </div>
+      </div>
     );
   }
   if (!res.ok || !advancedRes.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la configuración:{" "}
-        {res.ok ? (advancedRes as { error: string }).error : res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        {cabecera}
+        <ErrorDeCarga titulo="No pudimos cargar la configuración" detalle={res.ok ? (advancedRes as { error: string }).error : res.error} />
+      </div>
     );
   }
 
@@ -71,12 +86,11 @@ export default async function SettingsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Configuración"
-        description="Cómo se presenta y cómo responde el asistente de este negocio."
-        helpSection="settings"
-      />
+      {cabecera}
       <SettingsTabs
+        esMaster={meRes.ok && meRes.data.role === "master"}
+        habilidades={habilidadesRes.ok ? habilidadesRes.data : null}
+        fallidos={fallidosRes.ok ? fallidosRes.data.entries.length : null}
         advanced={advancedRes.data}
         defaultTab={tab}
         defaultSeccion={seccion}

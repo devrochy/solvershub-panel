@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import { ChevronDown } from "lucide-react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { BotonCopiar } from "@/components/domain/boton-copiar";
@@ -36,6 +37,7 @@ export function WebChatForm({
   const [guardado, setGuardado] = useState({ enabled: webChat.enabled, originsText: webChat.allowed_origins.join("\n") });
   const [turnstile, setTurnstile] = useState("");
   const [rotateKey, setRotateKey] = useState(false);
+  const [avanzado, setAvanzado] = useState(false);
   const [snippet, setSnippet] = useState(webChat.snippet);
   const { run, pending } = useAction();
   useAvisarCambios(
@@ -98,9 +100,18 @@ export function WebChatForm({
             />
           </Field>
 
-          <details className="group rounded-md border border-border-soft px-4 py-3">
-            <summary className="cursor-pointer text-sm font-medium text-headline">Opciones avanzadas</summary>
-            <div className="mt-4 flex flex-col gap-4">
+          <button
+            type="button"
+            aria-expanded={avanzado}
+            aria-controls="chat-web-avanzado"
+            onClick={() => setAvanzado((v) => !v)}
+            className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2.5 text-left text-sm text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
+          >
+            Avanzado: protección contra bots y clave del chat
+            <ChevronDown aria-hidden className={`h-4 w-4 text-text-soft transition-transform duration-150 ${avanzado ? "rotate-180" : ""}`} />
+          </button>
+          {avanzado && (
+            <div id="chat-web-avanzado" className="flex flex-col gap-4">
               <Field
                 label="Protección contra bots (Turnstile de Cloudflare)"
                 htmlFor="turnstile_secret"
@@ -125,7 +136,7 @@ export function WebChatForm({
                 onCheckedChange={setRotateKey}
               />
             </div>
-          </details>
+          )}
           </ControlesEditables>
 
           {conFragmento && snippet ? (

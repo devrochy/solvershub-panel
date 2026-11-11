@@ -45,7 +45,7 @@ describe("AvisoDatosCard", () => {
     const guardar = screen.getByRole("button", { name: "Guardar aviso" });
     expect(guardar).toHaveProperty("disabled", true);
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Activar el aviso en el chat" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Mostrar el aviso en el chat" }));
     expect(screen.getByRole("button", { name: "Guardar aviso" })).toHaveProperty("disabled", true);
 
     fireEvent.click(screen.getByRole("checkbox", { name: /revisado legalmente/ }));

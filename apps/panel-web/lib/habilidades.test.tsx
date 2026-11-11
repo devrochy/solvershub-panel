@@ -42,10 +42,10 @@ describe("interruptor de habilidad", () => {
   function montar() {
     render(
       <FeedbackProviders>
-        <PluginActions pluginId="pack_calendar" enabled={false} hasError={false} />
+        <PluginActions pluginId="pack_calendar" nombre="Agenda" enabled={false} hasError={false} />
       </FeedbackProviders>,
     );
-    return screen.getByRole("switch", { name: "Habilitar pack_calendar" });
+    return screen.getByRole("switch", { name: "Encender Agenda" });
   }
 
   it("al tope del plan vuelve a apagado y explica el límite", async () => {
@@ -60,7 +60,7 @@ describe("interruptor de habilidad", () => {
       ),
     );
     await waitFor(() => expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe("false"));
-    expect(screen.getByText("No habilitada")).toBeTruthy();
+    expect(screen.getByText("Apagada")).toBeTruthy();
     expect(refresh).not.toHaveBeenCalled();
   });
 
