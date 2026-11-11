@@ -311,6 +311,13 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Cada alerta es una frase (`fraseDeEvento`) con su segunda línea (canal, IP, hace cuánto). El historial (`/seguridad/alertas`, no es pestaña) agrupa por día y filtra con Todas · Necesitan atención · Avisos · Informativas. Quien solo tiene `access_alerts` entra directo al historial; `/seguridad/dispositivos` redirige a `/seguridad`.
 - En el celular cada fila pone el texto arriba y los botones debajo.
 
+## Acceso, perfil y canales (SPEC-29)
+
+- Las pantallas sin sesión (entrar, recuperar la contraseña, activar la cuenta y la de tester) comparten `TarjetaDeAcceso`, rediseño D: en escritorio, a la izquierda la marca —el logo vertical centrado, la promesa («Tu agente atiende, vende, cobra y agenda por WhatsApp.») y «Atiende por» con los canales— y a la derecha el formulario de siempre (campos altos, ojo de la contraseña, botón largo, cambio de tema). En el celular, el logo y la promesa centrados arriba, sin los canales.
+- La portada se presenta al cargar: el logo aparece y crece un poco, la promesa sube y los canales aparecen uno a uno (`sh-acceso-logo`, `sh-acceso-sube` en `globals.css`; `prefers-reduced-motion` los apaga).
+- El Perfil va en dos secciones: «Tus datos» (la foto y quién eres a la izquierda, los campos a la derecha, el teléfono con la bandera del país) y «Acceso» (el correo fijo, la contraseña y el enlace a tus equipos en Seguridad).
+- Los canales se pintan con `ChannelIcon` en todo el panel: el logo oficial de WhatsApp, Instagram y Messenger (Simple Icons, los mismos de la landing) y un icono genérico para los demás, «bounded y desvanecido» en un solo tono, el de la marca (`bg-link/14`, `border-link/30`, `text-link`): cian en oscuro, azul en claro.
+
 ## Pruebas (SPEC-30)
 
 - Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.
