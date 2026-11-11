@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { LeadDetail, Me, Order } from "@/lib/api/types";
@@ -71,22 +71,51 @@ async function pintar(pagina: Pagina, sp: Record<string, string> = {}) {
 describe("/comercio/pedidos", () => {
   const pedidos = async () => (await import("@/app/(app)/comercio/pedidos/page")).default as unknown as Pagina;
 
-  it("el nombre del cliente abre su ficha en la pestaña Ventas", async () => {
+  it("la fila abre el pedido en un cajón, que enlaza a la ficha del cliente en la pestaña Ventas", async () => {
     respuestas["/pack/commerce/orders"] = { data: [PEDIDO], total: 1 };
     respuestas["/admin/me"] = { data: sesionDueno };
     await pintar(await pedidos());
 
-    const enlace = screen.getByRole("link", { name: "Ana Prueba" });
-    expect(enlace.getAttribute("href")).toBe("/leads?cliente=cli-1&agente=ventas");
+    const fila = screen.getAllByRole("link", { name: "Abrir el pedido OC-0007 de Ana Prueba" })[0];
+    expect(fila.getAttribute("href")).toBe("/comercio/pedidos?pedido=ped-1");
+    cleanup();
+
+    await pintar(await pedidos(), { pedido: "ped-1" });
+    const cajon = await screen.findByRole("dialog");
+    expect(within(cajon).getByRole("link", { name: "Ver la ficha de Ana Prueba" }).getAttribute("href")).toBe(
+      "/leads?cliente=cli-1&agente=ventas",
+    );
+    // Despachado: el paso siguiente es entregarlo, y cancelar queda en «Más acciones».
+    expect(within(cajon).getByRole("button", { name: "Marcar como entregado" })).toBeTruthy();
+    expect(within(cajon).getByRole("button", { name: "Más acciones del pedido OC-0007" })).toBeTruthy();
   });
 
-  it("sin acceso a Clientes el nombre no es un enlace", async () => {
+  it("sin acceso a Clientes el cajón no enlaza a la ficha", async () => {
     respuestas["/pack/commerce/orders"] = { data: [PEDIDO], total: 1 };
     respuestas["/admin/me"] = { data: SIN_CLIENTES };
-    await pintar(await pedidos());
+    await pintar(await pedidos(), { pedido: "ped-1" });
 
-    expect(screen.getByText("Ana Prueba")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Ana Prueba" })).toBeNull();
+    const cajon = await screen.findByRole("dialog");
+    expect(within(cajon).getByText("Ana Prueba")).toBeTruthy();
+    expect(within(cajon).queryByRole("link", { name: /Ver la ficha/ })).toBeNull();
+  });
+
+  it("marcar como entregado manda el estado nuevo al servidor", async () => {
+    respuestas["/pack/commerce/orders"] = { data: [PEDIDO], total: 1 };
+    respuestas["/admin/me"] = { data: sesionDueno };
+    const fetchOriginal = globalThis.fetch;
+    const envio = vi.fn(async () => new Response(null, { status: 204 }));
+    globalThis.fetch = envio as unknown as typeof fetch;
+    try {
+      await pintar(await pedidos(), { pedido: "ped-1" });
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Marcar como entregado" }));
+      await waitFor(() => expect(envio).toHaveBeenCalled());
+      const [url, init] = envio.mock.calls[0] as unknown as [string, RequestInit];
+      expect(url).toBe("/api/pack/commerce/orders/ped-1/status");
+      expect(JSON.parse(String(init.body))).toEqual({ status: "entregado" });
+    } finally {
+      globalThis.fetch = fetchOriginal;
+    }
   });
 
   it("pide al backend los filtros y la página, y escribe los estados en español", async () => {
@@ -99,9 +128,10 @@ describe("/comercio/pedidos", () => {
     expect(consulta.get("q")).toBe("OC-0007");
     expect(consulta.get("limit")).toBe("25");
     expect(consulta.get("offset")).toBe("25");
-    const estado = screen.getByLabelText("Estado del pedido ped-1") as HTMLSelectElement;
-    expect(within(estado).getByRole("option", { name: "Despachado" })).toBeTruthy();
-    expect(within(estado).queryByRole("option", { name: "despachado" })).toBeNull();
+    // Estado y pago en palabras, no los valores de la API.
+    expect(screen.getAllByText("En camino").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Pagado").length).toBeGreaterThan(0);
+    expect(screen.queryByText("despachado")).toBeNull();
     // 60 pedidos en total y esta es la página 2 de 25: hay anterior y siguiente.
     expect(screen.getByText(/60 pedidos · página 2/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Siguiente" }).getAttribute("href")).toContain("page=3");

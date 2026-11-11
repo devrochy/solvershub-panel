@@ -1,94 +1,106 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Pencil, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/confirm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenuItem, DropdownMenuLinkItem } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useAction } from "@/lib/use-action";
+import { cuantosProductos, hrefCategoria, hrefProductos, type Categoria } from "@/lib/ventas";
 
-type Category = { id: string; name: string; parent_id: string | null; sort_order: number; active: boolean };
+async function guardarCategoria(cuerpo: { category_id: string | null; name: string; parent_id: string | null; sort_order: number }) {
+  const res = await fetch("/api/pack/commerce/categories", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cuerpo),
+  });
+  const json = (await res.json().catch(() => ({}))) as { error?: string };
+  return { ok: res.ok, status: res.status, error: json.error };
+}
 
-/** Alta/edición de categoría del catálogo. */
-export function CategoryDialog({
-  category,
-  categories,
+/**
+ * Crear o renombrar una categoría (VEN-10). El orden ya no se escribe: la nueva va al final de sus
+ * hermanas y se mueve con las flechas de la lista.
+ */
+export function EditorDeCategoria({
+  categoria,
+  categorias,
+  alCerrar,
 }: {
-  category?: Category;
-  categories: Category[];
+  categoria?: Categoria;
+  categorias: Categoria[];
+  alCerrar: string;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+  const [estado, setEstado] = useState<{ guardando?: boolean; error?: string }>({});
+  const cerrar = () => router.replace(alCerrar, { scroll: false });
+  // No puede quedar dentro de sí misma ni de una de sus hijas.
+  const descendientes = new Set<string>(categoria ? [categoria.id] : []);
+  for (let crecio = true; crecio; ) {
+    crecio = false;
+    for (const c of categorias) {
+      if (c.parent_id && descendientes.has(c.parent_id) && !descendientes.has(c.id)) {
+        descendientes.add(c.id);
+        crecio = true;
+      }
+    }
+  }
+  const madres = categorias.filter((c) => !descendientes.has(c.id));
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setStatus({ loading: true });
-    const res = await fetch("/api/pack/commerce/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        category_id: category?.id ?? null,
-        name: String(data.get("name") ?? ""),
-        parent_id: String(data.get("parent_id") ?? "") || null,
-        sort_order: Number(data.get("sort_order") ?? 0),
-      }),
+    const madre = String(data.get("parent_id") ?? "") || null;
+    const hermanas = categorias.filter((c) => (c.parent_id ?? null) === madre && c.id !== categoria?.id);
+    const mismaMadre = categoria && (categoria.parent_id ?? null) === madre;
+    setEstado({ guardando: true });
+    const r = await guardarCategoria({
+      category_id: categoria?.id ?? null,
+      name: String(data.get("name") ?? "").trim(),
+      parent_id: madre,
+      sort_order: mismaMadre ? categoria.sort_order : Math.max(0, ...hermanas.map((c) => c.sort_order + 1)),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo guardar la categoría." });
+    if (!r.ok) {
+      setEstado({ error: r.error ?? "No se pudo guardar la categoría." });
       return;
     }
-    setStatus({});
-    setOpen(false);
+    setEstado({});
+    cerrar();
     router.refresh();
   }
 
-  const others = categories.filter((c) => c.id !== category?.id);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {category ? (
-          <Button aria-label="Editar" size="icon" title="Editar" variant="outline"><Pencil className="h-4 w-4" aria-hidden /></Button>
-        ) : (
-          <Button variant="accent">Nueva categoría</Button>
-        )}
-      </DialogTrigger>
-      <DialogContent title={category ? "Editar categoría" : "Nueva categoría"} className="max-w-lg">
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <Dialog open onOpenChange={(abierto) => !abierto && cerrar()}>
+      <DialogContent title={categoria ? `Editar ${categoria.name}` : "Nueva categoría"} className="max-w-md">
+        <form onSubmit={guardar} className="flex flex-col gap-4">
           <Field label="Nombre" htmlFor="c-name" required>
-            <Input id="c-name" name="name" required defaultValue={category?.name ?? ""} />
+            <Input id="c-name" name="name" required maxLength={120} defaultValue={categoria?.name ?? ""} />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Categoría padre" htmlFor="c-parent">
-              <Select id="c-parent" name="parent_id" defaultValue={category?.parent_id ?? ""}>
-                <option value="">Sin padre (raíz)</option>
-                {others.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Orden" htmlFor="c-order">
-              <Input id="c-order" name="sort_order" type="number" defaultValue={category?.sort_order ?? 0} />
-            </Field>
-          </div>
-
-          <FormFeedback error={status.error} />
-
+          <Field label="Dentro de" htmlFor="c-parent" help="Una subcategoría hereda las promociones de su categoría, si así se eligen.">
+            <Select id="c-parent" name="parent_id" defaultValue={categoria?.parent_id ?? ""}>
+              <option value="">Ninguna (categoría principal)</option>
+              {madres.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <FormFeedback error={estado.error} />
           <div className="mt-2 flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
-            </DialogClose>
-            <Button type="submit" variant="accent" disabled={status.loading}>
-              {status.loading ? "Guardando…" : "Guardar categoría"}
+            <Button type="button" variant="outline" onClick={cerrar}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="accent" loading={estado.guardando}>
+              {categoria ? "Guardar categoría" : "Crear categoría"}
             </Button>
           </div>
         </form>
@@ -97,41 +109,99 @@ export function CategoryDialog({
   );
 }
 
-/** Elimina (soft-delete) una categoría. */
-export function DeleteCategoryButton({ categoryId, label }: { categoryId: string; label: string }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+/** Subir o bajar una categoría entre sus hermanas: intercambia su lugar con la vecina. */
+export function MoverCategoria({ categoria, anterior, siguiente }: { categoria: Categoria; anterior: Categoria | null; siguiente: Categoria | null }) {
+  const { run, pending } = useAction();
 
-  async function remove() {
-    setStatus({ loading: true });
-    const res = await fetch(`/api/pack/commerce/categories/${categoryId}/delete`, { method: "POST" });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo eliminar." });
-      return;
-    }
-    setOpen(false);
-    router.refresh();
+  function mover(vecina: Categoria, sube: boolean) {
+    void run(async () => {
+      // Con el mismo número de orden, la que sube queda una antes que la vecina.
+      const mio = vecina.sort_order === categoria.sort_order ? (sube ? Math.max(0, vecina.sort_order - 1) : vecina.sort_order + 1) : vecina.sort_order;
+      const suyo = vecina.sort_order === categoria.sort_order ? vecina.sort_order : categoria.sort_order;
+      for (const [c, orden] of [
+        [categoria, mio],
+        [vecina, suyo],
+      ] as const) {
+        const r = await guardarCategoria({ category_id: c.id, name: c.name, parent_id: c.parent_id, sort_order: orden });
+        if (!r.ok) return { ok: false, status: r.status, error: r.error ?? "No se pudo cambiar el orden." };
+      }
+      return { ok: true };
+    });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button aria-label="Eliminar" size="icon" title="Eliminar" variant="outline"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
-      </DialogTrigger>
-      <DialogContent title="Eliminar categoría" description={label} className="max-w-md">
-        <p className="text-sm text-body">Los productos de esta categoría quedarán sin categoría.</p>
-        <FormFeedback error={status.error} className="mt-3" />
-        <div className="mt-6 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
-          </DialogClose>
-          <Button type="button" variant="danger" onClick={() => void remove()} disabled={status.loading}>
-            {status.loading ? "Eliminando…" : "Eliminar"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <span className="flex items-center">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={`Subir ${categoria.name}`}
+        disabled={!anterior || pending}
+        onClick={() => anterior && mover(anterior, true)}
+        className="pointer-coarse:h-11 pointer-coarse:w-11"
+      >
+        <ArrowUp className="h-4 w-4" aria-hidden />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={`Bajar ${categoria.name}`}
+        disabled={!siguiente || pending}
+        onClick={() => siguiente && mover(siguiente, false)}
+        className="pointer-coarse:h-11 pointer-coarse:w-11"
+      >
+        <ArrowDown className="h-4 w-4" aria-hidden />
+      </Button>
+    </span>
+  );
+}
+
+/** «Más acciones» de una categoría: editar y eliminar (con lo que pasa con sus productos). */
+export function AccionesDeCategoria({
+  categoria,
+  productos,
+  subcategorias,
+  vista,
+}: {
+  categoria: Categoria;
+  productos: number;
+  subcategorias: number;
+  vista: string;
+}) {
+  const { run } = useAction();
+  const confirmar = useConfirm();
+
+  async function eliminar() {
+    const partes = [
+      productos > 0 ? `${cuantosProductos(productos)} quedan sin categoría` : null,
+      subcategorias > 0 ? `${subcategorias === 1 ? "su subcategoría pasa" : `sus ${subcategorias} subcategorías pasan`} a ser principal${subcategorias === 1 ? "" : "es"}` : null,
+    ].filter(Boolean);
+    const ok = await confirmar({
+      title: `¿Eliminar ${categoria.name}?`,
+      description: `${partes.length ? `${partes.join(" y ")}.`.replace(/^./, (l) => l.toUpperCase()) : "No tiene productos."} El asistente deja de usarla para filtrar y sugerir.`,
+      confirmLabel: "Eliminar categoría",
+      destructive: true,
+    });
+    if (!ok) return;
+    void run(async () => {
+      const res = await fetch(`/api/pack/commerce/categories/${encodeURIComponent(categoria.id)}/delete`, { method: "POST" });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      return res.ok ? { ok: true, success: `${categoria.name} eliminada.` } : { ok: false, status: res.status, error: json.error ?? "No se pudo eliminar." };
+    });
+  }
+
+  return (
+    <MenuDeFila etiqueta={`Más acciones de ${categoria.name}`}>
+      <DropdownMenuLinkItem href={hrefCategoria(categoria.id, vista)} scroll={false}>
+        Editar
+      </DropdownMenuLinkItem>
+      <DropdownMenuLinkItem href={hrefProductos({ categoria: categoria.id })}>
+        Ver sus productos
+      </DropdownMenuLinkItem>
+      <DropdownMenuItem tone="danger" onSelect={() => void eliminar()}>
+        Eliminar categoría
+      </DropdownMenuItem>
+    </MenuDeFila>
   );
 }

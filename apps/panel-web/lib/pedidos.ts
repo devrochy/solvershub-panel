@@ -35,8 +35,13 @@ export type FiltrosPedidos = {
   q?: string;
   /** Id del cliente (viene de «Ver sus pedidos» en su ficha). */
   cliente?: string;
+  /** `etapas` (tablero por etapa) o `lista`; vacía, la guardada en el navegador (VEN-03). */
+  vista?: string;
+  /** Id del pedido abierto en el cajón (VEN-03). */
+  pedido?: string;
   page?: string;
 };
+
 
 /** Número de página de la URL (≥ 1; lo inválido vale 1). */
 export function paginaDe(page: string | undefined): number {
@@ -51,6 +56,8 @@ export function filtrosLimpios(sp: FiltrosPedidos): Required<Omit<FiltrosPedidos
     pago: sp.pago && sp.pago in ESTADOS_DE_PAGO ? sp.pago : "",
     q: sp.q?.trim() ?? "",
     cliente: sp.cliente?.trim() ?? "",
+    vista: sp.vista === "etapas" || sp.vista === "lista" ? sp.vista : "",
+    pedido: sp.pedido?.trim() ?? "",
   };
 }
 
@@ -67,14 +74,20 @@ export function consultaPedidos(sp: FiltrosPedidos): URLSearchParams {
   return qs;
 }
 
-/** Query de la página `/comercio/pedidos` con los filtros vigentes (sin `page`) y la página pedida. */
+/**
+ * Query de la página `/comercio/pedidos` con los filtros vigentes (sin `page`) y la página pedida.
+ * Lleva la vista y el pedido abierto, así cambiar un filtro no devuelve a la lista ni cierra el cajón
+ * por accidente (quien quiera cerrarlo pasa `pedido: ""`).
+ */
 export function hrefPedidos(sp: FiltrosPedidos, page = 1): string {
-  const { estado, pago, q, cliente } = filtrosLimpios(sp);
+  const { estado, pago, q, cliente, vista, pedido } = filtrosLimpios(sp);
   const qs = new URLSearchParams();
   if (estado) qs.set("estado", estado);
   if (pago) qs.set("pago", pago);
   if (q) qs.set("q", q);
   if (cliente) qs.set("cliente", cliente);
+  if (vista) qs.set("vista", vista);
+  if (pedido) qs.set("pedido", pedido);
   if (page > 1) qs.set("page", String(page));
   return `/comercio/pedidos${qs.size ? `?${qs.toString()}` : ""}`;
 }

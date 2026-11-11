@@ -252,6 +252,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - La vista previa queda fija al lado en escritorio; en el celular se abre con «Ver cómo queda».
 - Avisos por evento: una lista por módulo con lo que le llega al cliente («Con plantilla», «Solo dentro de 24 horas», «Sin aviso»). Cada aviso se edita en un cajón con su propio Guardar; el texto por canal va plegado. La API guarda el mapa completo, así que guardar un aviso manda también lo guardado de los demás.
 
+## Ventas (SPEC-29)
+
+- Todo en palabras (`lib/ventas.ts`): «Hoy, 5:30 p. m.», «3 variantes · 15 en stock», «19 % en Ropa · del 20 al 21 de nov.». Nada de SKU, letra de código ni valores de la API a la vista; el código de un producto va en «Avanzado» de su ficha.
+- El resumen muestra lo que pide acción (por despachar, pago pendiente, agotados) y lo vendido en el mes; cada cifra abre su lista filtrada.
+- Un pedido se abre en un cajón (`?pedido=`) con un solo botón para el paso siguiente; los demás cambios de estado van en «Más acciones» y cancelar pide confirmación. Pedidos tiene un solo filtro (control segmentado) y una búsqueda que filtra mientras se escribe.
+- Dos formas de ver: Productos y Categorías en lista o vitrina (tarjetas con foto; en la vitrina de productos, la promoción vigente), Pedidos en lista o por etapa. La vista viaja en `?vista=` y se recuerda en este navegador (`lib/vista-guardada.ts`); los enlaces solo la escriben cuando difiere de la guardada.
+- Productos, promociones, categorías y aliados se editan en un cajón o diálogo que vive en la URL. Las acciones de fila van en «Más acciones», nunca como íconos sueltos; borrar dice qué pasa con lo que depende de eso.
+- Aliados es pestaña solo con el módulo encendido: `comercio/layout.tsx` lo consulta y las pestañas `oculta` con `mostrarCon` salen con `PestanasOpcionales`.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

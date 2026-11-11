@@ -1,183 +1,139 @@
-import { Percent } from "lucide-react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 import {
-  PromotionDialog,
-  PromotionToggle,
+  EditorDePromocion,
+  InterruptorDePromocion,
   type Option,
   type Promotion,
-} from "@/app/(app)/comercio/promociones/_components/promotion-dialog";
+} from "@/app/(app)/comercio/promociones/_components/editor-de-promocion";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Aliado, ModulosComercio } from "@/lib/aliados";
 import { apiFetch } from "@/lib/api/server";
-import { formatDateTime } from "@/lib/format";
+import { estadoDePromo, promoEnPalabras, type NombresDeVentas } from "@/lib/ventas";
 
 export const metadata = { title: "Promociones" };
 
-const TIPO_LABEL: Record<string, string> = {
-  temporada: "Temporada",
-  volumen: "Volumen",
-  campaña: "Campaña",
-};
+const hrefPromocion = (id?: string) => (id ? `/comercio/promociones?promocion=${encodeURIComponent(id)}` : "/comercio/promociones");
+const nombreDe = (p: Promotion) => String(p.rules.label ?? "").trim() || "Promoción sin nombre";
 
-const SEGMENTO_LABEL: Record<string, string> = {
-  nuevo: "Nuevos",
-  ocasional: "Ocasionales",
-  frecuente: "Frecuentes",
-  fiel: "Fieles",
-  inactivo: "Inactivos",
-};
-
-function beneficio(rules: Record<string, unknown>): string {
-  const tiers = rules.tiers;
-  if (Array.isArray(tiers) && tiers.length > 0) {
-    return tiers
-      .map((t) => {
-        const tier = t as Record<string, unknown>;
-        const rango = tier.max ? `${tier.min}-${tier.max}` : `${tier.min}+`;
-        const premio = tier.discount_pct ? `${tier.discount_pct}%` : `regalo ${tier.free_item_sku}`;
-        return `${rango} → ${premio}`;
-      })
-      .join(" · ");
-  }
-  if (rules.discount_pct !== undefined && rules.discount_pct !== null) {
-    return `${rules.discount_pct}%`;
-  }
-  return "—";
-}
-
-function estadoVigencia(active: boolean, from: string | null, to: string | null) {
-  if (!active) return { label: "Inactiva", tone: "neutral" as const };
-  const ahora = Date.now();
-  if (from && new Date(from).getTime() > ahora) return { label: "Programada", tone: "warning" as const };
-  if (to && new Date(to).getTime() < ahora) return { label: "Vencida", tone: "danger" as const };
-  return { label: "Activa", tone: "success" as const };
-}
-
-export default async function PromotionsPage() {
-  const [res, categoriasRes, productosRes, modulosRes] = await Promise.all([
+/**
+ * Promociones (VEN-11/12): cada una como frase («19 % en Ropa · del 20 al 21 de nov.»), con un solo
+ * estado y su interruptor; tocarla la abre en el editor. Primero las encendidas.
+ */
+export default async function PromotionsPage({ searchParams }: { searchParams: Promise<{ promocion?: string }> }) {
+  const [sp, res, categoriasRes, productosRes, modulosRes] = await Promise.all([
+    searchParams,
     apiFetch<Promotion[]>("/pack/commerce/promotions"),
     apiFetch<Option[]>("/pack/commerce/categories"),
     apiFetch<Option[]>("/pack/commerce/products"),
     apiFetch<ModulosComercio>("/pack/commerce/modulos"),
   ]);
   // HU-CRM-03: `null` = aliados apagados en el negocio.
-  const aliadosRes =
-    modulosRes.ok && modulosRes.data.aliados ? await apiFetch<Aliado[]>("/pack/commerce/allies") : null;
+  const aliadosRes = modulosRes.ok && modulosRes.data.aliados ? await apiFetch<Aliado[]>("/pack/commerce/allies") : null;
   const aliados: Option[] | null = aliadosRes ? (aliadosRes.ok ? aliadosRes.data : []) : null;
+
+  const header = (
+    <PageHeader
+      title="Promociones"
+      description="Descuentos que el asistente ofrece. Si varias aplican a un carrito, usa la de mayor beneficio."
+      actions={
+        <Button asChild variant="accent">
+          <Link href={hrefPromocion("nueva")} scroll={false}>
+            <Plus className="h-4 w-4" aria-hidden /> Nueva promoción
+          </Link>
+        </Button>
+      }
+    />
+  );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las promociones: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        {header}
+        <ErrorDeCarga titulo="No pudimos cargar las promociones" detalle={res.error} />
+      </div>
     );
   }
   const categorias = categoriasRes.ok ? categoriasRes.data : [];
   const productos = productosRes.ok ? productosRes.data : [];
-  const nombreCategoria = new Map(categorias.map((c) => [c.id, c.name]));
-  const nombreProducto = new Map(productos.map((p) => [p.id, p.name]));
-  const nombreAliado = new Map((aliados ?? []).map((a) => [a.id, a.name]));
+  const nombres: NombresDeVentas = {
+    categorias: new Map(categorias.map((c) => [c.id, c.name])),
+    productos: new Map(productos.map((p) => [p.id, p.name])),
+    aliados: new Map((aliados ?? []).map((a) => [a.id, a.name])),
+  };
+  const promos = [...res.data].sort((a, b) => Number(b.active) - Number(a.active) || nombreDe(a).localeCompare(nombreDe(b), "es"));
+  const abierta = sp.promocion === "nueva" ? "nueva" : promos.find((p) => p.id === sp.promocion);
 
   const columns: Column<Promotion>[] = [
     {
-      key: "nombre",
+      key: "promocion",
       header: "Promoción",
       cell: (p) => (
-        <div className="flex flex-col gap-1">
-          <span className="text-headline">{String(p.rules.label ?? "Sin nombre")}</span>
-          <Badge variant="neutral">{TIPO_LABEL[p.type] ?? p.type}</Badge>
-        </div>
-      ),
-    },
-    {
-      key: "beneficio",
-      header: "Beneficio",
-      cell: (p) => <span className="text-body">{beneficio(p.rules)}</span>,
-    },
-    {
-      key: "vigencia",
-      header: "Vigencia",
-      cell: (p) => {
-        const estado = estadoVigencia(p.active, p.valid_from, p.valid_to);
-        return (
-          <div className="flex flex-col gap-1">
-            <Badge variant={estado.tone}>{estado.label}</Badge>
-            <span className="text-xs text-body">
-              {p.valid_from ? formatDateTime(p.valid_from) : "—"} →{" "}
-              {p.valid_to ? formatDateTime(p.valid_to) : "—"}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      key: "alcance",
-      header: "Alcance",
-      cell: (p) => (
-        <div className="flex flex-col gap-1 text-body">
-          <span>
-            {p.product_id
-              ? `Producto: ${nombreProducto.get(p.product_id) ?? "—"}`
-              : p.category_id
-                ? `Categoría: ${nombreCategoria.get(p.category_id) ?? "—"}`
-                : "Toda la tienda"}
-          </span>
-          {p.ally_id && (
-            <span className="text-xs text-text-soft">Aliado: {nombreAliado.get(p.ally_id) ?? "eliminado"}</span>
-          )}
-          {p.eligible_segments && p.eligible_segments.length > 0 && (
-            <span className="text-xs text-text-soft">
-              {p.eligible_segments.map((s) => SEGMENTO_LABEL[s] ?? s).join(", ")}
-            </span>
-          )}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="font-medium text-headline">{nombreDe(p)}</span>
+          <span className="text-sm text-body">{promoEnPalabras(p, nombres)}</span>
         </div>
       ),
     },
     {
       key: "estado",
-      header: "Interruptor",
-      align: "right",
-      cell: (p) => <PromotionToggle promotionId={p.id} active={p.active} />,
+      header: "Estado",
+      cell: (p) => {
+        const e = estadoDePromo(p);
+        return <Badge variant={e.tono}>{e.label}</Badge>;
+      },
     },
     {
-      key: "acciones",
-      header: "Acciones",
+      key: "encendida",
+      header: <span className="sr-only">Encendida</span>,
       align: "right",
-      cell: (p) => <PromotionDialog promotion={p} categories={categorias} products={productos} allies={aliados} />,
+      className: "relative z-10 w-16",
+      cell: (p) => <InterruptorDePromocion key={`${p.id}-${p.active}`} id={p.id} nombre={nombreDe(p)} activa={p.active} />,
     },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Promociones"
-        description="Descuentos por temporada, volumen o campaña que el agente puede aplicar (elige el mayor beneficio, sin acumular)."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <PromotionDialog
-              categories={categorias}
-              products={productos}
-              allies={aliados}
-              trigger={
-                <Button variant="outline">
-                  <Percent className="h-4 w-4" aria-hidden /> Para un segmento
-                </Button>
-              }
-              aviso="La promoción se limita a la clasificación que elijas y también aplica a los clientes que lleguen después."
-            />
-            <PromotionDialog categories={categorias} products={productos} allies={aliados} />
-          </div>
-        }
-      />
-      <DataTable
+      {header}
+      <TablaResponsiva
+        etiqueta="Promociones"
+        caption="Promociones"
         columns={columns}
-        rows={res.data}
+        rows={promos}
         getRowKey={(p) => p.id}
-        emptyTitle="Sin promociones"
-        emptyDescription="Crea la primera para que el agente ofrezca descuentos."
+        getRowHref={(p) => hrefPromocion(p.id)}
+        getRowLabel={(p) => `Editar ${nombreDe(p)}`}
+        scrollAlAbrir={false}
+        density="comfortable"
+        emptyTitle="Aún no hay promociones"
+        emptyDescription="Crea una para que el asistente ofrezca descuentos: por fechas, por cantidad o de bienvenida."
+        filaCelular={(p) => ({
+          titulo: nombreDe(p),
+          detalle: `${estadoDePromo(p).label} · ${promoEnPalabras(p, nombres)}`,
+          href: hrefPromocion(p.id),
+          accion: <InterruptorDePromocion key={`${p.id}-${p.active}`} id={p.id} nombre={nombreDe(p)} activa={p.active} />,
+        })}
       />
+      {promos.length > 1 && (
+        <p className="text-xs text-text-soft">Las promociones no se suman: el cliente recibe la de mayor beneficio para su carrito.</p>
+      )}
+
+      {abierta && (
+        <EditorDePromocion
+          key={abierta === "nueva" ? "nueva" : abierta.id}
+          promocion={abierta === "nueva" ? undefined : abierta}
+          categorias={categorias}
+          productos={productos}
+          aliados={aliados}
+          nombres={nombres}
+          alCerrar={hrefPromocion()}
+        />
+      )}
     </div>
   );
 }
