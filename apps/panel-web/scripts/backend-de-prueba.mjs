@@ -651,26 +651,42 @@ if (process.env.CONSUMO === "1") {
   respuestas["/admin/costs/meta/credits"] = { connections: [{ id: "c-meta-1", label: "WhatsApp Café Aurora", channel: "whatsapp", business_id: "55" }] };
 }
 
-// SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol.
+// SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol. Fechas relativas a
+// ahora; `/access/devices?estado=` y `/access/events?severidad=` filtran (handler `seguridad`).
+let seguridad = null;
 {
-  const cuenta = (id, email, nombre) => ({ id, email, nombre, rol: id === "test-admin-1" ? "owner" : "colaborador" });
-  const equipo = (id, c, estado, extra = {}) => ({ id, cuenta: c, device_id_corto: "a1b2c3", device_label: "Samsung A15", plataforma: "android", estado, origen: "autoregistro", rol_al_registrar: "gestor", bloqueo_equipo: false, legacy: false, ultimo_uso_at: "2026-10-30T14:00:00Z", ultima_ip: "190.25.1.10", aprobado_at: null, bloqueado_at: null, motivo: null, created_at: "2026-10-29T09:00:00Z", ...extra });
+  const hace = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+  const cuenta = (id, email, nombre, rol = "colaborador") => ({ id, email, nombre, rol: id === "test-admin-1" ? "owner" : rol });
+  const equipo = (id, c, estado, extra = {}) => ({ id, cuenta: c, device_id_corto: "a1b2c3", device_label: "Samsung A15", plataforma: "android", estado, origen: "autoregistro", rol_al_registrar: "gestor", bloqueo_equipo: false, legacy: false, ultimo_uso_at: hace(3), ultima_ip: "190.25.1.10", aprobado_at: null, bloqueado_at: null, motivo: null, created_at: hace(2), ...extra });
+  const gestor1 = cuenta("g-1", "gestor@test.example", "Gestor Uno");
+  const desconocido = cuenta("g-3", "desconocido@test.example", null);
   respuestas["/access/policy"] = { owner: "abierto", colaborador: "abierto", gestor: "restringido" };
-  respuestas["/access/devices"] = {
-    items: [
-      equipo("d1", cuenta("g-1", "gestor@test.example", "Gestor Uno"), "pendiente"),
-      equipo("d2", cuenta("test-admin-1", "duena@test.example", "Dueña"), "activo", { rol_al_registrar: "owner", origen: "politica_abierta", device_label: "Pixel 8", device_id_corto: "9f8e7d" }),
-      equipo("d3", cuenta("g-3", "desconocido@test.example", null), "bloqueado", { bloqueado_at: "2026-10-30T10:00:00Z", motivo: "Equipo perdido" }),
-    ],
-    next_cursor: null,
-  };
-  respuestas["/access/events"] = {
-    items: [
-      { id: "e1", tipo: "dispositivo_pendiente", severidad: "aviso", canal: "campo", rol: "gestor", cuenta: cuenta("g-1", "gestor@test.example", "Gestor Uno"), device_id_corto: "a1b2c3", ip: "190.25.1.10", detalle: null, occurred_at: "2026-10-30T14:00:00Z" },
-      { id: "e2", tipo: "login_fallido", severidad: "aviso", canal: "panel_apk", rol: null, cuenta: null, device_id_corto: null, ip: "181.1.1.1", detalle: { repeticiones_previas: 3 }, occurred_at: "2026-10-30T13:00:00Z" },
-      { id: "e3", tipo: "dispositivo_bloqueado_usado", severidad: "critico", canal: "campo", rol: "gestor", cuenta: cuenta("g-3", "desconocido@test.example", null), device_id_corto: "a1b2c3", ip: "190.25.1.11", detalle: null, occurred_at: "2026-10-30T12:00:00Z" },
-    ],
-    next_cursor: null,
+  const equipos = [
+    equipo("d1", gestor1, "pendiente", { ultimo_uso_at: null }),
+    equipo("d4", cuenta("g-4", "marta@test.example", "Marta Gestora"), "pendiente", { device_label: "iPhone 13", plataforma: "ios", device_id_corto: "77aa01", ultimo_uso_at: null, created_at: hace(26) }),
+    equipo("d2", cuenta("test-admin-1", "duena@test.example", "Dueña"), "activo", { rol_al_registrar: "owner", origen: "politica_abierta", device_label: "Pixel 8", device_id_corto: "9f8e7d", ultimo_uso_at: hace(0.2) }),
+    equipo("d5", cuenta("g-5", "pedro@test.example", "Pedro Gestor"), "activo", { device_label: "Moto G54", device_id_corto: "5c5c12", ultimo_uso_at: hace(3), aprobado_at: hace(400) }),
+    equipo("d6", cuenta("c-6", "ana@test.example", "Ana Colaboradora"), "activo", { rol_al_registrar: "colaborador", device_label: "iPhone 12", plataforma: "ios", device_id_corto: "12ab34", ultimo_uso_at: hace(22) }),
+    equipo("d3", desconocido, "bloqueado", { bloqueado_at: hace(300), motivo: "Equipo perdido", ultimo_uso_at: hace(1) }),
+  ];
+  const eventos = [
+    { id: "e3", tipo: "dispositivo_bloqueado_usado", severidad: "critico", canal: "campo", rol: "gestor", cuenta: desconocido, device_id_corto: "a1b2c3", ip: "190.25.1.11", detalle: null, occurred_at: hace(1) },
+    { id: "e1", tipo: "dispositivo_pendiente", severidad: "aviso", canal: "campo", rol: "gestor", cuenta: gestor1, device_id_corto: "a1b2c3", ip: "190.25.1.10", detalle: null, occurred_at: hace(2) },
+    { id: "e2", tipo: "login_fallido", severidad: "aviso", canal: "panel_apk", rol: null, cuenta: null, device_id_corto: null, ip: "181.1.1.1", detalle: { repeticiones_previas: 2 }, occurred_at: hace(3) },
+    { id: "e4", tipo: "dispositivo_pendiente", severidad: "aviso", canal: "campo", rol: "gestor", cuenta: cuenta("g-4", "marta@test.example", "Marta Gestora"), device_id_corto: "77aa01", ip: "190.25.1.12", detalle: null, occurred_at: hace(26) },
+    { id: "e5", tipo: "politica_cambiada", severidad: "info", canal: "panel_apk", rol: "owner", cuenta: cuenta("test-admin-1", "duena@test.example", "Dueña"), device_id_corto: null, ip: null, detalle: null, occurred_at: hace(30) },
+    { id: "e6", tipo: "dispositivo_nuevo", severidad: "info", canal: "panel_apk", rol: "colaborador", cuenta: cuenta("c-6", "ana@test.example", "Ana Colaboradora"), device_id_corto: "12ab34", ip: "190.25.1.13", detalle: null, occurred_at: hace(80) },
+  ];
+  seguridad = (ruta, url) => {
+    if (ruta === "/access/devices") {
+      const estado = url.searchParams.get("estado");
+      return { items: equipos.filter((d) => !estado || d.estado === estado), next_cursor: null };
+    }
+    if (ruta === "/access/events") {
+      const severidad = url.searchParams.get("severidad");
+      return { items: eventos.filter((e) => !severidad || e.severidad === severidad), next_cursor: null };
+    }
+    return null;
   };
 }
 
@@ -1591,6 +1607,10 @@ createServer(async (req, res) => {
       res.end(JSON.stringify(r[1]));
       return;
     }
+  }
+  if (req.method === "GET" && (ruta === "/access/devices" || ruta === "/access/events")) {
+    res.end(JSON.stringify(seguridad(ruta, url)));
+    return;
   }
   if (suscripciones && ruta.startsWith("/pack/pack_subscriptions/")) {
     const r = suscripciones(req.method ?? "GET", ruta, url);
