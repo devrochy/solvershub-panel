@@ -1,22 +1,23 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, CheckCircle2, RotateCcw, Trash2 } from "lucide-react";
+import { Ban, Trash2 } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
-import { IconAction } from "@/components/ui/icon-action";
-import { Select } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ETIQUETA_DE_ACCION,
   RUTA_DE_ACCION,
   cuerpoDeAccion,
+  equipoEnPalabras,
   mensajeDeAccionRechazada,
-  nombreDelEquipo,
+  quienEs,
   type AccionDispositivo,
   type DispositivoAcceso,
 } from "@/lib/seguridad";
@@ -29,26 +30,21 @@ const EXITO: Record<AccionDispositivo, string> = {
   dar_de_baja: "Equipo dado de baja.",
 };
 
-const ICONO: Record<AccionDispositivo, ReactNode> = {
-  aprobar: <CheckCircle2 className="h-4 w-4" aria-hidden />,
-  reactivar: <RotateCcw className="h-4 w-4" aria-hidden />,
-  bloquear: <Ban className="h-4 w-4" aria-hidden />,
-  dar_de_baja: <Trash2 className="h-4 w-4" aria-hidden />,
-};
-
-const TONO = { aprobar: "aprobar", reactivar: "aprobar", bloquear: "eliminar", dar_de_baja: "eliminar" } as const;
-
 /**
- * Acciones de una fila de dispositivos. Solo recibe las que la API aceptaría para quien mira
- * (`accionesDeDispositivo`); cada una manda el estado que se veía y, si el equipo cambió
+ * Acciones de un equipo (SEG-01, SEG-03). Solo recibe las que la API aceptaría para quien mira
+ * (`accionesDeDispositivo`). La del estado va con texto («Aprobar», «Reactivar»); bloquear y dar de
+ * baja, en «Más acciones». En «Necesita atención» (`atencion`) un equipo pendiente ofrece
+ * «Rechazar» y «Aprobar» a la vista. Cada acción manda el estado que se veía: si el equipo cambió
  * mientras tanto (409), se refresca y se explica.
  */
 export function AccionesDeDispositivo({
   dispositivo,
   acciones,
+  atencion = false,
 }: {
   dispositivo: DispositivoAcceso;
   acciones: AccionDispositivo[];
+  atencion?: boolean;
 }) {
   const confirm = useConfirm();
   const router = useRouter();
@@ -56,7 +52,8 @@ export function AccionesDeDispositivo({
   const [bloqueando, setBloqueando] = useState(false);
   const [alcance, setAlcance] = useState<"cuenta" | "equipo">("cuenta");
   const [motivo, setMotivo] = useState("");
-  const nombre = `${nombreDelEquipo(dispositivo)} de ${dispositivo.cuenta?.email ?? "la cuenta"}`;
+  const quien = quienEs(dispositivo.cuenta);
+  const nombre = `el ${equipoEnPalabras(dispositivo)} de ${quien}`;
 
   async function enviar(accion: AccionDispositivo, extra: { motivo?: string; alcance?: "cuenta" | "equipo" } = {}) {
     const res = await fetch(`/api/access/devices/${dispositivo.id}/${RUTA_DE_ACCION[accion]}`, {
@@ -81,11 +78,12 @@ export function AccionesDeDispositivo({
       return;
     }
     if (accion === "dar_de_baja") {
+      const pendiente = dispositivo.estado === "pendiente";
       const ok = await confirm({
-        title: `Dar de baja: ${nombre}`,
+        title: pendiente ? `¿Rechazar ${nombre}?` : `¿Dar de baja ${nombre}?`,
         description:
-          "El equipo sale de la lista. Si la política del rol es «Restringido», para volver a entrar tendrá que registrarse otra vez y quedar pendiente de aprobación.",
-        confirmLabel: "Dar de baja",
+          "El equipo sale de la lista. Si su rol necesita aprobación, para volver a entrar tendrá que pedirla otra vez.",
+        confirmLabel: pendiente ? "Rechazar" : "Dar de baja",
         destructive: true,
       });
       if (!ok) return;
@@ -102,38 +100,63 @@ export function AccionesDeDispositivo({
     }
   }
 
-  if (acciones.length === 0) return <span className="text-sm text-text-soft">—</span>;
+  if (acciones.length === 0) return null;
+  const principal = acciones.find((a) => a === "aprobar" || a === "reactivar");
+  const enMenu = acciones.filter((a) => a === "bloquear" || (a === "dar_de_baja" && !(atencion && dispositivo.estado === "pendiente")));
 
   return (
-    <div className="flex items-center justify-end gap-1">
-      {acciones.map((accion) => (
-        <IconAction
-          key={accion}
-          tone={TONO[accion]}
-          label={`${ETIQUETA_DE_ACCION[accion]}: ${nombre}`}
-          onClick={() => void pedir(accion)}
+    <div className="flex items-center justify-end gap-2">
+      {atencion && dispositivo.estado === "pendiente" && acciones.includes("dar_de_baja") && (
+        <Button type="button" variant="outline" size="sm" onClick={() => void pedir("dar_de_baja")} disabled={pending} aria-label={`Rechazar ${nombre}`}>
+          Rechazar
+        </Button>
+      )}
+      {principal && (
+        <Button
+          type="button"
+          variant={atencion ? "accent" : "outline"}
+          size="sm"
+          onClick={() => void pedir(principal)}
           disabled={pending}
+          aria-label={`${principal === "aprobar" ? "Aprobar" : "Reactivar"} ${nombre}`}
         >
-          {ICONO[accion]}
-        </IconAction>
-      ))}
+          {principal === "aprobar" ? "Aprobar" : "Reactivar"}
+        </Button>
+      )}
+      {enMenu.length > 0 && (
+        <MenuDeFila etiqueta={`Más acciones de ${nombre}`}>
+          {enMenu.includes("bloquear") && (
+            <DropdownMenuItem icon={<Ban aria-hidden />} onSelect={() => void pedir("bloquear")} disabled={pending}>
+              Bloquear
+            </DropdownMenuItem>
+          )}
+          {enMenu.includes("dar_de_baja") && (
+            <DropdownMenuItem tone="danger" icon={<Trash2 aria-hidden />} onSelect={() => void pedir("dar_de_baja")} disabled={pending}>
+              {dispositivo.estado === "pendiente" ? "Rechazar" : "Dar de baja"}
+            </DropdownMenuItem>
+          )}
+        </MenuDeFila>
+      )}
       <Dialog open={bloqueando} onOpenChange={setBloqueando}>
-        <DialogContent title="Bloquear equipo" description={nombre} className="max-w-md">
-          <div className="flex flex-col gap-3">
-            <Field
-              label="¿Qué se bloquea?"
-              htmlFor={`alcance-${dispositivo.id}`}
-              help="Si el equipo lo usan varias cuentas, bloquea el equipo para cerrarlo a todas."
-            >
-              <Select
-                id={`alcance-${dispositivo.id}`}
+        <DialogContent title="Bloquear equipo" description={`${equipoEnPalabras(dispositivo)} de ${quien}`} className="max-w-md">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-headline">¿Qué se bloquea?</span>
+              <SegmentedControl
+                label="Qué se bloquea"
                 value={alcance}
-                onChange={(e) => setAlcance(e.target.value === "equipo" ? "equipo" : "cuenta")}
-              >
-                <option value="cuenta">Solo esta cuenta en este equipo</option>
-                <option value="equipo">El equipo para todas las cuentas</option>
-              </Select>
-            </Field>
+                onChange={(v) => setAlcance(v === "equipo" ? "equipo" : "cuenta")}
+                options={[
+                  { value: "cuenta", label: "Solo esta cuenta" },
+                  { value: "equipo", label: "El equipo entero" },
+                ]}
+              />
+              <span className="text-sm text-text-soft">
+                {alcance === "cuenta"
+                  ? `${quien} no podrá entrar desde este equipo.`
+                  : "Nadie podrá entrar desde este equipo, con ninguna cuenta. Úsalo si se perdió o lo comparten."}
+              </span>
+            </div>
             <Field label="Motivo (opcional)" htmlFor={`motivo-${dispositivo.id}`}>
               <Textarea
                 id={`motivo-${dispositivo.id}`}
@@ -146,11 +169,11 @@ export function AccionesDeDispositivo({
             </Field>
             <div className="flex justify-end gap-2">
               <DialogClose asChild>
-                <Button type="button" variant="ghost" size="sm">
+                <Button type="button" variant="outline">
                   Cancelar
                 </Button>
               </DialogClose>
-              <Button type="button" variant="danger" size="sm" onClick={() => void bloquear()} disabled={pending}>
+              <Button type="button" variant="danger" onClick={() => void bloquear()} disabled={pending}>
                 Bloquear
               </Button>
             </div>

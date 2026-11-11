@@ -218,10 +218,11 @@ export const NAV_GROUPS: NavGroupDef[] = [
       // (IA y WhatsApp) son del equipo de SolversHub: van en Plataforma.
       { section: "plan", label: "Consumo y plan", href: "/plan", icon: CreditCard, ready: true },
       { section: "collaborators", label: "Equipo", href: "/colaboradores", icon: UserCog, ready: true },
-      // Seguridad es del negocio, no de un pack (ADR-0174, HU-ACC-04): dispositivos y alertas de acceso.
+      // Seguridad es del negocio, no de un pack (ADR-0174, HU-ACC-04). Rediseño B (SEG): una sola página con
+      // los equipos y la actividad; el historial de alertas no es pestaña. Quien solo ve alertas entra al historial.
       entrada("Seguridad", LockKeyhole, [
-        { section: "devices", label: "Dispositivos", href: "/seguridad/dispositivos", icon: Smartphone, ready: true },
-        { section: "access_alerts", label: "Alertas de acceso", href: "/seguridad/alertas", icon: BellRing, ready: true },
+        { section: "devices", label: "Seguridad", href: "/seguridad", icon: Smartphone, ready: true },
+        { section: "access_alerts", label: "Historial de accesos", href: "/seguridad/alertas", icon: BellRing, ready: true, oculta: true },
       ]),
       // Rediseño B (CFG-11): Habilidades y Mensajes fallidos son filas del resumen de Configuración, no
       // pestañas; siguen como rutas del menú para sus permisos, migas y la paleta.

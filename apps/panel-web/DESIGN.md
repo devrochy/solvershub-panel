@@ -303,6 +303,14 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Los cobros dicen el mes en palabras («octubre de 2026»), cuándo vencen o cómo se pagaron («Pagó con Wompi»), y sus acciones van en el menú de la fila (`AccionesDeCobro`; el diálogo vive fuera del menú). Un aviso que no salió va arriba con «Cómo arreglarlo»; avisos y cambios se juntan en «Historial», plegado.
 - En Planes la fila abre el editor (`?plan=`); dejar de ofrecer y eliminar van en «Más acciones». El código de un plan nuevo sale del nombre y vive en «Avanzado»; el de uno que existe no cambia al renombrarlo.
 
+## Seguridad (SPEC-29)
+
+- Una sola página (`/seguridad`, rediseño B): una frase («3 equipos entran a la app. 3 cosas necesitan tu atención.»), «Necesita atención» con los equipos que esperan aprobación («Rechazar», «Aprobar») y las alertas críticas de la semana («Ver el equipo» lleva a su fila), los equipos y la actividad reciente lado a lado, y la política de equipos nuevos en una línea al final.
+- La política se cambia en un panel lateral, con un control segmentado por rol (Sin aprobación · Con aprobación) y el aviso de lo que no frena. Pedir aprobación al dueño pide confirmación.
+- Cada equipo en palabras (`lineaDelEquipo`: «Pixel 8 · Android · usado hace 12 min»), sin el identificador a la vista. La acción del estado lleva texto («Aprobar», «Reactivar»); bloquear y dar de baja van en «Más acciones». Bloquear elige el alcance con un control segmentado.
+- Cada alerta es una frase (`fraseDeEvento`) con su segunda línea (canal, IP, hace cuánto). El historial (`/seguridad/alertas`, no es pestaña) agrupa por día y filtra con Todas · Necesitan atención · Avisos · Informativas. Quien solo tiene `access_alerts` entra directo al historial; `/seguridad/dispositivos` redirige a `/seguridad`.
+- En el celular cada fila pone el texto arriba y los botones debajo.
+
 ## Pruebas (SPEC-30)
 
 - Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.

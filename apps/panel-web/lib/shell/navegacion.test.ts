@@ -48,8 +48,9 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/agentes/calidad", "agents", false],
   // HU-CRM-12: lista de clientes de Ventas y de Agenda; exigen la sección `leads`, como Clientes.
   ["/comercio/clientes", "leads", false], ["/calendario/clientes", "leads", false],
-  // HU-ACC-04 (ADR-0174): Dispositivos y Alertas de acceso salen de Cobranza y son del negocio.
-  ["/seguridad/dispositivos", "devices", false], ["/seguridad/alertas", "access_alerts", false],
+  // HU-ACC-04 (ADR-0174): Dispositivos y Alertas de acceso salen de Cobranza y son del negocio. Rediseño B (SEG):
+  // una sola página `/seguridad` con los equipos; el historial de alertas queda en su ruta, con su propia clave.
+  ["/seguridad", "devices", false], ["/seguridad/alertas", "access_alerts", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {
@@ -90,7 +91,7 @@ describe("menú v2 (HU-UX-02)", () => {
     const soloAlertas = gruposVisibles({ access_alerts: "read" });
     expect(etiquetas(soloAlertas)).toEqual(["Seguridad"]);
     expect(soloAlertas[0].visible[0].href).toBe("/seguridad/alertas");
-    expect(soloAlertas[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Alertas de acceso"]);
+    expect(soloAlertas[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Historial de accesos"]);
   });
 
   it("los costos técnicos son de Plataforma y solo los ve el master (rediseño B de Consumo y plan)", () => {
@@ -220,11 +221,13 @@ describe("navegación del shell (HU-DS-04)", () => {
     const sesion = (permisos: Record<string, string>) => ({ permisos, esMaster: false, negocioId: "t" });
     const soloAlertas = gruposVisibles({ access_alerts: "read" });
     expect(puedeVerRuta("/seguridad/alertas", sesion({ access_alerts: "read" }))).toBe(true);
-    expect(puedeVerRuta("/seguridad/dispositivos", sesion({ access_alerts: "read" }))).toBe(false);
+    expect(puedeVerRuta("/seguridad", sesion({ access_alerts: "read" }))).toBe(false);
     expect(etiquetas(soloAlertas)).toContain("Seguridad");
     // Con una sola pestaña permitida, la entrada lleva directo a ella.
     expect(pestanasPara("/seguridad/alertas", soloAlertas).pestanas).toEqual([]);
-    expect(pestanasPara("/seguridad/dispositivos", grupos).pestanas.map((p) => p.label)).toEqual(["Dispositivos", "Alertas de acceso"]);
+    // Rediseño B: una sola página, sin pestañas; el historial no es pestaña.
+    expect(pestanasPara("/seguridad", grupos).pestanas).toEqual([]);
+    expect(pestanasPara("/seguridad/alertas", grupos).pestanas).toEqual([]);
     // Las rutas viejas de Cobranza solo redirigen: pasan aunque la sesión no tenga Cobranza.
     expect(puedeVerRuta("/cobranza/dispositivos", sesion({ devices: "read" }))).toBe(true);
     expect(puedeVerRuta("/cobranza/alertas", sesion({}))).toBe(true);
@@ -232,7 +235,7 @@ describe("navegación del shell (HU-DS-04)", () => {
     // Costos pasó a Plataforma: la ruta pasa y su página manda a quien no es master a Consumo y plan.
     expect(puedeVerRuta("/costos", sesion({ costs: "read" }))).toBe(true);
     // Los permisos viejos del pack ya no abren Seguridad: el core copió las concesiones (migración 0104).
-    expect(puedeVerRuta("/seguridad/dispositivos", sesion({ "pack_cobranza:dispositivos": "write" }))).toBe(false);
+    expect(puedeVerRuta("/seguridad", sesion({ "pack_cobranza:dispositivos": "write" }))).toBe(false);
   });
 
   it("las pestañas respetan los permisos", () => {

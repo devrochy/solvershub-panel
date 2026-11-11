@@ -104,6 +104,15 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     what: "Tu plan, los créditos que te quedan y lo que has usado en el período.",
     first: ["Mira tu saldo.", "Sube de plan o recarga si te estás quedando corto."],
   },
+  seguridad: {
+    question: "¿Qué es Seguridad?",
+    what: "Desde qué equipos entra cada persona del negocio a la app, y lo que pasó con esos accesos: equipos nuevos, intentos fallidos y equipos bloqueados.",
+    first: [
+      "Aprueba o rechaza los equipos que esperan: mientras tanto esa persona no entra a la app.",
+      "Bloquea un equipo perdido o compartido; puedes bloquearlo solo para una cuenta o para todas.",
+      "La política de equipos nuevos frena la app, no el panel web.",
+    ],
+  },
   subscriptions: {
     question: "¿Qué son las Suscripciones?",
     what: "Los clientes que pagan un plan cada periodo: a quién le cobras, cuánto debe cada uno y qué pagos están pendientes.",
