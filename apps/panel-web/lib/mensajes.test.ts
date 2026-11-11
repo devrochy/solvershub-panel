@@ -5,6 +5,8 @@ import { catalogoDeMensajes } from "@/lib/testing/fixtures";
 
 import {
   canalesLabel,
+  enPalabras,
+  variableEnPalabras,
   contarPorTipo,
   detalleDeEstado,
   enlaceAlEditor,
@@ -59,7 +61,7 @@ describe("estado legible", () => {
 
   it("el detalle depende del tipo", () => {
     expect(detalleDeEstado(meta)).toBe("Categoría utility");
-    expect(detalleDeEstado(evento)).toBe("Plantilla: cobro_nuevo");
+    expect(detalleDeEstado(evento)).toBe("Plantilla: Cobro nuevo");
     expect(detalleDeEstado(opciones)).toBe("En Meta: aprobada");
     expect(detalleDeEstado(pack)).toBe("Agenda");
     expect(detalleDeEstado({ tipo: "meta", estado_detalle: null })).toBeNull();
@@ -74,6 +76,14 @@ describe("nombres, canales y filtros", () => {
 
   it("el correo se nombra como correo", () => {
     expect(canalesLabel(["email"])).toBe("Correo");
+    expect(enPalabras("subscription.charge_created")).toBe("Cargo de suscripción generado");
+    expect(enPalabras("cobro_nuevo")).toBe("Cobro nuevo");
+    expect(variableEnPalabras("cliente.nombre")).toBe("nombre del cliente");
+    expect(variableEnPalabras("cargo.monto")).toBe("monto del cobro");
+    expect(enPalabras("Confirmar cita")).toBe("Confirmar cita");
+    expect(variableEnPalabras("{{1}}")).toBe("dato 1");
+    expect(variableEnPalabras("{{nombre}}")).toBe("nombre del cliente");
+    expect(variableEnPalabras("fecha_cita")).toBe("fecha cita");
     expect(canalesLabel(["whatsapp"])).toBe("WhatsApp");
     expect(canalesLabel([])).toBe("—");
   });

@@ -1,60 +1,55 @@
-import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Select } from "@/components/ui/select";
-import { PERIODOS, type Pestana } from "@/lib/agentes";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLinkItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { PERIODOS } from "@/lib/agentes";
 
 /**
- * Filtros de la vista de un agente (período y conexión). Form GET: conserva la pestaña.
- * Los `Select` no controlados llevan `key` con su valor: al navegar en el cliente (Limpiar,
- * una pestaña) React reutiliza el nodo y `defaultValue` no se vuelve a aplicar (HU-UX-12).
+ * Período y conexión de una vista de agentes (AGT-05): se aplican al tocarlos, sin «Filtrar». El
+ * período es un control segmentado y la conexión, con más de una, un menú. Todo viaja en la URL.
  */
 export function AgentFilters({
-  baseHref,
-  tab,
   dias,
+  hrefDias,
   conexion,
   connections,
+  hrefConexion,
 }: {
-  baseHref: string;
-  tab: Pestana;
   dias: number;
+  hrefDias: (dias: number) => string;
   conexion: string | null;
   connections: { id: string; label: string }[];
+  hrefConexion: (id: string | null) => string;
 }) {
+  const actual = connections.find((c) => c.id === conexion);
   return (
-    <form method="get" action={baseHref} className="flex flex-wrap items-end gap-3">
-      {tab !== "conversaciones" && <input type="hidden" name="tab" value={tab} />}
-      <Field label="Período" htmlFor="dias" className="w-44">
-        <Select key={dias} id="dias" name="dias" defaultValue={String(dias)}>
-          {PERIODOS.map((p) => (
-            <option key={p.dias} value={p.dias}>
-              {p.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+    <div className="flex flex-wrap items-center gap-2">
       {connections.length > 1 && (
-        <Field label="Conexión" htmlFor="conexion" className="w-56">
-          <Select key={conexion ?? ""} id="conexion" name="conexion" defaultValue={conexion ?? ""}>
-            <option value="">Todas</option>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm" aria-label={`Conexión: ${actual?.label ?? "todas"}`}>
+              {actual?.label ?? "Todas las conexiones"}
+              <ChevronDown className="size-4" aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLinkItem href={hrefConexion(null)} current={!actual}>
+              Todas las conexiones
+            </DropdownMenuLinkItem>
             {connections.map((c) => (
-              <option key={c.id} value={c.id}>
+              <DropdownMenuLinkItem key={c.id} href={hrefConexion(c.id)} current={c.id === actual?.id}>
                 {c.label}
-              </option>
+              </DropdownMenuLinkItem>
             ))}
-          </Select>
-        </Field>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
-      {(conexion || dias !== 30) && (
-        <Link href={tab === "conversaciones" ? baseHref : `${baseHref}?tab=${tab}`} className="pb-2.5 text-sm text-link hover:underline">
-          Limpiar
-        </Link>
-      )}
-    </form>
+      <SegmentedControl
+        label="Período"
+        value={String(dias)}
+        options={PERIODOS.map((p) => ({ value: String(p.dias), label: p.label, href: hrefDias(p.dias) }))}
+      />
+    </div>
   );
 }

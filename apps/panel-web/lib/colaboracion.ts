@@ -8,20 +8,23 @@ import type { Link, RoutePreview } from "@/lib/api/types";
 export type Modo = "handoff" | "delegate" | "query";
 
 /** En el orden en que se muestran. */
-export const MODOS: { modo: Modo; etiqueta: string; ayuda: string }[] = [
+export const MODOS: { modo: Modo; etiqueta: string; ayuda: string; frase: string }[] = [
   {
     modo: "handoff",
     etiqueta: "Pasar la conversación",
+    frase: "pasarle la conversación a",
     ayuda: "Le entrega el cliente con todo lo que ya dio; desde el siguiente mensaje lo atiende el otro.",
   },
   {
     modo: "delegate",
     etiqueta: "Encargar",
+    frase: "encargarle un recorrido a",
     ayuda: "Le pide que haga un recorrido de su área con los datos del cliente, sin pasarle la conversación.",
   },
   {
     modo: "query",
     etiqueta: "Consultar",
+    frase: "consultarle a",
     ayuda: "Le pregunta un dato de su área (por ejemplo, un estado) y sigue atendiendo.",
   },
 ];
@@ -192,4 +195,9 @@ export function explicarPrueba(p: RoutePreview, nombresPorKey: Record<string, st
     );
   }
   return { agente, porque, avisos };
+}
+
+/** Un permiso en una frase (AGT-13): «Agenda puede consultarle a Ventas». */
+export function fraseDePermiso(desde: string, hacia: string, frase: string, activo = true): string {
+  return `${desde} ${activo ? "puede" : "no puede"} ${frase} ${hacia}`;
 }

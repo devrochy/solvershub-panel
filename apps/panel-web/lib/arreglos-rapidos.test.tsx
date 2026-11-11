@@ -113,14 +113,14 @@ describe("listas que paginan en el servidor", () => {
 });
 
 describe("filtros de un agente", () => {
-  it("el período sigue al valor de la URL al navegar en el cliente", () => {
-    const props = { baseHref: "/agentes/general", tab: "conversaciones" as const, conexion: null, connections: [] };
+  it("el período es un control segmentado que navega: sigue al valor de la URL", () => {
+    const props = { conexion: null, connections: [], hrefDias: (d: number) => `/agentes/general?dias=${d}`, hrefConexion: () => "/agentes/general" };
     const { rerender } = render(<AgentFilters {...props} dias={7} />);
-    const periodo = () => screen.getByRole("combobox", { name: "Período" }) as HTMLSelectElement;
-    expect(periodo().value).toBe("7");
-    // «Limpiar» vuelve a 30 días sin recargar: el Select se rehace con el valor nuevo.
+    const actual = () => within(screen.getByRole("navigation", { name: "Período" })).getByRole("link", { current: "page" });
+    expect(actual().textContent).toBe("7 días");
     rerender(<AgentFilters {...props} dias={30} />);
-    expect(periodo().value).toBe("30");
+    expect(actual().textContent).toBe("30 días");
+    expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
   });
 });
 

@@ -34,8 +34,12 @@ describe("pantalla Mensajes (solo lectura)", () => {
     expect(apiFetch).toHaveBeenCalledWith("/mensajes/catalogo");
     expect(screen.getByRole("heading", { level: 1, name: "Mensajes" })).toBeTruthy();
     const href = (nombre: RegExp) => screen.getByRole("link", { name: nombre }).getAttribute("href");
-    expect(href(/^cobro_nuevo$/)).toBe("/conexiones/meta/c1/plantillas");
-    expect(href(/^subscription\.charge_created$/)).toBe("/plantillas/eventos");
+    // AGT-15: claves en palabras.
+    expect(href(/^Cobro nuevo$/)).toBe("/conexiones/meta/c1/plantillas");
+    expect(href(/^Cargo de suscripción generado$/)).toBe("/plantillas/eventos");
+    expect(screen.queryByText("subscription.charge_created")).toBeNull();
+    expect(screen.getAllByText("nombre del cliente").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("tab", { name: /\(0\)/ })).toBeNull();
     expect(href(/^Confirmar cita$/)).toBe("/plantillas-opciones/confirmar_cita");
     expect(href(/correo de confirmación/)).toBe("/habilidades/pack_calendar");
   });
@@ -51,8 +55,8 @@ describe("pantalla Mensajes (solo lectura)", () => {
     await pintar();
     fireEvent.click(screen.getByRole("tab", { name: /Aviso por evento/ }));
     const tabla = screen.getByRole("table");
-    expect(within(tabla).getByText("subscription.charge_created")).toBeTruthy();
-    expect(within(tabla).queryByText("cobro_nuevo")).toBeNull();
+    expect(within(tabla).getByText("Cargo de suscripción generado")).toBeTruthy();
+    expect(within(tabla).queryByText("Cobro nuevo")).toBeNull();
   });
 
   it("avisa qué tipos no se muestran y por qué", async () => {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { PlantillasEnTarjetas } from "@/app/(app)/agentes/nuevo/_components/plantillas-en-tarjetas";
 import { RadioGroup } from "@/components/ui/radio-group";
 import {
   ESTADO_INICIAL,
@@ -24,7 +25,6 @@ import {
   type EstadoDelAsistente,
 } from "@/lib/agente-asistente";
 import type { AgentTemplate } from "@/lib/api/types";
-import { habilidadLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
 const CLAVE_LOCAL = "asistente-de-agente";
@@ -155,32 +155,14 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
   function contenidoDelPaso() {
     if (paso.id === "tipo") {
       return (
-        <div className="flex flex-col gap-3">
-          <RadioGroup
-            label="Qué quieres que haga tu agente"
-            name="tipo-de-agente"
-            value={estado.plantilla ?? undefined}
-            onValueChange={(key) => {
-              const elegida = plantillas.find((p) => p.key === key);
-              if (elegida) elegir(elegida);
-            }}
-            options={plantillas.map((p) => ({
-              value: p.key,
-              label: p.available ? p.name : `${p.name} (no disponible)`,
-              description: !p.available
-                ? "No está disponible en tu servicio por ahora."
-                : p.will_enable.length > 0
-                  ? `${p.description} Al crearlo activaremos: ${p.will_enable.map(habilidadLabel).join(", ")}.`
-                  : p.description,
-            }))}
-          />
-          {plantilla?.superpowers.length ? (
-            <p className="text-sm text-body">
-              Superpoderes de este agente:{" "}
-              <span className="text-headline">{plantilla.superpowers.map((s) => s.title).join(", ")}</span>
-            </p>
-          ) : null}
-        </div>
+        <PlantillasEnTarjetas
+          plantillas={plantillas}
+          value={estado.plantilla ?? undefined}
+          onValueChange={(key) => {
+            const elegida = plantillas.find((p) => p.key === key);
+            if (elegida) elegir(elegida);
+          }}
+        />
       );
     }
     if ("pregunta" in paso) {

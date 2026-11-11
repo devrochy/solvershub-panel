@@ -28,7 +28,7 @@ describe("hrefDeDestino (ADR-0171)", () => {
       "/agentes/general?tab=consumo",
     );
     expect(hrefDeDestino({ ruta: "agente", params: { ref: "abc-123", pestana: "tareas" } })).toBe(
-      "/agentes/abc-123?tab=tareas",
+      "/agentes/abc-123?ver=tareas",
     );
     expect(hrefDeDestino({ ruta: "agente", params: { ref: "abc-123", pestana: "conversaciones" } })).toBe(
       "/agentes/abc-123",

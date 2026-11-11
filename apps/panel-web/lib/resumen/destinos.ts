@@ -9,8 +9,8 @@ import type { DestinoResumen } from "@/lib/api/types";
  * la tarjeta se muestra sin enlace en vez de romper.
  */
 
-/** Pestañas de `/agentes/[id]` que el Resumen enlaza (la de conversaciones es la de por defecto). */
-const PESTANAS_DE_AGENTE = new Set(["conversaciones", "tareas", "consumo"]);
+/** Lo que el Resumen enlaza de `/agentes/[id]` (AGT-04): las tareas viven en Actividad, el consumo en su pestaña. */
+const PESTANAS_DE_AGENTE: Record<string, string> = { tareas: "?ver=tareas", consumo: "?tab=consumo" };
 
 function conFiltros(base: string, params: Record<string, string>, permitidos: readonly string[]): string {
   const qs = new URLSearchParams();
@@ -36,9 +36,7 @@ export function hrefDeDestino(destino: DestinoResumen | null | undefined): strin
       const ref = p.ref;
       if (!ref) return undefined;
       const base = `/agentes/${encodeURIComponent(ref)}`;
-      return p.pestana && p.pestana !== "conversaciones" && PESTANAS_DE_AGENTE.has(p.pestana)
-        ? `${base}?tab=${p.pestana}`
-        : base;
+      return `${base}${(p.pestana && PESTANAS_DE_AGENTE[p.pestana]) || ""}`;
     }
     case "comercio.pedidos":
       return conFiltros("/comercio/pedidos", p, ["estado", "pago"]);

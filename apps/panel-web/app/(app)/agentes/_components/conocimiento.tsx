@@ -4,12 +4,14 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, FileText, RotateCw, Trash2 } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
+
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/ui/confirm";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dropzone } from "@/components/ui/dropzone";
-import { IconAction } from "@/components/ui/icon-action";
 import type { KnowledgeDocument } from "@/lib/api/types";
 import {
   archivoAdmitido,
@@ -115,10 +117,10 @@ export function ConocimientoDelAgente({
     const res = await fetch(`${base}/${doc.id}/reprocess`, { method: "POST" });
     if (!res.ok) {
       const json = (await res.json().catch(() => ({}))) as Respuesta;
-      toast.error(json.error ?? "No se pudo volver a procesar.");
+      toast.error(json.error ?? "No se pudo volver a leer.");
       return;
     }
-    toast.success(`«${doc.titulo}» volvió a la cola.`);
+    toast.success(`«${doc.titulo}» se volverá a leer en un momento.`);
     await recargar();
   }
 
@@ -150,7 +152,7 @@ export function ConocimientoDelAgente({
             <Badge variant={estado.tono}>{estado.label}</Badge>
             {motivo && <span className="max-w-xs text-xs text-text-soft">{motivo}</span>}
             {d.desactualizado && (
-              <span className="max-w-xs text-xs text-text-soft">Procesado con una versión anterior: reprocésalo.</span>
+              <span className="max-w-xs text-xs text-text-soft">Se leyó con una versión anterior: vuelve a leerlo.</span>
             )}
           </div>
         );
@@ -162,17 +164,19 @@ export function ConocimientoDelAgente({
           {
             key: "acciones",
             header: <span className="sr-only">Acciones</span>,
-            className: "w-24",
+            className: "w-14",
             cell: (d: KnowledgeDocument) => (
-              <div className="flex justify-end gap-1">
-                {(d.estado === "fallido" || d.desactualizado) && (
-                  <IconAction label={`Volver a procesar «${d.titulo}»`} onClick={() => void reprocesar(d)}>
-                    <RotateCw aria-hidden className="h-4 w-4" />
-                  </IconAction>
-                )}
-                <IconAction tone="eliminar" label={`Borrar «${d.titulo}»`} onClick={() => void borrar(d)}>
-                  <Trash2 aria-hidden className="h-4 w-4" />
-                </IconAction>
+              <div className="flex justify-end">
+                <MenuDeFila etiqueta={`Más acciones de «${d.titulo}»`}>
+                  {(d.estado === "fallido" || d.desactualizado) && (
+                    <DropdownMenuItem icon={<RotateCw aria-hidden className="h-4 w-4" />} onSelect={() => void reprocesar(d)}>
+                      Volver a leerlo
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem tone="danger" icon={<Trash2 aria-hidden className="h-4 w-4" />} onSelect={() => void borrar(d)}>
+                    Borrar documento
+                  </DropdownMenuItem>
+                </MenuDeFila>
               </div>
             ),
           } satisfies Column<KnowledgeDocument>,

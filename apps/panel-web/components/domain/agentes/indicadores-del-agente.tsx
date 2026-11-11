@@ -1,70 +1,71 @@
-import { KpiTile } from "@/components/ui/kpi-tile";
+import { creditos } from "@/lib/consumo";
 import { formatNumber, formatUsd } from "@/lib/format";
 
 /** Un indicador: su valor, o por qué no hay (sin permiso no se muestra; sin datos, se dice). */
 export type Indicador<T> = { valor: T } | { error: string } | null;
 
+function porcentaje(n: number): string {
+  return `${n.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`;
+}
+
 /**
- * Indicadores de la cabecera de la ficha del agente (HU-UX-09), siempre de los últimos 7 días:
- * conversaciones, % resueltas sin pasar a una persona y consumo. Un indicador `null` no se
- * muestra (p. ej. el costo para quien no ve costos: entonces el consumo va en respuestas).
+ * Indicadores de la cabecera de la ficha (HU-UX-09, AGT-03), en una frase: «48 conversaciones esta
+ * semana · 95 % sin pasar a una persona · 3.200 créditos este mes». Un indicador `null` no se muestra
+ * (sin permiso); uno que falla o no tiene muestra se omite de la frase sin tumbar los demás. Los
+ * dólares van solo para el master.
  */
 export function IndicadoresDelAgente({
   conversaciones,
   resueltas,
-  consumo,
+  creditosDelMes,
+  costoUsd = null,
 }: {
   conversaciones: Indicador<number>;
   resueltas: Indicador<{ porcentaje: number | null; turnos: number }>;
-  consumo: Indicador<{ costoUsd: number | null; turnos: number }>;
+  /** Créditos del plan que usó este mes; `null` si el plan no los mide. */
+  creditosDelMes: Indicador<number>;
+  /** Solo para el master: costo de proveedor de los últimos 7 días. */
+  costoUsd?: Indicador<number | null>;
 }) {
-  const tiles = [
-    conversaciones && (
-      <KpiTile
-        size="compact"
-        key="conversaciones"
-        label="Conversaciones · 7 días"
-        {...("error" in conversaciones ? { error: conversaciones.error } : { value: formatNumber(conversaciones.valor) })}
-      />
-    ),
-    resueltas && (
-      <KpiTile
-        size="compact"
-        key="resueltas"
-        label="Resueltas sin una persona · 7 días"
-        {...("error" in resueltas
-          ? { error: resueltas.error }
-          : resueltas.valor.porcentaje === null
-            ? {
-                value: "—",
-                hint:
-                  resueltas.valor.turnos === 0
-                    ? "Aún no hay respuestas en estos 7 días."
-                    : `Muestra pequeña: ${formatNumber(resueltas.valor.turnos)} respuestas.`,
-              }
-            : {
-                value: `${resueltas.valor.porcentaje.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`,
-                hint: `De ${formatNumber(resueltas.valor.turnos)} respuestas.`,
-              })}
-      />
-    ),
-    consumo && (
-      <KpiTile
-        size="compact"
-        key="consumo"
-        label="Consumo · 7 días"
-        {...("error" in consumo
-          ? { error: consumo.error }
-          : consumo.valor.costoUsd === null
-            ? { value: formatNumber(consumo.valor.turnos), hint: "Respuestas del agente." }
-            : { value: formatUsd(consumo.valor.costoUsd, 2), hint: `${formatNumber(consumo.valor.turnos)} respuestas.` })}
-      />
-    ),
-  ].filter(Boolean);
-  if (tiles.length === 0) return null;
+  const partes: React.ReactNode[] = [];
+  if (conversaciones && "valor" in conversaciones) {
+    const n = conversaciones.valor;
+    partes.push(
+      <span key="conversaciones">
+        <b className="font-semibold text-headline">{`${formatNumber(n)} ${n === 1 ? "conversación" : "conversaciones"}`}</b> esta semana
+      </span>,
+    );
+  }
+  if (resueltas && "valor" in resueltas && resueltas.valor.porcentaje !== null) {
+    partes.push(
+      <span key="resueltas">
+        <b className="font-semibold text-headline">{porcentaje(resueltas.valor.porcentaje)}</b> sin pasar a una persona
+      </span>,
+    );
+  }
+  if (creditosDelMes && "valor" in creditosDelMes) {
+    partes.push(
+      <span key="creditos">
+        <b className="font-semibold text-headline">{creditos(creditosDelMes.valor)}</b> este mes
+      </span>,
+    );
+  }
+  if (costoUsd && "valor" in costoUsd && costoUsd.valor !== null) {
+    partes.push(<span key="costo">{`${formatUsd(costoUsd.valor, 2)} de proveedor esta semana`}</span>);
+  }
+  const algunoFallo = [conversaciones, resueltas, creditosDelMes].some((i) => i && "error" in i);
+  if (partes.length === 0) {
+    if (!algunoFallo) return null;
+    return <p className="text-sm text-text-soft">Todavía no hay cifras de esta semana.</p>;
+  }
   return (
-    <section aria-label="Indicadores de los últimos 7 días" className="grid gap-2 sm:grid-cols-3 sm:gap-3">
-      {tiles}
-    </section>
+    <p className="text-sm text-body tabular-nums">
+      {partes.map((parte, i) => (
+        <span key={i}>
+          {i > 0 && <span aria-hidden> · </span>}
+          {parte}
+        </span>
+      ))}
+    </p>
   );
 }

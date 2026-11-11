@@ -6,6 +6,7 @@ import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimie
 import { DatosDePruebaDelAgente } from "@/app/(app)/agentes/_components/datos-de-prueba";
 import { ImportarDatosDelAgente } from "@/app/(app)/agentes/_components/importar-datos";
 import {
+  ClientesDelAgente,
   ConsumoDelAgente,
   ConversacionesDelAgente,
   RegistrosDelAgente,
@@ -17,10 +18,13 @@ import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agente
 import { ProbarAgente } from "@/components/domain/agentes/probar-agente";
 import { SelectorDeAgentes } from "@/components/domain/agentes/selector-de-agentes";
 import { SuperpoderesDelAgente } from "@/components/domain/agentes/superpoderes-del-agente";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { DetailPage } from "@/components/templates/detail-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TabLinks } from "@/components/ui/tab-links";
 import { apiFetch, type ApiResult } from "@/lib/api/server";
 import type {
@@ -37,18 +41,20 @@ import type {
   KnowledgeDocument,
   LlmModelCatalog,
   Me,
+  PlanResponse,
   PluginSummary,
   ReliabilityResponse,
   RequirementPage,
   SuperpowerPage,
 } from "@/lib/api/types";
 import {
+  dondeAtiende,
   estaArchivado,
   filtrosDe,
   hrefDeAgente,
+  papelDelAgente,
   PESTANAS,
   PESTANAS_SIN_FILTROS,
-  pestanaValida,
   puedeArchivar,
   puedeEditarAgentes,
   puedeEscribirConocimiento,
@@ -57,8 +63,10 @@ import {
   tieneConexiones,
   tieneConocimiento,
   tieneSuperpoderes,
-  tipoDeAgente,
+  ubicacionDe,
+  VISTAS_DE_ACTIVIDAD,
   type Pestana,
+  type VistaDeActividad,
 } from "@/lib/agentes";
 import { MIN_FRASES_POR_DEFECTO } from "@/lib/agentes-editor";
 import {
@@ -71,6 +79,7 @@ import {
   nombresDeHabilidades,
   resueltasSinPersona,
 } from "@/lib/agentes-ficha";
+import { creditosPorAgenteId } from "@/lib/consumo";
 import { usaConocimiento } from "@/lib/conocimiento";
 
 export const metadata = { title: "Agente" };
@@ -97,11 +106,17 @@ function indicador<T, R>(res: ApiResult<T> | null, valor: (data: T) => R): Indic
   return res.ok ? { valor: valor(res.data) } : { error: "Sin datos por ahora." };
 }
 
-function ErrorDeCarga({ res }: { res: ApiResult<unknown> }) {
+/** Una parte de la ficha que no cargó: la cabecera y las pestañas siguen en pie (AGT-15). */
+function NoCargo({ que, res }: { que: string; res: ApiResult<unknown> }) {
+  return <ErrorDeCarga titulo={`No pudimos cargar ${que}`} detalle={res.ok ? undefined : res.error} />;
+}
+
+function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <p role="alert" className="text-status-danger-fg">
-      No se pudo cargar esta vista: {res.ok ? "respuesta inesperada" : res.error}
-    </p>
+    <section className="flex flex-col gap-3">
+      <h2 className="font-display text-sh-block text-headline">{titulo}</h2>
+      {children}
+    </section>
   );
 }
 
@@ -115,42 +130,51 @@ export default async function AgentePage({
   const ref = refValido((await params).id);
   if (!ref) notFound();
   const sp = await searchParams;
-  const tab: Pestana = pestanaValida(sp.tab);
+  const ubicacion = ubicacionDe(sp);
   const filtros = filtrosDe(sp);
 
-  const [overviewRes, meRes] = await Promise.all([
+  const [overviewRes, meRes, planRes] = await Promise.all([
     apiFetch<AgentsOverview>("/admin/agents/overview"),
     apiFetch<Me>("/admin/me"),
+    // Créditos del mes de este agente (AGT-03): si no responde, la frase va sin ellos.
+    apiFetch<PlanResponse>("/admin/plan"),
   ]);
-  if (!overviewRes.ok) return <ErrorDeCarga res={overviewRes} />;
+  if (!overviewRes.ok) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Agente" breadcrumbs={[{ label: "Agentes", href: "/agentes" }]} tabs={false} />
+        <NoCargo que="el agente" res={overviewRes} />
+      </div>
+    );
+  }
   const agente = overviewRes.data.items.find((a) => a.ref === ref);
   if (!agente) notFound();
-  // Nunca un 403 por diseño: sin permiso de conversaciones, esa pestaña no se muestra.
+  // Nunca un 403 por diseño: sin permiso de conversaciones, esas vistas no se muestran.
   const permisos = (meRes.ok ? meRes.data.permissions : null) ?? {};
-  const verConversaciones = meRes.ok && (meRes.data.role === "master" || Boolean(permisos.conversations));
-  const pestanas = PESTANAS.filter(
-    (p) =>
-      (p.id !== "conversaciones" || verConversaciones) &&
-      (p.id !== "conocimiento" || tieneConocimiento(agente)) &&
-      (p.id !== "superpoderes" || tieneSuperpoderes(agente)) &&
-      ((p.id !== "conexiones" && p.id !== "probar") || tieneConexiones(agente)),
-  );
-  const actual: Pestana = pestanas.some((p) => p.id === tab) ? tab : pestanas[0].id;
-  const vigente = { tab: actual, ...filtros };
+  const esMaster = meRes.ok && meRes.data.role === "master";
+  const verConversaciones = meRes.ok && (esMaster || Boolean(permisos.conversations));
+  const conSabe = tieneSuperpoderes(agente) || tieneConocimiento(agente);
+  const pestanas = PESTANAS.filter((p) => (p.id !== "sabe" || conSabe) && (p.id !== "atiende" || tieneConexiones(agente)));
+  const actual: Pestana = pestanas.some((p) => p.id === ubicacion.tab) ? ubicacion.tab : "actividad";
+  const vistas = VISTAS_DE_ACTIVIDAD.filter((v) => verConversaciones || (v.id !== "conversaciones" && v.id !== "clientes"));
+  const ver: VistaDeActividad = vistas.some((v) => v.id === ubicacion.ver) ? ubicacion.ver : vistas[0].id;
+  const vigente = { tab: actual, ver, ...filtros };
   const base = `/admin/agents/${ref}`;
   const qs = queryDeApi(filtros);
   const puedeEditar = Boolean(agente.id) && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime);
   const asignarHref =
     puedeEditar && agente.kind === "specialist" ? `/agentes/${agente.id}/editar?paso=publicar` : null;
+  const delMes = creditosPorAgenteId(planRes.ok ? planRes.data.credit : null);
+  const creditosDelMes = delMes.size > 0 && agente.id ? (delMes.get(agente.id) ?? 0) : null;
 
-  // Cabecera (HU-UX-09): detalle (propósito y versión), conexiones con rol y prioridad e indicadores de 7 días.
-  // Cada indicador se degrada solo: si su consulta falla, la ficha abre igual.
+  // Cabecera (HU-UX-09): propósito, dónde atiende y lo que hizo en 7 días. Cada cifra se degrada
+  // sola: si su consulta falla, la ficha abre igual.
   const desde7 = new URLSearchParams({ desde: desdeHace(7) }).toString();
   const [detalleRes, consola, fiabilidad, uso7, conversaciones7] = await Promise.all([
     agente.id ? apiFetch<AgentDetail>(`/admin/agents/${agente.id}`) : Promise.resolve(null),
     agente.id ? cargarConsola() : Promise.resolve(null),
     agente.id ? apiFetch<ReliabilityResponse>(`/admin/reliability?${desde7}`) : Promise.resolve(null),
-    apiFetch<AgentUsage>(`${base}/usage?${desde7}`),
+    esMaster ? apiFetch<AgentUsage>(`${base}/usage?${desde7}`) : Promise.resolve(null),
     verConversaciones ? apiFetch<AgentConversationPage>(`${base}/conversations?${desde7}&page_size=1`) : Promise.resolve(null),
   ]);
   const detalle = detalleRes?.ok ? detalleRes.data : null;
@@ -171,47 +195,49 @@ export default async function AgentePage({
   let contenido: React.ReactNode;
   let paginada: Paginada | null = null;
   let etiqueta = "";
-  if (actual === "conversaciones") {
+  if (actual === "actividad" && ver === "conversaciones") {
     const res = await apiFetch<AgentConversationPage>(`${base}/conversations?${qs}`);
-    if (!res.ok) return <ErrorDeCarga res={res} />;
-    contenido = <ConversacionesDelAgente page={res.data} nombre={agente.name} />;
-    paginada = res.data;
-    etiqueta = "conversaciones";
-  } else if (actual === "tareas") {
+    if (res.ok) {
+      contenido = <ConversacionesDelAgente page={res.data} nombre={agente.name} verCosto={esMaster} />;
+      paginada = res.data;
+      etiqueta = "conversaciones";
+    } else contenido = <NoCargo que="las conversaciones" res={res} />;
+  } else if (actual === "actividad" && ver === "tareas") {
     const res = await apiFetch<AgentTaskPage>(`${base}/tasks?${qs}`);
-    if (!res.ok) return <ErrorDeCarga res={res} />;
-    contenido = (
-      <div className="flex flex-col gap-4">
-        <TabLinks
-          label="Estado de las tareas"
-          current={hrefDeAgente(ref, vigente, { estado: filtros.estado })}
-          items={[
-            { label: "Todas", href: hrefDeAgente(ref, vigente, { estado: null }) },
-            { label: "En curso", href: hrefDeAgente(ref, vigente, { estado: "open" }) },
-            { label: "Cerradas", href: hrefDeAgente(ref, vigente, { estado: "closed" }) },
-          ]}
-        />
-        <TareasDelAgente page={res.data} nombre={agente.name} />
-      </div>
-    );
-    paginada = res.data;
-    etiqueta = "tareas";
-  } else if (actual === "registros") {
-    const [records, customers] = await Promise.all([
-      apiFetch<AgentRecordPage>(`${base}/records?${qs}`),
-      verConversaciones ? apiFetch<AgentCustomerPage>(`${base}/customers?${qs}`) : Promise.resolve(null),
-    ]);
-    if (!records.ok) return <ErrorDeCarga res={records} />;
-    contenido = (
-      <RegistrosDelAgente
-        records={records.data}
-        customers={customers && customers.ok ? customers.data : null}
-        nombre={agente.name}
-      />
-    );
-    paginada = records.data;
-    etiqueta = "registros";
-  } else if (actual === "conexiones") {
+    if (res.ok) {
+      contenido = (
+        <div className="flex flex-col gap-4">
+          <SegmentedControl
+            label="Estado de las tareas"
+            value={filtros.estado ?? "todas"}
+            className="self-start"
+            options={[
+              { value: "todas", label: "Todas", href: hrefDeAgente(ref, vigente, { estado: null }) },
+              { value: "open", label: "En curso", href: hrefDeAgente(ref, vigente, { estado: "open" }) },
+              { value: "closed", label: "Cerradas", href: hrefDeAgente(ref, vigente, { estado: "closed" }) },
+            ]}
+          />
+          <TareasDelAgente page={res.data} nombre={agente.name} />
+        </div>
+      );
+      paginada = res.data;
+      etiqueta = "tareas";
+    } else contenido = <NoCargo que="las tareas" res={res} />;
+  } else if (actual === "actividad" && ver === "clientes") {
+    const res = await apiFetch<AgentCustomerPage>(`${base}/customers?${qs}`);
+    if (res.ok) {
+      contenido = <ClientesDelAgente customers={res.data} nombre={agente.name} />;
+      paginada = res.data;
+      etiqueta = "clientes";
+    } else contenido = <NoCargo que="los clientes" res={res} />;
+  } else if (actual === "actividad") {
+    const res = await apiFetch<AgentRecordPage>(`${base}/records?${qs}`);
+    if (res.ok) {
+      contenido = <RegistrosDelAgente records={res.data} nombre={agente.name} />;
+      paginada = res.data;
+      etiqueta = "registros";
+    } else contenido = <NoCargo que="los registros" res={res} />;
+  } else if (actual === "atiende") {
     contenido = (
       <ConexionesDelAgente
         filas={filasDeConexiones}
@@ -222,59 +248,67 @@ export default async function AgentePage({
         respaldo={agente.connections.map((c) => ({ id: c.id, label: c.label }))}
       />
     );
-  } else if (actual === "superpoderes" && agente.id) {
-    const [superpoderes, modelos, plugins, requisitos] = await Promise.all([
-      apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${agente.id}&page_size=100`),
+  } else if (actual === "sabe" && agente.id) {
+    const [superpoderes, modelos, plugins, requisitos, docs] = await Promise.all([
+      tieneSuperpoderes(agente)
+        ? apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${agente.id}&page_size=100`)
+        : Promise.resolve(null),
       apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
       apiFetch<PluginSummary[]>("/admin/plugins"),
       apiFetch<RequirementPage>(`/admin/agents/${agente.id}/requirements?page_size=100`),
+      tieneConocimiento(agente)
+        ? apiFetch<KnowledgeDocument[]>(`/pack/pack_knowledge/agents/${agente.id}/documents`)
+        : Promise.resolve(null),
     ]);
-    if (!superpoderes.ok) return <ErrorDeCarga res={superpoderes} />;
-    if (!detalle) return <ErrorDeCarga res={detalleRes ?? superpoderes} />;
     const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
-    contenido = (
-      <SuperpoderesDelAgente
-        agente={detalle}
-        catalogo={superpoderes.data.items}
-        minFrases={modelos.ok ? modelos.data.min_phrases : MIN_FRASES_POR_DEFECTO}
-        nombreDeHabilidad={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
-        requisitos={requisitos.ok ? requisitos.data.items : []}
-        puedeEditar={puedeEditar}
-        cambiosSinPublicar={hayCambiosSinPublicar(detalle)}
-      />
-    );
-  } else if (actual === "probar") {
-    const conexion = conexionParaProbar(filasDeConexiones, filtros.conexion);
-    contenido = (
-      <ProbarAgente
-        nombre={agente.name}
-        conexion={conexion}
-        opciones={filasDeConexiones.map((f) => ({
-          id: f.id,
-          label: f.label,
-          href: hrefDeAgente(ref, vigente, { tab: "probar", conexion: f.id }),
-        }))}
-        asignarHref={asignarHref}
-      />
-    );
-  } else if (actual === "conocimiento" && agente.id) {
-    const docs = await apiFetch<KnowledgeDocument[]>(`/pack/pack_knowledge/agents/${agente.id}/documents`);
-    if (!docs.ok) return <ErrorDeCarga res={docs} />;
     const borrador = detalle?.draft?.content as Record<string, unknown> | undefined;
     contenido = (
-      <ConocimientoDelAgente
-        agenteId={agente.id}
-        nombre={agente.name}
-        documentos={docs.data}
-        puedeEscribir={meRes.ok && puedeEscribirConocimiento(meRes.data)}
-        usaConocimiento={borrador ? usaConocimiento(borrador) : false}
-        puedeEditar={puedeEditar}
-      />
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        {/* Los superpoderes traen su propio título («Qué sabe hacer Ventas»). */}
+        {superpoderes && (
+          <div className="flex flex-col gap-3">
+            {!superpoderes.ok ? (
+              <NoCargo que="los superpoderes" res={superpoderes} />
+            ) : !detalle ? (
+              <NoCargo que="los superpoderes" res={detalleRes ?? superpoderes} />
+            ) : (
+              <SuperpoderesDelAgente
+                agente={detalle}
+                catalogo={superpoderes.data.items}
+                minFrases={modelos.ok ? modelos.data.min_phrases : MIN_FRASES_POR_DEFECTO}
+                nombreDeHabilidad={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
+                requisitos={requisitos.ok ? requisitos.data.items : []}
+                puedeEditar={puedeEditar}
+                cambiosSinPublicar={hayCambiosSinPublicar(detalle)}
+              />
+            )}
+          </div>
+        )}
+        {docs && (
+          <Seccion titulo="Documentos">
+            {!docs.ok ? (
+              <NoCargo que="los documentos" res={docs} />
+            ) : (
+              <ConocimientoDelAgente
+                agenteId={agente.id}
+                nombre={agente.name}
+                documentos={docs.data}
+                puedeEscribir={meRes.ok && puedeEscribirConocimiento(meRes.data)}
+                usaConocimiento={borrador ? usaConocimiento(borrador) : false}
+                puedeEditar={puedeEditar}
+              />
+            )}
+          </Seccion>
+        )}
+      </div>
     );
   } else {
     const res = await apiFetch<AgentUsage>(`${base}/usage?${queryDeApi(filtros, new Date(), false)}`);
-    if (!res.ok) return <ErrorDeCarga res={res} />;
-    contenido = <ConsumoDelAgente usage={res.data} nombre={agente.name} />;
+    contenido = res.ok ? (
+      <ConsumoDelAgente usage={res.data} nombre={agente.name} creditosDelMes={creditosDelMes} verCosto={esMaster} />
+    ) : (
+      <NoCargo que="el consumo" res={res} />
+    );
   }
 
   // Datos de prueba (HU-QA-10): solo en test (fuera, la API responde 404 y no se muestra nada) y
@@ -287,90 +321,122 @@ export default async function AgentePage({
   const importacion = datosDePrueba?.ok
     ? await apiFetch<EstadoImportacion>(`/admin/agents/${agente.id}/importar-datos`)
     : null;
-  const conexiones = agente.connections.map((c) => ({ id: c.id, label: c.label }));
-  const proposito = detalle?.description.trim();
-  const descripcion = [tipoDeAgente(agente.kind), proposito || null].filter(Boolean).join(" · ");
+  // Las conexiones de la consola son las de «Dónde atiende»; sin consola, las del resumen.
+  const conexiones =
+    filasDeConexiones.length > 0
+      ? filasDeConexiones.map((f) => ({ id: f.id, label: f.label }))
+      : agente.connections.map((c) => ({ id: c.id, label: c.label }));
+  const descripcion = [papelDelAgente(agente, detalle?.description), tieneConexiones(agente) ? dondeAtiende(conexiones) : null]
+    .filter(Boolean)
+    .join(" · ");
   const publicacion = estadoDePublicacion(agente.published, detalle?.latest_version);
   const archivado = estaArchivado(agente);
+  const conFiltros = !PESTANAS_SIN_FILTROS.has(actual);
 
   return (
-    <div className="flex flex-col gap-4">
-      <SelectorDeAgentes
-        agentes={overviewRes.data.items.map((a) => ({ ref: a.ref, key: a.key, name: a.name, published: a.published }))}
-        actual={ref}
-      />
-      <DetailPage
-        header={{
-          title: agente.name,
-          description: descripcion,
-          breadcrumbs: [{ label: "Agentes", href: "/agentes" }, { label: agente.name }],
-          actions: (
-            <>
-              {archivado ? (
-                <Badge variant="neutral">Archivado</Badge>
+    <DetailPage
+      header={{
+        title: agente.name,
+        description: descripcion,
+        breadcrumbs: [{ label: "Agentes", href: "/agentes" }, { label: agente.name }],
+        despuesDelTitulo: (
+          <>
+            <SelectorDeAgentes
+              agentes={overviewRes.data.items.map((a) => ({ ref: a.ref, key: a.key, name: a.name, published: a.published }))}
+              actual={ref}
+            />
+            {archivado ? (
+              <Badge variant="neutral">Archivado</Badge>
+            ) : (
+              !agente.virtual &&
+              (publicacion.tono === "success" ? (
+                <Badge variant="success">{publicacion.label}</Badge>
               ) : (
-                !agente.virtual &&
-                (publicacion.tono === "success" ? (
-                  <Badge variant="success">{publicacion.label}</Badge>
-                ) : (
-                  <Badge variant="neutral">{publicacion.label}</Badge>
-                ))
-              )}
-              {agente.id && importacion?.ok && (
-                <ImportarDatosDelAgente agenteId={agente.id} nombre={agente.name} estado={importacion.data} />
-              )}
-              {agente.id && datosDePrueba?.ok && (
-                <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
-              )}
-              {/* Archivado no se edita (la API responde 409): primero se reactiva. */}
-              {puedeEditar && agente.kind === "specialist" && !archivado && (
-                <Button asChild variant="outline">
-                  <Link href={`/agentes/${agente.id}/editar`}>Editar</Link>
-                </Button>
-              )}
-              {puedeEditar && agente.id && puedeArchivar(agente) && (
-                <ArchivarAgente agenteId={agente.id} nombre={agente.name} archivado={archivado} />
-              )}
-            </>
-          ),
-          tabs: (
-            <div className="flex flex-col gap-4">
-              <IndicadoresDelAgente
-                conversaciones={indicador(conversaciones7, (d) => d.total)}
-                resueltas={resueltas}
-                // Sin la sección `costs` la API manda el costo en null: el consumo va en respuestas.
-                consumo={indicador(uso7, (d) => ({ costoUsd: d.total.cost_usd, turnos: d.total.turns }))}
+                <Badge variant="neutral">{publicacion.label}</Badge>
+              ))
+            )}
+          </>
+        ),
+        actions: (
+          <>
+            {agente.id && importacion?.ok && (
+              <ImportarDatosDelAgente agenteId={agente.id} nombre={agente.name} estado={importacion.data} />
+            )}
+            {agente.id && datosDePrueba?.ok && (
+              <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
+            )}
+            {tieneConexiones(agente) && (
+              <ProbarAgente
+                nombre={agente.name}
+                conexiones={filasDeConexiones}
+                inicial={conexionParaProbar(filasDeConexiones, filtros.conexion)}
+                asignarHref={asignarHref}
+                abierto={ubicacion.probar}
               />
-              <TabLinks
-                label={`Secciones de ${agente.name}`}
-                size="compact"
-                current={hrefDeAgente(ref, vigente, { tab: actual })}
-                items={pestanas.map((p) => ({ label: p.label, href: hrefDeAgente(ref, vigente, { tab: p.id }) }))}
+            )}
+            {/* Archivado no se edita (la API responde 409): primero se reactiva. */}
+            {puedeEditar && agente.kind === "specialist" && !archivado && (
+              <Button asChild variant="accent">
+                <Link href={`/agentes/${agente.id}/editar`}>Editar</Link>
+              </Button>
+            )}
+            {puedeEditar && agente.id && puedeArchivar(agente) && (
+              <ArchivarAgente agenteId={agente.id} nombre={agente.name} archivado={archivado} />
+            )}
+          </>
+        ),
+        tabs: (
+          <div className="flex flex-col gap-4">
+            <IndicadoresDelAgente
+              conversaciones={indicador(conversaciones7, (d) => d.total)}
+              resueltas={resueltas}
+              creditosDelMes={creditosDelMes === null ? null : { valor: creditosDelMes }}
+              costoUsd={indicador(uso7, (d) => d.total.cost_usd)}
+            />
+            <TabLinks
+              label={`Pestañas de ${agente.name}`}
+              size="compact"
+              current={hrefDeAgente(ref, vigente, { tab: actual })}
+              items={pestanas.map((p) => ({ label: p.label, href: hrefDeAgente(ref, vigente, { tab: p.id }) }))}
+            />
+          </div>
+        ),
+      }}
+    >
+      {conFiltros && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {actual === "actividad" && vistas.length > 1 ? (
+            // En el celular el control se desplaza en vez de apretar las opciones.
+            <div className="max-w-full overflow-x-auto">
+              <SegmentedControl
+                label="Qué ver"
+                value={ver}
+                className="w-max"
+                options={vistas.map((v) => ({ value: v.id, label: v.label, href: hrefDeAgente(ref, vigente, { ver: v.id }) }))}
               />
             </div>
-          ),
-        }}
-      >
-        {!PESTANAS_SIN_FILTROS.has(actual) && (
+          ) : (
+            <span />
+          )}
           <AgentFilters
-            baseHref={`/agentes/${ref}`}
-            tab={actual}
             dias={filtros.dias}
+            hrefDias={(dias) => hrefDeAgente(ref, vigente, { dias })}
             conexion={filtros.conexion}
             connections={conexiones}
+            hrefConexion={(conexion) => hrefDeAgente(ref, vigente, { conexion })}
           />
-        )}
-        {contenido}
-        {paginada && paginada.total > 0 && (
-          <Pagination
-            page={paginada.page}
-            hasMore={paginada.has_more}
-            total={paginada.total}
-            label={etiqueta}
-            makeHref={(target) => hrefDeAgente(ref, vigente, { page: target })}
-          />
-        )}
-      </DetailPage>
-    </div>
+        </div>
+      )}
+      {contenido}
+      {paginada && paginada.total > 0 && (
+        <Pagination
+          page={paginada.page}
+          hasMore={paginada.has_more}
+          total={paginada.total}
+          label={etiqueta}
+          makeHref={(target) => hrefDeAgente(ref, vigente, { page: target })}
+        />
+      )}
+    </DetailPage>
   );
 }
