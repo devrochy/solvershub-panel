@@ -73,12 +73,12 @@ describe("enlace para pagar un pago pendiente", () => {
     expect(enlaceDePago({ ...PAGO, checkout_url: "no es url" })).toBeNull();
   });
 
-  it("Plan muestra «Pagar» en la fila pendiente y no en la pagada", async () => {
+  it("Plan muestra «Pagar» en la fila pendiente y no en la pagada (cajón de pagos, CYP-06)", async () => {
     respuestas["/admin/plan"] = {
       ...plan,
       payments: [PAGO, { ...PAGO, status: "aprobado", paid_at: "2026-09-12T10:00:00Z", periodo: "2026-09" }],
     };
-    const { container } = await abrir(() => import("@/app/(app)/plan/page"));
+    const { container } = await abrir(() => import("@/app/(app)/plan/page"), { ver: "pagos" });
     const pagar = screen.getAllByRole("link", { name: /^Pagar/ });
     expect(pagar).toHaveLength(1);
     expect(pagar[0].getAttribute("href")).toBe(PAGO.checkout_url);

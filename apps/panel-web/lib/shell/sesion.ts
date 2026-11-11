@@ -67,7 +67,13 @@ const SECCION_FUERA_DEL_MENU: Record<string, string> = {
  * Sin esto, `/cobranza/*` las trataría como Resumen de Cobranza y quien no tiene Cobranza vería un
  * «sin acceso» en vez de llegar a Seguridad. Se quitan junto con los redirects.
  */
-const RUTAS_MOVIDAS = new Set(["/cobranza/dispositivos", "/cobranza/alertas"]);
+const RUTAS_MOVIDAS = new Set([
+  "/cobranza/dispositivos",
+  "/cobranza/alertas",
+  // Costos pasó de Consumo y plan a Plataforma (solo master, rediseño B): la página manda a quien no es
+  // master de vuelta a Consumo y plan en vez de mostrarle «sin acceso».
+  "/costos",
+]);
 
 function seccionFueraDelMenu(pathname: string): string | null {
   const match = Object.entries(SECCION_FUERA_DEL_MENU)

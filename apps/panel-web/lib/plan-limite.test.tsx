@@ -5,21 +5,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
 import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new-collaborator-dialog";
 import { FeedbackProviders } from "@/components/ui/providers";
-import { UsageBar } from "@/components/ui/usage-bar";
 import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpower } from "@/lib/api/types";
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import {
-  avisoDeCredito,
-  desgloseDeCredito,
-  esLimiteDePlan,
-  etiquetaDeLimite,
-  formatoCreditos,
-  limitesOrdenados,
-  RUTA_MEJORAR_PLAN,
-  separarConsumo,
-} from "./plan-limite";
+import { esLimiteDePlan, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -48,60 +38,39 @@ describe("reglas del plan por agentes (lógica pura)", () => {
     expect(esLimiteDePlan(undefined)).toBe(false);
   });
 
-  it("separa lo que vende el plan del resto de topes, en orden", () => {
-    const { delPlan, resto } = separarConsumo(planDePrueba.usage);
-    expect(delPlan.map((u) => u.key)).toEqual(["agentes", "colaboradores"]);
-    expect(resto.map((u) => u.key)).toEqual(["conversations"]);
-  });
-
-  it("topes del catálogo con nombre legible y las dimensiones del plan primero", () => {
+  it("topes del catálogo con las dimensiones del plan primero", () => {
     expect(limitesOrdenados({ mensajes: 10, colaboradores: 5, agentes: 2 }).map(([k]) => k)).toEqual([
       "agentes",
       "colaboradores",
       "mensajes",
     ]);
-    expect(etiquetaDeLimite("agentes")).toBe("Agentes publicados");
-    expect(etiquetaDeLimite("otra")).toBe("otra");
   });
 });
 
-describe("barras de Plan y consumo", () => {
-  it("una barra sin medición muestra el tope, la barra vacía y la nota", () => {
-    render(<UsageBar label="Crédito mensual" used={null} limit={20000} percent={null} unit="créditos" nota="pronto" />);
-    const barra = screen.getByRole("progressbar", { name: "Crédito mensual" });
-    expect(barra.getAttribute("aria-valuenow")).toBeNull();
-    expect(screen.getByText(/— \/ 20/)).toBeTruthy();
-    expect(screen.getByText("créditos · pronto")).toBeTruthy();
-  });
-
-  it("agentes, colaboradores y crédito mensual van primero, con su consumo y su tope", async () => {
+describe("Consumo y plan (rediseño B)", () => {
+  it("el crédito en palabras, el reparto y los topes con lo que pasa al llegar (CYP-02 a 04)", async () => {
     respuestaDelPlan.actual = planDePrueba satisfies PlanResponse;
     const { default: PlanPage } = await import("@/app/(app)/plan/page");
-    render(<FeedbackProviders>{await resolverServidor(await PlanPage())}</FeedbackProviders>);
+    render(<FeedbackProviders>{await resolverServidor(await PlanPage({ searchParams: Promise.resolve({}) }))}</FeedbackProviders>);
+    // Crédito medido (HU-BILL-04/06): lo que queda, sin aviso por debajo del 80 %.
+    expect(screen.getByRole("heading", { name: "Te quedan 18.766 créditos" })).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+    const reparto = screen.getByRole("region", { name: "En qué se usó el crédito" });
+    expect(within(reparto).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Respuestas del asistente (IA)1.100 · 89 %",
+      "Plantillas enviadas130 · 11 %",
+      "Notas de voz5 · 0 %",
+    ]);
+    expect(screen.getByRole("link", { name: "Ventas" }).getAttribute("href")).toBe("/agentes/00000000-0000-4000-8000-0000000000a1");
+    // Los topes, con los que piden atención primero y lo que pasa al llegar.
     const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
-    const barras = within(incluye).getAllByRole("progressbar");
-    expect(barras.map((b) => b.getAttribute("aria-label"))).toEqual([
+    expect(within(incluye).getAllByRole("progressbar").map((b) => b.getAttribute("aria-label"))).toEqual([
       "Agentes publicados",
-      "Colaboradores",
-      "Crédito mensual",
+      "Conversaciones del mes",
+      "Personas del equipo",
     ]);
-    expect(barras[0].getAttribute("aria-valuenow")).toBe("2");
-    expect(barras[0].getAttribute("aria-valuemax")).toBe("2");
-    expect(barras[2].getAttribute("aria-valuemax")).toBe("20000");
-    // Crédito medido (HU-BILL-04/06): consumo real, sin aviso por debajo del 80 %.
-    expect(barras[2].getAttribute("aria-valuenow")).toBe("1234.5");
-    expect(within(incluye).getByText(/1 crédito = COP 10 · se renueva el/)).toBeTruthy();
-    expect(within(incluye).queryByRole("status")).toBeNull();
-    const conceptos = within(incluye).getByRole("list", { name: "Crédito por concepto" });
-    expect(within(conceptos).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      "Respuestas del asistente (IA)1.100",
-      "Plantillas enviadas130",
-      "Notas de voz4,5",
-    ]);
-    const agentes = within(incluye).getByRole("list", { name: "Crédito por agente" });
-    expect(within(agentes).getByText("Ventas")).toBeTruthy();
-    // El catálogo dice los topes con nombre legible, no la clave.
-    expect(screen.getAllByText("Agentes publicados").length).toBeGreaterThan(1);
+    expect(within(incluye).getByText(/No puedes publicar otro agente/)).toBeTruthy();
+    expect(within(incluye).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(`${RUTA_MEJORAR_PLAN}?ver=planes`);
   });
 });
 
@@ -111,47 +80,24 @@ describe("crédito mensual medido (HU-BILL-04/06)", () => {
     credit: { ...planDePrueba.credit!, used, percent },
   });
 
-  it("avisa al 80 % y al 100 % sin hablar de bloqueo; por debajo, nada", () => {
-    expect(avisoDeCredito(conCredito(15000, 75).credit)).toBeNull();
-    expect(avisoDeCredito(conCredito(null, null).credit)).toBeNull();
-    expect(avisoDeCredito(conCredito(16400, 82).credit, "5 nov")).toMatchObject({
-      nivel: "alto",
-      titulo: "Llevas el 82 % del crédito del mes",
-    });
-    const agotado = avisoDeCredito(conCredito(21000, 105).credit, "5 nov");
-    expect(agotado?.nivel).toBe("agotado");
-    expect(agotado?.texto).toMatch(/sigue respondiendo/);
-    expect(agotado?.texto).toMatch(/se renueva el 5 nov/);
-  });
-
-  it("desglose legible, de mayor a menor y sin conceptos en cero", () => {
-    expect(desgloseDeCredito(planDePrueba.credit).map((d) => d.concepto)).toEqual([
-      "Respuestas del asistente (IA)",
-      "Plantillas enviadas",
-      "Notas de voz",
-    ]);
-    expect(formatoCreditos(1234.5)).toBe("1.234,5");
-  });
-
   it.each([
-    [82, "Llevas el 82 % del crédito del mes"],
-    [100, "Usaste todo el crédito del mes"],
+    [82, /^Vas al 82 %/],
+    [100, /^El crédito se acabó$/],
   ])("al %i %% la página muestra el aviso y la barra sigue", async (percent, titulo) => {
     respuestaDelPlan.actual = conCredito(percent * 200, percent);
     const { default: PlanPage } = await import("@/app/(app)/plan/page");
-    render(<FeedbackProviders>{await resolverServidor(await PlanPage())}</FeedbackProviders>);
-    const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
-    expect(within(within(incluye).getByRole("status")).getByText(titulo)).toBeTruthy();
-    expect(within(incluye).getByRole("progressbar", { name: "Crédito mensual" })).toBeTruthy();
+    render(<FeedbackProviders>{await resolverServidor(await PlanPage({ searchParams: Promise.resolve({}) }))}</FeedbackProviders>);
+    expect(within(screen.getByRole("status")).getByText(titulo)).toBeTruthy();
+    expect(screen.getByRole("progressbar", { name: "Crédito usado" })).toBeTruthy();
   });
 
   it("si el core no pudo medir, la barra queda vacía con «medición pendiente»", async () => {
     respuestaDelPlan.actual = { ...planDePrueba, credit: { limit: 20000, used: null, percent: null } };
     const { default: PlanPage } = await import("@/app/(app)/plan/page");
-    render(<FeedbackProviders>{await resolverServidor(await PlanPage())}</FeedbackProviders>);
-    const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
-    expect(within(incluye).getByText(/medición del consumo en créditos llega pronto/)).toBeTruthy();
-    expect(within(incluye).queryByRole("status")).toBeNull();
+    render(<FeedbackProviders>{await resolverServidor(await PlanPage({ searchParams: Promise.resolve({}) }))}</FeedbackProviders>);
+    expect(screen.getByText(/La medición del consumo llega pronto/)).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("progressbar", { name: "Crédito usado" })).toBeNull();
   });
 });
 

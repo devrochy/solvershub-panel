@@ -6,7 +6,7 @@ import { MetaCosts } from "@/components/domain/meta-costs";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/server";
-import type { CostsResponse } from "@/lib/api/types";
+import type { CostsResponse, Me } from "@/lib/api/types";
 import { costosDeLaCuenta, numerosDeLaCuenta } from "@/lib/conexion-ficha";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
 import { formatNumber, formatUsd } from "@/lib/format";
@@ -17,17 +17,19 @@ type CuentaDeCreditos = { id: string; label: string | null; channel: string; bus
 
 /**
  * Costos de WhatsApp de la cuenta de Meta del número (30 días, CON-17): el total arriba, el
- * consumo por número y los créditos. El resto de los costos del negocio sigue en Costos.
+ * consumo por número y los créditos. Los costos de todo el negocio están en Plataforma › Costos técnicos (solo master).
  */
 export default async function CostosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ficha = await fichaDePestana(id, "costos");
   const metaId = ficha?.conexion.meta_connection_id;
   if (!ficha || !metaId) return null;
-  const [res, creditosRes] = await Promise.all([
+  const [res, creditosRes, me] = await Promise.all([
     apiFetch<CostsResponse>("/admin/costs"),
     apiFetch<{ connections: CuentaDeCreditos[] }>("/admin/costs/meta/credits"),
+    apiFetch<Me>("/admin/me"),
   ]);
+  const esMaster = me.ok && me.data.role === "master";
   if (!res.ok) {
     return (
       <SeccionFicha titulo="Costos">
@@ -60,9 +62,11 @@ export default async function CostosPage({ params }: { params: Promise<{ id: str
           : "Lo que Meta cobra por los mensajes de esta cuenta en los últimos 30 días."
       }
       acciones={
-        <Button asChild variant="ghost">
-          <Link href="/costos">Costos del negocio</Link>
-        </Button>
+        esMaster ? (
+          <Button asChild variant="ghost">
+            <Link href="/costos">Costos técnicos del negocio</Link>
+          </Button>
+        ) : undefined
       }
     >
       {!separado && (

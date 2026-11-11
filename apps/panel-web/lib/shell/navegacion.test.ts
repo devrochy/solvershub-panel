@@ -19,7 +19,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/dashboard", "dashboard", false], ["/agentes", "agents", false], ["/conversaciones", "conversations", false],
   ["/escalaciones", "escalations", false], ["/leads", "leads", false], ["/conexiones", "connections", false],
   ["/habilidades", "plugins", false], ["/colaboradores", "collaborators", false], ["/configuracion", "settings", false],
-  ["/costos", "costs", false], ["/plan", "plan", false], ["/cobranza", "pack_cobranza:resumen", false],
+  ["/costos", "costs", true], ["/plan", "plan", false], ["/cobranza", "pack_cobranza:resumen", false],
   ["/cobranza/gestores", "pack_cobranza:gestores", false], ["/cobranza/carteras", "pack_cobranza:carteras", false],
   ["/cobranza/clientes", "pack_cobranza:clientes", false],
   ["/cobranza/pagos", "pack_cobranza:cobros", false], ["/cobranza/promesas", "pack_cobranza:promesas", false],
@@ -87,10 +87,17 @@ describe("menú v2 (HU-UX-02)", () => {
   });
 
   it("una entrada se ve con una sola pestaña permitida y lleva a esa pestaña", () => {
-    const soloCostos = gruposVisibles({ costs: "read" });
-    expect(etiquetas(soloCostos)).toEqual(["Consumo y plan"]);
-    expect(soloCostos[0].visible[0].href).toBe("/costos");
-    expect(soloCostos[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Costos"]);
+    const soloAlertas = gruposVisibles({ access_alerts: "read" });
+    expect(etiquetas(soloAlertas)).toEqual(["Seguridad"]);
+    expect(soloAlertas[0].visible[0].href).toBe("/seguridad/alertas");
+    expect(soloAlertas[0].visible[0].tabs?.map((t) => t.label)).toEqual(["Alertas de acceso"]);
+  });
+
+  it("los costos técnicos son de Plataforma y solo los ve el master (rediseño B de Consumo y plan)", () => {
+    expect(gruposVisibles({ costs: "read", plan: "read" }).flatMap((g) => g.visible.map((i) => i.label))).toEqual(["Consumo y plan"]);
+    const master = gruposVisibles({ costs: "read" }, NAV_GROUPS, true);
+    expect(master.map((g) => g.group.label)).toEqual(["Plataforma"]);
+    expect(master[0].visible.map((i) => [i.label, i.href])).toEqual([["Costos técnicos", "/costos"]]);
   });
 
   it("Probar asistente ya no es pestaña de Agentes (HU-UX-09) pero /asistente sigue protegida por connections", () => {
@@ -222,6 +229,8 @@ describe("navegación del shell (HU-DS-04)", () => {
     expect(puedeVerRuta("/cobranza/dispositivos", sesion({ devices: "read" }))).toBe(true);
     expect(puedeVerRuta("/cobranza/alertas", sesion({}))).toBe(true);
     expect(puedeVerRuta("/cobranza/gestores", sesion({ devices: "read" }))).toBe(false);
+    // Costos pasó a Plataforma: la ruta pasa y su página manda a quien no es master a Consumo y plan.
+    expect(puedeVerRuta("/costos", sesion({ costs: "read" }))).toBe(true);
     // Los permisos viejos del pack ya no abren Seguridad: el core copió las concesiones (migración 0104).
     expect(puedeVerRuta("/seguridad/dispositivos", sesion({ "pack_cobranza:dispositivos": "write" }))).toBe(false);
   });

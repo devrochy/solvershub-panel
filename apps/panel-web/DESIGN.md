@@ -268,6 +268,13 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Productos, promociones, categorías y aliados se editan en un cajón o diálogo que vive en la URL. Las acciones de fila van en «Más acciones», nunca como íconos sueltos; borrar dice qué pasa con lo que depende de eso.
 - Aliados es pestaña solo con el módulo encendido: `comercio/layout.tsx` lo consulta y las pestañas `oculta` con `mostrarCon` salen con `PestanasOpcionales`.
 
+## Consumo y plan (SPEC-29)
+
+- Una sola página para el dueño, en créditos y en pesos, nunca en dólares (`lib/consumo.ts`): «Te quedan 9.588 créditos · unos $ 95.880 · para 9 días». Desde el 80 % avisa con el ritmo («se acaba el 14 de nov.»).
+- El plan va en una tarjeta con su estado en palabras y, si hay un período por pagar, «Pagar $ …» como acción principal. Los planes y los pagos se abren en un cajón (`?ver=planes`, `?ver=pagos`).
+- Cada tope dice qué pasa al llegar («No puedes publicar otro agente») y ofrece «Mejorar mi plan»; lo que no tiene tope dice «sin límite», sin barra ni «∞».
+- Los costos en dólares (IA por agente y modelo, WhatsApp por categoría) son del equipo de SolversHub: Plataforma › Costos técnicos, solo master. Quien no es master y entra a `/costos` vuelve a Consumo y plan.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |
