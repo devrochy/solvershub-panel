@@ -8,9 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { BrainSettings, CatalogoConfig } from "@/lib/api/types";
 import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
+import { TEMPERATURAS, cercano } from "@/lib/configuracion-resumen";
 import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
@@ -19,10 +21,13 @@ export function BrainForm({
   brain,
   catalogo = null,
   puedeEditar = true,
+  onGuardado,
 }: {
   brain: BrainSettings;
   catalogo?: CatalogoConfig | null;
   puedeEditar?: boolean;
+  /** Tras guardar bien: el cajón se cierra. */
+  onGuardado?: () => void;
 }) {
   const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
   const ayuda = (clave: string, respaldo: string) => ayudaDelCatalogo(indice, clave, respaldo);
@@ -36,7 +41,7 @@ export function BrainForm({
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    await run(async () => {
+    const ok = await run(async () => {
       const res = await fetch("/api/settings/brain", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -47,6 +52,7 @@ export function BrainForm({
       setGuardado(values);
       return { ok: true, success: "Cerebro guardado." };
     });
+    if (ok) onGuardado?.();
   }
 
   return (
@@ -86,8 +92,19 @@ export function BrainForm({
                 onChange={(e) => set("model_fallback", e.target.value)}
               />
             </Field>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <span className="text-[13px] font-medium text-body">Cómo salen las respuestas</span>
+              <SegmentedControl
+                label="Cómo salen las respuestas"
+                options={TEMPERATURAS.map((o) => ({ value: o.value, label: o.label }))}
+                value={cercano(TEMPERATURAS, values.model_temperature, (o) => o.valor).valor === values.model_temperature ? cercano(TEMPERATURAS, values.model_temperature, (o) => o.valor).value : ""}
+                onChange={(v) => set("model_temperature", Number(v))}
+                className="self-start"
+              />
+              <p className="text-xs text-text-soft">Precisas: casi siempre igual, lo mejor para atender clientes. Creativas: más variadas.</p>
+            </div>
             <Field
-              label="Temperatura (0-2)"
+              label="Temperatura exacta (de 0 a 2)"
               htmlFor="model_temperature"
               help={ayuda("model_temperature", "Qué tan variadas son las respuestas: cerca de 0 el asistente es más predecible y cerca de 2 más creativo. Para atender clientes conviene un valor bajo.")}
             >
@@ -136,8 +153,8 @@ export function BrainForm({
 
           {puedeEditar ? (
             <div>
-              <Button type="submit" variant="accent" disabled={pending}>
-                {pending ? "Guardando…" : "Guardar cerebro"}
+              <Button type="submit" variant="accent" loading={pending}>
+                Guardar
               </Button>
             </div>
           ) : (

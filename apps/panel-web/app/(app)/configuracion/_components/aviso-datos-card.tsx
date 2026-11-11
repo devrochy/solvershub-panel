@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   cuerpoDelAviso,
@@ -116,13 +117,10 @@ function Editor({ aviso, puedeEditar }: { aviso: AvisoDatos; puedeEditar: boolea
           </Field>
           {puedeEditar ? (
             <>
-              <Checkbox
-                id="aviso-activo"
-                label="Activar el aviso en el chat"
-                checked={activo}
-                disabled={pending}
-                onCheckedChange={setActivo}
-              />
+              <label htmlFor="aviso-activo" className="flex items-center justify-between gap-4 text-sm text-headline">
+                Mostrar el aviso en el chat
+                <Switch id="aviso-activo" checked={activo} disabled={pending} onCheckedChange={setActivo} />
+              </label>
               {activo && !aviso.activo && (
                 <Checkbox
                   id="aviso-revision-legal"

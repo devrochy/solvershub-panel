@@ -224,10 +224,12 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "devices", label: "Dispositivos", href: "/seguridad/dispositivos", icon: Smartphone, ready: true },
         { section: "access_alerts", label: "Alertas de acceso", href: "/seguridad/alertas", icon: BellRing, ready: true },
       ]),
+      // Rediseño B (CFG-11): Habilidades y Mensajes fallidos son filas del resumen de Configuración, no
+      // pestañas; siguen como rutas del menú para sus permisos, migas y la paleta.
       entrada("Configuración", Settings, [
-        { section: "settings", label: "General", href: "/configuracion", icon: Settings, ready: true },
-        { section: "plugins", label: "Habilidades", href: "/habilidades", icon: Workflow, ready: true },
-        { section: "settings", label: "Mensajes fallidos", href: "/dlq", icon: AlertTriangle, ready: true },
+        { section: "settings", label: "Configuración", pestana: "General", href: "/configuracion", icon: Settings, ready: true },
+        { section: "plugins", label: "Habilidades", href: "/habilidades", icon: Workflow, ready: true, oculta: true },
+        { section: "settings", label: "Mensajes fallidos", href: "/dlq", icon: AlertTriangle, ready: true, oculta: true },
       ]),
     ],
   },

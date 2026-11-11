@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { InputNumero } from "@/components/ui/input-numero";
 import { Switch } from "@/components/ui/switch";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
@@ -21,7 +23,16 @@ type SkillBinding = {
 };
 
 /** Herramientas del agente: activar, límite por conversación (0 = sin límite) y confirmación. */
-export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBinding[]; puedeEditar?: boolean }) {
+export function SkillsForm({
+  skills,
+  puedeEditar = true,
+  onGuardado,
+}: {
+  skills: SkillBinding[];
+  puedeEditar?: boolean;
+  /** Tras guardar bien: el cajón se cierra. */
+  onGuardado?: () => void;
+}) {
   const [values, setValues] = useState(skills);
   const [guardado, setGuardado] = useState(skills);
   const { run, pending } = useAction();
@@ -32,7 +43,7 @@ export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBindin
   }
 
   async function onSubmit() {
-    await run(async () => {
+    const ok = await run(async () => {
       const res = await fetch("/api/settings/skills", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -43,6 +54,24 @@ export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBindin
       setGuardado(values);
       return { ok: true, success: "Herramientas guardadas." };
     });
+    if (ok) onGuardado?.();
+  }
+
+  // Sin habilidades no hay herramientas: nada que guardar, y el camino es encender una (CFG-05).
+  if (values.length === 0) {
+    return (
+      <Card>
+        <EmptyState
+          title="Todavía no hay herramientas"
+          description="Las herramientas llegan con las habilidades. Enciende una para elegir qué puede hacer el asistente."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/habilidades">Ver las habilidades</Link>
+            </Button>
+          }
+        />
+      </Card>
+    );
   }
 
   return (
@@ -68,10 +97,8 @@ export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBindin
                   aria-label={`Habilitar ${tool.name}`}
                 />
                 <div className="flex min-w-52 flex-1 flex-col">
-                  <span className="font-mono text-xs text-headline">{tool.name}</span>
-                  <span className="text-xs text-text-soft">
-                    {tool.description ?? tool.plugin_id}
-                  </span>
+                  <span className="text-sm text-headline">{tool.description || tool.name}</span>
+                  {tool.description && <span className="text-xs text-text-soft">{tool.name}</span>}
                 </div>
                 <label className="flex flex-col gap-1 text-xs text-body">
                   Límite por conversación
@@ -106,8 +133,8 @@ export function SkillsForm({ skills, puedeEditar = true }: { skills: SkillBindin
 
         {puedeEditar ? (
           <div>
-            <Button variant="accent" onClick={() => void onSubmit()} disabled={pending}>
-              {pending ? "Guardando…" : "Guardar herramientas"}
+            <Button variant="accent" onClick={() => void onSubmit()} loading={pending}>
+              Guardar
             </Button>
           </div>
         ) : (

@@ -1,10 +1,14 @@
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
+import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
+import { avisoEnPalabras, llegadaDe } from "@/lib/fallidos";
+import { formatDateTime } from "@/lib/format";
 import { RetryButton } from "./_components/retry-button";
 import { RetryDomainEventButton } from "./_components/retry-domain-event-button";
 
-export const metadata = { title: "Bandeja de fallos" };
+export const metadata = { title: "Mensajes fallidos" };
 
 type DlqEntry = {
   entry_id: string;
@@ -21,88 +25,93 @@ type DomainEventEntry = {
   created_at: string;
 };
 
+const llegada = (e: DlqEntry) => {
+  const fecha = llegadaDe(e.entry_id);
+  return fecha ? formatDateTime(fecha) : "";
+};
+
+/**
+ * Mensajes fallidos (CFG-08): lo que el asistente no pudo procesar tras sus reintentos, en palabras. Sin ids
+ * de WhatsApp ni del negocio a la vista; los avisos del sistema (pagos, pedidos) con su nombre.
+ */
 export default async function DlqPage() {
   const [res, eventsRes] = await Promise.all([
     apiFetch<{ entries: DlqEntry[] }>("/admin/dlq"),
     apiFetch<{ entries: DomainEventEntry[] }>("/admin/domain-events"),
   ]);
+  const cabecera = (
+    <PageHeader
+      title="Mensajes fallidos"
+      description="Mensajes de clientes que el asistente no pudo procesar. Reintentar los vuelve a poner en la fila."
+      helpSection="tools"
+    />
+  );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar la bandeja de fallos: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        {cabecera}
+        <ErrorDeCarga titulo="No pudimos cargar los mensajes fallidos" detalle={res.error} />
+      </div>
     );
   }
 
   const columns: Column<DlqEntry>[] = [
-    {
-      key: "mensaje",
-      header: "Mensaje",
-      cell: (e) => <span className="font-mono text-xs text-body">{e.external_message_id || "—"}</span>,
-    },
-    {
-      key: "negocio",
-      header: "Negocio",
-      cell: (e) => <span className="font-mono text-xs text-body">{e.tenant_id.slice(0, 8)}</span>,
-    },
-    { key: "contenido", header: "Contenido", cell: (e) => <span className="text-body">{e.content || "—"}</span> },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (e) => <RetryButton entryId={e.entry_id} />,
-    },
+    { key: "mensaje", header: "Mensaje", cell: (e) => <span className="text-headline">{e.content ? `«${e.content}»` : "Sin texto (audio, imagen o archivo)"}</span> },
+    { key: "llego", header: "Llegó", cell: (e) => <span className="text-body">{llegada(e)}</span> },
+    { key: "acciones", header: <span className="sr-only">Acciones</span>, align: "right", cell: (e) => <RetryButton entryId={e.entry_id} que={`el mensaje «${e.content.slice(0, 40)}»`} /> },
   ];
 
   const eventColumns: Column<DomainEventEntry>[] = [
-    { key: "evento", header: "Evento", cell: (e) => <span className="font-mono text-xs text-body">{e.topic}</span> },
-    {
-      key: "intentos",
-      header: "Intentos",
-      cell: (e) => <span className="text-body">{e.attempts}</span>,
-    },
-    {
-      key: "error",
-      header: "Último error",
-      cell: (e) => <span className="text-xs text-body">{e.last_error || "—"}</span>,
-    },
-    {
-      key: "acciones",
-      header: "Acciones",
-      align: "right",
-      cell: (e) => <RetryDomainEventButton eventId={e.id} />,
-    },
+    { key: "aviso", header: "Aviso", cell: (e) => <span className="text-headline">{avisoEnPalabras(e.topic)}</span> },
+    { key: "cuando", header: "Cuándo", cell: (e) => <span className="text-body">{formatDateTime(e.created_at)}</span> },
+    { key: "intentos", header: "Intentos", cell: (e) => <span className="text-body tabular-nums">{e.attempts}</span> },
+    { key: "error", header: "Qué pasó", cell: (e) => <span className="text-xs text-text-soft">{e.last_error || "Sin detalle"}</span> },
+    { key: "acciones", header: <span className="sr-only">Acciones</span>, align: "right", cell: (e) => <RetryDomainEventButton eventId={e.id} que={`el aviso ${avisoEnPalabras(e.topic)}`} /> },
   ];
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Bandeja de fallos"
-        description="Mensajes que fallaron tras varios reintentos. Reintentar los devuelve a la cola de entrada."
-        helpSection="tools"
-      />
-      <DataTable
+      {cabecera}
+      <TablaResponsiva
+        etiqueta="Mensajes de clientes"
+        caption="Mensajes de clientes que no se procesaron"
         columns={columns}
         rows={res.data.entries}
         getRowKey={(e) => e.entry_id}
-        emptyTitle="Sin mensajes fallidos"
-        emptyDescription="Cuando un mensaje agote sus reintentos aparecerá aquí."
+        emptyTitle="Todo llegó"
+        emptyDescription="No hay mensajes de clientes por reintentar."
+        filaCelular={(e) => ({
+          titulo: e.content ? `«${e.content}»` : "Sin texto (audio, imagen o archivo)",
+          detalle: llegada(e),
+          accion: <RetryButton entryId={e.entry_id} que={`el mensaje «${e.content.slice(0, 40)}»`} />,
+        })}
       />
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3" aria-labelledby="avisos-del-sistema">
         <div>
-          <h2 className="font-display text-lg font-semibold text-headline">Eventos de dominio fallidos</h2>
-          <p className="text-sm text-body">
-            Eventos de pago/pedido/suscripción que agotaron sus reintentos. Reintentar los devuelve a la cola.
-          </p>
+          <h2 id="avisos-del-sistema" className="font-display text-sh-block text-headline">
+            Avisos del sistema que no salieron
+          </h2>
+          <p className="text-sm text-body">Pagos, pedidos o suscripciones que no se pudieron registrar tras varios intentos.</p>
         </div>
-        <DataTable
-          columns={eventColumns}
-          rows={eventsRes.ok ? eventsRes.data.entries : []}
-          getRowKey={(e) => e.id}
-          emptyTitle="Sin eventos fallidos"
-          emptyDescription="Cuando un evento agote sus reintentos aparecerá aquí."
-        />
+        {eventsRes.ok ? (
+          <TablaResponsiva
+            etiqueta="Avisos del sistema"
+            caption="Avisos del sistema que no salieron"
+            columns={eventColumns}
+            rows={eventsRes.data.entries}
+            getRowKey={(e) => e.id}
+            emptyTitle="Ningún aviso pendiente"
+            emptyDescription="Cuando un aviso agote sus intentos aparecerá aquí."
+            filaCelular={(e) => ({
+              titulo: avisoEnPalabras(e.topic),
+              detalle: `${formatDateTime(e.created_at)} · ${e.attempts} intentos`,
+              accion: <RetryDomainEventButton eventId={e.id} que={`el aviso ${avisoEnPalabras(e.topic)}`} />,
+            })}
+          />
+        ) : (
+          <ErrorDeCarga titulo="No pudimos cargar los avisos del sistema" detalle={eventsRes.error} />
+        )}
       </section>
     </div>
   );

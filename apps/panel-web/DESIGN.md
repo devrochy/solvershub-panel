@@ -252,6 +252,13 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - La vista previa queda fija al lado en escritorio; en el celular se abre con «Ver cómo queda».
 - Avisos por evento: una lista por módulo con lo que le llega al cliente («Con plantilla», «Solo dentro de 24 horas», «Sin aviso»). Cada aviso se edita en un cajón con su propio Guardar; el texto por canal va plegado. La API guarda el mapa completo, así que guardar un aviso manda también lo guardado de los demás.
 
+## Configuración (SPEC-29)
+
+- Es un resumen, no un formulario: cada ajuste en una fila con su valor actual en palabras (`lib/configuracion-resumen.ts`: «Lun a vie, 9:00 a. m. a 6:00 p. m.», «Recuerda 10 mensajes (normal)»), agrupado por tarea. Tocar una fila abre el ajuste en un cajón; la sección abierta vive en la URL (`?seccion=`, `?tab=` y sus alias siguen valiendo).
+- En el cajón se guarda con «Guardar» y el cajón se cierra; cerrarlo con cambios pide confirmación. Habilidades y Mensajes fallidos son filas más (enlaces a sus páginas), no pestañas.
+- Nada técnico a la vista: el horario se elige por día (`EditorDeFranjas`), la memoria y la temperatura en palabras con los números exactos en «Avanzado», la moneda de una lista y los rangos cortos con puntos. AgentSpec y proveedor solo lo ve el master.
+- Mensajes fallidos dice el mensaje y cuándo llegó (sin ids de WhatsApp ni del negocio) y nombra los avisos del sistema (`lib/fallidos.ts`); cada fila tiene «Reintentar» con texto.
+
 ## Ventas (SPEC-29)
 
 - Todo en palabras (`lib/ventas.ts`): «Hoy, 5:30 p. m.», «3 variantes · 15 en stock», «19 % en Ropa · del 20 al 21 de nov.». Nada de SKU, letra de código ni valores de la API a la vista; el código de un producto va en «Avanzado» de su ficha.

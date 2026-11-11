@@ -1,5 +1,6 @@
 import { PluginCard } from "@/app/(app)/habilidades/_components/plugin-card";
 import { SubscriptionProviderCard } from "@/app/(app)/habilidades/_components/subscription-provider-card";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
@@ -12,21 +13,25 @@ export default async function PluginsPage() {
     apiFetch<PluginSummary[]>("/admin/plugins"),
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
   ]);
+  const cabecera = (
+    <PageHeader
+      title="Habilidades"
+      description="Lo que tu asistente sabe hacer además de conversar. Enciende las que usa tu negocio; si una falla, el resto sigue funcionando."
+      helpSection="plugins"
+    />
+  );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar las habilidades: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        {cabecera}
+        <ErrorDeCarga titulo="No pudimos cargar las habilidades" detalle={res.error} />
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Habilidades"
-        description="Módulos que se suman al agente. El alcance es por negocio: al activar uno se carga su código y su salud se controla aislada por negocio (si falla, se puede reintentar sin afectar al resto)."
-        helpSection="plugins"
-        />
+      {cabecera}
 
       {proveedorRes.ok && proveedorRes.data.estado !== "sin_proveedor" && (
         <SubscriptionProviderCard settings={proveedorRes.data} />

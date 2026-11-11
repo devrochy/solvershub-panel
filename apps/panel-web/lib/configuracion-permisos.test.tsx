@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import { me, RESPUESTAS } from "@/lib/testing/fixtures";
@@ -62,21 +62,23 @@ describe("permisos de Configuración", () => {
   it("si falla /admin/me, los formularios siguen editables y no se culpa al permiso", async () => {
     respuestaDeMe.valor = null;
     await montarPagina("memoria");
-    expect(screen.getByRole("button", { name: "Guardar memoria" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Guardar" })).toBeTruthy();
     expect(screen.queryByText(/Solo puedes ver esta sección/)).toBeNull();
-    expect(screen.getByLabelText(/Turnos de contexto/).matches(":disabled")).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: /^Avanzado: los números exactos/ }));
+    expect(screen.getByLabelText(/Mensajes que recuerda/).matches(":disabled")).toBe(false);
   });
 
   it("quien tiene permiso de escritura edita", async () => {
     await montarPagina("memoria");
-    expect(screen.getByRole("button", { name: "Guardar memoria" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Guardar" })).toBeTruthy();
   });
 
   it("quien solo puede leer ve el formulario sin guardar y con el aviso", async () => {
     respuestaDeMe.valor = { ...me, role: "colaborador", permissions: { ...me.permissions, settings: "read" } };
     await montarPagina("memoria");
-    expect(screen.queryByRole("button", { name: "Guardar memoria" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Guardar" })).toBeNull();
     expect(screen.getByText(/Solo puedes ver esta sección/)).toBeTruthy();
-    expect(screen.getByLabelText(/Turnos de contexto/).matches(":disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /^Avanzado: los números exactos/ }));
+    expect(screen.getByLabelText(/Mensajes que recuerda/).matches(":disabled")).toBe(true);
   });
 });
