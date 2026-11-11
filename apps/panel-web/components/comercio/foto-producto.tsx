@@ -6,9 +6,12 @@ import { ImageOff, Package } from "lucide-react";
 import { esFotoValida } from "@/lib/foto-producto";
 import { cn } from "@/lib/utils";
 
-const TAMANO = { sm: "h-10 w-10", lg: "h-28 w-28" } as const;
+const TAMANO = { sm: "h-10 w-10", lg: "h-28 w-28", vitrina: "aspect-[4/3] w-full rounded-lg" } as const;
 
-/** Miniatura de la foto del producto (HU-CRM-01). Sin foto o con un link roto, un ícono. */
+/**
+ * Miniatura de la foto del producto (HU-CRM-01). Sin foto o con un link roto, un ícono. `vitrina`
+ * ocupa el ancho de la tarjeta (VEN-06, vista «Vitrina»).
+ */
 export function FotoProducto({
   url,
   nombre,
@@ -28,7 +31,7 @@ export function FotoProducto({
     const Icono = valida ? ImageOff : Package;
     return (
       <span className={marco} role="img" aria-label={valida ? `No se pudo cargar la foto de ${nombre}` : `${nombre} sin foto`}>
-        <Icono className="h-4 w-4" aria-hidden />
+        <Icono className={size === "vitrina" ? "h-8 w-8" : "h-4 w-4"} aria-hidden />
       </span>
     );
   }

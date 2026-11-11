@@ -258,13 +258,21 @@ describe("Agenda en una sola vista (HU-CAL-08)", () => {
 
   it("en /comercio/aliados (oculta, HU-CRM-03) se ven las pestañas de Ventas sin «Aliados»", () => {
     const ventas = pestanasPara("/comercio/aliados", grupos);
-    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Productos", "Categorías", "Promociones", "Pedidos", "Clientes"]);
+    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Pedidos", "Productos", "Categorías", "Promociones", "Clientes"]);
     expect(ventas.ocultas).toEqual(["/comercio/aliados"]);
     expect(migasPara("/comercio/aliados", grupos)).toEqual([
       { label: "Negocio" },
       { label: "Ventas", href: "/comercio" },
       { label: "Aliados" },
     ]);
+  });
+
+  it("con el módulo de aliados encendido (VEN-14), Aliados es una pestaña antes de Clientes", () => {
+    const ventas = pestanasPara("/comercio/aliados", grupos, ["aliados"]);
+    expect(ventas.pestanas.map((p) => p.label)).toEqual(["Resumen", "Pedidos", "Productos", "Categorías", "Promociones", "Aliados", "Clientes"]);
+    expect(ventas.ocultas).toEqual([]);
+    // Un módulo que no es el suyo no la muestra.
+    expect(pestanasPara("/comercio", grupos, ["otro"]).pestanas.map((p) => p.label)).not.toContain("Aliados");
   });
 });
 

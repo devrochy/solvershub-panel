@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
  * Como navegan, son enlaces dentro de un `nav` con `aria-current`, no un `tablist`
  * (ese es `Tabs`, para contenido dentro de la misma página).
  *
- * `size="compact"` es para filas largas (la ficha del agente, HU-UX-09): menos relleno lateral
- * y, si aun así no caben, la fila se desplaza sola hasta la pestaña activa.
+ * `size="compact"` es para filas largas (la ficha del agente, HU-UX-09): menos relleno lateral.
+ * Si no caben (en el celular, casi siempre), la fila se desplaza sola hasta la pestaña activa.
  */
 export function TabLinks({
   label,
@@ -34,7 +34,8 @@ export function TabLinks({
     >
       {items.map((item) => {
         const activa = item.href === current;
-        const Enlace = activa && compacta ? TabLinkActiva : Link;
+        // La activa siempre queda a la vista: en el celular la fila no cabe (VEN-15).
+        const Enlace = activa ? TabLinkActiva : Link;
         return (
           <Enlace
             key={item.href}

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { NAV_GROUPS } from "@/components/shell/nav";
+import { usePestanasOpcionales } from "@/components/shell/pestanas-opcionales";
 import { useShell } from "@/components/shell/shell-context";
 import { Breadcrumbs, type Miga } from "@/components/ui/breadcrumbs";
 import { TabLinks } from "@/components/ui/tab-links";
@@ -37,9 +38,10 @@ function actualDe(pathname: string, items: { href: string }[]): string {
 export function PestanasDeShell({ compactas = false }: { compactas?: boolean }) {
   const pathname = usePathname();
   const shell = useShell();
+  const opcionales = usePestanasOpcionales();
   if (!shell) return null;
   const grupos = gruposVisibles(shell.permisos, NAV_GROUPS, shell.esMaster);
-  const { subgrupos, subgrupoActual, pestanas, ocultas } = pestanasPara(pathname, grupos);
+  const { subgrupos, subgrupoActual, pestanas, ocultas } = pestanasPara(pathname, grupos, opcionales);
   if (subgrupos.length === 0 && pestanas.length === 0) return null;
   // En una página oculta (Bloqueos, Aliados) ninguna pestaña queda marcada.
   const actual = actualDe(pathname, [...pestanas, ...ocultas.map((href) => ({ href }))]);

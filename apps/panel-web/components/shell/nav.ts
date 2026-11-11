@@ -79,6 +79,11 @@ export type NavItem = {
    * por su clave de permiso y las migas la ubican.
    */
   oculta?: boolean;
+  /**
+   * Con `oculta`: módulo opcional del negocio que, encendido, la muestra como pestaña (VEN-14:
+   * Aliados con el módulo de aliados). Lo enciende la sección con `PestanasOpcionales`.
+   */
+  mostrarCon?: string;
   /** Texto en la fila de pestañas, si difiere del nombre de la página (menú, paleta y migas). */
   pestana?: string;
 };
@@ -159,15 +164,16 @@ export const NAV_GROUPS: NavGroupDef[] = [
         ShoppingCart,
         [
           { section: "pack_commerce", label: "Resumen", href: "/comercio", icon: LayoutDashboard, ready: true },
+          // VEN-03: los pedidos son el trabajo de todos los días; van justo después del resumen.
+          { section: "pack_commerce", label: "Pedidos", href: "/comercio/pedidos", icon: ShoppingCart, ready: true },
           { section: "pack_commerce", label: "Productos", href: "/comercio/productos", icon: Package, ready: true },
           { section: "pack_commerce", label: "Categorías", href: "/comercio/categorias", icon: Tags, ready: true },
           { section: "pack_commerce", label: "Promociones", href: "/comercio/promociones", icon: BadgePercent, ready: true },
-          { section: "pack_commerce", label: "Pedidos", href: "/comercio/pedidos", icon: ShoppingCart, ready: true },
+          // HU-CRM-03: los aliados son opcionales por negocio. VEN-14: salen como pestaña solo con el
+          // módulo encendido (`comercio/layout.tsx` lo consulta); apagado, la ruta da 404.
+          { section: "pack_commerce", label: "Aliados", href: "/comercio/aliados", icon: Handshake, ready: true, oculta: true, mostrarCon: "aliados" },
           // HU-CRM-12: clientes con datos de Ventas; la lista exige la sección `leads`.
           { section: "leads", label: "Clientes", href: "/comercio/clientes", icon: Users, ready: true },
-          // HU-CRM-03: los aliados son opcionales por negocio; no sale como pestaña y se entra
-          // desde Productos cuando el master los enciende.
-          { section: "pack_commerce", label: "Aliados", href: "/comercio/aliados", icon: Handshake, ready: true, oculta: true },
         ],
         { pack: "pack_commerce" },
       ),

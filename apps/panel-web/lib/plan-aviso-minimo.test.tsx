@@ -2,7 +2,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-import { ProductDialog } from "@/app/(app)/comercio/productos/_components/product-dialog";
+import { FichaDeProducto } from "@/app/(app)/comercio/productos/_components/ficha-de-producto";
 import { PlanDialog } from "@/app/(app)/suscripciones/planes/_components/plan-dialog";
 import type { PlanOut } from "@/lib/api/types";
 import { violacionesGraves } from "@/lib/testing/axe";
@@ -154,14 +154,22 @@ describe("guardar un plan (HU-SUB-31)", () => {
 });
 
 describe("Productos ya no habla de planes (HU-COM-18)", () => {
-  it("el diálogo de producto no ofrece «Cobro», «Días de prueba» ni el aviso de mínimo", async () => {
-    const dialogo = await abrir(
-      <ProductDialog
-        product={{ id: "p1", name: "Camisa", description: "", category_id: null, price: 80_000, variants: [{ sku: "CAM", stock: 3 }] }}
-        categories={[]}
+  it("la ficha de producto no ofrece «Cobro», «Días de prueba» ni el aviso de mínimo", async () => {
+    render(
+      <FichaDeProducto
+        producto={{
+          id: "p1",
+          name: "Camisa",
+          description: "",
+          category_id: null,
+          price: 80_000,
+          variants: [{ sku: "CAM", attributes: {}, price: 80_000, stock: 3, active: true }],
+        }}
+        categorias={[]}
+        alCerrar="/comercio/productos"
       />,
-      "Editar",
     );
+    const dialogo = await screen.findByRole("dialog");
     expect(within(dialogo).queryByLabelText("Cobro")).toBeNull();
     expect(within(dialogo).queryByLabelText("Días de prueba")).toBeNull();
     expect(within(dialogo).queryByText(/link de pago/)).toBeNull();

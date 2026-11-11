@@ -301,7 +301,9 @@ describe("Comercio › Productos sin planes (HU-COM-18)", () => {
     const Pagina = (await import("@/app/(app)/comercio/productos/page")).default as Pagina;
     await pintar(await Pagina(buscar({ tipo: "planes" })));
     expect(screen.getByRole("table").textContent).toMatch(/Camisa/);
-    expect(screen.getByRole("table").textContent).toMatch(/CAM · .*80\.000 · 4 en stock/);
+    // VEN-06: el inventario en palabras, sin el SKU a la vista.
+    expect(screen.getByRole("table").textContent).toMatch(/4 en stock.*80\.000/);
+    expect(screen.getByRole("table").textContent).not.toMatch(/CAM ·/);
     expect(screen.queryByLabelText("Tipo")).toBeNull();
     expect(screen.queryByText(/Planes \(suscripción\)/)).toBeNull();
     expect(screen.queryByText(/plan mensual|Plan mensual/)).toBeNull();

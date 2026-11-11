@@ -8,6 +8,7 @@
 //   node scripts/backend-de-prueba.mjs            # escucha en :8765
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
+//   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
@@ -276,6 +277,89 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
   respuestas["/admin/collaborators/test-admin-2/permissions"] = permisos({ conversations: "write" });
   for (const id of ["g-1", "g-2", "g-3"]) respuestas[`/admin/collaborators/${id}/permissions`] = permisos({});
   respuestas["/admin/invitations/outgoing"] = [{ id: "inv-1", email: "carla@correo.co", rol: "colaborador", creadaEn: "2026-11-08T15:00:00Z" }];
+}
+
+// COMERCIO=1 (Ventas): una tienda de ropa con catálogo, variantes, categorías anidadas, promociones, pedidos en todos los
+// estados y dos aliados (el módulo de aliados encendido).
+// Pedidos y promociones con estado (COMERCIO=1): filtros, total y cambios que se ven al refrescar.
+let comercio = null;
+if (process.env.COMERCIO === "1") {
+  const C = "/pack/commerce";
+  const cat = (id, name, parent_id = null, sort_order = 0) => ({ id, name, parent_id, sort_order, active: true });
+  const categorias = [cat("cat-ropa", "Ropa", null, 1), cat("cat-camisetas", "Camisetas", "cat-ropa", 1), cat("cat-pantalones", "Pantalones", "cat-ropa", 2), cat("cat-acc", "Accesorios", null, 2), { ...cat("cat-temporada", "Temporada pasada", null, 3), active: false }];
+  const variante = (id, sku, attributes, price, stock, active = true) => ({ id, sku, attributes, price, stock, active });
+  const producto = (id, name, category_id, price, variants, extra = {}) => ({
+    id, name, description: "", category_id, category: categorias.find((c) => c.id === category_id)?.name ?? "", ally_id: null, price, image_url: null, image_url_externa: null, image_key: null, variants, ...extra,
+  });
+  const ALIADO_A = "8f2b1c3a-1d2e-4f50-9a6b-1c2d3e4f5a6b";
+  const ALIADO_B = "9a3c2d4b-2e3f-4a61-8b7c-2d3e4f5a6b7c";
+  const productos = [
+    producto("p-1", "Camiseta básica", "cat-camisetas", 39000, [variante("v-1", "CAM-BAS-S-NEG", { talla: "S", color: "Negro" }, 39000, 12), variante("v-2", "CAM-BAS-M-NEG", { talla: "M", color: "Negro" }, 39000, 3), variante("v-3", "CAM-BAS-L-BLA", { talla: "L", color: "Blanco" }, 39000, 0)], { description: "Algodón peinado, corte recto." }),
+    producto("p-2", "Jean clásico", "cat-pantalones", 129000, [variante("v-4", "JEA-CLA-30", { talla: "30" }, 129000, 7), variante("v-5", "JEA-CLA-32", { talla: "32" }, 129000, 5)]),
+    producto("p-3", "Gorra bordada", "cat-acc", 45000, [variante("v-6", "GOR-BOR-UNI", { talla: "Única" }, 45000, 20)], { ally_id: ALIADO_A }),
+    producto("p-4", "Medias pack x3", "cat-acc", 25000, [variante("v-7", "MED-X3", {}, 25000, 0)], { ally_id: ALIADO_B }),
+    producto("p-5", "Camiseta oversize", "cat-camisetas", 59000, [variante("v-8", "CAM-OVR-M", { talla: "M" }, 59000, 9), variante("v-9", "CAM-OVR-L", { talla: "L" }, 62000, 4, false)]),
+  ];
+  const linea = (name, quantity, unit_price) => ({ name, quantity, unit_price });
+  const pedido = (n, nombre, status, payment_status, total, horas, lineas, extra = {}) => ({
+    id: `o-${n}`, public_order_number: `PED-10${n}`, customer_id: `cli-${n}`, customer_name: nombre, total, status, payment_status, payment_method: "pago_en_linea", delivery_method: "domicilio",
+    delivery_full_name: nombre, delivery_address: "Cra 7 # 45-10, Bogotá", created_at: new Date(Date.now() - horas * 3600_000).toISOString(), line_items: lineas, ...extra,
+  });
+  const pedidos = [
+    pedido(1, "Ana Prueba", "abierto", "pendiente", 207000, 2, [linea("Jean clásico 30", 1, 129000), linea("Camiseta básica S Negro", 2, 39000)]),
+    pedido(2, "Camilo Vega", "abierto", "pagado", 59000, 5, [linea("Camiseta oversize M", 1, 59000)]),
+    pedido(3, "Laura Gómez", "despachado", "pagado", 90000, 28, [linea("Gorra bordada", 2, 45000)]),
+    pedido(4, "Pedro Ruiz", "entregado", "pagado", 129000, 72, [linea("Jean clásico 32", 1, 129000)], { delivery_method: "recoger_en_tienda", payment_method: "efectivo_contraentrega" }),
+    pedido(5, "Marta Díaz", "cancelado", "rechazado", 25000, 96, [linea("Medias pack x3", 1, 25000)]),
+    pedido(6, null, "expirado", "pendiente", 39000, 150, [linea("Camiseta básica M Negro", 1, 39000)], { customer_name: null, delivery_full_name: null }),
+  ];
+  respuestas[`${C}/categories`] = categorias;
+  respuestas[`${C}/products`] = productos;
+  respuestas[`${C}/modulos`] = { aliados: true };
+  respuestas[`${C}/allies`] = [
+    { id: ALIADO_A, name: "Taller Bordados Ruiz", contact_info: { contacto: "Jorge Ruiz", telefono: "+57 310 555 0101", email: "jorge@bordados.co" }, active: true, products: 1, created_at: "2026-09-01T10:00:00Z" },
+    { id: ALIADO_B, name: "Medias del Norte", contact_info: { telefono: "+57 300 555 0202" }, active: false, products: 1, created_at: "2026-08-15T10:00:00Z" },
+  ];
+  respuestas[`${C}/promotions`] = [
+    { id: "pr-1", type: "temporada", rules: { label: "Día sin IVA", discount_pct: 19 }, active: true, valid_from: "2026-11-20T00:00:00Z", valid_to: "2026-11-21T23:59:00Z", category_id: "cat-ropa", product_id: null, include_child_categories: true, eligible_segments: null },
+    { id: "pr-2", type: "volumen", rules: { label: "Lleva más, paga menos", tiers: [{ min: 3, max: 5, discount_pct: 10 }, { min: 6, discount_pct: 15 }] }, active: true, valid_from: null, valid_to: null, category_id: null, product_id: "p-1", include_child_categories: false, eligible_segments: null },
+    { id: "pr-3", type: "campaña", rules: { label: "Bienvenida", discount_pct: 10, once_per_customer: true }, active: false, valid_from: null, valid_to: null, category_id: null, product_id: null, include_child_categories: false, eligible_segments: ["nuevo"] },
+  ];
+  respuestas[`${C}/orders`] = pedidos;
+  comercio = (metodo, ruta, url, cuerpo) => {
+    if (metodo === "GET" && ruta === `${C}/orders`) {
+      const q = (url.searchParams.get("q") ?? "").toLowerCase();
+      const filtrados = pedidos.filter(
+        (o) =>
+          (!url.searchParams.get("estado") || o.status === url.searchParams.get("estado")) &&
+          (!url.searchParams.get("pago") || o.payment_status === url.searchParams.get("pago")) &&
+          (!url.searchParams.get("customer_id") || o.customer_id === url.searchParams.get("customer_id")) &&
+          (!q || o.public_order_number.toLowerCase().includes(q) || (o.customer_name ?? "").toLowerCase().includes(q)),
+      );
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      const limit = Number(url.searchParams.get("limit") ?? 200);
+      return [200, filtrados.slice(offset, offset + limit), { "X-Total-Count": String(filtrados.length) }];
+    }
+    const estado = ruta.match(new RegExp(`^${C}/orders/([^/]+)/status$`));
+    if (metodo === "POST" && estado) {
+      const pedido = pedidos.find((o) => o.id === decodeURIComponent(estado[1]));
+      if (pedido && cuerpo.status) pedido.status = cuerpo.status;
+      return [pedido ? 204 : 404, null];
+    }
+    const alternar = ruta.match(new RegExp(`^${C}/promotions/([^/]+)/toggle$`));
+    if (metodo === "POST" && alternar) {
+      const promo = respuestas[`${C}/promotions`].find((x) => x.id === decodeURIComponent(alternar[1]));
+      if (promo) promo.active = !promo.active;
+      return [promo ? 204 : 404, null];
+    }
+    return null;
+  };
+  respuestas[`${C}/dashboard`] = {
+    kpi: { leads: 42, products: productos.length, promotions: 2, orders: pedidos.length },
+    recent_orders: pedidos.slice(0, 5).map((o) => ({ id: o.id, public_order_number: o.public_order_number, total: o.total, status: o.status, created_at: o.created_at })),
+  };
+  respuestas["/admin/me"] = { ...respuestas["/admin/me"], permissions: { ...(respuestas["/admin/me"].permissions ?? {}), pack_commerce: "write" } };
+  respuestas["/admin/datos-de-prueba/ventas"] = { modulo: "ventas", titulo: "Ventas", disponible: false, motivo: "Tu negocio ya tiene productos.", falta_descripcion: false, lote: null };
 }
 
 // Mensajes fallidos (/dlq): dos mensajes que agotaron sus reintentos y un evento de pago sin entregar.
@@ -988,6 +1072,17 @@ createServer(async (req, res) => {
     if (r) {
       res.statusCode = r[0];
       res.end(JSON.stringify(r[1]));
+      return;
+    }
+  }
+  if (comercio && ruta.startsWith("/pack/commerce/")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = comercio(req.method ?? "GET", ruta, url, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      for (const [k, v] of Object.entries(r[2] ?? {})) res.setHeader(k, v);
+      res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
   }

@@ -119,15 +119,19 @@ export type Pestana = { href: string; label: string };
  * (`subgrupoActual` es la del subgrupo de la página) y `pestanas` son las del subgrupo actual. Cada fila solo se muestra si tiene más de una.
  * Las páginas `oculta` no salen como pestaña, aunque se esté en ellas: `ocultas` trae sus rutas
  * para no marcar otra pestaña por prefijo (en `/comercio/aliados`, «Resumen» es `/comercio`).
+ * Una oculta con `mostrarCon` sale como pestaña si su módulo está en `opcionales` (VEN-14).
  */
 export function pestanasPara(
   pathname: string,
   grupos: GrupoVisible[],
+  opcionales: readonly string[] = [],
 ): { subgrupos: Pestana[]; subgrupoActual: string | null; pestanas: Pestana[]; ocultas: string[] } {
   const vacio = { subgrupos: [], subgrupoActual: null, pestanas: [], ocultas: [] };
   const activo = itemActivo(pathname, grupos);
   if (!activo?.tab || !activo.item.tabs) return vacio;
-  const tabs = activo.item.tabs.filter((tab) => tab.ready && !tab.oculta);
+  const visible = (tab: { oculta?: boolean; mostrarCon?: string }) =>
+    !tab.oculta || (tab.mostrarCon !== undefined && opcionales.includes(tab.mostrarCon));
+  const tabs = activo.item.tabs.filter((tab) => tab.ready && visible(tab));
   const subs = [...new Set(tabs.map((tab) => tab.sub))];
   const subgrupos =
     subs.length > 1
@@ -141,6 +145,6 @@ export function pestanasPara(
     subgrupos,
     subgrupoActual: subgrupos.length ? (hermanas[0]?.href ?? null) : null,
     pestanas: hermanas.length > 1 ? hermanas.map((tab) => ({ href: tab.href, label: tab.pestana ?? tab.label })) : [],
-    ocultas: activo.item.tabs.filter((tab) => tab.oculta).map((tab) => tab.href),
+    ocultas: activo.item.tabs.filter((tab) => !visible(tab)).map((tab) => tab.href),
   };
 }

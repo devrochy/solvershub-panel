@@ -259,6 +259,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Nada técnico a la vista: el horario se elige por día (`EditorDeFranjas`), la memoria y la temperatura en palabras con los números exactos en «Avanzado», la moneda de una lista y los rangos cortos con puntos. AgentSpec y proveedor solo lo ve el master.
 - Mensajes fallidos dice el mensaje y cuándo llegó (sin ids de WhatsApp ni del negocio) y nombra los avisos del sistema (`lib/fallidos.ts`); cada fila tiene «Reintentar» con texto.
 
+## Ventas (SPEC-29)
+
+- Todo en palabras (`lib/ventas.ts`): «Hoy, 5:30 p. m.», «3 variantes · 15 en stock», «19 % en Ropa · del 20 al 21 de nov.». Nada de SKU, letra de código ni valores de la API a la vista; el código de un producto va en «Avanzado» de su ficha.
+- El resumen muestra lo que pide acción (por despachar, pago pendiente, agotados) y lo vendido en el mes; cada cifra abre su lista filtrada.
+- Un pedido se abre en un cajón (`?pedido=`) con un solo botón para el paso siguiente; los demás cambios de estado van en «Más acciones» y cancelar pide confirmación. Pedidos tiene un solo filtro (control segmentado) y una búsqueda que filtra mientras se escribe.
+- Dos formas de ver: Productos y Categorías en lista o vitrina (tarjetas con foto; en la vitrina de productos, la promoción vigente), Pedidos en lista o por etapa. La vista viaja en `?vista=` y se recuerda en este navegador (`lib/vista-guardada.ts`); los enlaces solo la escriben cuando difiere de la guardada.
+- Productos, promociones, categorías y aliados se editan en un cajón o diálogo que vive en la URL. Las acciones de fila van en «Más acciones», nunca como íconos sueltos; borrar dice qué pasa con lo que depende de eso.
+- Aliados es pestaña solo con el módulo encendido: `comercio/layout.tsx` lo consulta y las pestañas `oculta` con `mostrarCon` salen con `PestanasOpcionales`.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |
