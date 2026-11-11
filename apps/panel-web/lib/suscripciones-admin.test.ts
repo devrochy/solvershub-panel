@@ -142,7 +142,7 @@ describe("acciones: la confirmación explica la consecuencia", () => {
   it("reenviar el link dice por dónde sale y qué pasa sin WhatsApp", () => {
     const c = confirmacionDeReenvio({ periodo: "2026-10", monto: 200000 }, "Ana");
     expect(c.description).toMatch(/WhatsApp/);
-    expect(c.description).toMatch(/2026-10/);
+    expect(c.description).toMatch(/cobro de octubre de 2026/);
     expect(mensajeDeReenvio({ enviado: true })).toMatch(/salió por WhatsApp/);
     expect(mensajeDeReenvio({ enviado: false, motivo: "sin_conversacion_whatsapp" })).toMatch(/copia el link/);
   });
@@ -175,7 +175,7 @@ describe("permisos y planes", () => {
     expect(mensajeDePagoRegistrado({ estado: "ya_registrado", suscripcion_estado: "activa" })).toMatch(/ya estaba registrado/);
     expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "activa" })).toMatch(/está activa/);
     expect(mensajeDePagoRegistrado({ estado: "registrado", suscripcion_estado: "pausada" })).toBe("Pago registrado.");
-    expect(descripcionDeRegistroDePago({ periodo: "2026-10", monto: 200000, moneda: "COP" }, "Ana")).toMatch(/2026-10 de Ana/);
+    expect(descripcionDeRegistroDePago({ periodo: "2026-10", monto: 200000, moneda: "COP" }, "Ana")).toMatch(/cobro de octubre de 2026 de Ana/);
   });
 });
 
@@ -220,5 +220,69 @@ describe("inscripción pendiente de pago (SPEC-43, HU-SUB-31)", () => {
     expect(textoDeDescuentoVigente({ mrr_descuento: 25000, suscripciones_con_descuento: 1 }, "COP")).toMatch(/en 1 suscripción\./);
     expect(textoDeDescuentoVigente({ mrr_descuento: 0, suscripciones_con_descuento: 0 }, "COP")).toBeNull();
     expect(textoDeDescuentoVigente({}, "COP")).toBeNull();
+  });
+});
+
+describe("en palabras (SUS)", () => {
+  const base = { estado: "activa", deuda: 0, en_mora: 0, dias_mora: null, proximo_cargo: "2026-11-23", trial_termina: null, valor_periodo: 99000, moneda: "COP" };
+
+  it("un solo estado por suscripción", async () => {
+    const { situacion } = await import("@/lib/suscripciones-admin");
+    expect(situacion({ estado: "pausada", motivo_pausa: "mora" })).toBe("pausada_mora");
+    expect(situacion({ estado: "pausada", motivo_pausa: "cliente" })).toBe("pausada_negocio");
+    expect(situacion({ estado: "activa" })).toBe("activa");
+  });
+
+  it("la línea dice lo que debe o qué sigue", async () => {
+    const { lineaDeSuscripcion } = await import("@/lib/suscripciones-admin");
+    expect(lineaDeSuscripcion(base)).toBe("Próximo cobro el 23 de nov.");
+    expect(lineaDeSuscripcion({ ...base, deuda: 198000, en_mora: 198000, dias_mora: 38 })).toMatch(/^Debe .*198\.000 · 38 días de mora$/);
+    expect(lineaDeSuscripcion({ ...base, estado: "pendiente_pago" }, 30000)).toMatch(/^Espera .*30\.000 para empezar$/);
+    expect(lineaDeSuscripcion({ ...base, estado: "trialing", trial_termina: "2026-11-15" })).toBe("La prueba termina el 15 de nov.");
+    expect(lineaDeSuscripcion({ ...base, estado: "cancelada", proximo_cargo: null })).toBe("Ya no se cobra");
+  });
+
+  it("cómo se pagó, la mora por tramos y cuánto se quedan", async () => {
+    const { comoPago, tramosEnUnaLinea, retencionPorPlan } = await import("@/lib/suscripciones-admin");
+    expect(comoPago({ canal: "wompi" })).toBe("Pagó con Wompi");
+    expect(comoPago({ canal: "efectivo" })).toBe("Pagó en efectivo");
+    expect(comoPago({ canal: "nequi" })).toBe("Pagó por nequi");
+    expect(comoPago(null)).toBeNull();
+    expect(tramosEnUnaLinea([{ etiqueta: "1 a 30 días", cargos: 2 }, { etiqueta: "31 a 60 días", cargos: 0 }, { etiqueta: "Más de 60 días", cargos: 1 }])).toBe(
+      "2 cobros de 1 a 30 días · 1 cobro de más de 60 días",
+    );
+    expect(
+      retencionPorPlan([
+        { plan: "Pro", altas: 2, vigentes: 1 },
+        { plan: "Básico", altas: 4, vigentes: 4 },
+        { plan: "Pro", altas: 1, vigentes: 1 },
+      ]),
+    ).toEqual(["Básico: 4 de 4 siguen", "Pro: 2 de 3 siguen"]);
+  });
+
+  it("el código de un plan sale de su nombre", async () => {
+    const { codigoDesdeNombre } = await import("@/lib/suscripciones-admin");
+    expect(codigoDesdeNombre("Pro anual")).toBe("pro_anual");
+    expect(codigoDesdeNombre("  Básico (Niños) ")).toBe("basico_ninos");
+  });
+
+  it("la frase de la ficha no duplica el punto de las abreviaturas", async () => {
+    const { fraseDeLaSuscripcion } = await import("@/lib/suscripciones-admin");
+    const s = { ...base, motivo_pausa: null, cargos_pendientes: 0, fecha_cancelacion: null };
+    expect(fraseDeLaSuscripcion(s)).toBe("Al día. El próximo cobro es el 23 de nov.");
+    expect(
+      fraseDeLaSuscripcion({ ...s, estado: "pausada", motivo_pausa: "mora", deuda: 198000, cargos_pendientes: 2, en_mora: 198000, dias_mora: 38 }, "2026-11-03T10:00:00Z"),
+    ).toMatch(/^Se pausó el 3 de nov\. porque no pagó\. Debe .*198\.000 de 2 cobros; el más viejo venció hace 38 días\.$/);
+  });
+
+  it("Pagos empieza por lo que hay que cobrar", async () => {
+    const { vistaDePagos } = await import("@/lib/suscripciones-admin");
+    expect(vistaDePagos({})).toBe("por_cobrar");
+    expect(consultaPagos({}).get("estado")).toBe("pendiente");
+    expect(vistaDePagos({ vencidos: "1" })).toBe("vencidos");
+    expect(vistaDePagos({ estado: "pagado" })).toBe("pagados");
+    expect(vistaDePagos({ ver: "todos" })).toBe("todos");
+    expect(consultaPagos({ ver: "todos" }).has("estado")).toBe(false);
+    expect(vistaDePagos({ suscripcion_id: "x" })).toBe("todos");
   });
 });

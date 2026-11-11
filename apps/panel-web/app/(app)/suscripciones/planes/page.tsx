@@ -1,18 +1,23 @@
 import { AccionesDePlan } from "@/app/(app)/suscripciones/planes/_components/acciones-de-plan";
-import { PlanDialog } from "@/app/(app)/suscripciones/planes/_components/plan-dialog";
+import { EditorDePlan, PlanDialog } from "@/app/(app)/suscripciones/planes/_components/plan-dialog";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { StatusBadge } from "@/components/domain/status-badge";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
-import { Badge } from "@/components/ui/badge";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import type { Column } from "@/components/ui/data-table";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
 import type { Me, MinimoPagoEnLineaOut, PlanOut } from "@/lib/api/types";
-import { formatMoney } from "@/lib/format";
-import { PLAN_ESTADO, estadoDelPlan, textoDePrueba } from "@/lib/planes";
-import { periodicidadLabel, puedeAdministrar } from "@/lib/suscripciones-admin";
+import { PLAN_ESTADO, estadoDelPlan, precioEnPalabras, textoDePrueba } from "@/lib/planes";
+import { puedeAdministrar } from "@/lib/suscripciones-admin";
 
 export const metadata = { title: "Planes" };
 
-export default async function PlanesPage() {
+/**
+ * Planes (SUS-10): cada fila dice qué incluye, cuánto y cada cuánto; la fila abre su editor
+ * (`?plan=`) y dejar de ofrecer o eliminar van en «Más acciones». Sin código a la vista.
+ */
+export default async function PlanesPage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
+  const sp = await searchParams;
   const [res, me, minimoRes, moneda] = await Promise.all([
     apiFetch<PlanOut[]>("/pack/pack_subscriptions/planes?incluir_inactivos=true"),
     apiFetch<Me>("/admin/me"),
@@ -22,7 +27,21 @@ export default async function PlanesPage() {
   ]);
   const puedeEscribir = me.ok && puedeAdministrar(me.data);
   const minimo = minimoRes.ok ? minimoRes.data : null;
-  const planes = res.ok ? res.data : [];
+  const header = {
+    title: "Planes",
+    helpSection: "subscriptions",
+    actions: puedeEscribir ? <PlanDialog minimo={minimo} moneda={moneda} /> : undefined,
+  };
+  if (!res.ok) {
+    return (
+      <ListPage header={header}>
+        <ErrorDeCarga titulo="No pudimos cargar los planes" detalle={res.error} />
+      </ListPage>
+    );
+  }
+  const planes = res.data;
+  const elegido = puedeEscribir && sp.plan ? planes.find((p) => p.id === sp.plan) : undefined;
+  const editarHref = (p: PlanOut) => `/suscripciones/planes?plan=${p.id}`;
 
   const columns: Column<PlanOut>[] = [
     {
@@ -30,32 +49,30 @@ export default async function PlanesPage() {
       header: "Plan",
       cell: (p) => (
         <div className="flex min-w-0 flex-col">
-          <span className="text-headline">{p.nombre}</span>
-          <span className="font-mono text-xs text-text-soft">{p.codigo}</span>
+          <span className="font-medium text-headline">{p.nombre}</span>
           {p.descripcion && <span className="text-xs text-text-soft">{p.descripcion}</span>}
         </div>
       ),
     },
+    { key: "precio", header: "Precio", cell: (p) => <span className="whitespace-nowrap tabular-nums">{precioEnPalabras(p)}</span> },
+    { key: "prueba", header: "Prueba", cell: (p) => textoDePrueba(p) },
     {
-      key: "precio",
-      header: "Precio",
-      align: "right",
+      key: "estado",
+      header: "Estado",
       cell: (p) => (
-        <span className="tabular-nums">{p.precio > 0 ? formatMoney(p.precio, p.moneda) : <Badge variant="accent">Gratis</Badge>}</span>
+        <span className="whitespace-nowrap">
+          <StatusBadge value={estadoDelPlan(p)} map={PLAN_ESTADO} />
+        </span>
       ),
     },
-    { key: "periodicidad", header: "Periodicidad", cell: (p) => periodicidadLabel(p.periodicidad) },
-    { key: "prueba", header: "Prueba", cell: (p) => textoDePrueba(p) },
-    { key: "estado", header: "Estado", cell: (p) => <StatusBadge value={estadoDelPlan(p)} map={PLAN_ESTADO} /> },
     ...(puedeEscribir
       ? [
           {
             key: "acciones",
-            header: "Acciones",
+            header: <span className="sr-only">Acciones</span>,
             align: "right" as const,
             cell: (p: PlanOut) => (
-              <div className="flex items-center justify-end gap-1">
-                <PlanDialog plan={p} minimo={minimo} moneda={moneda} />
+              <div className="relative z-10 flex justify-end">
                 <AccionesDePlan plan={p} />
               </div>
             ),
@@ -65,18 +82,21 @@ export default async function PlanesPage() {
   ];
 
   return (
-    <ListPage
-      header={{
-        title: "Planes",
-        description: "Lo que ofreces y cobras por suscripción: precio, periodicidad y prueba de cada plan.",
-        helpSection: "subscriptions",
-        actions: puedeEscribir ? <PlanDialog minimo={minimo} moneda={moneda} /> : undefined,
-      }}
-    >
-      <DataTable
+    <ListPage header={header}>
+      <TablaResponsiva
+        etiqueta="Planes de suscripción"
         columns={columns}
         rows={planes}
         getRowKey={(p) => p.id}
+        getRowHref={puedeEscribir ? editarHref : undefined}
+        getRowLabel={(p) => `Editar ${p.nombre}`}
+        scrollAlAbrir={false}
+        filaCelular={(p) => ({
+          titulo: p.nombre,
+          detalle: `${precioEnPalabras(p)} · ${p.trial_dias > 0 ? `${textoDePrueba(p)} de prueba` : "sin prueba"}${p.activo ? "" : " · no se ofrece"}`,
+          accion: puedeEscribir ? <AccionesDePlan plan={p} /> : undefined,
+          href: puedeEscribir ? editarHref(p) : undefined,
+        })}
         emptyTitle="Todavía no tienes planes"
         emptyDescription={
           puedeEscribir
@@ -84,9 +104,9 @@ export default async function PlanesPage() {
             : "Quien administra el negocio puede crear el primero."
         }
         emptyAction={puedeEscribir ? <PlanDialog minimo={minimo} moneda={moneda} /> : undefined}
-        error={res.ok ? null : `No se pudieron cargar los planes: ${res.error}`}
         caption="Planes de suscripción"
       />
+      {elegido && <EditorDePlan plan={elegido} minimo={minimo} moneda={moneda} />}
     </ListPage>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { Power, Trash2 } from "lucide-react";
+import { Pencil, Power, Trash2 } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { useConfirm } from "@/components/ui/confirm";
-import { IconAction } from "@/components/ui/icon-action";
+import { DropdownMenuItem, DropdownMenuLinkItem } from "@/components/ui/dropdown-menu";
 import type { PlanOut } from "@/lib/api/types";
 import {
   ACCION_DE_PLAN_EXITO,
@@ -16,7 +17,7 @@ import { useAction } from "@/lib/use-action";
 /**
  * Activar, desactivar y eliminar un plan (HU-SUB-31). Desactivar lo deja de ofrecer pero se puede
  * volver a activar; eliminar es el borrado lógico del servidor. En ambos, quienes ya están inscritos
- * siguen cobrándose, y la confirmación lo dice.
+ * siguen cobrándose, y la confirmación lo dice. Van en «Más acciones» con «Editar» (SUS-10).
  */
 export function AccionesDePlan({ plan }: { plan: PlanOut }) {
   const confirm = useConfirm();
@@ -41,18 +42,21 @@ export function AccionesDePlan({ plan }: { plan: PlanOut }) {
   }
 
   return (
-    <>
-      <IconAction
-        label={plan.activo ? `Desactivar ${plan.nombre}` : `Activar ${plan.nombre}`}
-        tone={plan.activo ? "neutro" : "aprobar"}
-        onClick={() => ejecutar(plan.activo ? "desactivar" : "activar")}
+    <MenuDeFila etiqueta={`Más acciones de ${plan.nombre}`}>
+      <DropdownMenuLinkItem href={`/suscripciones/planes?plan=${plan.id}`} scroll={false}>
+        <Pencil aria-hidden className="h-4 w-4 text-text-soft" />
+        Editar
+      </DropdownMenuLinkItem>
+      <DropdownMenuItem
+        icon={<Power aria-hidden />}
+        onSelect={() => void ejecutar(plan.activo ? "desactivar" : "activar")}
         disabled={pending}
       >
-        <Power className="h-4 w-4" aria-hidden />
-      </IconAction>
-      <IconAction label={`Eliminar ${plan.nombre}`} tone="eliminar" onClick={() => ejecutar("eliminar")} disabled={pending}>
-        <Trash2 className="h-4 w-4" aria-hidden />
-      </IconAction>
-    </>
+        {plan.activo ? "Dejar de ofrecer" : "Volver a ofrecer"}
+      </DropdownMenuItem>
+      <DropdownMenuItem tone="danger" icon={<Trash2 aria-hidden />} onSelect={() => void ejecutar("eliminar")} disabled={pending}>
+        Eliminar plan
+      </DropdownMenuItem>
+    </MenuDeFila>
   );
 }

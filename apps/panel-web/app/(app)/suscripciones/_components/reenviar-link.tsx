@@ -2,24 +2,21 @@
 
 import { Send } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
-import { IconAction } from "@/components/ui/icon-action";
 import type { ReenvioLinkOut } from "@/lib/api/types";
 import { confirmacionDeReenvio, mensajeDeReenvio } from "@/lib/suscripciones-admin";
 import { useAction } from "@/lib/use-action";
 
+export type CargoParaAccion = { id: string; periodo: string; monto: number; moneda?: string | null };
+
 /**
  * Reenvía al cliente el link de pago de un cobro pendiente (HU-SUB-20). Si el cliente no tiene
  * una conversación de WhatsApp el servidor no envía nada y devuelve el link: se copia al
- * portapapeles para que el negocio lo comparta por otro medio.
+ * portapapeles para que el negocio lo comparta por otro medio. Hook aparte para usarlo desde un
+ * menú (SUS-08) sin que la acción dependa de que el menú siga abierto.
  */
-export function ReenviarLink({
-  cargo,
-  cliente,
-}: {
-  cargo: { id: string; periodo: string; monto: number; moneda?: string | null };
-  cliente: string;
-}) {
+export function useReenviarLink(cargo: CargoParaAccion, cliente: string) {
   const confirm = useConfirm();
   const { run, pending } = useAction({ refresh: false });
 
@@ -50,9 +47,16 @@ export function ReenviarLink({
     });
   }
 
+  return { reenviar, pending };
+}
+
+/** El botón «Reenviar link», con el nombre del cliente para lectores de pantalla. */
+export function ReenviarLink({ cargo, cliente }: { cargo: CargoParaAccion; cliente: string }) {
+  const { reenviar, pending } = useReenviarLink(cargo, cliente);
   return (
-    <IconAction label={`Reenviar link de pago a ${cliente}`} tone="editar" onClick={reenviar} disabled={pending}>
+    <Button type="button" variant="outline" size="sm" aria-label={`Reenviar link de pago a ${cliente}`} onClick={reenviar} disabled={pending}>
       <Send className="h-4 w-4" aria-hidden />
-    </IconAction>
+      Reenviar link
+    </Button>
   );
 }

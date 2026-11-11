@@ -108,6 +108,25 @@ describe("guardar un plan (HU-SUB-31)", () => {
     });
   });
 
+  it("un plan nuevo toma su código del nombre, en «Avanzado» (SUS-10)", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 201, json: async () => ({}) });
+    const dialogo = await abrir(<PlanDialog minimo={null} moneda="COP" />, "Nuevo plan");
+    fireEvent.change(within(dialogo).getByLabelText(/^Nombre/), { target: { value: "Pro anual" } });
+    expect((within(dialogo).getByLabelText(/^Código/) as HTMLInputElement).value).toBe("pro_anual");
+    expect(within(dialogo).getByText("Avanzado")).toBeTruthy();
+    fireEvent.change(within(dialogo).getByLabelText("Precio (COP)"), { target: { value: "990000" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Guardar plan" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ codigo: "pro_anual", nombre: "Pro anual" });
+  });
+
+  it("renombrar un plan que existe no cambia su código", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    const dialogo = await abrir(<PlanDialog plan={plan(200_000, "mensual")} minimo={null} />);
+    fireEvent.change(within(dialogo).getByLabelText(/^Nombre/), { target: { value: "Plan Pro Plus" } });
+    expect((within(dialogo).getByLabelText(/^Código/) as HTMLInputElement).value).toBe("PRO");
+  });
+
   it("editar usa PUT al plan y devuelve lo que el formulario no muestra", async () => {
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     const dialogo = await abrir(<PlanDialog plan={plan(200_000, "mensual")} minimo={sandbox} />);

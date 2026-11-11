@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
 
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
 import { ConfirmarPago } from "@/app/(app)/suscripciones/_components/confirmar-pago";
 import { FiltrosSuscripciones } from "@/app/(app)/suscripciones/_components/filtros";
-import { StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { StatusBadge, SUBSCRIPTION_SITUATION } from "@/components/domain/status-badge";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { IconAction } from "@/components/ui/icon-action";
+import type { Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
 import { apiFetch } from "@/lib/api/server";
 import type {
@@ -18,23 +18,29 @@ import type {
   SuscripcionItem,
   SuscripcionesPage,
 } from "@/lib/api/types";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import {
-  MOTIVO_PAUSA_LABEL,
   conQuery,
   consultaSuscripciones,
   enlaceDePagina,
+  lineaDeSuscripcion,
   montosDeInscripcion,
   nombreDelCliente,
   opcionesDePlanes,
   periodicidadLabel,
   puedeAdministrar,
-  textoDeMora,
+  situacion,
   type FiltrosSuscripciones as Filtros,
 } from "@/lib/suscripciones-admin";
 
 export const metadata = { title: "Suscripciones" };
 
+const cabecera = { title: "Suscripciones", helpSection: "subscriptions" };
+
+/**
+ * Lista de suscripciones (SUS-05, SUS-06): filtra al tocar, la fila abre la suscripción, el estado
+ * dice una sola cosa y la línea de la derecha dice lo que debe o qué sigue. En el celular, filas.
+ */
 export default async function SuscripcionesListaPage({ searchParams }: { searchParams: Promise<Filtros> }) {
   const sp = await searchParams;
   const qs = consultaSuscripciones(sp);
@@ -45,9 +51,15 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
     apiFetch<Me>("/admin/me"),
   ]);
-  const { items, page, has_more, total } = res.ok
-    ? res.data
-    : { items: [] as SuscripcionItem[], page: 1, has_more: false, total: 0 };
+  const filtros = <FiltrosSuscripciones planes={planes.ok ? opcionesDePlanes(planes.data) : []} />;
+  if (!res.ok) {
+    return (
+      <ListPage header={cabecera} filters={filtros}>
+        <ErrorDeCarga titulo="No pudimos cargar las suscripciones" detalle={res.error} />
+      </ListPage>
+    );
+  }
+  const { items, page, has_more, total } = res.data;
   const puedeEscribir = me.ok && puedeAdministrar(me.data);
   // El cargo de la inscripción no cuenta en «Debe» (solo cobros de período): se busca aparte, y solo
   // si hay inscripciones esperando pago en esta página.
@@ -58,6 +70,16 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
       )
     : null;
   const montos = montosDeInscripcion(cargosDeInscripcion?.ok ? cargosDeInscripcion.data.items : []);
+  const linea = (s: SuscripcionItem) => lineaDeSuscripcion(s, montos.get(s.id));
+  const confirmar = (s: SuscripcionItem) =>
+    puedeEscribir && s.estado === "pendiente_pago" ? (
+      <ConfirmarPago
+        suscripcionId={s.id}
+        plan={s.plan}
+        cliente={nombreDelCliente(s.cliente)}
+        cargo={{ monto: montos.get(s.id) ?? s.valor_periodo, moneda: s.moneda, tipo: "inscripcion" }}
+      />
+    ) : null;
 
   const columns: Column<SuscripcionItem>[] = [
     {
@@ -65,9 +87,7 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
       header: "Cliente",
       cell: (s) => (
         <div className="flex min-w-0 flex-col">
-          <Link href={`/suscripciones/lista/${s.id}`} className="truncate font-medium text-link hover:underline">
-            {nombreDelCliente(s.cliente)}
-          </Link>
+          <span className="truncate font-medium text-headline">{nombreDelCliente(s.cliente)}</span>
           {s.cliente.telefono && s.cliente.nombre && (
             <span className="truncate text-xs text-text-soft">{s.cliente.telefono}</span>
           )}
@@ -80,7 +100,9 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
       cell: (s) => (
         <div className="flex flex-col">
           <span className="text-headline">{s.plan}</span>
-          <span className="text-xs text-text-soft">{periodicidadLabel(s.periodicidad)}</span>
+          <span className="text-xs text-text-soft">
+            {periodicidadLabel(s.periodicidad)} · {formatMoney(s.valor_periodo, s.moneda)}
+          </span>
         </div>
       ),
     },
@@ -88,94 +110,68 @@ export default async function SuscripcionesListaPage({ searchParams }: { searchP
       key: "estado",
       header: "Estado",
       cell: (s) => (
-        <div className="flex flex-col items-start gap-1">
-          <StatusBadge value={s.estado} map={SUBSCRIPTION_STATUS} />
-          {s.estado === "pausada" && s.motivo_pausa && (
-            <span className="text-xs text-text-soft">{MOTIVO_PAUSA_LABEL[s.motivo_pausa] ?? s.motivo_pausa}</span>
-          )}
-          {s.estado === "pendiente_pago" && (
-            <span className="text-xs text-text-soft">Espera {formatMoney(montos.get(s.id) ?? s.valor_periodo, s.moneda)}</span>
-          )}
-        </div>
+        <span className="whitespace-nowrap">
+          <StatusBadge value={situacion(s)} map={SUBSCRIPTION_SITUATION} />
+        </span>
       ),
     },
     {
-      key: "valor",
-      header: "Valor",
-      align: "right",
-      cell: (s) => <span className="tabular-nums">{formatMoney(s.valor_periodo, s.moneda)}</span>,
-    },
-    {
-      key: "proximo",
-      header: "Próximo cobro",
-      info: "Cuándo se genera el siguiente cobro. Vacío si está pausada, cancelada o en prueba sin cobro.",
-      cell: (s) => <span className="tabular-nums">{s.proximo_cargo ? formatDate(s.proximo_cargo) : "—"}</span>,
-    },
-    {
-      key: "debe",
-      header: "Debe",
-      align: "right",
-      info: "Suma de los cobros del período que están pendientes. Si ya vencieron, se indica la mora.",
-      cell: (s) => (
-        <div className="flex flex-col items-end">
-          <span className="tabular-nums text-headline">{s.deuda ? formatMoney(s.deuda, s.moneda) : "—"}</span>
-          {s.en_mora > 0 && <span className="text-xs text-status-danger-fg">{textoDeMora(s.dias_mora)}</span>}
-        </div>
-      ),
+      key: "sigue",
+      header: "Qué sigue",
+      cell: (s) => <span className={s.en_mora > 0 ? "text-status-danger-fg" : "text-body"}>{linea(s)}</span>,
     },
     {
       key: "acciones",
-      header: "Acciones",
+      header: <span className="sr-only">Acciones</span>,
       align: "right",
-      cell: (s) => (
-        <div className="flex items-center justify-end gap-1">
-          {puedeEscribir && s.estado === "pendiente_pago" && (
-            <ConfirmarPago
-              suscripcionId={s.id}
-              plan={s.plan}
-              cliente={nombreDelCliente(s.cliente)}
-              cargo={{ monto: montos.get(s.id) ?? s.valor_periodo, moneda: s.moneda, tipo: "inscripcion" }}
-            />
-          )}
-          <IconAction href={`/suscripciones/lista/${s.id}`} label={`Ver suscripción de ${nombreDelCliente(s.cliente)}`} tone="ver">
-            <Eye className="h-4 w-4" aria-hidden />
-          </IconAction>
-        </div>
-      ),
+      cell: (s) => <div className="relative z-10 flex justify-end">{confirmar(s)}</div>,
     },
   ];
 
+  const deUnCliente = sp.cliente_id ? items[0]?.cliente : undefined;
+
   return (
-    <ListPage
-      header={{
-        title: "Suscripciones",
-        description: "Los clientes que pagan un plan cada periodo: su estado, el próximo cobro y lo que deben.",
-        helpSection: "subscriptions",
-      }}
-      filters={
-        <FiltrosSuscripciones sp={sp} planes={planes.ok ? opcionesDePlanes(planes.data) : []} />
-      }
-    >
+    <ListPage header={cabecera} filters={filtros}>
       <AvisoDeAlcance proveedor={proveedor.ok ? proveedor.data : null} />
-      <DataTable
+      {sp.cliente_id && (
+        <p className="text-sm text-body">
+          Solo las suscripciones de {deUnCliente ? nombreDelCliente(deUnCliente) : "un cliente"}.{" "}
+          <Link href="/suscripciones/lista" className="text-link hover:underline">
+            Ver todas
+          </Link>
+        </p>
+      )}
+      <TablaResponsiva
+        etiqueta="Suscripciones"
         columns={columns}
         rows={items}
         getRowKey={(s) => s.id}
+        getRowHref={(s) => `/suscripciones/lista/${s.id}`}
+        getRowLabel={(s) => `Abrir la suscripción de ${nombreDelCliente(s.cliente)}`}
+        filaCelular={(s) => ({
+          titulo: nombreDelCliente(s.cliente),
+          detalle: (
+            <span className={s.en_mora > 0 ? "text-status-danger-fg" : undefined}>
+              {s.plan} · {linea(s)}
+            </span>
+          ),
+          // Con «Confirmar pago» a la derecha no cabe también el estado: la línea ya dice qué espera.
+          fin: confirmar(s) ? undefined : <StatusBadge value={situacion(s)} map={SUBSCRIPTION_SITUATION} />,
+          accion: confirmar(s),
+          href: `/suscripciones/lista/${s.id}`,
+        })}
         emptyTitle="Sin suscripciones"
         emptyDescription="Cuando un cliente se inscriba a un plan, su suscripción aparecerá aquí."
-        error={res.ok ? null : `No se pudieron cargar las suscripciones: ${res.error}`}
         caption="Suscripciones"
         serverPaginated
       />
-      {res.ok && (
-        <Pagination
-          page={page}
-          hasMore={has_more}
-          total={total}
-          label="suscripciones"
-          makeHref={(target) => enlaceDePagina("/suscripciones/lista", qs, target)}
-        />
-      )}
+      <Pagination
+        page={page}
+        hasMore={has_more}
+        total={total}
+        label="suscripciones"
+        makeHref={(target) => enlaceDePagina("/suscripciones/lista", qs, target)}
+      />
     </ListPage>
   );
 }

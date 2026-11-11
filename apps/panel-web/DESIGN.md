@@ -293,6 +293,16 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Crons dice el estado en una línea («3 crons · 1 con fallo · 2 atrasados»), avisa si el planificador parece detenido y filtra con un control segmentado (Todos, Con fallo, En pausa, Atrasados). Los horarios van primero en hora de Colombia; un cron atrasado se marca «Atrasado 8 d» (`lib/crons.ts`, `atraso`).
 - Quien no es master y entra a una página de Plataforma vuelve a su inicio, nunca ve un 403. Las cargas usan `CargandoLista`.
 
+## Suscripciones (SPEC-29)
+
+- El Resumen abre con una frase («Cobras $ 231.400 al mes de 3 suscripciones activas. 3 suscripciones deben $ 297.700.») y tres tarjetas: ingreso recurrente, mora y el mes (altas y bajas). Las fórmulas viven en «¿Cómo se calcula?». Siguen «Quién debe» (filas que abren la suscripción, con los tramos en una línea) y «Cuánto se quedan» por plan, con el detalle por mes plegado.
+- La tarjeta de datos de prueba solo aparece cuando ofrece algo (generar o borrar).
+- Un solo estado por suscripción (`SUBSCRIPTION_SITUATION`): «Pausada por mora», «Pausada por el negocio», «Esperando el primer pago». La línea de cada fila dice lo que debe o qué sigue (`lineaDeSuscripcion`).
+- Las listas filtran al tocar: búsqueda al escribir, un control segmentado con lo más usado y lo demás en «Filtros» (se aplica al elegir). Pagos empieza en «Por cobrar» (`vistaDePagos`); `?ver=todos` lo quita.
+- La ficha lleva al cliente como título, una frase con lo que pasa (`fraseDeLaSuscripcion`) y la acción que lo resuelve a la vista («Registrar pago» del cobro más viejo, «Confirmar pago» de la inscripción o «Reanudar»). «Cancelar suscripción» va en «Más acciones».
+- Los cobros dicen el mes en palabras («octubre de 2026»), cuándo vencen o cómo se pagaron («Pagó con Wompi»), y sus acciones van en el menú de la fila (`AccionesDeCobro`; el diálogo vive fuera del menú). Un aviso que no salió va arriba con «Cómo arreglarlo»; avisos y cambios se juntan en «Historial», plegado.
+- En Planes la fila abre el editor (`?plan=`); dejar de ofrecer y eliminar van en «Más acciones». El código de un plan nuevo sale del nombre y vive en «Avanzado»; el de uno que existe no cambia al renombrarlo.
+
 ## Pruebas (SPEC-30)
 
 - Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.

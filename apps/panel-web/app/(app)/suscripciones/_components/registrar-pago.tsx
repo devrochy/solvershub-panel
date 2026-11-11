@@ -6,7 +6,6 @@ import { Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
-import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
 import type { PagoRegistradoOut } from "@/lib/api/types";
 import { descripcionDeRegistroDePago, mensajeDePagoRegistrado } from "@/lib/suscripciones-admin";
@@ -20,11 +19,20 @@ import { useAction } from "@/lib/use-action";
 export function RegistrarPago({
   cargo,
   cliente,
+  boton = "outline",
+  abierto: abiertoFuera,
+  onAbierto,
 }: {
   cargo: { id: string; periodo: string; monto: number; moneda?: string | null };
   cliente: string;
+  /** `accent` cuando es la acción principal de la ficha; `ninguno` cuando lo abre un menú (SUS-08). */
+  boton?: "accent" | "outline" | "ninguno";
+  abierto?: boolean;
+  onAbierto?: (abierto: boolean) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abiertoPropio, setAbiertoPropio] = useState(false);
+  const abierto = abiertoFuera ?? abiertoPropio;
+  const setAbierto = onAbierto ?? setAbiertoPropio;
   const [referencia, setReferencia] = useState("");
   const { run, pending } = useAction();
   const valida = referencia.trim().length >= 3;
@@ -52,14 +60,19 @@ export function RegistrarPago({
 
   return (
     <>
-      <IconAction
-        label={`Registrar pago por transferencia de ${cliente}`}
-        tone="aprobar"
-        onClick={() => setAbierto(true)}
-        disabled={pending}
-      >
-        <Landmark className="h-4 w-4" aria-hidden />
-      </IconAction>
+      {boton !== "ninguno" && (
+        <Button
+          type="button"
+          variant={boton}
+          size={boton === "accent" ? "default" : "sm"}
+          aria-label={`Registrar pago por transferencia de ${cliente}`}
+          onClick={() => setAbierto(true)}
+          disabled={pending}
+        >
+          <Landmark className="h-4 w-4" aria-hidden />
+          Registrar pago
+        </Button>
+      )}
       <Dialog open={abierto} onOpenChange={setAbierto}>
         <DialogContent title="Registrar pago por transferencia" description={descripcionDeRegistroDePago(cargo, cliente)}>
           <form onSubmit={registrar} className="flex flex-col gap-4">
