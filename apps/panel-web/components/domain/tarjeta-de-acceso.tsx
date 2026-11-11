@@ -41,7 +41,7 @@ export async function TarjetaDeAcceso({
       >
         <Marca pieza="logo-vertical" className="sh-acceso-logo h-auto w-[150px] lg:w-[240px]" />
         <div className="sh-acceso-sube flex max-w-[460px] flex-col gap-3">
-          <p className="font-display text-xl font-semibold text-headline lg:text-[30px] lg:leading-tight">
+          <p className="font-display text-xl font-semibold text-headline lg:text-sh-hero lg:leading-tight">
             Tu agente atiende, vende, cobra y agenda por WhatsApp.
           </p>
           <p className="hidden text-base text-body lg:block">Desde aquí ves cómo va y lo ajustas.</p>

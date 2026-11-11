@@ -420,7 +420,7 @@ export function EditorDePlantilla({
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-3">
-                  <label htmlFor="pie-plantilla" className="text-[13px] font-medium text-body">
+                  <label htmlFor="pie-plantilla" className="text-sh-label font-medium text-body">
                     Pie (opcional)
                   </label>
                   <span
@@ -462,7 +462,7 @@ export function EditorDePlantilla({
                 </div>
                 <div className="flex items-start justify-between gap-3 rounded-md bg-surface-2 p-3">
                   <div className="flex flex-col gap-1">
-                    <label htmlFor="exclusivo-plantilla" className="text-[13px] font-medium text-body">
+                    <label htmlFor="exclusivo-plantilla" className="text-sh-label font-medium text-body">
                       Una sola opción por mensaje
                     </label>
                     <p className="text-xs text-text-soft">

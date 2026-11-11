@@ -9,6 +9,7 @@ import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
@@ -139,7 +140,14 @@ export function ConnectionActions({
               }}
             />
           ) : (
-            <p className="text-sm text-text-soft">Cargando…</p>
+            <div role="status" aria-busy="true" aria-label="Cargando los datos de la conexión" className="flex flex-col gap-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex flex-col gap-1.5">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              ))}
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { PlanResponse, PlatformTenant } from "@/lib/api/types";
@@ -114,9 +115,7 @@ export function TenantPlanBadge({
           </p>
 
           {plans.length === 0 && (
-            <p role="alert" className="text-xs text-status-danger-fg">
-              No hay planes disponibles. Inténtalo de nuevo más tarde.
-            </p>
+            <FormFeedback error="No hay planes disponibles. Inténtalo de nuevo más tarde." className="text-xs" />
           )}
 
           <div className="flex justify-end gap-2">

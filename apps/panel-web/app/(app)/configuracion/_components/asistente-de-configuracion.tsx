@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/confirm";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -385,11 +386,7 @@ function PasoDePregunta({
           ))}
         </fieldset>
       )}
-      {error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          {error}
-        </p>
-      )}
+      <FormFeedback error={error} />
       <p className="text-xs text-text-soft">
         {respondida ? (
           <>
@@ -441,9 +438,7 @@ function Revision({
       )}
       {vista === "error" && (
         <div className="flex flex-col items-start gap-2">
-          <p role="alert" className="text-sm text-status-danger-fg">
-            {errorDeVista}
-          </p>
+          <FormFeedback error={errorDeVista} />
           <Button type="button" variant="outline" size="sm" onClick={onReintentar}>
             Reintentar
           </Button>

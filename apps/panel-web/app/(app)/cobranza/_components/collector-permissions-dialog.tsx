@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { FormFeedback } from "@/components/ui/form-feedback";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
 const ETIQUETAS: Record<string, string> = {
@@ -105,7 +106,16 @@ export function CollectorPermissionsDialog({
         className="max-h-[85vh] overflow-y-auto"
       >
         <div className="flex flex-col gap-3">
-          {cargando && <p className="text-sm text-text-soft">Cargando permisos…</p>}
+          {cargando && (
+            <div role="status" aria-busy="true" aria-label="Cargando los permisos" className="flex flex-col gap-3">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-3">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-5 w-9 rounded-full" />
+                </div>
+              ))}
+            </div>
+          )}
           {catalogo.map((permiso) => (
             <label key={permiso} className="flex items-center justify-between gap-3 text-sm">
               <span className="text-body">{ETIQUETAS[permiso] ?? permiso.replaceAll("_", " ")}</span>

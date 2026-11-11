@@ -46,7 +46,7 @@ export function LoginForm({ destino = "/dashboard" }: { destino?: string }) {
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
-          className="h-12 text-[15px]"
+          className="h-12 text-sh-body"
           required
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
@@ -58,7 +58,7 @@ export function LoginForm({ destino = "/dashboard" }: { destino?: string }) {
           id="password"
           name="password"
           autoComplete="current-password"
-          className="h-12 text-[15px]"
+          className="h-12 text-sh-body"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -72,7 +72,7 @@ export function LoginForm({ destino = "/dashboard" }: { destino?: string }) {
         variant="accent"
         size="lg"
         loading={loading}
-        className="h-12 w-full text-[15px]"
+        className="h-12 w-full text-sh-body"
       >
         {loading ? "Entrando…" : "Entrar"}
       </Button>

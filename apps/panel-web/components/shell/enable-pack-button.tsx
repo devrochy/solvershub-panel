@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FormFeedback } from "@/components/ui/form-feedback";
 
 /**
  * CTA para habilitar un pack desde el menú (mismo endpoint que la página de
@@ -54,11 +55,7 @@ export function EnablePackButton({
       <Button disabled={loading} onClick={activate} size="sm" variant="outline">
         {loading ? "Habilitando…" : `Habilitar ${label}`}
       </Button>
-      {error && (
-        <span className="text-xs text-status-danger-fg" role="alert">
-          {error}
-        </span>
-      )}
+      <FormFeedback error={error} className="text-xs" />
     </div>
   );
 }

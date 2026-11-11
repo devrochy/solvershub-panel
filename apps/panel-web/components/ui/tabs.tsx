@@ -22,10 +22,18 @@ export function Tabs({
   className?: string;
 }) {
   const activaRef = useRef<HTMLButtonElement>(null);
+  const filaRef = useRef<HTMLDivElement>(null);
 
-  // Si no caben todas, la fila se desplaza sola hasta la activa.
+  // Si no caben todas, la fila (no la página) se desplaza sola hasta la activa. Con
+  // `scrollIntoView` la página saltaba hasta las pestañas cuando estaban bajo el primer pantallazo.
   useEffect(() => {
-    activaRef.current?.scrollIntoView?.({ inline: "nearest", block: "nearest" });
+    const activa = activaRef.current;
+    const fila = filaRef.current;
+    if (!activa || !fila || fila.scrollWidth <= fila.clientWidth) return;
+    const caja = fila.getBoundingClientRect();
+    const pestana = activa.getBoundingClientRect();
+    if (pestana.right > caja.right) fila.scrollLeft += pestana.right - caja.right;
+    else if (pestana.left < caja.left) fila.scrollLeft -= caja.left - pestana.left;
   }, [value]);
 
   function onKeyDown(event: KeyboardEvent) {
@@ -41,6 +49,7 @@ export function Tabs({
 
   return (
     <div
+      ref={filaRef}
       role="tablist"
       onKeyDown={onKeyDown}
       // overflow-x-auto: en celular las pestañas no caben y empujaban toda la página.

@@ -111,9 +111,7 @@ export default async function ConversationsPage({ searchParams }: { searchParams
         />
       )}
       {ficha && !ficha.ok && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          No se pudo abrir la ficha del cliente: {ficha.error}
-        </p>
+        <EstadoDeError forma="en-linea" titulo="No pudimos abrir la ficha del cliente" detalle={ficha.error} />
       )}
     </div>
   );

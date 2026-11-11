@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { ApprovedTemplate } from "@/lib/api/types";
@@ -75,7 +76,7 @@ export function TemplatePicker({
         Pasaron más de 24 horas desde el último mensaje del cliente. WhatsApp solo permite
         escribirle con una plantilla aprobada.
       </p>
-      {error && <p className="text-sm text-status-danger-fg">{error}</p>}
+      <FormFeedback error={error} />
       {plantillas && plantillas.length === 0 && (
         <p className="text-sm text-body">
           Esta conexión no tiene plantillas aprobadas. Créalas en Plantillas de WhatsApp.

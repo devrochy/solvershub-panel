@@ -627,7 +627,8 @@ export async function ClientesDeModulo({
           page={page}
           hasMore={has_more}
           total={total}
-          label={total === 1 ? "cliente" : "clientes"}
+          label="clientes"
+          singular="cliente"
           makeHref={(target) => {
             const next = new URLSearchParams(qs);
             next.delete("agente");

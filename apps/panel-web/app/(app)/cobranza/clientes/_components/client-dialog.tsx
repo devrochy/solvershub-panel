@@ -201,11 +201,7 @@ export function ClientRowActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {error && (
-        <span className="text-xs text-status-danger-fg" role="alert">
-          {error}
-        </span>
-      )}
+      <FormFeedback error={error} className="text-xs" />
       <MenuDeFila etiqueta={`Más acciones de ${nombre}`}>
         <DropdownMenuItem icon={<Pencil />} onSelect={() => setEditando(true)}>
           Editar

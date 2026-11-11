@@ -6,6 +6,7 @@ import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { GraphOut } from "@/lib/api/types";
 import {
   advertenciasLegibles,
@@ -30,7 +31,11 @@ const MapaDePermisos = dynamic(
     ),
   {
     ssr: false,
-    loading: () => <p className="text-sm text-soft">Cargando el mapa…</p>,
+    loading: () => (
+      <div role="status" aria-busy="true" aria-label="Cargando el mapa" className="flex flex-col gap-2">
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
   },
 );
 

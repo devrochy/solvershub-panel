@@ -154,7 +154,7 @@ export default async function PagosDeSuscripcionesPage({ searchParams }: { searc
         page={page}
         hasMore={has_more}
         total={total}
-        label="cobros"
+        label="cobros" singular="cobro"
         makeHref={(target) => enlaceDePagina("/suscripciones/pagos", qs, target)}
       />
     </ListPage>

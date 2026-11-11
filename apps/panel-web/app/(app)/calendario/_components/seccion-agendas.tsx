@@ -231,11 +231,7 @@ function FilaAgenda({
           )}
         </MenuDeFila>
       </div>
-      {error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          {error}
-        </p>
-      )}
+      <FormFeedback error={error} />
       {moverA !== null && otras.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <Select aria-label="Pasar las citas a" value={moverA} onChange={(e) => setMoverA(e.target.value)} className="w-56">

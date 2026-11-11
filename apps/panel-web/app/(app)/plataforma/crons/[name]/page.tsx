@@ -174,7 +174,7 @@ export default async function CronDetallePage({
           serverPaginated
         />
         {ejecuciones.ok && (
-          <Pagination page={page} hasMore={has_more} total={total} label="ejecuciones" makeHref={(p) => enlace(c.name, sp, p)} />
+          <Pagination page={page} hasMore={has_more} total={total} label="ejecuciones" singular="ejecución" makeHref={(p) => enlace(c.name, sp, p)} />
         )}
       </section>
     </DetailPage>

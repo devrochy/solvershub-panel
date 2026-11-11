@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { ETAPA_PERDIDA, textoDeActividad, textoDeValor, TONO_DE_ETAPA } from "@/lib/clientes";
 import { desdeDeColumna, moverTarjeta, sumarPagina, type ColumnaDeEmbudo, type TarjetaDeEmbudo } from "@/lib/embudo";
 import { formatNumber } from "@/lib/format";
@@ -159,9 +160,7 @@ export function TableroEmbudo({
             </header>
 
             {c.error ? (
-              <p role="alert" className="px-1 text-sm text-status-danger-fg">
-                {c.error}
-              </p>
+              <FormFeedback error={c.error} className="px-1" />
             ) : c.tarjetas.length === 0 ? (
               <p className="px-1 text-sm text-text-soft">Sin clientes en esta etapa.</p>
             ) : (

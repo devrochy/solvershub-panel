@@ -72,7 +72,7 @@ export function MemoryForm({
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <span className="text-[13px] font-medium text-body">Cuánto recuerda de la conversación</span>
+            <span className="text-sh-label font-medium text-body">Cuánto recuerda de la conversación</span>
             <SegmentedControl
               label="Cuánto recuerda de la conversación"
               options={MEMORIA_RECUERDA.map((o) => ({ value: o.value, label: o.label }))}
@@ -85,7 +85,7 @@ export function MemoryForm({
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="text-[13px] font-medium text-body">Cuánto busca en lo que le enseñaste</span>
+            <span className="text-sh-label font-medium text-body">Cuánto busca en lo que le enseñaste</span>
             <SegmentedControl
               label="Cuánto busca en lo que le enseñaste"
               options={MEMORIA_BUSCA.map((o) => ({ value: o.value, label: o.label }))}

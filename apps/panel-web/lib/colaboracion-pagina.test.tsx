@@ -87,7 +87,7 @@ describe("colaboración entre agentes", () => {
     const guardar = screen.getByRole("button", { name: "Guardar permisos" }) as HTMLButtonElement;
     expect(guardar.disabled).toBe(true);
     for (const c of screen.getAllByRole("checkbox", { name: /puede pasarle la conversación a/ })) fireEvent.click(c);
-    expect(screen.getByRole("status").textContent).toMatch(/Ventas → Agenda → Ventas/);
+    expect(screen.getAllByRole("status").map((s) => s.textContent).join(" ")).toMatch(/Ventas → Agenda → Ventas/);
     expect(guardar.disabled).toBe(false);
   });
 

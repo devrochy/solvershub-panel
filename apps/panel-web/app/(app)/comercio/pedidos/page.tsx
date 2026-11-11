@@ -127,7 +127,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               href: hrefDe(o),
             })}
           />
-          <Pagination page={page} hasMore={hayMas} total={total} label="pedidos" makeHref={(destino) => hrefPedidos({ ...filtros, pedido: "" }, destino)} />
+          <Pagination page={page} hasMore={hayMas} total={total} label="pedidos" singular="pedido" makeHref={(destino) => hrefPedidos({ ...filtros, pedido: "" }, destino)} />
         </>
       )}
 

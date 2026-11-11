@@ -6,6 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { InputPassword } from "@/components/ui/input-password";
 import type { CampoCredencial } from "@/lib/conexiones";
 
@@ -170,7 +171,7 @@ export function CredencialesConexion({
                 autoFocus
               />
             </Field>
-            {error && <p role="alert" className="text-sm text-status-danger-fg">{error}</p>}
+            <FormFeedback error={error} />
             <p className="text-xs text-text-soft">
               Los secretos se vuelven a ocultar a los {SEGUNDOS_VISIBLE} s.
             </p>

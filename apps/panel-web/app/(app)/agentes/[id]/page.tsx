@@ -120,6 +120,8 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
   );
 }
 
+const SINGULAR: Record<string, string> = { conversaciones: "conversación", tareas: "tarea", clientes: "cliente", registros: "registro" };
+
 export default async function AgentePage({
   params,
   searchParams,
@@ -434,6 +436,7 @@ export default async function AgentePage({
           hasMore={paginada.has_more}
           total={paginada.total}
           label={etiqueta}
+          singular={SINGULAR[etiqueta]}
           makeHref={(target) => hrefDeAgente(ref, vigente, { page: target })}
         />
       )}

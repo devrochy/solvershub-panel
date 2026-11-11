@@ -1,5 +1,4 @@
-import { TriangleAlert } from "lucide-react";
-
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { MAX_BOTON_META, MAX_BOTONES_META, type ResumenDeComponentes } from "@/lib/plantillas-opciones-meta";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +35,7 @@ export function VistaPreviaMeta({ resumen, cuerpoRenderizado }: { resumen: Resum
         caracteres cada uno).
       </p>
       {excedido && (
-        <p role="alert" className="flex items-start gap-1 text-xs text-status-danger-fg">
-          <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
-          Esta plantilla supera los topes de Meta: corrige las opciones y publica una versión nueva.
-        </p>
+        <FormFeedback error="Esta plantilla supera los topes de Meta: corrige las opciones y publica una versión nueva." className="text-xs" />
       )}
     </div>
   );

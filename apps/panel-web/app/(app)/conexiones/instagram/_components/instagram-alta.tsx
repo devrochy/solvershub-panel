@@ -233,11 +233,10 @@ export function InstagramAlta({ estado }: { estado: EstadoInstagram }) {
         profesional y estar vinculada a una Página de Facebook.
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="accent" disabled={!sdkListo || !intento || ocupado || preparando} onClick={abrirPopup}>
-          <LogIn className="h-4 w-4" aria-hidden />
+        <Button variant="accent" loading={!sdkListo} disabled={!intento || ocupado || preparando} onClick={abrirPopup}>
+          {sdkListo && <LogIn className="h-4 w-4" aria-hidden />}
           {ocupado ? "Buscando tus Páginas…" : "Conectar con Facebook"}
         </Button>
-        {!sdkListo && <span className="text-xs text-text-soft">Cargando Facebook…</span>}
         {sdkListo && !intento && !preparando && !ocupado && (
           <Button variant="ghost" size="sm" onClick={() => void preparar()}>
             Preparar de nuevo

@@ -7,7 +7,7 @@ import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Badge } from "@/components/ui/badge";
 import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatCard } from "@/components/ui/stat-card";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import { apiFetch } from "@/lib/api/server";
 import type { CostsResponse, Me } from "@/lib/api/types";
 import { enlaceSaludMeta } from "@/lib/conexion-ficha";
@@ -108,9 +108,9 @@ export default async function CostsPage() {
       {header}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Últimos 30 días" value={formatUsd(d.month, 2)} hint="IA del negocio" />
-        <StatCard label="Hoy" value={formatUsd(d.today, 2)} />
-        <StatCard label="Respuestas" value={formatNumber(d.total_turns)} hint={d.total_turns > 0 ? `${formatUsd(d.month / d.total_turns, 4)} cada una` : undefined} />
+        <KpiTile label="Últimos 30 días" value={formatUsd(d.month, 2)} hint="IA del negocio" />
+        <KpiTile label="Hoy" value={formatUsd(d.today, 2)} />
+        <KpiTile label="Respuestas" value={formatNumber(d.total_turns)} hint={d.total_turns > 0 ? `${formatUsd(d.month / d.total_turns, 4)} cada una` : undefined} />
       </div>
 
       <section className="flex flex-col gap-3" aria-labelledby="por-agente">

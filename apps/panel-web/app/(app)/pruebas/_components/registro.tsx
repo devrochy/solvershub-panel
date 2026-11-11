@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QaEvento } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
@@ -29,7 +30,7 @@ export function Registro({ slug }: { slug: string }) {
     };
   }, [slug]);
 
-  if (error) return <p role="alert" className="text-sm text-status-danger-fg">No se pudo cargar el registro: {error}</p>;
+  if (error) return <EstadoDeError forma="en-linea" titulo="No pudimos cargar el registro" detalle={error} />;
   if (!eventos) return <Skeleton lines={4} />;
   if (eventos.length === 0) {
     return <p className="text-sm text-body">Todavía no hay cambios en esta prueba durante el ciclo.</p>;

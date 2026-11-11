@@ -18,7 +18,15 @@ import { KpiTile, textoDelta } from "./kpi-tile";
 import { RadioGroup } from "./radio-group";
 import { SearchInput } from "./search-input";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
+import { Tabs } from "@/components/ui/tabs";
 import { TabLinks } from "./tab-links";
+
+// El catálogo muestra `ErrorDeCarga`, cuyo «Reintentar» usa el router.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/catalogo",
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 afterEach(cleanup);
 
@@ -136,6 +144,28 @@ describe("TabLinks", () => {
         />,
       );
       expect(screen.getByRole("navigation").scrollLeft).toBe(180);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      anchoFila.mockRestore();
+      visible.mockRestore();
+      rect.mockRestore();
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("las Tabs también desplazan solo su fila, y no la página", () => {
+    const caja = (left: number, right: number) => ({ left, right, top: 0, bottom: 44, width: right - left, height: 44, x: left, y: 0, toJSON: () => ({}) });
+    const anchoFila = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(1100);
+    const visible = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(900);
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      return (this.getAttribute("role") === "tablist" ? caja(0, 900) : caja(1000, 1080)) as DOMRect;
+    });
+    const scrollIntoView = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    try {
+      render(<Tabs items={[{ id: "a", label: "Acceso" }, { id: "p", label: "Permisos" }]} value="p" onValueChange={() => undefined} />);
+      expect(screen.getByRole("tablist").scrollLeft).toBe(180);
       expect(scrollIntoView).not.toHaveBeenCalled();
     } finally {
       anchoFila.mockRestore();

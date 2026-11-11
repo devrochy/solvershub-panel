@@ -208,11 +208,7 @@ export function CreditDelete({ creditId }: { creditId: string }) {
       ) : (
         <Button onClick={() => setConfirmando(true)} aria-label="Eliminar abono" size="icon" title="Eliminar abono" variant="ghost" className="pointer-coarse:h-11 pointer-coarse:w-11"><Trash2 className="h-4 w-4 text-status-danger-fg" aria-hidden /></Button>
       )}
-      {error && (
-        <span className="text-xs text-status-danger-fg" role="alert">
-          {error}
-        </span>
-      )}
+      <FormFeedback error={error} className="text-xs" />
     </div>
   );
 }

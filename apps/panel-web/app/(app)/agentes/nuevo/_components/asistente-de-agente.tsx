@@ -8,6 +8,7 @@ import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { PlantillasEnTarjetas } from "@/app/(app)/agentes/nuevo/_components/plantillas-en-tarjetas";
@@ -284,11 +285,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
 
       {contenidoDelPaso()}
 
-      {error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          {error}
-        </p>
-      )}
+      <FormFeedback error={error} />
 
       <div className="flex flex-wrap items-center gap-3">
         {indice > 0 && (

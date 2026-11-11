@@ -114,7 +114,7 @@ export function EditorHorario({ cron }: Props) {
           {puedeCambiar && (
             <>
               <fieldset className="flex flex-wrap gap-2">
-                <legend className="mb-1.5 text-[13px] font-medium text-body">Horarios frecuentes</legend>
+                <legend className="mb-1.5 text-sh-label font-medium text-body">Horarios frecuentes</legend>
                 {PRESETS_CRON.map((p) => (
                   <Button key={p.value} type="button" size="sm" variant="outline" onClick={() => setValor(p.value)}>
                     {p.label}

@@ -6,6 +6,7 @@ import { FlaskConical, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
 import type { OpcionesPlantillaResumen } from "@/lib/api/types";
 import { opcionesApi } from "@/lib/plantillas-opciones-cliente";
@@ -66,9 +67,7 @@ export function ProbarPlantilla({
         </span>
       </p>
       {error ? (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          {error}
-        </p>
+        <FormFeedback error={error} />
       ) : publicadas === null ? (
         <p role="status" className="text-sm text-text-soft">
           Cargando plantillas…

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
 import type { LeadNote, TimelineItem, TimelineResponse } from "@/lib/api/types";
 import { enlaceDeEvento, TIPO_DE_EVENTO } from "@/lib/clientes";
@@ -89,7 +90,7 @@ export function NotasDelCliente({ leadId, onCambio }: { leadId: string; onCambio
           </Button>
         </div>
       </form>
-      {error && <p className="text-sm text-status-danger-fg">{error}</p>}
+      <FormFeedback error={error} />
       {notas && notas.length > 0 && (
         <ul className="space-y-2">
           {notas.map((n) => (
@@ -157,7 +158,7 @@ export function HistoriaDelCliente({ leadId }: { leadId: string }) {
       {parcial && (
         <p className="text-xs text-status-warning-fg">Falta información de alguna habilidad; vuelve a abrir la ficha.</p>
       )}
-      {error && <p className="text-sm text-status-danger-fg">{error}</p>}
+      <FormFeedback error={error} />
       {!cargando && items.length === 0 && !error && <p className="text-sm text-body">Sin movimientos todavía.</p>}
       <ol className="relative space-y-3 border-l border-border-soft pl-4">
         {items.map((e, i) => {

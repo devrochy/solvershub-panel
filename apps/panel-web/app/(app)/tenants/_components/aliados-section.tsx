@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import type { EstadoAliados } from "@/lib/aliados";
 import { formatDate } from "@/lib/format";
@@ -66,7 +67,10 @@ export function AliadosSection({ tenantId }: { tenantId: string }) {
       {error ? (
         <p role="status" className="text-sm text-body">{error}</p>
       ) : !estado ? (
-        <p className="text-sm text-body">Cargando…</p>
+        <div role="status" aria-busy="true" aria-label="Cargando los aliados" className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       ) : (
         <p className="text-xs text-body">
           Con los aliados encendidos, el negocio ve «Aliados» en Ventas, el filtro por aliado en Productos y el aliado en

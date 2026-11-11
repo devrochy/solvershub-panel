@@ -6,6 +6,7 @@ import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { SearchInput } from "@/components/ui/search-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ConversationSummary, OpcionesPrueba } from "@/lib/api/types";
@@ -104,11 +105,7 @@ export function EnviarPrueba({
               <SearchInput label="Buscar una conversación" placeholder="Nombre o teléfono del cliente" value={q} onChange={setQ} />
               <fieldset className="flex max-h-56 flex-col gap-1 overflow-y-auto">
                 <legend className="sr-only">Conversación a la que se envía</legend>
-                {errorLista && (
-                  <p role="alert" className="text-sm text-status-danger-fg">
-                    {errorLista}
-                  </p>
-                )}
+                <FormFeedback error={errorLista} />
                 {lista && lista.length === 0 && !errorLista && <p className="text-sm text-text-soft">No hay conversaciones que coincidan.</p>}
                 {lista === null && !errorLista && (
                   <div role="status" aria-label="Cargando las conversaciones" className="flex flex-col gap-2">
@@ -158,11 +155,7 @@ export function EnviarPrueba({
                 />
               </div>
 
-              {error && (
-                <p role="alert" className="text-sm text-status-danger-fg">
-                  {error}
-                </p>
-              )}
+              <FormFeedback error={error} />
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={onCerrar}>
                   Cancelar

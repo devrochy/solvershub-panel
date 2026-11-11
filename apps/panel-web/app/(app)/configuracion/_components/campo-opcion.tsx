@@ -90,7 +90,7 @@ export function CampoOpcion({
     if (posibles.length === 0) return null;
     return (
       <fieldset className="flex flex-col gap-3">
-        <legend className="text-[13px] font-medium text-body">{opcion.etiqueta}</legend>
+        <legend className="text-sh-label font-medium text-body">{opcion.etiqueta}</legend>
         <p className="text-xs text-text-soft">
           {ayuda}
           {enlace}

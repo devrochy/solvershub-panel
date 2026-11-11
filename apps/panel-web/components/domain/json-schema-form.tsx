@@ -353,9 +353,7 @@ export function JsonSchemaForm({
         <div key={name} className="flex flex-col gap-1.5">
           {renderControl(name, prop)}
           {fieldErrors[name] ? (
-            <p role="alert" className="text-xs text-status-danger-fg">
-              {fieldErrors[name]}
-            </p>
+            <FormFeedback error={fieldErrors[name]} className="text-xs" />
           ) : (
             prop.description && <p className="text-xs text-text-soft">{prop.description}</p>
           )}
