@@ -1,3 +1,4 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { QaVersionEvo } from "@/lib/api/types";
 import { fechaDeCatalogo } from "@/lib/qa/estados";
 import { cn } from "@/lib/utils";
@@ -11,104 +12,129 @@ const ENTORNOS: Record<string, string> = {
   otros: "Sin clasificar",
 };
 
-type Fila = { clave: string; ruta: string; celdas: Record<number, string>; tonos: Record<number, string>; titulos: Record<number, string> };
+type Celda = { ok: number; total: number; falla: number; bloqueada: number; sinCorrer: number };
+type Fila = { clave: string; ruta: string; celdas: Record<number, Celda> };
 
-function tonoDe(falla: number, bloqueada: number, sinCorrer: number): string {
-  if (falla > 0 || bloqueada > 0) return "bg-status-danger-bg text-status-danger-fg";
-  if (sinCorrer > 0) return "bg-status-warning-bg text-status-warning-fg";
+function tonoDe(c: Celda): string {
+  if (c.falla > 0 || c.bloqueada > 0) return "bg-status-danger-bg text-status-danger-fg";
+  if (c.sinCorrer > 0) return "bg-status-warning-bg text-status-warning-fg";
   return "bg-status-success-bg text-status-success-fg";
 }
 
-function celdaDe(ok: number, falla: number, bloqueada: number, sinCorrer: number, total: number) {
-  const partes = [`OK ${ok}`, `Falla ${falla}`, `Bloqueada ${bloqueada}`, `Sin correr ${sinCorrer}`];
-  return { texto: `${ok}/${total}`, tono: tonoDe(falla, bloqueada, sinCorrer), partes: partes.join(" · ") };
+/** Lo que pasó además de las aprobadas, en palabras: «1 falla», «2 sin correr». */
+function detalleDe(c: Celda): string | null {
+  const partes = [
+    c.falla > 0 ? `${c.falla} ${c.falla === 1 ? "falla" : "fallas"}` : null,
+    c.bloqueada > 0 ? `${c.bloqueada} ${c.bloqueada === 1 ? "bloqueada" : "bloqueadas"}` : null,
+    c.sinCorrer > 0 ? `${c.sinCorrer} sin correr` : null,
+  ].filter(Boolean);
+  return partes.length > 0 ? partes.join(" · ") : null;
+}
+
+/** Tendencia entre las dos últimas versiones con dato de la fila (PRU-06). */
+export function tendencia(celdas: (Celda | undefined)[]): string {
+  const con = celdas.filter((c): c is Celda => !!c && c.total > 0);
+  if (con.length < 2) return con.length === 1 ? "Nueva" : "—";
+  const [antes, ahora] = con.slice(-2);
+  const a = antes.ok / antes.total;
+  const b = ahora.ok / ahora.total;
+  if (ahora.falla + ahora.bloqueada > antes.falla + antes.bloqueada || b < a - 0.001) {
+    return ahora.sinCorrer > 0 && ahora.falla + ahora.bloqueada === 0 ? "Falta correr" : "Empeoró";
+  }
+  if (b > a + 0.001) return "Mejoró";
+  return "Igual";
 }
 
 /**
- * Evolución por versión (HU-QA-08): una fila por subsección y una columna por versión del
- * catálogo, con el resultado consolidado del ciclo que usó cada una. Se lee de izquierda a
- * derecha: cómo avanza (o retrocede) cada parte del producto release a release.
+ * Cómo va cada sección (HU-QA-08, PRU-06): una fila por subsección y una columna por catálogo,
+ * con las aprobadas de cada ciclo y la tendencia en palabras. El color acompaña al texto, nunca
+ * va solo.
  */
 export function Evolucion({ versiones }: { versiones: QaVersionEvo[] }) {
   if (versiones.length === 0) return null;
   const filas: Fila[] = [];
   const porClave = new Map<string, Fila>();
-  versiones.forEach((version, indice) => {    for (const seccion of version.secciones ?? []) {
+  versiones.forEach((version, indice) => {
+    for (const seccion of version.secciones ?? []) {
       for (const area of seccion.areas ?? []) {
         for (const sub of area.subsecciones ?? []) {
           const ruta = `${ENTORNOS[seccion.entorno] ?? seccion.entorno} › ${area.area}${sub.subseccion ? ` › ${sub.subseccion}` : ""}`;
           const clave = `${seccion.entorno}\u0000${area.area}\u0000${sub.subseccion}`;
           let fila = porClave.get(clave);
           if (!fila) {
-            fila = { clave, ruta, celdas: {}, tonos: {}, titulos: {} };
+            fila = { clave, ruta, celdas: {} };
             porClave.set(clave, fila);
             filas.push(fila);
           }
-          const celda = celdaDe(sub.ok, sub.falla, sub.bloqueada, sub.sin_correr, sub.total);
-          fila.celdas[indice] = celda.texto;
-          fila.tonos[indice] = celda.tono;
-          fila.titulos[indice] = celda.partes;
+          fila.celdas[indice] = { ok: sub.ok, total: sub.total, falla: sub.falla, bloqueada: sub.bloqueada, sinCorrer: sub.sin_correr };
         }
       }
     }
   });
 
   return (
-    <section aria-label="Evolución por versión" className="flex flex-col gap-3">
+    <section aria-labelledby="evolucion-titulo" className="flex flex-col gap-3">
       <div className="flex flex-col gap-0.5">
-        <h2 className="font-display text-sh-block text-headline">Evolución por versión</h2>
+        <h2 id="evolucion-titulo" className="font-display text-sh-block text-headline">
+          Cómo va cada sección
+        </h2>
         <p className="text-sm text-body">
-          Cada columna es una versión del catálogo con lo que quedó en el ciclo que la usó: cómo avanza cada sección
-          release a release.
+          Cada columna es el catálogo que usó un ciclo, con las pruebas aprobadas de las que tenía. En verde, todo bien; en
+          amarillo, falta correr; en rojo, hay fallas o bloqueos.
         </p>
       </div>
-      <div className="overflow-x-auto rounded-md border border-border-soft">
-        <table className="w-full min-w-max text-sm">
-          <caption className="sr-only">Resultado por subsección en cada versión del catálogo</caption>
-          <thead>
-            <tr className="border-b border-border-soft bg-surface-2 text-left">
-              <th scope="col" className="sticky left-0 z-10 bg-surface-2 px-3 py-2 font-medium text-headline">
-                Sección
-              </th>
-              {versiones.map((v) => (
-                <th key={v.version} scope="col" className="min-w-44 px-3 py-2 text-right font-medium text-headline">
-                  <span className="block">v{v.version}</span>
-                  <span className="block text-xs font-normal text-text-soft">
-                    {fechaDeCatalogo(v.fecha)}
-                    {v.ciclo?.cerrado_en ? " · ciclo cerrado" : v.ciclo ? " · ciclo abierto" : " · sin ciclo"}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filas.map((fila) => (
-              <tr key={fila.clave} className="border-b border-border-soft last:border-b-0">
-                <th scope="row" className="sticky left-0 z-10 bg-surface px-3 py-2 text-left font-normal text-body">
-                  {fila.ruta}
-                </th>
-                {versiones.map((v, i) => (
-                  <td key={v.version} className="px-3 py-2 text-right">
-                    <span
-                      title={fila.titulos[i]}
-                      className={cn("inline-block rounded-sm px-1.5 py-0.5 text-xs tabular-nums", fila.tonos[i] ?? "text-text-soft")}
-                    >
-                      {fila.celdas[i] ?? "—"}
+      {filas.length === 0 ? (
+        <p className="text-sm text-text-soft">Todavía no hay resultados por sección.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-border-soft">
+          <Table className="min-w-max">
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col" className="sticky left-0 z-10 bg-surface">
+                  Sección
+                </TableHead>
+                {versiones.map((v) => (
+                  <TableHead key={v.version} scope="col" className="min-w-36 text-right">
+                    <span className="block normal-case tracking-normal">Catálogo del {fechaDeCatalogo(v.fecha)}</span>
+                    <span className="block font-normal normal-case tracking-normal text-text-soft">
+                      {v.ciclo?.cerrado_en ? "ciclo cerrado" : v.ciclo ? "ciclo abierto" : "sin ciclo"}
                     </span>
-                  </td>
+                  </TableHead>
                 ))}
-              </tr>
-            ))}
-            {filas.length === 0 && (
-              <tr>
-                <td colSpan={versiones.length + 1} className="px-3 py-6 text-center text-body">
-                  Todavía no hay resultados por sección.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                <TableHead scope="col">Tendencia</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filas.map((fila) => (
+                <TableRow key={fila.clave}>
+                  <TableHead scope="row" className="sticky left-0 z-10 bg-surface text-sm font-normal normal-case tracking-normal text-body">
+                    {fila.ruta}
+                  </TableHead>
+                  {versiones.map((v, i) => {
+                    const c = fila.celdas[i];
+                    const detalle = c ? detalleDe(c) : null;
+                    return (
+                      <TableCell key={v.version} className="text-right">
+                        {c ? (
+                          <span className={cn("inline-flex flex-col items-end rounded-sm px-2 py-1 text-xs tabular-nums", tonoDe(c))}>
+                            <span className="font-medium">
+                              {c.ok} de {c.total}
+                            </span>
+                            {detalle && <span>{detalle}</span>}
+                          </span>
+                        ) : (
+                          <span className="text-text-soft">—</span>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell className="text-sm text-body">{tendencia(versiones.map((_, i) => fila.celdas[i]))}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </section>
   );
 }

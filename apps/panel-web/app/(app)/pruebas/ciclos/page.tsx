@@ -1,3 +1,4 @@
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, QaCatalogo, QaCiclo, QaEvolucion } from "@/lib/api/types";
 
@@ -16,11 +17,7 @@ export default async function CiclosPage() {
     apiFetch<Me>("/admin/me"),
   ]);
   if (!ciclos.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar los ciclos: {ciclos.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No pudimos cargar los ciclos" detalle={ciclos.error} />;
   }
   // Cerrar un ciclo: master, o tester en test (ADR-0134). Nunca un 403 por diseño.
   const rol = me.ok ? me.data.role : "";

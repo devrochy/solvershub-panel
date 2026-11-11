@@ -275,6 +275,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Cada tope dice qué pasa al llegar («No puedes publicar otro agente») y ofrece «Mejorar mi plan»; lo que no tiene tope dice «sin límite», sin barra ni «∞».
 - Los costos en dólares (IA por agente y modelo, WhatsApp por categoría) son del equipo de SolversHub: Plataforma › Costos técnicos, solo master. Quien no es master y entra a `/costos` vuelve a Consumo y plan.
 
+## Pruebas (SPEC-30)
+
+- Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.
+- En palabras (`lib/qa/estados.ts`): «Imprescindible» en vez de «Humo · P0», fechas como «4 de nov.», «En este ciclo: 2 la aprobaron» y resúmenes sin ceros («14 aprobadas · 3 con falla»).
+- La lista de Ejecutar filtra el estado con un control segmentado y lo demás en «Filtros». En el celular el avance va en una línea y el paso ofrece Aprobar y Falla, con lo demás en un menú.
+- El informe empieza por fallas y bloqueos, dice por entorno solo lo que no está bien y pliega las aprobadas (completas al imprimir). Informes van por ciclo y la fila abre el informe.
+- Cerrar un ciclo se hace desde su tarjeta y la confirmación dice cuántas ejecuciones quedan en solo lectura. «Cómo va cada sección» muestra cada catálogo por su fecha y la tendencia en palabras.
+- Las listas de verificación son filas con el estado en un menú; «Por qué», «Cómo», variables y nota se ven al abrir la fila.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

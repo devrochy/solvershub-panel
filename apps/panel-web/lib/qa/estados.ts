@@ -73,11 +73,65 @@ export function porcentaje(parte: number, total: number): number {
   return Math.round((parte / total) * 100);
 }
 
+const MESES = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic."];
+
 /**
- * Fecha del catálogo (`2026-10-13`, sin hora) en el formato corto del panel. `formatDate` la
- * leería como medianoche UTC y en Colombia mostraría el día anterior.
+ * Una fecha en palabras (PRU-04): «13 de oct.». Una fecha sin hora (`2026-10-13`, la del
+ * catálogo) se lee tal cual: como medianoche UTC, en Colombia caería el día anterior.
  */
+export function fechaEnPalabras(valor: string | null | undefined): string {
+  if (!valor) return "—";
+  const soloDia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  if (soloDia) return `${Number(soloDia[3])} de ${MESES[Number(soloDia[2]) - 1]}`;
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return valor;
+  return `${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
+}
+
+/** «del 12 de oct. al 3 de nov.»; sin fin, «desde el 12 de oct.». */
+export function rangoEnPalabras(desde: string | null | undefined, hasta: string | null | undefined): string {
+  return hasta ? `del ${fechaEnPalabras(desde)} al ${fechaEnPalabras(hasta)}` : `desde el ${fechaEnPalabras(desde)}`;
+}
+
+/** La prioridad que importa decir (PRU-03): las de humo (P0) son imprescindibles; las demás no llevan marca. */
+export function prioridadEnPalabras(prioridad: string | null | undefined): string | null {
+  return prioridad === "P0" ? "Imprescindible" : null;
+}
+
+const EN_EL_CICLO: Record<string, [string, string]> = {
+  ok: ["la aprobó", "la aprobaron"],
+  falla: ["con falla", "con falla"],
+  bloqueada: ["bloqueada", "bloqueadas"],
+  omitida: ["la omitió", "la omitieron"],
+  en_curso: ["la está corriendo", "la están corriendo"],
+};
+
+/** Lo que pasó con la prueba en el ciclo, en una frase: «En este ciclo: 2 la aprobaron · 1 con falla». */
+export function resumenDelCiclo(ejecuciones: Record<string, number> | null | undefined): string | null {
+  const partes = Object.entries(ejecuciones ?? {})
+    .filter(([, n]) => n > 0)
+    .map(([estado, n]) => {
+      const texto = EN_EL_CICLO[estado];
+      return texto ? `${n} ${n === 1 ? texto[0] : texto[1]}` : `${n} ${estado.replaceAll("_", " ")}`;
+    });
+  return partes.length > 0 ? `En este ciclo: ${partes.join(" · ")}` : null;
+}
+
+/** Fecha del catálogo (`2026-10-13`, sin hora) en palabras. */
 export function fechaDeCatalogo(fecha: string | null | undefined): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha ?? "");
-  return m ? `${m[3]}/${m[2]}/${m[1].slice(2)}` : (fecha ?? "—");
+  return fechaEnPalabras(fecha);
+}
+
+/** «14 aprobadas · 3 con falla · 12 sin correr», sin los ceros. */
+export function resumenDeAvance(p: QaProgreso): string {
+  const partes: [number, string, string][] = [
+    [p.ok, "aprobada", "aprobadas"],
+    [p.falla, "con falla", "con falla"],
+    [p.bloqueada, "bloqueada", "bloqueadas"],
+    [p.omitida, "omitida", "omitidas"],
+    [p.en_curso, "en curso", "en curso"],
+    [p.sin_correr, "sin correr", "sin correr"],
+  ];
+  const texto = partes.filter(([n]) => n > 0).map(([n, uno, varios]) => `${n} ${n === 1 ? uno : varios}`);
+  return texto.length > 0 ? texto.join(" · ") : "Sin pruebas";
 }

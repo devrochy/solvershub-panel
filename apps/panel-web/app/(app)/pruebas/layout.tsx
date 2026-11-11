@@ -18,11 +18,8 @@ export default async function PruebasLayout({ children }: { children: ReactNode 
   const esMaster = me.ok && me.data.role === "master";
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Pruebas"
-        description="Ejecuta las pruebas del catálogo paso a paso, deja evidencia y envía tu informe. Cada ciclo agrupa una ronda de pruebas antes de pasar a producción."
-        tabs={<PestanasDePruebas esMaster={esMaster} />}
-      />
+      {/* PRU-01: la explicación vive en «¿Qué es esto?»; la cabecera no la repite en cada pestaña. */}
+      <PageHeader title="Pruebas" helpSection="pruebas" tabs={<PestanasDePruebas esMaster={esMaster} />} />
       {children}
     </div>
   );

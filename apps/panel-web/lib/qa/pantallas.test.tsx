@@ -111,6 +111,10 @@ beforeEach(() => {
       if (url.endsWith("/runs/me/submit")) return Response.json(ejecucion({ estado: "enviada", editable: false }));
       if (url.endsWith("/runs/me/start")) return Response.json(ejecucion());
       if (url.includes("/history")) return Response.json([]);
+      if (url.includes("/config/")) {
+        const cambios = body as { estado?: string; nota?: string | null };
+        return Response.json({ slug: url.split("/config/")[1], estado: cambios.estado ?? "pendiente", nota: cambios.nota ?? null, actualizado_en: null });
+      }
       return Response.json({ error: "no esperado" }, { status: 500 });
     }),
   );
@@ -133,6 +137,14 @@ describe("Ejecutar pruebas", () => {
   it("sin ejecución, muestra la prueba en lectura y deja empezar", async () => {
     const { container } = montar(null);
     expect(screen.getByRole("heading", { name: "Ir con Ctrl+K" })).toBeTruthy();
+    // PRU-03: en palabras, sin «Humo · P0» ni la plataforma en minúscula.
+    expect(screen.getAllByText("Imprescindible").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Humo/)).toBeNull();
+    expect(screen.queryByText("panel")).toBeNull();
+    // PRU-02: el estado en un control segmentado; lo demás, en «Filtros».
+    expect(screen.getAllByRole("button", { name: "Con falla" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Filtros" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("combobox", { name: /Filtrar por/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^Aprobar/ }).hasAttribute("disabled")).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: /Empezar a probar/ }));
@@ -233,6 +245,8 @@ describe("Informe, ciclos, checklist y testers", () => {
       },
     });
     const { container } = render(<DetalleDeInforme run={run} />);
+    // PRU-07: lo que falló va primero, con sus pasos.
+    expect(screen.getByRole("heading", { name: "Fallas y bloqueos (1)" })).toBeTruthy();
     expect(screen.getByText("Nota: No abre")).toBeTruthy();
     expect(screen.getByAltText("Captura p.png")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Descargar Markdown/ }).getAttribute("href")).toBe(
@@ -259,7 +273,7 @@ describe("Informe, ciclos, checklist y testers", () => {
     );
     expect(screen.getByText("Ir con Ctrl+K")).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
-    fireEvent.click(screen.getByRole("button", { name: /Cerrar ciclo y abrir otro/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar este ciclo" }));
     expect(await screen.findByLabelText(/Nombre del ciclo nuevo/)).toBeTruthy();
   });
 
@@ -276,8 +290,27 @@ describe("Informe, ciclos, checklist y testers", () => {
     } as QaItem;
     const { container } = render(<Checklist items={[item]} editable={false} />);
     expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Estado de/ })).toBeNull();
+    expect(screen.getByText("Pendiente")).toBeTruthy();
+    // PRU-09: «Por qué», «Cómo» y las variables se ven al abrir la fila.
+    expect(screen.queryByText("QA_TESTERS_ENABLED")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Rol tester apagado/ }));
     expect(screen.getByText("QA_TESTERS_ENABLED")).toBeTruthy();
+    expect(screen.getByText("Un tester vería datos reales.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Agregar nota" })).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("el checklist editable cambia el estado desde un menú y la nota se agrega a pedido", async () => {
+    const item = { ...prueba("test-x"), seccion: "test", titulo: "Llaves de Wompi", grupo: "Pagos", estado: "pendiente" } as QaItem;
+    render(<Checklist items={[item]} editable />);
+    expect(screen.queryByRole("textbox")).toBeNull();
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Estado de Llaves de Wompi: Pendiente" }), { button: 0, ctrlKey: false, pointerType: "mouse" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Listo" }));
+    await waitFor(() => expect(llamadas.some((l) => l.url === "/api/qa/config/test-x" && (l.body as { estado: string }).estado === "listo")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: /^Llaves de Wompi/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Agregar nota" }));
+    expect(screen.getByRole("textbox", { name: "Nota de Llaves de Wompi" })).toBeTruthy();
   });
 
   it("testers: sin el rol habilitado avisa y no deja invitar", async () => {

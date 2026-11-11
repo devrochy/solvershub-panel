@@ -28,6 +28,14 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     what: "Cada chat entre tu asistente y un cliente. Aquí ves lo que se dijo y puedes tomar el control.",
     first: ["Abre una conversación para leer el contexto.", "Toma el control si necesitas responder tú."],
   },
+  pruebas: {
+    question: "¿Qué es Pruebas?",
+    what: "El centro de pruebas de la plataforma: ejecutas las pruebas del catálogo paso a paso, dejas evidencia y envías tu informe. Cada ciclo agrupa una ronda de pruebas antes de pasar a producción.",
+    first: [
+      "Empieza por las imprescindibles: son las que no pueden fallar.",
+      "Prepara tu negocio de prueba en Datos antes de la primera prueba.",
+    ],
+  },
   agents: {
     question: "¿Qué son los Agentes?",
     what: "Cada agente que atiende tu negocio (Ventas, Agenda, Cobranza…) y lo que construyó: conversaciones, tareas, clientes, registros y consumo.",

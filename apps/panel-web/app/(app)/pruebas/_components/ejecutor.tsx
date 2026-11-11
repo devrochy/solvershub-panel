@@ -4,10 +4,12 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, FileText, Trash2 } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { useAtajos } from "@/components/shell/atajos-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dropzone } from "@/components/ui/dropzone";
 import { Kbd } from "@/components/ui/kbd";
 import { Stepper, type StepItem, type StepState } from "@/components/ui/stepper";
@@ -15,10 +17,19 @@ import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { QaAdjunto, QaItem, QaResultadoPrueba } from "@/lib/api/types";
 import { esCampoEditable } from "@/lib/shell/paleta";
-import { ESTADO_PASO, esTerminada, etiquetaPrueba, tonoPrueba, type EstadoPaso } from "@/lib/qa/estados";
+import {
+  ESTADO_PASO,
+  esTerminada,
+  etiquetaPrueba,
+  prioridadEnPalabras,
+  resumenDelCiclo,
+  tonoPrueba,
+  type EstadoPaso,
+} from "@/lib/qa/estados";
 import { ENTORNOS, areaDe, entornoDe, primerPasoPendiente } from "@/lib/qa/lista";
 import { accionDeTecla } from "@/lib/qa/teclas";
 import { toast } from "@/lib/toast-store";
+import { cn } from "@/lib/utils";
 
 import { URL_ADJUNTO } from "./api";
 import { Registro } from "./registro";
@@ -233,11 +244,21 @@ export function Ejecutor({
                 disabled={!editable}
                 aria-pressed={marca === clave}
                 onClick={() => void marcar(n, clave)}
+                // PRU-13: en el celular van Aprobar y Falla; Bloqueado y Omitir, en «Más resultados».
+                className={cn(clave === "ok" && "max-sm:flex-1", (clave === "bloqueado" || clave === "omitido") && "max-sm:hidden")}
               >
                 {ESTADO_PASO[clave].accion}
                 <Kbd keys={[ESTADO_PASO[clave].tecla]} className="hidden sm:inline-flex" />
               </Button>
             ))}
+            {editable && (
+              <span className="sm:hidden">
+                <MenuDeFila etiqueta="Más resultados">
+                  <DropdownMenuItem onSelect={() => void marcar(n, "bloqueado")}>Bloqueado</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void marcar(n, "omitido")}>Omitir</DropdownMenuItem>
+                </MenuDeFila>
+              </span>
+            )}
             {marca && editable && (
               <Button size="sm" variant="ghost" onClick={() => void onMarcar(n, null)}>
                 Desmarcar
@@ -266,7 +287,7 @@ export function Ejecutor({
               <Dropzone
                 accept={TIPOS_CAPTURA}
                 maxBytes={MAX_CAPTURA}
-                hint="PNG, JPG, WEBP o PDF de hasta 5 MB. Con el foco aquí, Ctrl+V pega una captura."
+                hint="PNG, JPG, WEBP o PDF, hasta 5 MB. Ctrl+V pega una captura."
                 onFiles={(archivos) => void onCapturas(n, archivos)}
                 onReject={(motivo) => toast.error(motivo)}
               />
@@ -283,9 +304,9 @@ export function Ejecutor({
         <header className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-text-soft">
-              {[ENTORNOS[entornoDe(item)], areaDe(item), item.grupo !== areaDe(item) ? item.grupo : null]
+              {[ENTORNOS[entornoDe(item)], areaDe(item), item.subseccion || (item.grupo !== areaDe(item) ? item.grupo : null)]
                 .filter(Boolean)
-                .join(" · ")}
+                .join(" › ")}
             </p>
             <div className="flex items-center gap-1">
               <Button size="icon" variant="ghost" aria-label="Prueba anterior (K)" onClick={() => onVecina(-1)}>
@@ -300,20 +321,12 @@ export function Ejecutor({
             <h2 className="font-display text-sh-h1 text-headline">{item.titulo}</h2>
             {badgeDeEstado(estado)}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {item.prioridad && <Badge variant={item.prioridad === "P0" ? "accent" : "neutral"}>{item.prioridad === "P0" ? "Humo · P0" : item.prioridad}</Badge>}
-            {(item.plataforma ?? []).map((p) => (
-              <Badge key={p}>{p}</Badge>
-            ))}
-            {(item.hu ?? []).map((hu) => (
-              <Badge key={hu} className="font-mono">
-                {hu}
-              </Badge>
-            ))}
-            {Object.keys(item.ejecuciones ?? {}).length > 0 && (
+          {/* PRU-03: la prioridad, la HU y lo del ciclo en palabras. */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {prioridadEnPalabras(item.prioridad) && <Badge variant="warning">{prioridadEnPalabras(item.prioridad)}</Badge>}
+            {[(item.hu ?? []).join(", "), resumenDelCiclo(item.ejecuciones)].filter(Boolean).length > 0 && (
               <span className="text-xs text-text-soft">
-                En el ciclo: {etiquetaPrueba(item.estado)} ·{" "}
-                {Object.values(item.ejecuciones ?? {}).reduce((a, b) => a + b, 0)} ejecución(es)
+                {[(item.hu ?? []).join(", "), resumenDelCiclo(item.ejecuciones)].filter(Boolean).join(" · ")}
               </span>
             )}
           </div>
@@ -332,34 +345,28 @@ export function Ejecutor({
                   </dd>
                 </div>
               )}
-              {(item.datos ?? []).length > 0 && (
+              {((item.datos ?? []).length > 0 || (item.requiere ?? []).length > 0) && (
                 <div className="flex flex-col gap-1">
-                  <dt className="text-sh-label text-headline">Datos de prueba</dt>
-                  <dd>
-                    <ul className="list-disc space-y-0.5 pl-4 text-body">
-                      {(item.datos ?? []).map((d) => (
-                        <li key={d}>{d}</li>
-                      ))}
-                    </ul>
-                  </dd>
-                </div>
-              )}
-              {(item.requiere ?? []).length > 0 && (
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <dt className="text-sh-label text-headline">Cómo conseguir los datos</dt>
-                  <dd>
-                    <ul className="flex flex-wrap gap-x-4 gap-y-1">
-                      {(item.requiere ?? []).map((slug) => (
-                        <li key={slug}>
-                          <Link
-                            href={`/pruebas/datos#${slug}`}
-                            className="text-link underline-offset-2 hover:underline"
-                          >
-                            {guia[slug] ?? slug}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                  <dt className="text-sh-label text-headline">Necesitas</dt>
+                  <dd className="flex flex-col gap-1">
+                    {(item.datos ?? []).length > 0 && (
+                      <ul className="list-disc space-y-0.5 pl-4 text-body">
+                        {(item.datos ?? []).map((d) => (
+                          <li key={d}>{d}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {(item.requiere ?? []).length > 0 && (
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                        {(item.requiere ?? []).map((slug) => (
+                          <li key={slug}>
+                            <Link href={`/pruebas/datos#${slug}`} className="text-link underline-offset-2 hover:underline">
+                              {guia[slug] ?? "Cómo conseguir los datos"}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </dd>
                 </div>
               )}

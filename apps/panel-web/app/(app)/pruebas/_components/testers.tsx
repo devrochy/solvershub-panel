@@ -4,15 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, UserPlus } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { QaTesterInvitado, QaTesterOut, QaTestersOut } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { fechaEnPalabras } from "@/lib/qa/estados";
 import { toast } from "@/lib/toast-store";
 
 import { llamarQa } from "./api";
@@ -23,6 +25,16 @@ const ESTADO: Record<QaTesterOut["estado"], { label: string; badge: "success" | 
   vencido: { label: "Invitación vencida", badge: "warning" },
   revocado: { label: "Revocado", badge: "neutral" },
 };
+
+/** Cuándo vence una invitación pendiente (PRU-11): «Vence en 6 días», «Venció hace 5 días». */
+export function vencimiento(t: Pick<QaTesterOut, "estado" | "expira_en">, ahora: Date = new Date()): string | null {
+  if ((t.estado !== "invitado" && t.estado !== "vencido") || !t.expira_en) return null;
+  const dias = Math.round((new Date(t.expira_en).getTime() - ahora.getTime()) / 86_400_000);
+  if (dias > 1) return `Vence en ${dias} días`;
+  if (dias === 1) return "Vence mañana";
+  if (dias === 0) return t.estado === "vencido" ? "Venció hoy" : "Vence hoy";
+  return dias === -1 ? "Venció ayer" : `Venció hace ${-dias} días`;
+}
 
 function EstadoTester({ estado }: { estado: QaTesterOut["estado"] }) {
   const { label, badge } = ESTADO[estado];
@@ -79,25 +91,39 @@ export function GestionDeTesters({ inicial }: { inicial: QaTestersOut }) {
   const columnas: Column<QaTesterOut>[] = [
     { key: "email", header: "Correo", cell: (t) => <span className="text-headline">{t.email}</span> },
     { key: "estado", header: "Estado", cell: (t) => <EstadoTester estado={t.estado} /> },
-    { key: "invitado", header: "Invitado", cell: (t) => formatDateTime(t.invitado_en) },
+    {
+      key: "invitado",
+      header: "Invitación",
+      cell: (t) => (
+        <span className="flex flex-col">
+          <span>{t.invitado_en ? `Enviada el ${fechaEnPalabras(t.invitado_en)}` : "—"}</span>
+          {vencimiento(t) && <span className="text-xs text-text-soft">{vencimiento(t)}</span>}
+        </span>
+      ),
+    },
     {
       key: "acciones",
-      header: "Acciones",
+      header: <span className="sr-only">Acciones</span>,
       align: "right",
-      cell: (t) => (
-        <div className="flex justify-end gap-2">
-          {t.estado !== "activo" && (
-            <Button size="sm" variant="outline" disabled={enviando || !inicial.habilitado} onClick={() => void invitar(t.email)}>
-              {t.estado === "revocado" ? "Volver a invitar" : "Reenviar invitación"}
-            </Button>
-          )}
-          {t.estado !== "revocado" && (
-            <Button size="sm" variant="ghost" onClick={() => void revocar(t)}>
-              Revocar
-            </Button>
-          )}
-        </div>
-      ),
+      className: "w-14",
+      cell: (t) =>
+        t.estado === "revocado" && !inicial.habilitado ? null : (
+          <div className="flex justify-end">
+            {/* PRU-11: las acciones de la fila en «Más acciones». */}
+            <MenuDeFila etiqueta={`Más acciones de ${t.email}`}>
+              {t.estado !== "activo" && (
+                <DropdownMenuItem disabled={enviando || !inicial.habilitado} onSelect={() => void invitar(t.email)}>
+                  {t.estado === "revocado" ? "Volver a invitar" : "Reenviar invitación"}
+                </DropdownMenuItem>
+              )}
+              {t.estado !== "revocado" && (
+                <DropdownMenuItem tone="danger" onSelect={() => void revocar(t)}>
+                  Revocar acceso
+                </DropdownMenuItem>
+              )}
+            </MenuDeFila>
+          </div>
+        ),
     },
   ];
 
@@ -114,9 +140,9 @@ export function GestionDeTesters({ inicial }: { inicial: QaTestersOut }) {
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-sh-block text-headline">Invitar un tester</h2>
             <p className="max-w-prose text-sm text-body">
-              Un tester entra al panel de test con los permisos de un master. En Colaboradores actúa como dueño del
-              negocio que tenga activo: no crea masters ni toca cuentas de plataforma.
-              Usa una cuenta propia, solo para pruebas. El enlace sirve una vez y vence en 7 días.
+              Un tester prueba el panel de test como el equipo de SolversHub: ve todos los negocios y, en Equipo, actúa
+              como dueño del negocio que tenga abierto. No crea administradores ni toca la plataforma. Usa una cuenta
+              propia, solo para pruebas. El enlace sirve una vez y vence en 7 días.
             </p>
           </div>
           <form
