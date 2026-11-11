@@ -9,6 +9,7 @@
  */
 import type { PagoConfirmadoOut, PlanOut, SuscripcionDetalle } from "@/lib/api/types";
 import { formatDate, formatMoney } from "@/lib/format";
+import { diaEnPalabras } from "@/lib/plataforma";
 
 export const RUTA = "/suscripciones";
 
@@ -31,6 +32,8 @@ export type FiltrosPagos = {
   hasta?: string;
   q?: string;
   suscripcion_id?: string;
+  /** `todos` = sin el «Por cobrar» de fábrica (SUS-12). */
+  ver?: string;
   page?: string;
 };
 
@@ -79,10 +82,25 @@ export function consultaSuscripciones(sp: FiltrosSuscripciones): URLSearchParams
   return qs;
 }
 
+export type VistaDePagos = "por_cobrar" | "vencidos" | "pagados" | "todos";
+
+/**
+ * Qué muestra Pagos (SUS-12). Sin filtros empieza por lo que hay que cobrar (pendientes);
+ * `?ver=todos` lo quita y un cobro de una suscripción (`suscripcion_id`) se ve completo.
+ */
+export function vistaDePagos(sp: FiltrosPagos): VistaDePagos {
+  if (verdadero(sp.vencidos)) return "vencidos";
+  if (sp.estado === "pagado") return "pagados";
+  if (sp.estado === "pendiente") return "por_cobrar";
+  if (sp.ver === "todos" || sp.estado || sp.suscripcion_id) return "todos";
+  return "por_cobrar";
+}
+
 /** Query de `GET /cargos` (los pagos). */
 export function consultaPagos(sp: FiltrosPagos): URLSearchParams {
   const qs = new URLSearchParams();
-  opcion(qs, "estado", sp.estado, ESTADOS_PAGO);
+  if (vistaDePagos(sp) === "por_cobrar") qs.set("estado", "pendiente");
+  else opcion(qs, "estado", sp.estado, ESTADOS_PAGO);
   opcion(qs, "tipo", sp.tipo, TIPOS_PAGO);
   if (verdadero(sp.vencidos)) qs.set("vencidos", "true");
   if (sp.desde && FECHA.test(sp.desde)) qs.set("desde", sp.desde);
@@ -241,7 +259,7 @@ export function confirmacionDeReenvio(
   return {
     title: `¿Reenviar el link de pago a ${cliente}?`,
     description:
-      `Se le envía por WhatsApp el link del cobro ${cargo.periodo} por ` +
+      `Se le envía por WhatsApp el link del cobro de ${mesLegible(cargo.periodo)} por ` +
       `${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. Si no tiene una conversación de WhatsApp, ` +
       "no se envía nada y podrás copiar el link.",
     confirmLabel: "Reenviar link",
@@ -254,7 +272,7 @@ export function descripcionDeRegistroDePago(
   cliente: string,
 ): string {
   return (
-    `Marca como pagado el cobro ${cargo.periodo} de ${cliente} por ` +
+    `Marca como pagado el cobro de ${mesLegible(cargo.periodo)} de ${cliente} por ` +
     `${formatMoney(cargo.monto, cargo.moneda ?? "COP")}. El cliente deja de recibir recordatorios y, ` +
     "si su suscripción estaba pausada por mora, se reactiva. Verifica antes que el dinero llegó: " +
     "el sistema no lo comprueba."
@@ -409,4 +427,136 @@ export function cambioProgramadoTexto(
 export function canalDePagoExterno(pago: Record<string, unknown> | null | undefined): string | null {
   const canal = pago?.canal;
   return typeof canal === "string" && canal ? canal : null;
+}
+
+// ----------------------------------------------------------------------------- en palabras (SUS)
+/**
+ * Un solo estado por suscripción (SUS-06): la pausa por mora no se repite como «Pausada · Pausada por
+ * mora» y la inscripción sin pagar dice qué espera. Clave de `SUBSCRIPTION_SITUATION`.
+ */
+export function situacion(s: { estado: string; motivo_pausa?: string | null }): string {
+  if (s.estado === "pausada" && s.motivo_pausa === "mora") return "pausada_mora";
+  if (s.estado === "pausada" && s.motivo_pausa === "cliente") return "pausada_negocio";
+  return s.estado;
+}
+
+/**
+ * Lo que importa de una suscripción en una línea: lo que debe y desde cuándo; si no debe, qué sigue.
+ * `esperaInscripcion` = el monto de la inscripción pendiente, cuando se conoce.
+ */
+export function lineaDeSuscripcion(
+  s: {
+    estado: string;
+    deuda: number;
+    en_mora: number;
+    dias_mora?: number | null;
+    proximo_cargo?: string | null;
+    trial_termina?: string | null;
+    valor_periodo: number;
+    moneda: string;
+  },
+  esperaInscripcion?: number,
+): string {
+  if (s.estado === "pendiente_pago") return `Espera ${formatMoney(esperaInscripcion ?? s.valor_periodo, s.moneda)} para empezar`;
+  if (s.deuda > 0) {
+    const debe = `Debe ${formatMoney(s.deuda, s.moneda)}`;
+    return s.en_mora > 0 ? `${debe} · ${textoDeMora(s.dias_mora)}` : debe;
+  }
+  if (s.estado === "trialing" && s.trial_termina) return `La prueba termina el ${diaEnPalabras(s.trial_termina)}`;
+  if (s.proximo_cargo) return `Próximo cobro el ${diaEnPalabras(s.proximo_cargo)}`;
+  return s.estado === "cancelada" ? "Ya no se cobra" : "Sin cobros pendientes";
+}
+
+/** Cómo se pagó un cobro, en palabras: «Pagó con Wompi», «Pagó en efectivo»; null si no se sabe. */
+export function comoPago(pago: Record<string, unknown> | null | undefined): string | null {
+  const canal = canalDePagoExterno(pago);
+  if (!canal) return null;
+  const nombres: Record<string, string> = {
+    wompi: "Pagó con Wompi",
+    transferencia: "Pagó por transferencia",
+    efectivo: "Pagó en efectivo",
+    link: "Pagó con el link de pago",
+  };
+  return nombres[canal.toLowerCase()] ?? `Pagó por ${canal}`;
+}
+
+/** Los tramos de la mora en una línea (SUS-03): «2 cobros de 1 a 30 días · 1 cobro de más de 60 días». */
+export function tramosEnUnaLinea(tramos: { etiqueta: string; cargos: number }[]): string {
+  return tramos
+    .filter((t) => t.cargos > 0)
+    .map((t) => `${t.cargos} ${t.cargos === 1 ? "cobro" : "cobros"} de ${t.etiqueta.charAt(0).toLowerCase()}${t.etiqueta.slice(1)}`)
+    .join(" · ");
+}
+
+/** Retención por plan (SUS-04), sumando las cohortes: «Pro: 4 de 5 siguen». Los planes con más altas, primero. */
+export function retencionPorPlan(cohortes: { plan: string; altas: number; vigentes: number }[]): string[] {
+  const porPlan = new Map<string, { altas: number; vigentes: number }>();
+  for (const c of cohortes) {
+    const actual = porPlan.get(c.plan) ?? { altas: 0, vigentes: 0 };
+    porPlan.set(c.plan, { altas: actual.altas + c.altas, vigentes: actual.vigentes + c.vigentes });
+  }
+  return [...porPlan.entries()]
+    .filter(([, v]) => v.altas > 0)
+    .sort((a, b) => b[1].altas - a[1].altas)
+    .map(([plan, v]) => `${plan}: ${v.vigentes} de ${v.altas} ${v.vigentes === 1 ? "sigue" : "siguen"}`);
+}
+
+/** Código de un plan nuevo a partir de su nombre (SUS-10): «Pro anual» → «pro_anual». */
+export function codigoDesdeNombre(nombre: string): string {
+  return nombre
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+}
+
+/**
+ * Qué pasa con una suscripción, en una frase (SUS-07): lo que debe y desde cuándo, o qué sigue.
+ * `pausadaEl` = cuándo se pausó (del historial), si se sabe.
+ */
+/** Cierra una frase sin duplicar el punto de una abreviatura («23 de nov.»). */
+function conPunto(texto: string): string {
+  return texto.endsWith(".") ? texto : `${texto}.`;
+}
+
+export function fraseDeLaSuscripcion(
+  s: Pick<
+    SuscripcionDetalle,
+    | "estado"
+    | "motivo_pausa"
+    | "deuda"
+    | "cargos_pendientes"
+    | "en_mora"
+    | "dias_mora"
+    | "proximo_cargo"
+    | "trial_termina"
+    | "fecha_cancelacion"
+    | "moneda"
+  >,
+  pausadaEl?: string | null,
+): string {
+  const partes: string[] = [];
+  if (s.estado === "pausada") {
+    const cuando = pausadaEl ? ` el ${diaEnPalabras(pausadaEl)}` : "";
+    partes.push(s.motivo_pausa === "mora" ? `Se pausó${cuando} porque no pagó.` : `La pausaste${cuando}: no se cobra mientras siga así.`);
+  }
+  if (s.estado === "pendiente_pago") partes.push("Empieza cuando pague la inscripción.");
+  if (s.estado === "cancelada") {
+    partes.push(s.fecha_cancelacion ? `Se canceló el ${conPunto(diaEnPalabras(s.fecha_cancelacion))} Ya no se cobra.` : "Está cancelada. Ya no se cobra.");
+  }
+  if (s.deuda > 0) {
+    const cobros = s.cargos_pendientes === 1 ? "1 cobro" : `${s.cargos_pendientes} cobros`;
+    const viejo =
+      s.en_mora > 0 && s.dias_mora != null && s.dias_mora > 0
+        ? `; ${s.cargos_pendientes > 1 ? "el más viejo venció" : "venció"} hace ${s.dias_mora === 1 ? "1 día" : `${s.dias_mora} días`}`
+        : "";
+    partes.push(`Debe ${formatMoney(s.deuda, s.moneda)} de ${cobros}${viejo}.`);
+  } else if (s.estado === "trialing" && s.trial_termina) {
+    partes.push(`Está en prueba hasta el ${conPunto(diaEnPalabras(s.trial_termina))}`);
+  } else if (s.estado === "activa") {
+    partes.push(s.proximo_cargo ? `Al día. El próximo cobro es el ${conPunto(diaEnPalabras(s.proximo_cargo))}` : "Al día.");
+  }
+  return partes.join(" ") || "Sin cobros pendientes.";
 }

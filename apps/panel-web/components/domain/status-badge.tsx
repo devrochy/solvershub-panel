@@ -60,6 +60,14 @@ export const SUBSCRIPTION_STATUS: StatusMap = {
   cancelada: { label: "Cancelada", variant: "neutral" },
 };
 
+/** Lo que ve el negocio de una suscripción (SUS-06): un solo estado, la pausa por mora incluida. */
+export const SUBSCRIPTION_SITUATION: StatusMap = {
+  ...SUBSCRIPTION_STATUS,
+  pendiente_pago: { label: "Esperando el primer pago", variant: "warning" },
+  pausada_mora: { label: "Pausada por mora", variant: "warning" },
+  pausada_negocio: { label: "Pausada por el negocio", variant: "warning" },
+};
+
 /**
  * Estado de un cobro de suscripción. No reutiliza `PAYMENT_STATUS`: el cobro solo es
  * `pendiente`, `pagado` o `anulado` (reemplazado por otro cambio de plan); no hay «rechazado».

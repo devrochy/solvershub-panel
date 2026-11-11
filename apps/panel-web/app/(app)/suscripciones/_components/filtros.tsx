@@ -1,9 +1,16 @@
-import Link from "next/link";
+"use client";
 
-import { SUBSCRIPTION_STATUS, CHARGE_STATUS } from "@/components/domain/status-badge";
+import { SlidersHorizontal } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { BuscarEnUrl } from "@/components/domain/buscar-en-url";
+import { CHARGE_STATUS, SUBSCRIPTION_SITUATION } from "@/components/domain/status-badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
 import {
   ESTADOS_PAGO,
@@ -12,153 +19,184 @@ import {
   TIPOS_PAGO,
   periodicidadLabel,
   tipoDePagoLabel,
-  type FiltrosClientesSuscripcion,
-  type FiltrosPagos,
-  type FiltrosSuscripciones,
+  vistaDePagos,
   type OpcionDePlan,
 } from "@/lib/suscripciones-admin";
 
-function Limpiar({ href, activos }: { href: string; activos: boolean }) {
-  return activos ? (
-    <Link href={href} className="pb-2.5 text-sm text-link hover:underline">
-      Limpiar
-    </Link>
-  ) : null;
+type Cambios = Record<string, string | null>;
+
+/** Lee y reescribe la URL: los filtros viven en ella y cada cambio vuelve a la primera página. */
+function useFiltrosEnUrl() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  const href = (cambios: Cambios) => {
+    const next = new URLSearchParams(sp.toString());
+    for (const [k, v] of Object.entries(cambios)) {
+      if (v) next.set(k, v);
+      else next.delete(k);
+    }
+    next.delete("page");
+    return `${pathname}${next.size ? `?${next.toString()}` : ""}`;
+  };
+  return { sp, href, ir: (cambios: Cambios) => router.replace(href(cambios), { scroll: false }) };
 }
 
-function Mora({ valor, etiqueta = "Con mora" }: { valor?: string; etiqueta?: string }) {
+type Opcion = { value: string; label: string };
+
+/** «Filtros»: lo que se usa poco, en un menú que se aplica al elegir. */
+function MasFiltros({ campos }: { campos: { clave: string; etiqueta: string; opciones?: Opcion[]; fecha?: boolean }[] }) {
+  const { sp, ir } = useFiltrosEnUrl();
+  const activos = campos.filter((c) => sp.get(c.clave)).length;
   return (
-    <Field label="Mora" htmlFor="con_mora" className="w-40">
-      <Select id="con_mora" name="con_mora" defaultValue={valor === "1" || valor === "true" ? "1" : ""}>
-        <option value="">Todas</option>
-        <option value="1">{etiqueta}</option>
-      </Select>
-    </Field>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" aria-label={activos ? `Filtros, ${activos} activos` : "Filtros"}>
+          <SlidersHorizontal aria-hidden className="h-4 w-4" />
+          {activos ? `Filtros · ${activos}` : "Filtros"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent label="Más filtros" align="end" className="flex w-72 flex-col gap-3 p-4">
+        {campos.map((c) => (
+          <Field key={c.clave} label={c.etiqueta} htmlFor={`filtro-${c.clave}`}>
+            {c.fecha ? (
+              <Input
+                id={`filtro-${c.clave}`}
+                type="date"
+                value={sp.get(c.clave) ?? ""}
+                onChange={(e) => ir({ [c.clave]: e.target.value || null })}
+              />
+            ) : (
+              <Select id={`filtro-${c.clave}`} value={sp.get(c.clave) ?? ""} onChange={(e) => ir({ [c.clave]: e.target.value || null })}>
+                <option value="">Todos</option>
+                {(c.opciones ?? []).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        ))}
+        {activos > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            onClick={() => ir(Object.fromEntries(campos.map((c) => [c.clave, null])))}
+          >
+            Quitar estos filtros
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
-/** Filtros de la lista de suscripciones. Formulario GET: la URL es el estado. */
-export function FiltrosSuscripciones({ sp, planes }: { sp: FiltrosSuscripciones; planes: OpcionDePlan[] }) {
-  const activos = Boolean(sp.q || sp.estado || sp.plan || sp.periodicidad || sp.con_mora || sp.cliente_id);
+const VISTAS_SUSCRIPCIONES: { value: string; label: string; cambios: Cambios }[] = [
+  { value: "", label: "Todas", cambios: { estado: null, con_mora: null } },
+  { value: "mora", label: "En mora", cambios: { estado: null, con_mora: "1" } },
+  { value: "trialing", label: "En prueba", cambios: { estado: "trialing", con_mora: null } },
+  { value: "pausada", label: "Pausadas", cambios: { estado: "pausada", con_mora: null } },
+  { value: "cancelada", label: "Canceladas", cambios: { estado: "cancelada", con_mora: null } },
+];
+
+/**
+ * Filtros de la lista de suscripciones (SUS-05): la búsqueda filtra al escribir, los estados más
+ * usados son un control segmentado y plan, periodicidad y los demás estados van en «Filtros».
+ */
+export function FiltrosSuscripciones({ planes }: { planes: OpcionDePlan[] }) {
+  const { sp, href } = useFiltrosEnUrl();
+  const conMora = sp.get("con_mora") === "1" || sp.get("con_mora") === "true";
+  const estado = sp.get("estado") ?? "";
+  // Un estado que no tiene segmento (`?estado=activa`, del Resumen) deja el control sin selección.
+  const actual = conMora ? "mora" : !estado ? "" : VISTAS_SUSCRIPCIONES.some((v) => v.value === estado) ? estado : "otro";
   return (
-    <form method="get" className="flex flex-wrap items-end gap-3">
-      {sp.cliente_id && <input type="hidden" name="cliente_id" value={sp.cliente_id} />}
-      <Field label="Buscar" htmlFor="q" className="w-60">
-        <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Cliente, teléfono o plan" />
-      </Field>
-      <Field label="Estado" htmlFor="estado" className="w-40">
-        <Select id="estado" name="estado" defaultValue={sp.estado ?? ""}>
-          <option value="">Todos</option>
-          {ESTADOS_SUSCRIPCION.map((e) => (
-            <option key={e} value={e}>
-              {SUBSCRIPTION_STATUS[e].label}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      {planes.length > 0 && (
-        <Field label="Plan" htmlFor="plan" className="w-52">
-          <Select id="plan" name="plan" defaultValue={sp.plan ?? ""}>
-            <option value="">Todos</option>
-            {planes.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      )}
-      <Field label="Periodicidad" htmlFor="periodicidad" className="w-40">
-        <Select id="periodicidad" name="periodicidad" defaultValue={sp.periodicidad ?? ""}>
-          <option value="">Todas</option>
-          {PERIODICIDADES.map((p) => (
-            <option key={p} value={p}>
-              {periodicidadLabel(p)}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Mora valor={sp.con_mora} />
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
-      <Limpiar href="/suscripciones/lista" activos={activos} />
-    </form>
+    <div className="flex flex-wrap items-center gap-3">
+      <BuscarEnUrl label="Buscar por cliente, teléfono o plan" placeholder="Buscar un cliente" className="w-72 max-w-full" />
+      <div className="max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:overflow-x-auto max-sm:px-4">
+        <SegmentedControl
+          label="Qué suscripciones ver"
+          value={actual}
+          options={VISTAS_SUSCRIPCIONES.map((v) => ({ value: v.value, label: v.label, href: href(v.cambios) }))}
+          className="w-max"
+        />
+      </div>
+      <MasFiltros
+        campos={[
+          {
+            clave: "estado",
+            etiqueta: "Estado",
+            opciones: ESTADOS_SUSCRIPCION.map((e) => ({ value: e, label: SUBSCRIPTION_SITUATION[e].label })),
+          },
+          ...(planes.length > 0 ? [{ clave: "plan", etiqueta: "Plan", opciones: planes }] : []),
+          { clave: "periodicidad", etiqueta: "Se cobra", opciones: PERIODICIDADES.map((p) => ({ value: p, label: periodicidadLabel(p) })) },
+        ]}
+      />
+    </div>
   );
 }
 
-/** Filtros de los pagos (cobros). */
-export function FiltrosPagos({ sp }: { sp: FiltrosPagos }) {
-  const activos = Boolean(sp.q || sp.estado || sp.tipo || sp.vencidos || sp.desde || sp.hasta || sp.suscripcion_id);
+const VISTAS_PAGOS: { value: string; label: string; cambios: Cambios }[] = [
+  { value: "por_cobrar", label: "Por cobrar", cambios: { ver: null, estado: "pendiente", vencidos: null } },
+  { value: "vencidos", label: "Vencidos", cambios: { ver: null, estado: null, vencidos: "1" } },
+  { value: "pagados", label: "Pagados", cambios: { ver: null, estado: "pagado", vencidos: null } },
+  { value: "todos", label: "Todos", cambios: { ver: "todos", estado: null, vencidos: null } },
+];
+
+/** Filtros de los pagos (SUS-12): empieza por lo que hay que cobrar; tipo y fechas en «Filtros». */
+export function FiltrosPagos() {
+  const { sp, href } = useFiltrosEnUrl();
+  const vista = vistaDePagos(Object.fromEntries(sp.entries()));
   return (
-    <form method="get" className="flex flex-wrap items-end gap-3">
-      {sp.suscripcion_id && <input type="hidden" name="suscripcion_id" value={sp.suscripcion_id} />}
-      <Field label="Buscar" htmlFor="q" className="w-60">
-        <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Cliente, teléfono o plan" />
-      </Field>
-      <Field label="Estado" htmlFor="estado" className="w-40">
-        <Select id="estado" name="estado" defaultValue={sp.estado ?? ""}>
-          <option value="">Todos</option>
-          {ESTADOS_PAGO.map((e) => (
-            <option key={e} value={e}>
-              {CHARGE_STATUS[e].label}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field label="Tipo" htmlFor="tipo" className="w-44">
-        <Select id="tipo" name="tipo" defaultValue={sp.tipo ?? ""}>
-          <option value="">Todos</option>
-          {TIPOS_PAGO.map((t) => (
-            <option key={t} value={t}>
-              {tipoDePagoLabel(t)}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field label="Vence desde" htmlFor="desde" className="w-40">
-        <Input id="desde" name="desde" type="date" defaultValue={sp.desde ?? ""} />
-      </Field>
-      <Field label="Vence hasta" htmlFor="hasta" className="w-40">
-        <Input id="hasta" name="hasta" type="date" defaultValue={sp.hasta ?? ""} />
-      </Field>
-      <Field label="Vencimiento" htmlFor="vencidos" className="w-44">
-        <Select id="vencidos" name="vencidos" defaultValue={sp.vencidos === "1" || sp.vencidos === "true" ? "1" : ""}>
-          <option value="">Todos</option>
-          <option value="1">Solo vencidos sin pagar</option>
-        </Select>
-      </Field>
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
-      <Limpiar href="/suscripciones/pagos" activos={activos} />
-    </form>
+    <div className="flex flex-wrap items-center gap-3">
+      <BuscarEnUrl label="Buscar por cliente, teléfono o plan" placeholder="Buscar un cliente" className="w-72 max-w-full" />
+      <div className="max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:overflow-x-auto max-sm:px-4">
+        <SegmentedControl
+          label="Qué pagos ver"
+          value={vista}
+          options={VISTAS_PAGOS.map((v) => ({ value: v.value, label: v.label, href: href(v.cambios) }))}
+          className="w-max"
+        />
+      </div>
+      <MasFiltros
+        campos={[
+          { clave: "tipo", etiqueta: "Tipo de cobro", opciones: TIPOS_PAGO.map((t) => ({ value: t, label: tipoDePagoLabel(t) })) },
+          ...(vista === "todos"
+            ? [{ clave: "estado", etiqueta: "Estado", opciones: ESTADOS_PAGO.map((e) => ({ value: e, label: CHARGE_STATUS[e].label })) }]
+            : []),
+          { clave: "desde", etiqueta: "Vence desde", fecha: true },
+          { clave: "hasta", etiqueta: "Vence hasta", fecha: true },
+        ]}
+      />
+    </div>
   );
 }
 
-/** Filtros de los clientes con suscripción. */
-export function FiltrosClientes({ sp }: { sp: FiltrosClientesSuscripcion }) {
-  const activos = Boolean(sp.q || sp.con_mora || sp.incluir_canceladas);
+/** Filtros de los clientes con suscripción (SUS-11). */
+export function FiltrosClientes() {
+  const { sp, href, ir } = useFiltrosEnUrl();
+  const conMora = sp.get("con_mora") === "1" || sp.get("con_mora") === "true";
+  const canceladas = sp.get("incluir_canceladas") === "1" || sp.get("incluir_canceladas") === "true";
   return (
-    <form method="get" className="flex flex-wrap items-end gap-3">
-      <Field label="Buscar" htmlFor="q" className="w-60">
-        <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre o teléfono" />
-      </Field>
-      <Mora valor={sp.con_mora} />
-      <Field label="Canceladas" htmlFor="incluir_canceladas" className="w-56">
-        <Select
-          id="incluir_canceladas"
-          name="incluir_canceladas"
-          defaultValue={sp.incluir_canceladas === "1" || sp.incluir_canceladas === "true" ? "1" : ""}
-        >
-          <option value="">Solo con suscripción vigente</option>
-          <option value="1">Incluir quienes ya cancelaron</option>
-        </Select>
-      </Field>
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
-      <Limpiar href="/suscripciones/clientes" activos={activos} />
-    </form>
+    <div className="flex flex-wrap items-center gap-3">
+      <BuscarEnUrl label="Buscar por nombre o teléfono" className="w-72 max-w-full" />
+      <SegmentedControl
+        label="Qué clientes ver"
+        value={conMora ? "mora" : ""}
+        options={[
+          { value: "", label: "Todos", href: href({ con_mora: null }) },
+          { value: "mora", label: "Con mora", href: href({ con_mora: "1" }) },
+        ]}
+        className="w-max"
+      />
+      <Checkbox
+        id="incluir-canceladas"
+        label="Incluir quienes cancelaron"
+        checked={canceladas}
+        onCheckedChange={(v) => ir({ incluir_canceladas: v ? "1" : null })}
+      />
+    </div>
   );
 }

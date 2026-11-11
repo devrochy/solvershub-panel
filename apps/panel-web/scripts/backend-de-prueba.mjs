@@ -12,6 +12,7 @@
 //   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
 //   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
 //   PLATAFORMA=1 (con MASTER=1: App de Meta, requisitos de Embedded Signup y alta automática con documentos y altas en revisión)
+//   SUSCRIPCIONES=1 (Suscripciones con datos: todos los estados, cuatro planes, cobros, mora, avisos y métricas)
 //   PRUEBAS=1 (Plataforma › Pruebas con catálogo, ejecución propia, informes, ciclos, evolución, checklists, datos y testers)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
@@ -1394,6 +1395,124 @@ if (process.env.PLATAFORMA === "1") {
   ];
 }
 
+// SUSCRIPCIONES=1: un gimnasio con suscripciones en todos los estados (activa, en prueba, pendiente de pago, pausada por
+// mora, vencida y cancelada), cuatro planes (uno inactivo), cobros pagados, pendientes y vencidos, avisos y métricas.
+let suscripciones = null;
+if (process.env.SUSCRIPCIONES === "1") {
+  const dia = (d) => new Date(Date.now() + d * 86400_000).toISOString();
+  const fecha = (d) => dia(d).slice(0, 10);
+  const uuid = (n) => `5b0c0000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const P = { basico: uuid(101), pro: uuid(102), anual: uuid(103), verano: uuid(104) };
+  const planes = [
+    { id: P.basico, codigo: "basico", nombre: "Básico", descripcion: "Clases dos veces por semana.", precio: 49900, moneda: "COP", periodicidad: "mensual", trial_dias: 7, entitlements: {}, plan_plataforma: null, activo: true, orden: 1, creado: dia(-200), actualizado: dia(-30) },
+    { id: P.pro, codigo: "pro", nombre: "Pro", descripcion: "Clases ilimitadas y una asesoría al mes.", precio: 99000, moneda: "COP", periodicidad: "mensual", trial_dias: 0, entitlements: {}, plan_plataforma: null, activo: true, orden: 2, creado: dia(-200), actualizado: dia(-60) },
+    { id: P.anual, codigo: "pro_anual", nombre: "Pro anual", descripcion: "El plan Pro pagado por un año, con dos meses gratis.", precio: 990000, moneda: "COP", periodicidad: "anual", trial_dias: 0, entitlements: {}, plan_plataforma: null, activo: true, orden: 3, creado: dia(-150), actualizado: dia(-150) },
+    { id: P.verano, codigo: "verano", nombre: "Promo verano", descripcion: "Tres meses a precio especial.", precio: 120000, moneda: "COP", periodicidad: "trimestral", trial_dias: 0, entitlements: {}, plan_plataforma: null, activo: false, orden: 4, creado: dia(-300), actualizado: dia(-120) },
+  ];
+  const cli = (n, nombre, tel) => ({ id: uuid(200 + n), nombre, telefono: tel, canal: "whatsapp" });
+  const C = [cli(1, "Ana Pérez", "+57 300 000 0001"), cli(2, "Luis Gómez", "+57 300 000 0002"), cli(3, "Marta Ruiz", "+57 300 000 0003"), cli(4, "Carlos Díaz", "+57 300 000 0004"), cli(5, "Sofía León", "+57 300 000 0005"), cli(6, "Jorge Restrepo", "+57 300 000 0006"), cli(7, "Paula Mejía", "+57 300 000 0007"), cli(8, "Daniel Ortiz", "+57 300 000 0008")];
+  const sub = (n, c, plan, estado, extra = {}) => {
+    const p = planes.find((x) => x.id === plan);
+    return { id: uuid(300 + n), cliente: c, plan: p.nombre, plan_id: plan, estado, motivo_pausa: null, periodicidad: p.periodicidad, valor_periodo: p.precio, moneda: "COP", proximo_cargo: null, trial_termina: null, fecha_alta: dia(-95), deuda: 0, cargos_pendientes: 0, en_mora: 0, dias_mora: null, ...extra };
+  };
+  const subs = [
+    sub(1, C[0], P.pro, "activa", { proximo_cargo: fecha(12), fecha_alta: dia(-95) }),
+    sub(2, C[1], P.basico, "trialing", { trial_termina: fecha(4), proximo_cargo: fecha(4), fecha_alta: dia(-3) }),
+    sub(3, C[2], P.pro, "pausada", { motivo_pausa: "mora", deuda: 198000, cargos_pendientes: 2, en_mora: 198000, dias_mora: 38, fecha_alta: dia(-160) }),
+    sub(4, C[3], P.basico, "activa", { proximo_cargo: fecha(24), deuda: 49900, cargos_pendientes: 1, en_mora: 49900, dias_mora: 6, fecha_alta: dia(-70) }),
+    sub(5, C[4], P.anual, "activa", { proximo_cargo: fecha(210), fecha_alta: dia(-155) }),
+    sub(6, C[5], P.basico, "pendiente_pago", { deuda: 49900, cargos_pendientes: 1, fecha_alta: dia(-1) }),
+    sub(7, C[6], P.pro, "cancelada", { fecha_alta: dia(-200) }),
+    sub(8, C[7], P.basico, "vencida", { deuda: 49900, cargos_pendientes: 1, en_mora: 49900, dias_mora: 64, fecha_alta: dia(-130) }),
+  ];
+  const periodo = (d) => dia(d).slice(0, 7);
+  let nc = 0;
+  const cargo = (s, d, estado, extra = {}) => ({ id: uuid(400 + ++nc), suscripcion_id: s.id, cliente: s.cliente, plan: s.plan, periodo: periodo(d), tipo: "periodo", monto: s.valor_periodo, moneda: "COP", estado, fecha_vencimiento: fecha(d), dias_mora: null, link_url: estado === "pendiente" ? "https://checkout.wompi.co/l/prueba" : null, pago_externo: null, creado: dia(d - 3), ...extra });
+  const cargos = [
+    cargo(subs[0], -18, "pagado", { pago_externo: { canal: "wompi" } }),
+    cargo(subs[0], -48, "pagado", { pago_externo: { canal: "wompi" } }),
+    cargo(subs[0], -95, "pagado", { tipo: "inscripcion", monto: 30000, pago_externo: { canal: "transferencia" } }),
+    cargo(subs[2], -38, "pendiente", { dias_mora: 38 }),
+    cargo(subs[2], -8, "pendiente", { dias_mora: 8 }),
+    cargo(subs[2], -68, "pagado", { pago_externo: { canal: "efectivo" } }),
+    cargo(subs[3], -6, "pendiente", { dias_mora: 6 }),
+    cargo(subs[3], -36, "pagado", { pago_externo: { canal: "wompi" } }),
+    cargo(subs[4], -155, "pagado", { pago_externo: { canal: "wompi" } }),
+    cargo(subs[5], 2, "pendiente"),
+    cargo(subs[7], -64, "pendiente", { dias_mora: 64 }),
+    cargo(subs[6], -40, "anulado"),
+  ];
+  const pagina = (items, url) => {
+    const tam = Number(url.searchParams.get("page_size") ?? 20);
+    return { items: items.slice(0, tam), total: items.length, page: 1, page_size: tam, has_more: items.length > tam };
+  };
+  const busca = (url, c) => {
+    const q = (url.searchParams.get("q") ?? "").toLowerCase();
+    return !q || (c?.nombre ?? "").toLowerCase().includes(q) || (c?.telefono ?? "").includes(q);
+  };
+  const SP = "/pack/pack_subscriptions";
+  respuestas[`${SP}/planes`] = planes;
+  respuestas["/admin/settings/subscription-provider"] = { estado: "ok", configurado: "pack_subscriptions", efectivo: "pack_subscriptions", habilitados: [{ id: "pack_subscriptions", label: "Suscripciones" }], mensaje: "Los planes se cobran con la habilidad Suscripciones." };
+  respuestas["/pack/commerce/pago-en-linea/minimo"] = { minimo: 1500, fuente: "pasarela", moneda: "COP", cuentas_de_transferencia: 1 };
+  respuestas["/admin/datos-de-prueba/suscripciones"] = { modulo: "suscripciones", titulo: "Suscripciones", disponible: false, motivo: "Tu negocio ya tiene suscripciones.", falta_descripcion: false, lote: null };
+  respuestas[`${SP}/metricas`] = {
+    moneda: "COP", otras_monedas: 0, mrr: 99000 + 49900 + 82500, mrr_descuento: 0, suscripciones_con_descuento: 0, mrr_mes_anterior: 280300,
+    activas: 3, en_prueba: 1, pendientes_de_pago: 1, pausadas: 1, vencidas: 1, canceladas: 1,
+    altas_mes: 2, altas_mes_anterior: 3, bajas_mes: 1, bajas_mes_anterior: 0, churn_mes: 0.125,
+    mora: { cargos: 4, monto: 297700, tramos: [{ etiqueta: "1 a 30 días", cargos: 2, monto: 148900 }, { etiqueta: "31 a 60 días", cargos: 1, monto: 99000 }, { etiqueta: "Más de 60 días", cargos: 1, monto: 49900 }] },
+    cohortes: [
+      { cohorte: periodo(-200), plan: "Pro", altas: 2, vigentes: 1 }, { cohorte: periodo(-160), plan: "Pro", altas: 1, vigentes: 1 },
+      { cohorte: periodo(-130), plan: "Básico", altas: 2, vigentes: 1 }, { cohorte: periodo(-95), plan: "Pro", altas: 1, vigentes: 1 },
+      { cohorte: periodo(-70), plan: "Básico", altas: 1, vigentes: 1 }, { cohorte: periodo(-3), plan: "Básico", altas: 2, vigentes: 2 },
+    ],
+    desde: fecha(-210),
+  };
+  const historial = (s) => [
+    ...(s.estado === "pausada" ? [{ at: dia(-8), accion: "subs_pausada_por_mora", actor: "Sistema", detalle: "Dos cobros sin pagar." }, { at: dia(-30), accion: "subs_link_reenviado", actor: "Dueña", detalle: null }] : []),
+    ...(s.estado === "cancelada" ? [{ at: dia(-40), accion: "subs_cancelada", actor: "Dueña", detalle: "Se mudó de ciudad." }] : []),
+  ];
+  const acciones = (s) => (s.estado === "pausada" ? ["reanudar", "cancelar"] : ["activa", "trialing", "vencida"].includes(s.estado) ? ["pausar", "cancelar"] : s.estado === "pendiente_pago" ? ["cancelar"] : []);
+  suscripciones = (metodo, ruta, url) => {
+    if (metodo !== "GET") return [200, { ok: true, suscripcion_estado: "activa" }];
+    if (ruta === `${SP}/suscripciones`) {
+      const estado = url.searchParams.get("estado"), plan = url.searchParams.get("plan_id"), cliente = url.searchParams.get("cliente_id");
+      const items = subs.filter((s) => (!estado || s.estado === estado) && (!plan || s.plan_id === plan) && (!cliente || s.cliente.id === cliente) && (url.searchParams.get("con_mora") !== "true" || s.en_mora > 0) && busca(url, s.cliente));
+      return [200, pagina(items, url)];
+    }
+    const una = ruta.match(/^\/pack\/pack_subscriptions\/suscripciones\/([^/]+)$/);
+    if (una) {
+      const s = subs.find((x) => x.id === una[1]);
+      if (!s) return [404, { error: { code: "not_found", message: "No existe esa suscripción." } }];
+      return [200, { ...s, fecha_cancelacion: s.estado === "cancelada" ? dia(-40) : null, cambio_programado: null, cargos: cargos.filter((c) => c.suscripcion_id === s.id), historial: historial(s), acciones: acciones(s) }];
+    }
+    if (ruta === `${SP}/cargos`) {
+      const estado = url.searchParams.get("estado"), tipo = url.searchParams.get("tipo"), sid = url.searchParams.get("suscripcion_id");
+      const items = cargos.filter((c) => (!estado || c.estado === estado) && (!tipo || c.tipo === tipo) && (!sid || c.suscripcion_id === sid) && (url.searchParams.get("vencidos") !== "true" || (c.dias_mora ?? 0) > 0) && busca(url, c.cliente));
+      return [200, pagina(items, url)];
+    }
+    const avisosDe = ruta.match(/^\/pack\/pack_subscriptions\/cargos\/([^/]+)\/avisos$/);
+    if (avisosDe) {
+      const c = cargos.find((x) => x.id === avisosDe[1]);
+      if (!c) return [200, []];
+      const d = Math.round((Date.parse(c.creado) - Date.now()) / 86400_000);
+      const lista = [{ evento: "subscription.charge_created", creado: dia(d), estado_evento: "entregado", intentos: 1, mensaje_estado: c.estado === "pagado" ? "read" : "delivered", plantilla: "cobro_con_link", enviado: dia(d) }];
+      if (c.estado === "pendiente" && (c.dias_mora ?? 0) > 0) lista.unshift({ evento: "subscription.charge_reminder", creado: dia(d + 4), estado_evento: "entregado", intentos: 1, mensaje_estado: "delivered", plantilla: "recordatorio_pago", enviado: dia(d + 4) });
+      if (c.estado === "pendiente" && (c.dias_mora ?? 0) > 30) lista.unshift({ evento: "subscription.paused", creado: dia(-8), estado_evento: "fallido", intentos: 3, mensaje_estado: null, mensaje_error: "sin_plantilla", plantilla: null, enviado: null });
+      return [200, lista];
+    }
+    if (ruta === `${SP}/clientes`) {
+      const items = C.map((c) => {
+        const suyas = subs.filter((s) => s.cliente.id === c.id);
+        const vivas = suyas.filter((s) => s.estado !== "cancelada");
+        const mora = Math.max(0, ...suyas.map((s) => s.dias_mora ?? 0));
+        return { cliente: c, suscripciones: suyas.length, vivas: vivas.length, planes: [...new Set(suyas.map((s) => s.plan))], deuda: suyas.reduce((t, s) => t + s.deuda, 0), en_mora: suyas.reduce((t, s) => t + s.en_mora, 0), dias_mora: mora || null, ultimo_periodo_pagado: suyas.some((s) => s.estado === "activa") ? periodo(-18) : null };
+      }).filter((f) => (url.searchParams.get("incluir_canceladas") === "true" || f.vivas > 0) && (url.searchParams.get("con_mora") !== "true" || f.en_mora > 0) && busca(url, f.cliente));
+      return [200, pagina(items, url)];
+    }
+    return null;
+  };
+}
+
 // PRUEBAS=1: la sección global `qa` (después de MASTER=1/TESTER=1, que reescriben /admin/me).
 if (process.env.PRUEBAS === "1") {
   const yo = respuestas["/admin/me"];
@@ -1467,6 +1586,14 @@ createServer(async (req, res) => {
     let texto = "";
     for await (const trozo of req) texto += trozo;
     const r = plataforma(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
+      return;
+    }
+  }
+  if (suscripciones && ruta.startsWith("/pack/pack_subscriptions/")) {
+    const r = suscripciones(req.method ?? "GET", ruta, url);
     if (r) {
       res.statusCode = r[0];
       res.end(JSON.stringify(r[1]));

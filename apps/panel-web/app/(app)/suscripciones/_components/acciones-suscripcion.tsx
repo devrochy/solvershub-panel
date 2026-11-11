@@ -2,8 +2,10 @@
 
 import { Pause, Play, XCircle } from "lucide-react";
 
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import type { SuscripcionDetalle } from "@/lib/api/types";
 import {
   ACCION_LABEL,
@@ -20,7 +22,7 @@ const EXITO: Record<AccionSuscripcion, string> = {
 };
 
 /**
- * Pausar, reanudar y cancelar (HU-SUB-08). Solo se ofrecen las acciones que el servidor declara
+ * Pausar, reanudar y cancelar (HU-SUB-08, SUS-07). Solo se ofrecen las acciones que el servidor declara
  * válidas para el estado actual y solo a quien puede escribir: nunca un 403 por diseño.
  * Cada una pide confirmación que explica qué pasa con los cobros; el servidor la deja en la
  * auditoría con el usuario.
@@ -52,23 +54,26 @@ export function AccionesSuscripcion({
     });
   }
 
+  // SUS-07: pausar y reanudar a la vista; cancelar, que no tiene vuelta atrás, en «Más acciones».
+  const visibles = acciones.filter((a) => a !== "cancelar");
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Acciones de la suscripción">
-      {acciones.map((accion) => {
+      {visibles.map((accion) => {
         const Icono = ICONO[accion];
         return (
-          <Button
-            key={accion}
-            type="button"
-            variant={accion === "cancelar" ? "danger" : "outline"}
-            disabled={pending}
-            onClick={() => ejecutar(accion)}
-          >
+          <Button key={accion} type="button" variant="outline" disabled={pending} onClick={() => ejecutar(accion)}>
             <Icono className="h-4 w-4" aria-hidden />
             {ACCION_LABEL[accion]}
           </Button>
         );
       })}
+      {acciones.includes("cancelar") && (
+        <MenuDeFila etiqueta="Más acciones de la suscripción">
+          <DropdownMenuItem tone="danger" icon={<XCircle aria-hidden />} onSelect={() => void ejecutar("cancelar")} disabled={pending}>
+            Cancelar suscripción
+          </DropdownMenuItem>
+        </MenuDeFila>
+      )}
     </div>
   );
 }

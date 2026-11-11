@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import { AvisoDeAlcance } from "@/app/(app)/suscripciones/_components/aviso-de-alcance";
 import { DatosDePruebaDelModulo } from "@/components/domain/datos-de-prueba-modulo";
-import { StatusBadge, SUBSCRIPTION_STATUS } from "@/components/domain/status-badge";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { StatusBadge, SUBSCRIPTION_SITUATION } from "@/components/domain/status-badge";
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { DashboardPage } from "@/components/templates/dashboard-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { KpiTile } from "@/components/ui/kpi-tile";
@@ -21,8 +23,11 @@ import {
   nombreDelCliente,
   porcentaje,
   retencion,
+  retencionPorPlan,
+  situacion,
   textoDeDescuentoVigente,
   textoDeMora,
+  tramosEnUnaLinea,
   variacion,
 } from "@/lib/suscripciones-admin";
 
@@ -35,6 +40,15 @@ function delta(actual: number, anterior: number, versus = ANTERIOR) {
   return v == null ? undefined : { value: v, versus };
 }
 
+function contar(n: number, uno: string, varios: string, ninguno?: string) {
+  if (n === 0 && ninguno) return ninguno;
+  return n === 1 ? `1 ${uno}` : `${formatNumber(n)} ${varios}`;
+}
+
+/**
+ * Resumen de Suscripciones (SUS-01 a 04): una frase con lo que cobras y lo que te deben, tres
+ * tarjetas, quién debe y cuánto se quedan. Las fórmulas viven en «¿Cómo se calcula?».
+ */
 export default async function ResumenSuscripcionesPage() {
   const [metricas, conMora, proveedor, datosPrueba] = await Promise.all([
     apiFetch<MetricasSuscripciones>("/pack/pack_subscriptions/metricas"),
@@ -42,36 +56,59 @@ export default async function ResumenSuscripcionesPage() {
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
     apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/suscripciones"),
   ]);
+  // SUS-02: la tarjeta de datos de prueba solo aparece cuando ofrece algo (generar o borrar).
+  const conDatosDePrueba = datosPrueba.ok && (datosPrueba.data.disponible || Boolean(datosPrueba.data.lote));
   const aviso = (
     <>
       <AvisoDeAlcance proveedor={proveedor.ok ? proveedor.data : null} />
-      {datosPrueba.ok && (
-        <DatosDePruebaDelModulo modulo="suscripciones" estado={datosPrueba.data} />
-      )}
+      {conDatosDePrueba && <DatosDePruebaDelModulo modulo="suscripciones" estado={datosPrueba.data} />}
     </>
   );
-  const cabecera = {
-    title: "Suscripciones",
-    description: "Tu ingreso recurrente, las altas y bajas del mes, la mora y cuánto se quedan los clientes.",
-    helpSection: "subscriptions",
-  };
+  const cabecera = { title: "Suscripciones", helpSection: "subscriptions" };
 
   if (!metricas.ok) {
     return (
       <DashboardPage header={cabecera} notices={aviso}>
-        <p role="alert" className="col-span-full text-status-danger-fg">
-          No se pudieron cargar las métricas: {metricas.error}
-        </p>
+        <div className="col-span-full">
+          <ErrorDeCarga titulo="No pudimos cargar el resumen" detalle={metricas.error} />
+        </div>
       </DashboardPage>
     );
   }
   const m = metricas.data;
   const dinero = (v: number) => formatMoney(v, m.moneda);
+  const deben: SuscripcionItem[] = conMora.ok ? conMora.data.items : [];
+  const totalDeben = conMora.ok ? conMora.data.total : 0;
+  const descuento = textoDeDescuentoVigente(m, m.moneda);
+  const noSuman = [
+    m.en_prueba > 0 && contar(m.en_prueba, "en prueba", "en prueba"),
+    m.pausadas > 0 && contar(m.pausadas, "pausada", "pausadas"),
+    m.vencidas > 0 && contar(m.vencidas, "vencida", "vencidas"),
+  ].filter(Boolean);
 
-  const moraColumns: Column<MetricasSuscripciones["mora"]["tramos"][number]>[] = [
-    { key: "tramo", header: "Antigüedad", cell: (t) => t.etiqueta },
-    { key: "cargos", header: "Cobros", align: "right", cell: (t) => <span className="tabular-nums">{formatNumber(t.cargos)}</span> },
-    { key: "monto", header: "Monto", align: "right", cell: (t) => <span className="tabular-nums">{dinero(t.monto)}</span> },
+  const debenColumns: Column<SuscripcionItem>[] = [
+    {
+      key: "cliente",
+      header: "Cliente",
+      cell: (s) => (
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate font-medium text-headline">{nombreDelCliente(s.cliente)}</span>
+          <span className="truncate text-xs text-text-soft">{s.plan}</span>
+        </div>
+      ),
+    },
+    { key: "estado", header: "Estado", cell: (s) => <StatusBadge value={situacion(s)} map={SUBSCRIPTION_SITUATION} /> },
+    {
+      key: "debe",
+      header: "Debe",
+      align: "right",
+      cell: (s) => (
+        <div className="flex flex-col items-end">
+          <span className="tabular-nums text-headline">{formatMoney(s.deuda, s.moneda)}</span>
+          <span className="whitespace-nowrap text-xs text-status-danger-fg">{textoDeMora(s.dias_mora)}</span>
+        </div>
+      ),
+    },
   ];
 
   const cohorteColumns: Column<CohorteSuscripciones>[] = [
@@ -81,137 +118,133 @@ export default async function ResumenSuscripcionesPage() {
     { key: "siguen", header: "Siguen hoy", align: "right", cell: (c) => <span className="tabular-nums">{c.vigentes}</span> },
     {
       key: "retencion",
-      header: "Retención",
+      header: "Se quedan",
       align: "right",
-      info: "De las altas de ese mes, cuántas no están canceladas hoy.",
       cell: (c) => <span className="tabular-nums text-headline">{retencion(c.altas, c.vigentes)}</span>,
     },
   ];
-
-  const moraSuscripciones: SuscripcionItem[] = conMora.ok ? conMora.data.items : [];
-  const moraListaColumns: Column<SuscripcionItem>[] = [
-    {
-      key: "cliente",
-      header: "Cliente",
-      cell: (s) => (
-        <Link href={`/suscripciones/lista/${s.id}`} className="font-medium text-link hover:underline">
-          {nombreDelCliente(s.cliente)}
-        </Link>
-      ),
-    },
-    { key: "plan", header: "Plan", cell: (s) => s.plan },
-    { key: "estado", header: "Estado", cell: (s) => <StatusBadge value={s.estado} map={SUBSCRIPTION_STATUS} /> },
-    {
-      key: "mora",
-      header: "En mora",
-      align: "right",
-      cell: (s) => (
-        <div className="flex flex-col items-end">
-          <span className="tabular-nums text-headline">{formatMoney(s.en_mora, s.moneda)}</span>
-          <span className="text-xs text-status-danger-fg">{textoDeMora(s.dias_mora)}</span>
-        </div>
-      ),
-    },
-  ];
+  const quedan = retencionPorPlan(m.cohortes);
 
   return (
     <DashboardPage header={cabecera} notices={aviso}>
-      {m.otras_monedas > 0 && (
-        <p role="note" className="col-span-full text-sm text-text-soft">
-          Las cifras son en {m.moneda}. Hay {m.otras_monedas} suscripciones activas en otra moneda que no suman aquí.
+      <div className="col-span-full flex flex-col gap-1">
+        <p className="text-lg text-body">
+          Cobras <strong className="text-headline">{dinero(m.mrr)} al mes</strong> de{" "}
+          {contar(m.activas, "suscripción activa", "suscripciones activas")}.{" "}
+          {m.mora.monto > 0 && (
+            <span className="text-status-danger-fg">
+              {totalDeben > 0
+                ? `${contar(totalDeben, "suscripción debe", "suscripciones deben")} ${dinero(m.mora.monto)}.`
+                : `Te deben ${dinero(m.mora.monto)}.`}
+            </span>
+          )}
         </p>
-      )}
-      <div className="col-span-full grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <KpiTile
-          label="Ingreso mensual recurrente"
-          value={dinero(m.mrr)}
-          delta={delta(m.mrr, m.mrr_mes_anterior, "el cierre del mes anterior (aproximado)")}
-          hint={
-            "Activas de pago: trimestral ÷ 3, anual ÷ 12. No cuenta pruebas, planes de $0 ni inscripciones sin pagar." +
-            (textoDeDescuentoVigente(m, m.moneda) ? ` ${textoDeDescuentoVigente(m, m.moneda)}` : "")
-          }
-        />
-        <KpiTile
-          label="Suscripciones activas"
-          value={formatNumber(m.activas)}
-          href="/suscripciones/lista?estado=activa"
-          hint={`${formatNumber(m.en_prueba)} en prueba · ${formatNumber(m.pausadas)} pausadas · ${formatNumber(m.vencidas)} vencidas`}
-        />
         {m.pendientes_de_pago > 0 && (
-          <KpiTile
-            label="Esperando pago"
-            value={formatNumber(m.pendientes_de_pago)}
-            href="/suscripciones/lista?estado=pendiente_pago"
-            hint="Inscripciones que todavía no pagan. No cuentan como activas ni en el ingreso recurrente."
-          />
+          <Link href="/suscripciones/lista?estado=pendiente_pago" className="w-fit text-sm text-link hover:underline">
+            {m.pendientes_de_pago === 1
+              ? "1 inscripción espera su primer pago"
+              : `${formatNumber(m.pendientes_de_pago)} inscripciones esperan su primer pago`}
+          </Link>
         )}
+      </div>
+
+      <div className="col-span-full grid gap-4 sm:grid-cols-3">
+        <KpiTile
+          label="Ingreso recurrente"
+          value={dinero(m.mrr)}
+          delta={delta(m.mrr, m.mrr_mes_anterior)}
+          hint={descuento ? `Lo que cobras cada mes. ${descuento}` : "Lo que cobras cada mes."}
+        />
         <KpiTile
           label="En mora"
           value={dinero(m.mora.monto)}
           tone={m.mora.cargos > 0 ? "danger" : "default"}
           href="/suscripciones/pagos?vencidos=1"
-          hint={m.mora.cargos === 1 ? "1 cobro vencido sin pagar" : `${formatNumber(m.mora.cargos)} cobros vencidos sin pagar`}
+          hint={m.mora.cargos > 0 ? `${contar(m.mora.cargos, "cobro vencido", "cobros vencidos")} sin pagar` : "Nadie te debe."}
         />
         <KpiTile
-          label="Altas del mes"
-          value={formatNumber(m.altas_mes)}
-          delta={delta(m.altas_mes, m.altas_mes_anterior)}
-        />
-        <KpiTile
-          label="Bajas del mes"
-          value={formatNumber(m.bajas_mes)}
-          polarity="up-bad"
-          delta={delta(m.bajas_mes, m.bajas_mes_anterior)}
-        />
-        <KpiTile
-          label="Bajas sobre el inicio del mes"
-          value={porcentaje(m.churn_mes)}
-          polarity="up-bad"
-          hint="Bajas del mes ÷ suscripciones vigentes el primer día del mes."
+          label="Este mes"
+          value={`${contar(m.altas_mes, "alta", "altas", "Sin altas")} · ${contar(m.bajas_mes, "baja", "bajas", "sin bajas")}`}
+          hint={`El mes pasado: ${contar(m.altas_mes_anterior, "alta", "altas", "ninguna alta")} y ${contar(m.bajas_mes_anterior, "baja", "bajas", "ninguna baja")}.`}
         />
       </div>
 
-      <section aria-labelledby="mora" className="col-span-full flex flex-col gap-3">
-        <h2 id="mora" className="text-sh-block font-display text-headline">
-          Mora por antigüedad
-        </h2>
-        <DataTable
-          columns={moraColumns}
-          rows={m.mora.tramos}
-          getRowKey={(t) => t.etiqueta}
-          emptyTitle="Sin mora"
-          emptyDescription="No hay cobros vencidos sin pagar."
-          caption="Mora por antigüedad"
+      <details className="col-span-full text-sm text-body">
+        <summary className="w-fit cursor-pointer text-link hover:underline">¿Cómo se calcula?</summary>
+        <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+          <li>
+            El ingreso recurrente suma lo que pagan al mes las suscripciones activas: un plan trimestral cuenta un tercio y uno
+            anual, un doceavo. No suman las pruebas, los planes de $0 ni las inscripciones sin pagar
+            {noSuman.length > 0 ? ` (hoy: ${noSuman.join(", ")})` : ""}.
+          </li>
+          <li>Frente al mes anterior se compara con el cierre de ese mes; es una cifra aproximada.</li>
+          {m.churn_mes != null && (
+            <li>Este mes se fue el {porcentaje(m.churn_mes)} de las suscripciones que estaban vigentes el primer día.</li>
+          )}
+          {m.otras_monedas > 0 && (
+            <li>
+              Las cifras son en {m.moneda}. Hay {contar(m.otras_monedas, "suscripción activa", "suscripciones activas")} en otra
+              moneda que no suman aquí.
+            </li>
+          )}
+        </ul>
+      </details>
+
+      <section aria-labelledby="deben" className="col-span-full flex flex-col gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="deben" className="text-sh-block font-display text-headline">
+            Quién debe
+          </h2>
+          {m.mora.cargos > 0 && <span className="text-sm text-text-soft">{tramosEnUnaLinea(m.mora.tramos)}</span>}
+        </div>
+        <TablaResponsiva
+          etiqueta="Quién debe"
+          columns={debenColumns}
+          rows={deben}
+          getRowKey={(s) => s.id}
+          getRowHref={(s) => `/suscripciones/lista/${s.id}`}
+          getRowLabel={(s) => `Abrir la suscripción de ${nombreDelCliente(s.cliente)}`}
+          filaCelular={(s) => ({
+            titulo: nombreDelCliente(s.cliente),
+            detalle: `${s.plan} · ${textoDeMora(s.dias_mora)}`,
+            fin: formatMoney(s.deuda, s.moneda),
+            href: `/suscripciones/lista/${s.id}`,
+          })}
+          emptyTitle="Nadie te debe"
+          emptyDescription="Todos los cobros vencidos están pagados."
+          caption="Quién debe"
         />
-        {moraSuscripciones.length > 0 && (
-          <>
-            <h3 className="text-sh-label text-headline">Quiénes están en mora</h3>
-            <DataTable
-              columns={moraListaColumns}
-              rows={moraSuscripciones}
-              getRowKey={(s) => s.id}
-              emptyTitle="Sin mora"
-              caption="Suscripciones en mora"
-            />
-            <Link href="/suscripciones/lista?con_mora=1" className="text-sm text-link hover:underline">
-              Ver todas las que están en mora
-            </Link>
-          </>
+        {totalDeben > deben.length && (
+          <Link href="/suscripciones/lista?con_mora=1" className="w-fit text-sm text-link hover:underline">
+            Ver las {formatNumber(totalDeben)} que deben
+          </Link>
         )}
       </section>
 
-      <section aria-labelledby="cohortes" className="col-span-full flex flex-col gap-3">
-        <h2 id="cohortes" className="text-sh-block font-display text-headline">
-          Retención por plan
+      <section aria-labelledby="quedan" className="col-span-full flex flex-col gap-2">
+        <h2 id="quedan" className="text-sh-block font-display text-headline">
+          Cuánto se quedan
         </h2>
-        <DataTable
-          columns={cohorteColumns}
-          rows={m.cohortes}
-          getRowKey={(c) => `${c.cohorte}-${c.plan}`}
-          emptyTitle="Todavía no hay cohortes"
-          emptyDescription="Cuando tengas altas de planes de pago en los últimos seis meses, verás cuántas siguen vigentes."
-          caption="Retención por mes de alta y plan"
-        />
+        {quedan.length === 0 ? (
+          <p className="text-sm text-text-soft">
+            Cuando tengas altas de planes de pago en los últimos seis meses, verás cuántas siguen vigentes.
+          </p>
+        ) : (
+          <>
+            <p className="text-body">{quedan.join(" · ")}.</p>
+            <details className="text-sm">
+              <summary className="w-fit cursor-pointer text-link hover:underline">Ver por mes de alta</summary>
+              <div className="mt-3">
+                <DataTable
+                  columns={cohorteColumns}
+                  rows={m.cohortes}
+                  getRowKey={(c) => `${c.cohorte}-${c.plan}`}
+                  caption="Cuánto se quedan por mes de alta y plan"
+                />
+              </div>
+            </details>
+          </>
+        )}
       </section>
     </DashboardPage>
   );

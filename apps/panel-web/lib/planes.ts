@@ -171,7 +171,7 @@ export function textoDePrueba(plan: Pick<PlanOut, "trial_dias">): string {
 
 export const PLAN_ESTADO = {
   activo: { label: "Activo", variant: "success" },
-  inactivo: { label: "Inactivo", variant: "neutral" },
+  inactivo: { label: "No se ofrece", variant: "neutral" },
 } as const;
 
 export function estadoDelPlan(plan: Pick<PlanOut, "activo">): keyof typeof PLAN_ESTADO {
@@ -181,8 +181,8 @@ export function estadoDelPlan(plan: Pick<PlanOut, "activo">): keyof typeof PLAN_
 export type AccionDePlan = "desactivar" | "activar" | "eliminar";
 
 export const ACCION_DE_PLAN_EXITO: Record<AccionDePlan, string> = {
-  desactivar: "Plan desactivado.",
-  activar: "Plan activado.",
+  desactivar: "El plan ya no se ofrece a clientes nuevos.",
+  activar: "El plan vuelve a ofrecerse.",
   eliminar: "Plan eliminado.",
 };
 
@@ -191,18 +191,18 @@ export function confirmacionDeAccionDePlan(accion: AccionDePlan, plan: Pick<Plan
   switch (accion) {
     case "desactivar":
       return {
-        title: `¿Desactivar «${plan.nombre}»?`,
+        title: `¿Dejar de ofrecer «${plan.nombre}»?`,
         description:
           "Deja de ofrecerse para inscribir clientes nuevos. Quienes ya están inscritos siguen con su plan y " +
-          "siguen pagando. Puedes activarlo de nuevo cuando quieras.",
-        confirmLabel: "Desactivar plan",
+          "siguen pagando. Puedes volver a ofrecerlo cuando quieras.",
+        confirmLabel: "Dejar de ofrecer",
         destructive: false,
       };
     case "activar":
       return {
-        title: `¿Activar «${plan.nombre}»?`,
+        title: `¿Volver a ofrecer «${plan.nombre}»?`,
         description: "Vuelve a ofrecerse para inscribir clientes.",
-        confirmLabel: "Activar plan",
+        confirmLabel: "Volver a ofrecer",
         destructive: false,
       };
     case "eliminar":
@@ -215,4 +215,11 @@ export function confirmacionDeAccionDePlan(accion: AccionDePlan, plan: Pick<Plan
         destructive: true,
       };
   }
+}
+
+/** Precio y período en una frase (SUS-10): «$ 49.900 al mes», «$ 120.000 cada 3 meses», «Gratis». */
+export function precioEnPalabras(plan: Pick<PlanOut, "precio" | "moneda" | "periodicidad">): string {
+  if (plan.precio <= 0) return "Gratis";
+  const cada: Record<string, string> = { mensual: "al mes", trimestral: "cada 3 meses", anual: "al año" };
+  return `${formatMoney(plan.precio, plan.moneda)} ${cada[plan.periodicidad] ?? plan.periodicidad}`;
 }

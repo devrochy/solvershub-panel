@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Pencil, X } from "lucide-react";
+import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -22,25 +22,35 @@ import {
   permiteProbar,
   type PlanFormulario,
 } from "@/lib/planes";
-import { periodicidadLabel } from "@/lib/suscripciones-admin";
+import { codigoDesdeNombre, periodicidadLabel } from "@/lib/suscripciones-admin";
 
 /**
  * Alta y edición de un plan del catálogo de Suscripciones (HU-SUB-31). Guardar un plan bajo el mínimo
  * de la pasarela avisa pero no bloquea: ese cobro se hará por transferencia. Editar no toca lo ya
- * vendido: las suscripciones inscritas conservan su precio.
+ * vendido: las suscripciones inscritas conservan su precio. En Planes lo abre la fila (`?plan=`, SUS-10):
+ * con `abierto` no dibuja su botón. El código de un plan nuevo sale del nombre hasta que se edita a mano;
+ * el de un plan que existe no cambia al renombrarlo (es único en el negocio).
  */
 export function PlanDialog({
   plan,
   minimo = null,
   moneda = "COP",
+  abierto,
+  onAbierto,
 }: {
   plan?: PlanOut;
+  abierto?: boolean;
+  onAbierto?: (abierto: boolean) => void;
   /** Mínimo del pago en línea según el servidor; `null` = no se pudo saber, sin aviso. */
   minimo?: Pick<MinimoPagoEnLineaOut, "minimo" | "cuentas_de_transferencia"> | null;
   moneda?: string;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [openPropio, setOpenPropio] = useState(false);
+  const controlado = abierto !== undefined;
+  const open = controlado ? abierto : openPropio;
+  const setOpen = (v: boolean) => (controlado ? onAbierto?.(v) : setOpenPropio(v));
+  const [codigoTocado, setCodigoTocado] = useState(Boolean(plan));
   const [form, setForm] = useState<PlanFormulario>(() => formularioDePlan(plan));
   const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
   const monedaDelPlan = plan?.moneda ?? moneda;
@@ -81,23 +91,26 @@ export function PlanDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(abierto) => {
-        if (abierto) {
+      onOpenChange={(siguiente) => {
+        if (siguiente) {
           setForm(formularioDePlan(plan));
+          setCodigoTocado(Boolean(plan));
           setStatus({});
         }
-        setOpen(abierto);
+        setOpen(siguiente);
       }}
     >
-      <DialogTrigger asChild>
-        {plan ? (
-          <Button aria-label={`Editar ${plan.nombre}`} size="icon" title="Editar" variant="outline">
-            <Pencil className="h-4 w-4" aria-hidden />
-          </Button>
-        ) : (
-          <Button variant="accent">Nuevo plan</Button>
-        )}
-      </DialogTrigger>
+      {!controlado && (
+        <DialogTrigger asChild>
+          {plan ? (
+            <Button aria-label={`Editar ${plan.nombre}`} size="icon" title="Editar" variant="outline">
+              <Pencil className="h-4 w-4" aria-hidden />
+            </Button>
+          ) : (
+            <Button variant="accent">Nuevo plan</Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent
         title={plan ? "Editar plan" : "Nuevo plan"}
         description={
@@ -108,15 +121,19 @@ export function PlanDialog({
         className="max-w-xl"
       >
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nombre" htmlFor="plan-nombre" required>
-              <Input id="plan-nombre" value={form.nombre} onChange={(e) => cambiar("nombre", e.target.value)} maxLength={120} required />
-            </Field>
-            <Field label="Código" htmlFor="plan-codigo" help="Identifica el plan; no se repite en tu negocio." required>
-              <Input id="plan-codigo" value={form.codigo} onChange={(e) => cambiar("codigo", e.target.value)} maxLength={40} required />
-            </Field>
-          </div>
-          <Field label="Descripción" htmlFor="plan-descripcion">
+          <Field label="Nombre" htmlFor="plan-nombre" required>
+            <Input
+              id="plan-nombre"
+              value={form.nombre}
+              onChange={(e) => {
+                const nombre = e.target.value;
+                setForm((actual) => ({ ...actual, nombre, codigo: codigoTocado ? actual.codigo : codigoDesdeNombre(nombre) }));
+              }}
+              maxLength={120}
+              required
+            />
+          </Field>
+          <Field label="Qué incluye" htmlFor="plan-descripcion">
             <Input id="plan-descripcion" value={form.descripcion} onChange={(e) => cambiar("descripcion", e.target.value)} maxLength={2000} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -162,6 +179,24 @@ export function PlanDialog({
             onCheckedChange={(v) => cambiar("activo", v)}
           />
 
+          <details className="text-sm" open={Boolean(status.error && !form.codigo.trim())}>
+            <summary className="w-fit cursor-pointer text-link hover:underline">Avanzado</summary>
+            <div className="mt-3">
+              {/* Sin `required`: dentro de un <details> cerrado el navegador no podría enfocarlo; lo valida cuerpoDePlan. */}
+              <Field label="Código" htmlFor="plan-codigo" help="Identifica el plan; no se repite en tu negocio. Sale del nombre.">
+                <Input
+                  id="plan-codigo"
+                  value={form.codigo}
+                  onChange={(e) => {
+                    setCodigoTocado(true);
+                    cambiar("codigo", e.target.value);
+                  }}
+                  maxLength={40}
+                />
+              </Field>
+            </div>
+          </details>
+
           {aviso && (
             <div role="status" className="rounded-lg border border-status-warning-border bg-status-warning-bg p-3 text-sm text-body">
               <p className="font-medium text-headline">Este plan no podrá cobrarse con link de pago</p>
@@ -198,8 +233,8 @@ export function PlanDialog({
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>
-              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline">
-                <X className="h-4 w-4" aria-hidden />
+              <Button type="button" variant="outline">
+                Cancelar
               </Button>
             </DialogClose>
             <Button type="submit" variant="accent" disabled={status.loading}>
@@ -212,3 +247,28 @@ export function PlanDialog({
   );
 }
 
+
+/** El editor de un plan abierto desde su fila (`?plan=`): al cerrarse, la URL vuelve a la lista. */
+export function EditorDePlan({
+  plan,
+  minimo,
+  moneda,
+}: {
+  plan: PlanOut;
+  minimo?: Pick<MinimoPagoEnLineaOut, "minimo" | "cuentas_de_transferencia"> | null;
+  moneda?: string;
+}) {
+  const router = useRouter();
+  return (
+    <PlanDialog
+      key={plan.id}
+      plan={plan}
+      minimo={minimo}
+      moneda={moneda}
+      abierto
+      onAbierto={(v) => {
+        if (!v) router.replace("/suscripciones/planes", { scroll: false });
+      }}
+    />
+  );
+}
