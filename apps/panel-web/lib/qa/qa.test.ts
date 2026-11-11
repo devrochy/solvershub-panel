@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import type { QaEvento, QaItem } from "@/lib/api/types";
-import { estadoDePrueba, fechaDeCatalogo, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
+import {
+  estadoDePrueba,
+  fechaDeCatalogo,
+  porcentaje,
+  prioridadEnPalabras,
+  rangoEnPalabras,
+  resumenDeAvance,
+  resumenDelCiclo,
+  segmentosDeProgreso,
+} from "@/lib/qa/estados";
 import { describirEvento } from "@/lib/qa/historial";
 import { leerInforme } from "@/lib/qa/informe";
 import {
@@ -56,7 +65,15 @@ describe("estados", () => {
     expect(seg.map((s) => s.clave)).toEqual(["ok", "falla", "en_curso"]);
     expect(porcentaje(4, 10)).toBe(40);
     expect(porcentaje(1, 0)).toBe(0);
-    expect(fechaDeCatalogo("2026-10-13")).toBe("13/10/26");
+    expect(fechaDeCatalogo("2026-10-13")).toBe("13 de oct.");
+    expect(rangoEnPalabras("2026-10-12", "2026-11-03")).toBe("del 12 de oct. al 3 de nov.");
+    expect(prioridadEnPalabras("P0")).toBe("Imprescindible");
+    expect(prioridadEnPalabras("P1")).toBeNull();
+    expect(resumenDelCiclo({ ok: 2, falla: 1, bloqueada: 0 })).toBe("En este ciclo: 2 la aprobaron · 1 con falla");
+    expect(resumenDelCiclo({ ok: 0 })).toBeNull();
+    expect(resumenDeAvance({ total: 5, terminadas: 3, ok: 2, falla: 1, bloqueada: 0, omitida: 0, en_curso: 0, sin_correr: 2 })).toBe(
+      "2 aprobadas · 1 con falla · 2 sin correr",
+    );
     expect(fechaDeCatalogo(null)).toBe("—");
   });
 });
@@ -165,5 +182,26 @@ describe("historial y atajos", () => {
     expect(accionDeTecla({ key: "a", enCampo: true })).toBeNull();
     expect(accionDeTecla({ key: "k", ctrlKey: true, enCampo: false })).toBeNull();
     expect(accionDeTecla({ key: "x", enCampo: false })).toBeNull();
+  });
+});
+
+describe("tendencia y vencimientos (PRU-06, PRU-11)", () => {
+  const celda = (ok: number, total: number, falla = 0, sinCorrer = 0) => ({ ok, total, falla, bloqueada: 0, sinCorrer });
+
+  it("dice si una sección mejoró o empeoró entre los dos últimos catálogos", async () => {
+    const { tendencia } = await import("@/app/(app)/pruebas/_components/evolucion");
+    expect(tendencia([celda(3, 4, 1), celda(4, 4)])).toBe("Mejoró");
+    expect(tendencia([celda(1, 1), celda(0, 1, 1)])).toBe("Empeoró");
+    expect(tendencia([celda(1, 1), celda(0, 1, 0, 1)])).toBe("Falta correr");
+    expect(tendencia([undefined, celda(1, 1)])).toBe("Nueva");
+    expect(tendencia([celda(2, 2), celda(2, 2)])).toBe("Igual");
+  });
+
+  it("dice cuándo vence una invitación", async () => {
+    const { vencimiento } = await import("@/app/(app)/pruebas/_components/testers");
+    const ahora = new Date("2026-11-11T12:00:00Z");
+    expect(vencimiento({ estado: "invitado", expira_en: "2026-11-17T12:00:00Z" }, ahora)).toBe("Vence en 6 días");
+    expect(vencimiento({ estado: "vencido", expira_en: "2026-11-06T12:00:00Z" }, ahora)).toBe("Venció hace 5 días");
+    expect(vencimiento({ estado: "activo", expira_en: null }, ahora)).toBeNull();
   });
 });

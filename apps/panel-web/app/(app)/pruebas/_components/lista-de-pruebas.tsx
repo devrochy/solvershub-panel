@@ -1,17 +1,27 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field } from "@/components/ui/field";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { SearchInput } from "@/components/ui/search-input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
 import type { QaItem } from "@/lib/api/types";
 import { agrupar, areas, entornos, subsecciones, type Filtros } from "@/lib/qa/lista";
 import { cn } from "@/lib/utils";
 
 import { IconoEstado } from "./icono-estado";
+
+const ESTADOS_A_LA_VISTA = [
+  { value: "pendientes", label: "Sin terminar" },
+  { value: "falla", label: "Con falla" },
+  { value: "todas", label: "Todas" },
+];
 
 /**
  * Lista lateral de pruebas (HU-QA-03 y HU-QA-08): buscador, filtros y las pruebas agrupadas
@@ -73,6 +83,7 @@ export function ListaDePruebas({
   }
 
   const opcionesDeArea = areas(items, filtros.entorno);
+  const activos = [filtros.entorno, filtros.area, filtros.subseccion, filtros.soloHumo].filter(Boolean).length;
   const opcionesDeSubseccion = subsecciones(items, filtros.entorno, filtros.area);
 
   function renderPrueba(item: QaItem) {
@@ -94,8 +105,8 @@ export function ListaDePruebas({
         <IconoEstado estado={estadoDe(item.slug)} className="mt-0.5" />
         <span className="min-w-0 flex-1 leading-snug">{item.titulo}</span>
         {item.prioridad === "P0" && (
-          <span className="shrink-0 rounded-sm bg-hover px-1 text-[11px] font-medium text-body" title="Prueba de humo">
-            P0
+          <span className="shrink-0 rounded-sm bg-hover px-1 text-sh-caption font-medium text-body" title="Imprescindible">
+            Imprescindible
           </span>
         )}
       </button>
@@ -110,70 +121,104 @@ export function ListaDePruebas({
         value={filtros.texto}
         onChange={(texto) => onFiltros({ ...filtros, texto })}
       />
-      <div className="grid grid-cols-2 gap-2">
-        <Select
-          aria-label="Filtrar por entorno"
-          value={filtros.entorno}
-          // Cambiar de entorno limpia la sección y la subsección: pueden no existir en el nuevo.
-          onChange={(e) => onFiltros({ ...filtros, entorno: e.target.value, area: "", subseccion: "" })}
-        >
-          <option value="">Todos los entornos</option>
-          {entornos(items).map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.titulo}
-            </option>
-          ))}
-        </Select>
-        <Select
-          aria-label="Filtrar por sección"
-          value={filtros.area}
-          onChange={(e) => onFiltros({ ...filtros, area: e.target.value, subseccion: "" })}
-        >
-          <option value="">Todas las secciones</option>
-          {opcionesDeArea.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </Select>
-        {opcionesDeSubseccion.length > 0 && (
-          <Select
-            aria-label="Filtrar por subsección"
-            className="col-span-2"
-            value={filtros.subseccion}
-            onChange={(e) => onFiltros({ ...filtros, subseccion: e.target.value })}
-          >
-            <option value="">Todas las subsecciones</option>
-            {opcionesDeSubseccion.map((s) => (
-              <option key={s} value={s}>
-                {s || "Sin subsección"}
-              </option>
-            ))}
-          </Select>
-        )}
-        <Select
-          aria-label="Filtrar por estado"
-          className={cn(opcionesDeSubseccion.length === 0 && "col-span-2")}
-          value={filtros.estado}
-          onChange={(e) => onFiltros({ ...filtros, estado: e.target.value as Filtros["estado"] })}
-        >
-          <option value="todas">Todas</option>
-          <option value="pendientes">Sin terminar</option>
-          <option value="terminadas">Terminadas</option>
-          <option value="falla">Con falla</option>
-          <option value="bloqueada">Bloqueadas</option>
-        </Select>
-      </div>
-      <Checkbox
-        id="filtro-humo"
-        label="Solo pruebas de humo (P0)"
-        checked={filtros.soloHumo}
-        onCheckedChange={(v) => onFiltros({ ...filtros, soloHumo: v })}
+      {/* PRU-02: el estado a la vista; entorno, sección y subsección en un menú «Filtros». */}
+      <SegmentedControl
+        label="Qué pruebas ver"
+        value={ESTADOS_A_LA_VISTA.some((e) => e.value === filtros.estado) ? filtros.estado : ""}
+        onChange={(estado) => onFiltros({ ...filtros, estado: estado as Filtros["estado"] })}
+        options={ESTADOS_A_LA_VISTA}
+        className="grid w-full grid-cols-3"
       />
-      <p className="text-xs text-text-soft" aria-live="polite">
-        {visibles.length === items.length ? `${items.length} pruebas` : `${visibles.length} de ${items.length} pruebas`}
-      </p>
-
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-text-soft" aria-live="polite">
+          {visibles.length === items.length ? `${items.length} pruebas` : `${visibles.length} de ${items.length} pruebas`}
+        </p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline" size="sm" aria-label={activos ? `Filtros, ${activos} activos` : "Filtros"}>
+              <SlidersHorizontal aria-hidden className="h-4 w-4" />
+              {activos ? `Filtros · ${activos}` : "Filtros"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent label="Filtros de la lista" align="end" className="flex w-72 flex-col gap-3 p-4">
+            <Field label="Entorno" htmlFor="filtro-entorno">
+              <Select
+                id="filtro-entorno"
+                value={filtros.entorno}
+                // Cambiar de entorno limpia la sección y la subsección: pueden no existir en el nuevo.
+                onChange={(e) => onFiltros({ ...filtros, entorno: e.target.value, area: "", subseccion: "" })}
+              >
+                <option value="">Todos</option>
+                {entornos(items).map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.titulo}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Sección" htmlFor="filtro-seccion">
+              <Select
+                id="filtro-seccion"
+                value={filtros.area}
+                onChange={(e) => onFiltros({ ...filtros, area: e.target.value, subseccion: "" })}
+              >
+                <option value="">Todas</option>
+                {opcionesDeArea.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {opcionesDeSubseccion.length > 0 && (
+              <Field label="Subsección" htmlFor="filtro-subseccion">
+                <Select
+                  id="filtro-subseccion"
+                  value={filtros.subseccion}
+                  onChange={(e) => onFiltros({ ...filtros, subseccion: e.target.value })}
+                >
+                  <option value="">Todas</option>
+                  {opcionesDeSubseccion.map((s) => (
+                    <option key={s} value={s}>
+                      {s || "Sin subsección"}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+            <Field label="Estado" htmlFor="filtro-estado">
+              <Select
+                id="filtro-estado"
+                value={filtros.estado}
+                onChange={(e) => onFiltros({ ...filtros, estado: e.target.value as Filtros["estado"] })}
+              >
+                <option value="todas">Todas</option>
+                <option value="pendientes">Sin terminar</option>
+                <option value="terminadas">Terminadas</option>
+                <option value="falla">Con falla</option>
+                <option value="bloqueada">Bloqueadas</option>
+              </Select>
+            </Field>
+            <Checkbox
+              id="filtro-humo"
+              label="Solo las imprescindibles"
+              checked={filtros.soloHumo}
+              onCheckedChange={(v) => onFiltros({ ...filtros, soloHumo: v })}
+            />
+            {activos > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="self-start"
+                onClick={() => onFiltros({ ...filtros, entorno: "", area: "", subseccion: "", soloHumo: false })}
+              >
+                Quitar filtros
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+      </div>
       <nav
         aria-label="Pruebas del catálogo"
         onKeyDown={teclas}

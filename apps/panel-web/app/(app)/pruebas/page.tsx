@@ -1,3 +1,4 @@
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api/server";
 import type { QaCatalogo, QaEjecucion } from "@/lib/api/types";
@@ -15,11 +16,7 @@ export default async function EjecutarPruebasPage() {
     apiFetch<QaCatalogo>("/admin/qa/catalog?seccion=datos"),
   ]);
   if (!catalogo.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el catálogo de pruebas: {catalogo.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No pudimos cargar las pruebas" detalle={catalogo.error} />;
   }
   if (!catalogo.data.ciclo) {
     return (

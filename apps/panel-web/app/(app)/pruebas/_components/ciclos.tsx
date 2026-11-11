@@ -13,15 +13,14 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import type { QaCiclo } from "@/lib/api/types";
-import { formatDate } from "@/lib/format";
-import { porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
+import { fechaEnPalabras, porcentaje, rangoEnPalabras, resumenDeAvance, segmentosDeProgreso } from "@/lib/qa/estados";
 import { toast } from "@/lib/toast-store";
 import { cn } from "@/lib/utils";
 
 import { llamarQa } from "./api";
 import { IconoEstado } from "./icono-estado";
 
-function Ciclo({ ciclo, titulos }: { ciclo: QaCiclo; titulos: Record<string, string> }) {
+function Ciclo({ ciclo, titulos, onCerrar }: { ciclo: QaCiclo; titulos: Record<string, string>; onCerrar?: () => void }) {
   const [abierto, setAbierto] = useState(ciclo.abierto);
   const p = ciclo.progreso;
   const problemas = Object.entries(ciclo.por_prueba ?? {}).filter(([, e]) => e === "falla" || e === "bloqueada");
@@ -32,11 +31,19 @@ function Ciclo({ ciclo, titulos }: { ciclo: QaCiclo; titulos: Record<string, str
           <div className="flex flex-col gap-0.5">
             <h2 className="font-display text-sh-block text-headline">{ciclo.nombre}</h2>
             <p className="text-xs text-text-soft">
-              Catálogo v{ciclo.catalogo.version} · {formatDate(ciclo.abierto_en)}
-              {ciclo.cerrado_en ? ` → ${formatDate(ciclo.cerrado_en)}` : ""}
+              Catálogo del {fechaEnPalabras(ciclo.catalogo.fecha)} · {rangoEnPalabras(ciclo.abierto_en, ciclo.cerrado_en)}
             </p>
           </div>
-          {ciclo.abierto ? <Badge variant="info">Abierto</Badge> : <Badge>Cerrado</Badge>}
+          <div className="flex flex-wrap items-center gap-2">
+            {ciclo.abierto ? <Badge variant="info">Abierto</Badge> : <Badge>Cerrado</Badge>}
+            {/* PRU-05: la acción va junto al ciclo que cierra. */}
+            {onCerrar && (
+              <Button size="sm" variant="outline" onClick={onCerrar}>
+                <RotateCcw aria-hidden className="h-4 w-4" />
+                Cerrar este ciclo
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Progress
@@ -47,18 +54,11 @@ function Ciclo({ ciclo, titulos }: { ciclo: QaCiclo; titulos: Record<string, str
           />
           <span className="shrink-0 text-sm tabular-nums text-body">{porcentaje(p.terminadas, p.total)} %</span>
         </div>
-        <p className="text-sm text-body">
-          OK {p.ok} · Falla {p.falla} · Bloqueada {p.bloqueada} · Omitida {p.omitida} · Sin correr {p.sin_correr}
-        </p>
-        <button
-          type="button"
-          onClick={() => setAbierto((v) => !v)}
-          aria-expanded={abierto}
-          className="inline-flex w-fit items-center gap-1 text-sm text-link"
-        >
-          <ChevronDown aria-hidden className={cn("h-4 w-4 transition-transform", !abierto && "-rotate-90")} />
+        <p className="text-sm text-body">{resumenDeAvance(p)}</p>
+        <Button variant="ghost" size="sm" className="self-start" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}>
+          <ChevronDown aria-hidden className={cn("h-4 w-4 transition-transform duration-150", !abierto && "-rotate-90")} />
           {abierto ? "Ocultar detalle" : "Ver detalle"}
-        </button>
+        </Button>
         {abierto && (
           <div className="grid gap-5 md:grid-cols-2">
             <section aria-label="Ejecuciones" className="flex flex-col gap-2">
@@ -73,8 +73,8 @@ function Ciclo({ ciclo, titulos }: { ciclo: QaCiclo; titulos: Record<string, str
                       <span className="w-24 shrink-0">
                         <Progress size="sm" label={`Avance de ${e.tester}`} value={e.progreso.terminadas} max={e.progreso.total || 1} />
                       </span>
-                      <span className="w-20 shrink-0 text-right text-xs text-body">
-                        {e.estado === "enviada" ? "Enviado" : "En curso"}
+                      <span className="w-36 shrink-0 text-right text-xs text-body">
+                        {e.estado === "enviada" ? `Enviado el ${fechaEnPalabras(e.enviada_en)}` : "En curso"}
                       </span>
                     </li>
                   ))}
@@ -121,6 +121,7 @@ export function ListaDeCiclos({
   const [nombre, setNombre] = useState("");
   const [cerrando, setCerrando] = useState(false);
   const abierto = ciclos.find((c) => c.abierto);
+  const enCurso = (abierto?.ejecuciones ?? []).filter((e) => e.estado !== "enviada").length;
 
   async function cerrar() {
     if (!nombre.trim()) return;
@@ -143,24 +144,19 @@ export function ListaDeCiclos({
 
   return (
     <div className="flex flex-col gap-4">
-      {abierto && puedeCerrar && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft px-4 py-3">
-          <p className="text-sm text-body">
-            Cierra el ciclo cuando terminen las pruebas de esta release. Las ejecuciones en curso quedan en solo lectura.
-          </p>
-          <Button variant="outline" onClick={() => setDialogo(true)}>
-            <RotateCcw aria-hidden className="h-4 w-4" />
-            Cerrar ciclo y abrir otro
-          </Button>
-        </div>
-      )}
       {ciclos.map((c) => (
-        <Ciclo key={c.id} ciclo={c} titulos={titulos} />
+        <Ciclo key={c.id} ciclo={c} titulos={titulos} onCerrar={c.abierto && puedeCerrar ? () => setDialogo(true) : undefined} />
       ))}
       <Dialog open={dialogo} onOpenChange={setDialogo}>
         <DialogContent
-          title="Cerrar ciclo y abrir otro"
-          description={`«${abierto?.nombre ?? ""}» queda como foto fija con lo que llevaba cada tester. Las ejecuciones en curso pasan a solo lectura y el ciclo nuevo arranca con todas las pruebas sin correr.`}
+          title="Cerrar este ciclo"
+          description={`«${abierto?.nombre ?? ""}» queda como foto fija con lo que llevaba cada tester. ${
+            enCurso === 0
+              ? "No hay ejecuciones en curso."
+              : enCurso === 1
+                ? "La ejecución en curso queda en solo lectura."
+                : `Las ${enCurso} ejecuciones en curso quedan en solo lectura.`
+          } El ciclo nuevo usa la última versión del catálogo y arranca con todas las pruebas sin correr.`}
         >
           <form
             className="flex flex-col gap-4"

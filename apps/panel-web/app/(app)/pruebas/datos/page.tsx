@@ -1,3 +1,4 @@
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { QaCatalogo, QaEscenarios, QaMisDatos } from "@/lib/api/types";
 
@@ -17,11 +18,7 @@ export default async function DatosDePruebaPage() {
     apiFetch<QaCatalogo>("/admin/qa/catalog?seccion=datos"),
   ]);
   if (!datos.ok) {
-    return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudieron cargar tus datos de prueba: {datos.error}
-      </p>
-    );
+    return <ErrorDeCarga titulo="No pudimos cargar tus datos de prueba" detalle={datos.error} />;
   }
   // Los escenarios solo existen en test (fuera de él la API responde 404): sin ellos no se muestra la sección.
   const escenarios = datos.data.disponible ? await apiFetch<QaEscenarios>("/admin/qa/datos/escenarios") : null;

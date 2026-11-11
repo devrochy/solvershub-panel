@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useConfirm } from "@/components/ui/confirm";
 import type { QaDatos, QaDatosAgentOS, QaDatosCuenta, QaEscenarios, QaItem, QaMisDatos } from "@/lib/api/types";
 import { esEscenario } from "@/lib/qa/escenarios";
+import { habilidadLabel } from "@/lib/labels";
 import { toast } from "@/lib/toast-store";
 
 import { llamarQa } from "./api";
@@ -27,7 +28,7 @@ function copiar(texto: string, que: string) {
  * cuentas; las contraseñas viven solo en el estado de esta vista (se muestran una vez y no se
  * guardan en ningún lado). Debajo, la guía de los datos externos agrupada como en el catálogo.
  * Con los datos listos, «Actualizar mis datos» vuelve a pulsar «Preparar» (HU-QA-09): el backend
- * responde 200 sin contraseñas y pone al día el Agent OS (agentes y chat web).
+ * responde 200 sin contraseñas y pone al día los agentes y el chat web.
  */
 export function DatosDePrueba({
   inicial,
@@ -239,11 +240,12 @@ function EstadoDeMisDatos({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="text-sh-label text-headline">{datos.negocio.nombre ?? datos.negocio.slug}</span>
-          <span className="font-mono text-xs text-text-soft">{datos.negocio.slug}</span>
+          <span className="text-sh-label text-headline">{datos.negocio.nombre ?? "Tu negocio de prueba"}</span>
+          <span className="text-xs text-text-soft">Solo tú lo usas: nadie más toca estos datos.</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" loading={trabajando === "negocio"} onClick={() => onIrAMiNegocio(datos.negocio.id)}>
+          {/* PRU-10: una acción principal; las otras dos, secundarias. */}
+          <Button variant="accent" loading={trabajando === "negocio"} onClick={() => onIrAMiNegocio(datos.negocio.id)}>
             <ArrowRightLeft aria-hidden className="h-4 w-4" /> Ir a mi negocio de prueba
           </Button>
           <Button variant="outline" loading={trabajando === "contrasenas"} onClick={onContrasenas}>
@@ -260,11 +262,11 @@ function EstadoDeMisDatos({
           Copia las contraseñas ahora: no se vuelven a mostrar. Si las pierdes, pide contraseñas nuevas.
         </p>
       )}
-      <TablaDeCuentas cuentas={datos.cuentas} contrasenas={contrasenas} />
-      <p className="text-xs text-text-soft">
-        Las cuentas usan el dominio pruebas.solvershub.test y no reciben correo. Para las pruebas de correo, crea un
-        colaborador con tu correo con alias.
+      <p className="rounded-md border border-status-info-border bg-status-info-bg px-3 py-2 text-sm text-headline">
+        Estos correos no reciben mensajes (usan el dominio pruebas.solvershub.test). Para probar un correo, crea un
+        colaborador con tu propio correo y un alias.
       </p>
+      <TablaDeCuentas cuentas={datos.cuentas} contrasenas={contrasenas} />
       {datos.agent_os && (
         <AgentOs agentOs={datos.agent_os} reintentando={trabajando === "preparar"} onReintentar={onPreparar} />
       )}
@@ -289,10 +291,10 @@ function AgentOs({
     <section aria-labelledby="datos-agent-os" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <h3 id="datos-agent-os" className="text-sh-label text-headline">
-          Agent OS
+          Agentes
         </h3>
         {agentOs.estado === "listo" ? (
-          <Badge variant="success">Listo</Badge>
+          <Badge variant="success">Listos</Badge>
         ) : agentOs.estado === "pendiente" ? (
           <Badge variant="warning">Pendiente</Badge>
         ) : (
@@ -309,7 +311,7 @@ function AgentOs({
           role={agentOs.estado === "error" ? "alert" : "status"}
         >
           <p className="text-sm text-headline">
-            {agentOs.estado === "error" ? "El Agent OS no quedó listo" : "El Agent OS todavía no está listo"}
+            {agentOs.estado === "error" ? "Los agentes no quedaron listos" : "Los agentes todavía no están listos"}
             {agentOs.motivo ? `: ${agentOs.motivo}` : "."}
           </p>
           <Button variant="outline" className="self-start" loading={reintentando} onClick={onReintentar}>
@@ -423,7 +425,7 @@ function Contenido({ contenido }: { contenido: QaMisDatos["contenido"] }) {
       <div className="grid gap-4 md:grid-cols-3">
         {contenido.map((c) => (
           <div key={c.habilidad} className="flex flex-col gap-1.5">
-            <Badge className="self-start">{c.habilidad}</Badge>
+            <span className="text-sm font-medium text-headline">{habilidadLabel(c.habilidad)}</span>
             <ul className="list-disc space-y-0.5 pl-4 text-sm text-body">
               {c.detalle.map((d) => (
                 <li key={d}>{d}</li>
