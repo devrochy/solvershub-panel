@@ -275,6 +275,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Cada tope dice qué pasa al llegar («No puedes publicar otro agente») y ofrece «Mejorar mi plan»; lo que no tiene tope dice «sin límite», sin barra ni «∞».
 - Los costos en dólares (IA por agente y modelo, WhatsApp por categoría) son del equipo de SolversHub: Plataforma › Costos técnicos, solo master. Quien no es master y entra a `/costos` vuelve a Consumo y plan.
 
+## Agentes (SPEC-29)
+
+- La lista dice qué hace cada agente (el General coordina) y qué hizo en 30 días, en conversaciones y créditos del mes (`lib/agentes.ts`, `creditosPorAgenteId`). Se ve en cuadrícula o en lista (`?vista=`, recordada como en Ventas).
+- La ficha cambia de agente desde el título (un menú, no una fila de insignias) y dice lo que hizo en una frase: «48 conversaciones esta semana · 95 % sin pasar a una persona · 3.200 créditos este mes». Los dólares de proveedor solo los ve el master, también en Consumo y Calidad.
+- Cuatro pestañas: Actividad (conversaciones, tareas, clientes y registros en un control segmentado), Lo que sabe (superpoderes y documentos), Dónde atiende y Consumo. «Probar» es un botón que abre el chat en un cajón. Las pestañas de antes (`?tab=tareas`, `?tab=conocimiento`, `?tab=probar`…) siguen abriendo su lugar.
+- El período es un control segmentado que se aplica al tocarlo; la conexión, un menú. Las filas abren la conversación (sin columnas «Ver» ni «Versión»); en el celular son filas de un toque.
+- Todo en palabras: etapas con tildes, el motivo de una tarea que falló, «Atiende primero» en vez de prioridades, «9 de cada 10 en menos de 2 s» en vez de p95, permisos como frases («Agenda puede consultarle a Ventas») y claves de mensajes con su nombre.
+- El editor es una tarea enfocada: sin las pestañas de la sección y con «Volver a Ventas». Las plantillas de «Nuevo agente» son tarjetas con lo que saben hacer y lo que falta preparar.
+
 ## Pruebas (SPEC-30)
 
 - Seis pestañas: Ejecutar, Datos, Informes, Ciclos, Entornos (Test · Producción en un control segmentado) y Testers. La explicación vive en «¿Qué es esto?», no en cada pestaña.

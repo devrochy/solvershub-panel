@@ -21,6 +21,7 @@ import {
   tipoAyuda,
   tipoLabel,
   tiposVisibles,
+  variableEnPalabras,
 } from "@/lib/mensajes";
 
 const MAX_VARIABLES_VISIBLES = 3;
@@ -32,9 +33,9 @@ function Variables({ variables }: { variables: string[] }) {
   return (
     <span className="flex flex-wrap items-center gap-1">
       {visibles.map((v) => (
-        <code key={v} className="rounded-sm bg-hover px-1.5 py-0.5 font-mono text-xs text-body">
-          {v}
-        </code>
+        <span key={v} className="rounded-sm bg-hover px-1.5 py-0.5 text-xs text-body">
+          {variableEnPalabras(v)}
+        </span>
       ))}
       {resto > 0 && <span className="text-xs text-text-soft">+{resto}</span>}
     </span>
@@ -78,7 +79,7 @@ const COLUMNAS: Column<MensajeDelCatalogo>[] = [
     },
   },
   { key: "canales", header: "Canales", cell: (m) => canalesLabel(m.canales_soportados) },
-  { key: "variables", header: "Variables", cell: (m) => <Variables variables={m.variables} /> },
+  { key: "variables", header: "Lo que completa", cell: (m) => <Variables variables={m.variables} /> },
   {
     key: "actualizado",
     header: "Actualizado",
@@ -93,7 +94,10 @@ export function CatalogoMensajes({ catalogo }: { catalogo: CatalogoDeMensajes })
   const cuentas = contarPorTipo(catalogo.mensajes);
   const pestanas = [
     { id: "todos", label: `Todos (${catalogo.mensajes.length})` },
-    ...tiposVisibles(catalogo.mensajes, catalogo.omitidas).map((t) => ({ id: t, label: `${tipoLabel(t)} (${cuentas[t] ?? 0})` })),
+    // AGT-15: un filtro sin mensajes no se muestra.
+    ...tiposVisibles(catalogo.mensajes, catalogo.omitidas)
+      .filter((t) => (cuentas[t] ?? 0) > 0)
+      .map((t) => ({ id: t, label: `${tipoLabel(t)} (${cuentas[t]})` })),
   ];
   const filas = filtrarPorTipo(catalogo.mensajes, tipo);
 

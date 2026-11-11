@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { apiFetch } from "@/lib/api/server";
@@ -49,16 +52,27 @@ export default async function EditarAgentePage({
   const falla = [agente, superpoderes, modelos].find((r) => !r.ok);
   if (!agente.ok || !superpoderes.ok || !modelos.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo abrir el editor: {falla && !falla.ok ? falla.error : "inténtalo de nuevo."}
-      </p>
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Editar agente" breadcrumbs={[{ label: "Agentes", href: "/agentes" }, { label: "Editar" }]} tabs={false} />
+        <ErrorDeCarga titulo="No pudimos abrir el editor" detalle={falla && !falla.ok ? falla.error : undefined} />
+      </div>
     );
   }
   const titulo = `Editar ${agente.data.name}`;
+  const migas = [
+    { label: "Agentes", href: "/agentes" },
+    { label: agente.data.name, href: `/agentes/${id}` },
+    { label: "Editar" },
+  ];
+  const volver = (
+    <Button asChild variant="outline">
+      <Link href={`/agentes/${id}`}>Volver a {agente.data.name}</Link>
+    </Button>
+  );
   if (agente.data.kind !== "specialist") {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title={titulo} breadcrumbs={[{ label: "Agentes" }, { label: agente.data.name }]} />
+        <PageHeader title={titulo} breadcrumbs={migas} tabs={false} actions={volver} />
         <p className="text-sm text-body">
           Este agente lo administra el sistema (Coordinador o back-office): el editor por pasos es para especialistas.
         </p>
@@ -70,10 +84,13 @@ export default async function EditarAgentePage({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
       <PageHeader
         title={titulo}
         description="Ajusta tu agente paso a paso. Lo avanzado está plegado: no hace falta tocarlo."
-        breadcrumbs={[{ label: "Agentes" }, { label: agente.data.name }]}
+        breadcrumbs={migas}
+        tabs={false}
+        actions={volver}
       />
       <EditorDeAgente
         agente={agente.data}

@@ -5,7 +5,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
 import { violacionesGraves } from "@/lib/testing/axe";
-import { agentes, consolaConexiones, conversacionesDeAgente, me, tareasVacias } from "@/lib/testing/fixtures";
+import { agentes, consolaConexiones, conversacionesDeAgente, me, plan, tareasVacias } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 // Vista de un agente (HU-AOS-47): pestañas, estado vacío que explica cómo probar y la pestaña de
@@ -78,8 +78,13 @@ async function abrir(id: string, sp: Record<string, string> = {}) {
   return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 }
 
+/** La frase de la cabecera con lo que hizo esta semana (AGT-03). */
+function fraseDeLaSemana(): string | undefined {
+  return Array.from(document.querySelectorAll("p")).find((p) => p.textContent?.includes("esta semana"))?.textContent ?? undefined;
+}
+
 describe("vista de un agente", () => {
-  it("muestra sus conversaciones con conexión y versión, y las cuatro pestañas", async () => {
+  it("muestra sus conversaciones, las cuatro pestañas y «Probar» como botón (AGT-04)", async () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
@@ -87,11 +92,17 @@ describe("vista de un agente", () => {
     });
     const { container } = await abrir("general", { dias: "7" });
     expect(screen.getByRole("heading", { level: 1, name: "General" })).toBeTruthy();
-    expect(screen.getByText("test-Ana")).toBeTruthy();
-    expect(screen.getByText("v3")).toBeTruthy();
-    for (const pestana of ["Conversaciones", "Tareas", "Clientes y registros", "Consumo y calidad", "Conexiones", "Superpoderes", "Conocimiento", "Probar"]) {
-      expect(screen.getByRole("link", { name: pestana })).toBeTruthy();
-    }
+    expect(screen.getAllByText("test-Ana").length).toBeGreaterThan(0);
+    expect(screen.queryByText("v3")).toBeNull();
+    const pestanas = screen.getByRole("navigation", { name: "Pestañas de General" });
+    expect(within(pestanas).getAllByRole("link").map((a) => a.textContent)).toEqual(["Actividad", "Lo que sabe", "Dónde atiende", "Consumo"]);
+    const queVer = screen.getByRole("navigation", { name: "Qué ver" });
+    expect(within(queVer).getAllByRole("link").map((a) => a.textContent)).toEqual(["Conversaciones", "Tareas", "Clientes", "Registros"]);
+    expect(within(queVer).getByRole("link", { name: "Tareas" }).getAttribute("href")).toBe("/agentes/general?ver=tareas&dias=7");
+    expect(screen.getByRole("button", { name: "Probar" })).toBeTruthy();
+    // El período se aplica al tocarlo: no hay «Filtrar».
+    expect(within(screen.getByRole("navigation", { name: "Período" })).getByRole("link", { name: "7 días" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
     expect(llamadas.some((r) => r.startsWith("/admin/agents/general/conversations?desde="))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
   });
@@ -119,7 +130,7 @@ describe("vista de un agente", () => {
     expect(llamadas.some((r) => r.includes("/conversations"))).toBe(false);
   });
 
-  it("sin la sección de costos no muestra el costo, pero sí turnos y tokens", async () => {
+  it("el dueño no ve dólares ni tokens: el consumo va en respuestas y créditos", async () => {
     const fila = { turns: 2, input_tokens: 10, output_tokens: 5, cost_usd: null };
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
@@ -134,16 +145,17 @@ describe("vista de un agente", () => {
       },
       "/admin/agents/general/conversations": {
         ...conversacionesDeAgente,
-        items: conversacionesDeAgente.items.map((c) => ({ ...c, cost_usd: null })),
+        items: conversacionesDeAgente.items.map((c) => ({ ...c, cost_usd: 0.4 })),
       },
     });
     await abrir("general", { tab: "consumo" });
-    expect(screen.getByText("Turnos atendidos")).toBeTruthy();
-    expect(screen.queryByText("Costo del período")).toBeNull();
-    expect(screen.queryByRole("columnheader", { name: /costo/i })).toBeNull();
+    expect(screen.getByText("Respuestas en el período")).toBeTruthy();
+    expect(screen.getByText("Créditos este mes")).toBeTruthy();
+    expect(screen.queryByText("Costo de proveedor")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: /costo|tokens/i })).toBeNull();
     cleanup();
     await abrir("general");
-    expect(screen.getByText("test-Ana")).toBeTruthy();
+    expect(screen.getAllByText("test-Ana").length).toBeGreaterThan(0);
     expect(screen.queryByRole("columnheader", { name: /costo/i })).toBeNull();
   });
 
@@ -227,32 +239,33 @@ describe("ficha del agente (HU-UX-09)", () => {
     });
   }
 
-  it("cabecera: selector de agentes, propósito, «Publicado · vX», Editar e indicadores de 7 días", async () => {
+  it("cabecera: cambiar de agente en el título, propósito, «Publicado · vX», Editar y lo que hizo en una frase", async () => {
     base();
+    respuestas["/admin/plan"] = { ...plan, credit: { ...plan.credit, by_agent: [{ agent_id: ID, name: "Ventas", used: 3200 }] } };
     const { container } = await abrir(ID, { tab: "conexiones" });
-    const selector = screen.getByRole("navigation", { name: "Tus agentes" });
-    expect(within(selector).getByRole("link", { name: /Ventas/ }).getAttribute("aria-current")).toBe("page");
-    expect(within(selector).getByRole("link", { name: /General/ }).getAttribute("href")).toBe("/agentes/general");
-    expect(screen.getByText("Especialista · Toma pedidos y resuelve dudas de productos")).toBeTruthy();
-    expect(screen.queryByText(/Atiende en/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Cambiar de agente" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Tus agentes" })).toBeNull();
+    expect(screen.getByText("Toma pedidos y resuelve dudas de productos · Atiende en WhatsApp principal")).toBeTruthy();
     expect(screen.getByText("Publicado · v3")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Editar" }).getAttribute("href")).toBe(`/agentes/${ID}/editar`);
-    const indicadores = screen.getByRole("region", { name: "Indicadores de los últimos 7 días" });
-    expect(indicadores.textContent).toContain("Conversaciones · 7 días7");
-    // 4 escaladas de 40 respuestas del agente: la otra instancia no cuenta.
-    expect(indicadores.textContent).toContain("90 %");
-    expect(indicadores.textContent).toMatch(/1,25/);
+    // 4 escaladas de 40 respuestas del agente: la otra instancia no cuenta. Sin dólares para el dueño.
+    expect(fraseDeLaSemana()).toBe(
+      "7 conversaciones esta semana · 90 % sin pasar a una persona · 3.200 créditos este mes",
+    );
+    expect(document.body.textContent).not.toMatch(/1,25/);
+    // El costo de 7 días es de proveedor: solo se pide para el master.
+    expect(llamadas.some((r) => r.startsWith(`/admin/agents/${ID}/usage`))).toBe(false);
     expect(llamadas.some((r) => r.startsWith(`/admin/agents/${ID}/conversations?desde=`) && r.includes("page_size=1"))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("pestaña Conexiones: tabla enlazada a la ficha de cada conexión y sin filtros de período", async () => {
+  it("Dónde atiende (también desde ?tab=conexiones): filas que abren la conexión y sin período", async () => {
     base();
     await abrir(ID, { tab: "conexiones" });
     const tabla = screen.getByRole("table", { name: "Conexiones donde atiende Ventas" });
-    expect(within(tabla).getByRole("link", { name: "WhatsApp principal" }).getAttribute("href")).toBe("/conexiones/test-conn-1");
+    expect(within(tabla).getByRole("link", { name: "Abrir la conexión WhatsApp principal" }).getAttribute("href")).toBe("/conexiones/test-conn-1");
     expect(tabla.textContent).toContain("WhatsApp oficial (Meta)");
-    expect(tabla.textContent).toContain("Especialista");
+    expect(tabla.textContent).toContain("Atiende primero");
     expect(tabla.textContent).not.toContain("Google Calendar");
     expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe(`/agentes/${ID}/editar?paso=publicar`);
     expect(screen.queryByLabelText(/Período/i)).toBeNull();
@@ -260,9 +273,10 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(llamadas.filter((r) => r.startsWith("/admin/connections")).length).toBe(1);
   });
 
-  it("pestaña Superpoderes: interruptores con la habilidad de origen", async () => {
+  it("Lo que sabe (también desde ?tab=superpoderes): interruptores con la habilidad de origen y los documentos", async () => {
     base();
     Object.assign(respuestas, {
+      [`/pack/pack_knowledge/agents/${ID}/documents`]: [],
       "/admin/agent-superpowers": {
         items: [
           { id: "pack_commerce.tomar_pedido", version: "1.0.0", skill: "pack_commerce", title: "Tomar pedidos", description: "", phrases: ["a", "b", "c"] },
@@ -277,22 +291,24 @@ describe("ficha del agente (HU-UX-09)", () => {
     const { container } = await abrir(ID, { tab: "superpoderes" });
     expect(screen.getByRole("switch", { name: "Tomar pedidos" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByText("De la habilidad Comercio")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Documentos" })).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("pestaña Probar: el chat corre por la conexión principal del agente", async () => {
+  it("?tab=probar abre el cajón de prueba por la conexión principal del agente", async () => {
     base();
     await abrir(ID, { tab: "probar" });
+    expect(screen.getByRole("dialog", { name: "Probar a Ventas" })).toBeTruthy();
     expect(screen.getByTestId("chat").textContent).toBe("test-conn-1");
-    expect(screen.getByRole("heading", { name: "Probar en WhatsApp principal" })).toBeTruthy();
   });
 
   it("si la consola no responde, la ficha abre igual y lo explica", async () => {
     base();
     delete respuestas["/admin/connections/console"];
     await abrir(ID, { tab: "conexiones" });
-    expect(screen.getByText(/No se pudo cargar el detalle de las conexiones/)).toBeTruthy();
+    expect(screen.getByText(/No pudimos ver cómo atiende en cada conexión/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "test-Chat web" }).getAttribute("href")).toBe("/conexiones/00000000-0000-4000-8000-0000000000c1");
-    expect(screen.getByRole("region", { name: "Indicadores de los últimos 7 días" }).textContent).toContain("Sin datos por ahora.");
+    // Sin la consola no hay porcentaje: la frase sale con lo que sí cargó.
+    expect(fraseDeLaSemana()).toBe("7 conversaciones esta semana");
   });
 });

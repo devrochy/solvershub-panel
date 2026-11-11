@@ -4,28 +4,61 @@
  */
 
 export const PESTANAS = [
-  { id: "conversaciones", label: "Conversaciones" },
-  { id: "tareas", label: "Tareas" },
-  { id: "registros", label: "Clientes y registros" },
-  { id: "consumo", label: "Consumo y calidad" },
-  // HU-UX-09: dónde atiende (rol, prioridad y principal) y qué sabe hacer. Solo agentes con id.
-  { id: "conexiones", label: "Conexiones" },
-  { id: "superpoderes", label: "Superpoderes" },
-  // HU-AOS-49: documentos del negocio con los que responde. Solo especialistas con id.
-  { id: "conocimiento", label: "Conocimiento" },
-  // HU-UX-09: el chat de prueba del asistente, por una conexión donde está el agente.
-  { id: "probar", label: "Probar" },
+  // AGT-04: lo que hizo (conversaciones, tareas, clientes y registros), lo que sabe (superpoderes y
+  // documentos), dónde atiende y cuánto consume. «Probar» es un botón de la cabecera.
+  { id: "actividad", label: "Actividad" },
+  { id: "sabe", label: "Lo que sabe" },
+  { id: "atiende", label: "Dónde atiende" },
+  { id: "consumo", label: "Consumo" },
 ] as const;
 
 export type Pestana = (typeof PESTANAS)[number]["id"];
 
-/** Pestañas sin filtros de período ni conexión (no muestran `AgentFilters`). */
-export const PESTANAS_SIN_FILTROS: ReadonlySet<Pestana> = new Set(["conexiones", "superpoderes", "conocimiento", "probar"]);
+/** Qué se ve dentro de Actividad. */
+export const VISTAS_DE_ACTIVIDAD = [
+  { id: "conversaciones", label: "Conversaciones" },
+  { id: "tareas", label: "Tareas" },
+  { id: "clientes", label: "Clientes" },
+  { id: "registros", label: "Registros" },
+] as const;
+
+export type VistaDeActividad = (typeof VISTAS_DE_ACTIVIDAD)[number]["id"];
+
+/** Pestañas sin período ni conexión. */
+export const PESTANAS_SIN_FILTROS: ReadonlySet<Pestana> = new Set(["sabe", "atiende"]);
+
+/**
+ * Las ocho pestañas de antes siguen abriendo su lugar (Resumen enlaza `?tab=tareas` y `?tab=consumo`,
+ * el editor `?tab=conocimiento`): `?tab=probar` abre la actividad con el chat de prueba abierto.
+ */
+const PESTANAS_DE_ANTES: Record<string, { tab: Pestana; ver?: VistaDeActividad; probar?: true }> = {
+  conversaciones: { tab: "actividad", ver: "conversaciones" },
+  tareas: { tab: "actividad", ver: "tareas" },
+  registros: { tab: "actividad", ver: "registros" },
+  conexiones: { tab: "atiende" },
+  superpoderes: { tab: "sabe" },
+  conocimiento: { tab: "sabe" },
+  probar: { tab: "actividad", probar: true },
+};
+
+export type UbicacionEnLaFicha = { tab: Pestana; ver: VistaDeActividad; probar: boolean };
+
+/** Pestaña y vista de la URL: las de ahora o las de antes; cualquier otra cosa, la actividad. */
+export function ubicacionDe(sp: Record<string, string | undefined>): UbicacionEnLaFicha {
+  const antes = sp.tab ? PESTANAS_DE_ANTES[sp.tab] : undefined;
+  const tab = PESTANAS.find((p) => p.id === sp.tab)?.id ?? antes?.tab ?? "actividad";
+  const ver = VISTAS_DE_ACTIVIDAD.find((v) => v.id === sp.ver)?.id ?? antes?.ver ?? "conversaciones";
+  return { tab, ver, probar: Boolean(antes?.probar) || sp.probar === "1" };
+}
+
+export function pestanaValida(valor: string | undefined): Pestana {
+  return ubicacionDe({ tab: valor }).tab;
+}
 
 export const PERIODOS = [
-  { dias: 7, label: "Últimos 7 días" },
-  { dias: 30, label: "Últimos 30 días" },
-  { dias: 90, label: "Últimos 90 días" },
+  { dias: 7, label: "7 días" },
+  { dias: 30, label: "30 días" },
+  { dias: 90, label: "90 días" },
 ] as const;
 
 export const DIAS_POR_DEFECTO = 30;
@@ -36,10 +69,6 @@ const REF_VALIDO = /^(general|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0
 export function refValido(ref: string | undefined): string | null {
   const limpio = (ref ?? "").trim();
   return REF_VALIDO.test(limpio) ? limpio.toLowerCase() : null;
-}
-
-export function pestanaValida(valor: string | undefined): Pestana {
-  return PESTANAS.find((p) => p.id === valor)?.id ?? "conversaciones";
 }
 
 export function diasValidos(valor: string | undefined): number {
@@ -74,19 +103,22 @@ export function queryDeApi(f: FiltrosDeAgente, ahora: Date = new Date(), conPagi
 /** Enlace de la vista con los filtros vigentes y lo que cambie (`null` quita el parámetro). */
 export function hrefDeAgente(
   ref: string,
-  actual: { tab: Pestana } & FiltrosDeAgente,
-  cambios: Partial<{ tab: Pestana; dias: number; conexion: string | null; page: number; estado: string | null }> = {},
+  actual: { tab: Pestana; ver: VistaDeActividad } & FiltrosDeAgente,
+  cambios: Partial<{ tab: Pestana; ver: VistaDeActividad; dias: number; conexion: string | null; page: number; estado: string | null }> = {},
 ): string {
   const qs = new URLSearchParams();
   const tab = cambios.tab ?? actual.tab;
-  if (tab !== "conversaciones") qs.set("tab", tab);
+  if (tab !== "actividad") qs.set("tab", tab);
+  const ver = cambios.ver ?? actual.ver;
+  if (tab === "actividad" && ver !== "conversaciones") qs.set("ver", ver);
   const dias = cambios.dias ?? actual.dias;
   if (dias !== DIAS_POR_DEFECTO) qs.set("dias", String(dias));
   const conexion = "conexion" in cambios ? cambios.conexion : actual.conexion;
   if (conexion) qs.set("conexion", conexion);
   const estado = "estado" in cambios ? cambios.estado : actual.estado;
-  if (estado && tab === "tareas") qs.set("estado", estado);
-  const page = cambios.page ?? (cambios.tab || cambios.dias || "conexion" in cambios || "estado" in cambios ? 1 : actual.pagina);
+  if (estado && tab === "actividad" && ver === "tareas") qs.set("estado", estado);
+  const cambiaLaVista = cambios.tab || cambios.ver || cambios.dias || "conexion" in cambios || "estado" in cambios;
+  const page = cambios.page ?? (cambiaLaVista ? 1 : actual.pagina);
   if (page > 1) qs.set("page", String(page));
   return `/agentes/${ref}${qs.size ? `?${qs.toString()}` : ""}`;
 }
@@ -125,10 +157,51 @@ export function tipoDeAgente(kind: string): string {
   return TIPO_AGENTE[kind] ?? "Agente";
 }
 
+/**
+ * Qué hace el agente, en una frase (AGT-01): su propósito si lo tiene; el General y el Coordinador,
+ * que crea el sistema, dicen que coordinan (el General es `specialist` en la API).
+ */
+export function papelDelAgente(agente: { key: string; kind: string }, proposito?: string | null): string {
+  // Sin el punto final: la frase sigue con «· Atiende en…».
+  const texto = proposito?.trim().replace(/\.+$/, "");
+  if (texto) return texto;
+  if (agente.key === "general") return "Coordina a los demás y responde lo que nadie más sabe";
+  if (agente.kind === "core") return "Reparte cada conversación al agente que sabe";
+  return tipoDeAgente(agente.kind);
+}
+
 /** Procedimiento legible: `agendar_cita` → «Agendar cita». */
 export function nombreDeProcedimiento(id: string): string {
   const texto = id.split(/[.:/]/).pop()?.replaceAll(/[_-]+/g, " ").trim() ?? id;
   return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : id;
+}
+
+/** Palabras que los ids escriben sin tilde. */
+const TILDES: Record<string, string> = {
+  direccion: "dirección",
+  informacion: "información",
+  cotizacion: "cotización",
+  confirmacion: "confirmación",
+  verificacion: "verificación",
+  devolucion: "devolución",
+  ubicacion: "ubicación",
+  envio: "envío",
+  dia: "día",
+  telefono: "teléfono",
+  numero: "número",
+  metodo: "método",
+};
+
+/** Etapa de una tarea en palabras (AGT-07): `confirmar_direccion` → «Confirmar dirección»; `fin`, «Terminó». */
+export function nombreDeEtapa(stage: string | null | undefined): string {
+  if (!stage) return "—";
+  if (stage === "fin" || stage === "end") return "Terminó";
+  const nombre = nombreDeProcedimiento(stage);
+  return nombre.replaceAll(/[a-záéíóúñ]+/gi, (palabra) => {
+    const con = TILDES[palabra.toLowerCase()];
+    if (!con) return palabra;
+    return palabra[0] === palabra[0].toUpperCase() ? con.charAt(0).toUpperCase() + con.slice(1) : con;
+  });
 }
 
 /** pass^k en porcentaje con la tendencia frente a la medición anterior (más reciente primero). */
@@ -194,4 +267,40 @@ export function puedeArchivar(agente: { id?: string | null; key: string; virtual
 /** Los archivados van al final de la lista, sin cambiar el orden del resto. */
 export function archivadosAlFinal<T extends { status?: string | null }>(agentes: T[]): T[] {
   return [...agentes.filter((a) => !estaArchivado(a)), ...agentes.filter(estaArchivado)];
+}
+
+/** Dónde atiende, en palabras: «Atiende en Chat de la tienda», «Atiende en 3 conexiones». */
+export function dondeAtiende(conexiones: { label: string }[]): string {
+  if (conexiones.length === 0) return "Todavía no está en ninguna conexión";
+  if (conexiones.length === 1) return `Atiende en ${conexiones[0].label}`;
+  return `Atiende en ${conexiones.length} conexiones`;
+}
+
+/** Estado del agente en la lista y en la ficha. */
+export function estadoDelAgente(agente: { virtual: boolean; published: boolean; status?: string | null }): {
+  label: string;
+  tono: "success" | "neutral" | "info";
+} {
+  if (agente.virtual) return { label: "Historial del asistente", tono: "info" };
+  if (estaArchivado(agente)) return { label: "Archivado", tono: "neutral" };
+  return agente.published ? { label: "Atendiendo", tono: "success" } : { label: "Sin conexión activa", tono: "neutral" };
+}
+
+const CONVERSACION: Record<string, { label: string; tono: "info" | "success" | "warning" }> = {
+  open: { label: "Abierta", tono: "info" },
+  active: { label: "Abierta", tono: "info" },
+  resolved: { label: "Resuelta", tono: "success" },
+  closed: { label: "Cerrada", tono: "success" },
+  escalated: { label: "Pasó a una persona", tono: "warning" },
+  handoff: { label: "Pasó a una persona", tono: "warning" },
+};
+
+/** Estado de una conversación del agente; uno que no conocemos no se muestra. */
+export function estadoDeConversacion(status: string | null | undefined): { label: string; tono: "info" | "success" | "warning" } | null {
+  return (status && CONVERSACION[status]) || null;
+}
+
+/** «1 respuesta», «14 respuestas»: lo que la API llama turnos. */
+export function respuestas(n: number): string {
+  return `${n.toLocaleString("es-CO")} ${n === 1 ? "respuesta" : "respuestas"}`;
 }

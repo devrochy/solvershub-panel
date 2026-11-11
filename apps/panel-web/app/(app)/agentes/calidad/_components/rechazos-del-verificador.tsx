@@ -65,7 +65,7 @@ export function RechazosDelVerificador({
             )}
             {verConversaciones && (
               <button type="button" className="text-link hover:underline" onClick={() => setTurnoAbierto(r.turn_id)}>
-                Ver turno
+                Ver la respuesta
               </button>
             )}
             <span className="ml-auto">

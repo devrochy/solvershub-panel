@@ -72,3 +72,20 @@ export function origenDeCorrida(origen: string): string {
 
 /** ¿Puede marcar falsos positivos? Escritura en `agents` (o master), igual que el conocimiento. */
 export const puedeMarcar = puedeEscribirConocimiento;
+
+/** Rapidez en palabras (AGT-14): el p95 dicho como «9 de cada 10 en menos de 2,1 s». */
+export function rapidez(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
+  return `9 de cada 10 en menos de ${segundos(ms)}`;
+}
+
+/** Conexión de cada instancia de agente (una por conexión), para decir «Ventas · Chat de la tienda». */
+export function conexionPorInstancia(
+  conexiones: { label: string; agents: { instance_id: string }[]; coordinator?: { instance_id: string } | null }[],
+): Map<string, string> {
+  const mapa = new Map<string, string>();
+  for (const c of conexiones) {
+    for (const a of [...c.agents, ...(c.coordinator ? [c.coordinator] : [])]) mapa.set(a.instance_id, c.label.trim());
+  }
+  return mapa;
+}

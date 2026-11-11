@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 // El chat de prueba pide su historial al montar: aquí basta con saber por qué conexión se abrió.
@@ -33,8 +33,8 @@ function fila(cambios: Partial<ConexionDelAgente> = {}): ConexionDelAgente {
   };
 }
 
-describe("pestaña Conexiones del agente (HU-UX-09)", () => {
-  it("muestra conexión, tipo, rol, prioridad, principal y estado; cada fila lleva a la ficha de la conexión", async () => {
+describe("pestaña Dónde atiende del agente (HU-UX-09, AGT-08)", () => {
+  it("dice en palabras cuándo atiende y el estado; cada fila abre la ficha de la conexión", async () => {
     const { container } = render(
       <ConexionesDelAgente
         filas={[fila(), fila({ id: "c-2", label: "Chat web", tipo: "Chat web", principal: false, prioridad: 200, estado: { label: "Pausada", tono: "neutral" }, version: null })]}
@@ -45,14 +45,14 @@ describe("pestaña Conexiones del agente (HU-UX-09)", () => {
     );
     const tabla = screen.getByRole("table");
     const encabezados = within(tabla).getAllByRole("columnheader").map((h) => h.textContent?.trim());
-    expect(encabezados.join("|")).toMatch(/Conexión\|Tipo\|Rol\|Prioridad.*\|Principal.*\|Estado/);
-    expect(screen.getByRole("link", { name: "WhatsApp tienda" }).getAttribute("href")).toBe("/conexiones/c-1");
-    expect(screen.getByRole("link", { name: "Chat web" }).getAttribute("href")).toBe("/conexiones/c-2");
+    expect(encabezados.join("|")).toMatch(/Conexión\|Cuándo atiende.*\|Estado/);
+    expect(encabezados.join("|")).not.toMatch(/Prioridad|Principal/);
+    expect(screen.getAllByRole("link", { name: "Abrir la conexión WhatsApp tienda" })[0].getAttribute("href")).toBe("/conexiones/c-1");
+    expect(screen.getAllByRole("link", { name: "Abrir la conexión Chat web" })[0].getAttribute("href")).toBe("/conexiones/c-2");
     const filas = within(tabla).getAllByRole("row").slice(1);
-    expect(filas[0].textContent).toContain("Sí");
-    expect(filas[0].textContent).toContain("v3 activa");
-    expect(filas[1].textContent).toContain("No");
-    expect(filas[1].textContent).toContain("Sin versión activa");
+    expect(filas[0].textContent).toContain("Atiende primero");
+    expect(filas[1].textContent).toContain("Cuando la conversación es de su tema");
+    expect(tabla.textContent).not.toMatch(/v3|200/);
     expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a-1/editar?paso=publicar");
     expect(await violacionesGraves(container)).toEqual([]);
   });
@@ -73,18 +73,18 @@ describe("pestaña Conexiones del agente (HU-UX-09)", () => {
     expect(screen.queryByRole("link", { name: "Asignar a una conexión" })).toBeNull();
   });
 
-  it("si la consola no responde, lo dice y lista las conexiones del resumen", () => {
+  it("si la consola no responde, lo dice sin jerga y lista las conexiones del resumen", () => {
     render(
       <ConexionesDelAgente filas={[]} nombre="Ventas" publicado asignarHref={null} error="Sin permiso" respaldo={[{ id: "c-9", label: "Tienda" }]} />,
     );
-    expect(screen.getByRole("alert").textContent).toContain("Sin permiso");
+    expect(screen.getByRole("status").textContent).toContain("No pudimos ver cómo atiende en cada conexión");
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("link", { name: "Tienda" }).getAttribute("href")).toBe("/conexiones/c-9");
-    expect(screen.queryByRole("status")).toBeNull();
   });
 });
 
-describe("cabecera de la ficha del agente (HU-UX-09)", () => {
-  it("el selector marca el agente actual y enlaza a los demás", async () => {
+describe("cabecera de la ficha del agente (HU-UX-09, AGT-02, AGT-03)", () => {
+  it("el agente se cambia desde un menú junto al título", async () => {
     const { container } = render(
       <SelectorDeAgentes
         actual="a-2"
@@ -95,10 +95,8 @@ describe("cabecera de la ficha del agente (HU-UX-09)", () => {
         ]}
       />,
     );
-    const nav = screen.getByRole("navigation", { name: "Tus agentes" });
-    expect(within(nav).getByRole("link", { name: /Ventas/ }).getAttribute("aria-current")).toBe("page");
-    expect(within(nav).getByRole("link", { name: /General/ }).getAttribute("href")).toBe("/agentes/general");
-    expect(within(nav).getByRole("link", { name: /Agenda/ }).textContent).toContain("borrador");
+    expect(screen.getByRole("button", { name: "Cambiar de agente" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
@@ -107,76 +105,70 @@ describe("cabecera de la ficha del agente (HU-UX-09)", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("indicadores de 7 días: conversaciones, resueltas sin persona y consumo en dinero", async () => {
+  it("los indicadores van en una frase y en créditos, sin dólares para el dueño", async () => {
     const { container } = render(
       <IndicadoresDelAgente
-        conversaciones={{ valor: 42 }}
-        resueltas={{ valor: { porcentaje: 92.5, turnos: 120 } }}
-        consumo={{ valor: { costoUsd: 1.5, turnos: 120 } }}
+        conversaciones={{ valor: 48 }}
+        resueltas={{ valor: { porcentaje: 95, turnos: 120 } }}
+        creditosDelMes={{ valor: 3200 }}
       />,
     );
-    const seccion = screen.getByRole("region", { name: "Indicadores de los últimos 7 días" });
-    expect(seccion.textContent).toContain("Conversaciones · 7 días42");
-    expect(seccion.textContent).toContain("92,5 %");
-    expect(seccion.textContent).toMatch(/US\$\s?1,50|1,50\s?US\$/);
-    // En móvil van compactos (una fila cada uno) para que las pestañas queden en el primer pantallazo.
-    expect(seccion.className).toMatch(/gap-2/);
-    expect(Array.from(seccion.children).every((t) => /\bp-3\b/.test(t.className))).toBe(true);
+    expect(container.textContent).toBe("48 conversaciones esta semana · 95 % sin pasar a una persona · 3.200 créditos este mes");
+    expect(container.textContent).not.toContain("US$");
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("sin ver costos el consumo va en respuestas; sin muestra no inventa un porcentaje; sin permiso no se muestra", () => {
-    render(
-      <IndicadoresDelAgente
-        conversaciones={null}
-        resueltas={{ valor: { porcentaje: null, turnos: 4 } }}
-        consumo={{ valor: { costoUsd: null, turnos: 4 } }}
-      />,
+  it("el master ve además el costo de proveedor", () => {
+    const { container } = render(
+      <IndicadoresDelAgente conversaciones={{ valor: 1 }} resueltas={null} creditosDelMes={null} costoUsd={{ valor: 1.5 }} />,
     );
-    const seccion = screen.getByRole("region");
-    expect(seccion.textContent).not.toContain("Conversaciones");
-    expect(seccion.textContent).toContain("Muestra pequeña: 4 respuestas.");
-    expect(seccion.textContent).not.toContain("US$");
-    expect(seccion.textContent).toContain("Respuestas del agente.");
+    expect(container.textContent).toMatch(/^1 conversación esta semana · (US\$\s?1,50|1,50\s?US\$) de proveedor esta semana$/);
   });
 
-  it("un indicador que falla se explica sin tumbar los demás", () => {
-    render(<IndicadoresDelAgente conversaciones={{ error: "Sin datos por ahora." }} resueltas={null} consumo={null} />);
-    expect(screen.getByRole("alert").textContent).toBe("Sin datos por ahora.");
+  it("sin muestra no inventa un porcentaje; sin permiso no se muestra; si todo falla lo dice", () => {
+    const { container, rerender } = render(
+      <IndicadoresDelAgente conversaciones={null} resueltas={{ valor: { porcentaje: null, turnos: 4 } }} creditosDelMes={{ valor: 12 }} />,
+    );
+    expect(container.textContent).toBe("12 créditos este mes");
+    rerender(<IndicadoresDelAgente conversaciones={{ error: "Sin datos por ahora." }} resueltas={null} creditosDelMes={null} />);
+    expect(container.textContent).toBe("Todavía no hay cifras de esta semana.");
+    rerender(<IndicadoresDelAgente conversaciones={null} resueltas={null} creditosDelMes={null} />);
+    expect(container.innerHTML).toBe("");
   });
 });
 
-describe("pestaña Probar del agente (HU-UX-09)", () => {
-  it("abre el chat por la conexión elegida y deja cambiarla", async () => {
-    const { container } = render(
-      <ProbarAgente
-        nombre="Ventas"
-        conexion={fila()}
-        opciones={[
-          { id: "c-1", label: "WhatsApp tienda", href: "/agentes/a?tab=probar&conexion=c-1" },
-          { id: "c-2", label: "Chat web", href: "/agentes/a?tab=probar&conexion=c-2" },
-        ]}
-        asignarHref={null}
-      />,
+describe("«Probar» del agente (HU-UX-09, AGT-10)", () => {
+  it("es un botón que abre el chat en un cajón por la conexión principal y deja cambiarla", async () => {
+    const { baseElement } = render(
+      <ProbarAgente nombre="Ventas" conexiones={[fila(), fila({ id: "c-2", label: "Chat web", principal: false })]} inicial={fila()} asignarHref={null} />,
     );
+    expect(screen.queryByTestId("chat")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Probar" }));
+    expect(screen.getByRole("dialog", { name: "Probar a Ventas" })).toBeTruthy();
     expect(screen.getByTestId("chat").textContent).toBe("c-1");
-    const nav = screen.getByRole("navigation", { name: "Conexión de la prueba" });
-    expect(within(nav).getByRole("link", { name: "WhatsApp tienda" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByText(/lo que tengas sin publicar no entra/)).toBeTruthy();
-    expect(await violacionesGraves(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Chat web" }));
+    expect(screen.getByTestId("chat").textContent).toBe("c-2");
+    expect(await violacionesGraves(baseElement)).toEqual([]);
   });
 
-  it("avisa si el agente no atiende ahí o no está en la versión activa", () => {
-    const { rerender } = render(
-      <ProbarAgente nombre="Ventas" conexion={fila({ atiende: false, estado: { label: "Deshabilitado aquí", tono: "neutral" } })} opciones={[]} asignarHref={null} />,
+  it("abre solo con los enlaces de antes (?tab=probar) y avisa si el agente no atiende ahí", () => {
+    render(
+      <ProbarAgente
+        nombre="Ventas"
+        conexiones={[fila({ atiende: false, estado: { label: "Apagado en esta conexión", tono: "neutral" } })]}
+        inicial={fila({ atiende: false, estado: { label: "Apagado en esta conexión", tono: "neutral" } })}
+        asignarHref={null}
+        abierto
+      />,
     );
     expect(screen.getByRole("status").textContent).toContain("la prueba la responde otro agente");
-    rerender(<ProbarAgente nombre="Ventas" conexion={fila({ version: null })} opciones={[]} asignarHref={null} />);
-    expect(screen.getByRole("status").textContent).toContain("todavía no está en la versión activa");
+    cleanup();
+    render(<ProbarAgente nombre="Ventas" conexiones={[fila({ version: null })]} inicial={fila({ version: null })} asignarHref={null} abierto />);
+    expect(screen.getByRole("status").textContent).toContain("todavía no está publicado en WhatsApp tienda");
   });
 
   it("sin conexiones no hay chat: pide asignarlo a una", () => {
-    render(<ProbarAgente nombre="Ventas" conexion={null} opciones={[]} asignarHref="/agentes/a/editar?paso=publicar" />);
+    render(<ProbarAgente nombre="Ventas" conexiones={[]} inicial={null} asignarHref="/agentes/a/editar?paso=publicar" abierto />);
     expect(screen.queryByTestId("chat")).toBeNull();
     expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a/editar?paso=publicar");
   });

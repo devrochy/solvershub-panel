@@ -17,7 +17,7 @@ export default async function AsistentePage({ searchParams }: { searchParams: Pr
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Probar asistente"
-        description="Playground: el mismo runtime del asistente, sin canal. No envía mensajes ni consume métricas."
+        description="Escribe como un cliente y mira cómo responde tu asistente. No se envía nada ni cuenta en tus métricas. Para probar un agente en una conexión, usa «Probar» en su ficha."
       />
       <ChatPrueba probarOpciones={puedeProbarOpciones ? { plantillaInicial: inicial } : undefined} />
     </div>

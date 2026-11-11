@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -42,7 +41,7 @@ const TONO_AVISO: Record<AvisoDeToque["tono"], string> = {
 };
 
 /**
- * Chat de prueba del asistente: mismo loop del runtime, sin canales.
+ * Chat de prueba del asistente: responde igual que con un cliente, sin enviar nada por el canal.
  *
  * Con `conexionId` la prueba corre por esa conexión (HU-AOS-57): así se prueba la versión activa del
  * agente publicado ahí, como en el asistente de primer uso. `sugerencias` son frases para empezar con un
@@ -187,8 +186,8 @@ export function ChatPrueba({
         <CardContent className="flex max-h-[60vh] min-h-72 flex-col gap-3 overflow-y-auto pt-5">
           {turnos.length === 0 ? (
             <p className="text-sm text-text-soft">
-              Escribe un mensaje para probar el asistente. Corre el mismo loop que atiende
-              WhatsApp, pero sin enviar nada por ningún canal.
+              Escribe un mensaje como lo haría un cliente. Te responde igual que en WhatsApp, pero no se
+              envía nada por ningún canal.
             </p>
           ) : (
             turnos.map((t, i) => (
@@ -266,7 +265,7 @@ export function ChatPrueba({
           <Button disabled={status.loading} onClick={() => void reiniciar()} variant="outline">
             Reiniciar prueba
           </Button>
-          <Badge variant="neutral">canal: test</Badge>
+          <span className="text-sh-caption text-text-soft">No se envía nada a tus clientes.</span>
           <FormFeedback error={status.error} />
         </div>
       </div>

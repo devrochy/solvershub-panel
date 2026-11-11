@@ -13,6 +13,7 @@ import {
   conModo,
   hayCambios,
   mensajeDeError,
+  fraseDePermiso,
   MODOS,
   paraGuardar,
   tieneModo,
@@ -50,7 +51,7 @@ export function EditorDePermisos({
 }) {
   const [guardados, setGuardados] = useState<Permiso[]>(iniciales);
   const [permisos, setPermisos] = useState<Permiso[]>(iniciales);
-  const [verMapa, setVerMapa] = useState(false);
+  const [verMapa, setVerMapa] = useState(true);
   const { run, pending } = useAction();
   const nombres = useMemo(
     () => Object.fromEntries(agentes.map((a) => [a.id, a.name])),
@@ -107,60 +108,53 @@ export function EditorDePermisos({
             className="rounded-lg border border-border-soft bg-surface p-4"
           >
             <h2 className="font-display text-base font-semibold text-headline">
-              {desde.name} puede…
+              Lo que puede hacer {desde.name}
             </h2>
-            <div className="mt-3 flex flex-col gap-3">
+            <div className="mt-3 flex flex-col gap-4">
               {agentes
                 .filter((hacia) => hacia.id !== desde.id)
                 .map((hacia) => (
-                  <fieldset key={hacia.id} className="sm:flex sm:items-center">
-                    {/* Un `legend` no entra en el flex: flota a la izquierda en pantallas anchas. */}
-                    <legend className="mb-1 text-sm font-medium text-body sm:float-left sm:mb-0 sm:w-40 sm:shrink-0">
-                      con {hacia.name}
+                  <fieldset key={hacia.id} className="flex flex-col gap-2">
+                    <legend className="sr-only">
+                      {desde.name} con {hacia.name}
                     </legend>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                      {MODOS.map(({ modo, etiqueta }) => {
-                        const activo = tieneModo(
-                          permisos,
-                          desde.id,
-                          hacia.id,
-                          modo,
-                        );
-                        return puedeEditar ? (
-                          <Checkbox
-                            key={modo}
-                            id={`permiso-${desde.id}-${hacia.id}-${modo}`}
-                            label={etiqueta}
-                            checked={activo}
-                            disabled={pending}
-                            onCheckedChange={(v) =>
-                              setPermisos((ps) =>
-                                conModo(ps, desde.id, hacia.id, modo, v),
-                              )
-                            }
-                          />
-                        ) : (
-                          <span key={modo} className="text-sm text-soft">
-                            {etiqueta}: {activo ? "sí" : "no"}
-                          </span>
-                        );
-                      })}
-                    </div>
+                    {MODOS.map(({ modo, frase, ayuda }) => {
+                      const activo = tieneModo(
+                        permisos,
+                        desde.id,
+                        hacia.id,
+                        modo,
+                      );
+                      // AGT-13: cada permiso es una frase, con su explicación junto al control.
+                      return (
+                        <div key={modo} className="flex flex-col gap-0.5">
+                          {puedeEditar ? (
+                            <Checkbox
+                              id={`permiso-${desde.id}-${hacia.id}-${modo}`}
+                              label={fraseDePermiso(desde.name, hacia.name, frase)}
+                              checked={activo}
+                              disabled={pending}
+                              onCheckedChange={(v) =>
+                                setPermisos((ps) =>
+                                  conModo(ps, desde.id, hacia.id, modo, v),
+                                )
+                              }
+                            />
+                          ) : (
+                            <span className="text-sm text-body">
+                              {fraseDePermiso(desde.name, hacia.name, frase, activo)}
+                            </span>
+                          )}
+                          <span className={`text-xs text-soft ${puedeEditar ? "pl-6" : ""}`}>{ayuda}</span>
+                        </div>
+                      );
+                    })}
                   </fieldset>
                 ))}
             </div>
           </li>
         ))}
       </ul>
-
-      <dl className="grid gap-2 text-sm text-soft sm:grid-cols-3">
-        {MODOS.map(({ modo, etiqueta, ayuda }) => (
-          <div key={modo}>
-            <dt className="font-medium text-body">{etiqueta}</dt>
-            <dd>{ayuda}</dd>
-          </div>
-        ))}
-      </dl>
 
       {ciclos.length > 0 && (
         <div

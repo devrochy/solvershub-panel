@@ -107,6 +107,21 @@ export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Dat
   return { titulo: `Te quedan ${entero(quedan)} créditos`, detalle, porcentaje, tono: credit.percent >= 80 ? "warning" : "info", aviso };
 }
 
+/** «3.200 créditos»; «1 crédito». */
+export function creditos(n: number): string {
+  const redondo = Math.round(n);
+  return `${entero(redondo)} ${redondo === 1 ? "crédito" : "créditos"}`;
+}
+
+/**
+ * Créditos del mes por id de agente (AGT-01, AGT-03): lo que cada agente gastó del crédito del plan.
+ * Sin medición (`used` null) o sin desglose, vacío: la vista no muestra la cifra.
+ */
+export function creditosPorAgenteId(credit: Credito | null | undefined): Map<string, number> {
+  if (credit?.used == null) return new Map();
+  return new Map((credit.by_agent ?? []).flatMap((a) => (a.agent_id ? [[a.agent_id, a.used] as const] : [])));
+}
+
 export type Parte = { nombre: string; usado: number; porcentaje: number };
 
 /** Partes de un total con su porcentaje, de mayor a menor, sin las que están en cero (CYP-03). */

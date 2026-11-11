@@ -1,14 +1,23 @@
 import Link from "next/link";
 
+import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import type { ConexionDelAgente } from "@/lib/agentes-ficha";
+import type { Column } from "@/components/ui/data-table";
+import { cuandoAtiende, type ConexionDelAgente } from "@/lib/agentes-ficha";
+
+function Estado({ fila }: { fila: ConexionDelAgente }) {
+  return fila.estado.tono === "neutral" ? (
+    <Badge variant="neutral">{fila.estado.label}</Badge>
+  ) : (
+    <Badge variant={fila.estado.tono}>{fila.estado.label}</Badge>
+  );
+}
 
 /**
- * Pestaña Conexiones de la ficha del agente (HU-UX-09, escenario «Agente → conexión»): dónde
- * atiende, con qué rol y prioridad y cuál es la principal; cada fila lleva a la ficha de la conexión.
- * `asignarHref` lleva al paso Publicar del editor (null si quien mira no puede editar).
+ * Pestaña «Dónde atiende» de la ficha del agente (HU-UX-09, AGT-08): las conexiones donde está, de
+ * la que atiende primero a las demás, y cada fila abre la ficha de la conexión. `asignarHref` lleva
+ * al paso Publicar del editor (null si quien mira no puede editar).
  */
 export function ConexionesDelAgente({
   filas,
@@ -37,40 +46,19 @@ export function ConexionesDelAgente({
       key: "conexion",
       header: "Conexión",
       cell: (f) => (
-        <Link href={`/conexiones/${f.id}`} className="font-medium text-link hover:underline">
-          {f.label}
-        </Link>
-      ),
-    },
-    { key: "tipo", header: "Tipo", cell: (f) => f.tipo },
-    { key: "rol", header: "Rol", cell: (f) => f.rol },
-    {
-      key: "prioridad",
-      header: "Prioridad",
-      align: "right",
-      info: "Con varios especialistas, el de menor número atiende primero lo que no tiene dueño claro.",
-      cell: (f) => <span className="tabular-nums">{f.prioridad}</span>,
-    },
-    {
-      key: "principal",
-      header: "Principal",
-      info: "El agente por defecto de la conexión: atiende cuando el Coordinador no elige a otro.",
-      cell: (f) => (f.principal ? <Badge variant="accent">Sí</Badge> : <span className="text-text-soft">No</span>),
-    },
-    {
-      key: "estado",
-      header: "Estado",
-      cell: (f) => (
-        <span className="inline-flex flex-wrap items-center gap-2">
-          {f.estado.tono === "neutral" ? (
-            <Badge variant="neutral">{f.estado.label}</Badge>
-          ) : (
-            <Badge variant={f.estado.tono}>{f.estado.label}</Badge>
-          )}
-          <span className="text-xs text-text-soft">{f.version ? `v${f.version} activa` : "Sin versión activa"}</span>
+        <span className="flex flex-col">
+          <span className="font-medium text-headline">{f.label}</span>
+          <span className="text-xs text-text-soft">{f.tipo}</span>
         </span>
       ),
     },
+    {
+      key: "cuando",
+      header: "Cuándo atiende",
+      info: "Con varios agentes en una conexión, el principal atiende primero y el Coordinador le pasa a cada uno lo de su tema.",
+      cell: (f) => cuandoAtiende(f),
+    },
+    { key: "estado", header: "Estado", cell: (f) => <Estado fila={f} /> },
   ];
 
   return (
@@ -82,8 +70,8 @@ export function ConexionesDelAgente({
         {filas.length > 0 && asignar}
       </div>
       {error && (
-        <p role="alert" className="text-sm text-status-danger-fg">
-          No se pudo cargar el detalle de las conexiones (rol, prioridad y estado): {error}
+        <p role="status" className="text-sm text-text-soft">
+          No pudimos ver cómo atiende en cada conexión. {respaldo.length > 0 ? "Estas son las conexiones donde está:" : ""}
         </p>
       )}
       {error && respaldo.length > 0 && (
@@ -112,7 +100,21 @@ export function ConexionesDelAgente({
         </div>
       ) : (
         filas.length > 0 && (
-          <DataTable columns={columnas} rows={filas} getRowKey={(f) => f.id} caption={`Conexiones donde atiende ${nombre}`} />
+          <TablaResponsiva
+            etiqueta={`Conexiones donde atiende ${nombre}`}
+            columns={columnas}
+            rows={filas}
+            getRowKey={(f) => f.id}
+            getRowHref={(f) => `/conexiones/${f.id}`}
+            getRowLabel={(f) => `Abrir la conexión ${f.label}`}
+            caption={`Conexiones donde atiende ${nombre}`}
+            filaCelular={(f) => ({
+              titulo: f.label,
+              detalle: `${f.tipo} · ${cuandoAtiende(f)}`,
+              fin: <Estado fila={f} />,
+              href: `/conexiones/${f.id}`,
+            })}
+          />
         )
       )}
     </section>
