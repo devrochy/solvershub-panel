@@ -181,9 +181,12 @@ export function resolverSeccion(
   return SECCION_INICIAL;
 }
 
-/** Secciones que se muestran: WhatsApp Web solo existe para el master (el catálogo no la trae al resto). */
-export function seccionesVisibles({ waweb }: { waweb: boolean }): Seccion[] {
-  return SECCIONES.filter((s) => s.id !== "whatsapp-web" || waweb);
+/**
+ * Secciones que se muestran: WhatsApp Web solo existe para el master (el catálogo no la trae al resto) y
+ * AgentSpec y proveedor es del equipo técnico (CFG-04): JSON crudo, reglas con sintaxis técnica y evals.
+ */
+export function seccionesVisibles({ waweb, agentspec = false }: { waweb: boolean; agentspec?: boolean }): Seccion[] {
+  return SECCIONES.filter((s) => (s.id !== "whatsapp-web" || waweb) && (s.id !== "agentspec" || agentspec));
 }
 
 export function seccionPorId(id: SeccionId): Seccion {

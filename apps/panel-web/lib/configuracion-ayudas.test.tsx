@@ -54,11 +54,17 @@ function montar(cat: CatalogoConfig | null) {
   );
 }
 
-const menu = () => within(screen.getByRole("navigation", { name: "Secciones de Configuración" }));
+/** Abre un ajuste del resumen en su cajón (rediseño B); si hay otro abierto, lo cierra antes. */
 const irA = async (nombre: string, titulo: string) => {
-  fireEvent.click(menu().getByRole("button", { name: nombre }));
-  await waitFor(() => expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(titulo));
+  const abierto = screen.queryByRole("dialog");
+  if (abierto) {
+    fireEvent.click(within(abierto).getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  }
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${nombre}`) }));
+  await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("heading", { level: 2 }).textContent).toBe(titulo));
 };
+const verAvanzado = () => fireEvent.click(screen.getByRole("button", { name: /^Avanzado: los números exactos/ }));
 
 beforeAll(() => {
   window.matchMedia ??= ((query: string) => ({
@@ -86,6 +92,7 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
     await irA("Cerebro y modelos", "Cerebro y modelos");
     expect(screen.getByText(/Ayuda del catálogo para la temperatura\. Entre 0 y 2\./)).toBeTruthy();
     await irA("Memoria", "Memoria");
+    verAvanzado();
     expect(screen.getByText(/Ayuda del catálogo para los fragmentos\. Entre 0 y 20\./)).toBeTruthy();
   });
 
@@ -94,12 +101,14 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
     await irA("Cerebro y modelos", "Cerebro y modelos");
     expect(screen.getByText(/cerca de 0 el asistente es más predecible/)).toBeTruthy();
     await irA("Memoria", "Memoria");
+    verAvanzado();
     expect(screen.getByText(/Cuántos mensajes recientes ve el agente/)).toBeTruthy();
   });
 
   it("sin catálogo tampoco se rompe", async () => {
     montar(null);
     await irA("Memoria", "Memoria");
+    verAvanzado();
     expect(screen.getByText(/Cuántos mensajes recientes ve el agente/)).toBeTruthy();
   });
 });
@@ -107,13 +116,15 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
 describe("aviso del runtime v3 en Identidad", () => {
   const AVISO = /Tu negocio usa el Agent OS/;
 
-  it("con v3 avisa que nombre, descripción y voz se aplican al publicar una versión", () => {
+  it("con v3 avisa que nombre, descripción y voz se aplican al publicar una versión", async () => {
     montar(catalogo("v3"));
+    await irA("Identidad", "Identidad");
     expect(screen.getAllByText(AVISO).length).toBeGreaterThan(0);
   });
 
-  it("con legacy no hay aviso", () => {
+  it("con legacy no hay aviso", async () => {
     montar(catalogo("legacy"));
+    await irA("Identidad", "Identidad");
     expect(screen.queryByText(AVISO)).toBeNull();
   });
 });

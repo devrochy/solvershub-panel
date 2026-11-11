@@ -1,28 +1,30 @@
 import Link from "next/link";
 
 import { PluginActions } from "@/app/(app)/habilidades/_components/plugin-actions";
-import { PLUGIN_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PluginSummary } from "@/lib/api/types";
 
-/** Tarjeta de habilidad: estado, salud, habilitación y acceso a configuración. */
+/** Estado de una habilidad en palabras (CFG-06): encendida, apagada o con un problema. */
+export function estadoDeHabilidad(plugin: Pick<PluginSummary, "enabled_for_tenant" | "error_message" | "tenant_health_error">) {
+  if (plugin.error_message || (plugin.enabled_for_tenant && plugin.tenant_health_error)) return { etiqueta: "Con un problema", tono: "danger" as const };
+  return plugin.enabled_for_tenant ? { etiqueta: "Activa", tono: "success" as const } : { etiqueta: "Apagada", tono: "neutral" as const };
+}
+
+/** Tarjeta de habilidad: qué hace, su estado en palabras, encenderla y sus ajustes. */
 export function PluginCard({ plugin }: { plugin: PluginSummary }) {
   const hasError = Boolean(plugin.error_message || plugin.tenant_health_error);
   const nombre = plugin.display_name || plugin.name;
-  const categoria = plugin.category;
+  const estado = estadoDeHabilidad(plugin);
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <CardTitle>{nombre}</CardTitle>
-          <StatusBadge value={plugin.status} map={PLUGIN_STATUS} />
+          <Badge variant={estado.tono}>{estado.etiqueta}</Badge>
         </div>
-        <p className="font-mono text-xs text-text-soft">
-          {plugin.id}
-          {categoria ? ` · ${categoria}` : ""} · v{plugin.version}
-        </p>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         {plugin.description && <p className="text-sm text-body">{plugin.description}</p>}
@@ -48,27 +50,31 @@ export function PluginCard({ plugin }: { plugin: PluginSummary }) {
 
         <PluginActions
           pluginId={plugin.id}
+          nombre={nombre}
           enabled={plugin.enabled_for_tenant}
           hasError={hasError}
         />
 
         {hasError && (
           <p className="text-xs text-status-danger-fg">
-            {plugin.tenant_health_error ?? plugin.error_message}
+            No se pudo cargar en este negocio; el resto del asistente sigue funcionando. Detalle: {plugin.tenant_health_error ?? plugin.error_message}
           </p>
         )}
 
         <div className="mt-auto flex items-center gap-2">
           {plugin.has_config ? (
             <Button asChild variant="outline" size="sm">
-              <Link href={`/habilidades/${plugin.id}`}>Configurar</Link>
+              <Link href={`/habilidades/${plugin.id}`} aria-label={`Ajustes de ${nombre}`}>
+                Ajustes
+              </Link>
             </Button>
           ) : (
-            <span className="text-xs text-text-soft">Sin configuración</span>
+            <span className="text-xs text-text-soft">No tiene ajustes</span>
           )}
           {plugin.min_plan && plugin.min_plan !== "free" && (
             <span className="text-xs text-text-soft">Plan {plugin.min_plan}+</span>
           )}
+          <span className="ml-auto text-xs text-text-soft">Versión {plugin.version}</span>
         </div>
       </CardContent>
     </Card>

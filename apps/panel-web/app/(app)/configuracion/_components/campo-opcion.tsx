@@ -1,19 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { TriangleAlert } from "lucide-react";
 
+import { EditorDeFranjas } from "@/app/(app)/configuracion/_components/editor-de-franjas";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
 import { ListaDeFrases } from "@/components/ui/lista-de-frases";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
 import { type Pendiente } from "@/lib/frases-pendientes";
-import { analizarFranjas, franjasATexto } from "@/lib/horario-atencion";
+import type { Franja } from "@/lib/horario-atencion";
+
+/** Monedas más usadas por los negocios; una guardada que no esté se agrega a la lista (CFG-10). */
+const MONEDAS = [
+  { valor: "COP", etiqueta: "Peso colombiano (COP)" },
+  { valor: "USD", etiqueta: "Dólar estadounidense (USD)" },
+  { valor: "MXN", etiqueta: "Peso mexicano (MXN)" },
+  { valor: "PEN", etiqueta: "Sol peruano (PEN)" },
+  { valor: "CLP", etiqueta: "Peso chileno (CLP)" },
+  { valor: "ARS", etiqueta: "Peso argentino (ARS)" },
+  { valor: "EUR", etiqueta: "Euro (EUR)" },
+];
 
 type Valores = Record<string, unknown>;
 
@@ -43,8 +54,6 @@ export function CampoOpcion({
   onPendiente?: (pendiente: Pendiente | null) => void;
 }) {
   const { clave } = opcion;
-  // Líneas del horario que no se pudieron leer: no se guardan, así que se avisa en vez de callar.
-  const [ignoradas, setIgnoradas] = useState<string[]>([]);
   const valor = valores[clave];
   const dep = dependencia(opcion, valores);
   const bloqueado = opcion.solo_lectura || !dep.activa;
@@ -118,15 +127,6 @@ export function CampoOpcion({
         {control()}
       </Field>
       {enlace && <p className="mt-1 text-xs text-text-soft">{enlace}</p>}
-      {ignoradas.length > 0 && (
-        <p role="status" className="mt-1.5 flex items-start gap-1 text-xs text-status-warning-fg">
-          <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>
-            {ignoradas.length === 1 ? "Esta línea no se va a guardar" : `Estas ${ignoradas.length} líneas no se van a guardar`}{" "}
-            porque no tienen la forma «día HH:MM-HH:MM»: {ignoradas.map((l) => `«${l}»`).join(", ")}.
-          </span>
-        </p>
-      )}
     </>
   );
 
@@ -145,7 +145,22 @@ export function CampoOpcion({
         );
       }
       case "entero":
-      case "decimal":
+      case "decimal": {
+        // Un rango corto de enteros (la calidez, de 1 a 5) se elige tocando, no escribiendo (CFG-10).
+        const min = opcion.minimo ?? null;
+        const max = opcion.maximo ?? null;
+        if (opcion.tipo === "entero" && min !== null && max !== null && max - min <= 4) {
+          const puntos = Array.from({ length: max - min + 1 }, (_, i) => String(min + i));
+          return (
+            <SegmentedControl
+              label={opcion.etiqueta}
+              options={puntos.map((p) => ({ value: p, label: p }))}
+              value={String(valor ?? min)}
+              onChange={bloqueado ? undefined : (v) => onChange(clave, Number(v))}
+              className="self-start"
+            />
+          );
+        }
         return (
           <InputNumero
             id={clave}
@@ -158,6 +173,7 @@ export function CampoOpcion({
             onValueChange={(n) => onChange(clave, n)}
           />
         );
+      }
       case "texto_largo":
         return (
           <Textarea
@@ -186,19 +202,27 @@ export function CampoOpcion({
         );
       case "franjas":
         return (
-          <Textarea
+          <EditorDeFranjas
             id={clave}
-            rows={3}
+            franjas={Array.isArray(valor) ? (valor as Franja[]) : []}
             disabled={bloqueado}
-            defaultValue={franjasATexto((valor as Parameters<typeof franjasATexto>[0]) ?? [])}
-            onChange={(e) => {
-              const { franjas, ignoradas: sinLeer } = analizarFranjas(e.target.value);
-              setIgnoradas(sinLeer);
-              onChange(clave, franjas);
-            }}
+            onChange={(franjas) => onChange(clave, franjas)}
           />
         );
       default:
+        if (clave === "currency") {
+          const actual = String(valor ?? "");
+          const lista = MONEDAS.some((m) => m.valor === actual) || !actual ? MONEDAS : [...MONEDAS, { valor: actual, etiqueta: actual }];
+          return (
+            <Select id={clave} value={actual} disabled={bloqueado} onChange={(e) => onChange(clave, e.target.value)}>
+              {lista.map((m) => (
+                <option key={m.valor} value={m.valor}>
+                  {m.etiqueta}
+                </option>
+              ))}
+            </Select>
+          );
+        }
         return (
           <Input
             id={clave}

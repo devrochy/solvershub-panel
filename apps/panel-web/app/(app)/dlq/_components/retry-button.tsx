@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
 /** Re-encola un evento de la bandeja de fallos. */
-export function RetryButton({ entryId }: { entryId: string }) {
+export function RetryButton({ entryId, que }: { entryId: string; /** Qué se reintenta, para el nombre accesible. */ que?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -27,15 +26,8 @@ export function RetryButton({ entryId }: { entryId: string }) {
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Button
-        aria-label="Reintentar"
-        disabled={loading}
-        onClick={reintentar}
-        size="icon"
-        title="Reintentar"
-        variant="outline"
-      >
-        <RefreshCw className="h-4 w-4" aria-hidden />
+      <Button aria-label={que ? `Reintentar ${que}` : undefined} loading={loading} onClick={reintentar} size="sm" variant="outline">
+        Reintentar
       </Button>
       {error && (
         <span className="text-xs text-status-danger-fg" role="alert">

@@ -278,6 +278,37 @@ if (process.env.GESTOR_EN_EQUIPO === "1") {
   respuestas["/admin/invitations/outgoing"] = [{ id: "inv-1", email: "carla@correo.co", rol: "colaborador", creadaEn: "2026-11-08T15:00:00Z" }];
 }
 
+// Mensajes fallidos (/dlq): dos mensajes que agotaron sus reintentos y un evento de pago sin entregar.
+respuestas["/admin/dlq"] = {
+  entries: [
+    { entry_id: "1731200000000-0", external_message_id: "wamid.HBgMNTczMDAwMDAwMDAxFQIAEhgUM0E", tenant_id: "test-tenant-1", content: "Hola, quiero agendar una cita para mañana" },
+    { entry_id: "1731200005000-0", external_message_id: "wamid.HBgMNTczMDAwMDAwMDAyFQIAEhgUM0F", tenant_id: "test-tenant-1", content: "¿Me mandas el link de pago?" },
+  ],
+};
+respuestas["/admin/domain-events"] = {
+  entries: [{ id: "ev-1", topic: "payment.approved", attempts: 5, last_error: "TimeoutError: el webhook de Wompi no respondió en 10 s", created_at: "2026-11-09T14:00:00Z" }],
+};
+
+// Configuración de Comercio (/habilidades/pack_commerce): un formulario con texto, número, interruptor y una llave.
+respuestas["/admin/plugins/pack_commerce/config"] = {
+  plugin_id: "pack_commerce",
+  name: "pack_commerce",
+  description: "Catálogo, pedidos y pagos por WhatsApp.",
+  schema: {
+    type: "object",
+    properties: {
+      moneda: { type: "string", title: "Moneda", default: "COP" },
+      pedido_minimo: { type: "integer", title: "Pedido mínimo", description: "En pesos. 0 = sin mínimo." },
+      envio_gratis: { type: "boolean", title: "Envío gratis", description: "No cobrar domicilio." },
+      wompi_public_key: { type: "string", title: "wompi_public_key" },
+      wompi_private_key: { type: "string", title: "wompi_private_key", format: "password", "x-secret": true },
+    },
+    required: ["moneda"],
+  },
+  values: { moneda: "COP", pedido_minimo: 20000, envio_gratis: false, wompi_public_key: "pub_test_abc" },
+  configured_secrets: ["wompi_private_key"],
+};
+
 // SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol.
 {
   const cuenta = (id, email, nombre) => ({ id, email, nombre, rol: id === "test-admin-1" ? "owner" : "colaborador" });

@@ -18,10 +18,13 @@ export function PluginActions({
   pluginId,
   enabled,
   hasError,
+  nombre,
 }: {
   pluginId: string;
   enabled: boolean;
   hasError: boolean;
+  /** Nombre visible de la habilidad, para los nombres accesibles. */
+  nombre?: string;
 }) {
   // Estado optimista mientras la API responde; `null` = lo que dice el servidor.
   const [optimista, setOptimista] = useState<boolean | null>(null);
@@ -74,9 +77,9 @@ export function PluginActions({
           checked={isEnabled}
           onCheckedChange={onToggle}
           disabled={pending}
-          aria-label={isEnabled ? `Deshabilitar ${pluginId}` : `Habilitar ${pluginId}`}
+          aria-label={isEnabled ? `Apagar ${nombre ?? pluginId}` : `Encender ${nombre ?? pluginId}`}
         />
-        <span className="text-sm text-body">{isEnabled ? "Habilitada" : "No habilitada"}</span>
+        <span className="text-sm text-body">{isEnabled ? "Encendida" : "Apagada"}</span>
         {hasError && (
           <Button
             type="button"

@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast-store";
 import { mensajeDeRango, mensajeEntero, mensajeNumero, mensajeObligatorio } from "@/lib/validacion-nativa";
@@ -49,6 +50,11 @@ type JsonSchema = {
 function humanize(name: string): string {
   const spaced = name.replace(/_/g, " ");
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/** Rótulo del campo: su `title`, salvo que sea el mismo nombre técnico («wompi_public_key»), que se lee en palabras. */
+function rotulo(name: string, prop: JsonSchema): string {
+  return prop.title && prop.title !== name ? prop.title : humanize(name);
 }
 
 const isSecret = (prop: JsonSchema) => Boolean(prop.writeOnly) || prop.format === "password";
@@ -94,7 +100,7 @@ export function parseJsonField(value: string): { ok: true; data: unknown } | { o
 export function errorDeCampo(prop: JsonSchema, valor: unknown, obligatorio: boolean, nombre = ""): string | null {
   const { type, source } = effType(prop);
   if (type === "boolean" || type === "array" || type === "object" || isSecret(prop)) return null;
-  const etiqueta = `«${prop.title ?? humanize(nombre)}»`;
+  const etiqueta = `«${rotulo(nombre, prop)}»`;
   const vacio = valor === undefined || valor === null || (typeof valor === "string" && valor.trim() === "");
   if (vacio) return obligatorio ? mensajeObligatorio(etiqueta) : null;
   if (type !== "number" && type !== "integer") return null;
@@ -217,17 +223,11 @@ export function JsonSchemaForm({
     const etiqueta = (v: unknown) => labels[String(v)] ?? String(v);
 
     if (type === "boolean") {
+      // Un sí/no es un interruptor del kit, como en el resto de Configuración (CFG-07).
       return (
-        <label htmlFor={id} className="flex items-center gap-3 text-sm text-headline">
-          <input
-            id={id}
-            name={name}
-            type="checkbox"
-            className="h-4 w-4 rounded border-control-border bg-bg-deep accent-[var(--sh-blue-500)]"
-            checked={Boolean(values[name])}
-            onChange={(e) => update(name, e.target.checked)}
-          />
-          {source.title ?? humanize(name)}
+        <label htmlFor={id} className="flex items-center justify-between gap-4 text-sm text-headline">
+          {rotulo(name, source)}
+          <Switch id={id} checked={Boolean(values[name])} onCheckedChange={(v) => update(name, v)} />
         </label>
       );
     }
@@ -365,7 +365,7 @@ export function JsonSchemaForm({
     return (
       <Field
         key={name}
-        label={prop.title ?? humanize(name)}
+        label={rotulo(name, prop)}
         htmlFor={id}
         help={prop.description}
         error={fieldErrors[name]}

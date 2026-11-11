@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { SettingsTabs } from "@/app/(app)/configuracion/_components/settings-tabs";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -115,11 +115,12 @@ describe("«Ajustar con preguntas» en Configuración", () => {
       .mockResolvedValueOnce(respuesta(200, aplicada))
       .mockResolvedValueOnce(respuesta(200, {}));
     montar({ defaultSeccion: "horario" });
-    expect(campo("business_ranges").value).toBe("");
+    expect(screen.getByRole("switch", { name: "Abierto el lunes" }).getAttribute("aria-checked")).toBe("false");
     expect(campo("business_hours_mode").value).toBe("bloquea");
 
     fireEvent.click(boton()!);
-    await screen.findByRole("dialog");
+    // El asistente se abre encima del cajón de Horario.
+    await screen.findByRole("radio", { name: /Lunes a viernes/ });
     fireEvent.click(screen.getByRole("radio", { name: /Lunes a viernes/ }));
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
     await screen.findByRole("heading", { level: 3, name: "¿Qué hace cuando escriben fuera de horario?" });
@@ -127,21 +128,18 @@ describe("«Ajustar con preguntas» en Configuración", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ver los cambios" }));
     await screen.findByRole("list", { name: "Cambios propuestos" });
     fireEvent.click(screen.getByRole("button", { name: "Aplicar cambios" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Aplicar cambios" })).toBeNull());
 
-    expect(campo("business_ranges").value).toBe("0 08:00-18:00\n1 08:00-18:00\n2 08:00-18:00\n3 08:00-18:00\n4 08:00-18:00");
+    // Lunes a viernes quedan abiertos de 8:00 a. m. a 6:00 p. m. en el horario por días.
+    for (const dia of ["lunes", "martes", "miércoles", "jueves", "viernes"]) {
+      expect(screen.getByRole("switch", { name: `Abierto el ${dia}` }).getAttribute("aria-checked")).toBe("true");
+    }
+    expect((screen.getByLabelText("Lunes: desde") as HTMLSelectElement).value).toBe("08:00");
+    expect(screen.getByRole("switch", { name: "Abierto el sábado" }).getAttribute("aria-checked")).toBe("false");
     expect(campo("business_hours_mode").value).toBe("informativo");
 
-    // Aplicar deja el formulario limpio: pasar a otra sección no pide confirmar nada. (Se usa una hermana
-    // de la misma familia porque en ésta el formulario sigue montado; la página real se refresca sola.)
-    fireEvent.click(within(screen.getByRole("navigation", { name: "Secciones de Configuración" })).getByRole("button", { name: "Voz y estilo" }));
-    await waitFor(() => expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Voz y estilo"));
-    expect(screen.queryByRole("alertdialog")).toBeNull();
-    fireEvent.click(within(screen.getByRole("navigation", { name: "Secciones de Configuración" })).getByRole("button", { name: "Horario y escalamiento" }));
-    await waitFor(() => expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Horario y escalamiento"));
-
     // Guardar a mano manda lo que dejó el asistente.
-    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     const [url, init] = fetchMock.mock.calls[2] as [string, RequestInit];
     expect(url).toBe("/api/settings/identity");
