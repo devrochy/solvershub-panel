@@ -9,6 +9,7 @@
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
 //   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
+//   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
@@ -392,6 +393,92 @@ respuestas["/admin/plugins/pack_commerce/config"] = {
   values: { moneda: "COP", pedido_minimo: 20000, envio_gratis: false, wompi_public_key: "pub_test_abc" },
   configured_secrets: ["wompi_private_key"],
 };
+
+// CONSUMO=1 (Consumo y plan): plan Pro con el crédito al 84 %, un período por pagar, pagos de varios canales, tres
+// planes y costos del mes por agente, modelo y conversación, con datos de Meta y una diferencia por revisar.
+if (process.env.CONSUMO === "1") {
+  const hoy = new Date();
+  const dia = (n) => new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + n, 12).toISOString();
+  respuestas["/admin/plan"] = {
+    overview: { plan_id: "pro", plan_name: "Pro", status: "active", operational: true, days_left: 9, has_plan: true },
+    usage: [
+      { key: "agentes", label: "Agentes publicados", unit: "agentes", scope: "lifetime", used: 3, limit: 3, percent: 100, exceeded: false },
+      { key: "colaboradores", label: "Colaboradores", unit: "colaboradores", scope: "lifetime", used: 4, limit: 10, percent: 40, exceeded: false },
+      { key: "conversaciones", label: "Conversaciones", unit: "conv", scope: "month", used: 812, limit: 1500, percent: 54.1, exceeded: false },
+      { key: "conversaciones_audio", label: "Audios", unit: "audios", scope: "month", used: 96, limit: 100, percent: 96, exceeded: false },
+      { key: "clientes", label: "Clientes", unit: "clientes", scope: "lifetime", used: 1240, limit: null, percent: null, exceeded: false },
+    ],
+    payments: [
+      { plan_id: "pro", amount_cop: 249000, status: "pending", provider: "wompi", created_at: dia(-1), paid_at: null, checkout_url: "https://checkout.wompi.co/l/prueba123", periodo: "2026-11" },
+      { plan_id: "pro", amount_cop: 249000, status: "approved", provider: "asistente", created_at: dia(-31), paid_at: dia(-31), checkout_url: null, periodo: "2026-10" },
+      { plan_id: "basic", amount_cop: 99000, status: "approved", provider: "wompi", created_at: dia(-62), paid_at: dia(-62), checkout_url: null, periodo: "2026-09" },
+      { plan_id: "basic", amount_cop: 99000, status: "declined", provider: "plataforma", created_at: dia(-63), paid_at: null, checkout_url: null, periodo: "2026-09" },
+    ],
+    plans: [
+      { id: "free", name: "Gratis", price_cop: 0, is_free: true, current: false, limits: { agentes: 1, colaboradores: 2, conversaciones: 100 }, features: {}, monthly_credits: 2500 },
+      { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: false, limits: { agentes: 2, colaboradores: 5, conversaciones: 500 }, features: { soporte: "Soporte por WhatsApp" }, monthly_credits: 20000 },
+      { id: "pro", name: "Pro", price_cop: 249000, is_free: false, current: true, limits: { agentes: 3, colaboradores: 10, conversaciones: 1500, conversaciones_audio: 100 }, features: { soporte: "Soporte prioritario", reportes: true }, monthly_credits: 60000 },
+      { id: "empresa", name: "Empresa", price_cop: 590000, is_free: false, current: false, limits: { agentes: 8, colaboradores: null, conversaciones: null }, features: { soporte: "Soporte prioritario", reportes: true, multi_negocio: true }, monthly_credits: 150000 },
+    ],
+    cobro: { referencia: "PLAN-PRO-2026-11", inicio: dia(-21), fin: dia(9), plan_id: "pro", monto_cop: 249000, estado: "pendiente", pagado_por: null, disponible_desde: null },
+    credit: {
+      limit: 60000,
+      used: 50412.5,
+      percent: 84.0,
+      period_start: dia(-21),
+      period_end: dia(9),
+      by_concept: { llm_turn: 41200, stt: 3912.5, vision: 1800, template_sent: 3500 },
+      by_agent: [
+        { agent_id: "00000000-0000-4000-8000-0000000000a1", name: "Ventas", used: 28900 },
+        { agent_id: "00000000-0000-4000-8000-0000000000a2", name: "Cobranza", used: 15200 },
+        { agent_id: "00000000-0000-4000-8000-0000000000a3", name: "Agenda", used: 4800 },
+        { agent_id: null, name: null, used: 1512.5 },
+      ],
+      by_agent_truncated: false,
+    },
+    plan_por_el_asistente: false,
+  };
+  respuestas["/admin/costs"] = {
+    today: 0.62,
+    month: 18.45,
+    total_turns: 4120,
+    by_agent: [
+      { agent_id: "00000000-0000-4000-8000-0000000000a1", agent_name: "Ventas", turns: 2410, tokens_in: 8_120_000, cached_tokens: 5_030_000, cached_pct: 61.9, cost: 10.82 },
+      { agent_id: "00000000-0000-4000-8000-0000000000a2", agent_name: "Cobranza", turns: 1290, tokens_in: 4_300_000, cached_tokens: 1_720_000, cached_pct: 40, cost: 5.71 },
+      { agent_id: "00000000-0000-4000-8000-0000000000a3", agent_name: "Agenda", turns: 380, tokens_in: 910_000, cached_tokens: 0, cached_pct: null, cost: 1.52 },
+      { agent_id: null, agent_name: null, turns: 40, tokens_in: 120_000, cached_tokens: 0, cached_pct: null, cost: 0.4 },
+    ],
+    by_model: [
+      { model: "anthropic/claude-haiku-5-5", calls: 3610, tokens_in: 11_900_000, tokens_out: 820_000, avg_latency: 1840, cost: 14.9 },
+      { model: "openai/whisper-1", calls: 96, tokens_in: 0, tokens_out: 0, avg_latency: 2300, cost: 1.2 },
+      { model: "google/gemini-2.5-flash", calls: 410, tokens_in: 1_430_000, tokens_out: 110_000, avg_latency: 950, cost: 2.35 },
+    ],
+    by_conversation: [
+      { conversation_id: "3f2a9c1e-7b4d-4e21-9a0f-1c2d3e4f5a6b", turns: 64, cost: 0.92, last: dia(0) },
+      { conversation_id: "8b1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e", turns: 41, cost: 0.58, last: dia(-1) },
+      { conversation_id: "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f", turns: 33, cost: 0.44, last: dia(-3) },
+    ],
+    meta: {
+      service_allowance_hypothesis: true,
+      by_category_country: [
+        { category: "marketing", country: "CO", volume: 420, cost: 9.8 },
+        { category: "utility", country: "CO", volume: 1310, cost: 4.6 },
+        { category: "service", country: "CO", volume: 2890, cost: 0 },
+        { category: "authentication", country: "CO", volume: 54, cost: 0.4 },
+      ],
+      by_phone: [
+        { phone_number: "+57 300 555 0101", volume: 4210, cost: 13.1 },
+        { phone_number: "+57 300 555 0102", volume: 464, cost: 1.7 },
+      ],
+      discrepancy: [
+        { category: "marketing", webhook_count: 420, pricing_volume: 420, diff: 0 },
+        { category: "utility", webhook_count: 1290, pricing_volume: 1310, diff: -20 },
+        { category: "service", webhook_count: 2890, pricing_volume: 2890, diff: 0 },
+      ],
+    },
+  };
+  respuestas["/admin/costs/meta/credits"] = { connections: [{ id: "c-meta-1", label: "WhatsApp Café Aurora", channel: "whatsapp", business_id: "55" }] };
+}
 
 // SEGURIDAD: dispositivos y alertas de acceso del negocio (HU-ACC-04), con una política por rol.
 {

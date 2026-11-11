@@ -214,10 +214,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
     id: "cuenta",
     label: "Cuenta",
     items: [
-      entrada("Consumo y plan", CreditCard, [
-        { section: "plan", label: "Plan y consumo", href: "/plan", icon: CreditCard, ready: true },
-        { section: "costs", label: "Costos", href: "/costos", icon: Coins, ready: true },
-      ]),
+      // Rediseño B (CYP): una sola página con el crédito, el plan y sus pagos. Los costos en dólares
+      // (IA y WhatsApp) son del equipo de SolversHub: van en Plataforma.
+      { section: "plan", label: "Consumo y plan", href: "/plan", icon: CreditCard, ready: true },
       { section: "collaborators", label: "Equipo", href: "/colaboradores", icon: UserCog, ready: true },
       // Seguridad es del negocio, no de un pack (ADR-0174, HU-ACC-04): dispositivos y alertas de acceso.
       entrada("Seguridad", LockKeyhole, [
@@ -247,6 +246,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "tenants", label: "App de Meta", href: "/plataforma/meta", icon: ShieldCheck, ready: true },
         { section: "tenants", label: "Embedded Signup", href: "/plataforma/meta/embedded-signup", icon: LogIn, ready: true },
       ]),
+      // Costos técnicos del negocio activo (IA por modelo y WhatsApp por categoría), CYP-07 a 10. Solo master.
+      { section: "costs", label: "Costos técnicos", href: "/costos", icon: Coins, ready: true, soloMaster: true },
       // Crons (ADR-0183): catálogo por módulo, historial, ejecución manual y horario. Solo master.
       { section: "tenants", label: "Crons", href: "/plataforma/crons", icon: Timer, ready: true, soloMaster: true },
       // Centro de pruebas (SPEC-30): sección global `qa`, de master y testers (solo en test).

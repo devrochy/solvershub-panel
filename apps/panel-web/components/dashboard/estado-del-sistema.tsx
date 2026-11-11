@@ -34,10 +34,13 @@ export function EstadoDelSistema({ d, esPlataforma = false }: { d: Dashboard; es
           <span className="text-body">Habilidades activas</span>
           <Badge variant="accent">{d.kpi.active_plugins}</Badge>
         </Link>
-        <Link href="/costos" className={FILA}>
-          <span className="text-body">Costo IA, 30 días</span>
-          <span className="font-medium tabular-nums text-headline">{formatUsd(d.kpi.cost_30d, 2)}</span>
-        </Link>
+        {/* Los costos en dólares son del equipo de SolversHub (rediseño B de Consumo y plan). */}
+        {esPlataforma && (
+          <Link href="/costos" className={FILA}>
+            <span className="text-body">Costo IA, 30 días</span>
+            <span className="font-medium tabular-nums text-headline">{formatUsd(d.kpi.cost_30d, 2)}</span>
+          </Link>
+        )}
         {d.billing?.has_plan && (
           <Link href="/plan" className={FILA}>
             <span className="text-body">Plan</span>

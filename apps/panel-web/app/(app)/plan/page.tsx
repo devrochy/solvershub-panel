@@ -1,336 +1,293 @@
-import { CreditCard } from "lucide-react";
+import Link from "next/link";
 
+import { CajonDePagos, CajonDePlanes } from "@/app/(app)/plan/_components/cajones";
 import { SubscribeButton } from "@/app/(app)/plan/_components/subscribe-button";
-import { PAYMENT_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { IconAction } from "@/components/ui/icon-action";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { UsageBar } from "@/components/ui/usage-bar";
+import { Progress, type ProgressTone } from "@/components/ui/progress";
 import { apiFetch } from "@/lib/api/server";
-import type { PlanResponse } from "@/lib/api/types";
-import { formatCop, formatDate, formatNumber } from "@/lib/format";
+import type { Me, PlanResponse } from "@/lib/api/types";
 import {
-  avisoDeCredito,
-  CREDITO_SIN_MEDICION,
-  desgloseDeCredito,
-  enlaceDePago,
-  etiquetaDeLimite,
-  formatoCreditos,
-  limitesOrdenados,
-  separarConsumo,
-} from "@/lib/plan-limite";
+  creditoEnPalabras,
+  creditoPorAgente,
+  creditoPorConcepto,
+  diaCorto,
+  estadoDelPlan,
+  precioDelPlan,
+  topesEnPalabras,
+  type Parte,
+} from "@/lib/consumo";
+import { formatCop, formatNumber } from "@/lib/format";
+import { RUTA_MEJORAR_PLAN } from "@/lib/plan-limite";
+import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Plan y consumo" };
+export const metadata = { title: "Consumo y plan" };
 
-type PaymentRow = PlanResponse["payments"][number];
+const TONO_DE_BARRA: Record<string, ProgressTone> = { info: "data", warning: "warning", danger: "danger", neutral: "neutral", success: "success" };
+/** Colores de series para repartir un total (tokens `data-*`), en orden. */
+const SERIES = ["bg-data-1", "bg-data-2", "bg-data-3", "bg-data-4"];
 
-/** Por dónde entró cada pago del plan (HU-SH-04): el asistente de SolversHub o este panel. */
-const CANAL_DEL_PAGO: Record<string, string> = {
-  asistente: "Asistente",
-  wompi: "Panel",
-  plataforma: "Cobro de renovación",
-};
+/** Un total repartido en una barra con su leyenda (CYP-03). */
+function Reparto({ titulo, partes, enlace }: { titulo: string; partes: Parte[]; enlace?: (i: number) => string | null }) {
+  return (
+    <section className="flex flex-col gap-3" aria-label={titulo}>
+      <h3 className="text-sm font-medium text-headline">{titulo}</h3>
+      <div className="flex h-3 w-full gap-0.5 overflow-hidden rounded-full bg-hover" role="img" aria-label={`${titulo}: ${partes.map((p) => `${p.nombre} ${p.porcentaje} %`).join(", ")}`}>
+        {partes.map((p, i) => (
+          <span key={p.nombre} className={cn("h-full", SERIES[i % SERIES.length])} style={{ width: `${p.porcentaje}%` }} />
+        ))}
+      </div>
+      <ul className="flex flex-col gap-1.5 text-sm">
+        {partes.map((p, i) => {
+          const href = enlace?.(i) ?? null;
+          return (
+            <li key={p.nombre} className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-sm", SERIES[i % SERIES.length])} aria-hidden />
+                {href ? (
+                  <Link href={href} className="truncate text-link hover:underline">
+                    {p.nombre}
+                  </Link>
+                ) : (
+                  <span className="truncate text-body">{p.nombre}</span>
+                )}
+              </span>
+              <span className="shrink-0 tabular-nums text-text-soft">
+                {formatNumber(Math.round(p.usado))} · {p.porcentaje} %
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
 
-export default async function PlanPage() {
-  const res = await apiFetch<PlanResponse>("/admin/plan");
+/**
+ * Consumo y plan (rediseño B, CYP-01 a 06): una sola página con el crédito del mes, el plan y su pago,
+ * en qué y en quién se va el crédito y los topes con lo que pasa al llegar. Los planes y los pagos se
+ * abren en un cajón (`?ver=planes`, `?ver=pagos`). Los costos técnicos son de Plataforma.
+ */
+export default async function PlanPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
+  const [sp, res, me] = await Promise.all([searchParams, apiFetch<PlanResponse>("/admin/plan"), apiFetch<Me>("/admin/me")]);
+  const header = (
+    <PageHeader
+      title="Consumo y plan"
+      description="Lo que usa tu asistente este mes y tu plan."
+      helpSection="plan"
+      actions={
+        <Button asChild variant="outline">
+          <Link href="/plan?ver=planes" scroll={false}>
+            Ver planes
+          </Link>
+        </Button>
+      }
+    />
+  );
   if (!res.ok) {
     return (
-      <p role="alert" className="text-status-danger-fg">
-        No se pudo cargar el plan: {res.error}
-      </p>
+      <div className="flex flex-col gap-6">
+        {header}
+        <ErrorDeCarga titulo="No pudimos cargar tu consumo" detalle={res.error} />
+      </div>
     );
   }
-  const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: planPorElAsistente } = res.data;
-  // Lo que vende el plan (D-35): agentes publicados, colaboradores y crédito mensual, primero.
-  const { delPlan, resto } = separarConsumo(usage);
-  // Crédito mensual medido (HU-BILL-04/06): aviso al 80 % y al 100 %, sin bloquear.
-  const creditoMedido = credit != null && credit.used != null;
-  const reinicio = credit?.period_end ? formatDate(credit.period_end) : undefined;
-  const aviso = avisoDeCredito(credit, reinicio);
-  const desglose = desgloseDeCredito(credit);
-  const porAgente = (credit?.by_agent ?? []).filter((a) => a.used > 0);
-
-  const paymentColumns: Column<PaymentRow>[] = [
-    { key: "plan", header: "Plan", cell: (p) => p.plan_id ?? "—" },
-    {
-      key: "periodo",
-      header: "Período",
-      cell: (p) => <span className="font-mono text-xs text-body">{p.periodo ?? "—"}</span>,
-    },
-    { key: "monto", header: "Monto", align: "right", cell: (p) => formatCop(p.amount_cop) },
-    {
-      key: "estado",
-      header: "Estado",
-      cell: (p) => <StatusBadge value={p.status} map={PAYMENT_STATUS} />,
-    },
-    {
-      key: "proveedor",
-      header: "Canal",
-      cell: (p) => (
-        <span className="text-body">{p.provider ? (CANAL_DEL_PAGO[p.provider] ?? p.provider) : "—"}</span>
-      ),
-    },
-    {
-      key: "fecha",
-      header: "Fecha",
-      cell: (p) => <span className="text-body">{formatDate(p.paid_at ?? p.created_at)}</span>,
-    },
-    {
-      key: "acciones",
-      header: <span className="sr-only">Acciones</span>,
-      align: "right",
-      cell: (p) => {
-        // Un pago pendiente con su checkout se puede terminar desde aquí (HU-UX-12).
-        const href = enlaceDePago(p);
-        return href ? (
-          <IconAction tone="aprobar" label={`Pagar ${formatCop(p.amount_cop)}`} href={href}>
-            <CreditCard className="h-4 w-4" aria-hidden />
-          </IconAction>
-        ) : null;
-      },
-    },
-  ];
+  const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: porElAsistente } = res.data;
+  const esMaster = me.ok && me.data.role === "master";
+  const pendiente = cobro?.estado === "pendiente";
+  const estado = estadoDelPlan(overview, pendiente);
+  const actual = plans.find((p) => p.current);
+  const credito = creditoEnPalabras(credit);
+  const conceptos = credito && credit?.used != null ? creditoPorConcepto(credit) : [];
+  const agentes = credito && credit?.used != null ? creditoPorAgente(credit) : [];
+  const topes = topesEnPalabras(usage);
+  const renueva = cobro?.fin ?? credit?.period_end ?? null;
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Plan y consumo" description="Suscripción, cuotas y pagos del negocio."   helpSection="plan"
-        />
+      {header}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Plan actual</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4 text-sm">
-          {overview?.has_plan ? (
-            <>
-              <span className="text-headline">{overview.plan_name}</span>
-              <Badge variant={overview.operational ? "success" : "danger"}>{overview.status}</Badge>
-              {overview.days_left !== null && overview.days_left !== undefined && (
-                <span className="text-body">{overview.days_left} días restantes</span>
-              )}
-            </>
-          ) : (
-            <span className="text-body">Sin suscripción activa.</span>
-          )}
-        </CardContent>
-      </Card>
-
-      {cobro && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Período del plan</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-headline">{cobro.referencia}</span>
-              <span className="text-body">
-                {formatDate(cobro.inicio)} – {formatDate(cobro.fin)}
-              </span>
-              <span className="text-headline">{formatCop(cobro.monto_cop)}</span>
-              {cobro.estado === "pagado" ? (
-                <Badge variant="success">
-                  {cobro.pagado_por === "asistente" ? "Pagado por el asistente" : "Pagado"}
-                </Badge>
-              ) : (
-                <Badge variant="warning">Pendiente</Badge>
-              )}
-            </div>
-            {cobro.estado === "pendiente" ? (
-              <div className="max-w-xs">
-                <SubscribeButton planId={cobro.plan_id} label="Pagar el período" />
-              </div>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <section aria-labelledby="credito-titulo" className="flex flex-col gap-4 rounded-lg border border-border-soft bg-surface p-5">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-text-soft">Crédito del mes</span>
+            {credito ? (
+              <>
+                <h2 id="credito-titulo" className="font-display text-2xl font-semibold tabular-nums text-headline">
+                  {credito.titulo}
+                </h2>
+                <p className="text-sm text-body">{credito.detalle}</p>
+              </>
             ) : (
-              cobro.disponible_desde && (
-                <p className="text-text-soft">
-                  Tu plan está al día. El cobro del período siguiente se habilita el{" "}
-                  {formatDate(cobro.disponible_desde)}.
-                </p>
-              )
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {(delPlan.length > 0 || credit) && (
-        <section className="flex flex-col gap-3" aria-labelledby="incluye-titulo">
-          <h2 id="incluye-titulo" className="font-display text-lg font-semibold text-headline">
-            Lo que incluye tu plan
-          </h2>
-          <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 md:grid-cols-3">
-            {delPlan.map((metric) => (
-              <UsageBar
-                key={metric.key}
-                label={metric.label}
-                used={metric.used}
-                limit={metric.limit}
-                percent={metric.percent}
-                unit={metric.unit}
-                exceeded={metric.exceeded}
-              />
-            ))}
-            {credit && (
-              <UsageBar
-                label="Crédito mensual"
-                used={credit.used ?? null}
-                limit={credit.limit}
-                percent={credit.percent ?? null}
-                unit="créditos"
-                exceeded={(credit.percent ?? 0) >= 100}
-                nota={
-                  creditoMedido
-                    ? `1 crédito = COP 10${reinicio ? ` · se renueva el ${reinicio}` : ""}`
-                    : CREDITO_SIN_MEDICION
-                }
-              />
+              <h2 id="credito-titulo" className="font-display text-xl font-semibold text-headline">
+                Tu plan no trae crédito mensual
+              </h2>
             )}
           </div>
-          {aviso && (
+          {credito && credit?.used != null && (
+            <Progress
+              label="Crédito usado"
+              value={credito.porcentaje}
+              valueText={`${Math.floor(credito.porcentaje)} % usado`}
+              segments={[{ key: "usado", value: credito.porcentaje, label: "Usado", tone: TONO_DE_BARRA[credito.tono] ?? "data" }]}
+            />
+          )}
+          {credito?.aviso && (
             <div
               role="status"
-              className={
-                aviso.nivel === "agotado"
-                  ? "flex flex-col gap-1 rounded-lg border border-status-danger-border bg-status-danger-bg p-4 text-sm"
-                  : "flex flex-col gap-1 rounded-lg border border-status-warning-border bg-status-warning-bg p-4 text-sm"
-              }
+              className={cn(
+                "flex flex-col gap-0.5 rounded-md px-3.5 py-3 text-sm",
+                credito.aviso.tono === "danger" ? "bg-status-danger-bg" : "bg-status-warning-bg",
+              )}
             >
-              <span
-                className={
-                  aviso.nivel === "agotado"
-                    ? "font-semibold text-status-danger-fg"
-                    : "font-semibold text-status-warning-fg"
-                }
-              >
-                {aviso.titulo}
+              <span className={cn("font-semibold", credito.aviso.tono === "danger" ? "text-status-danger-fg" : "text-status-warning-fg")}>
+                {credito.aviso.titulo}
               </span>
-              <span className="text-body">{aviso.texto}</span>
-            </div>
-          )}
-          {creditoMedido && (desglose.length > 0 || porAgente.length > 0) && (
-            <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 text-sm md:grid-cols-2">
-              {desglose.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-headline">En qué se usó el crédito</h3>
-                  <ul className="flex flex-col gap-1 text-body" aria-label="Crédito por concepto">
-                    {desglose.map((d) => (
-                      <li key={d.concepto} className="flex items-center justify-between gap-3">
-                        <span>{d.concepto}</span>
-                        <span className="text-headline">{formatoCreditos(d.usado)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {porAgente.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-headline">Por agente</h3>
-                  <ul className="flex flex-col gap-1 text-body" aria-label="Crédito por agente">
-                    {porAgente.map((a) => (
-                      <li key={a.agent_id ?? "sin-agente"} className="flex items-center justify-between gap-3">
-                        <span>{a.name ?? "Sin agente (medios y turnos anteriores)"}</span>
-                        <span className="text-headline">{formatoCreditos(a.used)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {credit?.by_agent_truncated && (
-                    <p className="text-xs text-text-soft">Se muestran los agentes con más consumo.</p>
-                  )}
-                </div>
-              )}
+              <span className="text-body">
+                {credito.aviso.texto}{" "}
+                <Link href="/plan?ver=planes" scroll={false} className="text-link hover:underline">
+                  Ver planes
+                </Link>
+              </span>
             </div>
           )}
         </section>
+
+        <section aria-labelledby="plan-titulo" className="flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-5">
+          <span className="text-sm text-text-soft">Tu plan</span>
+          {overview?.has_plan ? (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id="plan-titulo" className="font-display text-xl font-semibold text-headline">
+                  {overview.plan_name}
+                </h2>
+                <Badge variant={estado.tono}>{estado.label}</Badge>
+              </div>
+              <p className="text-sm text-body">
+                {actual ? precioDelPlan(actual) : null}
+                {renueva ? `${actual ? " · " : ""}se renueva el ${diaCorto(renueva)}` : null}
+              </p>
+              {pendiente && cobro ? (
+                porElAsistente ? (
+                  <p className="text-sm text-text-soft">Paga {formatCop(cobro.monto_cop)} escribiéndole al asistente de SolversHub por WhatsApp.</p>
+                ) : (
+                  <SubscribeButton planId={cobro.plan_id} label={`Pagar ${formatCop(cobro.monto_cop)}`} variant="accent" />
+                )
+              ) : cobro?.disponible_desde ? (
+                <p className="text-sm text-text-soft">Estás al día. El pago del siguiente período se habilita el {diaCorto(cobro.disponible_desde)}.</p>
+              ) : null}
+              <Link href="/plan?ver=pagos" scroll={false} className="self-start text-sm text-link hover:underline">
+                Pagos anteriores
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 id="plan-titulo" className="font-display text-xl font-semibold text-headline">
+                Aún no tienes un plan
+              </h2>
+              <p className="text-sm text-body">Elige uno para que tu asistente responda sin límites de prueba.</p>
+              <Button asChild variant="accent" className="self-start">
+                <Link href="/plan?ver=planes" scroll={false}>
+                  Ver planes
+                </Link>
+              </Button>
+            </>
+          )}
+        </section>
+      </div>
+
+      {agentes.length > 0 && (
+        <section aria-labelledby="por-agente" className="flex flex-col gap-3">
+          <h2 id="por-agente" className="font-display text-lg font-semibold text-headline">
+            Por agente
+          </h2>
+          <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+            {agentes.map((a) => (
+              <li key={a.agentId ?? "otros"} className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto] items-center gap-4 border-b border-border-soft px-4 py-3 last:border-b-0 max-sm:grid-cols-[minmax(0,1fr)_auto]">
+                {a.agentId ? (
+                  <Link href={`/agentes/${a.agentId}`} className="truncate font-medium text-headline hover:underline">
+                    {a.nombre}
+                  </Link>
+                ) : (
+                  <span className="truncate font-medium text-headline" title="Medios y turnos que no son de un agente">
+                    {a.nombre}
+                  </span>
+                )}
+                <Progress label={`Crédito de ${a.nombre}`} value={a.porcentaje} valueText={`${a.porcentaje} % del crédito usado`} size="sm" className="max-sm:order-last max-sm:col-span-2" />
+                <span className="text-sm tabular-nums text-text-soft">
+                  {formatNumber(Math.round(a.usado))} créditos · {a.porcentaje} %
+                </span>
+              </li>
+            ))}
+          </ul>
+          {credit?.by_agent_truncated && <p className="text-xs text-text-soft">Se muestran los agentes que más usan.</p>}
+        </section>
       )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Consumo del periodo</h2>
-        {resto.length === 0 ? (
-          <p className="text-sm text-text-soft">Sin métricas de consumo.</p>
-        ) : (
-          <div className="grid gap-4 rounded-lg border border-border-soft bg-surface p-5 md:grid-cols-2">
-            {resto.map((metric) => (
-              <UsageBar
-                key={metric.key}
-                label={metric.label}
-                used={metric.used}
-                limit={metric.limit}
-                percent={metric.percent}
-                unit={metric.unit}
-                exceeded={metric.exceeded}
-              />
-            ))}
+      <div className={cn("grid items-start gap-4", conceptos.length > 0 && "lg:grid-cols-2")}>
+        {conceptos.length > 0 && (
+          <div className="rounded-lg border border-border-soft bg-surface p-5">
+            <Reparto titulo="En qué se usó el crédito" partes={conceptos} />
           </div>
         )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Planes disponibles</h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {plans.map((plan) => (
-            <Card key={plan.id} className={plan.current ? "ring-1 ring-focus" : undefined}>
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle>{plan.name}</CardTitle>
-                  {plan.current && <Badge variant="accent">Actual</Badge>}
-                </div>
-                <p className="font-display text-xl font-bold text-headline">
-                  {plan.is_free ? "Gratis" : formatCop(plan.price_cop)}
-                </p>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                {Object.keys(plan.limits).length > 0 && (
-                  <ul className="flex flex-col gap-1 text-xs text-body">
-                    {limitesOrdenados(plan.limits).map(([key, value]) => (
-                      <li key={key} className="flex items-center justify-between gap-3">
-                        <span>{etiquetaDeLimite(key)}</span>
-                        <span className="text-headline">{value ?? "∞"}</span>
-                      </li>
-                    ))}
-                    {plan.monthly_credits != null && (
-                      <li className="flex items-center justify-between gap-3">
-                        <span>Crédito mensual</span>
-                        <span className="text-headline">{formatNumber(plan.monthly_credits)}</span>
-                      </li>
-                    )}
-                  </ul>
-                )}
-                {Object.keys(plan.features).length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {Object.entries(plan.features)
-                      .filter(([, value]) => value)
-                      .map(([key, value]) => (
-                        <Badge key={key} variant="neutral">
-                          {typeof value === "string" ? value : key}
-                        </Badge>
-                      ))}
+        {topes.length > 0 && (
+          <section aria-labelledby="topes" className="flex flex-col gap-4 rounded-lg border border-border-soft bg-surface p-5">
+            <h3 id="topes" className="text-sm font-medium text-headline">
+              Lo que incluye tu plan
+            </h3>
+            <ul className="flex flex-col gap-4">
+              {topes.map((t) => (
+                <li key={t.clave} className="flex flex-col gap-1.5">
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="text-headline">{t.titulo}</span>
+                    <span className="tabular-nums text-body">{t.uso}</span>
                   </div>
-                )}
-                {!plan.is_free &&
-                  (plan.current ? (
-                    <p className="text-sm text-text-soft">Tu plan actual</p>
-                  ) : planPorElAsistente ? (
-                    <p className="text-sm text-text-soft">
-                      Para cambiar de plan, escríbele al asistente de SolversHub por WhatsApp.
-                    </p>
-                  ) : (
-                    <SubscribeButton planId={plan.id} />
-                  ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                  {t.porcentaje !== null && (
+                    <Progress
+                      label={t.titulo}
+                      value={t.porcentaje}
+                      valueText={t.uso}
+                      size="sm"
+                      segments={[{ key: t.clave, value: t.porcentaje, label: t.titulo, tone: TONO_DE_BARRA[t.tono] ?? "data" }]}
+                    />
+                  )}
+                  <span
+                    className={cn(
+                      "text-xs",
+                      t.tono === "danger" ? "text-status-danger-fg" : t.tono === "warning" ? "text-status-warning-fg" : "text-text-soft",
+                    )}
+                  >
+                    {t.nota}
+                    {t.mejorar && (
+                      <>
+                        {" · "}
+                        <Link href={`${RUTA_MEJORAR_PLAN}?ver=planes`} scroll={false} className="text-link hover:underline">
+                          Mejorar mi plan
+                        </Link>
+                      </>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-headline">Pagos</h2>
-        <DataTable
-          columns={paymentColumns}
-          rows={payments}
-          getRowKey={(p, index) => `${p.plan_id}-${index}`}
-          emptyTitle="Sin pagos registrados"
-        />
-      </section>
+      {esMaster && (
+        <p className="text-xs text-text-soft">
+          Equipo de SolversHub: los costos en dólares de este negocio (IA y WhatsApp) están en{" "}
+          <Link href="/costos" className="text-link hover:underline">
+            Costos técnicos
+          </Link>
+          .
+        </p>
+      )}
+
+      {sp.ver === "planes" && <CajonDePlanes planes={plans} porElAsistente={porElAsistente} />}
+      {sp.ver === "pagos" && <CajonDePagos pagos={payments} planes={plans} />}
     </div>
   );
 }

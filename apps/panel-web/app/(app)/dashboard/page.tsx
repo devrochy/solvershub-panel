@@ -152,13 +152,18 @@ export default async function DashboardPage({
                 tone={d.kpi.pending_escalations > 0 ? "warning" : "default"}
                 href="/escalaciones?estado=pendiente"
               />
-              <StatCard
-                label="Costo LLM (30 días)"
-                value={formatUsd(d.kpi.cost_30d)}
-                tone="accent"
-                hint={planHint}
-                href="/costos"
-              />
+              {/* Rediseño B de Consumo y plan: los costos en dólares son del equipo de SolversHub. */}
+              {esPlataforma ? (
+                <StatCard
+                  label="Costo LLM (30 días)"
+                  value={formatUsd(d.kpi.cost_30d)}
+                  tone="accent"
+                  hint={planHint}
+                  href="/costos"
+                />
+              ) : (
+                <StatCard label="Plan" value={d.billing?.plan_name ?? "Sin plan"} hint={planHint} href="/plan" />
+              )}
             </div>
           )}
 

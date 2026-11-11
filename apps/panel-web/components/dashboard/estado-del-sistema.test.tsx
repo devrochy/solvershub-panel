@@ -23,8 +23,10 @@ describe("EstadoDelSistema", () => {
     expect(screen.getByText("deepseek · deepseek-chat")).toBeTruthy();
   });
 
-  it("muestra el agente, las habilidades, el costo de IA y el plan con sus días", () => {
-    render(<EstadoDelSistema d={con({ bot_paused: false })} />);
+  it("muestra el agente, las habilidades y el plan con sus días; el costo de IA solo al master", () => {
+    const { rerender } = render(<EstadoDelSistema d={con({ bot_paused: false })} />);
+    expect(screen.queryByRole("link", { name: /Costo IA, 30 días/ })).toBeNull();
+    rerender(<EstadoDelSistema d={con({ bot_paused: false })} esPlataforma />);
 
     expect(within(screen.getByRole("link", { name: /Agente/ })).getByText("Activo")).toBeTruthy();
     const costo = screen.getByRole("link", { name: /Costo IA, 30 días/ });
@@ -39,7 +41,7 @@ describe("EstadoDelSistema", () => {
   });
 
   it("sin plan o sin días restantes, no inventa el texto", () => {
-    render(<EstadoDelSistema d={con({ billing: null })} />);
+    render(<EstadoDelSistema d={con({ billing: null })} esPlataforma />);
     expect(screen.getByRole("link", { name: /Costo IA, 30 días/ })).toBeTruthy();
     expect(screen.queryByText(/restantes/)).toBeNull();
   });

@@ -138,11 +138,13 @@ describe("reglas de Colaboradores (lógica pura)", () => {
       "dashboard",
       "algo_nuevo",
     ]);
-    expect(grupos.map((g) => g.label)).toEqual(["Operación", "Negocio", "Cuenta", "Otras"]);
+    expect(grupos.map((g) => g.label)).toEqual(["Operación", "Negocio", "Cuenta", "Plataforma", "Otras"]);
     expect(grupos[0].filas.map((f) => f.label)).toEqual(["Resumen", "Clientes"]);
     expect(grupos[1].filas.map((f) => f.label)).toEqual(["Agenda", "Agenda · Tipos de cita", "Cobranza · Clientes"]);
-    expect(grupos[2].filas.map((f) => f.label)).toEqual(["Consumo y plan · Costos", "Configuración"]);
-    expect(grupos[3].filas.map((f) => f.label)).toEqual(["Algo nuevo"]);
+    expect(grupos[2].filas.map((f) => f.label)).toEqual(["Configuración"]);
+    // Los costos técnicos pasaron a Plataforma (rediseño B de Consumo y plan).
+    expect(grupos[3].filas.map((f) => f.label)).toEqual(["Costos técnicos"]);
+    expect(grupos[4].filas.map((f) => f.label)).toEqual(["Algo nuevo"]);
   });
 
   it("solo se guarda lo cambiado para la persona: lo demás vuelve a su rol", () => {
