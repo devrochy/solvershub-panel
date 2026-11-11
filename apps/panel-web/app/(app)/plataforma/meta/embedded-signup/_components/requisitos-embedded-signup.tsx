@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import type { components } from "@/lib/api/schema";
-import { formatDateTime } from "@/lib/format";
-import { resumenRevision } from "@/lib/requisitos-embedded-signup";
+import { diaEnPalabras } from "@/lib/plataforma";
+import { faltaEnPalabras, resumenRevision } from "@/lib/requisitos-embedded-signup";
 import { useAction } from "@/lib/use-action";
 
 type Requisitos = components["schemas"]["EmbeddedSignupRequirements"];
@@ -41,24 +41,16 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* PLT-08: lo que falta en una frase; los identificadores, en «Detalles». */}
       <div className="flex flex-wrap items-center gap-3 text-sm text-body">
         <Badge variant={estado.ready ? "success" : "warning"}>{estado.ready ? "Lista" : "Faltan requisitos"}</Badge>
-        <span>
-          App: <span className="font-mono text-xs">{estado.app_id || "sin configurar"}</span>
-        </span>
-        <span>
-          config_id: <span className="font-mono text-xs">{estado.config_id || "sin configurar"}</span>
-        </span>
-        <span>Graph {estado.graph_api_version}</span>
+        <span>{faltaEnPalabras(estado)}</span>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Revisión del servidor</CardTitle>
-          <p className="text-xs text-text-soft">
-            Las variables de la app, el webhook en HTTPS y su suscripción se revisan en «App de Meta», junto con
-            el resto de la infraestructura. La revisión vale 30 días.
-          </p>
+          <p className="text-xs text-text-soft">Se toma de la revisión de «App de Meta» y vale 30 días.</p>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
@@ -82,7 +74,7 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
             {revision.expired ? "Revisar de nuevo en App de Meta" : "Ver y revisar en App de Meta"}
           </Link>
           {!revision.expired && revision.expires_at && (
-            <span className="text-xs text-text-soft">Vale hasta {formatDateTime(revision.expires_at)} (30 días).</span>
+            <span className="text-xs text-text-soft">Vale hasta el {diaEnPalabras(revision.expires_at)}</span>
           )}
         </CardContent>
       </Card>
@@ -108,7 +100,7 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
                     Abrir en Meta <ExternalLink className="h-3 w-3" aria-hidden />
                   </a>
                   {m.updated_at && (
-                    <span className="text-xs text-text-soft">Actualizado {formatDateTime(m.updated_at)}</span>
+                    <span className="text-xs text-text-soft">Confirmado el {diaEnPalabras(m.updated_at)}</span>
                   )}
                 </span>
                 <Switch
@@ -122,6 +114,18 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
           </ul>
         </CardContent>
       </Card>
+
+      <details className="text-sm text-text-soft">
+        <summary className="cursor-pointer">Detalles</summary>
+        <dl className="mt-2 grid gap-1 sm:grid-cols-[max-content_1fr] sm:gap-x-4">
+          <dt>App de Meta</dt>
+          <dd className="font-mono text-xs text-body">{estado.app_id || "sin configurar"}</dd>
+          <dt>Configuración del registro</dt>
+          <dd className="font-mono text-xs text-body">{estado.config_id || "sin configurar"}</dd>
+          <dt>Versión de la API de Meta</dt>
+          <dd className="font-mono text-xs text-body">{estado.graph_api_version}</dd>
+        </dl>
+      </details>
     </div>
   );
 }

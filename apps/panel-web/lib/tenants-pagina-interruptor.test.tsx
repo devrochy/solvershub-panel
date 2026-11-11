@@ -39,8 +39,8 @@ function responder(rol: string) {
   });
 }
 
-async function pintar(abrir?: string) {
-  const nodo = await TenantsPage({ searchParams: Promise.resolve(abrir ? { abrir } : {}) });
+async function pintar(abrir?: string, negocio?: string) {
+  const nodo = await TenantsPage({ searchParams: Promise.resolve({ ...(abrir ? { abrir } : {}), ...(negocio ? { negocio } : {}) }) });
   render(<FeedbackProviders>{await resolverServidor(nodo)}</FeedbackProviders>);
 }
 
@@ -54,31 +54,39 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("página de Tenants: enlace al interruptor de plantillas con opciones", () => {
-  it("el master que llega con ?abrir=<negocio> ve abierto el diálogo de ese negocio con el interruptor", async () => {
+describe("página de Tenants: el negocio en su cajón (PLT-01, PLT-02)", () => {
+  it("el master que llega con ?abrir=<negocio> ve abierto el cajón de ese negocio con el interruptor", async () => {
     responder("master");
     await pintar(ID);
-    expect(await screen.findByText("Gestionar negocio")).toBeTruthy();
-    expect(screen.getByText("Café Aurora · cafe-aurora")).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: "Café Aurora" })).toBeTruthy();
+    expect(screen.getByText(/cafe-aurora · creado el/)).toBeTruthy();
     expect(await screen.findByRole("switch", { name: "Plantillas con opciones" })).toBeTruthy();
   });
 
-  it("sin ?abrir el diálogo queda cerrado", async () => {
+  it("?negocio= abre el cajón y las filas lo enlazan; sin parámetro queda cerrado", async () => {
     responder("master");
     await pintar();
-    expect(screen.queryByText("Gestionar negocio")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getAllByRole("link", { name: "Abrir Café Aurora" })[0].getAttribute("href")).toBe(`/tenants?negocio=${ID}`);
+    expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
+    cleanup();
+    await pintar(undefined, OTRO);
+    expect(await screen.findByRole("dialog", { name: "Otro negocio" })).toBeTruthy();
   });
 
   it("un ?abrir que no es un uuid se ignora", async () => {
     responder("master");
     await pintar("../x");
-    expect(screen.queryByText("Gestionar negocio")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("el tester, aunque vea la lista, no abre nada ni ve el interruptor", async () => {
+  it("el tester con ?abrir no abre nada ni ve el interruptor; con ?negocio ve el cajón sin las funciones del master", async () => {
     responder("tester");
     await pintar(ID);
-    expect(screen.queryByText("Gestionar negocio")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    cleanup();
+    await pintar(undefined, ID);
+    expect(await screen.findByRole("dialog", { name: "Café Aurora" })).toBeTruthy();
     expect(screen.queryByRole("switch", { name: "Plantillas con opciones" })).toBeNull();
   });
 });

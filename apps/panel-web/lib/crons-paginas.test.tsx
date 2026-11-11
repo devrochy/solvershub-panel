@@ -32,7 +32,9 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, replace: vi.fn(), push: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
   usePathname: () => "/plataforma/crons",
   useSearchParams: () => new URLSearchParams(),
-  redirect: vi.fn(),
+  redirect: (ruta: string) => {
+    throw new Error(`NEXT_REDIRECT ${ruta}`);
+  },
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
   },
@@ -84,9 +86,10 @@ describe("lista de crons", () => {
     const fila = within(tabla).getAllByRole("row")[1];
     expect(fila.textContent).toMatch(/Renovación del plan/);
     expect(fila.textContent).toMatch(/Con fallo/);
-    expect(fila.textContent).toMatch(/Todos los días a las 13:00 UTC \(08:00 en Colombia\)/);
-    expect(fila.textContent).toMatch(/Cobra o avisa a clientes/);
-    expect(within(fila).getByRole("link", { name: "Renovación del plan" }).getAttribute("href")).toBe(
+    expect(fila.textContent).toMatch(/Todos los días a las 08:00 en Colombia \(13:00 UTC\)/);
+    // PLT-11: el aviso es una marca corta y la fila abre el cron (sin el ojo del final).
+    expect(fila.textContent).toMatch(/Toca clientes/);
+    expect(within(fila).getByRole("link", { name: "Abrir Renovación del plan" }).getAttribute("href")).toBe(
       "/plataforma/crons/core.billing_renovacion",
     );
 
@@ -100,21 +103,20 @@ describe("lista de crons", () => {
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("los KPIs salen del resumen", async () => {
+  it("el resumen va en una línea y lo atrasado se marca (PLT-09, PLT-10)", async () => {
     const Pagina = (await import("@/app/(app)/plataforma/crons/page")).default as Pagina;
     await pintar(await Pagina(buscar()));
-    const resumen = screen.getByRole("region", { name: "Resumen" });
-    expect(resumen.textContent).toMatch(/Crons.*3/);
-    expect(resumen.textContent).toMatch(/Pausados.*1/);
-    expect(resumen.textContent).toMatch(/Con fallo.*1/);
+    expect(screen.getByText(/^3 crons · 1 con fallo · 1 en pausa/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
+    expect(screen.getByRole("navigation", { name: "Qué crons ver" })).toBeTruthy();
+    // Las fechas del fixture ya pasaron: el que no está en pausa sale atrasado.
+    expect(screen.getAllByText(/^Atrasado /).length).toBeGreaterThan(0);
   });
 
-  it.each(["owner", "tester", "colaborador"])("un %s no ve nada de los crons", async (role) => {
+  it.each(["owner", "tester", "colaborador"])("un %s vuelve al inicio sin ver los crons", async (role) => {
     respuestas["/admin/me"] = { ...meMaster, role };
     const Pagina = (await import("@/app/(app)/plataforma/crons/page")).default as Pagina;
-    await pintar(await Pagina(buscar()));
-    expect(screen.getByRole("alert").textContent).toMatch(/Solo el admin de plataforma/);
-    expect(screen.queryByRole("table")).toBeNull();
+    await expect(Pagina(buscar())).rejects.toThrow("NEXT_REDIRECT /dashboard");
   });
 });
 
@@ -156,8 +158,7 @@ describe("detalle de un cron", () => {
     const Pagina = (await import("@/app/(app)/plataforma/crons/[name]/page")).default as Pagina;
     await expect(Pagina(detalle("core.no_existe"))).rejects.toThrow("NEXT_NOT_FOUND");
     respuestas["/admin/me"] = { ...meMaster, role: "tester" };
-    await pintar(await Pagina(detalle("core.billing_renovacion")));
-    expect(screen.getByRole("alert").textContent).toMatch(/Solo el admin de plataforma/);
+    await expect(Pagina(detalle("core.billing_renovacion"))).rejects.toThrow("NEXT_REDIRECT /dashboard");
   });
 });
 
@@ -213,7 +214,7 @@ describe("acciones y reprogramación", () => {
     const d = await dialogo();
     const campo = within(d).getByLabelText(/Expresión/);
     fireEvent.change(campo, { target: { value: "0 5 * * *" } });
-    expect(d.textContent).toMatch(/Todos los días a las 05:00 UTC \(00:00 en Colombia\)/);
+    expect(d.textContent).toMatch(/Todos los días a las 00:00 en Colombia \(05:00 UTC\)/);
     expect((within(d).getByRole("button", { name: "Guardar horario" }) as HTMLButtonElement).disabled).toBe(false);
     fireEvent.change(campo, { target: { value: "61 * * * *" } });
     expect(d.textContent).toMatch(/minuto/);

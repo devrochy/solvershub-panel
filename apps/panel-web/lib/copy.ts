@@ -28,6 +28,26 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     what: "Cada chat entre tu asistente y un cliente. Aquí ves lo que se dijo y puedes tomar el control.",
     first: ["Abre una conversación para leer el contexto.", "Toma el control si necesitas responder tú."],
   },
+  tenants: {
+    question: "¿Qué es Negocios?",
+    what: "Todos los negocios de la plataforma, con su estado y su plan. Abre uno para cambiar su plan, reenviar el acceso al dueño, encender funciones o ver cómo atiende su asistente.",
+    first: ["Busca por nombre o slug: la lista filtra mientras escribes.", "Abre un negocio para gestionarlo; eliminarlo pide una frase de confirmación."],
+  },
+  alta_automatica: {
+    question: "¿Qué es el alta automática?",
+    what: "La configuración propia del agente de ventas de SolversHub: cuando un cliente compra un plan por WhatsApp, el agente crea su negocio solo. No es una función de los negocios.",
+    first: ["Revisa las altas que quedaron frenadas: apruébalas o descártalas.", "Publica los documentos que acepta el cliente; mientras falte uno, toda alta queda en revisión.", "Pausa el alta automática ante un ataque."],
+  },
+  meta_app: {
+    question: "¿Qué es la app de Meta?",
+    what: "Los chequeos de la app de Meta de la plataforma y de la infraestructura que la sostiene. Corren en segundo plano y queda guardado el último resultado.",
+    first: ["Arregla primero lo que aparece arriba: cada punto dice cómo.", "Revisa los requisitos de Embedded Signup antes de ofrecerlo a los negocios."],
+  },
+  crons: {
+    question: "¿Qué son los crons?",
+    what: "Las tareas periódicas de la plataforma por módulo: si corren a tiempo, qué falló y cómo operarlas.",
+    first: ["Mira primero los atrasados y los que fallaron.", "Los que tocan clientes cobran o escriben de verdad: cámbialos con cuidado."],
+  },
   agents: {
     question: "¿Qué son los Agentes?",
     what: "Cada agente que atiende tu negocio (Ventas, Agenda, Cobranza…) y lo que construyó: conversaciones, tareas, clientes, registros y consumo.",

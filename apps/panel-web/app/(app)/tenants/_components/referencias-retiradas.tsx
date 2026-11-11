@@ -19,7 +19,8 @@ async function leer(url: string): Promise<Lectura> {
   // Solo master: para quien no lo es, el bloque no existe (nunca un 403 por diseño).
   if (res.status === 403) return { sinPermiso: true };
   const json = (await res.json().catch(() => ({}))) as RetiredReferencesReport & { error?: string };
-  return res.ok ? { reporte: json } : { error: json.error ?? "No se pudo revisar las referencias retiradas." };
+  // PLT-04: una lectura que falla se dice con nuestras palabras, no con el texto crudo de la API.
+  return res.ok ? { reporte: json } : { error: "No pudimos revisar si este negocio nombra algo retirado. Vuelve a abrirlo en un momento." };
 }
 
 function Fila({ fila }: { fila: RetiredReferenceRow }) {
@@ -116,7 +117,7 @@ export function ReferenciasRetiradas({ tenantId }: { tenantId: string }) {
       {!lectura ? (
         <p className="text-sm text-body">Revisando agentes y releases…</p>
       ) : "error" in lectura ? (
-        <p role="alert" className="text-sm text-status-danger-fg">
+        <p role="status" className="text-sm text-body">
           {lectura.error}
         </p>
       ) : (

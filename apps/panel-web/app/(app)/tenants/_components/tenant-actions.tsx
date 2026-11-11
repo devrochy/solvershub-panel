@@ -1,55 +1,38 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
-import { Settings2, Trash2 } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
 import { AvisosPorCanalSection } from "@/app/(app)/tenants/_components/avisos-por-canal-section";
 import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
+import { TenantPlanBadge } from "@/app/(app)/tenants/_components/tenant-plan-badge";
+import { TenantStatusToggle } from "@/app/(app)/tenants/_components/tenant-status-toggle";
+import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenuItem, DropdownMenuLinkItem } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
-import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { mensajeAcceso } from "@/lib/acceso-dueno";
-import type { PlatformTenant, TenantOwnerInvitation } from "@/lib/api/types";
+import type { PlanResponse, PlatformTenant, TenantOwnerInvitation } from "@/lib/api/types";
 import { AVISO_DESACTIVAR_PRIMERO, sePuedeEliminar } from "@/lib/eliminar-negocio";
-import { estadoDelPlan } from "@/lib/estados-negocio";
 import { formatDate } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
 
-/** Acciones de gestión y eliminación de un negocio (master). */
-export function TenantActions({
-  tenant,
-  esMaster = false,
-  abrirInicial = false,
-}: {
-  tenant: PlatformTenant;
-  /** Solo el admin de plataforma ve los interruptores de plantillas con opciones y de avisos por canal (el tester no). */
-  esMaster?: boolean;
-  /** Llega por el enlace del editor de plantillas con opciones: abre el diálogo ya en el interruptor. */
-  abrirInicial?: boolean;
-}) {
-  const [gestionarOpen, setGestionarOpen] = useState(abrirInicial && esMaster);
-  const [eliminarOpen, setEliminarOpen] = useState(false);
-  const gestionarBoton = useRef<HTMLElement>(null);
-  const eliminarBoton = useRef<HTMLElement>(null);
+const AVISOS: Record<string, string> = {
+  deactivate: "Negocio desactivado.",
+  purge: "Negocio eliminado.",
+};
+
+/** Acciones de la API sobre un negocio (master): reenviar acceso, desactivar y eliminar. */
+function useAccionDeNegocio(tenantId: string) {
   const { run: ejecutar, pending } = useAction();
-  const activo = tenant.status === "active";
-  const eliminable = sePuedeEliminar(tenant.status);
-  const nombre = tenant.name || tenant.slug;
-  const plan = estadoDelPlan(tenant);
-
-  const AVISOS: Record<string, string> = {
-    deactivate: "Negocio desactivado.",
-    purge: "Negocio eliminado.",
-  };
-
   async function run(action: string, payload: Record<string, unknown> = {}) {
     return ejecutar(async () => {
-      const res = await fetch(`/api/platform/tenants/${tenant.id}`, {
+      const res = await fetch(`/api/platform/tenants/${tenantId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...payload }),
@@ -64,162 +47,190 @@ export function TenantActions({
       return { ok: true, success: AVISOS[action] ?? "Listo." };
     });
   }
+  return { run, pending };
+}
+
+/** Eliminar un negocio: pide la frase exacta y, si sigue activo, desactivarlo primero. */
+export function EliminarNegocio({
+  tenant,
+  abierto,
+  onAbierto,
+}: {
+  tenant: PlatformTenant;
+  abierto: boolean;
+  onAbierto: (abierto: boolean) => void;
+}) {
+  const { run, pending } = useAccionDeNegocio(tenant.id);
+  const activo = tenant.status === "active";
+  const eliminable = sePuedeEliminar(tenant.status);
+  const nombre = tenant.name || tenant.slug;
 
   async function onPurge(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const ok = await run("purge", { confirm_phrase: String(data.get("confirm_phrase") ?? "") });
-    if (ok) setEliminarOpen(false);
+    if (ok) onAbierto(false);
   }
 
   return (
-    <>
-      <div className="flex justify-end gap-1">
-        <IconAction
-          ref={gestionarBoton}
-          tone="neutro"
-          label={`Gestionar ${nombre}`}
-          onClick={() => setGestionarOpen(true)}
-        >
-          <Settings2 className="h-4 w-4" aria-hidden />
-        </IconAction>
-        <IconAction
-          ref={eliminarBoton}
-          tone="eliminar"
-          label={`Eliminar ${nombre}`}
-          onClick={() => setEliminarOpen(true)}
-        >
-          <Trash2 className="h-4 w-4" aria-hidden />
-        </IconAction>
-      </div>
-
-      <Dialog open={gestionarOpen} onOpenChange={setGestionarOpen}>
-        <DialogContent
-          title="Gestionar negocio"
-          description={`${nombre} · ${tenant.slug}`}
-          className="max-w-xl"
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            gestionarBoton.current?.focus();
-          }}
-        >
-          <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto pr-1">
-            <div className="flex flex-col gap-1 text-sm text-body">
-              <p>
-                Plan actual: <span className="text-headline">{plan.label}</span>
-              </p>
-              <p>
-                Creado: <span className="text-headline">{formatDate(tenant.created_at)}</span>
-              </p>
+    <Dialog open={abierto} onOpenChange={onAbierto}>
+      <DialogContent
+        title={`Eliminar ${nombre}`}
+        description="Borra todos sus datos: conversaciones, clientes, pedidos y cuentas. No se puede deshacer."
+        className="max-w-lg"
+      >
+        <form onSubmit={onPurge} className="flex flex-col gap-3">
+          {!eliminable && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
+              <p className="text-sm text-body">{AVISO_DESACTIVAR_PRIMERO}</p>
+              {activo && (
+                <Button type="button" variant="outline" size="sm" onClick={() => void run("deactivate")} disabled={pending}>
+                  Desactivar
+                </Button>
+              )}
             </div>
+          )}
+          <Field
+            label="Escribe la frase de confirmación"
+            htmlFor={`purge-${tenant.id}`}
+            help={`Debe ser exactamente: ELIMINAR ${tenant.slug}`}
+          >
+            <Input
+              id={`purge-${tenant.id}`}
+              name="confirm_phrase"
+              placeholder={`ELIMINAR ${tenant.slug}`}
+              autoComplete="off"
+              disabled={!eliminable || pending}
+            />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" disabled={pending}>
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="submit" variant="danger" disabled={pending || !eliminable}>
+              Eliminar definitivamente
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-            <Separator />
+/** Las acciones de la fila (PLT-01): abrir el negocio y eliminarlo, en «Más acciones». */
+export function AccionesDeNegocio({ tenant, abrirHref }: { tenant: PlatformTenant; abrirHref: string }) {
+  const [eliminar, setEliminar] = useState(false);
+  const nombre = tenant.name || tenant.slug;
+  return (
+    <>
+      <MenuDeFila etiqueta={`Más acciones de ${nombre}`}>
+        <DropdownMenuLinkItem href={abrirHref} scroll={false}>
+          Abrir
+        </DropdownMenuLinkItem>
+        <DropdownMenuItem tone="danger" onSelect={() => setEliminar(true)}>
+          Eliminar negocio
+        </DropdownMenuItem>
+      </MenuDeFila>
+      <EliminarNegocio tenant={tenant} abierto={eliminar} onAbierto={setEliminar} />
+    </>
+  );
+}
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-headline">Acceso del dueño</p>
-                <p className="text-sm text-body">
-                  Vuelve a enviar el correo con el enlace para definir la contraseña, mientras el dueño no haya entrado.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void run("resend_access")}
-                disabled={pending || !activo}
-              >
+function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
+  return (
+    <section aria-label={titulo} className="flex flex-col gap-3">
+      <h3 className="text-sh-label uppercase tracking-[0.06em] text-text-soft">{titulo}</h3>
+      <div className="flex flex-col gap-4 rounded-lg border border-border-soft bg-surface p-4">{children}</div>
+    </section>
+  );
+}
+
+function Fila({ nombre, detalle, children }: { nombre: string; detalle?: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-col">
+        <span className="text-sm font-medium text-headline">{nombre}</span>
+        {detalle && <span className="text-xs text-body">{detalle}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * El negocio en su cajón (PLT-02): vive en la URL (`?negocio=`) y se ordena en Cuenta, Funciones y
+ * Asistente. Las funciones que se encienden por negocio solo las ve el master (el tester no).
+ */
+export function FichaDeNegocio({
+  tenant,
+  plans,
+  esMaster,
+  enfocarOpciones = false,
+  cerrarHref,
+}: {
+  tenant: PlatformTenant;
+  plans: PlanResponse["plans"];
+  esMaster: boolean;
+  /** Llega por el enlace del editor de plantillas con opciones: enfoca ese interruptor. */
+  enfocarOpciones?: boolean;
+  cerrarHref: string;
+}) {
+  const router = useRouter();
+  const { run, pending } = useAccionDeNegocio(tenant.id);
+  const [eliminar, setEliminar] = useState(false);
+  const nombre = tenant.name || tenant.slug;
+  const activo = tenant.status === "active";
+
+  return (
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto) router.replace(cerrarHref, { scroll: false });
+      }}
+    >
+      <SheetContent
+        title={nombre}
+        description={`${tenant.slug} · creado el ${formatDate(tenant.created_at)}`}
+        className="sm:max-w-xl"
+        footer={
+          <Button type="button" variant="ghost" className="text-status-danger-fg" onClick={() => setEliminar(true)}>
+            Eliminar negocio
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-6">
+          <Seccion titulo="Cuenta">
+            <Fila nombre="Estado" detalle={activo ? "Atiende a sus clientes." : "No atiende hasta que lo reactives."}>
+              <TenantStatusToggle tenant={tenant} />
+            </Fila>
+            <Fila nombre="Plan">
+              <TenantPlanBadge tenant={tenant} plans={plans} />
+            </Fila>
+            <Fila nombre="Acceso del dueño" detalle="Reenvía el correo para definir la contraseña, mientras el dueño no haya entrado.">
+              <Button variant="outline" size="sm" onClick={() => void run("resend_access")} disabled={pending || !activo}>
                 Reenviar acceso
               </Button>
-            </div>
+            </Fila>
+          </Seccion>
 
-            <Separator />
-
+          <Seccion titulo="Funciones">
             {esMaster && (
               <>
-                <OpcionesDirectasSection
-                  tenantId={tenant.id}
-                  negocio={nombre}
-                  enfocar={abrirInicial}
-                />
-
-                <Separator />
-
+                <OpcionesDirectasSection tenantId={tenant.id} negocio={nombre} enfocar={enfocarOpciones} />
                 <AvisosPorCanalSection tenantId={tenant.id} negocio={nombre} />
-
-                <Separator />
               </>
             )}
-
-            <AgentOSSection tenantId={tenant.id} />
-
-            <Separator />
-
             <AliadosSection tenantId={tenant.id} />
+          </Seccion>
 
-            <div className="flex justify-end">
-              <DialogClose asChild>
-                <Button type="button" variant="ghost" size="sm">
-                  Cerrar
-                </Button>
-              </DialogClose>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={eliminarOpen} onOpenChange={setEliminarOpen}>
-        <DialogContent
-          title="Eliminar negocio"
-          description={`${nombre} · ${tenant.slug}. Borra todos sus datos y no se puede deshacer.`}
-          className="max-w-lg"
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            eliminarBoton.current?.focus();
-          }}
-        >
-          <form onSubmit={onPurge} className="flex flex-col gap-3">
-            {!eliminable && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft p-3">
-                <p className="text-sm text-body">{AVISO_DESACTIVAR_PRIMERO}</p>
-                {activo && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void run("deactivate")}
-                    disabled={pending}
-                  >
-                    Desactivar
-                  </Button>
-                )}
-              </div>
-            )}
-            <Field
-              label="Escribe la frase de confirmación"
-              htmlFor={`purge-${tenant.id}`}
-              help={`Debe ser exactamente: ELIMINAR ${tenant.slug}`}
-            >
-              <Input
-                id={`purge-${tenant.id}`}
-                name="confirm_phrase"
-                placeholder={`ELIMINAR ${tenant.slug}`}
-                autoComplete="off"
-                disabled={!eliminable || pending}
-              />
-            </Field>
-            <div className="flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button type="button" variant="ghost" disabled={pending}>
-                  Cancelar
-                </Button>
-              </DialogClose>
-              <Button type="submit" variant="danger" disabled={pending || !eliminable}>
-                Eliminar definitivamente
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+          <Seccion titulo="Asistente">
+            <AgentOSSection tenantId={tenant.id} />
+          </Seccion>
+        </div>
+      </SheetContent>
+      <EliminarNegocio tenant={tenant} abierto={eliminar} onAbierto={setEliminar} />
+    </Sheet>
   );
 }

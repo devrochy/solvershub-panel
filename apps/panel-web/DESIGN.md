@@ -284,6 +284,15 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Todo en palabras: etapas con tildes, el motivo de una tarea que falló, «Atiende primero» en vez de prioridades, «9 de cada 10 en menos de 2 s» en vez de p95, permisos como frases («Agenda puede consultarle a Ventas») y claves de mensajes con su nombre.
 - El editor es una tarea enfocada: sin las pestañas de la sección y con «Volver a Ventas». Las plantillas de «Nuevo agente» son tarjetas con lo que saben hacer y lo que falta preparar.
 
+## Plataforma (SPEC-29)
+
+- Negocios es una lista con búsqueda al escribir (`BuscarEnUrl`); cada fila abre un cajón (`?negocio=`) con Cuenta (estado, plan, acceso del dueño), Funciones (interruptores; los del master solo los ve el master) y Asistente. Eliminar vive en el menú de la fila y al pie del cajón, con su frase de confirmación.
+- El asistente se describe en palabras: «Motor», «Reparte entre especialistas», «Recorridos guiados»; el runbook queda plegado en «Antes de encender».
+- Alta automática pone primero las altas en revisión (motivo como título y «Aprobar» como acción; descartar va al menú) y luego los documentos como filas con «Versión de octubre de 2026 · desde el 12 de oct.».
+- App de Meta muestra primero lo que falla, cada chequeo con «Cómo arreglarlo» (`lib/plataforma.ts`, `comoArreglar`), y pliega «N en orden». Los ids técnicos van en «Detalles».
+- Crons dice el estado en una línea («3 crons · 1 con fallo · 2 atrasados»), avisa si el planificador parece detenido y filtra con un control segmentado (Todos, Con fallo, En pausa, Atrasados). Los horarios van primero en hora de Colombia; un cron atrasado se marca «Atrasado 8 d» (`lib/crons.ts`, `atraso`).
+- Quien no es master y entra a una página de Plataforma vuelve a su inicio, nunca ve un 403. Las cargas usan `CargandoLista`.
+
 ## Onboarding (HU-SH-06)
 
 | Pieza | Regla |

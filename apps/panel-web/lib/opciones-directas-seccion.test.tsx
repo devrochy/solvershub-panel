@@ -14,7 +14,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
-import { TenantActions } from "@/app/(app)/tenants/_components/tenant-actions";
+import { FichaDeNegocio } from "@/app/(app)/tenants/_components/tenant-actions";
 
 const ID = "0b6f6d3e-6a43-4c39-9a52-4b6c1c1e2f10";
 const URL_BANDERA = `/api/platform/tenants/${ID}/opciones-directas`;
@@ -243,15 +243,14 @@ describe("interruptor «Plantillas con opciones» por negocio (SPEC-40, PR 10b)"
   });
 });
 
-describe("el interruptor solo lo ve el master en las acciones del negocio", () => {
+describe("el interruptor solo lo ve el master en el cajón del negocio", () => {
   async function abrir(esMaster: boolean) {
     render(
       <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} esMaster={esMaster} />
+        <FichaDeNegocio tenant={NEGOCIO} plans={[]} esMaster={esMaster} cerrarHref="/tenants" />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Gestionar Café Aurora/ }));
-    await screen.findByText("Gestionar negocio");
+    await screen.findByRole("dialog", { name: "Café Aurora" });
   }
 
   it("el master lo ve", async () => {
@@ -266,22 +265,14 @@ describe("el interruptor solo lo ve el master en las acciones del negocio", () =
     expect(llamadas).toEqual([]);
   });
 
-  it("con `abrirInicial` (enlace del editor) el diálogo nace abierto con el interruptor enfocado", async () => {
+  it("con el enlace del editor el cajón enfoca el interruptor", async () => {
     render(
       <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} esMaster abrirInicial />
+        <FichaDeNegocio tenant={NEGOCIO} plans={[]} esMaster enfocarOpciones cerrarHref="/tenants" />
       </FeedbackProviders>,
     );
     const sw = await interruptor();
     await waitFor(() => expect(document.activeElement).toBe(sw));
   });
 
-  it("con `abrirInicial` pero sin ser master no abre nada", () => {
-    render(
-      <FeedbackProviders>
-        <TenantActions tenant={NEGOCIO} esMaster={false} abrirInicial />
-      </FeedbackProviders>,
-    );
-    expect(screen.queryByText("Gestionar negocio")).toBeNull();
-  });
 });

@@ -20,6 +20,7 @@ import {
   type EstadoCorrida,
 } from "@/lib/checklist-produccion";
 import { formatDateTime } from "@/lib/format";
+import { comoArreglar } from "@/lib/plataforma";
 
 export type Corrida = {
   status: EstadoCorrida;
@@ -40,10 +41,12 @@ export function ChecklistProduccion({
   endpoint,
   initial,
   connectionId,
+  plataforma = false,
 }: {
   endpoint: string;
   initial: Corrida;
   connectionId?: string;
+  plataforma?: boolean;
 }) {
   const [corrida, setCorrida] = useState<Corrida>(initial);
   const [error, setError] = useState<string>();
@@ -113,7 +116,7 @@ export function ChecklistProduccion({
       )}
       <FormFeedback error={error} />
 
-      {items.length > 0 && <ItemsChecklist items={items} connectionId={connectionId} />}
+      {items.length > 0 && <ItemsChecklist items={items} connectionId={connectionId} plataforma={plataforma} />}
     </div>
   );
 }
@@ -123,7 +126,17 @@ export function ChecklistProduccion({
  * el enlace para reparar los que no están en verde. Lo usan "Producción" de la conexión, la App
  * de Meta y el paso "Verificar" de "Pasar a producción".
  */
-export function ItemsChecklist({ items, connectionId }: { items: ReadinessItem[]; connectionId?: string }) {
+export function ItemsChecklist({
+  items,
+  connectionId,
+  plataforma = false,
+}: {
+  items: ReadinessItem[];
+  connectionId?: string;
+  /** La App de Meta (PLT-07): lo que falla primero, con cómo arreglarlo, y lo que está en orden plegado. */
+  plataforma?: boolean;
+}) {
+  if (plataforma) return <ChecklistDePlataforma items={items} />;
   return (
     <Card>
       <CardContent className="pt-2">
@@ -150,5 +163,51 @@ export function ItemsChecklist({ items, connectionId }: { items: ReadinessItem[]
         </ul>
       </CardContent>
     </Card>
+  );
+}
+
+function ChecklistDePlataforma({ items }: { items: ReadinessItem[] }) {
+  const pendientes = items.filter((i) => i.ok !== true);
+  const enOrden = items.filter((i) => i.ok === true);
+  return (
+    <div className="flex flex-col gap-3">
+      {pendientes.map((item) => {
+        const arreglo = item.ok === false ? comoArreglar(item.key) : null;
+        return (
+          <Card key={item.key}>
+            <CardContent className="flex items-start gap-3 pt-5 text-sm">
+              <MarcaDeRevision ok={item.ok} />
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="font-medium text-headline">{item.label}</span>
+                {item.detail && <span className="text-body">{item.detail}</span>}
+                {arreglo ? (
+                  <span className="text-body">
+                    <span className="font-medium text-headline">Cómo arreglarlo: </span>
+                    {arreglo}
+                  </span>
+                ) : (
+                  item.ok !== false && <span className="text-xs text-text-soft">No se pudo comprobar. Vuelve a revisar en unos minutos.</span>
+                )}
+              </span>
+            </CardContent>
+          </Card>
+        );
+      })}
+      {enOrden.length > 0 && (
+        <details className="rounded-lg border border-border-soft bg-surface px-4 py-3 text-sm">
+          <summary className="cursor-pointer font-medium text-headline">
+            {enOrden.length === 1 ? "1 en orden" : `${enOrden.length} en orden`}
+          </summary>
+          <ul className="mt-2 flex flex-col gap-1 text-body">
+            {enOrden.map((i) => (
+              <li key={i.key} className="flex items-center gap-2">
+                <MarcaDeRevision ok />
+                {i.label}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   );
 }
