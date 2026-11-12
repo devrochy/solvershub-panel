@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import { AsistenteDeAgente } from "@/app/(app)/agentes/nuevo/_components/asistente-de-agente";
+import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { puedeEditarAgentes } from "@/lib/agentes";
+import { avisoDeTopeDeAgentes } from "@/lib/plan-limite";
 import { apiFetch } from "@/lib/api/server";
 import type { AgentsOverview, AgentTemplatePage, Me } from "@/lib/api/types";
 
@@ -18,6 +20,7 @@ export default async function NuevoAgentePage() {
   ]);
   const runtime = agentes.ok ? agentes.data.runtime : "legacy";
   const puede = me.ok && puedeEditarAgentes(me.data, runtime);
+  const avisoTope = agentes.ok ? avisoDeTopeDeAgentes(agentes.data.cuota_agentes) : null;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -34,6 +37,13 @@ export default async function NuevoAgentePage() {
             Volver a Agentes
           </Link>
         </p>
+      ) : avisoTope ? (
+        <div className="flex flex-col gap-3">
+          <AvisoLimiteDePlan mensaje={avisoTope} />
+          <Link className="text-sm text-link underline" href="/agentes">
+            Volver a Agentes
+          </Link>
+        </div>
       ) : plantillas.ok ? (
         plantillas.data.items.length > 0 ? (
           <AsistenteDeAgente plantillas={plantillas.data.items} />

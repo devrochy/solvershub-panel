@@ -1,14 +1,13 @@
 import { cookies } from "next/headers";
-import Link from "next/link";
 
 import { AgentCard, EstadoDelAgente, loQueHizo, ultimaConversacion, type AgenteDeLaLista } from "@/app/(app)/agentes/_components/agent-card";
 import { AvisoDeReferenciasEnLista } from "@/components/domain/aviso-de-referencias-retiradas";
 import { DatosDePruebaParaTodos } from "@/app/(app)/agentes/_components/datos-de-prueba-para-todos";
+import { NuevoAgenteBoton } from "@/app/(app)/agentes/_components/nuevo-agente-boton";
 import { AgentIcon } from "@/components/domain/agent-icon";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { RecordarVista } from "@/components/domain/recordar-vista";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
-import { Button } from "@/components/ui/button";
 import type { Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,6 +15,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch } from "@/lib/api/server";
 import type { AgentsOverview, AgentSummary, EstadoDatosDePrueba, Me, PlanResponse, RetiredReferencesOut } from "@/lib/api/types";
 import { archivadosAlFinal, dondeAtiende, estaArchivado, papelDelAgente, puedeEditarAgentes, puedeEscribirConocimiento } from "@/lib/agentes";
+import { avisoDeTopeDeAgentes } from "@/lib/plan-limite";
 import { creditosPorAgenteId } from "@/lib/consumo";
 import { formatNumber, formatUsd } from "@/lib/format";
 import { VISTAS, vistaElegida, vistaEnEnlace } from "@/lib/vista-guardada";
@@ -74,6 +74,7 @@ export default async function AgentesPage({
       : false;
   const conAviso = new Set(retiradas.ok ? retiradas.data.agents.map((a) => a.agent_id) : []);
   const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data, runtime);
+  const avisoTope = avisoDeTopeDeAgentes(res.data.cuota_agentes);
   const propositos = new Map(resumenes.ok ? resumenes.data.map((a) => [a.id, a.description]) : []);
   const delMes = creditosPorAgenteId(plan.ok ? plan.data.credit : null);
   const verCosto = meRes.ok && meRes.data.role === "master";
@@ -149,11 +150,7 @@ export default async function AgentesPage({
           )}
           {enTest && <DatosDePruebaParaTodos agentes={especialistas} />}
           {/* El editor (HU-AOS-24) escribe en `settings`; sin ese permiso el botón no se muestra. */}
-          {puedeEditar && (
-            <Button asChild variant="accent">
-              <Link href="/agentes/nuevo">Nuevo agente</Link>
-            </Button>
-          )}
+          {puedeEditar && <NuevoAgenteBoton aviso={avisoTope} />}
         </>,
       )}
 
