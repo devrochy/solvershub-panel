@@ -5,7 +5,8 @@
  * El grupo lo manda la API (`group` de `GET /admin/agents/{id}/actions`, agent-core#746) y aquí solo se le
  * pone título y descripción, con los mismos textos que la APK. El mapa por nombre queda para el nombre
  * legible de cada acción y como respaldo del grupo cuando la API no lo trae: las acciones del core
- * (pasar a una persona, el perfil del cliente…) no vienen en esa lista, ni nada si la API no responde.
+ * (pasar a una persona, el perfil del cliente…) no vienen en esa lista, salvo las de suscripciones, y
+ * no llega nada si la API no responde.
  */
 import { humanizar } from "@/lib/turno";
 
@@ -123,11 +124,13 @@ function enPalabras(texto: string): string {
 }
 
 /**
- * Grupo de una acción: el que manda la API si viene; si no, el del mapa o el del nombre. Un grupo que el
- * panel aún no conoce se muestra con su clave en palabras («nuevo_grupo» → «Nuevo grupo»), no se pierde.
+ * Grupo de una acción: el que manda la API si viene; si no, el del mapa o el del nombre. «otras» de la API
+ * quiere decir que la habilidad no le puso grupo, así que no le gana al mapa. Un grupo que el panel aún no
+ * conoce se muestra con su clave en palabras («nuevo_grupo» → «Nuevo grupo»), no se pierde.
  */
 export function grupoDeAccion(tool: string, grupoDeLaApi?: string | null): GrupoDeAcciones {
-  const id = grupoDeLaApi?.trim() || ACCIONES[tool]?.grupo || grupoPorNombre(tool);
+  const deLaApi = grupoDeLaApi?.trim();
+  const id = (deLaApi && deLaApi !== OTRAS ? deLaApi : undefined) ?? ACCIONES[tool]?.grupo ?? grupoPorNombre(tool);
   return GRUPOS_DE_ACCIONES.find((g) => g.id === id) ?? { id, titulo: enPalabras(id), descripcion: "" };
 }
 

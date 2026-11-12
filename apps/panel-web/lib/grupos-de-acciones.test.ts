@@ -103,7 +103,12 @@ describe("grupos de acciones con el grupo de la API", () => {
   it("el grupo de la API manda sobre el mapa por nombre", () => {
     expect(grupoDeAccion("crear_pedido", "catalogo").id).toBe("catalogo");
     expect(grupoDeAccion("consultar_clima", "citas").id).toBe("citas");
-    expect(grupoDeAccion("crear_pedido", "otras").id).toBe("otras");
+  });
+
+  it("«otras» de la API es «sin grupo»: no le gana al mapa ni al nombre", () => {
+    expect(grupoDeAccion("escalate_to_human", "otras").id).toBe("conversacion");
+    expect(grupoDeAccion("cob_anular_promesa", "otras").id).toBe("promesas");
+    expect(grupoDeAccion("consultar_clima", "otras").id).toBe("otras");
   });
 
   it("sin grupo de la API, el respaldo por nombre coincide con la API", () => {
@@ -124,7 +129,7 @@ describe("grupos de acciones con el grupo de la API", () => {
       { tool: "consultar_clima", grupo: "otras" },
       { tool: "cob_registrar_promesa_pago", grupo: "promesas" },
       { tool: "rara_1", grupo: "bodega" },
-      { tool: "escalate_to_human" }, // del core: no viene en la API, se agrupa por el nombre
+      { tool: "escalate_to_human" }, // del core: la API no la lista (solo las de habilidades y las sub_*), va por el mapa
       { tool: "check_availability", grupo: "disponibilidad" },
       { tool: "generar_cotizacion", grupo: "cotizaciones" },
       { tool: "rara_2", grupo: "bodega" },
