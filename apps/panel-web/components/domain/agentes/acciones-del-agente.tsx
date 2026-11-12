@@ -34,6 +34,7 @@ export function AccionesDelAgente({
   errores = [],
   conConocimiento = false,
   soloLectura = false,
+  gruposDeLaApi = {},
 }: {
   acciones: Record<string, AccionEnEditor>;
   cambiar: (acciones: Record<string, AccionEnEditor>) => void;
@@ -44,12 +45,14 @@ export function AccionesDelAgente({
   /** El agente busca en los documentos del negocio: se explica dónde se controla. */
   conConocimiento?: boolean;
   soloLectura?: boolean;
+  /** Grupo de cada acción según la API (`group` de `GET /admin/agents/{id}/actions`); la que no esté se agrupa por su nombre. */
+  gruposDeLaApi?: Record<string, string>;
 }) {
   function poner(tool: string, cambio: Partial<AccionEnEditor>) {
     cambiar({ ...acciones, [tool]: { ...acciones[tool], ...cambio } });
   }
 
-  const grupos = agruparAcciones(Object.keys(acciones).map((tool) => ({ tool, ...acciones[tool] })));
+  const grupos = agruparAcciones(Object.keys(acciones).map((tool) => ({ tool, grupo: gruposDeLaApi[tool] })));
   const nota = conConocimiento && (
     <p className="text-sm text-text-soft">
       La búsqueda en tus documentos se enciende y se ajusta en el paso «Memoria y conocimiento».
@@ -81,10 +84,11 @@ export function AccionesDelAgente({
             <h3 id={`grupo-${grupo.id}`} className="font-display text-base font-semibold text-headline">
               {grupo.titulo}
             </h3>
-            <p className="text-sm text-text-soft">{grupo.descripcion}</p>
+            {grupo.descripcion && <p className="text-sm text-text-soft">{grupo.descripcion}</p>}
           </div>
           <ul className="flex flex-col gap-3">
-            {delGrupo.map(({ tool, ...accion }) => {
+            {delGrupo.map(({ tool }) => {
+              const accion = acciones[tool];
               const id = idDe(tool);
               const nombre = nombreDeAccion(tool);
               const error = erroresPorAccion[tool];
