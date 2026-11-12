@@ -153,11 +153,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Foco visible (manual §11): outline de 2 px, color de foco del tema. */
+/* Foco visible (manual §11): outline de 2 px, color de foco del tema. Sin radio propio:
+   el contorno sigue la forma del componente (un menú o una tarjeta no se vuelven cuadrados
+   al enfocarse). */
 :focus-visible {
   outline: 2px solid var(--sh-focus);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 ::selection {

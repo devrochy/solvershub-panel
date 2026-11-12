@@ -137,8 +137,8 @@ export function DropdownMenuExternalLinkItem({
   );
 }
 
-export function DropdownMenuLabel({ children }: { children: ReactNode }) {
-  return <Menu.Label className="px-2 py-1.5 text-xs text-text-soft">{children}</Menu.Label>;
+export function DropdownMenuLabel({ children, className }: { children: ReactNode; className?: string }) {
+  return <Menu.Label className={cn("px-2 py-1.5 text-xs text-text-soft", className)}>{children}</Menu.Label>;
 }
 
 export function DropdownMenuSeparator() {
