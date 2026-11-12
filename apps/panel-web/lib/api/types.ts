@@ -7,6 +7,7 @@
 import type { components } from "./schema";
 
 export type Me = components["schemas"]["MeResponse"];
+export type MePlanSummary = components["schemas"]["MePlanSummary"];
 export type TenantOption = components["schemas"]["TenantOption"];
 export type TenantPage = components["schemas"]["Page_TenantOption_"];
 export type Dashboard = components["schemas"]["DashboardResponse"];

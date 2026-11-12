@@ -48,7 +48,12 @@ export function VigilanteDeSesion() {
     if (!res.ok) return;
     const vigente = (await res.json().catch(() => null)) as Me | null;
     if (!vigente) return;
-    if (cambioLaSesion({ permisos: shell.permisos, esMaster: shell.esMaster, negocioId: shell.negocioId }, vigente)) {
+    if (
+      cambioLaSesion(
+        { permisos: shell.permisos, esMaster: shell.esMaster, negocioId: shell.negocioId, plan: shell.plan },
+        vigente,
+      )
+    ) {
       router.refresh();
     }
   });

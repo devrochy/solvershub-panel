@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
+import { AvisoPlanFree } from "@/components/domain/aviso-plan-free";
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
 import { AtajosProvider } from "@/components/shell/atajos";
 import { GuardiaDeModulo } from "@/components/shell/guardia-de-modulo";
@@ -25,6 +26,7 @@ import type {
   SettingsResponse,
 } from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
+import { AVISO_PLAN_COOKIE } from "@/lib/plan-limite";
 import { estadosDeModulos } from "@/lib/shell/modulos";
 import { resolverDocsUrl } from "@/lib/docs-url";
 import { enlacesDeObservabilidad } from "@/lib/observabilidad-url";
@@ -81,6 +83,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const modoSidebar = leerModoSidebar(store.get(SIDEBAR_COOKIE)?.value);
   const theme = normalizeTheme(store.get(THEME_COOKIE)?.value);
   const atajosActivos = leerAtajosActivos(store.get(ATAJOS_COOKIE)?.value);
+  // Aviso de plan Free (HU-BILL-15): cerrado en esta sesión para el negocio activo.
+  const avisoPlanCerrado = !!me.tenant?.id && store.get(AVISO_PLAN_COOKIE)?.value === me.tenant.id;
   const puedeEditar = puedeEditarAsistente(me.permissions);
   const esMaster = me.role === "master";
   // Destino de «Documentación» en la tarjeta del usuario: variable de servidor, leída en runtime.
@@ -93,6 +97,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <ShellProvider
+      key={claveDeNegocio(me)}
       permisos={me.permissions}
       esMaster={esMaster}
       negocioId={me.tenant?.id ?? null}
@@ -100,6 +105,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       modulos={modulos}
       asistentePausado={asistentePausado}
       puedeEditarAsistente={puedeEditar}
+      plan={me.plan ?? null}
+      avisoPlanCerradoInicial={avisoPlanCerrado}
     >
       <FeedbackProviders>
         <AtajosProvider atajosActivosIniciales={atajosActivos}>
@@ -143,6 +150,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col">
                     {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
                     {puedeTerminarPrimerUso && <AvisoDeOnboarding recorrido={recorrido} />}
+                    <AvisoPlanFree />
                     <GuardiaDeSeccion>
                       <GuardiaDeModulo packs={packs}>{children}</GuardiaDeModulo>
                     </GuardiaDeSeccion>

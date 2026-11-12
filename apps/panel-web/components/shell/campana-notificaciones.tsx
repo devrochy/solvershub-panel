@@ -5,9 +5,11 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Bell, X } from "lucide-react";
 
 import { CentroDeNotificaciones } from "@/components/notificaciones/centro-de-notificaciones";
+import { useShell } from "@/components/shell/shell-context";
 import { Contador } from "@/components/ui/contador";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNotificaciones } from "@/lib/notificaciones/use-notificaciones";
+import { avisoDePlanFree } from "@/lib/plan-limite";
 import { cn } from "@/lib/utils";
 
 /** Debajo de `md` (768 px) el centro es una hoja a pantalla casi completa; desde ahí, un popover. */
@@ -37,8 +39,20 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
   const [abierto, setAbierto] = useState(false);
   const chica = useEsPantallaChica();
   const n = useNotificaciones({ abierto });
+  const shell = useShell();
+  // Aviso de plan Free (HU-BILL-15): un punto cuando no hay otras no leídas que reclamen la campana.
+  const avisoPlanActivo =
+    !!avisoDePlanFree(shell?.plan) &&
+    !shell?.avisoPlanCerrado &&
+    !shell?.esMaster &&
+    shell?.permisos?.plan === "write";
 
-  const etiqueta = n.noLeidas > 0 ? `Notificaciones, ${textoDelContador(n.noLeidas)} sin leer` : "Notificaciones";
+  const etiqueta =
+    n.noLeidas > 0
+      ? `Notificaciones, ${textoDelContador(n.noLeidas)} sin leer`
+      : avisoPlanActivo
+        ? "Notificaciones, tienes un aviso de plan"
+        : "Notificaciones";
   const boton = (
     <button
       type="button"
@@ -52,7 +66,7 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
       )}
     >
       <Bell className="h-5 w-5" aria-hidden />
-      {n.noLeidas > 0 && (
+      {n.noLeidas > 0 ? (
         <Contador
           // `key`: al cambiar el número el globo hace un «pop» corto (un cambio de estado).
           key={n.noLeidas}
@@ -61,7 +75,9 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
           tamano="sm"
           className="sh-notif-globo absolute -right-0.5 -top-0.5"
         />
-      )}
+      ) : avisoPlanActivo ? (
+        <span aria-hidden className="absolute right-1 top-1 h-2 w-2 rounded-full bg-focus" />
+      ) : null}
     </button>
   );
 
