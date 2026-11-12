@@ -946,6 +946,15 @@ if (process.env.AGENTES === "1") {
     respuestas[`/admin/agents/${ref}/customers`] = clientes;
     respuestas[`/admin/agents/${ref}/usage`] = uso;
   }
+  // ADR-0190 (HU-AOS-66): habilidades del agente y cuentas Wompi del negocio (el PUT se simula abajo, en memoria).
+  respuestas[`/admin/agents/${VENTAS_ID}/skills`] = pagina([
+    { pack_id: "pack_knowledge", installed: true, status: "active", config: {} },
+    { pack_id: "pack_payments", installed: true, status: "active", config: { cuenta_id: "00000000-0000-4000-8000-0000000000a1" } },
+  ]);
+  respuestas["/pack/payments/accounts"] = [
+    { id: "00000000-0000-4000-8000-0000000000a1", name: "Principal", public_key: "pub_test_demo", sandbox: true, link_expires_hours: 24, min_amount: null, events_url: "https://api.solvershub.site/webhooks/payments/wompi/demo/00000000-0000-4000-8000-0000000000a1", agent_ids: [VENTAS_ID] },
+    { id: "00000000-0000-4000-8000-0000000000a2", name: "Sede norte", public_key: "pub_prod_demo", sandbox: false, link_expires_hours: 48, min_amount: 1500, events_url: "https://api.solvershub.site/webhooks/payments/wompi/demo/00000000-0000-4000-8000-0000000000a2", agent_ids: [] },
+  ];
   respuestas[`/pack/pack_knowledge/agents/${VENTAS_ID}/documents`] = [
     { id: "d-1", agent_id: VENTAS_ID, titulo: "Catálogo de temporada.pdf", mime: "application/pdf", bytes: 2_400_000, estado: "listo", error_codigo: null, paginas: 18, num_fragmentos: 64, pii_detectada: 0, desactualizado: false, created_at: hace(200), processed_at: hace(199) },
     { id: "d-2", agent_id: VENTAS_ID, titulo: "Políticas de cambios y devoluciones.docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", bytes: 84_000, estado: "listo", error_codigo: null, paginas: 3, num_fragmentos: 9, pii_detectada: 2, desactualizado: true, created_at: hace(900), processed_at: hace(899) },
@@ -1585,6 +1594,19 @@ createServer(async (req, res) => {
     const [estado, cuerpo] = opciones(req.method ?? "GET", ruta.split("/").slice(2), texto ? JSON.parse(texto) : {});
     res.statusCode = estado;
     res.end(cuerpo === null ? undefined : JSON.stringify(cuerpo));
+    return;
+  }
+  const habilidad = ruta.match(/^\/admin\/agents\/([^/]+)\/skills\/([a-z0-9_]+)$/);
+  if (habilidad && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const cuerpo = JSON.parse(texto || "{}");
+    const lista = respuestas[`/admin/agents/${habilidad[1]}/skills`]?.items ?? [];
+    const conCuenta = habilidad[2] !== "pack_payments" || Boolean(cuerpo.config?.cuenta_id);
+    const nueva = { pack_id: habilidad[2], installed: cuerpo.installed, status: cuerpo.installed ? (conCuenta ? "active" : "pending_config") : null, config: cuerpo.installed ? (cuerpo.config ?? {}) : {} };
+    const i = lista.findIndex((h) => h.pack_id === habilidad[2]);
+    if (i >= 0) lista[i] = nueva;
+    res.end(JSON.stringify(nueva));
     return;
   }
   if (retiradas === "1" && req.method === "POST" && ruta === `/admin/agents/${VENTAS_ID}/publish`) {

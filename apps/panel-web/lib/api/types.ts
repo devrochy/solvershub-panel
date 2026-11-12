@@ -346,3 +346,9 @@ export type CronEjecucion = components["schemas"]["CronRunOut"];
 export type CronListado = components["schemas"]["CronList"];
 export type CronResumen = components["schemas"]["CronSummary"];
 export type CronEjecucionesPage = components["schemas"]["Page_CronRunOut_"];
+
+// ADR-0190 (HU-AOS-64/66): habilidades del agente y cuentas Wompi del negocio.
+export type AgentSkill = components["schemas"]["AgentSkill"];
+export type AgentSkillPage = components["schemas"]["Page_AgentSkill_"];
+export type AgentAction = components["schemas"]["AgentAction"];
+export type PaymentAccount = components["schemas"]["PaymentAccount"];
