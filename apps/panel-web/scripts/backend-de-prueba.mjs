@@ -32,6 +32,7 @@
 //   RETIRADAS=1 (HU-AOS-59): el negocio de MASTER=1 y el agente Ventas nombran acciones y procedimientos retirados: aviso del
 //   master (Tenants › Agent OS), aviso del dueño en la lista de agentes y en el editor (/agentes/<id>/editar); publicar
 //   responde el 422 invalid_spec con error.fields. RETIRADAS=limpio: los mismos endpoints, sin nada retirado.
+//   ACCIONES=1 (con RETIRADAS=1 o =limpio): el borrador de Ventas con acciones reales para la pestaña Acciones del editor.
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -795,6 +796,19 @@ if (retiradas) {
   respuestas["/admin/agent-models"] = { items: [{ provider: "deepseek", model: "deepseek-flash", input_usd_per_mtok: 0.14, output_usd_per_mtok: 0.28, selectable: true, retired: false }], total: 1, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
   respuestas[`/admin/agents/${VENTAS_ID}/publish-targets`] = pagina([{ connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: true, covers_skills: true, missing_skills: [], active_release_id: null }]);
   respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
+}
+// ACCIONES=1 (con RETIRADAS=1 o RETIRADAS=limpio; fase 5a, ADR-0190): el borrador de Ventas trae acciones reales de
+// varios grupos (pedidos, catálogo, citas, pagos, leads, conversación), con tope, confirmación y una apagada.
+if (retiradas && process.env.ACCIONES === "1") {
+  const borrador = respuestas[`/admin/agents/${VENTAS_ID}`].draft.content;
+  borrador.tools = [
+    { tool: "consultar_inventario", enabled: true }, { tool: "recomendar_producto", enabled: true },
+    { tool: "generar_cotizacion", enabled: true }, { tool: "informar_plan", enabled: true },
+    { tool: "crear_pedido", enabled: true, requiresConfirmation: true }, { tool: "agregar_item_pedido" },
+    { tool: "consultar_estado_pedido", maxCallsPerConversation: 3 }, { tool: "verificar_pago_pedido" },
+    { tool: "create_calendar_event" }, { tool: "cancel_calendar_event", enabled: false },
+    { tool: "crear_lead" }, { tool: "escalate_to_human" }, { tool: "buscar_conocimiento", enabled: true },
+  ];
 }
 // FICHA_AGENTE=1 (HU-UX-09): la ficha de Ventas con sus conexiones (rol, prioridad y principal), indicadores de
 // 7 días, superpoderes de dos habilidades y el chat de prueba por su conexión principal.

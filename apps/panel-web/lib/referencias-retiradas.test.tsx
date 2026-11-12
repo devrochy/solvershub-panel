@@ -314,8 +314,11 @@ describe("editor de agentes con referencias retiradas", () => {
     const bloque = screen.getByRole("list", { name: "Superpoderes que no corresponden a este agente" });
     expect(within(bloque).getByText("Informar plan")).toBeTruthy();
     expect(within(bloque).getByText("«Informar plan» ya no existe: quítalo para publicar.")).toBeTruthy();
-    // Una acción retirada no tiene control propio: se lista en el paso, además del aviso de arriba.
+    // La acción retirada ya no se lista en Superpoderes (solo en el aviso de arriba): va junto a su fila en Acciones.
+    expect(screen.getAllByText("La acción «Informar plan» ya no existe.")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /Paso 4/ }));
     expect(screen.getAllByText("La acción «Informar plan» ya no existe.")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Quitar del agente" })).toBeTruthy();
     // El aviso de la versión publicada vive solo arriba, no pegado a un superpoder del borrador.
     expect(screen.getAllByText("Otra cosa de la versión publicada.")).toHaveLength(1);
   });
@@ -333,11 +336,11 @@ describe("editor de agentes con referencias retiradas", () => {
       ),
     );
     editor(null);
-    fireEvent.click(screen.getByRole("button", { name: /Paso 5/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 6/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
-    // Lleva al paso de superpoderes y pinta el texto ahí.
+    // Lleva al paso Acciones y pinta el texto junto a la acción.
     const alerta = await waitFor(() => {
-      const el = screen.getAllByRole("alert").find((a) => a.id.startsWith("acciones-error"));
+      const el = screen.getAllByRole("alert").find((a) => a.id === "accion-informar_plan-error");
       if (!el) throw new Error("sin texto junto al control");
       return el;
     });
