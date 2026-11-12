@@ -71,7 +71,9 @@ describe("grupos de acciones", () => {
   });
 });
 
-// `grupos_de_acciones` de cada habilidad en agent-core develop (agent-core#746) al 2026-11-12.
+// Grupos que manda agent-core develop (agent-core#746) al 2026-11-12: los `grupos_de_acciones` de cada
+// habilidad (packages/pack-*/pack_*/module.py) y, por prefijo, las `sub_*` en suscripciones
+// (core/agents/habilidades_del_agente.py `_GRUPOS_DEL_CORE`). Si el backend mueve una acción, actualizar aquí.
 const GRUPOS_DE_LA_API: Record<string, string> = {
   crear_pedido: "pedidos", agregar_item_pedido: "pedidos", consultar_estado_pedido: "pedidos",
   confirmar_pago_pedido: "pagos", verificar_pago_pedido: "pagos",
@@ -86,6 +88,10 @@ const GRUPOS_DE_LA_API: Record<string, string> = {
   cob_evaluar_negociacion: "promesas",
   cob_crear_suscripcion: "suscripciones", cob_consultar_suscripcion: "suscripciones", cob_renovar_suscripcion: "suscripciones",
   cob_pausar_suscripcion: "suscripciones", cob_cancelar_suscripcion: "suscripciones", cob_link_suscripcion: "pagos",
+  sub_aplicar_cambio_plan: "suscripciones", sub_cambiar_plan: "suscripciones", sub_cancelar: "suscripciones",
+  sub_confirmar_inscripcion: "suscripciones", sub_consultar: "suscripciones", sub_cotizar_cambio_plan: "suscripciones",
+  sub_cotizar_inscripcion: "suscripciones", sub_inscribir: "suscripciones", sub_link_pago: "suscripciones",
+  sub_listar_planes: "suscripciones", sub_pausar: "suscripciones",
 };
 
 describe("grupos de acciones con el grupo de la API", () => {
@@ -122,6 +128,7 @@ describe("grupos de acciones con el grupo de la API", () => {
   it("un grupo que el panel no conoce se muestra en palabras, sin perder la acción", () => {
     const g = grupoDeAccion("algo", "inventario_bodega");
     expect(g).toEqual({ id: "inventario_bodega", titulo: "Inventario bodega", descripcion: "" });
+    expect(grupoDeAccion("algo", "ventas.extra").titulo).not.toBe(grupoDeAccion("algo", "cobranza.extra").titulo);
   });
 
   it("agruparAcciones usa el grupo de la API y pone los desconocidos antes de «Otras acciones»", () => {

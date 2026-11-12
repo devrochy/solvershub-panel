@@ -8,7 +8,6 @@
  * (pasar a una persona, el perfil del cliente…) no vienen en esa lista, salvo las de suscripciones, y
  * no llega nada si la API no responde.
  */
-import { humanizar } from "@/lib/turno";
 
 export type GrupoDeAcciones = { id: string; titulo: string; descripcion: string };
 
@@ -49,7 +48,7 @@ const ACCIONES: Record<string, { grupo: string; nombre: string }> = {
   // Pagos (Wompi).
   confirmar_pago_pedido: { grupo: "pagos", nombre: "Confirmar el pago de un pedido" },
   verificar_pago_pedido: { grupo: "pagos", nombre: "Verificar el pago de un pedido" },
-  sub_link_pago: { grupo: "pagos", nombre: "Enviar el enlace de pago de una suscripción" },
+  sub_link_pago: { grupo: "suscripciones", nombre: "Enviar el enlace de pago de una suscripción" },
   cob_link_suscripcion: { grupo: "pagos", nombre: "Enviar el enlace de pago de una suscripción en cobro" },
   // Agenda: citas y disponibilidad.
   create_calendar_event: { grupo: "citas", nombre: "Agendar una cita" },
@@ -118,8 +117,9 @@ function grupoPorNombre(tool: string): string {
   return OTRAS;
 }
 
+/** `crear_pedido` → «Crear pedido». Sin `humanizar`, que corta en el último punto y juntaría grupos distintos. */
 function enPalabras(texto: string): string {
-  const t = humanizar(texto);
+  const t = texto.replace(/[_-]+/g, " ").trim();
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
@@ -148,7 +148,11 @@ export function agruparAcciones<T extends { tool: string; grupo?: string | null 
   acciones: T[],
 ): { grupo: GrupoDeAcciones; acciones: T[] }[] {
   const conocidos = GRUPOS_DE_ACCIONES.map((g) => g.id);
-  const orden = (id: string) => (id === OTRAS ? Infinity : conocidos.includes(id) ? conocidos.indexOf(id) : conocidos.length);
+  const orden = (id: string) => {
+    if (id === OTRAS) return Infinity;
+    const i = conocidos.indexOf(id);
+    return i >= 0 ? i : conocidos.length;
+  };
   const porGrupo = new Map<string, { grupo: GrupoDeAcciones; acciones: T[] }>();
   for (const accion of acciones) {
     const grupo = grupoDeAccion(accion.tool, accion.grupo);

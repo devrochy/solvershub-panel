@@ -21,6 +21,8 @@ function ErrorDeAccion({ id, mensaje }: { id: string; mensaje?: string }) {
 
 /** Id seguro para el DOM a partir del nombre de la acción (solo letras, números y `_`, ACTION_PATTERN). */
 const idDe = (tool: string) => `accion-${tool}`;
+/** El id del grupo viene de la API: se limpia para que sirva de id del DOM y de `aria-labelledby`. */
+const idDeGrupo = (grupo: string) => `grupo-${grupo.replace(/[^A-Za-z0-9_-]/g, "_")}`;
 
 /**
  * Pestaña «Acciones» del editor (fase 5a de la SPEC «habilidades por agente», ADR-0190 en preparación):
@@ -79,9 +81,9 @@ export function AccionesDelAgente({
       ))}
       {nota}
       {grupos.map(({ grupo, acciones: delGrupo }) => (
-        <section key={grupo.id} aria-labelledby={`grupo-${grupo.id}`} className="flex flex-col gap-3">
+        <section key={grupo.id} aria-labelledby={idDeGrupo(grupo.id)} className="flex flex-col gap-3">
           <div>
-            <h3 id={`grupo-${grupo.id}`} className="font-display text-base font-semibold text-headline">
+            <h3 id={idDeGrupo(grupo.id)} className="font-display text-base font-semibold text-headline">
               {grupo.titulo}
             </h3>
             {grupo.descripcion && <p className="text-sm text-text-soft">{grupo.descripcion}</p>}
