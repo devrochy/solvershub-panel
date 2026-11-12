@@ -59,7 +59,7 @@ export function PlantillasEnTarjetas({
                 )}
                 {p.will_enable.length > 0 && (
                   <span className="text-xs text-text-soft">
-                    <span className="font-medium text-headline">Al crearlo activamos:</span> {p.will_enable.map(habilidadLabel).join(", ")}
+                    <span className="font-medium text-headline">El agente viene con:</span> {p.will_enable.map(habilidadLabel).join(", ")}
                   </span>
                 )}
                 {falta.length > 0 && (

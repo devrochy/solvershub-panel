@@ -6356,6 +6356,8 @@ export interface paths {
          * Catalogo Acciones
          * @description Las tools que el negocio puede usar como acción de una opción: elegibles (marca de su autor, pack activo,
          *     binding explícito y habilitado, sin gobernar por un procedimiento), con su JSON Schema y si son sensibles.
+         *     Con `?agent_id=` (ADR-0190, HU-AOS-67), solo las encendidas en ESE agente (el que atiende la conexión); 404 si
+         *     no es del negocio.
          */
         get: operations["catalogo_acciones_api_v1_plantillas_opciones_catalogo_acciones_get"];
         put?: never;
@@ -8835,6 +8837,104 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Agent Actions
+         * @description Las acciones de las habilidades del agente, agrupadas por lo que hacen, con su binding del borrador.
+         */
+        get: operations["list_agent_actions_api_v1_admin_agents__agent_id__actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/skills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Agent Skills
+         * @description Habilidades que se agregan a uno o varios agentes (Pagos en línea, Conocimiento) y si este agente las tiene.
+         */
+        get: operations["list_agent_skills_api_v1_admin_agents__agent_id__skills_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/skills/{pack_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Agent Skill
+         * @description Instala, quita o configura una habilidad del agente. Pagos en línea exige `config.cuenta_id`, una cuenta
+         *     Wompi del negocio; sin ella queda `pending_config`. 404 si el agente o la habilidad no existen; 422 si la
+         *     config no valida (sin devolver los valores).
+         */
+        put: operations["put_agent_skill_api_v1_admin_agents__agent_id__skills__pack_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/payments/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_api_v1_pack_payments_accounts_get"];
+        put?: never;
+        /** Create Account */
+        post: operations["create_account_api_v1_pack_payments_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/payments/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Account */
+        delete: operations["delete_account_api_v1_pack_payments_accounts__account_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Account */
+        patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
         trace?: never;
     };
 }
@@ -22653,6 +22753,133 @@ export interface components {
             /** Aprobada At */
             aprobada_at: string | null;
         };
+        /** AgentAction */
+        AgentAction: {
+            /** Tool */
+            tool: string;
+            /** Pack Id */
+            pack_id: string;
+            /** Group */
+            group: string;
+            /** Enabled */
+            enabled: boolean;
+            /** In Agent */
+            in_agent: boolean;
+            /** Max Calls Per Conversation */
+            max_calls_per_conversation: number | null;
+            /** Requires Confirmation */
+            requires_confirmation: boolean;
+        };
+        /** AgentSkill */
+        AgentSkill: {
+            /** Pack Id */
+            pack_id: string;
+            /** Installed */
+            installed: boolean;
+            /** Status */
+            status: ("active" | "pending_config") | null;
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+        };
+        /** AgentSkillIn */
+        AgentSkillIn: {
+            /** Installed */
+            installed: boolean;
+            /** Config */
+            config?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Page[AgentAction] */
+        Page_AgentAction_: {
+            /** Items */
+            items: components["schemas"]["AgentAction"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[AgentSkill] */
+        Page_AgentSkill_: {
+            /** Items */
+            items: components["schemas"]["AgentSkill"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** PaymentAccount */
+        PaymentAccount: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Public Key */
+            public_key: string;
+            /** Sandbox */
+            sandbox: boolean;
+            /** Link Expires Hours */
+            link_expires_hours: number;
+            /** Min Amount */
+            min_amount: number | null;
+            /** Events Url */
+            events_url: string;
+            /** Agent Ids */
+            agent_ids: string[];
+        };
+        /** PaymentAccountIn */
+        PaymentAccountIn: {
+            /** Name */
+            name: string;
+            /** Public Key */
+            public_key: string;
+            /** Private Key */
+            private_key: string;
+            /** Events Secret */
+            events_secret: string;
+            /**
+             * Sandbox
+             * @default true
+             */
+            sandbox: boolean;
+            /**
+             * Link Expires Hours
+             * @default 24
+             */
+            link_expires_hours: number;
+            /** Min Amount */
+            min_amount?: number | null;
+        };
+        /** PaymentAccountPatch */
+        PaymentAccountPatch: {
+            /** Name */
+            name?: string | null;
+            /** Public Key */
+            public_key?: string | null;
+            /** Private Key */
+            private_key?: string | null;
+            /** Events Secret */
+            events_secret?: string | null;
+            /** Sandbox */
+            sandbox?: boolean | null;
+            /** Link Expires Hours */
+            link_expires_hours?: number | null;
+            /** Min Amount */
+            min_amount?: number | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -36118,7 +36345,9 @@ export interface operations {
     };
     catalogo_acciones_api_v1_plantillas_opciones_catalogo_acciones_get: {
         parameters: {
-            query?: never;
+            query?: {
+                agent_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -41819,6 +42048,257 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agent_actions_api_v1_admin_agents__agent_id__actions_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentAction_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agent_skills_api_v1_admin_agents__agent_id__skills_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AgentSkill_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_agent_skill_api_v1_admin_agents__agent_id__skills__pack_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentSkillIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSkill"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts_api_v1_pack_payments_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_account_api_v1_pack_payments_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_account_api_v1_pack_payments_accounts__account_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_account_api_v1_pack_payments_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentAccountPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"];
+                };
             };
             /** @description Validation Error */
             422: {

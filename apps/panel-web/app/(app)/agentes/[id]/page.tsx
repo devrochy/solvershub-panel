@@ -15,6 +15,7 @@ import {
 import { ArchivarAgente } from "@/components/domain/agentes/archivar-agente";
 import { ConexionesDelAgente } from "@/components/domain/agentes/conexiones-del-agente";
 import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agentes/indicadores-del-agente";
+import { HabilidadesDelAgente } from "@/components/domain/agentes/habilidades-del-agente";
 import { ProbarAgente } from "@/components/domain/agentes/probar-agente";
 import { SelectorDeAgentes } from "@/components/domain/agentes/selector-de-agentes";
 import { SuperpoderesDelAgente } from "@/components/domain/agentes/superpoderes-del-agente";
@@ -46,6 +47,8 @@ import type {
   ReliabilityResponse,
   RequirementPage,
   SuperpowerPage,
+  AgentSkillPage,
+  PaymentAccount,
 } from "@/lib/api/types";
 import {
   dondeAtiende,
@@ -251,7 +254,7 @@ export default async function AgentePage({
       />
     );
   } else if (actual === "sabe" && agente.id) {
-    const [superpoderes, modelos, plugins, requisitos, docs] = await Promise.all([
+    const [superpoderes, modelos, plugins, requisitos, docs, habilidades, cuentas] = await Promise.all([
       tieneSuperpoderes(agente)
         ? apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${agente.id}&page_size=100`)
         : Promise.resolve(null),
@@ -261,6 +264,11 @@ export default async function AgentePage({
       tieneConocimiento(agente)
         ? apiFetch<KnowledgeDocument[]>(`/pack/pack_knowledge/agents/${agente.id}/documents`)
         : Promise.resolve(null),
+      // ADR-0190 (HU-AOS-66): habilidades que se agregan a uno o varios agentes y las cuentas Wompi del negocio.
+      agente.kind === "specialist"
+        ? apiFetch<AgentSkillPage>(`/admin/agents/${agente.id}/skills?page_size=50`)
+        : Promise.resolve(null),
+      agente.kind === "specialist" ? apiFetch<PaymentAccount[]>("/pack/payments/accounts") : Promise.resolve(null),
     ]);
     const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
     const borrador = detalle?.draft?.content as Record<string, unknown> | undefined;
@@ -285,6 +293,20 @@ export default async function AgentePage({
               />
             )}
           </div>
+        )}
+        {habilidades && (
+          <Seccion titulo="Habilidades">
+            {!habilidades.ok ? (
+              <NoCargo que="las habilidades" res={habilidades} />
+            ) : (
+              <HabilidadesDelAgente
+                agenteId={agente.id}
+                inicial={habilidades.data.items}
+                cuentas={cuentas?.ok ? cuentas.data : []}
+                puedeEditar={puedeEditar}
+              />
+            )}
+          </Seccion>
         )}
         {docs && (
           <Seccion titulo="Documentos">
