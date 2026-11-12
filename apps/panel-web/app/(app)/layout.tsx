@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
 import { AtajosProvider } from "@/components/shell/atajos";
+import { GuardiaDeModulo } from "@/components/shell/guardia-de-modulo";
 import { GuardiaDeSeccion } from "@/components/shell/guardia-de-seccion";
 import { MobileNav } from "@/components/shell/mobile-nav";
-import { PackLockBanner } from "@/components/shell/pack-lock-banner";
 import { ScrollAlInicio } from "@/components/shell/scroll-al-inicio";
 import { ShellProvider } from "@/components/shell/shell-context";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -16,8 +16,16 @@ import { Topbar } from "@/components/shell/topbar";
 import { VigilanteDeSesion } from "@/components/shell/vigilante-de-sesion";
 import { FeedbackProviders } from "@/components/ui/providers";
 import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
-import type { Me, PendingInvitations, PluginSummary, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
+import type {
+  AgentsOverview,
+  Me,
+  PendingInvitations,
+  PluginSummary,
+  PrimerosPasos,
+  SettingsResponse,
+} from "@/lib/api/types";
 import { puedeEditarAsistente } from "@/lib/asistente";
+import { estadosDeModulos } from "@/lib/shell/modulos";
 import { resolverDocsUrl } from "@/lib/docs-url";
 import { enlacesDeObservabilidad } from "@/lib/observabilidad-url";
 import { ATAJOS_COOKIE, SIDEBAR_COOKIE, leerAtajosActivos, leerModoSidebar } from "@/lib/shell/preferencias";
@@ -64,6 +72,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       { enabled: p.enabled_for_tenant, hasConfig: p.has_config },
     ]),
   );
+  // Módulos del negocio: un módulo se habilita con un especialista publicado (regla del
+  // dueño, 2026-11-12). Sin permiso `agents` o si la consulta falla, manda el pack.
+  const agentesRes =
+    me.tenant && me.permissions?.agents ? await apiFetch<AgentsOverview>("/admin/agents/overview") : null;
+  const modulos = estadosDeModulos(packs, agentesRes?.ok ? agentesRes.data : null);
 
   const modoSidebar = leerModoSidebar(store.get(SIDEBAR_COOKIE)?.value);
   const theme = normalizeTheme(store.get(THEME_COOKIE)?.value);
@@ -84,6 +97,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       esMaster={esMaster}
       negocioId={me.tenant?.id ?? null}
       packs={packs}
+      modulos={modulos}
       asistentePausado={asistentePausado}
       puedeEditarAsistente={puedeEditar}
     >
@@ -106,12 +120,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <TituloDePaginaProvider>
             <div className="flex h-screen overflow-hidden supports-[height:100dvh]:h-dvh print:h-auto print:overflow-visible">
               {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-              <Sidebar me={me} packs={packs} modo={modoSidebar} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} className="hidden h-full md:flex print:hidden" />
+              <Sidebar me={me} packs={packs} modulos={modulos} modo={modoSidebar} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} className="hidden h-full md:flex print:hidden" />
               {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <Topbar
                   me={me}
-                  menu={<MobileNav me={me} packs={packs} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} />}
+                  menu={<MobileNav me={me} packs={packs} modulos={modulos} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} />}
                   asistentePausado={asistentePausado}
                   puedeReactivar={puedeEditar}
                 />
@@ -129,8 +143,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col">
                     {invitaciones?.ok && <InvitacionesPendientes items={invitaciones.data.items} />}
                     {puedeTerminarPrimerUso && <AvisoDeOnboarding recorrido={recorrido} />}
-                    <PackLockBanner packs={packs} />
-                    <GuardiaDeSeccion>{children}</GuardiaDeSeccion>
+                    <GuardiaDeSeccion>
+                      <GuardiaDeModulo packs={packs}>{children}</GuardiaDeModulo>
+                    </GuardiaDeSeccion>
                   </div>
                 </main>
               </div>

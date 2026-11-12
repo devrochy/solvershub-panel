@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { NAV_GROUPS, type NavGroupDef } from "@/components/shell/nav";
 import type { SearchItem, SearchSection } from "@/lib/api/types";
 import { gruposVisibles, hojaDe, rutasDelMenu, type Permisos } from "@/lib/shell/navegacion";
+import type { EstadoModulo } from "@/lib/shell/modulos";
 
 /**
  * Índice de la paleta de comandos (HU-DS-05). Todo sale del menú (`nav.ts`) y de los
@@ -27,13 +28,17 @@ export function seccionesDePaleta(
   packs: PacksDelNegocio = {},
   grupos: NavGroupDef[] = NAV_GROUPS,
   esMaster = false,
+  modulos: Record<string, EstadoModulo> = {},
 ): EntradaSeccion[] {
   const vistas = new Set<string>();
   const entradas: EntradaSeccion[] = [];
   const visibles = gruposVisibles(permisos, grupos, esMaster).map(({ group, visible }) => ({ ...group, items: visible }));
   for (const ruta of rutasDelMenu(visibles)) {
     const { group, entrada, tab } = ruta;
-    if (entrada.pack && packs[entrada.pack]?.enabled === false) continue;
+    if (entrada.pack) {
+      const estado = modulos[entrada.pack];
+      if (estado ? estado !== "habilitado" : packs[entrada.pack]?.enabled === false) continue;
+    }
     const item = hojaDe(ruta);
     if (!item.ready || vistas.has(item.href)) continue;
     vistas.add(item.href);

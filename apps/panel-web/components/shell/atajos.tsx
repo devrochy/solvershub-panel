@@ -53,8 +53,8 @@ export function AtajosProvider({
   const primeraTecla = useRef<{ tecla: string; en: number } | null>(null);
 
   const secciones = useMemo(
-    () => seccionesDePaleta(shell?.permisos, shell?.packs, undefined, shell?.esMaster),
-    [shell?.permisos, shell?.packs, shell?.esMaster],
+    () => seccionesDePaleta(shell?.permisos, shell?.packs, undefined, shell?.esMaster, shell?.modulos),
+    [shell?.permisos, shell?.packs, shell?.esMaster, shell?.modulos],
   );
 
   const valor = useMemo<Atajos>(

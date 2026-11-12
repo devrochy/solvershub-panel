@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 
 import { Sidebar, type PackState } from "@/components/shell/sidebar";
 import type { Me } from "@/lib/api/types";
+import type { EstadoModulo } from "@/lib/shell/modulos";
 import { SIN_OBSERVABILIDAD, type EnlacesObservabilidad } from "@/lib/observabilidad-url";
 import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 
@@ -16,12 +17,14 @@ import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 export function MobileNav({
   me,
   packs,
+  modulos = {},
   initialTheme = DEFAULT_THEME,
   docsUrl = null,
   observabilidad = SIN_OBSERVABILIDAD,
 }: {
   me: Me;
   packs: Record<string, PackState>;
+  modulos?: Record<string, EstadoModulo>;
   initialTheme?: ThemeName;
   docsUrl?: string | null;
   observabilidad?: EnlacesObservabilidad;
@@ -67,6 +70,7 @@ export function MobileNav({
             <Sidebar
               me={me}
               packs={packs}
+              modulos={modulos}
               initialTheme={initialTheme}
               docsUrl={docsUrl}
               observabilidad={observabilidad}

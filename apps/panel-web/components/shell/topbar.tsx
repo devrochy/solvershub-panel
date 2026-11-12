@@ -19,12 +19,19 @@ export async function Topbar({
 }) {
   return (
     <>
-      <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border-soft bg-surface px-4 md:px-6 print:hidden">
+      <header className="z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border-soft bg-surface px-4 md:px-6 print:hidden">
         <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
           <ZonaDeTitulo menu={menu} current={me.tenant} count={me.tenant_count} />
         </div>
-        <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        {/* El buscador vive en el centro desde `md`: así no compite con el selector de negocio
+            ni con las acciones, y el texto cabe en una sola línea (se recorta si hace falta). */}
+        <div className="hidden min-w-0 flex-1 justify-center md:flex">
           <BotonBuscar />
+        </div>
+        <div className="flex shrink-0 items-center gap-2 md:gap-3">
+          <div className="md:hidden">
+            <BotonBuscar />
+          </div>
           <EstadoAsistente pausado={asistentePausado} puedeReactivar={puedeReactivar} className="hidden md:flex" />
           {/* Siempre a la derecha de la barra (ADR-0167). La clave es el negocio: al cambiarlo, estado limpio. */}
           {me.tenant && <CampanaNotificaciones key={me.tenant.id} />}

@@ -10,6 +10,7 @@ import type { AgenteResumen, KpiResumen, ModuloResumen, ResumenPorAgente } from 
 import { tipoDeAgente } from "@/lib/agentes";
 import { formatDateTime } from "@/lib/format";
 import { propsDeKpi } from "@/lib/resumen/kpi";
+import { RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";
 import { agentesConTarjeta, cifrasDelTitulo, llevaInsignia, modulosSinAgente } from "@/lib/resumen/resumen-agente";
 
 import { ActividadDeAgentes } from "./actividad-agentes";
@@ -97,11 +98,24 @@ function AgenteGeneral({ datos, dias, ocultarEscalaciones }: { datos: ResumenPor
         </p>
       ))}
       {sinAgente.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-body">Módulos que ningún agente gestiona todavía.</p>
-          {sinAgente.map((m) => (
-            <Modulo key={m.id} modulo={m} dias={dias} />
-          ))}
+        <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-headline">Módulos sin agente</p>
+            <p className="text-sm text-body">
+              Estos módulos están activos en tu negocio, pero ningún especialista los atiende. Mejora tu plan para
+              habilitarlos desde el panel.
+            </p>
+          </div>
+          <ul className="flex flex-wrap gap-2">
+            {sinAgente.slice(0, 4).map((m) => (
+              <li key={m.id}>
+                <Badge variant="neutral">{m.nombre}</Badge>
+              </li>
+            ))}
+          </ul>
+          <Link href={`${RUTA_MEJORAR_PLAN}?ver=planes`} className="self-start text-sm text-link hover:underline">
+            {TEXTO_MEJORAR_PLAN}
+          </Link>
         </div>
       )}
     </Seccion>

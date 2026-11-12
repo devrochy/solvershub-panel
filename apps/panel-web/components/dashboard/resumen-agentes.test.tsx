@@ -99,11 +99,15 @@ describe("ResumenAgentes (ADR-0171)", () => {
     expect(within(general).getByText(/\+100 % frente a los 7 días anteriores/)).toBeTruthy();
   });
 
-  it("los módulos sin agente se muestran bajo el agente general", () => {
+  it("los módulos sin agente piden mejorar el plan en vez de mostrar sus cifras", () => {
     render(<ResumenAgentes datos={DATOS} />);
     const general = screen.getByRole("region", { name: "Todo el negocio" });
-    const modulo = within(general).getByRole("region", { name: "Módulo Agenda" });
-    expect(within(modulo).getByText("Citas de hoy")).toBeTruthy();
+    expect(within(general).getByText("Módulos sin agente")).toBeTruthy();
+    expect(within(general).getByText("Agenda")).toBeTruthy();
+    expect(within(general).queryByText("Citas de hoy")).toBeNull();
+    expect(within(general).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(
+      "/plan?ver=planes",
+    );
   });
 
   it("cada agente es una tarjeta plegable y solo la primera arranca abierta", () => {

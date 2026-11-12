@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 import type { Permisos } from "@/lib/shell/navegacion";
+import type { EstadoModulo } from "@/lib/shell/modulos";
 import type { PacksDelNegocio } from "@/lib/shell/paleta";
 
 type Shell = {
@@ -13,6 +14,8 @@ type Shell = {
   negocioId: string | null;
   /** Packs del negocio (ADR-0019): la paleta omite los apagados. */
   packs: PacksDelNegocio;
+  /** Módulos del negocio: habilitado (agente publicado), plan o pack apagado. */
+  modulos: Record<string, EstadoModulo>;
   asistentePausado: boolean;
   /** Escritura en Configuración: puede pausar o reactivar el asistente. */
   puedeEditarAsistente: boolean;
@@ -31,13 +34,14 @@ export function ShellProvider({
   esMaster = false,
   negocioId = null,
   packs = {},
+  modulos = {},
   asistentePausado = false,
   puedeEditarAsistente = false,
   children,
 }: Partial<Omit<Shell, "permisos">> & { permisos: Permisos; children: ReactNode }) {
   return (
     <ShellContext.Provider
-      value={{ permisos, esMaster, negocioId, packs, asistentePausado, puedeEditarAsistente }}
+      value={{ permisos, esMaster, negocioId, packs, modulos, asistentePausado, puedeEditarAsistente }}
     >
       {children}
     </ShellContext.Provider>
