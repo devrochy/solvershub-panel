@@ -111,6 +111,35 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
     expect(enlace.closest("[data-tooltip]")?.hasAttribute("tabindex")).toBe(false);
   });
 
+  it("arranca con sola la sección de la página abierta y abre una sola a la vez", () => {
+    const { container } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
+    const { expandida } = contenedores(container);
+    // Cobranza vive en «Negocio»: su grupo arranca abierto y «Operación» cerrado.
+    expect(within(expandida).getByRole("link", { name: "Cobranza" })).toBeTruthy();
+    expect(within(expandida).queryByRole("link", { name: "Resumen" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Operación" }));
+    expect(within(expandida).getByRole("link", { name: "Resumen" })).toBeTruthy();
+    expect(within(expandida).queryByRole("link", { name: "Cobranza" })).toBeNull();
+  });
+
+  it("muestra los módulos sin agente con candado y «Plan» sin ocultarlos", () => {
+    const { container } = render(
+      <Sidebar
+        me={me}
+        packs={PACKS}
+        modulos={{ pack_cobranza: "plan", pack_calendar: "habilitado" }}
+        modo="expandida"
+      />,
+    );
+    const { expandida } = contenedores(container);
+    const cobranza = within(expandida).getByRole("link", { name: /Cobranza \(Mejora tu plan/ });
+    expect(cobranza.getAttribute("href")).toBe("/cobranza");
+    expect(within(expandida).getByText("Plan")).toBeTruthy();
+    // Agenda sí tiene agente: se ve normal, sin el sufijo de bloqueo.
+    expect(within(expandida).getByRole("link", { name: "Agenda" })).toBeTruthy();
+  });
+
   it("marca la sección actual en las dos estructuras", () => {
     const { container } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
     const { expandida, plegada } = contenedores(container);

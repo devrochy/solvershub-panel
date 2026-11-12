@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
@@ -54,6 +55,9 @@ export function UserCard({
   const { version, preview } = useAvatarPerfil();
   const nombre = me.nombre?.trim() || me.username || me.email;
   const src = urlAvatarPropio(me.avatar_url, { version, preview });
+  // La tarjeta muestra el negocio y el rol; el correo queda en el encabezado del menú.
+  const rol = me.tenant?.role === "owner" ? "Dueño" : me.tenant?.role === "colaborador" ? "Colaborador" : null;
+  const contexto = [me.tenant?.name, rol].filter(Boolean).join(" · ") || me.email;
 
   function aplicarTema(next: ThemeName) {
     setTheme(next);
@@ -79,14 +83,13 @@ export function UserCard({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          title={collapsed ? nombre : undefined}
+          title={collapsed ? nombre : contexto}
           aria-label={collapsed ? nombre : "Menú de tu cuenta"}
           className={cn(
-            "flex items-center rounded-xl border transition-[background-color,border-color,box-shadow]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
-            collapsed
-              ? "h-11 w-11 justify-center border-border-soft bg-surface hover:border-border-strong"
-              : "w-full gap-3 border-border-soft bg-surface p-2.5 text-left shadow-elev-1 hover:border-border-strong hover:bg-surface-2",
+            "group flex items-center rounded-md text-left transition-colors",
+            "hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+            "data-[state=open]:bg-hover",
+            collapsed ? "h-11 w-11 justify-center" : "w-full gap-3 px-2 py-2",
           )}
         >
           <Avatar name={nombre} src={src} size="sm" />
@@ -94,17 +97,33 @@ export function UserCard({
             <>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium text-headline">{nombre}</span>
-                <span className="truncate text-xs text-text-soft">{me.email}</span>
+                <span className="truncate text-xs text-text-soft">{contexto}</span>
               </span>
-              <ChevronUp aria-hidden className="h-4 w-4 shrink-0 text-text-soft" />
+              <ChevronUp
+                aria-hidden
+                className="h-4 w-4 shrink-0 text-text-soft transition-transform duration-200 group-data-[state=open]:rotate-180"
+              />
             </>
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align={collapsed ? "start" : "end"} className="w-64">
-        <DropdownMenuLabel>
-          <span className="block truncate text-sm font-medium text-headline">{nombre}</span>
-          <span className="block truncate">{me.email}</span>
+      <DropdownMenuContent side="top" align="start" className="w-60 p-1.5">
+        <DropdownMenuLabel className="p-0">
+          <span className="flex items-center gap-3 px-2 py-2">
+            <Avatar name={nombre} src={src} size="md" />
+            <span className="flex min-w-0 flex-col">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-sm font-medium text-headline">{nombre}</span>
+                {rol && (
+                  <Badge variant="neutral" className="shrink-0 px-1.5 py-0">
+                    {rol}
+                  </Badge>
+                )}
+              </span>
+              <span className="truncate text-xs text-text-soft">{contexto}</span>
+              <span className="truncate text-xs text-text-soft">{me.email}</span>
+            </span>
+          </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuLinkItem href="/perfil" current={pathname === "/perfil"} onClick={onNavigate}>

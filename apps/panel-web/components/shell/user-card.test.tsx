@@ -49,6 +49,16 @@ async function abrirMenu() {
 }
 
 describe("tarjeta del usuario", () => {
+  it("muestra el negocio y el rol en la tarjeta, y el correo en el menú", async () => {
+    render(<UserCard me={ME} initialTheme="sh-dark" />);
+    expect(screen.getByText("Negocio de prueba · Dueño")).toBeTruthy();
+    expect(screen.queryByText("duena@test.example")).toBeNull();
+
+    await abrirMenu();
+    expect(screen.getByText("duena@test.example")).toBeTruthy();
+    expect(screen.getByText("Dueño")).toBeTruthy();
+  });
+
   it("muestra el nombre y el submenú con perfil, tema y salir", async () => {
     render(<UserCard me={ME} initialTheme="sh-dark" />);
     expect(screen.getByText("Ana Pérez")).toBeTruthy();

@@ -6,52 +6,19 @@ import { useEffect, useEffectEvent, useState, useSyncExternalStore } from "react
 import { ArrowUpRight, ChevronRight, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { EVENTO_ALTERNAR_MENU, useAtajos } from "@/components/shell/atajos-context";
-import { DEFAULT_COLLAPSED_GROUPS, NAV_GROUPS, type NavItem } from "@/components/shell/nav";
+import { NAV_GROUPS, type NavItem } from "@/components/shell/nav";
 import { UserCard } from "@/components/shell/user-card";
+import { Badge } from "@/components/ui/badge";
 import { Marca } from "@/components/ui/marca";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Me } from "@/lib/api/types";
 import { gruposVisibles, itemActivo } from "@/lib/shell/navegacion";
 import { SIN_OBSERVABILIDAD, type EnlacesObservabilidad } from "@/lib/observabilidad-url";
 import { esCampoEditable } from "@/lib/shell/paleta";
+import type { EstadoModulo } from "@/lib/shell/modulos";
 import { DEFAULT_THEME, type ThemeName } from "@/lib/theme";
 import { cookieModoSidebar, type ModoSidebar } from "@/lib/shell/preferencias";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "panel_nav_collapsed";
-
-// Grupos colapsados en localStorage, expuesto con useSyncExternalStore
-// (evita setState dentro de un efecto y mantiene la referencia estable).
-let colapsadosCache: string[] | null = null;
-const oyentes = new Set<() => void>();
-
-function leerColapsados(): string[] {
-  if (colapsadosCache) return colapsadosCache;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    colapsadosCache = raw ? (JSON.parse(raw) as string[]) : DEFAULT_COLLAPSED_GROUPS;
-  } catch {
-    colapsadosCache = DEFAULT_COLLAPSED_GROUPS;
-  }
-  return colapsadosCache;
-}
-
-function escribirColapsados(next: string[]) {
-  colapsadosCache = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    /* sin persistencia */
-  }
-  oyentes.forEach((notificar) => notificar());
-}
-
-function suscribir(notificar: () => void) {
-  oyentes.add(notificar);
-  return () => {
-    oyentes.delete(notificar);
-  };
-}
 
 // Ancho desde el que el modo `auto` se ve expandido (xl de Tailwind, SPEC-29 §3).
 const ANCHO_EXPANDIDA = "(min-width: 1280px)";
@@ -77,16 +44,20 @@ const ACTIVO =
 function NavRow({
   item,
   active,
-  locked,
+  estado,
   onNavigate,
 }: {
   item: NavItem;
   active: boolean;
-  locked?: boolean;
+  /** `plan` = sin agente (mejora el plan); `pack` = el módulo está apagado. */
+  estado?: EstadoModulo;
   onNavigate?: () => void;
 }) {
   const Icon = item.icon;
   const base = "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors";
+  const bloqueado = estado === "plan" || estado === "pack";
+  const motivo =
+    estado === "plan" ? "Mejora tu plan para usar este módulo" : estado === "pack" ? "Módulo apagado" : null;
 
   if (!item.ready) {
     return (
@@ -97,7 +68,8 @@ function NavRow({
     );
   }
 
-  // Un pack apagado sigue enlazando: su página explica cómo habilitarlo (PackLockBanner).
+  // Un módulo bloqueado sigue enlazando: su página explica cómo mejorarlo o activarlo, sin
+  // dejar interactuar con los datos (GuardiaDeModulo).
   return (
     <Link
       href={item.href}
@@ -105,16 +77,22 @@ function NavRow({
       // Objetivo del recorrido guiado (HU-SH-06): el tour resalta el enlace por su ruta.
       data-tour={item.href}
       aria-current={active ? "page" : undefined}
-      title={locked ? "Pack no habilitado" : undefined}
+      aria-label={motivo ? `${item.label} (${motivo})` : undefined}
+      title={motivo ?? undefined}
       className={cn(
         base,
-        active ? ACTIVO : locked ? "text-text-soft hover:bg-hover" : "text-body hover:bg-hover hover:text-headline",
+        active ? ACTIVO : bloqueado ? "text-text-soft hover:bg-hover" : "text-body hover:bg-hover hover:text-headline",
       )}
     >
-      <Icon className="h-4 w-4" aria-hidden />
-      <span className="flex-1">{item.label}</span>
-      {locked && <Lock className="h-3.5 w-3.5" aria-label="Pack no habilitado" />}
-      {item.legacy && <ArrowUpRight className="h-3.5 w-3.5 text-text-soft" aria-label="Abre el panel clásico" />}
+      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      {estado === "plan" && (
+        <Badge variant="neutral" icon={<Lock aria-hidden className="h-3 w-3" />} className="shrink-0 px-1.5 py-0">
+          Plan
+        </Badge>
+      )}
+      {estado === "pack" && <Lock className="h-3.5 w-3.5 shrink-0" aria-label="Módulo apagado" />}
+      {item.legacy && <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-text-soft" aria-label="Abre el panel clásico" />}
     </Link>
   );
 }
@@ -124,9 +102,15 @@ function NavRow({
  * con portal que aparece al pasar el puntero o al enfocar (sin un segundo tab stop). Al
  * ir en un portal, el scroll de la barra no lo recorta ni crea un scroll lateral.
  */
-function IconoDeRiel({ item, active, locked }: { item: NavItem; active: boolean; locked: boolean }) {
+function IconoDeRiel({ item, active, estado }: { item: NavItem; active: boolean; estado?: EstadoModulo }) {
   const Icon = item.icon;
-  const nombre = locked ? `${item.label} (no habilitado)` : item.label;
+  const bloqueado = estado === "plan" || estado === "pack";
+  const nombre =
+    estado === "plan"
+      ? `${item.label} (mejora tu plan)`
+      : estado === "pack"
+        ? `${item.label} (módulo apagado)`
+        : item.label;
   return (
     <Tooltip label={nombre} side="right" focusable={false}>
       <Link
@@ -135,10 +119,18 @@ function IconoDeRiel({ item, active, locked }: { item: NavItem; active: boolean;
         aria-current={active ? "page" : undefined}
         className={cn(
           "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
-          active ? ACTIVO : "text-body hover:bg-hover hover:text-headline",
+          active ? ACTIVO : bloqueado ? "text-text-soft hover:bg-hover" : "text-body hover:bg-hover hover:text-headline",
         )}
       >
-        <Icon className="h-[18px] w-[18px]" aria-hidden />
+        <span className="relative flex items-center justify-center">
+          <Icon className="h-[18px] w-[18px]" aria-hidden />
+          {bloqueado && (
+            <Lock
+              aria-hidden
+              className="absolute -right-1.5 -bottom-1.5 h-2.5 w-2.5 rounded-full bg-bg-deep text-text-soft"
+            />
+          )}
+        </span>
       </Link>
     </Tooltip>
   );
@@ -156,6 +148,7 @@ function IconoDeRiel({ item, active, locked }: { item: NavItem; active: boolean;
 export function Sidebar({
   me,
   packs,
+  modulos = {},
   modo: modoInicial = "auto",
   initialTheme = DEFAULT_THEME,
   docsUrl = null,
@@ -165,6 +158,8 @@ export function Sidebar({
 }: {
   me: Me;
   packs: Record<string, PackState>;
+  /** Estado de cada módulo (agente publicado + pack): filas habilitadas o bloqueadas. */
+  modulos?: Record<string, EstadoModulo>;
   /** Preferencia guardada; el menú móvil pasa `expandida`. */
   modo?: ModoSidebar;
   /** Tema leído de la cookie en el servidor (para la tarjeta del usuario). */
@@ -179,7 +174,12 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const [modo, setModo] = useState<ModoSidebar>(modoInicial);
-  const collapsedIds = useSyncExternalStore(suscribir, leerColapsados, () => DEFAULT_COLLAPSED_GROUPS);
+  /**
+   * Acordeón de una sola sección. Sin clic del usuario, se abre la sección de la página
+   * actual; si no hay, la del primer módulo habilitado. El `path` evita que el grupo
+   * abierto de la página anterior se quede abierto al navegar.
+   */
+  const [abierto, setAbierto] = useState<{ path: string; id: string | null } | null>(null);
   const anchoExpandida = useSyncExternalStore(suscribirAncho, leerAncho, () => true);
   const expandidaAhora = modo === "expandida" || (modo === "auto" && anchoExpandida);
   const esMovil = Boolean(onNavigate);
@@ -211,16 +211,33 @@ export function Sidebar({
     };
   }, [esMovil]);
 
-  function toggle(id: string) {
-    escribirColapsados(
-      collapsedIds.includes(id) ? collapsedIds.filter((value) => value !== id) : [...collapsedIds, id],
-    );
-  }
-
   // Permisos y rol del `/admin/me` de este render (el vigilante lo refresca si cambian).
   const visibleByGroup = gruposVisibles(me.permissions, NAV_GROUPS, me.role === "master");
-  const activeHref = itemActivo(pathname, visibleByGroup)?.item.href ?? "";
-  const bloqueada = (item: NavItem) => Boolean(item.pack && packs[item.pack] && !packs[item.pack].enabled);
+  const activo = itemActivo(pathname, visibleByGroup);
+  const activeHref = activo?.item.href ?? "";
+  const grupoActivo = activo?.group.id ?? null;
+  // Sin página activa (login, ruta fuera del menú): se abre el grupo del primer módulo usable.
+  const grupoConModulo =
+    visibleByGroup.find(({ visible }) => visible.some((item) => estadoDe(item) === "habilitado"))?.group.id ?? null;
+  const abiertoEfectivo = abierto?.path === pathname ? abierto.id : (grupoActivo ?? grupoConModulo);
+
+  /**
+   * Estado de la fila. Con `modulos` del layout manda el agente publicado; sin él (tests o
+   * llamadas antiguas) se cae al estado del pack, como antes.
+   */
+  function estadoDe(item: NavItem): EstadoModulo | undefined {
+    if (!item.pack) return undefined;
+    if (modulos?.[item.pack]) return modulos[item.pack];
+    return packs[item.pack] && !packs[item.pack].enabled ? "pack" : undefined;
+  }
+
+  const habilitado = (item: NavItem) => {
+    const estado = estadoDe(item);
+    return estado !== "plan" && estado !== "pack";
+  };
+  /** Los módulos usables primero; los bloqueados al final, conservando el orden del menú. */
+  const ordenados = (visible: NavItem[]) =>
+    [...visible].sort((a, b) => Number(!habilitado(a)) - Number(!habilitado(b)));
 
   // Qué estructura se ve en cada modo (CSS; las dos se renderizan y una queda oculta).
   const verExpandida = { auto: "hidden xl:flex", expandida: "flex", plegada: "hidden" }[modo];
@@ -258,14 +275,13 @@ export function Sidebar({
 
         <nav aria-label="Secciones del panel" className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
           {visibleByGroup.map(({ group, visible }) => {
-            const conActiva = visible.some((item) => item.href === activeHref);
-            const open = conActiva || !collapsedIds.includes(group.id);
+            const open = abiertoEfectivo === group.id;
             return (
               <div key={group.id} className="flex flex-col gap-0.5">
                 <button
                   type="button"
                   aria-expanded={open}
-                  onClick={() => toggle(group.id)}
+                  onClick={() => setAbierto({ path: pathname, id: open ? null : group.id })}
                   className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sh-caption font-medium tracking-[0.06em] text-text-soft uppercase transition-colors hover:text-headline"
                 >
                   <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} aria-hidden />
@@ -273,12 +289,12 @@ export function Sidebar({
                 </button>
                 {open && (
                   <div className="flex flex-col gap-0.5">
-                    {visible.map((item) => (
+                    {ordenados(visible).map((item) => (
                       <NavRow
                         key={item.href}
                         item={item}
                         active={item.href === activeHref}
-                        locked={bloqueada(item)}
+                        estado={estadoDe(item)}
                         onNavigate={onNavigate}
                       />
                     ))}
@@ -310,10 +326,10 @@ export function Sidebar({
             {visibleByGroup.map(({ group, visible }, i) => (
               <div key={group.id} className="flex flex-col items-center gap-1">
                 {i > 0 && <span aria-hidden className="my-1 h-px w-8 bg-border-soft" />}
-                {visible
+                {ordenados(visible)
                   .filter((item) => item.ready)
                   .map((item) => (
-                    <IconoDeRiel key={item.href} item={item} active={item.href === activeHref} locked={bloqueada(item)} />
+                    <IconoDeRiel key={item.href} item={item} active={item.href === activeHref} estado={estadoDe(item)} />
                   ))}
               </div>
             ))}
