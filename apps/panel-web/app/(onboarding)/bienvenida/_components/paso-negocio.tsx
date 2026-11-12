@@ -9,10 +9,8 @@ import { habilidadLabel } from "@/lib/labels";
 import {
   DESCRIPCION_MAX,
   NOMBRE_AGENTE_MAX,
-  OPCIONES_QUE_VENDE,
   TIPOS_DE_NEGOCIO,
   type EstadoDelAsistente,
-  type QueVende,
   type TipoDeNegocio,
 } from "@/lib/onboarding";
 
@@ -70,22 +68,6 @@ export function PasoNegocio({
           </p>
         )}
       </fieldset>
-
-      {estado.tipo === "ventas" && (
-        <GrupoDeOpciones titulo="¿Qué vendes?" ayuda="Así tu agente ofrece solo lo tuyo.">
-          {OPCIONES_QUE_VENDE.map((o) => (
-            <FichaUnica
-              key={o.id}
-              nombre="que-vendes"
-              valor={o.id}
-              elegida={estado.queVende === o.id}
-              onElegir={(v) => onCambiar({ queVende: v as QueVende })}
-            >
-              {o.titulo}
-            </FichaUnica>
-          ))}
-        </GrupoDeOpciones>
-      )}
 
       <div className="flex max-w-xl flex-col gap-5">
         <Field label="Nombre de tu negocio" htmlFor="onb-negocio">

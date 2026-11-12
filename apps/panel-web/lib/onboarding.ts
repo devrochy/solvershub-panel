@@ -35,7 +35,7 @@ export const TIPOS_DE_NEGOCIO: {
 }[] = [
   {
     id: "ventas",
-    titulo: "Vendo productos o planes",
+    titulo: "Vendo productos",
     ayuda: "Responde dudas, cotiza y toma el pedido.",
     contenido: "catalogo",
     nombres: ["Sofía", "Vera", "Mateo"],
@@ -56,19 +56,11 @@ export const TIPOS_DE_NEGOCIO: {
   },
   {
     id: "suscripciones",
-    titulo: "Gestiono suscripciones",
-    ayuda: "Atiende a quien ya es cliente de un plan.",
+    titulo: "Vendo y gestiono planes",
+    ayuda: "Contrata planes y atiende a quien ya está suscrito.",
     contenido: null,
     nombres: ["Alma", "Planes", "Leo"],
   },
-];
-
-export type QueVende = "productos" | "planes" | "ambos";
-
-export const OPCIONES_QUE_VENDE: { id: QueVende; titulo: string; ayuda: string }[] = [
-  { id: "productos", titulo: "Productos", ayuda: "Toma el pedido: ítems, entrega y pago." },
-  { id: "planes", titulo: "Planes", ayuda: "Contrata el plan que elige el cliente." },
-  { id: "ambos", titulo: "Los dos", ayuda: "Productos y planes." },
 ];
 
 // --------------------------------------------------------------------------------------- voz
@@ -249,7 +241,6 @@ export function motivosDePalabras(palabras: string[]): MotivoDeEscalar[] {
 
 export type EstadoDelAsistente = {
   tipo: TipoDeNegocio | null;
-  queVende: QueVende;
   negocio: string;
   descripcion: string;
   nombreDelAgente: string;
@@ -264,7 +255,6 @@ export type EstadoDelAsistente = {
 
 export const ESTADO_INICIAL: EstadoDelAsistente = {
   tipo: null,
-  queVende: "productos",
   negocio: "",
   descripcion: "",
   nombreDelAgente: "",
@@ -303,12 +293,12 @@ export function plantillaDe(tipo: TipoDeNegocio): string {
   return tipo;
 }
 
-/** Respuestas de `POST /admin/agents/from-script` según lo elegido. */
+/**
+ * Respuestas de `POST /admin/agents/from-script` según lo elegido. Ventas ya no pregunta qué vende
+ * (SPEC-43, HU-COM-17): toma pedidos de productos, y los planes son del agente de Suscripciones.
+ */
 export function respuestasDeCreacion(estado: EstadoDelAsistente): Record<string, string> {
-  return {
-    largo_respuesta: estado.largo,
-    ...(estado.tipo === "ventas" ? { que_vendes: estado.queVende } : {}),
-  };
+  return { largo_respuesta: estado.largo };
 }
 
 /**
@@ -419,5 +409,5 @@ export const FRASES_DE_PRUEBA: Record<TipoDeNegocio, string[]> = {
   ventas: ["Hola, ¿qué venden?", "¿Cuánto cuesta y cómo puedo pagar?", "Quiero hacer un pedido"],
   agenda: ["Hola, quiero agendar una cita", "¿Qué horarios tienen disponibles?", "Necesito cancelar mi cita"],
   cobranza: ["Hola, ¿cuánto debo?", "No puedo pagar esta semana", "¿Cómo pago mi cuota?"],
-  suscripciones: ["Hola, quiero cambiar mi plan", "¿Cuándo es mi próximo cobro?", "Quiero cancelar mi suscripción"],
+  suscripciones: ["Hola, ¿qué planes tienen?", "Quiero cambiar mi plan", "¿Cuándo es mi próximo cobro?"],
 };
