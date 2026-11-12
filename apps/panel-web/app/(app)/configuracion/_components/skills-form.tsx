@@ -22,6 +22,21 @@ type SkillBinding = {
   requires_confirmation: boolean;
 };
 
+/**
+ * Las acciones ahora se controlan en cada agente (fase 5a de la SPEC «habilidades por agente», ADR-0190 en
+ * preparación). La sección sigue mientras dure la transición; este aviso lleva a Agentes.
+ */
+export function AvisoAccionesPorAgente() {
+  return (
+    <p role="note" className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
+      Ahora se controla en cada agente: abre el agente, pulsa Editar y ve al paso «Acciones».{" "}
+      <Link href="/agentes" className="font-medium underline underline-offset-2">
+        Ir a Agentes
+      </Link>
+    </p>
+  );
+}
+
 /** Herramientas del agente: activar, límite por conversación (0 = sin límite) y confirmación. */
 export function SkillsForm({
   skills,
@@ -61,6 +76,9 @@ export function SkillsForm({
   if (values.length === 0) {
     return (
       <Card>
+        <CardContent className="pt-5">
+          <AvisoAccionesPorAgente />
+        </CardContent>
         <EmptyState
           title="Todavía no hay herramientas"
           description="Las herramientas llegan con las habilidades. Enciende una para elegir qué puede hacer el asistente."
@@ -77,6 +95,7 @@ export function SkillsForm({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 pt-5">
+        <AvisoAccionesPorAgente />
         <p className="text-xs text-text-soft">
           Cada herramienta es una acción concreta que el asistente puede hacer (agendar, consultar, cobrar…). Aquí
           apagas las que no quieres que use, le pones un tope de usos por conversación y decides si pide confirmación al

@@ -9,6 +9,7 @@ import {
   PasoPublicar,
   PasoSuperpoderes,
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agente";
 import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   type EstadoDelEditor,
   type PasoId,
 } from "@/lib/agentes-editor";
+import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
 import type {
   AgentDetail,
   AgentRetiredNotices,
@@ -55,7 +57,7 @@ type Respuesta = {
 
 /**
  * Editor por pasos de un agente especialista (HU-AOS-24): identidad, proveedor y modelo,
- * superpoderes, memoria y publicar. Avanzar guarda el borrador; publicar valida todo, publica en
+ * superpoderes, acciones (fase 5a, ADR-0190), memoria y publicar. Avanzar guarda el borrador; publicar valida todo, publica en
  * las conexiones elegidas (D-35) y deja la versión lista para activar, sin activarla.
  */
 export function EditorDeAgente({
@@ -120,6 +122,17 @@ export function EditorDeAgente({
     () => ({ ...avisoPorPoder, ...erroresPorSuperpoder(errores, contenido) }),
     [avisoPorPoder, errores, contenido],
   );
+  // Igual con las acciones (`tools[i]`): los avisos con el índice guardado, los errores con el del contenido.
+  const porAccion = useMemo(
+    () => ({ ...erroresPorAccion(avisosDeBorrador, base), ...erroresPorAccion(errores, contenido) }),
+    [avisosDeBorrador, errores, base, contenido],
+  );
+  const erroresDeLasAcciones = useMemo(
+    () => [...new Set([...erroresSueltosDeAcciones(avisosDeBorrador, base), ...erroresSueltosDeAcciones(errores, contenido)])],
+    [avisosDeBorrador, errores, base, contenido],
+  );
+  // Lo de `tools` se muestra en Acciones; Superpoderes se queda con el resto.
+  const sinAcciones = (campos: Errores) => Object.fromEntries(Object.entries(campos).filter(([campo]) => !campo.startsWith("tools")));
 
   function cambiar(cambio: Partial<EstadoDelEditor>) {
     setEstado((actual) => ({ ...actual, ...cambio }));
@@ -314,13 +327,22 @@ export function EditorDeAgente({
         cambiar={cambiar}
         // Las acciones retiradas del borrador no tienen un control propio: se listan en este paso, junto a los
         // errores de la API de esos mismos campos.
-        errores={{ ...avisosDeBorrador, ...errores }}
+        errores={sinAcciones({ ...avisosDeBorrador, ...errores })}
         erroresPorPoder={{ ...porPoder, ...avisosPorPoder }}
         registrarPendiente={pendientes.registrar}
         catalogo={superpoderes}
         minFrases={minFrases}
         requisitos={requisitos}
         nombreDeHabilidad={(skill) => nombresDeHabilidades[skill] ?? habilidadLabel(skill)}
+      />
+    ),
+    acciones: (
+      <AccionesDelAgente
+        acciones={estado.acciones}
+        cambiar={(acciones) => cambiar({ acciones })}
+        erroresPorAccion={porAccion}
+        errores={erroresDeLasAcciones}
+        conConocimiento={estado.conocimiento.activo}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,

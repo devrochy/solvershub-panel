@@ -167,7 +167,7 @@ describe("409 de tope del plan", () => {
         <EditorDeAgente agente={agente} superpoderes={[poder]} modelos={modelos} destinos={[conexion]} destinosError={null} puedeActivar />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paso 5/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 6/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     // El mensaje sale en el aviso junto al botón (con el enlace) y en el toast.

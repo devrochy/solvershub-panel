@@ -98,6 +98,7 @@ describe("validación del editor", () => {
   it("cada error de la API va a su paso y a su superpoder", () => {
     expect(pasoDelCampo("model.primary")).toBe("modelo");
     expect(pasoDelCampo("procedures[1].overrides.examples")).toBe("superpoderes");
+    expect(pasoDelCampo("tools[2].tool")).toBe("acciones");
     expect(pasoDelCampo("memory.readScopes")).toBe("memoria");
     expect(pasoDelCampo("connection_ids[0]")).toBe("publicar");
     expect(pasoDelCampo("persona.maxLength")).toBe("identidad");
@@ -207,7 +208,7 @@ describe("publicar (D-35)", () => {
         />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paso 5/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 6/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     await waitFor(() => expect(screen.getByLabelText("Tus frases").getAttribute("aria-invalid")).toBe("true"));
     const [, init] = fetchMock.mock.calls[0];
