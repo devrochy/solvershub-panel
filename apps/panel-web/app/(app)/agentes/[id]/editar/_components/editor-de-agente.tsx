@@ -71,6 +71,7 @@ export function EditorDeAgente({
   pasoInicial = "identidad",
   avisosRetirados = null,
   nombresDeHabilidades = {},
+  gruposDeAcciones = {},
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -86,6 +87,8 @@ export function EditorDeAgente({
   avisosRetirados?: AgentRetiredNotices | null;
   /** Nombre legible del pack de cada superpoder (`Superpower.skill`), para «De la habilidad …» (HU-UX-09). */
   nombresDeHabilidades?: Record<string, string>;
+  /** Grupo de cada acción según la API (ADR-0190); sin respuesta se agrupan por su nombre. */
+  gruposDeAcciones?: Record<string, string>;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -343,6 +346,7 @@ export function EditorDeAgente({
         erroresPorAccion={porAccion}
         errores={erroresDeLasAcciones}
         conConocimiento={estado.conocimiento.activo}
+        gruposDeLaApi={gruposDeAcciones}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,

@@ -50,6 +50,9 @@ describe("grupos de acciones", () => {
     expect(grupoDeAccion("cob_congelar_suscripcion").id).toBe("suscripciones");
     expect(grupoDeAccion("sub_algo").id).toBe("suscripciones");
     expect(grupoDeAccion("move_appointment").id).toBe("citas");
+    expect(grupoDeAccion("check_room_availability").id).toBe("disponibilidad");
+    expect(grupoDeAccion("cob_anular_promesa").id).toBe("promesas");
+    expect(grupoDeAccion("anular_cotizacion").id).toBe("cotizaciones");
     expect(grupoDeAccion("duplicar_pedido").id).toBe("pedidos");
     expect(grupoDeAccion("consultar_clima").id).toBe("otras");
     expect(nombreDeAccion("consultar_clima")).toBe("Consultar clima");
@@ -60,8 +63,89 @@ describe("grupos de acciones", () => {
   });
 
   it("agruparAcciones respeta el orden de los grupos y omite los vacíos", () => {
-    const grupos = agruparAcciones([{ tool: "consultar_clima" }, { tool: "crear_lead" }, { tool: "crear_pedido" }, { tool: "generar_cotizacion" }]);
-    expect(grupos.map((g) => g.grupo.id)).toEqual(["pedidos", "leads", "otras"]);
-    expect(grupos[0].acciones.map((a) => a.tool)).toEqual(["crear_pedido", "generar_cotizacion"]);
+    const grupos = agruparAcciones([
+      { tool: "consultar_clima" }, { tool: "crear_lead" }, { tool: "crear_pedido" }, { tool: "agregar_item_pedido" }, { tool: "generar_cotizacion" },
+    ]);
+    expect(grupos.map((g) => g.grupo.id)).toEqual(["pedidos", "cotizaciones", "leads", "otras"]);
+    expect(grupos[0].acciones.map((a) => a.tool)).toEqual(["crear_pedido", "agregar_item_pedido"]);
+  });
+});
+
+// Grupos que manda agent-core develop (agent-core#746) al 2026-11-12: los `grupos_de_acciones` de cada
+// habilidad (packages/pack-*/pack_*/module.py) y, por prefijo, las `sub_*` en suscripciones
+// (core/agents/habilidades_del_agente.py `_GRUPOS_DEL_CORE`). Si el backend mueve una acción, actualizar aquí.
+const GRUPOS_DE_LA_API: Record<string, string> = {
+  crear_pedido: "pedidos", agregar_item_pedido: "pedidos", consultar_estado_pedido: "pedidos",
+  confirmar_pago_pedido: "pagos", verificar_pago_pedido: "pagos",
+  consultar_inventario: "catalogo", recomendar_producto: "catalogo", aplicar_promocion: "catalogo",
+  generar_cotizacion: "cotizaciones", confirmar_cotizacion: "cotizaciones",
+  crear_lead: "leads", actualizar_lead: "leads", calificar_lead: "leads",
+  create_calendar_event: "citas", update_calendar_event: "citas", cancel_calendar_event: "citas", list_client_appointments: "citas",
+  check_availability: "disponibilidad", find_next_available: "disponibilidad", list_appointment_types: "disponibilidad",
+  list_calendars: "disponibilidad",
+  cob_consultar_saldo: "cartera", cob_estado_cuenta: "cartera", cob_registrar_abono: "cartera",
+  cob_opciones_promesa: "promesas", cob_registrar_promesa_pago: "promesas", cob_registrar_promesa_saldo: "promesas",
+  cob_evaluar_negociacion: "promesas",
+  cob_crear_suscripcion: "suscripciones", cob_consultar_suscripcion: "suscripciones", cob_renovar_suscripcion: "suscripciones",
+  cob_pausar_suscripcion: "suscripciones", cob_cancelar_suscripcion: "suscripciones", cob_link_suscripcion: "pagos",
+  sub_aplicar_cambio_plan: "suscripciones", sub_cambiar_plan: "suscripciones", sub_cancelar: "suscripciones",
+  sub_confirmar_inscripcion: "suscripciones", sub_consultar: "suscripciones", sub_cotizar_cambio_plan: "suscripciones",
+  sub_cotizar_inscripcion: "suscripciones", sub_inscribir: "suscripciones", sub_link_pago: "suscripciones",
+  sub_listar_planes: "suscripciones", sub_pausar: "suscripciones",
+};
+
+describe("grupos de acciones con el grupo de la API", () => {
+  it("conoce todos los grupos que manda la API, con los títulos de la APK", () => {
+    const ids = GRUPOS_DE_ACCIONES.map((g) => g.id);
+    for (const id of ["pedidos", "cotizaciones", "catalogo", "citas", "disponibilidad", "cartera", "promesas", "suscripciones", "pagos", "leads", "otras"]) {
+      expect(ids, id).toContain(id);
+    }
+    expect(grupoDeAccion("x", "cotizaciones").titulo).toBe("Cotizaciones");
+    expect(grupoDeAccion("x", "disponibilidad").titulo).toBe("Disponibilidad");
+    expect(grupoDeAccion("x", "promesas").titulo).toBe("Promesas de pago");
+    expect(GRUPOS_DE_ACCIONES.at(-1)?.id).toBe("otras");
+  });
+
+  it("el grupo de la API manda sobre el mapa por nombre", () => {
+    expect(grupoDeAccion("crear_pedido", "catalogo").id).toBe("catalogo");
+    expect(grupoDeAccion("consultar_clima", "citas").id).toBe("citas");
+  });
+
+  it("«otras» de la API es «sin grupo»: no le gana al mapa ni al nombre", () => {
+    expect(grupoDeAccion("escalate_to_human", "otras").id).toBe("conversacion");
+    expect(grupoDeAccion("cob_anular_promesa", "otras").id).toBe("promesas");
+    expect(grupoDeAccion("consultar_clima", "otras").id).toBe("otras");
+  });
+
+  it("sin grupo de la API, el respaldo por nombre coincide con la API", () => {
+    for (const [tool, grupo] of Object.entries(GRUPOS_DE_LA_API)) {
+      expect(grupoDeAccion(tool).id, tool).toBe(grupo);
+      expect(grupoDeAccion(tool, "").id, tool).toBe(grupo);
+      expect(grupoDeAccion(tool, null).id, tool).toBe(grupo);
+    }
+  });
+
+  it("un grupo que el panel no conoce se muestra en palabras, sin perder la acción", () => {
+    const g = grupoDeAccion("algo", "inventario_bodega");
+    expect(g).toEqual({ id: "inventario_bodega", titulo: "Inventario bodega", descripcion: "" });
+    expect(grupoDeAccion("algo", "ventas.extra").titulo).not.toBe(grupoDeAccion("algo", "cobranza.extra").titulo);
+  });
+
+  it("agruparAcciones usa el grupo de la API y pone los desconocidos antes de «Otras acciones»", () => {
+    const grupos = agruparAcciones([
+      { tool: "consultar_clima", grupo: "otras" },
+      { tool: "cob_registrar_promesa_pago", grupo: "promesas" },
+      { tool: "rara_1", grupo: "bodega" },
+      { tool: "escalate_to_human" }, // del core: la API no la lista (solo las de habilidades y las sub_*), va por el mapa
+      { tool: "check_availability", grupo: "disponibilidad" },
+      { tool: "generar_cotizacion", grupo: "cotizaciones" },
+      { tool: "rara_2", grupo: "bodega" },
+      { tool: "crear_pedido", grupo: "pedidos" },
+    ]);
+    expect(grupos.map((g) => g.grupo.id)).toEqual([
+      "pedidos", "cotizaciones", "disponibilidad", "promesas", "conversacion", "bodega", "otras",
+    ]);
+    expect(grupos.find((g) => g.grupo.id === "bodega")?.acciones.map((a) => a.tool)).toEqual(["rara_1", "rara_2"]);
+    expect(grupos.find((g) => g.grupo.id === "bodega")?.grupo.titulo).toBe("Bodega");
   });
 });

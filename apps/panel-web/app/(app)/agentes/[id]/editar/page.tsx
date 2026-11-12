@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { apiFetch } from "@/lib/api/server";
 import type {
+  AgentActionPage,
   AgentDetail,
   AgentRetiredNotices,
   LlmModelCatalog,
@@ -35,7 +36,7 @@ export default async function EditarAgentePage({
   // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
   const pasoInicial = paso === "publicar" ? "publicar" : undefined;
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
@@ -46,6 +47,8 @@ export default async function EditarAgentePage({
     apiFetch<AgentRetiredNotices>(`/admin/agents/${id}/retired-references`),
     // Nombre de la habilidad de cada superpoder (HU-UX-09); sin respuesta queda la etiqueta conocida.
     apiFetch<PluginSummary[]>("/admin/plugins"),
+    // Grupo de cada acción (ADR-0190, agent-core#746); sin respuesta, la pestaña Acciones agrupa por el nombre.
+    apiFetch<AgentActionPage>(`/admin/agents/${id}/actions?page_size=100`),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -103,6 +106,7 @@ export default async function EditarAgentePage({
         pasoInicial={pasoInicial}
         avisosRetirados={retiradas.ok ? retiradas.data : null}
         nombresDeHabilidades={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
+        gruposDeAcciones={acciones.ok ? Object.fromEntries(acciones.data.items.map((a) => [a.tool, a.group])) : {}}
       />
     </div>
   );

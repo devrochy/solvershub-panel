@@ -1,21 +1,25 @@
 /**
  * Grupos y nombres legibles de las acciones de un agente (fase 5a de la SPEC «habilidades por agente»,
- * ADR-0190 en preparación).
+ * ADR-0190).
  *
- * TEMPORAL: el backend todavía no expone el grupo ni el nombre de cada acción, así que se arman aquí
- * con un mapa por nombre de la acción (los de `packages/pack-*` y `core/` de agent-core). Cuando la API
- * traiga `grupo`, este módulo se borra y la pestaña Acciones usa lo que venga de ella.
+ * El grupo lo manda la API (`group` de `GET /admin/agents/{id}/actions`, agent-core#746) y aquí solo se le
+ * pone título y descripción, con los mismos textos que la APK. El mapa por nombre queda para el nombre
+ * legible de cada acción y como respaldo del grupo cuando la API no lo trae: las acciones del core
+ * (pasar a una persona, el perfil del cliente…) no vienen en esa lista, salvo las de suscripciones, y
+ * no llega nada si la API no responde.
  */
-import { humanizar } from "@/lib/turno";
 
 export type GrupoDeAcciones = { id: string; titulo: string; descripcion: string };
 
 /** En el orden en que se muestran. «Otras acciones» va siempre al final: nada se queda sin mostrar. */
 export const GRUPOS_DE_ACCIONES: GrupoDeAcciones[] = [
-  { id: "pedidos", titulo: "Pedidos", descripcion: "Cotizar, crear y seguir los pedidos de tus clientes." },
-  { id: "catalogo", titulo: "Catálogo", descripcion: "Consultar productos y recomendarlos." },
+  { id: "pedidos", titulo: "Pedidos", descripcion: "Crear y seguir los pedidos de tus clientes." },
+  { id: "cotizaciones", titulo: "Cotizaciones", descripcion: "Preparar y confirmar cotizaciones." },
+  { id: "catalogo", titulo: "Catálogo", descripcion: "Consultar productos, recomendarlos y aplicar promociones." },
   { id: "citas", titulo: "Citas", descripcion: "Agendar, mover y cancelar citas en tus agendas." },
-  { id: "cartera", titulo: "Cartera", descripcion: "Saldos, abonos y promesas de pago." },
+  { id: "disponibilidad", titulo: "Disponibilidad", descripcion: "Consultar horarios libres, agendas y tipos de cita." },
+  { id: "cartera", titulo: "Cartera", descripcion: "Saldos, abonos y estados de cuenta." },
+  { id: "promesas", titulo: "Promesas de pago", descripcion: "Negociar y registrar promesas de pago." },
   { id: "suscripciones", titulo: "Suscripciones", descripcion: "Planes, inscripciones, pausas y cancelaciones." },
   { id: "pagos", titulo: "Pagos", descripcion: "Enlaces de pago y confirmación de pagos." },
   { id: "leads", titulo: "Leads", descripcion: "Registrar y calificar a quien pregunta por primera vez." },
@@ -27,12 +31,12 @@ export const GRUPOS_DE_ACCIONES: GrupoDeAcciones[] = [
 
 const OTRAS = "otras";
 
-/** Grupo y nombre de cada acción conocida, por su nombre en el AgentSpec. */
+/** Nombre de cada acción conocida, por su nombre en el AgentSpec, y su grupo de respaldo (el mismo de la API). */
 const ACCIONES: Record<string, { grupo: string; nombre: string }> = {
-  // Ventas: pedidos, catálogo y leads.
-  generar_cotizacion: { grupo: "pedidos", nombre: "Preparar una cotización" },
-  aplicar_promocion: { grupo: "pedidos", nombre: "Aplicar una promoción" },
-  confirmar_cotizacion: { grupo: "pedidos", nombre: "Confirmar la cotización" },
+  // Ventas: pedidos, cotizaciones, catálogo y leads.
+  generar_cotizacion: { grupo: "cotizaciones", nombre: "Preparar una cotización" },
+  aplicar_promocion: { grupo: "catalogo", nombre: "Aplicar una promoción" },
+  confirmar_cotizacion: { grupo: "cotizaciones", nombre: "Confirmar la cotización" },
   crear_pedido: { grupo: "pedidos", nombre: "Crear el pedido" },
   agregar_item_pedido: { grupo: "pedidos", nombre: "Agregar productos al pedido" },
   consultar_estado_pedido: { grupo: "pedidos", nombre: "Consultar el estado de un pedido" },
@@ -44,24 +48,24 @@ const ACCIONES: Record<string, { grupo: string; nombre: string }> = {
   // Pagos (Wompi).
   confirmar_pago_pedido: { grupo: "pagos", nombre: "Confirmar el pago de un pedido" },
   verificar_pago_pedido: { grupo: "pagos", nombre: "Verificar el pago de un pedido" },
-  sub_link_pago: { grupo: "pagos", nombre: "Enviar el enlace de pago de una suscripción" },
+  sub_link_pago: { grupo: "suscripciones", nombre: "Enviar el enlace de pago de una suscripción" },
   cob_link_suscripcion: { grupo: "pagos", nombre: "Enviar el enlace de pago de una suscripción en cobro" },
-  // Agenda.
+  // Agenda: citas y disponibilidad.
   create_calendar_event: { grupo: "citas", nombre: "Agendar una cita" },
   update_calendar_event: { grupo: "citas", nombre: "Mover una cita" },
   cancel_calendar_event: { grupo: "citas", nombre: "Cancelar una cita" },
-  check_availability: { grupo: "citas", nombre: "Consultar la disponibilidad" },
-  find_next_available: { grupo: "citas", nombre: "Buscar el próximo espacio libre" },
+  check_availability: { grupo: "disponibilidad", nombre: "Consultar la disponibilidad" },
+  find_next_available: { grupo: "disponibilidad", nombre: "Buscar el próximo espacio libre" },
   list_client_appointments: { grupo: "citas", nombre: "Ver las citas del cliente" },
-  list_calendars: { grupo: "citas", nombre: "Ver las agendas" },
-  list_appointment_types: { grupo: "citas", nombre: "Ver los tipos de cita" },
-  // Cobranza.
+  list_calendars: { grupo: "disponibilidad", nombre: "Ver las agendas" },
+  list_appointment_types: { grupo: "disponibilidad", nombre: "Ver los tipos de cita" },
+  // Cobranza: cartera, promesas y suscripciones.
   cob_consultar_saldo: { grupo: "cartera", nombre: "Consultar el saldo" },
   cob_estado_cuenta: { grupo: "cartera", nombre: "Enviar el estado de cuenta" },
-  cob_evaluar_negociacion: { grupo: "cartera", nombre: "Evaluar una negociación" },
-  cob_opciones_promesa: { grupo: "cartera", nombre: "Ofrecer opciones de promesa de pago" },
-  cob_registrar_promesa_pago: { grupo: "cartera", nombre: "Registrar una promesa de pago" },
-  cob_registrar_promesa_saldo: { grupo: "cartera", nombre: "Registrar una promesa sobre el saldo" },
+  cob_evaluar_negociacion: { grupo: "promesas", nombre: "Evaluar una negociación" },
+  cob_opciones_promesa: { grupo: "promesas", nombre: "Ofrecer opciones de promesa de pago" },
+  cob_registrar_promesa_pago: { grupo: "promesas", nombre: "Registrar una promesa de pago" },
+  cob_registrar_promesa_saldo: { grupo: "promesas", nombre: "Registrar una promesa sobre el saldo" },
   cob_registrar_abono: { grupo: "cartera", nombre: "Registrar un abono" },
   cob_consultar_suscripcion: { grupo: "suscripciones", nombre: "Consultar una suscripción en cobro" },
   cob_crear_suscripcion: { grupo: "suscripciones", nombre: "Crear una suscripción en cobro" },
@@ -98,34 +102,65 @@ const ACCIONES: Record<string, { grupo: string; nombre: string }> = {
   buscar_conocimiento: { grupo: "conocimiento", nombre: "Buscar en tus documentos" },
 };
 
-/** Para acciones nuevas que el mapa aún no nombra: el grupo por el prefijo o la palabra del nombre. */
+/** Respaldo para acciones que ni la API ni el mapa agrupan: el grupo por el prefijo o la palabra del nombre. */
 function grupoPorNombre(tool: string): string {
-  if (tool.startsWith("cob_")) return tool.endsWith("_suscripcion") ? "suscripciones" : "cartera";
+  if (tool.startsWith("cob_")) {
+    if (tool.endsWith("_suscripcion")) return "suscripciones";
+    return /promesa|negociacion/.test(tool) ? "promesas" : "cartera";
+  }
   if (tool.startsWith("sub_")) return "suscripciones";
+  if (/availab/.test(tool)) return "disponibilidad";
   if (/calendar|appointment/.test(tool)) return "citas";
-  if (/pedido|cotizacion/.test(tool)) return "pedidos";
+  if (/cotizacion/.test(tool)) return "cotizaciones";
+  if (/pedido/.test(tool)) return "pedidos";
   if (/lead/.test(tool)) return "leads";
   return OTRAS;
 }
 
-export function grupoDeAccion(tool: string): GrupoDeAcciones {
-  const id = ACCIONES[tool]?.grupo ?? grupoPorNombre(tool);
-  return GRUPOS_DE_ACCIONES.find((g) => g.id === id) ?? GRUPOS_DE_ACCIONES[GRUPOS_DE_ACCIONES.length - 1];
+/** `crear_pedido` → «Crear pedido». Sin `humanizar`, que corta en el último punto y juntaría grupos distintos. */
+function enPalabras(texto: string): string {
+  const t = texto.replace(/[_-]+/g, " ").trim();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+/**
+ * Grupo de una acción: el que manda la API si viene; si no, el del mapa o el del nombre. «otras» de la API
+ * quiere decir que la habilidad no le puso grupo, así que no le gana al mapa. Un grupo que el panel aún no
+ * conoce se muestra con su clave en palabras («nuevo_grupo» → «Nuevo grupo»), no se pierde.
+ */
+export function grupoDeAccion(tool: string, grupoDeLaApi?: string | null): GrupoDeAcciones {
+  const deLaApi = grupoDeLaApi?.trim();
+  const id = (deLaApi && deLaApi !== OTRAS ? deLaApi : undefined) ?? ACCIONES[tool]?.grupo ?? grupoPorNombre(tool);
+  return GRUPOS_DE_ACCIONES.find((g) => g.id === id) ?? { id, titulo: enPalabras(id), descripcion: "" };
 }
 
 /** Nombre de la acción para el dueño: el del mapa o el nombre técnico en palabras («crear pedido» → «Crear pedido»). */
 export function nombreDeAccion(tool: string): string {
-  const conocida = ACCIONES[tool]?.nombre;
-  if (conocida) return conocida;
-  const texto = humanizar(tool);
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+  return ACCIONES[tool]?.nombre ?? enPalabras(tool);
 }
 
-/** Acciones agrupadas en el orden de `GRUPOS_DE_ACCIONES`; dentro del grupo, en el orden en que llegaron. */
-export function agruparAcciones<T extends { tool: string }>(acciones: T[]): { grupo: GrupoDeAcciones; acciones: T[] }[] {
-  return GRUPOS_DE_ACCIONES.map((grupo) => ({ grupo, acciones: acciones.filter((a) => grupoDeAccion(a.tool).id === grupo.id) })).filter(
-    (g) => g.acciones.length > 0,
-  );
+/**
+ * Acciones agrupadas: primero los grupos conocidos en el orden de `GRUPOS_DE_ACCIONES`, luego los que el
+ * panel no conoce (en el orden en que aparecen) y al final «Otras acciones». Dentro del grupo, en el orden
+ * en que llegaron. `grupo` es el de la API; sin él se usa el respaldo por nombre.
+ */
+export function agruparAcciones<T extends { tool: string; grupo?: string | null }>(
+  acciones: T[],
+): { grupo: GrupoDeAcciones; acciones: T[] }[] {
+  const conocidos = GRUPOS_DE_ACCIONES.map((g) => g.id);
+  const orden = (id: string) => {
+    if (id === OTRAS) return Infinity;
+    const i = conocidos.indexOf(id);
+    return i >= 0 ? i : conocidos.length;
+  };
+  const porGrupo = new Map<string, { grupo: GrupoDeAcciones; acciones: T[] }>();
+  for (const accion of acciones) {
+    const grupo = grupoDeAccion(accion.tool, accion.grupo);
+    const entrada = porGrupo.get(grupo.id) ?? { grupo, acciones: [] };
+    entrada.acciones.push(accion);
+    porGrupo.set(grupo.id, entrada);
+  }
+  return [...porGrupo.values()].sort((a, b) => orden(a.grupo.id) - orden(b.grupo.id));
 }
 
 /** Solo para el test: los nombres que el mapa conoce. */
