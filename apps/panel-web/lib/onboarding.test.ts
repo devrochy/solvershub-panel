@@ -44,11 +44,8 @@ describe("pasos del asistente", () => {
     expect(errorDelPaso("reglas", { ...listo, horario: null })).toBeUndefined();
   });
 
-  it("las respuestas de creación solo llevan «qué vendes» en ventas", () => {
-    expect(respuestasDeCreacion({ ...listo, queVende: "planes", largo: "cortas" })).toEqual({
-      largo_respuesta: "cortas",
-      que_vendes: "planes",
-    });
+  it("las respuestas de creación no preguntan qué vende: Ventas solo toma pedidos de productos (SPEC-43)", () => {
+    expect(respuestasDeCreacion({ ...listo, largo: "cortas" })).toEqual({ largo_respuesta: "cortas" });
     expect(respuestasDeCreacion({ ...listo, tipo: "agenda" })).toEqual({ largo_respuesta: "normal" });
   });
 });

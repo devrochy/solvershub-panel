@@ -53,7 +53,7 @@ async function post<T>(url: string, cuerpo?: unknown): Promise<Resultado<T>> {
 
 const BORRADOR = (negocioId: string) => `sh-onboarding:${negocioId}`;
 
-type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "queVende" | "negocio">>;
+type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "negocio">>;
 
 function leerBorrador(negocioId: string): Borrador {
   try {
@@ -66,7 +66,7 @@ function leerBorrador(negocioId: string): Borrador {
 
 function guardarBorrador(negocioId: string, estado: EstadoDelAsistente) {
   try {
-    window.localStorage.setItem(BORRADOR(negocioId), JSON.stringify({ tipo: estado.tipo, queVende: estado.queVende, negocio: estado.negocio }));
+    window.localStorage.setItem(BORRADOR(negocioId), JSON.stringify({ tipo: estado.tipo, negocio: estado.negocio }));
   } catch {
     // Sin almacenamiento el recorrido sigue: solo no recuerda el tipo si se recarga.
   }
@@ -97,7 +97,7 @@ type Props = {
 const nunca = () => () => {};
 
 /**
- * Espera a estar en el navegador para leer el borrador local (tipo de negocio y qué vende, que no viven en el
+ * Espera a estar en el navegador para leer el borrador local (tipo de negocio y nombre, que no viven en el
  * servidor); así el primer pintado del servidor y el del cliente coinciden.
  */
 export function RecorridoDeBienvenida(props: Props) {
@@ -128,7 +128,6 @@ function Asistente({
       ...base,
       nombreDelAgente: nombreElegido,
       tipo: borrador.tipo ?? base.tipo,
-      queVende: borrador.queVende ?? base.queVende,
       negocio: borrador.negocio ?? nombreDelNegocio,
     };
   });

@@ -102,7 +102,7 @@ describe("asistente de primer uso", () => {
 
   it("guarda el paso en Identidad y pasa al siguiente", async () => {
     montar();
-    fireEvent.click(await screen.findByRole("radio", { name: /Vendo productos o planes/ }));
+    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
     fireEvent.change(screen.getByLabelText(/Cuéntanos en una frase/), { target: { value: "Vendemos ropa deportiva con envíos" } });
     fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
 
@@ -117,7 +117,7 @@ describe("asistente de primer uso", () => {
   it("elegir un tipo no pide activar nada antes: avisa qué habilidad se activará al terminar", async () => {
     montar();
     expect(screen.queryByText(/Al terminar activaremos/)).toBeNull();
-    fireEvent.click(await screen.findByRole("radio", { name: /Vendo productos o planes/ }));
+    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
     expect((await screen.findByText(/Al terminar activaremos/)).textContent).toMatch(/Comercio/);
     // Un tipo cuya habilidad ya está activa no dice nada.
     fireEvent.click(await screen.findByRole("radio", { name: /citas|agenda/i }));
@@ -126,7 +126,7 @@ describe("asistente de primer uso", () => {
 
   it("un tipo que el servicio no trae sale deshabilitado y sin pedir activar una habilidad", async () => {
     montar(PENDIENTE, { disponibles: ["agenda"] });
-    const ventas = (await screen.findByRole("radio", { name: /Vendo productos o planes/ })) as HTMLInputElement;
+    const ventas = (await screen.findByRole("radio", { name: /^Vendo productos/ })) as HTMLInputElement;
     expect(ventas.disabled).toBe(true);
     expect(screen.getAllByText(/no está disponible en tu servicio/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Falta activar una habilidad/)).toBeNull();
@@ -134,10 +134,17 @@ describe("asistente de primer uso", () => {
 
   it("la tarjeta del agente muestra el nombre y la voz elegidos", async () => {
     montar();
-    fireEvent.click(await screen.findByRole("radio", { name: /Vendo productos o planes/ }));
+    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
     const tarjeta = screen.getAllByLabelText("Tu agente, armándose")[0];
     expect(tarjeta.textContent).toContain("Sofía");
     expect(tarjeta.textContent).toContain("Responde las 24 horas");
+  });
+
+  it("Ventas no pregunta qué vende: los planes son del agente de Suscripciones (SPEC-43)", async () => {
+    montar();
+    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
+    expect(screen.queryByText("¿Qué vendes?")).toBeNull();
+    expect(screen.getByRole("radio", { name: /Vendo y gestiono planes/ })).toBeTruthy();
   });
 
   it("omitir pide confirmación, avisa al servidor y vuelve al Resumen", async () => {

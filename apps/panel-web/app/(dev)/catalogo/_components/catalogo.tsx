@@ -299,7 +299,7 @@ export function Catalogo() {
   const [casilla, setCasilla] = useState<boolean | "indeterminate">("indeterminate");
   const [plan, setPlan] = useState("basico");
   const [segmento, setSegmento] = useState("");
-  const [vende, setVende] = useState("productos");
+  const [largo, setLargo] = useState("normal");
   const [horario, setHorario] = useState<HorarioElegido | null>(HORARIO_INICIAL);
   const [tipoNegocio, setTipoNegocio] = useState("ventas");
   const [busqueda, setBusqueda] = useState("");
@@ -942,7 +942,7 @@ export function Catalogo() {
               <AvisoDeOnboarding recorrido={{ estado: "omitido", paso: 3, total_pasos: 6, aplica: true, abrir: false, avisar: true }} />
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
-                  { id: "ventas", titulo: "Vendo productos o planes", ayuda: "Responde dudas, cotiza y toma el pedido." },
+                  { id: "ventas", titulo: "Vendo productos", ayuda: "Responde dudas, cotiza y toma el pedido." },
                   { id: "agenda", titulo: "Agendo citas", ayuda: "Ofrece horarios y reserva la cita." },
                 ].map((t) => (
                   <TarjetaElegible
@@ -973,23 +973,23 @@ export function Catalogo() {
                 <p className="text-sm text-text-soft">{textoDeAvance(1, 7)}</p>
                 <Progress value={2} max={7} label="Avance del asistente" valueText={textoDeAvance(1, 7)} size="sm" />
               </div>
-              <h3 className="text-lg font-semibold text-headline">¿Qué vendes?</h3>
+              <h3 className="text-lg font-semibold text-headline">¿Qué tan largas quieres sus respuestas?</h3>
               <RadioGroup
-                label="Qué vende tu negocio"
-                name="cat-asistente-vende"
-                value={vende}
-                onValueChange={setVende}
+                label="Largo de las respuestas"
+                name="cat-asistente-largo"
+                value={largo}
+                onValueChange={setLargo}
                 options={[
-                  { value: "productos", label: "Productos", description: "Tomas pedidos de tu catálogo." },
-                  { value: "planes", label: "Planes o suscripciones", description: "Vendes planes que se contratan y se renuevan." },
-                  { value: "ambos", label: "Ambos", description: "Productos y planes en el mismo negocio." },
+                  { value: "cortas", label: "Cortas", description: "Directas, pensadas para el celular." },
+                  { value: "normal", label: "Normales", description: "Lo habitual de tu negocio." },
+                  { value: "detalladas", label: "Detalladas", description: "Explica con más detalle." },
                 ]}
               />
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                 <dt className="text-text-soft">Tipo</dt>
                 <dd className="text-headline">Ventas</dd>
-                <dt className="text-text-soft">¿Qué vendes?</dt>
-                <dd className="text-headline">Productos</dd>
+                <dt className="text-text-soft">Respuestas</dt>
+                <dd className="text-headline">Normales</dd>
                 <dt className="text-text-soft">Nombre</dt>
                 <dd className="text-headline">Ventas</dd>
               </dl>
