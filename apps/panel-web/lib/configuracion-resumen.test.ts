@@ -43,7 +43,6 @@ describe("resumen de Configuración (rediseño B)", () => {
 
   it("el resumen de una sección junta sus primeras opciones con algo que decir", () => {
     const catalogo = {
-      aos_runtime: "legacy",
       version: "t",
       asistente: [],
       opciones: [

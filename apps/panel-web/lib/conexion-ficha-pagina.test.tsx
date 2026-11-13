@@ -94,7 +94,7 @@ const ITEMS: ConexionConsola[] = [
   }),
 ];
 
-const CONSOLA: ConnectionsConsole = { ...consolaConexiones, items: ITEMS, total: ITEMS.length, runtime: "v3" };
+const CONSOLA: ConnectionsConsole = { ...consolaConexiones, items: ITEMS, total: ITEMS.length };
 
 function preparar(extra: Record<string, unknown> = {}) {
   Object.assign(respuestas, { "/admin/connections/console": CONSOLA, "/admin/me": me }, extra);

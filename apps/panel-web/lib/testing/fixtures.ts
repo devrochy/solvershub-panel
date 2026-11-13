@@ -118,7 +118,6 @@ export const resumenPorAgente: ResumenPorAgente = {
     previo_hasta: "2026-10-20T00:00:00Z",
     dias: 7,
   },
-  runtime: "v3",
   general: {
     kpis: [
       { id: "conversaciones", label: "Conversaciones", valor: 128, unidad: "count", previo: 100, delta_pct: 28, polaridad: "up-good", hint: "Últimos 7 días", destino: { ruta: "conversaciones", params: {} } },
@@ -539,7 +538,6 @@ export const consolaConexiones: ConnectionsConsole = {
   page: 1,
   page_size: 50,
   has_more: false,
-  runtime: "v3",
   routing: "active",
   consistency: null,
   can_edit: true,
