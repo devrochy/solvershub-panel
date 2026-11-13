@@ -9594,6 +9594,11 @@ export interface components {
              * @description Serie diaria cero-rellena de todo el negocio (todos los agentes, el Coordinador y lo no atribuido); vacía sin la sección `agents`.
              */
             serie?: components["schemas"]["PuntoActividadOut"][];
+            /**
+             * Modulos Sin Agente
+             * @description Módulos activos del negocio que ningún agente cubre (ADR-0192: ya no cuelgan del General).
+             */
+            modulos_sin_agente?: components["schemas"]["ModuloOut"][];
         };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
@@ -16915,7 +16920,7 @@ export interface components {
         AgenteResumen: {
             /**
              * Ref
-             * @description Id del agente o el literal `general`, como en `/admin/agents/{ref}`.
+             * @description Id del agente, como en `/admin/agents/{ref}`.
              */
             ref: string;
             /** Key */
@@ -18404,8 +18409,6 @@ export interface components {
             connections: components["schemas"]["PublishedConnection"][];
             /** Warnings */
             warnings: string[];
-            /** General Updated */
-            general_updated?: number | null;
         };
         /** FromTemplateIn */
         FromTemplateIn: {
