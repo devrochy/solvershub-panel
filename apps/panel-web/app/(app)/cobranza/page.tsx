@@ -28,7 +28,7 @@ export default async function CobranzaPage() {
     apiFetch<CarteraBasica[]>("/pack/cobranza/portfolios"),
     getBusinessTimezone(),
   ]);
-  const header = <PageHeader title="Cobranza" />;
+  const header = <PageHeader title="Cobranza" helpSection="cobranza" />;
   if (!summaryRes.ok) {
     return (
       <div className="flex flex-col gap-6">

@@ -73,7 +73,7 @@ export default async function ProductsPage({
   ]);
 
   const header = (acciones?: React.ReactNode) => (
-    <PageHeader title="Productos" description="Lo que el asistente puede ofrecer y cotizar." actions={acciones} />
+    <PageHeader title="Productos" description="Lo que el asistente puede ofrecer y cotizar." helpSection="ventas" actions={acciones} />
   );
   if (!productsRes.ok) {
     return (

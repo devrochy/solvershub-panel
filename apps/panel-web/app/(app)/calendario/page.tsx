@@ -52,7 +52,7 @@ export default async function AgendaPage({
     return (
       <div className="flex flex-col gap-4">
         <AvisoGoogle codigo={google} />
-        <PageHeader title="Agenda" description="Las citas de tu negocio y quién las atiende." />
+        <PageHeader title="Agenda" description="Las citas de tu negocio y quién las atiende." helpSection="agenda" />
         {agendasRes.status === 403 ? (
           <EmptyState
             title="Todavía no tienes acceso a la Agenda"

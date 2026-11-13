@@ -40,6 +40,7 @@ export default async function CategoriesPage({ searchParams }: { searchParams: P
     <PageHeader
       title="Categorías"
       description="Cómo se agrupa el catálogo. El asistente las usa para filtrar y sugerir productos."
+      helpSection="ventas"
       actions={
         <Button asChild variant="accent">
           <Link href={hrefCategoria("nueva", enlace(vista))} scroll={false}>

@@ -41,6 +41,7 @@ export default async function AuditoriaPage({
   const header = {
     title: "Auditoría",
     description: "Cambios sobre cuotas, abonos, pagos, promesas y préstamos (hasta 200).",
+    helpSection: "cobranza",
   };
   if (!res.ok) {
     return (

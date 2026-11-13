@@ -28,6 +28,7 @@ export default async function ClientesPage({
   const carteras = carterasRes.ok ? carterasRes.data : [];
   const header = {
     title: "Clientes",
+    helpSection: "cobranza",
     actions:
       carteras.length > 0 ? (
         <ClientFormDialog

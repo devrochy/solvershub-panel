@@ -140,6 +140,7 @@ export function AgendaVista({
       <PageHeader
         title="Agenda"
         description="Las citas de tu negocio y quién las atiende."
+        helpSection="agenda"
         actions={
           <>
             {hayAjustes && (

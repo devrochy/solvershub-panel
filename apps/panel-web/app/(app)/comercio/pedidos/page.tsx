@@ -40,7 +40,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     getBusinessCurrency(),
   ]);
 
-  const header = <PageHeader title="Pedidos" description="Lo que vendió el asistente. Toca un pedido para verlo y pasarlo al siguiente paso." />;
+  const header = <PageHeader title="Pedidos" description="Lo que vendió el asistente. Toca un pedido para verlo y pasarlo al siguiente paso." helpSection="ventas" />;
   if (!res.ok) {
     return (
       <div className="flex flex-col gap-6">

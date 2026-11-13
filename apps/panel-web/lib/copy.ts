@@ -5,7 +5,7 @@
  */
 
 export type SectionHelp = {
-  /** Pregunta que abre el modal. */
+  /** Pregunta que describe la sección. */
   question: string;
   /** Para qué sirve la sección, en 1-2 frases. */
   what: string;
@@ -27,6 +27,33 @@ export const SECTION_HELP: Record<string, SectionHelp> = {
     question: "¿Qué son las Conversaciones?",
     what: "Cada chat entre tu asistente y un cliente. Aquí ves lo que se dijo y puedes tomar el control.",
     first: ["Abre una conversación para leer el contexto.", "Toma el control si necesitas responder tú."],
+  },
+  agenda: {
+    question: "¿Qué es la Agenda?",
+    what: "Las citas de tu negocio y quién las atiende. Tu asistente agenda por WhatsApp y aquí ves el día, las semanas y los ajustes.",
+    first: [
+      "Revisa las citas de hoy y confirma quién las atiende.",
+      "Crea la agenda o conecta tu Google Calendar si aún no hay.",
+      "Ajusta los tipos de cita y los horarios desde Ajustes.",
+    ],
+  },
+  ventas: {
+    question: "¿Qué es Ventas?",
+    what: "Tu operación de ventas por WhatsApp: pedidos, catálogo, categorías y promociones. Aquí ves lo que pide acción hoy y lo que vendiste en el mes.",
+    first: [
+      "Revisa los pedidos por despachar y los pagos pendientes.",
+      "Carga tus productos y categorías para que el asistente cotice bien.",
+      "Crea una promoción si quieres empujar una venta.",
+    ],
+  },
+  cobranza: {
+    question: "¿Qué es Cobranza?",
+    what: "Tu cartera de clientes con saldo: quién debe, desde cuándo y qué se prometió pagar. El asistente cobra por WhatsApp.",
+    first: [
+      "Mira la mora y las promesas de pago de hoy.",
+      "Abre una cartera para revisar cliente por cliente.",
+      "Asigna un gestor y revisa la actividad del asistente.",
+    ],
   },
   tenants: {
     question: "¿Qué es Negocios?",

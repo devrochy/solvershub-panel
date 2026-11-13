@@ -48,7 +48,7 @@ export default async function PromisesPage({
     apiFetch<PromesaDeAgenda[]>("/pack/cobranza/promises"),
     getBusinessTimezone(),
   ]);
-  const header = { title: "Promesas", description: "Promesas de pago del agente y de los gestores." };
+  const header = { title: "Promesas", description: "Promesas de pago del agente y de los gestores.", helpSection: "cobranza" };
   if (!res.ok) {
     return (
       <ListPage header={header}>

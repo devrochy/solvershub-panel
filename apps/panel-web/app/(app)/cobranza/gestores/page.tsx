@@ -35,7 +35,7 @@ export default async function GestoresPage() {
       }
     />
   );
-  const header = { title: "Gestores", description: "Cobradores del negocio, sus datos y permisos.", actions: nuevoGestor };
+  const header = { title: "Gestores", description: "Cobradores del negocio, sus datos y permisos.", helpSection: "cobranza", actions: nuevoGestor };
   if (!collectorsRes.ok) {
     return (
       <ListPage header={header}>

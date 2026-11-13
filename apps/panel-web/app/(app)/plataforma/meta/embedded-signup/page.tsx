@@ -19,7 +19,7 @@ export default async function EmbeddedSignupPage() {
   const res = await apiFetch<Requisitos>("/admin/platform/meta-app/embedded-signup");
   if (!res.ok && res.status === 403) redirect("/dashboard");
   const header = (
-    <PageHeader title="Embedded Signup" description="Lo que Meta tiene que aprobar para que los negocios conecten su WhatsApp con Facebook." />
+    <PageHeader title="Embedded Signup" description="Lo que Meta tiene que aprobar para que los negocios conecten su WhatsApp con Facebook." helpSection="meta_app" />
   );
   if (!res.ok) {
     return (

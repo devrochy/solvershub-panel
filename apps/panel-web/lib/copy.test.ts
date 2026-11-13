@@ -21,6 +21,12 @@ describe("ayuda contextual (HU-UX-03)", () => {
     }
   });
 
+  it("cubre las secciones principales que antes no tenían ayuda", () => {
+    for (const clave of ["agenda", "ventas", "cobranza"]) {
+      expect(sectionHelp(clave)?.question, clave).toMatch(/¿Qué/);
+    }
+  });
+
   it("devuelve undefined para una sección desconocida", () => {
     expect(sectionHelp("no-existe")).toBeUndefined();
   });

@@ -45,7 +45,7 @@ export const PASOS_DEL_TOUR: readonly PasoDelTour[] = [
     id: "conversaciones",
     titulo: "Atiende cuando haga falta",
     texto:
-      "En Conversaciones ves cada chat y puedes tomar el control. Si una sección no es clara, pulsa «¿Qué es esto?».",
+      "En Conversaciones ves cada chat y puedes tomar el control. Si una sección no es clara, toca el icono de información junto al título.",
     objetivo: "/conversaciones",
   },
 ];
