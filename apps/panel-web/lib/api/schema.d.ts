@@ -12050,6 +12050,24 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * MePlanSummary
+         * @description Plan del negocio activo, para el shell del panel y de la app (HU-BILL-15).
+         */
+        MePlanSummary: {
+            /** Plan Id */
+            plan_id: string | null;
+            /** Plan Name */
+            plan_name: string;
+            /** Status */
+            status: string;
+            /** Days Left */
+            days_left?: number | null;
+            /** Trial Ends At */
+            trial_ends_at?: string | null;
+            /** Has Plan */
+            has_plan: boolean;
+        };
         /** MeResponse */
         MeResponse: {
             /**
@@ -12083,6 +12101,7 @@ export interface components {
              * @default false
              */
             qa_testers_habilitados: boolean;
+            plan?: components["schemas"]["MePlanSummary"] | null;
         };
         /** MeasuredProcedure */
         MeasuredProcedure: {
