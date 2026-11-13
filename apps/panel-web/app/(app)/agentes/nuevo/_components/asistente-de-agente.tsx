@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
+import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -26,6 +27,7 @@ import {
   type EstadoDelAsistente,
 } from "@/lib/agente-asistente";
 import type { AgentTemplate } from "@/lib/api/types";
+import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
 const CLAVE_LOCAL = "asistente-de-agente";
@@ -72,6 +74,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
   const [mostrarError, setMostrarError] = useState(false);
   const [errorDeApi, setErrorDeApi] = useState<{ paso: number; mensaje: string } | null>(null);
   const [existente, setExistente] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
   const [retomado, setRetomado] = useState(false);
   const titulo = useRef<HTMLHeadingElement>(null);
 
@@ -125,6 +128,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
     if (!plantilla) return;
     setExistente(null);
     setErrorDeApi(null);
+    setLimite(null);
     await run(async () => {
       const res = await fetch("/api/agent-editor/from-script", {
         method: "POST",
@@ -139,6 +143,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
       };
       if (!res.ok) {
         if (json.code === "key_taken" && json.fields?.agent_id) setExistente(json.fields.agent_id);
+        setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de agentes de tu plan.") : null);
         const [campo, mensaje] = Object.entries(json.fields ?? {}).find(([k]) => k !== "agent_id") ?? [];
         if (campo && mensaje) {
           const destino = pasoDelCampo(campo, pasos);
@@ -239,6 +244,7 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
             </Link>
           </p>
         )}
+        {limite && <AvisoLimiteDePlan mensaje={limite} />}
       </div>
     );
   }

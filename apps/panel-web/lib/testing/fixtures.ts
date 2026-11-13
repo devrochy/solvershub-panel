@@ -745,6 +745,7 @@ export const agentes: AgentsOverview = {
     },
   ],
   sin_atribuir: { turns: 0, conversations: 0, cost_usd: 0, last_activity_at: null },
+  cuota_agentes: { used: 1, limit: 2, allowed: true },
 };
 
 export const conversacionesDeAgente: AgentConversationPage = {

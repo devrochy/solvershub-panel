@@ -1,4 +1,4 @@
-import type { MePlanSummary, PlanResponse } from "@/lib/api/types";
+import type { AgentsOverview, MePlanSummary, PlanResponse } from "@/lib/api/types";
 
 /**
  * Planes por agentes (D-35, HU-BILL-05, ADR-0142 del backend). Lógica pura del panel: cómo
@@ -13,6 +13,18 @@ export const TEXTO_MEJORAR_PLAN = "Mejorar mi plan";
 /** ¿Es el 409 de tope del plan (`plan_limit_agentes`, `plan_limit_colaboradores`, …)? */
 export function esLimiteDePlan(code: string | null | undefined): boolean {
   return typeof code === "string" && code.startsWith("plan_limit_");
+}
+
+type CuotaDeAgentes = AgentsOverview["cuota_agentes"];
+
+/**
+ * Aviso para no abrir el asistente de creación cuando el plan ya tiene todos sus agentes
+ * publicados. `null` si hay cupo, si el plan no limita o si el billing no respondió.
+ */
+export function avisoDeTopeDeAgentes(cuota: CuotaDeAgentes): string | null {
+  if (!cuota || cuota.allowed || cuota.limit === null) return null;
+  const permitidos = cuota.limit === 1 ? "1 agente publicado" : `${cuota.limit} agentes publicados`;
+  return `Tu plan permite ${permitidos} y ya tienes ${cuota.used}. Mejora tu plan para crear otro agente.`;
 }
 
 /** Las dimensiones que vende el plan (D-35), en este orden; el crédito va aparte. */

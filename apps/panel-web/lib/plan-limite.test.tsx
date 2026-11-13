@@ -9,7 +9,7 @@ import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpo
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import { avisoDePlanFree, esLimiteDePlan, esPlanFree, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
+import { avisoDePlanFree, avisoDeTopeDeAgentes, esLimiteDePlan, esPlanFree, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -44,6 +44,14 @@ describe("reglas del plan por agentes (lógica pura)", () => {
       "colaboradores",
       "mensajes",
     ]);
+  });
+
+  it("avisa del tope de agentes solo cuando no queda cupo", () => {
+    expect(avisoDeTopeDeAgentes({ used: 1, limit: 1, allowed: false })).toMatch(/ya tienes 1.*Mejora tu plan/);
+    expect(avisoDeTopeDeAgentes({ used: 1, limit: 2, allowed: true })).toBeNull();
+    expect(avisoDeTopeDeAgentes({ used: 99, limit: null, allowed: true })).toBeNull();
+    expect(avisoDeTopeDeAgentes(null)).toBeNull();
+    expect(avisoDeTopeDeAgentes(undefined)).toBeNull();
   });
 });
 
@@ -160,7 +168,7 @@ describe("409 de tope del plan", () => {
       active_release_id: null,
     };
     fetchMock.mockResolvedValueOnce(
-      limite("plan_limit_agentes", "Tu plan permite 1 agente(s) publicado(s) y ya tienes 1. Mejora tu plan para publicar otro agente."),
+      limite("plan_limit_agentes", "Tu plan permite 1 agente(s) publicado(s) y ya tienes 1. Mejora tu plan para crear otro agente."),
     );
     render(
       <FeedbackProviders>
