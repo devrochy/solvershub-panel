@@ -30,7 +30,7 @@ vi.mock("next/headers", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
-  usePathname: () => "/agentes/general",
+  usePathname: () => "/agentes/00000000-0000-4000-8000-000000000001",
   useSearchParams: () => new URLSearchParams(),
   redirect: vi.fn(),
   notFound: vi.fn(() => {
@@ -88,22 +88,22 @@ describe("vista de un agente", () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
-      "/admin/agents/general/conversations": conversacionesDeAgente,
+      "/admin/agents/00000000-0000-4000-8000-000000000001/conversations": conversacionesDeAgente,
     });
-    const { container } = await abrir("general", { dias: "7" });
-    expect(screen.getByRole("heading", { level: 1, name: "General" })).toBeTruthy();
+    const { container } = await abrir("00000000-0000-4000-8000-000000000001", { dias: "7" });
+    expect(screen.getByRole("heading", { level: 1, name: "Atención" })).toBeTruthy();
     expect(screen.getAllByText("test-Ana").length).toBeGreaterThan(0);
     expect(screen.queryByText("v3")).toBeNull();
-    const pestanas = screen.getByRole("navigation", { name: "Pestañas de General" });
+    const pestanas = screen.getByRole("navigation", { name: "Pestañas de Atención" });
     expect(within(pestanas).getAllByRole("link").map((a) => a.textContent)).toEqual(["Actividad", "Lo que sabe", "Dónde atiende", "Consumo"]);
     const queVer = screen.getByRole("navigation", { name: "Qué ver" });
     expect(within(queVer).getAllByRole("link").map((a) => a.textContent)).toEqual(["Conversaciones", "Tareas", "Clientes", "Registros"]);
-    expect(within(queVer).getByRole("link", { name: "Tareas" }).getAttribute("href")).toBe("/agentes/general?ver=tareas&dias=7");
+    expect(within(queVer).getByRole("link", { name: "Tareas" }).getAttribute("href")).toBe("/agentes/00000000-0000-4000-8000-000000000001?ver=tareas&dias=7");
     expect(screen.getByRole("button", { name: "Probar" })).toBeTruthy();
     // El período se aplica al tocarlo: no hay «Filtrar».
     expect(within(screen.getByRole("navigation", { name: "Período" })).getByRole("link", { name: "7 días" }).getAttribute("aria-current")).toBe("page");
     expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
-    expect(llamadas.some((r) => r.startsWith("/admin/agents/general/conversations?desde="))).toBe(true);
+    expect(llamadas.some((r) => r.startsWith("/admin/agents/00000000-0000-4000-8000-000000000001/conversations?desde="))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
@@ -123,9 +123,9 @@ describe("vista de un agente", () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": { ...me, role: "colaborador", permissions: permisos },
-      "/admin/agents/general/tasks": tareasVacias,
+      "/admin/agents/00000000-0000-4000-8000-000000000001/tasks": tareasVacias,
     });
-    await abrir("general");
+    await abrir("00000000-0000-4000-8000-000000000001");
     expect(screen.queryByRole("link", { name: "Conversaciones" })).toBeNull();
     expect(llamadas.some((r) => r.includes("/conversations"))).toBe(false);
   });
@@ -135,7 +135,7 @@ describe("vista de un agente", () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
-      "/admin/agents/general/usage": {
+      "/admin/agents/00000000-0000-4000-8000-000000000001/usage": {
         periodo: { desde: "2026-09-18T00:00:00Z", hasta: "2026-10-18T00:00:00Z" },
         incluye_sin_atribuir: true,
         total: fila,
@@ -143,23 +143,23 @@ describe("vista de un agente", () => {
         by_day: [{ ...fila, day: "2026-10-18" }],
         consistency: { scope: "negocio", measurements: [] },
       },
-      "/admin/agents/general/conversations": {
+      "/admin/agents/00000000-0000-4000-8000-000000000001/conversations": {
         ...conversacionesDeAgente,
         items: conversacionesDeAgente.items.map((c) => ({ ...c, cost_usd: 0.4 })),
       },
     });
-    await abrir("general", { tab: "consumo" });
+    await abrir("00000000-0000-4000-8000-000000000001", { tab: "consumo" });
     expect(screen.getByText("Respuestas en el período")).toBeTruthy();
     expect(screen.getByText("Créditos este mes")).toBeTruthy();
     expect(screen.queryByText("Costo de proveedor")).toBeNull();
     expect(screen.queryByRole("columnheader", { name: /costo|tokens/i })).toBeNull();
     cleanup();
-    await abrir("general");
+    await abrir("00000000-0000-4000-8000-000000000001");
     expect(screen.getAllByText("test-Ana").length).toBeGreaterThan(0);
     expect(screen.queryByRole("columnheader", { name: /costo/i })).toBeNull();
   });
 
-  it("un ref que no es id ni `general` es 404", async () => {
+  it("un ref que no es un id (tampoco `general`) es 404", async () => {
     await expect(abrir("ventas")).rejects.toThrow("NOT_FOUND");
   });
 });

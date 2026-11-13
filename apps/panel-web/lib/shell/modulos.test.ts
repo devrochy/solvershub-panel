@@ -46,13 +46,13 @@ describe("módulos del negocio", () => {
     });
   });
 
-  it("cuenta especialistas y back-office publicados, no el Coordinador ni el General", () => {
+  it("cuenta especialistas y back-office publicados, no el Coordinador", () => {
     expect(cuentaParaModulo(agente({}))).toBe(true);
     expect(cuentaParaModulo(agente({ kind: "backoffice" }))).toBe(true);
     expect(cuentaParaModulo(agente({ published: false }))).toBe(false);
     expect(cuentaParaModulo(agente({ virtual: true }))).toBe(false);
     expect(cuentaParaModulo(agente({ kind: "core" }))).toBe(false);
-    expect(cuentaParaModulo(agente({ key: "general" }))).toBe(false);
+    expect(cuentaParaModulo(agente({ key: "general" }))).toBe(true);  // una clave más (ADR-0192)
   });
 
   it("habilita el módulo con especialista publicado y pack encendido", () => {
@@ -63,7 +63,7 @@ describe("módulos del negocio", () => {
   });
 
   it("sin especialista, el módulo queda en plan aunque el pack esté encendido", () => {
-    const estados = estadosDeModulos(PACKS, { items: [agente({ key: "general" })] });
+    const estados = estadosDeModulos(PACKS, { items: [agente({ kind: "core" })] });
     expect(estados.pack_commerce).toBe("plan");
   });
 

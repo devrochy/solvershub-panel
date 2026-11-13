@@ -24,7 +24,11 @@ const DESCRIPCION = "Estado del negocio, actividad por agente y consumo.";
 
 /** Un colaborador con solo «Resumen» recibe el bloque vacío: ahí se muestran las cifras de siempre. */
 function tieneResumen(r: ResumenPorAgente): boolean {
-  return r.general.kpis.length > 0 || r.agentes.some((a) => a.kpis.length > 0 || a.modulos.length > 0);
+  return (
+    r.general.kpis.length > 0 ||
+    (r.general.modulos_sin_agente?.length ?? 0) > 0 ||
+    r.agentes.some((a) => a.kpis.length > 0 || a.modulos.length > 0)
+  );
 }
 
 export default async function DashboardPage({
