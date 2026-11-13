@@ -238,27 +238,23 @@ export function mensajeDeError(code: string | undefined, porDefecto?: string): s
       return "No hay ninguna versión en prueba en esta conexión.";
     case "porcentaje_invalido":
       return "El porcentaje debe estar entre 1 y 50.";
-    case "requiere_v3":
-      return "La prueba con una parte de los clientes se activa con el Agent OS de tu negocio.";
     case "sin_release_activa":
       return "La conexión no tiene una versión activa con la cual comparar.";
     case "sin_version_anterior":
       return "No hay una versión anterior a la cual volver.";
     case "gate_abierto":
       return "Las pruebas automáticas no están activas en tu negocio.";
-    case "aos_runtime_legacy":
-      return "Las versiones se activan con el Agent OS de tu negocio.";
     default:
       return porDefecto ?? "No se pudo completar. Inténtalo de nuevo.";
   }
 }
 
-/** ¿Puede publicar, volver atrás o detener? Igual que la API: propietario o master, y con el
- * runtime legacy solo el master. */
-export function puedeOperarVersiones(
-  me: { role?: string | null; tenant?: { role?: string | null } | null; permissions?: Record<string, string | null | undefined> | null },
-  runtime: string,
-): boolean {
+/** ¿Puede publicar, volver atrás o detener? Igual que la API: propietario o master. */
+export function puedeOperarVersiones(me: {
+  role?: string | null;
+  tenant?: { role?: string | null } | null;
+  permissions?: Record<string, string | null | undefined> | null;
+}): boolean {
   if (me.role === "master") return true;
-  return runtime === "v3" && me.tenant?.role === "owner" && me.permissions?.connections === "write";
+  return me.tenant?.role === "owner" && me.permissions?.connections === "write";
 }

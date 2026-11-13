@@ -166,7 +166,7 @@ export default async function AgentePage({
   const vigente = { tab: actual, ver, ...filtros };
   const base = `/admin/agents/${ref}`;
   const qs = queryDeApi(filtros);
-  const puedeEditar = Boolean(agente.id) && meRes.ok && puedeEditarAgentes(meRes.data, overviewRes.data.runtime);
+  const puedeEditar = Boolean(agente.id) && meRes.ok && puedeEditarAgentes(meRes.data);
   const asignarHref =
     puedeEditar && agente.kind === "specialist" ? `/agentes/${agente.id}/editar?paso=publicar` : null;
   const delMes = creditosPorAgenteId(planRes.ok ? planRes.data.credit : null);

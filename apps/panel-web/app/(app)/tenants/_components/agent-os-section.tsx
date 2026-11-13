@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { ReferenciasRetiradas } from "@/app/(app)/tenants/_components/referencias-retiradas";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
@@ -12,18 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import type { AgentOSEstado, AgentOSResultado } from "@/lib/api/types";
 import {
-  ETIQUETA_RUNTIME,
   ETIQUETA_RUTEO,
   NOTA_RUNBOOK,
   RUTEO_CORTO,
   RUTEOS,
   iguales,
-  normalizar,
   resumenDelCambio,
-  runtimesOfrecidos,
   type Banderas,
   type Ruteo,
-  type Runtime,
 } from "@/lib/agent-os";
 import { formatDate } from "@/lib/format";
 import { useAction } from "@/lib/use-action";
@@ -33,13 +28,12 @@ type Reporte = Pick<AgentOSResultado, "accion" | "pasos" | "bloqueos" | "avisos"
 const ACCION: Record<string, string> = {
   sin_cambios: "Sin cambios: el negocio ya está así.",
   listo: "Listo para aplicar.",
-  por_preparar: "Al aplicar se corren los pasos de abajo y después se comprueba que el motor nuevo quede listo.",
   bloqueado: "Bloqueado: el negocio no está listo para este cambio.",
   aplicado: "Cambio aplicado.",
 };
 
-function banderas(e: Pick<AgentOSEstado, "runtime" | "procedures" | "routing">): Banderas {
-  return { runtime: e.runtime, procedures: e.procedures, routing: e.routing };
+function banderas(e: Pick<AgentOSEstado, "procedures" | "routing">): Banderas {
+  return { procedures: e.procedures, routing: e.routing };
 }
 
 type Lectura = { estado: AgentOSEstado } | { error: string };
@@ -50,7 +44,7 @@ async function leer(url: string): Promise<Lectura> {
   return res.ok ? { estado: json } : { error: "No pudimos leer cómo atiende el asistente de este negocio." };
 }
 
-/** El asistente del negocio (HU-AOS-15, PLT-03): motor, reparto y recorridos, en palabras; simular y aplicar (master). */
+/** El asistente del negocio (HU-AOS-15, PLT-03): reparto y recorridos, en palabras; simular y aplicar (master). */
 export function AgentOSSection({ tenantId }: { tenantId: string }) {
   const url = `/api/platform/tenants/${tenantId}/agent-os`;
   const confirm = useConfirm();
@@ -58,7 +52,6 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
   const [estado, setEstado] = useState<AgentOSEstado | null>(null);
   const [cargaFallida, setCargaFallida] = useState<string | null>(null);
   const [objetivo, setObjetivo] = useState<Banderas | null>(null);
-  const [construir, setConstruir] = useState(false);
   const [reporte, setReporte] = useState<Reporte | null>(null);
 
   function mostrar(lectura: Lectura) {
@@ -100,7 +93,7 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
   const actual = banderas(estado);
   const cambia = !iguales(actual, objetivo);
   const cambiar = (parcial: Partial<Banderas>) => {
-    setObjetivo(normalizar({ ...objetivo, ...parcial }));
+    setObjetivo({ ...objetivo, ...parcial });
     setReporte(null);
   };
 
@@ -108,7 +101,7 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
     const res = await fetch(url, {
       method: metodo,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...objetivo, construir }),
+      body: JSON.stringify(objetivo),
     });
     const json = (await res.json().catch(() => ({}))) as Partial<AgentOSResultado> & {
       error?: string;
@@ -145,7 +138,6 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
     });
   }
 
-  const v3 = objetivo.runtime === "v3";
   return (
     <section className="flex flex-col gap-3" aria-labelledby={`aos-${tenantId}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -153,15 +145,10 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
           Cómo atiende
         </p>
         <span className="text-xs text-text-soft">
-          Motor {actual.runtime === "v3" ? "nuevo" : "anterior"} · reparte: {RUTEO_CORTO[actual.routing]} · recorridos guiados:{" "}
+          Reparte: {RUTEO_CORTO[actual.routing]} · recorridos guiados:{" "}
           {actual.procedures ? "sí" : "no"}
         </span>
       </div>
-      {!estado.aos_connection_routing && (
-        <p className="text-sm text-status-warning-fg">
-          El motor nuevo está apagado en este entorno: se enciende con un despliegue (AOS_CONNECTION_ROUTING).
-        </p>
-      )}
       {estado.ultimo_cambio && (
         <p className="text-xs text-body">
           Último cambio: {estado.ultimo_cambio.actor}, el {formatDate(estado.ultimo_cambio.fecha)}
@@ -169,26 +156,12 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Motor" htmlFor={`aos-rt-${tenantId}`}>
-          <Select
-            id={`aos-rt-${tenantId}`}
-            value={objetivo.runtime}
-            onChange={(e) => cambiar({ runtime: e.target.value as Runtime })}
-            disabled={pending}
-          >
-            {runtimesOfrecidos(actual.runtime).map((r) => (
-              <option key={r} value={r}>
-                {ETIQUETA_RUNTIME[r]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Reparte entre especialistas" htmlFor={`aos-ru-${tenantId}`} help={v3 ? undefined : "Necesita el motor nuevo."}>
+        <Field label="Reparte entre especialistas" htmlFor={`aos-ru-${tenantId}`}>
           <Select
             id={`aos-ru-${tenantId}`}
             value={objetivo.routing}
             onChange={(e) => cambiar({ routing: e.target.value as Ruteo })}
-            disabled={pending || !v3}
+            disabled={pending}
           >
             {RUTEOS.map((r) => (
               <option key={r} value={r}>
@@ -201,27 +174,16 @@ export function AgentOSSection({ tenantId }: { tenantId: string }) {
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={`aos-pr-${tenantId}`} className="flex flex-col text-sm text-body">
           Recorridos guiados
-          <span className="text-xs text-text-soft">
-            {v3 ? "Pedidos, citas y cobros paso a paso." : "Necesitan el motor nuevo."}
-          </span>
+          <span className="text-xs text-text-soft">Pedidos, citas y cobros paso a paso.</span>
         </label>
         <Switch
           id={`aos-pr-${tenantId}`}
           aria-label="Recorridos guiados"
           checked={objetivo.procedures}
           onCheckedChange={(procedures) => cambiar({ procedures })}
-          disabled={pending || !v3}
-        />
-      </div>
-      {v3 && actual.runtime === "legacy" && (
-        <Checkbox
-          id={`aos-co-${tenantId}`}
-          label="Si la versión publicada está desactualizada, crear y publicar una nueva (cambia la versión publicada)."
-          checked={construir}
-          onCheckedChange={setConstruir}
           disabled={pending}
         />
-      )}
+      </div>
       <details className="text-xs text-body">
         <summary className="cursor-pointer text-link">Antes de encender</summary>
         <p className="mt-1">{NOTA_RUNBOOK}</p>

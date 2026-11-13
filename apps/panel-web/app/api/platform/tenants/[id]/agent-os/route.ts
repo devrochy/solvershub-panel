@@ -42,12 +42,12 @@ async function enviar(request: Request, { params }: Ctx, simular: boolean) {
   return res.ok ? NextResponse.json(res.data) : error(res);
 }
 
-/** Simular (dry-run): bloqueos, avisos y pasos, sin escribir nada. */
+/** Simular (dry-run): avisos y pasos, sin escribir nada. */
 export async function POST(request: Request, ctx: Ctx) {
   return enviar(request, ctx, true);
 }
 
-/** Aplicar el cambio (backfills, migrar-a-v3 y banderas, auditado por la API). */
+/** Aplicar el cambio de banderas (auditado por la API). */
 export async function PUT(request: Request, ctx: Ctx) {
   return enviar(request, ctx, false);
 }

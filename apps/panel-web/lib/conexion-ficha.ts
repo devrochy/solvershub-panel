@@ -250,14 +250,14 @@ export function conQuery(ruta: string, query: Record<string, string | string[] |
 
 /**
  * ¿Puede cambiar los agentes de la conexión? La misma regla de `connection_agents.py`: el master
- * siempre; los demás con `settings` de escritura, viendo `connections`, y el Agent OS (v3).
+ * siempre; los demás con `settings` de escritura y viendo `connections`.
  */
-export function puedeEditarAgentesDeConexion(
-  me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null },
-  runtime: string,
-): boolean {
+export function puedeEditarAgentesDeConexion(me: {
+  role?: string | null;
+  permissions?: Record<string, string | null | undefined> | null;
+}): boolean {
   if (me.role === "master") return true;
-  return runtime === "v3" && me.permissions?.settings === "write" && me.permissions?.connections != null;
+  return me.permissions?.settings === "write" && me.permissions?.connections != null;
 }
 
 const ROLES: Record<string, string> = { core: "Coordinador", specialist: "Especialista", backoffice: "Back-office" };
@@ -268,8 +268,6 @@ export function rolLegible(role: string): string {
 
 /** Mensajes de los 409/403 de `connection_agents.py` por `code` estable. */
 const ERRORES_AGENTES: Record<string, string> = {
-  aos_runtime_legacy:
-    "Los agentes se activan con el Agent OS de este negocio: por ahora solo los edita el administrador.",
   core_missing: "Esta conexión todavía no tiene Coordinador: sin él no se pueden sumar especialistas.",
   core_required: "El Coordinador lo gestiona el sistema: no se deshabilita ni se quita.",
   not_specialist: "Solo se agregan especialistas: el Coordinador lo gestiona el sistema.",

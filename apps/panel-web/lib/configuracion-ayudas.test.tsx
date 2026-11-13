@@ -113,18 +113,12 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
   });
 });
 
-describe("aviso del runtime v3 en Identidad", () => {
+describe("aviso de la voz del agente en Identidad", () => {
   const AVISO = /Tu negocio usa el Agent OS/;
 
-  it("con v3 avisa que nombre, descripción y voz se aplican al publicar una versión", async () => {
+  it("avisa que nombre, descripción y voz se aplican al publicar una versión", async () => {
     montar(catalogo("v3"));
     await irA("Identidad", "Identidad");
     expect(screen.getAllByText(AVISO).length).toBeGreaterThan(0);
-  });
-
-  it("con legacy no hay aviso", async () => {
-    montar(catalogo("legacy"));
-    await irA("Identidad", "Identidad");
-    expect(screen.queryByText(AVISO)).toBeNull();
   });
 });

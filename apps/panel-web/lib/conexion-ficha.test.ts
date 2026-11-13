@@ -184,18 +184,16 @@ describe("rutas viejas del hub de Meta", () => {
 });
 
 describe("pestaña Agentes y Costos", () => {
-  it("edita el master, o settings de escritura con el Agent OS", () => {
+  it("edita el master, o settings de escritura viendo conexiones", () => {
     const dueno = { role: "owner", permissions: { settings: "write", connections: "read" } };
-    expect(puedeEditarAgentesDeConexion(dueno, "v3")).toBe(true);
-    expect(puedeEditarAgentesDeConexion(dueno, "legacy")).toBe(false);
-    expect(puedeEditarAgentesDeConexion({ role: "master", permissions: {} }, "legacy")).toBe(true);
-    expect(puedeEditarAgentesDeConexion({ role: "owner", permissions: { settings: "read", connections: "write" } }, "v3")).toBe(false);
-    expect(puedeEditarAgentesDeConexion({ role: "owner", permissions: { settings: "write", connections: null } }, "v3")).toBe(false);
+    expect(puedeEditarAgentesDeConexion(dueno)).toBe(true);
+    expect(puedeEditarAgentesDeConexion({ role: "master", permissions: {} })).toBe(true);
+    expect(puedeEditarAgentesDeConexion({ role: "owner", permissions: { settings: "read", connections: "write" } })).toBe(false);
+    expect(puedeEditarAgentesDeConexion({ role: "owner", permissions: { settings: "write", connections: null } })).toBe(false);
   });
 
   it("los códigos estables de la API tienen su mensaje", () => {
     expect(mensajeErrorAgentes("core_missing", "x")).toMatch(/Coordinador/);
-    expect(mensajeErrorAgentes("aos_runtime_legacy", "x")).toMatch(/Agent OS/);
     expect(mensajeErrorAgentes("otro", "fallback")).toBe("fallback");
     expect(mensajeErrorAgentes(undefined, "fallback")).toBe("fallback");
   });
