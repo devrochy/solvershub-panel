@@ -85,8 +85,8 @@ export function PedidosFilters({ filtros, nombreDelCliente }: { filtros: Filtros
           label="Cómo ver los pedidos"
           value={porEtapa ? "etapas" : "lista"}
           options={[
-            { value: "lista", label: "Lista", icon: List, href: hrefPedidos({ ...base, vista: "" }) },
-            { value: "etapas", label: "Por etapa", icon: Columns3, href: hrefPedidos({ ...base, vista: "etapas", estado: "" }) },
+            { value: "lista", label: "Lista", icon: <List />, href: hrefPedidos({ ...base, vista: "" }) },
+            { value: "etapas", label: "Por etapa", icon: <Columns3 />, href: hrefPedidos({ ...base, vista: "etapas", estado: "" }) },
           ]}
           className="sm:ml-auto"
         />

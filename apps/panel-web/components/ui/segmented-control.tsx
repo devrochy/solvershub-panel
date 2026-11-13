@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent, type ReactElement } from "react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,16 +10,21 @@ export type OpcionSegmentada = {
   label: string;
   /** Con `href` en todas las opciones, el control navega: el filtro viaja en la URL. */
   href?: string;
-  /** Si viene, la opción se muestra solo con el icono; `label` queda como nombre accesible. */
-  icon?: LucideIcon;
+  /**
+   * Si viene, la opción se muestra solo con el icono; `label` queda como nombre accesible. Es un
+   * elemento ya creado (`<List />`), no el componente: una página de servidor no puede pasarle una
+   * función a este componente de cliente (React no la serializa y la página no carga).
+   */
+  icon?: ReactElement;
 };
 
 function ContenidoDeOpcion({ opcion }: { opcion: OpcionSegmentada }) {
   if (!opcion.icon) return <>{opcion.label}</>;
-  const Icono = opcion.icon;
   return (
     <>
-      <Icono aria-hidden className="h-4 w-4" />
+      <span aria-hidden className="inline-flex [&>svg]:h-4 [&>svg]:w-4">
+        {opcion.icon}
+      </span>
       <span className="sr-only">{opcion.label}</span>
     </>
   );

@@ -73,8 +73,8 @@ export default async function CategoriesPage({ searchParams }: { searchParams: P
           label="Cómo ver las categorías"
           value={vista}
           options={[
-            { value: "lista", label: "Lista", icon: List, href: `/comercio/categorias${enlace("lista") ? `?vista=${enlace("lista")}` : ""}` },
-            { value: "vitrina", label: "Vitrina", icon: LayoutGrid, href: `/comercio/categorias${enlace("vitrina") ? `?vista=${enlace("vitrina")}` : ""}` },
+            { value: "lista", label: "Lista", icon: <List />, href: `/comercio/categorias${enlace("lista") ? `?vista=${enlace("lista")}` : ""}` },
+            { value: "vitrina", label: "Vitrina", icon: <LayoutGrid />, href: `/comercio/categorias${enlace("vitrina") ? `?vista=${enlace("vitrina")}` : ""}` },
           ]}
           className="self-end"
         />

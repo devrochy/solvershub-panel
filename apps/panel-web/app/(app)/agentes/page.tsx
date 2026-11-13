@@ -134,8 +134,8 @@ export default async function AgentesPage({
               label="Cómo ver los agentes"
               value={vista}
               options={[
-                { value: "cuadricula", label: "Cuadrícula", icon: LayoutGrid, href: enlace("cuadricula") },
-                { value: "lista", label: "Lista", icon: List, href: enlace("lista") },
+                { value: "cuadricula", label: "Cuadrícula", icon: <LayoutGrid />, href: enlace("cuadricula") },
+                { value: "lista", label: "Lista", icon: <List />, href: enlace("lista") },
               ]}
             />
           )}
