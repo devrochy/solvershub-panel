@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { Plus } from "lucide-react";
+import { LayoutGrid, List, Plus } from "lucide-react";
 
 import { AccionesDeCategoria, EditorDeCategoria, MoverCategoria } from "@/app/(app)/comercio/categorias/_components/category-dialog";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
@@ -73,8 +73,8 @@ export default async function CategoriesPage({ searchParams }: { searchParams: P
           label="Cómo ver las categorías"
           value={vista}
           options={[
-            { value: "lista", label: "Lista", href: `/comercio/categorias${enlace("lista") ? `?vista=${enlace("lista")}` : ""}` },
-            { value: "vitrina", label: "Vitrina", href: `/comercio/categorias${enlace("vitrina") ? `?vista=${enlace("vitrina")}` : ""}` },
+            { value: "lista", label: "Lista", icon: List, href: `/comercio/categorias${enlace("lista") ? `?vista=${enlace("lista")}` : ""}` },
+            { value: "vitrina", label: "Vitrina", icon: LayoutGrid, href: `/comercio/categorias${enlace("vitrina") ? `?vista=${enlace("vitrina")}` : ""}` },
           ]}
           className="self-end"
         />

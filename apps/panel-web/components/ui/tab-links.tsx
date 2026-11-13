@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
 import { TabLinkActiva } from "@/components/ui/tab-link-activa";
 import { formatNumber } from "@/lib/format";
@@ -21,7 +22,7 @@ export function TabLinks({
 }: {
   label: string;
   /** `count`: contador visible junto al nombre (por ejemplo los clientes de cada etapa). */
-  items: { href: string; label: string; count?: number }[];
+  items: { href: string; label: string; count?: number; icon?: LucideIcon }[];
   current: string;
   size?: "default" | "compact";
   className?: string;
@@ -36,18 +37,28 @@ export function TabLinks({
         const activa = item.href === current;
         // La activa siempre queda a la vista: en el celular la fila no cabe (VEN-15).
         const Enlace = activa ? TabLinkActiva : Link;
+        const Icono = item.icon;
         return (
           <Enlace
             key={item.href}
             href={item.href}
             aria-current={activa ? "page" : undefined}
+            title={Icono ? item.label : undefined}
             className={cn(
-              "-mb-px inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 py-2 text-sm transition-colors",
+              "-mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 py-2 text-sm transition-colors",
               compacta ? "px-3" : "px-4",
+              Icono && "min-w-11",
               activa ? "border-focus text-headline" : "border-transparent text-body hover:text-headline",
             )}
           >
-            {item.label}
+            {Icono ? (
+              <>
+                <Icono aria-hidden className="h-4 w-4" />
+                <span className="sr-only">{item.label}</span>
+              </>
+            ) : (
+              item.label
+            )}
             {item.count !== undefined && (
               <span className="ml-1.5 tabular-nums text-text-soft">{formatNumber(item.count)}</span>
             )}
