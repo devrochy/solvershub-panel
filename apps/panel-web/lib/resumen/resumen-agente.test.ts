@@ -19,8 +19,7 @@ function agente(parcial: Partial<AgenteResumen>): AgenteResumen {
 }
 
 describe("resumen por agente (panel)", () => {
-  it("el General y el Coordinador no son tarjetas", () => {
-    expect(esTarjetaDeAgente(agente({ key: "general" }))).toBe(false);
+  it("el Coordinador no es tarjeta; cualquier especialista sí", () => {
     expect(esTarjetaDeAgente(agente({ key: "coordinador", kind: "core" }))).toBe(false);
     expect(esTarjetaDeAgente(agente({ key: "ventas" }))).toBe(true);
   });
@@ -30,10 +29,11 @@ describe("resumen por agente (panel)", () => {
     expect(llevaInsignia(agente({ kind: "specialist" }))).toBe(false);
   });
 
-  it("separa las tarjetas y los módulos sin agente (que cuelgan del General)", () => {
+  it("separa las tarjetas y los módulos sin agente (del bloque del negocio, ADR-0192)", () => {
     const huerfano = { id: "pack_calendar", nombre: "Agenda", kpis: [], error: null };
     const datos = {
-      agentes: [agente({ key: "general", modulos: [huerfano] }), agente({ key: "ventas" })],
+      general: { kpis: [], serie: [], modulos_sin_agente: [huerfano] },
+      agentes: [agente({ key: "coordinador", kind: "core" }), agente({ key: "ventas" })],
     } as unknown as ResumenPorAgente;
     expect(agentesConTarjeta(datos).map((a) => a.key)).toEqual(["ventas"]);
     expect(modulosSinAgente(datos)).toEqual([huerfano]);

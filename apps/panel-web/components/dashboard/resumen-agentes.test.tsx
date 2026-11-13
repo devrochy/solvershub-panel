@@ -34,6 +34,8 @@ const DATOS: ResumenPorAgente = {
       k({ id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } }),
     ],
     serie: serie([7, 11, 1, 16, 12, 18, 15]),
+    // Módulos que ningún agente cubre: van en el bloque del negocio (ADR-0192).
+    modulos_sin_agente: [{ id: "pack_calendar", nombre: "Agenda", error: null, kpis: [k({ id: "citas_hoy", label: "Citas de hoy", valor: 4 })] }],
   },
   agentes: [
     {
@@ -55,16 +57,6 @@ const DATOS: ResumenPorAgente = {
           kpis: [k({ id: "pedidos", label: "Pedidos", valor: 2, destino: { ruta: "comercio.pedidos", params: {} } })],
         },
       ],
-    },
-    {
-      ref: "general",
-      key: "general",
-      name: "General",
-      kind: "specialist",
-      kpis: [k({ id: "turnos", label: "Turnos atendidos", valor: 20, destino: { ruta: "agente", params: { ref: "general", pestana: "conversaciones" } } })],
-      serie: serie([2, 3, 1, 4, 3, 4, 3]),
-      ultima_actividad: "2026-10-27T17:10:00Z",
-      modulos: [{ id: "pack_calendar", nombre: "Agenda", error: null, kpis: [k({ id: "citas_hoy", label: "Citas de hoy", valor: 4 })] }],
     },
     { ref: "id-coord", key: "coordinador", name: "Coordinador", kind: "core", kpis: [k({ id: "turnos", label: "Turnos atendidos", valor: 9 })], serie: serie([1, 1, 1, 2, 1, 1, 2]), ultima_actividad: null, modulos: [] },
     {
@@ -118,11 +110,10 @@ describe("ResumenAgentes (ADR-0171)", () => {
     expect(Array.from(tarjetas).map((d) => (d as HTMLDetailsElement).open)).toEqual([true, false, false]);
   });
 
-  it("no hay tarjeta del Coordinador ni del General; la insignia es solo del back-office", () => {
+  it("no hay tarjeta del Coordinador; la insignia es solo del back-office", () => {
     render(<ResumenAgentes datos={DATOS} />);
     const agentes = screen.getByRole("region", { name: "Agentes" });
     expect(within(agentes).queryByText("Coordinador")).toBeNull();
-    expect(within(agentes).queryByText("General")).toBeNull();
     expect(within(agentes).getAllByText("Back-office")).toHaveLength(1);
     expect(within(agentes).queryByText("Especialista")).toBeNull();
   });

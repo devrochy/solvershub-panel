@@ -63,9 +63,9 @@ export const PERIODOS = [
 
 export const DIAS_POR_DEFECTO = 30;
 
-const REF_VALIDO = /^(general|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+const REF_VALIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** El `ref` de la ruta: id del agente o `general`. Cualquier otra cosa es null (404). */
+/** El `ref` de la ruta: el id del agente (ya no hay General virtual, ADR-0192). Otra cosa es null (404). */
 export function refValido(ref: string | undefined): string | null {
   const limpio = (ref ?? "").trim();
   return REF_VALIDO.test(limpio) ? limpio.toLowerCase() : null;
@@ -158,14 +158,13 @@ export function tipoDeAgente(kind: string): string {
 }
 
 /**
- * Qué hace el agente, en una frase (AGT-01): su propósito si lo tiene; el General y el Coordinador,
- * que crea el sistema, dicen que coordinan (el General es `specialist` en la API).
+ * Qué hace el agente, en una frase (AGT-01): su propósito si lo tiene; el Coordinador, que crea el
+ * sistema, dice que reparte.
  */
 export function papelDelAgente(agente: { key: string; kind: string }, proposito?: string | null): string {
   // Sin el punto final: la frase sigue con «· Atiende en…».
   const texto = proposito?.trim().replace(/\.+$/, "");
   if (texto) return texto;
-  if (agente.key === "general") return "Coordina a los demás y responde lo que nadie más sabe";
   if (agente.kind === "core") return "Reparte cada conversación al agente que sabe";
   return tipoDeAgente(agente.kind);
 }
@@ -252,14 +251,14 @@ export function puedeEditarAgentes(
   return runtime === "v3" && me.permissions?.settings === "write";
 }
 
-/** Agentes que crea el sistema con el negocio: la API no deja archivarlos (409 `agent_reserved`). */
-export const KEYS_RESERVADAS: ReadonlySet<string> = new Set(["general", "coordinador"]);
+/** El agente que crea el sistema con el negocio: la API no deja archivarlo (409 `agent_reserved`). */
+export const KEYS_RESERVADAS: ReadonlySet<string> = new Set(["coordinador"]);
 
 export function estaArchivado(agente: { status?: string | null }): boolean {
   return agente.status === "archived";
 }
 
-/** Archivar o reactivar: solo agentes reales (con id) que no sean el General ni el Coordinador. */
+/** Archivar o reactivar: solo agentes reales (con id) que no sean el Coordinador. */
 export function puedeArchivar(agente: { id?: string | null; key: string; virtual?: boolean }): boolean {
   return Boolean(agente.id) && !agente.virtual && !KEYS_RESERVADAS.has(agente.key);
 }

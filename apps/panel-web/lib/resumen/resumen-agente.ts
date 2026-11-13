@@ -16,9 +16,9 @@ const CIFRAS_DE_ACTIVIDAD = ["turnos", "conversaciones"] as const;
 
 export type CifraDelTitulo = { id: string; label: string; valor: string };
 
-/** El Coordinador (`core`) y el agente «General» no son tarjetas: el General tiene su propia sección. */
+/** El Coordinador (`core`) no es tarjeta: sus turnos cuentan en el bloque del negocio. */
 export function esTarjetaDeAgente(a: Pick<AgenteResumen, "key" | "kind">): boolean {
-  return a.key !== "general" && a.kind !== "core";
+  return a.kind !== "core";
 }
 
 /** Solo los back-office llevan insignia de tipo: «especialista» es lo normal y no aporta. */
@@ -30,9 +30,9 @@ export function agentesConTarjeta(datos: ResumenPorAgente): AgenteResumen[] {
   return datos.agentes.filter(esTarjetaDeAgente);
 }
 
-/** Los módulos sin agente propio cuelgan del «General» (así los entrega el backend). */
+/** Los módulos activos que ningún agente cubre: el backend los entrega en el bloque del negocio (ADR-0192). */
 export function modulosSinAgente(datos: ResumenPorAgente) {
-  return datos.agentes.find((a) => a.key === "general")?.modulos ?? [];
+  return datos.general.modulos_sin_agente ?? [];
 }
 
 function aCifra(k: KpiResumen): CifraDelTitulo {

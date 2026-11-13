@@ -123,7 +123,7 @@ export const resumenPorAgente: ResumenPorAgente = {
     kpis: [
       { id: "conversaciones", label: "Conversaciones", valor: 128, unidad: "count", previo: 100, delta_pct: 28, polaridad: "up-good", hint: "Últimos 7 días", destino: { ruta: "conversaciones", params: {} } },
       { id: "escalaciones_pendientes", label: "Escalaciones pendientes", valor: 2, unidad: "count", previo: null, delta_pct: null, polaridad: "up-bad", destino: { ruta: "escalaciones", params: {} } },
-      { id: "tasa_escalamiento", label: "Tasa de escalamiento", valor: null, unidad: "pct", previo: null, delta_pct: null, polaridad: "up-bad", hint: "Sin datos suficientes", destino: { ruta: "agente", params: { ref: "general", pestana: "consumo" } } },
+      { id: "tasa_escalamiento", label: "Tasa de escalamiento", valor: null, unidad: "pct", previo: null, delta_pct: null, polaridad: "up-bad", hint: "Sin datos suficientes", destino: { ruta: "agente", params: { ref: "00000000-0000-4000-8000-000000000001", pestana: "consumo" } } },
     ],
     // Todo el negocio por día: la suma de las series de los agentes.
     serie: [
@@ -169,12 +169,12 @@ export const resumenPorAgente: ResumenPorAgente = {
       ],
     },
     {
-      ref: "general",
-      key: "general",
-      name: "General",
+      ref: "00000000-0000-4000-8000-000000000001",
+      key: "atencion",
+      name: "Atención",
       kind: "specialist",
       kpis: [
-        { id: "turnos", label: "Turnos atendidos", valor: 20, unidad: "count", previo: 10, delta_pct: 100, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "general", pestana: "conversaciones" } } },
+        { id: "turnos", label: "Turnos atendidos", valor: 20, unidad: "count", previo: 10, delta_pct: 100, polaridad: "up-good", destino: { ruta: "agente", params: { ref: "00000000-0000-4000-8000-000000000001", pestana: "conversaciones" } } },
       ],
       serie: [
         { fecha: "2026-10-21", turnos: 2, conversaciones: 1, costo: 0.01 },
@@ -713,9 +713,9 @@ export const agentes: AgentsOverview = {
   items: [
     {
       id: "00000000-0000-4000-8000-000000000001",
-      ref: "general",
-      key: "general",
-      name: "General",
+      ref: "00000000-0000-4000-8000-000000000001",
+      key: "atencion",
+      name: "Atención",
       kind: "specialist",
       status: "active",
       virtual: false,

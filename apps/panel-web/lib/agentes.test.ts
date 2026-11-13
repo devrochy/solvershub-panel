@@ -59,8 +59,8 @@ describe("pestañas de la ficha del agente (HU-UX-09, AGT-04)", () => {
 });
 
 describe("sección Agentes (HU-AOS-47)", () => {
-  it("acepta solo un id o `general` como ref", () => {
-    expect(refValido("general")).toBe("general");
+  it("acepta solo un id como ref (sin el `general` de antes)", () => {
+    expect(refValido("general")).toBeNull();
     expect(refValido(ID.toUpperCase())).toBe(ID);
     expect(refValido("ventas")).toBeNull();
     expect(refValido(undefined)).toBeNull();
@@ -96,11 +96,11 @@ describe("sección Agentes (HU-AOS-47)", () => {
 
   it("conserva los filtros al cambiar de pestaña y vuelve a la página 1", () => {
     const actual = { tab: "actividad" as const, ver: "conversaciones" as const, dias: 7, conexion: ID, pagina: 4, estado: null };
-    expect(hrefDeAgente("general", actual, { ver: "tareas" })).toBe(`/agentes/general?ver=tareas&dias=7&conexion=${ID}`);
-    expect(hrefDeAgente("general", actual, { tab: "consumo" })).toBe(`/agentes/general?tab=consumo&dias=7&conexion=${ID}`);
-    expect(hrefDeAgente("general", actual, { page: 5 })).toBe(`/agentes/general?dias=7&conexion=${ID}&page=5`);
-    expect(hrefDeAgente("general", actual, { conexion: null })).toBe("/agentes/general?dias=7");
-    expect(hrefDeAgente("general", { ...actual, ver: "tareas" }, { estado: "open" })).toBe(`/agentes/general?ver=tareas&dias=7&conexion=${ID}&estado=open`);
+    expect(hrefDeAgente(ID, actual, { ver: "tareas" })).toBe(`/agentes/${ID}?ver=tareas&dias=7&conexion=${ID}`);
+    expect(hrefDeAgente(ID, actual, { tab: "consumo" })).toBe(`/agentes/${ID}?tab=consumo&dias=7&conexion=${ID}`);
+    expect(hrefDeAgente(ID, actual, { page: 5 })).toBe(`/agentes/${ID}?dias=7&conexion=${ID}&page=5`);
+    expect(hrefDeAgente(ID, actual, { conexion: null })).toBe(`/agentes/${ID}?dias=7`);
+    expect(hrefDeAgente(ID, { ...actual, ver: "tareas" }, { estado: "open" })).toBe(`/agentes/${ID}?ver=tareas&dias=7&conexion=${ID}&estado=open`);
   });
 
   it("traduce estados, tipos y procedimientos", () => {
@@ -131,10 +131,10 @@ describe("sección Agentes (HU-AOS-47)", () => {
 });
 
 describe("archivar agentes", () => {
-  it("el General, el Coordinador y el General virtual no se archivan", () => {
-    expect(puedeArchivar({ id: ID, key: "general" })).toBe(false);
+  it("el Coordinador y un agente virtual no se archivan; `general` es una clave más", () => {
     expect(puedeArchivar({ id: ID, key: "coordinador" })).toBe(false);
-    expect(puedeArchivar({ id: null, key: "general", virtual: true })).toBe(false);
+    expect(puedeArchivar({ id: null, key: "x", virtual: true })).toBe(false);
+    expect(puedeArchivar({ id: ID, key: "general" })).toBe(true);
     expect(puedeArchivar({ id: ID, key: "ventas" })).toBe(true);
   });
 
@@ -152,8 +152,7 @@ describe("archivar agentes", () => {
 });
 
 describe("lista de agentes en palabras (AGT-01)", () => {
-  it("el General coordina; los demás dicen su propósito", () => {
-    expect(papelDelAgente({ key: "general", kind: "specialist" })).toBe("Coordina a los demás y responde lo que nadie más sabe");
+  it("el Coordinador reparte; los demás dicen su propósito", () => {
     expect(papelDelAgente({ key: "coordinador", kind: "core" })).toBe("Reparte cada conversación al agente que sabe");
     expect(papelDelAgente({ key: "ventas", kind: "specialist" }, "Toma pedidos")).toBe("Toma pedidos");
     expect(papelDelAgente({ key: "ventas", kind: "specialist" }, "  ")).toBe("Especialista");

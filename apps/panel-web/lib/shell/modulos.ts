@@ -30,13 +30,12 @@ export type PacksDelNegocio = Record<string, { enabled: boolean }>;
 
 /**
  * ¿El agente es un especialista vivo que cubre un módulo? Cuenta el `specialist` y el
- * `backoffice` (los dos atienden trabajo del negocio); nunca el Coordinador (`core`) ni el
- * General legado.
+ * `backoffice` (los dos atienden trabajo del negocio); nunca el Coordinador (`core`).
  */
 export function cuentaParaModulo(
   agente: Pick<AgentOverviewItem, "key" | "kind" | "published" | "virtual">,
 ): boolean {
-  return agente.kind !== "core" && agente.published && !agente.virtual && agente.key !== "general";
+  return agente.kind !== "core" && agente.published && !agente.virtual;
 }
 
 /** Packs que tienen al menos un especialista publicado. */
