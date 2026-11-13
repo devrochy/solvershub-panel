@@ -175,11 +175,12 @@ export function Sidebar({
   const pathname = usePathname();
   const [modo, setModo] = useState<ModoSidebar>(modoInicial);
   /**
-   * Acordeón de una sola sección. Sin clic del usuario, se abre la sección de la página
-   * actual; si no hay, la del primer módulo habilitado. El `path` evita que el grupo
-   * abierto de la página anterior se quede abierto al navegar.
+   * Secciones abiertas (varias a la vez, para no ocultar la subsección seleccionada al
+   * desplegar otra). Sin clic del usuario queda abierta la sección de la página actual; si
+   * no hay, la del primer módulo habilitado. El `path` descarta lo recordado al navegar, así
+   * la sección de la nueva página vuelve a abrirse.
    */
-  const [abierto, setAbierto] = useState<{ path: string; id: string | null } | null>(null);
+  const [abiertos, setAbiertos] = useState<{ path: string; ids: string[] } | null>(null);
   const anchoExpandida = useSyncExternalStore(suscribirAncho, leerAncho, () => true);
   const expandidaAhora = modo === "expandida" || (modo === "auto" && anchoExpandida);
   const esMovil = Boolean(onNavigate);
@@ -219,7 +220,22 @@ export function Sidebar({
   // Sin página activa (login, ruta fuera del menú): se abre el grupo del primer módulo usable.
   const grupoConModulo =
     visibleByGroup.find(({ visible }) => visible.some((item) => estadoDe(item) === "habilitado"))?.group.id ?? null;
-  const abiertoEfectivo = abierto?.path === pathname ? abierto.id : (grupoActivo ?? grupoConModulo);
+  // Al navegar (`path` viejo) se olvida lo abierto a mano y vuelve a abrirse la sección actual.
+  const abiertosEfectivos =
+    abiertos?.path === pathname
+      ? abiertos.ids
+      : grupoActivo
+        ? [grupoActivo]
+        : grupoConModulo
+          ? [grupoConModulo]
+          : [];
+
+  function alternarSeccion(id: string) {
+    const ids = abiertosEfectivos.includes(id)
+      ? abiertosEfectivos.filter((value) => value !== id)
+      : [...abiertosEfectivos, id];
+    setAbiertos({ path: pathname, ids });
+  }
 
   /**
    * Estado de la fila. Con `modulos` del layout manda el agente publicado; sin él (tests o
@@ -275,17 +291,26 @@ export function Sidebar({
 
         <nav aria-label="Secciones del panel" className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
           {visibleByGroup.map(({ group, visible }) => {
-            const open = abiertoEfectivo === group.id;
+            const open = abiertosEfectivos.includes(group.id);
+            const esActiva = group.id === grupoActivo;
+            const Icono = group.icon;
             return (
               <div key={group.id} className="flex flex-col gap-0.5">
                 <button
                   type="button"
                   aria-expanded={open}
-                  onClick={() => setAbierto({ path: pathname, id: open ? null : group.id })}
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sh-caption font-medium tracking-[0.06em] text-text-soft uppercase transition-colors hover:text-headline"
+                  onClick={() => alternarSeccion(group.id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-3 py-1.5 text-sh-caption font-medium tracking-[0.06em] uppercase transition-colors",
+                    esActiva ? "text-link" : "text-text-soft hover:text-headline",
+                  )}
                 >
-                  <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} aria-hidden />
+                  <Icono className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span className="flex-1 text-left">{group.label}</span>
+                  <ChevronRight
+                    className={cn("h-3.5 w-3.5 shrink-0 transition-transform", open && "rotate-90")}
+                    aria-hidden
+                  />
                 </button>
                 {open && (
                   <div className="flex flex-col gap-0.5">

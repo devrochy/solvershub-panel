@@ -111,7 +111,7 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
     expect(enlace.closest("[data-tooltip]")?.hasAttribute("tabindex")).toBe(false);
   });
 
-  it("arranca con sola la sección de la página abierta y abre una sola a la vez", () => {
+  it("arranca con la sección de la página abierta y al abrir otra no oculta la subsección seleccionada", () => {
     const { container } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
     const { expandida } = contenedores(container);
     // Cobranza vive en «Negocio»: su grupo arranca abierto y «Operación» cerrado.
@@ -119,8 +119,35 @@ describe("Sidebar adaptativo (HU-DS-04)", () => {
     expect(within(expandida).queryByRole("link", { name: "Resumen" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Operación" }));
+    // Ambas secciones quedan abiertas: la página actual sigue visible en el menú.
     expect(within(expandida).getByRole("link", { name: "Resumen" })).toBeTruthy();
+    expect(within(expandida).getByRole("link", { name: "Cobranza" })).toBeTruthy();
+  });
+
+  it("resalta con el acento solo la sección de la página actual", () => {
+    render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
+    // Cobranza vive en «Negocio»: esa sección va en acento y «Operación» en gris.
+    expect(screen.getByRole("button", { name: "Negocio" }).className).toMatch(/\btext-link\b/);
+    expect(screen.getByRole("button", { name: "Operación" }).className).not.toMatch(/\btext-link\b/);
+  });
+
+  it("cada sección muestra su icono además del chevrón", () => {
+    render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
+    // Icono de la sección + chevrón de desplegar.
+    expect(screen.getByRole("button", { name: "Negocio" }).querySelectorAll("svg")).toHaveLength(2);
+  });
+
+  it("la sección actual se puede plegar a mano, pero se reabre al navegar", () => {
+    const { container, rerender } = render(<Sidebar me={me} packs={PACKS} modo="expandida" />);
+    const { expandida } = contenedores(container);
+
+    fireEvent.click(screen.getByRole("button", { name: "Negocio" }));
     expect(within(expandida).queryByRole("link", { name: "Cobranza" })).toBeNull();
+
+    // Navegar dentro de la misma sección la vuelve a abrir.
+    ruta = "/cobranza/promesas";
+    rerender(<Sidebar me={me} packs={PACKS} modo="expandida" />);
+    expect(within(contenedores(container).expandida).getByRole("link", { name: "Cobranza" })).toBeTruthy();
   });
 
   it("muestra los módulos sin agente con candado y «Plan» sin ocultarlos", () => {

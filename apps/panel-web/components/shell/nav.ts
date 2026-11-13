@@ -1,7 +1,9 @@
 import {
   AlertTriangle,
+  Briefcase,
   Building2,
   CalendarDays,
+  CircleUser,
   Coins,
   CreditCard,
   FlaskConical,
@@ -36,7 +38,10 @@ import {
   Repeat,
   Scale,
   ScrollText,
+  Server,
   Smartphone,
+  Sparkles,
+  Store,
   Tags,
   Timer,
   Wallet,
@@ -91,6 +96,8 @@ export type NavItem = {
 export type NavGroupDef = {
   id: string;
   label: string;
+  /** Icono del encabezado de la sección (se resalta cuando la sección está activa). */
+  icon: LucideIcon;
   items: NavItem[];
 };
 
@@ -113,6 +120,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: "operacion",
     label: "Operación",
+    icon: Briefcase,
     items: [
       { section: "dashboard", label: "Resumen", href: "/dashboard", icon: LayoutDashboard, ready: true },
       entrada("Conversaciones", MessageSquare, [
@@ -125,6 +133,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: "asistente",
     label: "Tu asistente",
+    icon: Sparkles,
     items: [
       entrada("Agentes", Bot, [
         { section: "agents", label: "Agentes", href: "/agentes", icon: Bot, ready: true },
@@ -146,6 +155,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: "negocio",
     label: "Negocio",
+    icon: Store,
     items: [
       // HU-CAL-08: Agenda es una sola vista; tipos, horario, agendas y Google se abren en su cajón
       // de ajustes y la cuenta de Google vive en la ficha de su conexión. HU-CRM-12 le suma la
@@ -213,6 +223,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: "cuenta",
     label: "Cuenta",
+    icon: CircleUser,
     items: [
       // Rediseño B (CYP): una sola página con el crédito, el plan y sus pagos. Los costos en dólares
       // (IA y WhatsApp) son del equipo de SolversHub: van en Plataforma.
@@ -236,6 +247,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   {
     id: "plataforma",
     label: "Plataforma",
+    icon: Server,
     items: [
       // Solo master: `tenants` es una sección global (HU-CONN-07 y HU-SH-05).
       entrada("Negocios", Building2, [
