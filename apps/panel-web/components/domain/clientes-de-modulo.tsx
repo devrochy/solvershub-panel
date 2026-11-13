@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, MessageCircle, Phone, X } from "lucide-react";
+import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
@@ -509,8 +509,8 @@ export async function ClientesDeModulo({
         <TabLinks
           label="Vista de los clientes"
           items={[
-            { href: hrefCon({ vista: "lista" }), label: "Lista" },
-            { href: hrefCon({ vista: "embudo" }), label: "Embudo" },
+            { href: hrefCon({ vista: "lista" }), label: "Lista", icon: List },
+            { href: hrefCon({ vista: "embudo" }), label: "Embudo", icon: Columns3 },
           ]}
           current={hrefCon({ vista: modoEmbudo ? "embudo" : "lista" })}
         />

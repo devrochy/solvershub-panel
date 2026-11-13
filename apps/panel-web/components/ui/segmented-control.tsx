@@ -2,6 +2,7 @@
 
 import { useRef, type KeyboardEvent } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,20 @@ export type OpcionSegmentada = {
   label: string;
   /** Con `href` en todas las opciones, el control navega: el filtro viaja en la URL. */
   href?: string;
+  /** Si viene, la opción se muestra solo con el icono; `label` queda como nombre accesible. */
+  icon?: LucideIcon;
 };
+
+function ContenidoDeOpcion({ opcion }: { opcion: OpcionSegmentada }) {
+  if (!opcion.icon) return <>{opcion.label}</>;
+  const Icono = opcion.icon;
+  return (
+    <>
+      <Icono aria-hidden className="h-4 w-4" />
+      <span className="sr-only">{opcion.label}</span>
+    </>
+  );
+}
 
 const PISTA = "grid grid-flow-col auto-cols-fr gap-0.5 rounded-md border border-border-soft bg-bg-deep p-[3px]";
 
@@ -50,9 +64,10 @@ export function SegmentedControl({
               key={opcion.value || "todas"}
               href={opcion.href as string}
               aria-current={activa ? "page" : undefined}
-              className={cn(OPCION, activa ? ACTIVA : INACTIVA)}
+              title={opcion.icon ? opcion.label : undefined}
+              className={cn(OPCION, opcion.icon && "min-w-9 pointer-coarse:min-w-11", activa ? ACTIVA : INACTIVA)}
             >
-              {opcion.label}
+              <ContenidoDeOpcion opcion={opcion} />
             </Link>
           );
         })}
@@ -80,9 +95,10 @@ export function SegmentedControl({
             type="button"
             aria-pressed={activa}
             onClick={() => onChange?.(opcion.value)}
-            className={cn(OPCION, activa ? ACTIVA : INACTIVA)}
+            title={opcion.icon ? opcion.label : undefined}
+            className={cn(OPCION, opcion.icon && "min-w-9 pointer-coarse:min-w-11", activa ? ACTIVA : INACTIVA)}
           >
-            {opcion.label}
+            <ContenidoDeOpcion opcion={opcion} />
           </button>
         );
       })}

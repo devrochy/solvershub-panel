@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { Columns3, List, X } from "lucide-react";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -85,8 +85,8 @@ export function PedidosFilters({ filtros, nombreDelCliente }: { filtros: Filtros
           label="Cómo ver los pedidos"
           value={porEtapa ? "etapas" : "lista"}
           options={[
-            { value: "lista", label: "Lista", href: hrefPedidos({ ...base, vista: "" }) },
-            { value: "etapas", label: "Por etapa", href: hrefPedidos({ ...base, vista: "etapas", estado: "" }) },
+            { value: "lista", label: "Lista", icon: List, href: hrefPedidos({ ...base, vista: "" }) },
+            { value: "etapas", label: "Por etapa", icon: Columns3, href: hrefPedidos({ ...base, vista: "etapas", estado: "" }) },
           ]}
           className="sm:ml-auto"
         />
