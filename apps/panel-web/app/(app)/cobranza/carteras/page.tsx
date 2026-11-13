@@ -38,7 +38,7 @@ export default async function CarterasPage() {
       }
     />
   );
-  const header = { title: "Carteras", actions: nuevaCartera };
+  const header = { title: "Carteras", helpSection: "cobranza", actions: nuevaCartera };
   if (!res.ok) {
     return (
       <ListPage header={header}>

@@ -16,7 +16,7 @@ type Monitoring = {
 
 export default async function MonitoreoPage() {
   const res = await apiFetch<Monitoring>("/pack/cobranza/monitoring");
-  const header = { title: "Actividad del agente", description: "Lo que atendió el agente y cómo van las promesas de pago." };
+  const header = { title: "Actividad del agente", description: "Lo que atendió el agente y cómo van las promesas de pago.", helpSection: "cobranza" };
   if (!res.ok) {
     return (
       <ListPage header={header}>

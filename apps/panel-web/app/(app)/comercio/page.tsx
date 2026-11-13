@@ -39,6 +39,7 @@ export default async function VentasPage() {
     <PageHeader
       title="Ventas"
       description="Pedidos, catálogo y promociones con los que tu asistente vende."
+      helpSection="ventas"
       actions={
         <Button asChild variant="accent">
           <Link href="/comercio/productos?producto=nuevo" scroll={false}>

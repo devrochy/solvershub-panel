@@ -42,6 +42,7 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
     <PageHeader
       title="Promociones"
       description="Descuentos que el asistente ofrece. Si varias aplican a un carrito, usa la de mayor beneficio."
+      helpSection="ventas"
       actions={
         <Button asChild variant="accent">
           <Link href={hrefPromocion("nueva")} scroll={false}>

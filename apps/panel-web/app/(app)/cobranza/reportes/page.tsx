@@ -32,7 +32,7 @@ type Reports = { filas: ReportRow[]; liquidaciones: Liquidation[] };
 
 export default async function ReportesPage() {
   const res = await apiFetch<Reports>("/pack/cobranza/reports");
-  const header = { title: "Reportes", description: "Consolidado por cartera y últimas liquidaciones." };
+  const header = { title: "Reportes", description: "Consolidado por cartera y últimas liquidaciones.", helpSection: "cobranza" };
   if (!res.ok) {
     return (
       <ListPage header={header}>

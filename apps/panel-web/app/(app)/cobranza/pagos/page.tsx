@@ -19,7 +19,7 @@ type Payment = {
 
 export default async function CobrosPage() {
   const res = await apiFetch<Payment[]>("/pack/cobranza/payments");
-  const header = { title: "Pagos de clientes", description: "Últimos pagos registrados por los gestores (hasta 100)." };
+  const header = { title: "Pagos de clientes", description: "Últimos pagos registrados por los gestores (hasta 100).", helpSection: "cobranza" };
   if (!res.ok) {
     return (
       <ListPage header={header}>

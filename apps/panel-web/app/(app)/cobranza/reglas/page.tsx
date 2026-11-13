@@ -17,6 +17,7 @@ export default async function RulesPage() {
   const header = {
     title: "Reglas de negociación",
     description: "Los límites que el agente respeta al negociar prórrogas, abonos y reprogramaciones.",
+    helpSection: "cobranza",
   };
   if (!res.ok) {
     return (

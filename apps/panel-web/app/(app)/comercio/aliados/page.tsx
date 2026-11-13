@@ -32,6 +32,7 @@ export default async function AlliesPage({ searchParams }: { searchParams: Promi
     <PageHeader
       title="Aliados"
       description="Proveedores cuyos productos vendes. Asígnalos en cada producto o en el archivo, y úsalos para limitar promociones."
+      helpSection="ventas"
       actions={
         <Button asChild variant="accent">
           <Link href={hrefAliado("nuevo")} scroll={false}>

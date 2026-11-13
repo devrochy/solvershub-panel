@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { SectionHelpButton, SectionHelpPopover } from "@/app/(app)/_components/section-help-button";
+import { SectionHelp } from "@/app/(app)/_components/section-help";
 import { MigasDeShell, PestanasDeShell } from "@/components/shell/navegacion-de-pagina";
 import { TituloDePagina } from "@/components/shell/titulo-de-pagina";
 import { Breadcrumbs, type Miga } from "@/components/ui/breadcrumbs";
@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
  * Cabecera de página: migas + título + descripción + acciones, y debajo las pestañas de
  * la sección si las hay. Único lugar para el H1.
  *
- * `densidad="compacta"` es para herramientas de pantalla completa (Conversaciones): título y
- * pestañas en una franja y la descripción dentro de «¿Qué es esto?».
+ * La ayuda de la sección es un ícono informativo junto al título: abre la descripción y los
+ * primeros pasos. `densidad="compacta"` es para herramientas de pantalla completa
+ * (Conversaciones): título y pestañas en una franja.
  */
 export function PageHeader({
   title,
@@ -29,7 +30,7 @@ export function PageHeader({
   title: string;
   description?: string;
   actions?: ReactNode;
-  /** Clave de `lib/copy.ts` para el "¿Qué es esto?". Opcional. */
+  /** Clave de `lib/copy.ts` para el icono informativo. Opcional. */
   helpSection?: string;
   /** Migas propias. Sin esta prop salen solas del menú y la ruta (HU-DS-04). */
   breadcrumbs?: Miga[];
@@ -54,7 +55,7 @@ export function PageHeader({
           <div className="flex items-center gap-2 pb-2.5">
             <TituloDePagina title={title} compacto />
             {despuesDelTitulo}
-            <SectionHelpPopover section={helpSection} description={description} className="max-sm:hidden" />
+            <SectionHelp section={helpSection} description={description} className="max-sm:hidden" />
           </div>
           <div className="-mb-px min-w-0">{tabs ?? <PestanasDeShell compactas />}</div>
           {actions && <div className="ml-auto flex items-center gap-2 pb-2">{actions}</div>}
@@ -72,9 +73,9 @@ export function PageHeader({
             {antesDelTitulo}
             <TituloDePagina title={title} />
             {despuesDelTitulo}
-            {helpSection && <SectionHelpButton section={helpSection} />}
+            {helpSection && <SectionHelp section={helpSection} description={description} />}
           </div>
-          {description && <p className="mt-1 max-w-2xl text-sm text-body">{description}</p>}
+          {!helpSection && description && <p className="mt-1 max-w-2xl text-sm text-body">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>

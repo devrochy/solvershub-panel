@@ -18,7 +18,7 @@ export default async function MensajesPage() {
   if (!res.ok) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Mensajes" description={DESCRIPCION} />
+        <PageHeader title="Mensajes" description={DESCRIPCION} helpSection="connections" />
         {res.status === 403 ? (
           <div className="rounded-lg border border-border-soft bg-surface">
             <EstadoDeError
@@ -36,7 +36,7 @@ export default async function MensajesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Mensajes" description={DESCRIPCION} />
+      <PageHeader title="Mensajes" description={DESCRIPCION} helpSection="connections" />
       <CatalogoMensajes catalogo={res.data} />
     </div>
   );
