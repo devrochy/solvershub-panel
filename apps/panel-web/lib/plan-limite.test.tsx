@@ -9,7 +9,7 @@ import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpo
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import { esLimiteDePlan, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
+import { avisoDePlanFree, esLimiteDePlan, esPlanFree, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -202,5 +202,39 @@ describe("409 de tope del plan", () => {
     const caja = aviso.closest("[role=alert]") as HTMLElement;
     expect(within(caja).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(RUTA_MEJORAR_PLAN);
     expect(screen.queryByRole("dialog")).not.toBeNull();
+  });
+});
+
+
+describe("aviso permanente de plan Free (HU-BILL-15)", () => {
+  const free = {
+    plan_id: "free",
+    plan_name: "Free",
+    status: "trialing",
+    days_left: 12,
+    trial_ends_at: null,
+    has_plan: true,
+  };
+
+  it("reconoce Free y los negocios sin suscripción", () => {
+    expect(esPlanFree(free)).toBe(true);
+    expect(esPlanFree({ ...free, has_plan: false })).toBe(true);
+    expect(esPlanFree({ ...free, plan_id: "basic", plan_name: "Basic" })).toBe(false);
+    expect(esPlanFree(null)).toBe(false);
+  });
+
+  it("cuenta los días de prueba en singular y plural", () => {
+    expect(avisoDePlanFree(free)?.texto).toContain("Te quedan 12 días de prueba.");
+    expect(avisoDePlanFree({ ...free, days_left: 1 })?.texto).toContain("Te queda 1 día de prueba.");
+  });
+
+  it("cambia a peligro cuando la prueba venció", () => {
+    const aviso = avisoDePlanFree({ ...free, status: "expired" });
+    expect(aviso).toMatchObject({ tono: "danger", titulo: "Tu plan Free terminó" });
+    expect(avisoDePlanFree({ ...free, status: "past_due" })?.tono).toBe("danger");
+  });
+
+  it("no avisa en un plan pago", () => {
+    expect(avisoDePlanFree({ ...free, plan_id: "premium", plan_name: "Premium" })).toBeNull();
   });
 });

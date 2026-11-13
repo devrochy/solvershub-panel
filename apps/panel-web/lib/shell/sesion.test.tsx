@@ -54,6 +54,15 @@ describe("sesión vigente (lógica pura)", () => {
     expect(cambioLaSesion(DUENO, { ...vigente, tenant: { ...vigente.tenant, id: "t-2" } })).toBe(true);
   });
 
+  it("refresca el shell cuando cambia el plan del negocio (HU-BILL-15)", () => {
+    const free = { plan_id: "free", plan_name: "Free", status: "trialing", days_left: 12, trial_ends_at: null, has_plan: true };
+    const basic = { ...free, plan_id: "basic", plan_name: "Basic", status: "active" };
+    const vigente = { role: "owner", permissions: { ...PERMISOS }, tenant: { id: "t-1", name: "N", role: "owner", active: true }, plan: free };
+    expect(cambioLaSesion({ ...DUENO, plan: free }, vigente)).toBe(false);
+    expect(cambioLaSesion({ ...DUENO, plan: free }, { ...vigente, plan: basic })).toBe(true);
+    expect(cambioLaSesion({ ...DUENO, plan: free }, { ...vigente, plan: { ...free, days_left: 11 } })).toBe(true);
+  });
+
   it("resuelve la sección de una ruta y si la sesión puede verla", () => {
     expect(itemDeRuta("/colaboradores")?.section).toBe("collaborators");
     expect(itemDeRuta("/cobranza/pagos")?.section).toBe("pack_cobranza:cobros");

@@ -1,5 +1,5 @@
 import { NAV_GROUPS, type NavGroupDef, type NavItem } from "@/components/shell/nav";
-import type { Me } from "@/lib/api/types";
+import type { Me, MePlanSummary } from "@/lib/api/types";
 import { gruposVisibles, hojaDe, rutasDelMenu, type Permisos } from "@/lib/shell/navegacion";
 
 /**
@@ -9,13 +9,16 @@ import { gruposVisibles, hojaDe, rutasDelMenu, type Permisos } from "@/lib/shell
  */
 
 /** Lo que el panel compara entre lo que renderizó y lo que la API dice ahora. */
-export type SesionVigente = Pick<Me, "role" | "permissions" | "tenant">;
+export type SesionVigente = Pick<Me, "role" | "permissions" | "tenant"> & {
+  plan?: MePlanSummary | null;
+};
 
-/** Lo que el shell renderizó: permisos, rol y negocio del `/admin/me` de ese render. */
+/** Lo que el shell renderizó: permisos, rol, negocio y plan del `/admin/me` de ese render. */
 export type SesionRenderizada = {
   permisos: Permisos;
   esMaster: boolean;
   negocioId: string | null;
+  plan?: MePlanSummary | null;
 };
 
 function firmaDePermisos(permisos: Permisos): string {
@@ -26,6 +29,12 @@ function firmaDePermisos(permisos: Permisos): string {
   );
 }
 
+/** Huella del plan para refrescar el shell al pagar o al vencer la prueba (HU-BILL-15). */
+function firmaDelPlan(plan: MePlanSummary | null | undefined): string {
+  if (!plan) return "";
+  return `${plan.plan_id ?? ""}:${plan.status}:${plan.days_left ?? ""}:${plan.has_plan}`;
+}
+
 /**
  * ¿La API dice algo distinto de lo que el shell tiene en pantalla? Cambió una sección
  * (otorgada o revocada), el rol, o el negocio activo (otra pestaña lo cambió, o se
@@ -34,6 +43,7 @@ function firmaDePermisos(permisos: Permisos): string {
 export function cambioLaSesion(renderizada: SesionRenderizada, vigente: SesionVigente): boolean {
   if ((vigente.role === "master") !== renderizada.esMaster) return true;
   if ((vigente.tenant?.id ?? null) !== renderizada.negocioId) return true;
+  if (firmaDelPlan(vigente.plan) !== firmaDelPlan(renderizada.plan)) return true;
   return firmaDePermisos(vigente.permissions) !== firmaDePermisos(renderizada.permisos);
 }
 
