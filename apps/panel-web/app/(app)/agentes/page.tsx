@@ -60,11 +60,10 @@ export default async function AgentesPage({
       </div>
     );
   }
-  const { runtime } = res.data;
   // El General «virtual» (negocio sin el agente General) solo se muestra si tiene algo que ver.
-  const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || runtime !== "v3" || a.turns > 0));
+  const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || a.turns > 0));
   const conAviso = new Set(retiradas.ok ? retiradas.data.agents.map((a) => a.agent_id) : []);
-  const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data, runtime);
+  const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data);
   const avisoTope = avisoDeTopeDeAgentes(res.data.cuota_agentes);
   const propositos = new Map(resumenes.ok ? resumenes.data.map((a) => [a.id, a.description]) : []);
   const delMes = creditosPorAgenteId(plan.ok ? plan.data.credit : null);
@@ -142,13 +141,6 @@ export default async function AgentesPage({
           {/* El editor (HU-AOS-24) escribe en `settings`; sin ese permiso el botón no se muestra. */}
           {puedeEditar && <NuevoAgenteBoton aviso={avisoTope} />}
         </>,
-      )}
-
-      {runtime !== "v3" && (
-        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          Tu asistente todavía atiende con un solo agente, el General. Cuando tu negocio tenga especialistas (Ventas,
-          Agenda, Cobranza…), cada uno tendrá aquí su propia vista.
-        </p>
       )}
 
       <AvisoDeReferenciasEnLista avisos={retiradas.ok ? retiradas.data : null} />

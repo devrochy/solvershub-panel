@@ -79,10 +79,9 @@ describe("ciclos de pasar la conversación", () => {
 
 describe("permisos y errores", () => {
   it("edita el master o un negocio v3 con settings en escritura", () => {
-    expect(puedeEditarPermisos({ role: "master" }, "legacy")).toBe(true);
-    expect(puedeEditarPermisos({ role: "owner", permissions: { settings: "write" } }, "v3")).toBe(true);
-    expect(puedeEditarPermisos({ role: "owner", permissions: { settings: "write" } }, "legacy")).toBe(false);
-    expect(puedeEditarPermisos({ role: "colaborador", permissions: { settings: "read" } }, "v3")).toBe(false);
+    expect(puedeEditarPermisos({ role: "master" })).toBe(true);
+    expect(puedeEditarPermisos({ role: "owner", permissions: { settings: "write" } })).toBe(true);
+    expect(puedeEditarPermisos({ role: "colaborador", permissions: { settings: "read" } })).toBe(false);
   });
 
   it("los códigos de la API tienen un mensaje claro", () => {

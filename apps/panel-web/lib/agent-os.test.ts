@@ -1,63 +1,41 @@
 import { describe, expect, it } from "vitest";
 
-import { iguales, normalizar, objetivoValido, resumenDelCambio, runtimesOfrecidos, type Banderas } from "@/lib/agent-os";
+import { iguales, objetivoValido, resumenDelCambio, type Banderas } from "@/lib/agent-os";
 
-// Agent OS del panel del master (HU-AOS-15): orden de banderas al editar y lo que se reenvía.
+// Agent OS del panel del master (HU-AOS-15): lo que se reenvía y el resumen de la confirmación.
 
-const LEGACY: Banderas = { runtime: "legacy", procedures: false, routing: "off" };
-const V3: Banderas = { runtime: "v3", procedures: false, routing: "off" };
+const APAGADAS: Banderas = { procedures: false, routing: "off" };
 
 describe("objetivoValido", () => {
-  it("acepta solo los cuatro campos conocidos", () => {
-    expect(objetivoValido({ runtime: "v3", procedures: true, routing: "shadow", tenant: "otro", admin_id: "x" })).toEqual({
-      runtime: "v3",
-      procedures: true,
-      routing: "shadow",
-      construir: false,
-    });
-    expect(objetivoValido({ ...V3, construir: true })?.construir).toBe(true);
+  it("acepta solo los campos conocidos y manda runtime v3 fijo", () => {
+    expect(
+      objetivoValido({ runtime: "legacy", procedures: true, routing: "shadow", construir: true, tenant: "otro" }),
+    ).toEqual({ runtime: "v3", procedures: true, routing: "shadow" });
   });
 
   it("rechaza valores fuera del catálogo o con tipos raros", () => {
     expect(objetivoValido(null)).toBeNull();
     expect(objetivoValido([])).toBeNull();
-    expect(objetivoValido({ ...V3, runtime: "v4" })).toBeNull();
-    expect(objetivoValido({ ...V3, routing: "on" })).toBeNull();
-    expect(objetivoValido({ ...V3, procedures: "true" })).toBeNull();
-    expect(objetivoValido({ ...V3, construir: "si" })).toBeNull();
+    expect(objetivoValido({ ...APAGADAS, routing: "on" })).toBeNull();
+    expect(objetivoValido({ ...APAGADAS, procedures: "true" })).toBeNull();
   });
 });
 
-describe("orden de banderas al editar", () => {
-  it("volver a legacy apaga procedimientos y ruteo", () => {
-    expect(normalizar({ runtime: "legacy", procedures: true, routing: "active" })).toEqual(LEGACY);
-    const todo: Banderas = { runtime: "v3", procedures: true, routing: "active" };
-    expect(normalizar(todo)).toEqual(todo);
-  });
-
-  it("compara los tres valores", () => {
-    expect(iguales(V3, { ...V3 })).toBe(true);
-    expect(iguales(V3, { ...V3, routing: "shadow" })).toBe(false);
+describe("iguales", () => {
+  it("compara las dos banderas", () => {
+    expect(iguales(APAGADAS, { ...APAGADAS })).toBe(true);
+    expect(iguales(APAGADAS, { ...APAGADAS, routing: "shadow" })).toBe(false);
   });
 });
 
 describe("resumen de la confirmación", () => {
-  it("explica la migración y el runbook de activo", () => {
-    expect(resumenDelCambio(LEGACY, V3)).toContain("backfills");
-    const activo = resumenDelCambio(V3, { runtime: "v3", procedures: true, routing: "active" });
+  it("explica el runbook de activo", () => {
+    const activo = resumenDelCambio(APAGADAS, { procedures: true, routing: "active" });
     expect(activo).toContain("pass^4");
     expect(activo).toContain("una semana de prueba");
-    expect(resumenDelCambio({ ...V3, routing: "shadow" }, { ...V3, routing: "active" })).not.toContain("una semana");
-    expect(resumenDelCambio({ runtime: "v3", procedures: true, routing: "shadow" }, LEGACY)).toContain("Vuelve al motor anterior");
-  });
-});
-
-describe("runtimes que ofrece el panel", () => {
-  it("un negocio en v3 no ofrece volver a legacy", () => {
-    expect(runtimesOfrecidos("v3")).toEqual(["v3"]);
-  });
-
-  it("un negocio que sigue en legacy puede pasar a v3", () => {
-    expect(runtimesOfrecidos("legacy")).toEqual(["legacy", "v3"]);
+    expect(resumenDelCambio({ ...APAGADAS, routing: "shadow" }, { ...APAGADAS, routing: "active" })).not.toContain(
+      "una semana",
+    );
+    expect(resumenDelCambio({ procedures: true, routing: "shadow" }, APAGADAS)).toContain("Apaga los recorridos");
   });
 });

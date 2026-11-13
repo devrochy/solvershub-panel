@@ -216,10 +216,6 @@ export function consistencia(mediciones: { pass_k: number; k: number }[]): {
   return { actual, k: ultima.k, delta };
 }
 
-/**
- * ¿Mostrar «Nuevo agente» y «Editar» (editor de HU-AOS-24)? Escriben en la sección `settings` y,
- * con el runtime legacy, solo el master (la API responde 403 `aos_runtime_legacy`).
- */
 /** ¿La pestaña Conocimiento aplica? Solo a especialistas (el Coordinador no tiene documentos). */
 export function tieneConocimiento(agente: { id?: string | null; kind: string }): boolean {
   return Boolean(agente.id) && agente.kind === "specialist";
@@ -243,12 +239,12 @@ export function puedeEscribirConocimiento(me: {
   return me.role === "master" || me.permissions?.agents === "write";
 }
 
-export function puedeEditarAgentes(
-  me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null },
-  runtime: string,
-): boolean {
-  if (me.role === "master") return true;
-  return runtime === "v3" && me.permissions?.settings === "write";
+/** ¿Mostrar «Nuevo agente» y «Editar» (editor de HU-AOS-24)? Escriben en la sección `settings` (o master). */
+export function puedeEditarAgentes(me: {
+  role?: string | null;
+  permissions?: Record<string, string | null | undefined> | null;
+}): boolean {
+  return me.role === "master" || me.permissions?.settings === "write";
 }
 
 /** El agente que crea el sistema con el negocio: la API no deja archivarlo (409 `agent_reserved`). */

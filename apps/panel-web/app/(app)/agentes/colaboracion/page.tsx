@@ -3,7 +3,7 @@ import { ProbarFrase } from "@/app/(app)/agentes/colaboracion/_components/probar
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentsOverview, AgentSummary, ConnectionsConsole, Graph, Me } from "@/lib/api/types";
+import type { AgentSummary, ConnectionsConsole, Graph, Me } from "@/lib/api/types";
 import { desdeEnlaces, puedeEditarPermisos } from "@/lib/colaboracion";
 
 export const metadata = { title: "Colaboración" };
@@ -16,11 +16,10 @@ const DESCRIPCION =
  * solo lectura) y «Probar una frase» contra el router de cada conexión.
  */
 export default async function ColaboracionPage() {
-  const [grafo, agentesRes, meRes, overview, consola] = await Promise.all([
+  const [grafo, agentesRes, meRes, consola] = await Promise.all([
     apiFetch<Graph>("/admin/a2a/graph"),
     apiFetch<AgentSummary[]>("/admin/agents"),
     apiFetch<Me>("/admin/me"),
-    apiFetch<AgentsOverview>("/admin/agents/overview"),
     apiFetch<ConnectionsConsole>("/admin/connections/console?page=1&page_size=100"),
   ]);
   if (!grafo.ok || !agentesRes.ok) {
@@ -32,8 +31,7 @@ export default async function ColaboracionPage() {
       </div>
     );
   }
-  const runtime = overview.ok ? overview.data.runtime : "legacy";
-  const puedeEditar = meRes.ok && puedeEditarPermisos(meRes.data, runtime);
+  const puedeEditar = meRes.ok && puedeEditarPermisos(meRes.data);
   // Solo los especialistas activos colaboran (el Coordinador reparte; nadie lo llama).
   const especialistas = agentesRes.data
     .filter((a) => a.kind === "specialist" && a.status === "active")
@@ -52,13 +50,6 @@ export default async function ColaboracionPage() {
         description={DESCRIPCION}
         helpSection="agents"
       />
-
-      {runtime !== "v3" && (
-        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          Tu asistente todavía atiende con un solo agente. Los permisos entre agentes se activan con el Agent OS de tu
-          negocio.
-        </p>
-      )}
 
       <section aria-labelledby="permisos" className="flex flex-col gap-3">
         <div>

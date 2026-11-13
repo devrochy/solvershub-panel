@@ -221,13 +221,6 @@ describe("pestaña Agentes", () => {
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("sin el Agent OS: aviso y sin acciones", async () => {
-    await abrir({ "/admin/connections/console": { ...CONSOLA, runtime: "legacy" } });
-    expect(screen.getByText(/el equipo de SolversHub cambia los agentes/)).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Asignar agente" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Quitar" })).toBeNull();
-  });
-
   it("sin Coordinador: aviso y no deja asignar", async () => {
     await abrir({
       "/admin/connections/console": { ...CONSOLA, items: [{ ...ITEMS[0], coordinator: null }, ...ITEMS.slice(1)] },

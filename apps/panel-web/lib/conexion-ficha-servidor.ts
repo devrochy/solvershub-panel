@@ -10,7 +10,8 @@ import type { ConexionConsola } from "@/lib/conexiones";
 const POR_PAGINA = 100;
 const MAX_PAGINAS = 10;
 
-export type ConsolaCompleta = Omit<ConnectionsConsole, "items" | "page" | "page_size" | "has_more"> & {
+// Sin `runtime`: todo negocio corre en el Agent OS (ADR-0191); la API deja de mandarlo.
+export type ConsolaCompleta = Omit<ConnectionsConsole, "items" | "page" | "page_size" | "has_more" | "runtime"> & {
   items: ConexionConsola[];
 };
 
@@ -34,7 +35,6 @@ export const cargarConsola = cache(async (): Promise<{ ok: true; data: ConsolaCo
     data: {
       items,
       total: p.total,
-      runtime: p.runtime,
       routing: p.routing,
       consistency: p.consistency,
       can_edit: p.can_edit,

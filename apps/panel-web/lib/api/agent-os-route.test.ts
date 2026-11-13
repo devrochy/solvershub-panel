@@ -28,7 +28,7 @@ describe("BFF del Agent OS", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("lee el estado del negocio de la ruta", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ runtime: "legacy" }), { status: 200 }));
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ procedures: false, routing: "off" }), { status: 200 }));
     const res = await GET(new Request("http://panel.test/x"), ctx());
     expect(res.status).toBe(200);
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -42,16 +42,17 @@ describe("BFF del Agent OS", () => {
 
   it("simular reenvía solo los campos conocidos por POST", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ accion: "listo" }), { status: 200 }));
-    const res = await POST(cuerpo({ runtime: "v3", procedures: false, routing: "off", tenant_id: "otro" }), ctx());
+    const res = await POST(cuerpo({ procedures: false, routing: "off", tenant_id: "otro", construir: true }), ctx());
     expect(res.status).toBe(200);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toMatch(/\/agent-os\/simular$/);
     expect(init.method).toBe("POST");
-    expect(JSON.parse(String(init.body))).toEqual({ runtime: "v3", procedures: false, routing: "off", construir: false });
+    // `runtime: "v3"` fijo mientras la API lo pida (HU-AOS-69); `construir` ya no se reenvía.
+    expect(JSON.parse(String(init.body))).toEqual({ runtime: "v3", procedures: false, routing: "off" });
   });
 
   it("un estado inválido no llega a la API", async () => {
-    expect((await PUT(cuerpo({ runtime: "v3", procedures: "si", routing: "off" }), ctx())).status).toBe(400);
+    expect((await PUT(cuerpo({ procedures: "si", routing: "off" }), ctx())).status).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -63,7 +64,7 @@ describe("BFF del Agent OS", () => {
         status: 409,
       }),
     );
-    const res = await PUT(cuerpo({ runtime: "v3", procedures: false, routing: "off" }), ctx());
+    const res = await PUT(cuerpo({ procedures: false, routing: "off" }), ctx());
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: "No está listo.", code: "agent_os_bloqueado", details });
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];

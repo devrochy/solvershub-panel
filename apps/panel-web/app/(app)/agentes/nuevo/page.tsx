@@ -18,8 +18,7 @@ export default async function NuevoAgentePage() {
     apiFetch<Me>("/admin/me"),
     apiFetch<AgentsOverview>("/admin/agents/overview"),
   ]);
-  const runtime = agentes.ok ? agentes.data.runtime : "legacy";
-  const puede = me.ok && puedeEditarAgentes(me.data, runtime);
+  const puede = me.ok && puedeEditarAgentes(me.data);
   const avisoTope = agentes.ok ? avisoDeTopeDeAgentes(agentes.data.cuota_agentes) : null;
   return (
     <div className="flex flex-col gap-6">
@@ -30,9 +29,7 @@ export default async function NuevoAgentePage() {
       />
       {!puede ? (
         <p role="status" className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          {runtime !== "v3" && !(me.ok && me.data.role === "master")
-            ? "Tu negocio todavía atiende con un solo agente, el General. Cuando el Agent OS se active, aquí podrás crear especialistas."
-            : "Para crear agentes necesitas permiso de escritura en Ajustes. Pídeselo al dueño del negocio."}{" "}
+          Para crear agentes necesitas permiso de escritura en Ajustes. Pídeselo al dueño del negocio.{" "}
           <Link className="text-link underline" href="/agentes">
             Volver a Agentes
           </Link>

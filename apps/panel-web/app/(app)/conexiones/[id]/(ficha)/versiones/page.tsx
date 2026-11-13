@@ -23,7 +23,8 @@ const MAX_MEDICIONES = 3;
 export default async function VersionesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const [releases, ficha, meRes, pruebaRes] = await Promise.all([
+  // `fichaDePestana` también responde 404 si la conexión no tiene esta pestaña.
+  const [releases, , meRes, pruebaRes] = await Promise.all([
     apiFetch<ReleaseSummary[]>(`/admin/connections/${id}/releases?limit=50`),
     fichaDePestana(id, "versiones"),
     apiFetch<Me>("/admin/me"),
@@ -37,8 +38,7 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
       </SeccionFicha>
     );
   }
-  const runtime = ficha?.consola.runtime ?? "legacy";
-  const puedeOperar = meRes.ok && puedeOperarVersiones(meRes.data, runtime);
+  const puedeOperar = meRes.ok && puedeOperarVersiones(meRes.data);
   const prueba = pruebaRes.ok ? pruebaRes.data : null;
   const activa = releases.data.find((r) => r.active) ?? null;
   const candidatas = releases.data
@@ -58,18 +58,13 @@ export default async function VersionesPage({ params }: { params: Promise<{ id: 
       titulo="Versiones"
       descripcion="Cada cambio de tus agentes crea una versión. Revisa qué cambia, pruébala y publícala, o vuelve a la anterior."
     >
-      {runtime !== "v3" && (
-        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          Por ahora el equipo de SolversHub publica las versiones de tu negocio. Aquí ves cuál está activa y qué cambió.
-        </p>
-      )}
       {prueba && <PruebaConUnaParte conexionId={id} prueba={prueba} puedeOperar={puedeOperar} />}
       <ListaDeVersiones
         conexionId={id}
         versiones={releases.data}
         mediciones={mediciones}
         puedeOperar={puedeOperar}
-        puedeProbar={puedeOperar && runtime === "v3"}
+        puedeProbar={puedeOperar}
         hayPrueba={prueba !== null}
       />
     </SeccionFicha>
