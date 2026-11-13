@@ -105,8 +105,8 @@ export function FiltrosDeProductos({
         label="Cómo ver los productos"
         value={vista}
         options={[
-          { value: "lista", label: "Lista", icon: List, href: hrefProductos({ ...base, vista: vistaEnEnlace("productos", "lista", guardada) }) },
-          { value: "vitrina", label: "Vitrina", icon: LayoutGrid, href: hrefProductos({ ...base, vista: vistaEnEnlace("productos", "vitrina", guardada) }) },
+          { value: "lista", label: "Lista", icon: <List />, href: hrefProductos({ ...base, vista: vistaEnEnlace("productos", "lista", guardada) }) },
+          { value: "vitrina", label: "Vitrina", icon: <LayoutGrid />, href: hrefProductos({ ...base, vista: vistaEnEnlace("productos", "vitrina", guardada) }) },
         ]}
         className="sm:ml-auto"
       />
