@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BellOff, CheckCheck, Settings2 } from "lucide-react";
 
 import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
+import { TarjetaPlanFree } from "@/components/notificaciones/tarjeta-plan-free";
 import { useShell } from "@/components/shell/shell-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -57,6 +58,7 @@ export function CentroDeNotificaciones({ n, onCerrar }: { n: Estado; onCerrar: (
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <TarjetaPlanFree onCerrar={onCerrar} />
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-3 py-2">
         <div role="tablist" aria-label="Filtrar por lectura" className="flex gap-1">
           {PESTANAS.map((p) => (

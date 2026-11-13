@@ -1,4 +1,4 @@
-import type { AgentsOverview, PlanResponse } from "@/lib/api/types";
+import type { AgentsOverview, MePlanSummary, PlanResponse } from "@/lib/api/types";
 
 /**
  * Planes por agentes (D-35, HU-BILL-05, ADR-0142 del backend). Lógica pura del panel: cómo
@@ -64,3 +64,52 @@ export const CONCEPTOS_DE_CREDITO: Record<string, string> = {
   vision: "Imágenes",
   template_sent: "Plantillas enviadas",
 };
+
+/** Cookie de sesión con el negocio cuyo aviso de plan Free se cerró (HU-BILL-15). */
+export const AVISO_PLAN_COOKIE = "sh_aviso_plan_free";
+
+/** ¿El negocio está en Free (o sin suscripción) y por tanto se le ofrece mejorar? */
+export function esPlanFree(plan: MePlanSummary | null | undefined): boolean {
+  return !!plan && (!plan.has_plan || plan.plan_id === "free");
+}
+
+export type AvisoDePlanFree = {
+  tono: "warning" | "danger";
+  titulo: string;
+  texto: string;
+  cta: string;
+};
+
+/**
+ * Texto del recordatorio de plan Free (HU-BILL-15). Informativo: nunca bloquea una acción;
+ * solo cambia el tono cuando la prueba ya venció.
+ */
+export function avisoDePlanFree(plan: MePlanSummary | null | undefined): AvisoDePlanFree | null {
+  if (!esPlanFree(plan)) return null;
+  const vencido =
+    !plan?.has_plan ||
+    plan?.status === "expired" ||
+    plan?.status === "canceled" ||
+    plan?.status === "past_due";
+  if (vencido) {
+    return {
+      tono: "danger",
+      titulo: "Tu plan Free terminó",
+      texto: "Tu asistente dejó de atender clientes nuevos. Reactívalo con un plan pago y sigue operando.",
+      cta: TEXTO_MEJORAR_PLAN,
+    };
+  }
+  const dias = plan?.days_left;
+  const restante =
+    dias === 1
+      ? "Te queda 1 día de prueba."
+      : dias != null && dias > 0
+        ? `Te quedan ${dias} días de prueba.`
+        : "Tu prueba está por terminar.";
+  return {
+    tono: "warning",
+    titulo: "Estás en el plan Free",
+    texto: `${restante} Con un plan pago tienes más agentes, canales y crédito mensual.`,
+    cta: TEXTO_MEJORAR_PLAN,
+  };
+}
