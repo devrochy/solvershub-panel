@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, FileText, RotateCw, Trash2 } from "lucide-react";
 
 import { MenuDeFila } from "@/components/domain/menu-de-fila";
@@ -31,7 +30,7 @@ import { toast } from "@/lib/toast-store";
 type Respuesta = { error?: string; code?: string };
 
 /**
- * Pestaña «Conocimiento» de la ficha del agente (HU-AOS-49): los documentos del negocio con los
+ * Documentos de la habilidad «Conocimiento» en la pestaña «Lo que sabe» (HU-AOS-49): los documentos del negocio con los
  * que responde. Se suben acá; el worker los procesa (en cola → procesando → listo) y la lista se
  * revisa sola mientras haya alguno en proceso.
  */
@@ -40,17 +39,14 @@ export function ConocimientoDelAgente({
   nombre,
   documentos: iniciales,
   puedeEscribir,
-  usaConocimiento,
-  puedeEditar,
+  onCantidad,
 }: {
   agenteId: string;
   nombre: string;
   documentos: KnowledgeDocument[];
   puedeEscribir: boolean;
-  /** El borrador del agente declara la búsqueda (`buscar_conocimiento`). */
-  usaConocimiento: boolean;
-  /** Puede abrir el editor del agente para activarla. */
-  puedeEditar: boolean;
+  /** Avisa cuántos documentos hay, para el resumen de la tarjeta de la habilidad. */
+  onCantidad?: (n: number) => void;
 }) {
   const [documentos, setDocumentos] = useState(iniciales);
   const [subiendo, setSubiendo] = useState(0);
@@ -65,6 +61,7 @@ export function ConocimientoDelAgente({
     },
     [base],
   );
+  useEffect(() => onCantidad?.(documentos.length), [documentos.length, onCantidad]);
   usePolling(recargar, INTERVALO_DE_REVISION_MS, hayEnProceso(documentos) || subiendo > 0);
 
   async function subir(archivos: File[]) {
@@ -186,27 +183,6 @@ export function ConocimientoDelAgente({
 
   return (
     <div className="flex flex-col gap-4">
-      {!usaConocimiento && (
-        <div role="note" className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
-          {nombre} todavía no responde con estos documentos.{" "}
-          {puedeEditar ? (
-            <>
-              Actívalo en{" "}
-              <Link href={`/agentes/${agenteId}/editar`} className="font-medium underline underline-offset-2">
-                Editar agente → Memoria y conocimiento
-              </Link>{" "}
-              y publica la nueva versión.
-            </>
-          ) : (
-            "Pídele a quien administra los agentes que active el conocimiento en su configuración."
-          )}{" "}
-          La habilidad «Conocimiento» tiene que estar activa en{" "}
-          <Link href="/habilidades" className="font-medium underline underline-offset-2">
-            Habilidades
-          </Link>
-          .
-        </div>
-      )}
       {limite && <AvisoLimiteDePlan mensaje={limite} />}
       {puedeEscribir && (
         <Dropzone

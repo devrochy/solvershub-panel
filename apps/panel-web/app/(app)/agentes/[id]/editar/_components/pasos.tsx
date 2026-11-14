@@ -473,9 +473,9 @@ function SeccionConocimiento({
           </label>
           <p id="conocimiento-ayuda" className="text-sm text-text-soft">
             Busca en tus preguntas frecuentes, catálogos y políticas antes de responder, y cita de dónde sale el dato.
-            Los documentos se suben en la{" "}
+            Los documentos se suben en{" "}
             <Link href={`/agentes/${agenteId}?tab=sabe`} className="text-link underline underline-offset-2">
-              pestaña Conocimiento
+              Lo que sabe › Conocimiento
             </Link>
             .
           </p>
