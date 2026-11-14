@@ -10517,6 +10517,16 @@ export interface components {
              * @default false
              */
             coexistence: boolean;
+            /**
+             * Display Name
+             * @description Nombre visible de la conexión (p. ej. perfil de WhatsApp Web); null si no se conoce.
+             */
+            display_name?: string | null;
+            /**
+             * Display Phone Number
+             * @description Número visible de la conexión (WhatsApp Web); null si no se conoce.
+             */
+            display_phone_number?: string | null;
         };
         /** ConnectionProduction */
         ConnectionProduction: {
@@ -16156,6 +16166,18 @@ export interface components {
             risk_ok: boolean;
             /** Jid */
             jid?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Push Name */
+            push_name?: string | null;
+            /** Business Name */
+            business_name?: string | null;
+            /** Platform */
+            platform?: string | null;
+            /** Linked At */
+            linked_at?: string | null;
+            /** Last Connected At */
+            last_connected_at?: string | null;
             /** Qr Image */
             qr_image?: string | null;
             /** Last Error */
@@ -18319,9 +18341,14 @@ export interface components {
             external_id: string;
             /**
              * Display Phone Number
-             * @description WhatsApp oficial: el número como lo sincronizó Meta (p. ej. «+57 300 1234567»). Null en los demás canales o si el número aún no se sincronizó.
+             * @description Número visible: en WhatsApp oficial el que sincronizó Meta (p. ej. «+57 300 1234567»); en WhatsApp Web, el del teléfono vinculado. Null si aún no se conoce.
              */
             display_phone_number?: string | null;
+            /**
+             * Display Name
+             * @description Nombre visible del WhatsApp Web (perfil o negocio); null en los demás canales.
+             */
+            display_name?: string | null;
             /** Conversational */
             conversational: boolean;
             /** Active */
