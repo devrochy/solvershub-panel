@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 import type { MePlanSummary } from "@/lib/api/types";
-import { AVISO_PLAN_COOKIE } from "@/lib/plan-limite";
 import type { Permisos } from "@/lib/shell/navegacion";
 import type { EstadoModulo } from "@/lib/shell/modulos";
 import type { PacksDelNegocio } from "@/lib/shell/paleta";
@@ -23,9 +22,11 @@ type Shell = {
   puedeEditarAsistente: boolean;
   /** Plan del negocio activo (HU-BILL-15): banner y campana lo leen sin otra petición. */
   plan: MePlanSummary | null;
-  /** El aviso de plan Free se cerró en esta sesión del navegador. */
+  /** El aviso de plan Free se cerró en la vista actual; reaparece al navegar o recargar. */
   avisoPlanCerrado: boolean;
   cerrarAvisoPlan: () => void;
+  /** Vuelve a mostrar el aviso (cambio de sección o recarga). */
+  reiniciarAvisoPlan: () => void;
 };
 
 /**
@@ -45,19 +46,14 @@ export function ShellProvider({
   asistentePausado = false,
   puedeEditarAsistente = false,
   plan = null,
-  avisoPlanCerradoInicial = false,
   children,
-}: Partial<Omit<Shell, "permisos" | "avisoPlanCerrado" | "cerrarAvisoPlan">> & {
+}: Partial<Omit<Shell, "permisos" | "avisoPlanCerrado" | "cerrarAvisoPlan" | "reiniciarAvisoPlan">> & {
   permisos: Permisos;
-  avisoPlanCerradoInicial?: boolean;
   children: ReactNode;
 }) {
-  const [avisoPlanCerrado, setAvisoPlanCerrado] = useState(avisoPlanCerradoInicial);
-  const cerrarAvisoPlan = useCallback(() => {
-    setAvisoPlanCerrado(true);
-    // Cookie sin expiración: dura lo que la sesión del navegador (decisión HU-BILL-15).
-    document.cookie = `${AVISO_PLAN_COOKIE}=${negocioId ?? ""}; path=/; SameSite=Lax`;
-  }, [negocioId]);
+  const [avisoPlanCerrado, setAvisoPlanCerrado] = useState(false);
+  const cerrarAvisoPlan = useCallback(() => setAvisoPlanCerrado(true), []);
+  const reiniciarAvisoPlan = useCallback(() => setAvisoPlanCerrado(false), []);
   return (
     <ShellContext.Provider
       value={{
@@ -71,6 +67,7 @@ export function ShellProvider({
         plan,
         avisoPlanCerrado,
         cerrarAvisoPlan,
+        reiniciarAvisoPlan,
       }}
     >
       {children}

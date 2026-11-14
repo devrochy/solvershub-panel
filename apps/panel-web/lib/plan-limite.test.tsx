@@ -9,7 +9,7 @@ import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpo
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import { avisoDePlanFree, avisoDeTopeDeAgentes, esLimiteDePlan, esPlanFree, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
+import { avisoDePlanFree, avisoDeTopeDeAgentes, esLimiteDePlan, esPlanFree, esRutaDePlan, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -244,5 +244,12 @@ describe("aviso permanente de plan Free (HU-BILL-15)", () => {
 
   it("no avisa en un plan pago", () => {
     expect(avisoDePlanFree({ ...free, plan_id: "premium", plan_name: "Premium" })).toBeNull();
+  });
+
+  it("reconoce la ruta de Plan y consumo", () => {
+    expect(esRutaDePlan("/plan")).toBe(true);
+    expect(esRutaDePlan("/plan/")).toBe(true);
+    expect(esRutaDePlan("/dashboard")).toBe(false);
+    expect(esRutaDePlan(null)).toBe(false);
   });
 });
