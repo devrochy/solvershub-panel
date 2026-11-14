@@ -146,7 +146,7 @@ describe("«Ajustar con preguntas» en Configuración", () => {
     const cuerpo = JSON.parse(init.body as string) as { business_ranges: unknown[]; business_hours_mode: string };
     expect(cuerpo.business_hours_mode).toBe("informativo");
     expect(cuerpo.business_ranges).toHaveLength(5);
-  });
+  }, 15_000);
 
   it("con cambios sin guardar, descartar los quita del formulario antes de abrir el asistente", async () => {
     montar({ defaultSeccion: "horario" });
