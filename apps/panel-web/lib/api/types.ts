@@ -358,5 +358,7 @@ export type CronEjecucionesPage = components["schemas"]["Page_CronRunOut_"];
 export type AgentSkill = components["schemas"]["AgentSkill"];
 export type AgentSkillPage = components["schemas"]["Page_AgentSkill_"];
 export type AgentAction = components["schemas"]["AgentAction"];
+export type AgentFlowOut = components["schemas"]["AgentFlowOut"];
+export type AgentFlowOptionsOut = components["schemas"]["AgentFlowOptionsOut"];
 export type AgentActionPage = components["schemas"]["Page_AgentAction_"];
 export type PaymentAccount = components["schemas"]["PaymentAccount"];

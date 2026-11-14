@@ -309,33 +309,6 @@ export function AdvancedPanel({ advanced, puedeEditar = true }: { advanced: Adva
 
       <Card>
         <CardHeader>
-          <CardTitle>Flow de atención</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <p className="text-xs text-text-soft">Origen: {advanced.flow.source || "—"}</p>
-          {advanced.flow.sections.length === 0 ? (
-            <p className="text-sm text-text-soft">Sin secciones definidas.</p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-border-soft">
-              {advanced.flow.sections.map((section) => (
-                <li key={section.label} className="flex flex-col gap-1 py-2">
-                  <span className="text-sm text-headline">{section.label}</span>
-                  {section.purpose && <span className="text-xs text-text-soft">{section.purpose}</span>}
-                  <span className="font-mono text-xs text-body">{section.tools.join(", ") || "—"}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {advanced.flow.unknown_tools.length > 0 && (
-            <p className="text-xs text-status-warning-fg">
-              Herramientas desconocidas: {advanced.flow.unknown_tools.join(", ")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Últimas corridas de evals</CardTitle>
         </CardHeader>
         <CardContent>

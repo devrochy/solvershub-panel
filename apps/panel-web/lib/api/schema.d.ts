@@ -16935,6 +16935,10 @@ export interface components {
             content: {
                 [key: string]: unknown;
             };
+            /** Flow */
+            flow?: {
+                [key: string]: unknown;
+            } | null;
             /** Lock Version */
             lock_version: number;
             /** Base Version Id */
@@ -16944,6 +16948,40 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** AgentFlowOptionsOut */
+        AgentFlowOptionsOut: {
+            /** Actions */
+            actions: components["schemas"]["AgentAction"][];
+            /** Seed */
+            seed: {
+                [key: string]: unknown;
+            };
+        };
+        /** AgentFlowOut */
+        AgentFlowOut: {
+            /** Flow */
+            flow: {
+                [key: string]: unknown;
+            };
+            /** Lock Version */
+            lock_version: number;
+            /**
+             * Source
+             * @default agente
+             * @enum {string}
+             */
+            source: "agente" | "semilla";
+            /**
+             * Seeded
+             * @default false
+             */
+            seeded: boolean;
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings?: string[];
         };
         /** AgentPatch */
         AgentPatch: {
@@ -16999,6 +17037,8 @@ export interface components {
             contract: string;
             /** Content Hash */
             content_hash: string;
+            /** Flow Hash */
+            flow_hash?: string | null;
             /** Notes */
             notes: string;
             /** Legacy */
@@ -17012,6 +17052,10 @@ export interface components {
             content: {
                 [key: string]: unknown;
             };
+            /** Flow */
+            flow?: {
+                [key: string]: unknown;
+            } | null;
             /**
              * Procedures
              * @default []

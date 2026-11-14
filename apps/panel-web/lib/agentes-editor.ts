@@ -8,16 +8,17 @@
  * adelanta los mismos errores junto a cada campo.
  */
 import { accionesDesdeContenido, aplicarAcciones, type AccionEnEditor } from "@/lib/acciones-del-agente";
-import type { Superpower } from "@/lib/api/types";
+import type { AgentAction, Superpower } from "@/lib/api/types";
 import { aplicarConocimiento, conocimientoDesdeContenido, type ConocimientoEnEditor } from "@/lib/conocimiento";
 
-export type PasoId = "identidad" | "modelo" | "superpoderes" | "acciones" | "memoria" | "publicar";
+export type PasoId = "identidad" | "modelo" | "superpoderes" | "acciones" | "flujo" | "memoria" | "publicar";
 
 export const PASOS: { id: PasoId; titulo: string; descripcion: string }[] = [
   { id: "identidad", titulo: "Identidad", descripcion: "Nombre y cómo habla tu agente." },
   { id: "modelo", titulo: "Proveedor y modelo", descripcion: "La IA que usa y lo que cuesta." },
   { id: "superpoderes", titulo: "Superpoderes", descripcion: "Qué sabe hacer y con qué frases lo reconoce." },
   { id: "acciones", titulo: "Acciones", descripcion: "Qué puede hacer, cuántas veces y si pide confirmación." },
+  { id: "flujo", titulo: "Flujo de atención", descripcion: "Los pasos con los que atiende y las acciones de cada uno." },
   { id: "memoria", titulo: "Memoria y conocimiento", descripcion: "Cuánto recuerda y si responde con tus documentos." },
   { id: "publicar", titulo: "Publicar", descripcion: "Dónde atiende y su nueva versión." },
 ];
@@ -31,6 +32,43 @@ export const ALCANCES_DE_MEMORIA = [
 ] as const;
 
 export type Contenido = Record<string, unknown>;
+
+/** Flujo de atención del agente (ADR-0195): secciones con sus acciones, fuera del AgentSpec. */
+export type FlujoSeccion = { id: string; label: string; purpose: string; tools: string[] };
+export type FlujoDelAgente = { sections: FlujoSeccion[] };
+export type AccionDelFlujo = Pick<AgentAction, "tool" | "group" | "enabled" | "by_superpower">;
+
+export const FLUJO_VACIO: FlujoDelAgente = { sections: [] };
+
+/** `GET /admin/agents/{id}/flow` → estado tipado; tolera un body vacío o viejo. */
+export function flujoDesdeApi(raw: unknown): FlujoDelAgente {
+  const cuerpo = objeto(raw);
+  const secciones = Array.isArray(cuerpo.sections) ? cuerpo.sections : [];
+  const sections: FlujoSeccion[] = [];
+  for (const seccion of secciones) {
+    const s = objeto(seccion);
+    const id = typeof s.id === "string" ? s.id : "";
+    const label = typeof s.label === "string" ? s.label : "";
+    if (!id || !label) continue;
+    sections.push({
+      id,
+      label,
+      purpose: typeof s.purpose === "string" ? s.purpose : "",
+      tools: textos(s.tools),
+    });
+  }
+  return { sections };
+}
+
+/** Id estable y único para una sección nueva, a partir de su etiqueta. */
+export function idDeSeccion(label: string, existentes: Iterable<string>): string {
+  const base = normalizarFrase(label).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 32) || "seccion";
+  const usados = new Set(existentes);
+  let id = base;
+  let n = 2;
+  while (usados.has(id)) id = `${base}_${n++}`.slice(0, 40);
+  return id;
+}
 
 export type SuperpoderEnEditor = { activo: boolean; frases: string[] };
 
@@ -49,6 +87,8 @@ export type EstadoDelEditor = {
   alcances: string[];
   /** Documentos del negocio (HU-AOS-49): la tool, el playbook y el bloque `knowledge`. */
   conocimiento: ConocimientoEnEditor;
+  /** Flujo de atención del agente (ADR-0195), versionado aparte del AgentSpec. */
+  flujo: FlujoDelAgente;
 };
 
 type Ref = { id: string; version: string; overrides?: { examples?: string[]; description?: string | null } };
@@ -72,6 +112,7 @@ export function estadoDesdeBorrador(
   agente: { name: string; description: string },
   contenido: Contenido,
   catalogo: Superpower[],
+  flujo: FlujoDelAgente = FLUJO_VACIO,
 ): EstadoDelEditor {
   const persona = objeto(contenido.persona);
   const modelo = objeto(contenido.model);
@@ -99,6 +140,7 @@ export function estadoDesdeBorrador(
     turnosDeMemoria: typeof memoria.shortTermTurns === "number" ? memoria.shortTermTurns : 30,
     alcances: Array.isArray(memoria.readScopes) ? textos(memoria.readScopes) : ["customer", "connection", "tenant"],
     conocimiento: conocimientoDesdeContenido(contenido),
+    flujo,
   };
 }
 
@@ -223,6 +265,14 @@ export function erroresDelPaso(
     });
   }
   if (paso === "memoria" && estado.alcances.length === 0) errores["memory.readScopes"] = "Elige al menos qué puede recordar.";
+  if (paso === "flujo") {
+    const ids = new Set<string>();
+    estado.flujo.sections.forEach((seccion, i) => {
+      if (!seccion.label.trim()) errores[`flow.sections[${i}].label`] = "Ponle un nombre a la sección.";
+      if (ids.has(seccion.id)) errores[`flow.sections[${i}].id`] = "Esta sección está repetida.";
+      ids.add(seccion.id);
+    });
+  }
   if (paso === "publicar" && (opciones.conexiones ?? []).length === 0) {
     errores.connection_ids = "Elige al menos una conexión donde instalar el agente.";
   }
@@ -235,6 +285,7 @@ export function pasoDelCampo(campo: string): PasoId {
   if (campo.startsWith("model")) return "modelo";
   if (campo.startsWith("tools")) return "acciones";
   if (campo.startsWith("procedures") || campo.startsWith("playbooks")) return "superpoderes";
+  if (campo.startsWith("flow")) return "flujo";
   if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "memoria";
   return "publicar";
 }
