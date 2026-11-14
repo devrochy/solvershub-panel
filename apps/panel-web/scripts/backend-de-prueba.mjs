@@ -120,7 +120,7 @@ if (process.env.BOT_PAUSADO === "1") {
     fila("00000000-0000-4000-8000-0000000000c4", { label: "Agenda de Google", type_id: "google_calendar", channel: "", conversational: false, pausable: false, external_id: "agenda@test.example", coordinator: null, active_release: null, usage_7d: sinUso }),
     fila("00000000-0000-4000-8000-0000000000c7", { label: "Correo del negocio", type_id: "email_smtp", channel: "email", conversational: false, pausable: false, external_id: "hola@cafeaurora.co", coordinator: null, active_release: null, usage_7d: sinUso }),
   ];
-  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, runtime: "v3", routing: "active", consistency: { pass_k: 0.92, k: 4 } };
+  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, consistency: { pass_k: 0.92, k: 4 } };
   const instancia = (a) => ({ id: a.instance_id, agent_id: a.agent_id, key: a.key, name: a.name, role: a.role, is_default: a.is_default, priority: a.priority, enabled: a.enabled, latest_version: a.latest_version });
   for (const c of items.filter((x) => x.conversational)) {
     respuestas[`/admin/connections/${c.id}/agents`] = [...(c.coordinator ? [c.coordinator] : []), ...c.agents].map(instancia);
@@ -988,7 +988,7 @@ const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
 const avisosPorCanal = new Map();
 function plataforma(metodo, ruta, cuerpo) {
-  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados|retired-references)$/.exec(ruta);
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|aliados|retired-references)$/.exec(ruta);
   if (!m) return undefined;
   if (m[2] === "retired-references") return retiradas ? [200, reporteRetiradas(m[1])] : [404, { error: { message: "Sin fixture" } }];
   if (m[2] === "avisos-por-canal") {
@@ -996,7 +996,7 @@ function plataforma(metodo, ruta, cuerpo) {
     if (metodo === "PUT") avisosPorCanal.set(m[1], cuerpo.habilitada === true);
     return [200, { habilitada: avisosPorCanal.get(m[1]) ?? false }];
   }
-  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, m[2] === "aliados" ? ALIADOS : { runtime: "legacy", procedures: false, routing: "off", aos_connection_routing: true, ultimo_cambio: null }] : [200, { ok: true }];
+  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, ALIADOS] : [200, { ok: true }];
   const falla = process.env.PLATAFORMA;
   if (falla === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
   if (falla === "404") return [404, { error: { code: "not_found", message: "El negocio no existe." } }];
