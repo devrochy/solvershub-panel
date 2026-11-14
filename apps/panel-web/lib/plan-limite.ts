@@ -65,11 +65,6 @@ export const CONCEPTOS_DE_CREDITO: Record<string, string> = {
   template_sent: "Plantillas enviadas",
 };
 
-/** ¿La ruta es la de Plan y consumo? Allí no se muestra el recordatorio de upgrade. */
-export function esRutaDePlan(pathname: string | null | undefined): boolean {
-  return pathname === RUTA_MEJORAR_PLAN || !!pathname?.startsWith(`${RUTA_MEJORAR_PLAN}/`);
-}
-
 /** ¿El negocio está en Free (o sin suscripción) y por tanto se le ofrece mejorar? */
 export function esPlanFree(plan: MePlanSummary | null | undefined): boolean {
   return !!plan && (!plan.has_plan || plan.plan_id === "free");

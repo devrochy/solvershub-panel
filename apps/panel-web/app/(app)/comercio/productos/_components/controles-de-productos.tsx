@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, FileSpreadsheet, LayoutGrid, List, Plus, X } from "lucide-react";
+import { Camera, ChevronDown, FileSpreadsheet, LayoutGrid, List, Plus, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { CsvImportDialog } from "@/app/(app)/comercio/productos/_components/csv-import-dialog";
+import { ImportarCatalogoDialog } from "@/app/(app)/comercio/productos/_components/importar-catalogo-dialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SearchInput } from "@/components/ui/search-input";
@@ -15,9 +16,22 @@ import { SIN_ALIADO } from "@/lib/aliados";
 import { hrefProductos, type FiltrosProductos } from "@/lib/ventas";
 import { vistaEnEnlace } from "@/lib/vista-guardada";
 
-/** Acciones de Productos (VEN-08): «Nuevo producto» es la principal; importar va en «Más». */
-export function AccionesDeProductos({ filtros, aliados }: { filtros: FiltrosProductos; aliados: { id: string; name: string }[] | null }) {
+/**
+ * Acciones de Productos (VEN-08): «Nuevo producto» es la principal; importar va en «Más». Con un agente que importa
+ * (SPEC-45), «Importar con IA» (CSV propio o fotos) con precarga; el formato fijo queda para aliados y fotos por link.
+ */
+export function AccionesDeProductos({
+  filtros,
+  aliados,
+  agentes = [],
+}: {
+  filtros: FiltrosProductos;
+  aliados: { id: string; name: string }[] | null;
+  /** Especialistas del negocio: con alguno, se ofrece importar con IA. */
+  agentes?: { id: string; name: string }[];
+}) {
   const [importar, setImportar] = useState(false);
+  const [conIa, setConIa] = useState<"csv" | "fotos" | null>(null);
   return (
     <div className="flex flex-wrap items-center gap-2">
       <DropdownMenu modal={false}>
@@ -27,8 +41,18 @@ export function AccionesDeProductos({ filtros, aliados }: { filtros: FiltrosProd
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          {agentes.length > 0 && (
+            <>
+              <DropdownMenuItem icon={<Sparkles />} onSelect={() => setConIa("csv")}>
+                Importar tu archivo con IA
+              </DropdownMenuItem>
+              <DropdownMenuItem icon={<Camera />} onSelect={() => setConIa("fotos")}>
+                Cargar desde fotos
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuItem icon={<FileSpreadsheet />} onSelect={() => setImportar(true)}>
-            Importar desde un archivo
+            {agentes.length > 0 ? "Importar con columnas fijas" : "Importar desde un archivo"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -38,6 +62,9 @@ export function AccionesDeProductos({ filtros, aliados }: { filtros: FiltrosProd
         </Link>
       </Button>
       <CsvImportDialog allies={aliados} open={importar} onOpenChange={setImportar} />
+      {agentes.length > 0 && (
+        <ImportarCatalogoDialog agentes={agentes} modo={conIa} onOpenChange={(abierto) => !abierto && setConIa(null)} />
+      )}
     </div>
   );
 }

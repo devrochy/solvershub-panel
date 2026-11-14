@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { AsistenteDeAgente } from "@/app/(app)/agentes/nuevo/_components/asistente-de-agente";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -12,6 +12,8 @@ import {
   cuerpoDeCreacion,
   elegirTipo,
   errorDelPaso,
+  indiceDeCrear,
+  indiceValido,
   pasoDelCampo,
   pasosDelAsistente,
   respuestasPorDefecto,
@@ -84,8 +86,9 @@ describe("pasos del asistente", () => {
       "que_vendes",
       "largo_respuesta",
       "nombre",
-      "contenido",
       "revisar",
+      "datos",
+      "cargado",
     ]);
     expect(pasosDelAsistente(COBRANZA).map((p) => p.id)).not.toContain("que_vendes");
     const muchas = Array.from({ length: 12 }, (_, i) => ({ ...LARGO, id: `q${i}` }));
@@ -103,6 +106,7 @@ describe("pasos del asistente", () => {
       plantilla: "ventas",
       respuestas: { que_vendes: "productos", largo_respuesta: "normal" },
       nombre: "",
+      agenteId: null,
     });
   });
 
@@ -129,8 +133,16 @@ describe("pasos del asistente", () => {
     const pasos = pasosDelAsistente(VENTAS);
     expect(pasoDelCampo("que_vendes", pasos)).toBe(1);
     expect(pasoDelCampo("name", pasos)).toBe(3);
-    expect(pasoDelCampo("desconocido", pasos)).toBe(pasos.length - 1);
+    expect(pasoDelCampo("desconocido", pasos)).toBe(4); // «Revisar y crear»
     expect(textoDeAvance(1, 6)).toBe("Paso 2 de 6");
+  });
+
+  it("sin borrador no pasa de crear; con borrador no vuelve antes de «Datos»", () => {
+    const pasos = pasosDelAsistente(VENTAS);
+    expect(indiceDeCrear(pasos)).toBe(4);
+    expect(indiceValido(6, pasos, elegirTipo(VENTAS))).toBe(4);
+    expect(indiceValido(1, pasos, { ...elegirTipo(VENTAS), agenteId: "a-1" })).toBe(5);
+    expect(indiceValido(6, pasos, { ...elegirTipo(VENTAS), agenteId: "a-1" })).toBe(6);
   });
 });
 
@@ -152,8 +164,12 @@ describe("asistente en pantalla", () => {
     vi.unstubAllGlobals();
   });
 
-  it("guía el guion de Ventas: «Paso X de N», sin pedir frases ni modelo, y crea el borrador con las respuestas", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ agentId: "a-1", warnings: [], requirements: [] }), { status: 201 }));
+  it("guía el guion de Ventas: «Paso X de N», sin pedir frases ni modelo, crea el borrador y sigue con «Datos»", async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url === "/api/agent-editor/from-script"
+        ? new Response(JSON.stringify({ agentId: "a-1", warnings: [], requirements: [] }), { status: 201 })
+        : new Response(JSON.stringify({ error: "No existe." }), { status: 404 }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const { container } = montar([VENTAS, COBRANZA]);
 
@@ -162,7 +178,7 @@ describe("asistente en pantalla", () => {
     expect(screen.getByRole("alert").textContent).toMatch(/Elige/);
 
     fireEvent.click(screen.getByRole("radio", { name: /Ventas/ }));
-    expect(screen.getByText("Paso 1 de 6")).toBeTruthy();
+    expect(screen.getByText("Paso 1 de 7")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
 
     // Pregunta del tipo de negocio: elige planes.
@@ -172,14 +188,21 @@ describe("asistente en pantalla", () => {
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" })); // largo: por defecto
     fireEvent.change(screen.getByLabelText(/Nombre del agente/), { target: { value: "Mis ventas" } });
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
-    fireEvent.click(screen.getByRole("button", { name: "Siguiente" })); // contenido
 
-    expect(screen.getByText("Paso 6 de 6")).toBeTruthy();
+    expect(screen.getByText("Paso 5 de 7")).toBeTruthy();
     expect(screen.queryByText(/frases/i)).toBeTruthy(); // el resumen explica que van por defecto
     expect((await violacionesGraves(container)).join("\n")).toBe("");
 
     fireEvent.click(screen.getByRole("button", { name: "Crear mi agente" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/editar?paso=publicar"));
+    // SPEC-45: no va al editor; sigue con «Datos». Sin opciones en este entorno, se sigue sin cargar.
+    expect(await screen.findByRole("heading", { name: "Carga sus datos" })).toBeTruthy();
+    expect(await screen.findByText(/no tiene datos para cargar/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Atrás" })).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Seguir sin cargar datos" }));
+    expect(await screen.findByText(/No cargaste datos todavía/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Elegir dónde atiende y publicar" }));
+    expect(push).toHaveBeenCalledWith("/agentes/a-1/editar?paso=publicar");
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("/api/agent-editor/from-script");
     expect(JSON.parse(init.body as string)).toEqual({
@@ -187,9 +210,9 @@ describe("asistente en pantalla", () => {
       answers: { que_vendes: "planes", largo_respuesta: "normal" },
       name: "Mis ventas",
     });
-  });
+  }, 15_000);
 
-  it("Cobranza no ve las preguntas de Ventas y el paso de contenido enlaza lo que falta", () => {
+  it("Cobranza no ve las preguntas de Ventas y el resumen enlaza lo que falta", () => {
     montar([VENTAS, COBRANZA]);
     fireEvent.click(screen.getByRole("radio", { name: /Cobranza/ }));
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
@@ -197,7 +220,7 @@ describe("asistente en pantalla", () => {
     expect(screen.getByRole("heading", { name: "¿Qué tan largas quieres sus respuestas?" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
-    expect(screen.getByText(/Para que funcione del todo, configura/)).toBeTruthy();
+    expect(screen.getByText(/no funcionará del todo hasta que configures/)).toBeTruthy();
     expect(screen.getAllByRole("link").some((a) => a.getAttribute("href") !== "/agentes")).toBe(true); // enlace a la pantalla de la cartera
   });
 
@@ -212,7 +235,7 @@ describe("asistente en pantalla", () => {
     );
     montar([VENTAS]);
     fireEvent.click(screen.getByRole("radio", { name: /Ventas/ }));
-    for (let i = 0; i < 5; i += 1) fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    for (let i = 0; i < 4; i += 1) fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
     fireEvent.click(screen.getByRole("button", { name: "Crear mi agente" }));
     const enlace = await screen.findByRole("link", { name: "Editarlo" });
     expect(enlace.getAttribute("href")).toBe("/agentes/viejo/editar");
@@ -225,7 +248,19 @@ describe("asistente en pantalla", () => {
       JSON.stringify({ estado: elegirTipo(VENTAS), paso: 2 }),
     );
     montar([VENTAS]);
-    expect(screen.getByText("Paso 3 de 6")).toBeTruthy();
+    expect(screen.getByText("Paso 3 de 7")).toBeTruthy();
     expect(screen.getByText(/Retomamos donde lo dejaste/)).toBeTruthy();
+  });
+
+  it("con el borrador ya creado retoma en «Datos», no antes", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "No existe." }), { status: 404 })));
+    window.localStorage.setItem(
+      "asistente-de-agente",
+      JSON.stringify({ estado: { ...elegirTipo(VENTAS), agenteId: "a-1" }, paso: 1 }),
+    );
+    montar([VENTAS]);
+    expect(screen.getByText("Paso 6 de 7")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Terminar después" }).getAttribute("href")).toBe("/agentes/a-1");
+    await screen.findByText(/no tiene datos para cargar/);
   });
 });

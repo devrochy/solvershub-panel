@@ -7,14 +7,14 @@ import { Sparkles, X } from "lucide-react";
 
 import { useShell } from "@/components/shell/shell-context";
 import { Button } from "@/components/ui/button";
-import { RUTA_MEJORAR_PLAN, avisoDePlanFree, esRutaDePlan } from "@/lib/plan-limite";
+import { RUTA_MEJORAR_PLAN, avisoDePlanFree } from "@/lib/plan-limite";
 import { cn } from "@/lib/utils";
 
 /**
  * Recordatorio de plan Free (HU-BILL-15): vive en todas las pantallas del panel mientras el
  * negocio no tenga un plan pago. El cierre es temporal: al cambiar de sección o recargar vuelve
- * a aparecer. En Plan y consumo no se muestra. No bloquea nada: el enforcement de cuotas y el
- * estado de la suscripción siguen siendo la única puerta real.
+ * a aparecer, también en Plan y consumo. No bloquea nada: el enforcement de cuotas y el estado
+ * de la suscripción siguen siendo la única puerta real.
  */
 export function AvisoPlanFree() {
   const pathname = usePathname();
@@ -30,7 +30,6 @@ export function AvisoPlanFree() {
   if (!shell || !aviso || shell.avisoPlanCerrado) return null;
   // Solo quien puede contratar el plan: owner/master o colaborador con escritura en `plan`.
   if (shell.esMaster || shell.permisos?.plan !== "write") return null;
-  if (esRutaDePlan(pathname)) return null;
 
   const peligro = aviso.tono === "danger";
 

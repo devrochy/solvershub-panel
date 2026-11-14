@@ -56,6 +56,7 @@ export type PackProfile = components["schemas"]["PackProfile"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
 export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];
+export type WawebState = components["schemas"]["WawebState"];
 export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 export type TenantCreated = components["schemas"]["TenantCreated"];
@@ -234,6 +235,14 @@ export type DatosRetirados = components["schemas"]["DatosRetirados"];
 export type EstadoImportacion = components["schemas"]["EstadoImportacion"];
 export type VistaPreviaImportacion = components["schemas"]["VistaPreviaImportacion"];
 export type ImportacionHecha = components["schemas"]["ImportacionHecha"];
+// Carga de datos al crear un agente (SPEC-45): lista de lo cargado, mapeo con IA, precarga y fotos.
+export type RegistrosDePrueba = components["schemas"]["RegistrosDePrueba"];
+export type RegistroDePrueba = components["schemas"]["RegistroDePrueba"];
+export type PlantillaImportacion = components["schemas"]["PlantillaImportacionOut"];
+export type MapeoPropuesto = components["schemas"]["MapeoPropuesto"];
+export type FilaPrecarga = components["schemas"]["FilaPrecarga"];
+export type CotizacionFotos = components["schemas"]["CotizacionFotos"];
+export type FilaDeFoto = components["schemas"]["FilaDeFoto"];
 /** Estado de los datos de prueba de un módulo (local hasta que `schema.d.ts` lo traiga de develop). */
 export type EstadoDatosDePruebaModulo = {
   modulo: string;

@@ -7,15 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatearIdentificador } from "@/lib/conversaciones/nombre";
+import type { WawebState } from "@/lib/api/types";
+import { formatDateTime } from "@/lib/format";
+import { etiquetaPlataforma, nombreVinculado, telefonoVinculado } from "@/lib/waweb";
 
-type State = {
-  status: string;
-  risk_ok: boolean;
-  jid: string | null;
-  qr_image: string | null;
-  last_error: string | null;
-};
+type State = WawebState;
 
 // El conector rota el QR cada ~20 s; 3 s da feedback inmediato al reiniciar.
 const POLL_MS = 3000;
@@ -53,9 +49,11 @@ export function WawebPanel({ initial }: { initial: State }) {
     await refresh();
   }
 
-  const connected = Boolean(state.jid) || /^(conectad|connected)/i.test(state.status);
-  // El conector guarda el número como «573005550103@s.whatsapp.net»: se muestra como teléfono.
-  const numero = state.jid ? formatearIdentificador(state.jid.split("@")[0].split(":")[0]) : null;
+  const connected =
+    Boolean(state.jid || state.phone) || /^(conectad|connected)/i.test(state.status);
+  const nombre = nombreVinculado(state);
+  const numero = telefonoVinculado(state);
+  const plataforma = etiquetaPlataforma(state.platform);
 
   return (
     <Card>
@@ -85,10 +83,43 @@ export function WawebPanel({ initial }: { initial: State }) {
           </div>
         ) : (
           <div className="flex flex-col items-start gap-4">
-            {state.jid ? (
-              <p className="text-sm text-body">
-                Número: <span className="font-medium tabular-nums text-headline">{numero}</span>
-              </p>
+            {state.jid || state.phone ? (
+              <div className="flex w-full flex-col gap-2">
+                {nombre && <p className="text-base font-medium text-headline">{nombre}</p>}
+                <dl className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+                  {numero && (
+                    <>
+                      <dt className="text-text-soft">Número</dt>
+                      <dd className="font-medium tabular-nums text-headline">{numero}</dd>
+                    </>
+                  )}
+                  {state.business_name && state.push_name && (
+                    <>
+                      <dt className="text-text-soft">Negocio</dt>
+                      <dd className="text-body">{state.business_name}</dd>
+                    </>
+                  )}
+                  {plataforma && (
+                    <>
+                      <dt className="text-text-soft">Dispositivo</dt>
+                      <dd className="text-body">{plataforma}</dd>
+                    </>
+                  )}
+                  {state.linked_at && (
+                    <>
+                      <dt className="text-text-soft">Vinculado el</dt>
+                      <dd className="text-body">{formatDateTime(state.linked_at)}</dd>
+                    </>
+                  )}
+                  {state.last_connected_at &&
+                    state.last_connected_at !== state.linked_at && (
+                      <>
+                        <dt className="text-text-soft">Última conexión</dt>
+                        <dd className="text-body">{formatDateTime(state.last_connected_at)}</dd>
+                      </>
+                    )}
+                </dl>
+              </div>
             ) : state.qr_image ? (
               <div className="flex flex-col gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

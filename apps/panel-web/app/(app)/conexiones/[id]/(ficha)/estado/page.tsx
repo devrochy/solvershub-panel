@@ -3,13 +3,12 @@ import { WawebPanel } from "@/app/(app)/conexiones/_components/waweb-panel";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/server";
+import type { WawebState } from "@/lib/api/types";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
 import { actividadDeLaSemana } from "@/lib/conexiones";
 import { formatFechaLarga } from "@/lib/format";
 
 export const metadata = { title: "Estado" };
-
-type Estado = { status: string; risk_ok: boolean; jid: string | null; qr_image: string | null; last_error: string | null };
 
 /**
  * WhatsApp con QR en una sola pestaña (CON-21): el vínculo con su QR o el número vinculado, el
@@ -20,7 +19,7 @@ export default async function EstadoPage({ params }: { params: Promise<{ id: str
   const ficha = await fichaDePestana(id, "estado");
   if (!ficha) return null;
   const c = ficha.conexion;
-  const res = await apiFetch<Estado>("/admin/meta/waweb");
+  const res = await apiFetch<WawebState>("/admin/meta/waweb");
 
   return (
     <SeccionFicha titulo="Estado" descripcion="El vínculo con tu teléfono y lo que atendió en la semana.">

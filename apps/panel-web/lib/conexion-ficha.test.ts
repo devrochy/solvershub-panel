@@ -86,7 +86,25 @@ describe("cabecera y lista", () => {
   it("subtítulo con el tipo legible y el detalle", () => {
     expect(subtituloDeFicha(conexion({}), "whatsapp_meta")).toBe("WhatsApp oficial · +57 300 000 0000");
     expect(subtituloDeFicha(conexion({ external_id: "" }), "webchat")).toBe("Chat web");
-    expect(subtituloDeFicha(conexion({ external_id: "573005550103" }), "whatsapp_waweb")).toBe("WhatsApp con QR · +57 300 555 0103");
+    expect(
+      subtituloDeFicha(
+        conexion({
+          ...sinMeta,
+          type_id: "whatsapp_waweb",
+          external_id: "waweb:tenant",
+          display_name: "Ana",
+          display_phone_number: "573005550103",
+        }),
+        "whatsapp_waweb",
+      ),
+    ).toBe("WhatsApp con QR · Ana · +57 300 555 0103");
+    // Sin identidad no se muestra el `waweb:<uuid>` técnico.
+    expect(
+      subtituloDeFicha(
+        conexion({ ...sinMeta, type_id: "whatsapp_waweb", external_id: "waweb:tenant" }),
+        "whatsapp_waweb",
+      ),
+    ).toBe("WhatsApp con QR");
     expect(subtituloDeFicha(conexion({ external_id: "17841400000000000" }), "instagram")).toBe("Instagram");
   });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Bell, X } from "lucide-react";
 
@@ -10,7 +9,7 @@ import { useShell } from "@/components/shell/shell-context";
 import { Contador } from "@/components/ui/contador";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNotificaciones } from "@/lib/notificaciones/use-notificaciones";
-import { avisoDePlanFree, esRutaDePlan } from "@/lib/plan-limite";
+import { avisoDePlanFree } from "@/lib/plan-limite";
 import { cn } from "@/lib/utils";
 
 /** Debajo de `md` (768 px) el centro es una hoja a pantalla casi completa; desde ahí, un popover. */
@@ -41,14 +40,12 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
   const chica = useEsPantallaChica();
   const n = useNotificaciones({ abierto });
   const shell = useShell();
-  const pathname = usePathname();
-  // Aviso de plan Free (HU-BILL-15): un punto cuando no hay otras no leídas y no estamos en Plan.
+  // Aviso de plan Free (HU-BILL-15): un punto cuando no hay otras no leídas.
   const avisoPlanActivo =
     !!avisoDePlanFree(shell?.plan) &&
     !shell?.avisoPlanCerrado &&
     !shell?.esMaster &&
-    shell?.permisos?.plan === "write" &&
-    !esRutaDePlan(pathname);
+    shell?.permisos?.plan === "write";
 
   const etiqueta =
     n.noLeidas > 0
