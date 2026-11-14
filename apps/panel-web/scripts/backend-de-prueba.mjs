@@ -51,6 +51,26 @@ const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts"
 
 const puerto = Number(process.env.PUERTO ?? 8765);
 const respuestas = { ...RESPUESTAS, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
+
+// Centro de notificaciones (ADR-0167): un feed corto para mirar los filtros por categoría.
+{
+  const ahora = new Date().toISOString();
+  respuestas["/me/notifications"] = {
+    items: [
+      { id: "noti-ventas", event_key: "commerce.order.created", category: "ventas", severity: "success", title: "Pedido nuevo", body: "Ana pidió 2 cafés para recoger.", target: { entity: "pedido", id: null, section: "pack_commerce" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-conversacion", event_key: "core.escalation", category: "conversaciones", severity: "warning", title: "Un cliente pide una persona", body: "Luis quiere hablar con alguien del equipo.", target: { entity: "conversacion", id: "test-conv-1", section: "escalations" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-sistema", event_key: "core.connection.down", category: "sistema", severity: "info", title: "Conexión revisada", body: "El chat web está al día.", target: { entity: "conexion", id: "00000000-0000-4000-8000-0000000000c1", section: "connections" }, data: {}, created_at: ahora, read: true },
+    ],
+    next_cursor: null,
+    unread_count: 2,
+  };
+  respuestas["/me/notifications/unread-count"] = { unread_count: 2 };
+  respuestas["/me/notifications/preferences"] = {
+    categories: ["conversaciones", "ventas", "cobros", "agenda", "sistema"],
+    push_off_categories: [],
+    muted_until: null,
+  };
+}
 // COBRANZA=1: un negocio con Cobranza en marcha (carteras, ruta, cliente con préstamo, promesas, auditoría).
 if (process.env.COBRANZA === "1") {
   const dia = (n) => new Date(Date.now() - 5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
@@ -1688,6 +1708,33 @@ createServer(async (req, res) => {
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
+  }
+  if (ruta === "/me/notifications/read" && req.method === "POST") {
+    respuestas["/me/notifications"] = { ...respuestas["/me/notifications"], unread_count: 0 };
+    respuestas["/me/notifications/unread-count"] = { unread_count: 0 };
+    res.end(JSON.stringify({ unread_count: 0 }));
+    return;
+  }
+  if (ruta === "/me/notifications/preferences" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      ...JSON.parse(texto || "{}"),
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
+  }
+  if (ruta === "/me/notifications/mute" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const minutos = Number(JSON.parse(texto || "{}").minutes ?? 0);
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      muted_until: minutos > 0 ? new Date(Date.now() + minutos * 60_000).toISOString() : null,
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
   }
   const cuerpo =
     req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];
