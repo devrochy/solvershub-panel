@@ -6,6 +6,7 @@
  */
 import type {
   CotizacionFotos,
+  EstadoImportacion,
   FilaDeFoto,
   ImportacionHecha,
   MapeoPropuesto,
@@ -116,6 +117,13 @@ export function textoDeCotizacion(c: CotizacionFotos): string {
   return `${que}${llave}. Te quedan ${creditos(disponible)} este mes.`;
 }
 
+/** «Listo: 3 productos importados; 1 ya existía.» */
+export function resumenDeImportacionDelCatalogo(h: Pick<ImportacionHecha, "creadas" | "existentes">): string {
+  const partes = [`Listo: ${h.creadas} ${h.creadas === 1 ? "producto importado" : "productos importados"}`];
+  if (h.existentes > 0) partes.push(`${h.existentes} ya ${h.existentes === 1 ? "existía" : "existían"}`);
+  return `${partes.join("; ")}.`;
+}
+
 /** Lo cargado en producción (sin la API de registros, que es solo de test): la lista sale de las filas confirmadas. */
 export function registrosDesdeFilas(filas: FilaEditable[]): RegistroDePrueba[] {
   return filas
@@ -198,4 +206,18 @@ export function subirFoto(agenteId: string, foto: File): Promise<Respuesta<FilaD
   const cuerpo = new FormData();
   cuerpo.set("archivo", foto, foto.name);
   return llamar(`/api/agentes/${agenteId}/importar-datos/fotos`, { method: "POST", body: cuerpo });
+}
+
+/**
+ * Primer agente que importa productos (su plantilla de importación es `productos`), con esa plantilla; `null` si
+ * ninguno. Las rutas de importación son por agente, pero el catálogo es del negocio (SPEC-45).
+ */
+export async function agenteQueImportaProductos(
+  agentes: string[],
+): Promise<{ agenteId: string; plantilla: PlantillaImportacion } | null> {
+  for (const agenteId of agentes) {
+    const r = await leerJson<EstadoImportacion>(`/api/agentes/${agenteId}/importar-datos`);
+    if (r.ok && r.data.disponible && r.data.plantilla?.id === "productos") return { agenteId, plantilla: r.data.plantilla };
+  }
+  return null;
 }

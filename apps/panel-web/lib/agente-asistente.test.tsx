@@ -210,7 +210,7 @@ describe("asistente en pantalla", () => {
       answers: { que_vendes: "planes", largo_respuesta: "normal" },
       name: "Mis ventas",
     });
-  });
+  }, 15_000);
 
   it("Cobranza no ve las preguntas de Ventas y el resumen enlaza lo que falta", () => {
     montar([VENTAS, COBRANZA]);

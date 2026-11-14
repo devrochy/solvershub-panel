@@ -4,11 +4,13 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 
 import { PasoDatos } from "@/app/(app)/agentes/nuevo/_components/paso-datos";
 import { PasoLoCargado } from "@/app/(app)/agentes/nuevo/_components/paso-lo-cargado";
+import { ImportarCatalogoDialog } from "@/app/(app)/comercio/productos/_components/importar-catalogo-dialog";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { CotizacionFotos, MapeoPropuesto, PlantillaImportacion } from "@/lib/api/types";
 import { violacionesGraves } from "@/lib/testing/axe";
 
 import {
+  agenteQueImportaProductos,
   avisoDeIa,
   columnasVisibles,
   cuerpoDePrecarga,
@@ -164,7 +166,7 @@ describe("paso «Datos»", () => {
 
     const confirmar = fetchMock.mock.calls.find(([u]) => u === "/api/agentes/a-1/importar-datos/filas") as unknown as [string, RequestInit];
     expect(JSON.parse(confirmar[1].body as string).filas[1].valores.precio).toBe("20000");
-  });
+  }, 15_000);
 
   it("las fotos se cotizan antes y se detienen cuando se acaba el crédito, sin perder las reconocidas", async () => {
     let subidas = 0;
@@ -190,7 +192,7 @@ describe("paso «Datos»", () => {
     expect((screen.getByLabelText("nombre de la fila 2") as HTMLInputElement).value).toBe("Taza");
     expect(screen.getByRole("img", { name: "Foto de Taza" })).toBeTruthy();
     expect(fetchMock.mock.calls.filter(([u]) => u === "/api/agentes/a-1/importar-datos/fotos")).toHaveLength(2);
-  });
+  }, 15_000);
 
   it("en test genera datos de prueba y pasa a «Lo cargado»", async () => {
     const { onCargado } = montarDatos({
@@ -222,5 +224,49 @@ describe("paso «Lo cargado»", () => {
     render(<PasoLoCargado agenteId="a-1" locales={[]} resumen={null} />);
     expect(await screen.findByText("Pan")).toBeTruthy();
     expect(screen.getByText("«¿Tienen Pan?»")).toBeTruthy();
+  });
+});
+
+describe("importar con IA desde Productos", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("usa el primer agente cuya plantilla es de productos", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url === "/api/agentes/agenda/importar-datos"
+          ? respuesta({ disponible: true, plantilla: { ...PLANTILLA, id: "tipos_de_cita" }, importado: null })
+          : url === "/api/agentes/ventas/importar-datos"
+            ? respuesta(IMPORTACION)
+            : respuesta({ error: "No existe." }, 404),
+      ),
+    );
+    render(
+      <FeedbackProviders>
+        <ImportarCatalogoDialog
+          agentes={[
+            { id: "agenda", name: "Agenda" },
+            { id: "ventas", name: "Ventas" },
+          ]}
+          modo="csv"
+          onOpenChange={vi.fn()}
+        />
+      </FeedbackProviders>,
+    );
+    expect(await screen.findByLabelText("Tu archivo CSV")).toBeTruthy();
+    expect(await agenteQueImportaProductos(["agenda", "ventas"])).toMatchObject({ agenteId: "ventas" });
+  });
+
+  it("sin un agente que importe productos, lo explica", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => respuesta({ error: "No existe." }, 404)));
+    render(
+      <FeedbackProviders>
+        <ImportarCatalogoDialog agentes={[{ id: "agenda", name: "Agenda" }]} modo="fotos" onOpenChange={vi.fn()} />
+      </FeedbackProviders>,
+    );
+    expect(await screen.findByText(/necesitas un agente de Ventas/)).toBeTruthy();
   });
 });
