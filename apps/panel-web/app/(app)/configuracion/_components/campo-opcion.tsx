@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
+import { CALIDEZ_ETIQUETAS } from "@/lib/onboarding";
 import { type Pendiente } from "@/lib/frases-pendientes";
 import type { Franja } from "@/lib/horario-atencion";
 
@@ -146,15 +147,18 @@ export function CampoOpcion({
       }
       case "entero":
       case "decimal": {
-        // Un rango corto de enteros (la calidez, de 1 a 5) se elige tocando, no escribiendo (CFG-10).
+        // Un rango corto de enteros (la calidez, de 0 a 5) se elige tocando, no escribiendo (CFG-10).
         const min = opcion.minimo ?? null;
         const max = opcion.maximo ?? null;
-        if (opcion.tipo === "entero" && min !== null && max !== null && max - min <= 4) {
+        const esCalidez = opcion.clave === "persona_warmth";
+        if (opcion.tipo === "entero" && min !== null && max !== null && (esCalidez || max - min <= 4)) {
           const puntos = Array.from({ length: max - min + 1 }, (_, i) => String(min + i));
+          const etiqueta = (p: string) =>
+            esCalidez ? `${p} · ${CALIDEZ_ETIQUETAS[Number(p)] ?? p}` : p;
           return (
             <SegmentedControl
               label={opcion.etiqueta}
-              options={puntos.map((p) => ({ value: p, label: p }))}
+              options={puntos.map((p) => ({ value: p, label: etiqueta(p) }))}
               value={String(valor ?? min)}
               onChange={bloqueado ? undefined : (v) => onChange(clave, Number(v))}
               className="self-start"

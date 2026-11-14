@@ -52,7 +52,7 @@ export function PasoVoz({
             elegida={estado.calidez === n}
             onElegir={(v) => onCambiar({ calidez: Number(v) })}
           >
-            {n === CALIDEZ_MIN || n === CALIDEZ_MAX || estado.calidez === n ? `${n} · ${CALIDEZ_ETIQUETAS[n - 1]}` : n}
+            {n === CALIDEZ_MIN || n === CALIDEZ_MAX || estado.calidez === n ? `${n} · ${CALIDEZ_ETIQUETAS[n]}` : n}
           </FichaUnica>
         ))}
       </GrupoDeOpciones>

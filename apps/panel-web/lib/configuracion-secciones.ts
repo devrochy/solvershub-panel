@@ -72,7 +72,8 @@ export const SECCIONES: Seccion[] = [
     id: "voz",
     grupo: "respuesta",
     titulo: "Voz y estilo",
-    descripcion: "La personalidad del asistente y el ritmo con que envía sus respuestas.",
+    descripcion:
+      "La personalidad base del asistente y el ritmo con que envía sus respuestas. La voz se aplica al publicar una versión nueva del agente.",
     gruposIdentidad: ["voz", "respuesta"],
   },
   {

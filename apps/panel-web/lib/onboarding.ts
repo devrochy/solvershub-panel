@@ -88,9 +88,9 @@ export const LARGOS: { id: Largo; titulo: string; ayuda: string; caracteres: num
   { id: "detalladas", titulo: "Detalladas", ayuda: "Explican con más detalle.", caracteres: 900 },
 ];
 
-export const CALIDEZ_MIN = 1;
+export const CALIDEZ_MIN = 0;
 export const CALIDEZ_MAX = 5;
-export const CALIDEZ_ETIQUETAS = ["Sobrio", "Reservado", "Amable", "Cálido", "Muy cálido"] as const;
+export const CALIDEZ_ETIQUETAS = ["Seco", "Sobrio", "Reservado", "Amable", "Cálido", "Muy cálido"] as const;
 
 /**
  * Frase de ejemplo para la burbuja de voz. Es texto fijo según tono, calidez, emojis y largo: no llama
@@ -119,15 +119,23 @@ export function muestraDeVoz(
     voz.tono === "formal" || voz.tono === "neutral"
       ? `Le atiende ${quien}${donde ? `, de ${donde}` : ""}.`
       : `Soy ${quien}${donde ? `, de ${donde}` : ""}.`;
-  const calidez =
-    voz.calidez >= 4 ? "Me encanta poder ayudarte." : voz.calidez === 3 ? "Con gusto te ayudo." : "";
+  const calidez: Record<number, string> = {
+    0: "Vamos al punto.",
+    1: "Claro.",
+    2: "Entiendo.",
+    3: "Claro, te ayudo.",
+    4: "Con gusto te ayudo, cuéntame.",
+    5: "¡Me encanta poder ayudarte!",
+  };
   const detalle =
     voz.largo === "detalladas"
       ? "Puedo contarte los detalles, los precios y los horarios, y dejar todo listo por aquí mismo."
       : "";
   const emoji = voz.emojis === "none" ? "" : voz.emojis === "free" ? " 😊✨" : " 🙂";
   const partes =
-    voz.largo === "cortas" ? [saludo[voz.tono], ofrece[voz.tono]] : [saludo[voz.tono], presenta, calidez, detalle, ofrece[voz.tono]];
+    voz.largo === "cortas"
+      ? [saludo[voz.tono], calidez[voz.calidez] ?? "", ofrece[voz.tono]]
+      : [saludo[voz.tono], presenta, calidez[voz.calidez] ?? "", detalle, ofrece[voz.tono]];
   return `${partes.filter(Boolean).join(" ")}${emoji}`;
 }
 
