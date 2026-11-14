@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import type { WawebPolitica } from "@/lib/api/types";
 
-import { cuerpoWaweb, erroresPorClave, exigeAceptarRiesgo, valoresDePolitica } from "./waweb";
+import {
+  cuerpoWaweb,
+  erroresPorClave,
+  etiquetaPlataforma,
+  exigeAceptarRiesgo,
+  nombreVinculado,
+  telefonoVinculado,
+  valoresDePolitica,
+} from "./waweb";
 
 const politica: WawebPolitica = {
   mode: "reply_only",
@@ -54,5 +62,27 @@ describe("política de WhatsApp Web", () => {
     });
     expect(erroresPorClave(undefined)).toEqual({});
     expect(erroresPorClave({ risk_version: "El aviso cambió." }).acepta_riesgo).toBe("El aviso cambió.");
+  });
+});
+
+describe("identidad del vínculo", () => {
+  it("prefiere el nombre de perfil y cae al del negocio", () => {
+    expect(nombreVinculado({ push_name: "Ana", business_name: "Panadería" })).toBe("Ana");
+    expect(nombreVinculado({ push_name: "  ", business_name: "Panadería" })).toBe("Panadería");
+    expect(nombreVinculado({ push_name: null, business_name: null })).toBeNull();
+  });
+
+  it("formatea el número colombiano y conserva el prefijo de otros países", () => {
+    expect(telefonoVinculado({ phone: "573005550103", jid: null })).toBe("+57 300 555 0103");
+    expect(telefonoVinculado({ phone: null, jid: "593999999999@s.whatsapp.net" })).toBe("+593999999999");
+    expect(telefonoVinculado({ phone: null, jid: 'User: "573005550103"' })).toBe("+57 300 555 0103");
+    expect(telefonoVinculado({ phone: null, jid: null })).toBeNull();
+  });
+
+  it("traduce la plataforma y deja el valor crudo si no la conoce", () => {
+    expect(etiquetaPlataforma("android")).toBe("Android");
+    expect(etiquetaPlataforma("web")).toBe("WhatsApp Web");
+    expect(etiquetaPlataforma("smba")).toBe("smba");
+    expect(etiquetaPlataforma(null)).toBeNull();
   });
 });
