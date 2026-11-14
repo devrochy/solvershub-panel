@@ -26,17 +26,13 @@ export const ETIQUETA_RUTEO: Record<Ruteo, string> = {
 /** Lo mismo, corto, para el estado de la cabecera. */
 export const RUTEO_CORTO: Record<Ruteo, string> = { off: "no", shadow: "de prueba", active: "sí" };
 
-/**
- * Lo que `agent-os` acepta del navegador: valida y descarta cualquier otro campo. Reenvía
- * `runtime: "v3"` fijo mientras la API lo pida en el cuerpo; cuando la API lo quite (HU-AOS-69),
- * lo ignora.
- */
-export function objetivoValido(cuerpo: unknown): (Banderas & { runtime: "v3" }) | null {
+/** Lo que `agent-os` acepta del navegador: valida y descarta cualquier otro campo. */
+export function objetivoValido(cuerpo: unknown): Banderas | null {
   if (!cuerpo || typeof cuerpo !== "object" || Array.isArray(cuerpo)) return null;
   const c = cuerpo as Record<string, unknown>;
   if (!RUTEOS.includes(c.routing as Ruteo)) return null;
   if (typeof c.procedures !== "boolean") return null;
-  return { runtime: "v3", procedures: c.procedures, routing: c.routing as Ruteo };
+  return { procedures: c.procedures, routing: c.routing as Ruteo };
 }
 
 export function iguales(a: Banderas, b: Banderas): boolean {

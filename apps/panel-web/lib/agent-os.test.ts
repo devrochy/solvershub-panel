@@ -7,10 +7,10 @@ import { iguales, objetivoValido, resumenDelCambio, type Banderas } from "@/lib/
 const APAGADAS: Banderas = { procedures: false, routing: "off" };
 
 describe("objetivoValido", () => {
-  it("acepta solo los campos conocidos y manda runtime v3 fijo", () => {
+  it("acepta solo los campos conocidos", () => {
     expect(
       objetivoValido({ runtime: "legacy", procedures: true, routing: "shadow", construir: true, tenant: "otro" }),
-    ).toEqual({ runtime: "v3", procedures: true, routing: "shadow" });
+    ).toEqual({ procedures: true, routing: "shadow" });
   });
 
   it("rechaza valores fuera del catálogo o con tipos raros", () => {
