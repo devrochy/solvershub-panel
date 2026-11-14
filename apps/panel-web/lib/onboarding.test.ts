@@ -110,6 +110,17 @@ describe("voz", () => {
     expect(muestraDeVoz({ ...base, largo: "detalladas" }, "Sofía", "").length).toBeGreaterThan(normal.length);
   });
 
+  it("distingue cada nivel de calidez, incluidos Cálido y Muy cálido", () => {
+    const seco = muestraDeVoz({ ...base, calidez: 0 }, "Sofía", "");
+    const calido = muestraDeVoz({ ...base, calidez: 4 }, "Sofía", "");
+    const muyCalido = muestraDeVoz({ ...base, calidez: 5 }, "Sofía", "");
+
+    expect(seco).toContain("Vamos al punto");
+    expect(calido).toContain("Con gusto te ayudo");
+    expect(muyCalido).toContain("Me encanta poder ayudarte");
+    expect(calido).not.toBe(muyCalido);
+  });
+
   it("guarda la voz con los valores que acepta la API", () => {
     expect(cambiosDelPaso("voz", { ...listo, tono: "formal", largo: "detalladas", calidez: 9 })).toEqual({
       persona_tone: "formal",

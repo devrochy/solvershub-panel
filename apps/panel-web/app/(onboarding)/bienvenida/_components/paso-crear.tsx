@@ -6,6 +6,7 @@ import { AlertTriangle, Check, Circle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import {
+  CALIDEZ_ETIQUETAS,
   ETIQUETAS_DE_SUBPASO,
   MOTIVOS_DE_ESCALAR,
   TIPOS_DE_NEGOCIO,
@@ -100,6 +101,7 @@ export function PasoCrear({
         <Fila titulo="Tipo" valor={tipo?.titulo ?? "—"} />
         <Fila titulo="Se llama" valor={estado.nombreDelAgente.trim() || "—"} />
         <Fila titulo="Tono" valor={TONOS.find((t) => t.id === estado.tono)?.titulo ?? "—"} />
+        <Fila titulo="Calidez" valor={`${estado.calidez} · ${CALIDEZ_ETIQUETAS[estado.calidez]}`} />
         <Fila titulo="Atiende tu equipo" valor={horario} />
         <Fila titulo="Pasa a una persona si" valor={escalar.join(", ") || "—"} />
       </dl>
