@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
 import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimiento";
-import { DatosDePruebaDelAgente } from "@/app/(app)/agentes/_components/datos-de-prueba";
-import { ImportarDatosDelAgente } from "@/app/(app)/agentes/_components/importar-datos";
 import {
   ClientesDelAgente,
   ConsumoDelAgente,
@@ -37,8 +35,6 @@ import type {
   AgentTaskPage,
   AgentUsage,
   ConnectionsConsole,
-  EstadoDatosDePrueba,
-  EstadoImportacion,
   KnowledgeDocument,
   LlmModelCatalog,
   Me,
@@ -335,16 +331,8 @@ export default async function AgentePage({
     );
   }
 
-  // Datos de prueba (HU-QA-10): solo en test (fuera, la API responde 404 y no se muestra nada) y
-  // con escritura en la sección `agents`, la misma que exige la API.
-  const datosDePrueba =
-    agente.id && agente.kind === "specialist" && meRes.ok && puedeEscribirConocimiento(meRes.data)
-      ? await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${agente.id}/datos-de-prueba`)
-      : null;
-  // Importar datos existentes (HU-QA-12): mismo criterio; la API exige además escritura en la sección del pack.
-  const importacion = datosDePrueba?.ok
-    ? await apiFetch<EstadoImportacion>(`/admin/agents/${agente.id}/importar-datos`)
-    : null;
+  // Generar datos de prueba e importar ya no van en la ficha del agente (decisión del dueño 2026-11-14): se generan
+  // al crear el agente (asistente y bienvenida) y el catálogo se importa en Ventas › Productos.
   // Las conexiones de la consola son las de «Dónde atiende»; sin consola, las del resumen.
   const conexiones =
     filasDeConexiones.length > 0
@@ -383,12 +371,6 @@ export default async function AgentePage({
         ),
         actions: (
           <>
-            {agente.id && importacion?.ok && (
-              <ImportarDatosDelAgente agenteId={agente.id} nombre={agente.name} estado={importacion.data} />
-            )}
-            {agente.id && datosDePrueba?.ok && (
-              <DatosDePruebaDelAgente agenteId={agente.id} nombre={agente.name} estado={datosDePrueba.data} />
-            )}
             {tieneConexiones(agente) && (
               <ProbarAgente
                 nombre={agente.name}

@@ -9,7 +9,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Marca } from "@/components/ui/marca";
 import { Progress } from "@/components/ui/progress";
-import type { IdentitySettings, PasoPrimerosPasos } from "@/lib/api/types";
+import type { IdentitySettings, PasoPrimerosPasos, RegistroDePrueba } from "@/lib/api/types";
 import {
   ESTADO_INICIAL,
   PASOS,
@@ -24,8 +24,8 @@ import {
 } from "@/lib/onboarding";
 
 import { PantallaFinal } from "./pantalla-final";
-import { PasoConocimiento } from "./paso-conocimiento";
 import { PasoCrear } from "./paso-crear";
+import { PasoDatosDeBienvenida } from "./paso-datos";
 import { PasoNegocio } from "./paso-negocio";
 import { PasoProbar } from "./paso-probar";
 import { PasoReglas } from "./paso-reglas";
@@ -135,6 +135,7 @@ function Asistente({
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [terminado, setTerminado] = useState(false);
+  const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
   const titulo = useRef<HTMLHeadingElement>(null);
   const primeraVez = useRef(true);
 
@@ -279,7 +280,6 @@ function Asistente({
               />}
             {pasoActual.id === "voz" && <PasoVoz estado={estado} onCambiar={cambiar} />}
             {pasoActual.id === "reglas" && <PasoReglas estado={estado} onCambiar={cambiar} />}
-            {pasoActual.id === "conocimiento" && <PasoConocimiento estado={estado} contenido={contenido} />}
             {pasoActual.id === "crear" && (
               <PasoCrear
                 estado={estado}
@@ -288,7 +288,12 @@ function Asistente({
                 onListo={(r) => setRecorrido(r.recorrido)}
               />
             )}
-            {pasoActual.id === "probar" && <PasoProbar estado={estado} conexionId={conexionId} onRespuesta={() => setProbado(true)} />}
+            {pasoActual.id === "datos" && (
+              <PasoDatosDeBienvenida estado={estado} agenteId={agenteId} contenido={contenido} onRegistros={setCargados} />
+            )}
+            {pasoActual.id === "probar" && (
+              <PasoProbar estado={estado} conexionId={conexionId} onRespuesta={() => setProbado(true)} cargados={cargados} />
+            )}
             <FormFeedback error={error} className="max-w-xl" />
           </main>
           <div className="hidden lg:block">
@@ -309,7 +314,7 @@ function Asistente({
             </Button>
           ) : (
             <Button size="lg" variant="accent" onClick={() => void siguiente()} loading={ocupado} disabled={sinListo}>
-              {pasoActual.id === "crear" ? "Probar mi agente" : "Siguiente"}
+              {pasoActual.id === "datos" ? "Probar mi agente" : "Siguiente"}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Button>
           )}

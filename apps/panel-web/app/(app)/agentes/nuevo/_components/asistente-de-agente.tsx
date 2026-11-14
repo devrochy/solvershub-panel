@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { PasoDatos, type Cargado } from "@/app/(app)/agentes/nuevo/_components/paso-datos";
 import { PasoLoCargado } from "@/app/(app)/agentes/nuevo/_components/paso-lo-cargado";
+import { PasoProbarBorrador } from "@/app/(app)/agentes/nuevo/_components/paso-probar-borrador";
 import { PlantillasEnTarjetas } from "@/app/(app)/agentes/nuevo/_components/plantillas-en-tarjetas";
 import { RadioGroup } from "@/components/ui/radio-group";
 import {
@@ -30,7 +31,8 @@ import {
   textoDeRespuesta,
   type EstadoDelAsistente,
 } from "@/lib/agente-asistente";
-import type { AgentTemplate } from "@/lib/api/types";
+import type { AgentTemplate, RegistroDePrueba } from "@/lib/api/types";
+import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
 
@@ -81,7 +83,9 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
   const [existente, setExistente] = useState<string | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
   const [retomado, setRetomado] = useState(false);
-  const [cargado, setCargado] = useState<Cargado>({ registros: [], resumen: "" });
+  // Lo cargado en «Carga sus datos» (null = todavía no se cargó nada en esta visita) y lo que se muestra de ello.
+  const [cargado, setCargado] = useState<Cargado | null>(null);
+  const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
   const titulo = useRef<HTMLHeadingElement>(null);
 
   const plantilla = plantillas.find((p) => p.key === estado.plantilla) ?? null;
@@ -218,18 +222,28 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
       );
     }
     if (paso.id === "datos" && agenteId) {
-      return (
+      // Como en la bienvenida: cargar y ver lo cargado en el mismo paso.
+      return cargado ? (
+        <div className="flex flex-col gap-4">
+          <PasoLoCargado agenteId={agenteId} locales={cargado.registros} resumen={cargado.resumen || null} onRegistros={setCargados} />
+          <div>
+            <Button variant="outline" onClick={() => setCargado(null)}>
+              Cargar otros datos
+            </Button>
+          </div>
+        </div>
+      ) : (
         <PasoDatos
           agenteId={agenteId}
           onCargado={(c) => {
             setCargado(c);
-            irA(indice + 1);
+            setCargados(c.registros);
           }}
         />
       );
     }
-    if (paso.id === "cargado" && agenteId) {
-      return <PasoLoCargado agenteId={agenteId} locales={cargado.registros} resumen={cargado.resumen || null} />;
+    if (paso.id === "probar" && agenteId) {
+      return <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />;
     }
     return (
       <div className="flex flex-col gap-4">
@@ -332,8 +346,8 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
             Elegir dónde atiende y publicar
           </Button>
         ) : paso.id === "datos" ? (
-          <Button variant="outline" onClick={() => irA(indice + 1)}>
-            Seguir sin cargar datos
+          <Button variant="accent" onClick={() => irA(indice + 1)}>
+            Probar mi agente
           </Button>
         ) : (
           <Button variant="accent" onClick={avanzar} disabled={pending}>

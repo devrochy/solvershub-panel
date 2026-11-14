@@ -88,7 +88,7 @@ describe("pasos del asistente", () => {
       "nombre",
       "revisar",
       "datos",
-      "cargado",
+      "probar",
     ]);
     expect(pasosDelAsistente(COBRANZA).map((p) => p.id)).not.toContain("que_vendes");
     const muchas = Array.from({ length: 12 }, (_, i) => ({ ...LARGO, id: `q${i}` }));
@@ -133,7 +133,7 @@ describe("pasos del asistente", () => {
     const pasos = pasosDelAsistente(VENTAS);
     expect(pasoDelCampo("que_vendes", pasos)).toBe(1);
     expect(pasoDelCampo("name", pasos)).toBe(3);
-    expect(pasoDelCampo("desconocido", pasos)).toBe(4); // «Revisar y crear»
+    expect(pasoDelCampo("desconocido", pasos)).toBe(4); // «Crea tu agente»
     expect(textoDeAvance(1, 6)).toBe("Paso 2 de 6");
   });
 
@@ -199,8 +199,8 @@ describe("asistente en pantalla", () => {
     expect(await screen.findByText(/no tiene datos para cargar/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Atrás" })).toBeNull();
     expect(push).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Seguir sin cargar datos" }));
-    expect(await screen.findByText(/No cargaste datos todavía/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Probar mi agente" }));
+    expect(await screen.findByRole("heading", { name: "Pruébalo" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Elegir dónde atiende y publicar" }));
     expect(push).toHaveBeenCalledWith("/agentes/a-1/editar?paso=publicar");
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];

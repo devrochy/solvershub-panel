@@ -16,7 +16,7 @@ export type PasoAsistente =
   | { id: "nombre"; titulo: string }
   | { id: "revisar"; titulo: string }
   | { id: "datos"; titulo: string }
-  | { id: "cargado"; titulo: string };
+  | { id: "probar"; titulo: string };
 
 export type EstadoDelAsistente = {
   /** Key de la plantilla elegida (paso 1). */
@@ -33,17 +33,18 @@ export const ESTADO_INICIAL: EstadoDelAsistente = { plantilla: null, respuestas:
 const PASO_TIPO: PasoAsistente = { id: "tipo", titulo: "¿Qué quieres que haga?" };
 const PASOS_FINALES: PasoAsistente[] = [
   { id: "nombre", titulo: "¿Cómo se llama?" },
-  { id: "revisar", titulo: "Revisar y crear" },
+  // Mismos pasos y nombres que la bienvenida del primer uso (SPEC-45), sin voz ni horario: son del negocio.
+  { id: "revisar", titulo: "Crea tu agente" },
   { id: "datos", titulo: "Carga sus datos" },
-  { id: "cargado", titulo: "Lo que quedó cargado" },
+  { id: "probar", titulo: "Pruébalo" },
 ];
 
 /** Ids de pasos reservados: una pregunta de la API con uno de estos no puede pisarlos. */
-const RESERVADOS = new Set(["tipo", "nombre", "contenido", "revisar", "datos", "cargado"]);
+const RESERVADOS = new Set(["tipo", "nombre", "contenido", "revisar", "datos", "cargado", "probar"]);
 
 /**
- * Pasos para la plantilla elegida: tipo → una por pregunta del guion → nombre → revisar y crear → datos →
- * lo cargado (SPEC-45). Sin plantilla, solo el primero. Nunca más de `MAX_PASOS`: si el guion trae de más,
+ * Pasos para la plantilla elegida: tipo → una por pregunta del guion → nombre → crea tu agente → carga sus datos
+ * → pruébalo (SPEC-45, el mismo orden que la bienvenida). Sin plantilla, solo el primero. Nunca más de `MAX_PASOS`: si el guion trae de más,
  * sobran las últimas preguntas (la API las rellena con su valor por defecto).
  */
 export function pasosDelAsistente(plantilla: AgentTemplate | null | undefined): PasoAsistente[] {

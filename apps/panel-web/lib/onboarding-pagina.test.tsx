@@ -157,6 +157,29 @@ describe("asistente de primer uso", () => {
     expect(llamadas.some((l) => l.url === "/api/onboarding/omitir")).toBe(true);
   });
 
+  it("después de crear el agente, el paso 5 carga sus datos y lleva a probarlo (SPEC-45)", async () => {
+    const conAgente: Recorrido = { ...PENDIENTE, estado: "en_curso", paso: 5, agente_id: "a-1", conexion_id: "c-1" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url === "/api/agentes/a-1/datos-de-prueba") return respuesta({ disponible: true, falta_descripcion: false, lote: null });
+        if (url === "/api/agentes/a-1/importar-datos") return respuesta({ error: "No existe." }, 404);
+        if (url === "/api/onboarding/avanzar") return respuesta(conAgente);
+        return respuesta({ ok: true });
+      }),
+    );
+    montar(conAgente);
+    expect(await screen.findByRole("heading", { level: 1, name: "Carga sus datos" })).toBeTruthy();
+    expect(screen.getByText("Paso 5 de 6 · Datos")).toBeTruthy();
+    expect(await screen.findByRole("radio", { name: /Generar datos de prueba/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Probar mi agente/ })).toBeTruthy();
+  });
+
+  it("sin agente creado, el paso de datos pide crearlo primero", async () => {
+    montar({ ...PENDIENTE, estado: "en_curso", paso: 5 });
+    expect(await screen.findByText(/Primero crea tu agente/)).toBeTruthy();
+  });
+
   it("retoma en el paso donde se quedó", async () => {
     montar(OMITIDO);
     expect(await screen.findByRole("heading", { level: 1, name: "Horario y reglas" })).toBeTruthy();
