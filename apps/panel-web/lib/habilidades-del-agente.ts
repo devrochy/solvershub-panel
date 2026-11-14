@@ -47,3 +47,64 @@ export function puedeAdministrarCuentas(me: {
 }): boolean {
   return me.role === "master" || me.permissions?.plugins === "write";
 }
+
+/** Un paso de la configuración de una habilidad, para que el dueño vea qué le falta. */
+export type PasoDeHabilidad = {
+  id: "activa" | "cuenta" | "responde" | "documentos";
+  texto: string;
+  hecho: boolean;
+  /** El paso está hecho en el borrador pero los clientes todavía no lo ven. */
+  sinPublicar?: boolean;
+};
+
+export type ContextoDeHabilidad = {
+  cuentas: PaymentAccount[];
+  /** El borrador declara la búsqueda en documentos. */
+  usaEnBorrador: boolean;
+  /** La versión que ven los clientes ya busca en documentos. */
+  usaPublicado: boolean;
+  documentos: number;
+};
+
+export function pasosDeHabilidad(h: AgentSkill, ctx: ContextoDeHabilidad): PasoDeHabilidad[] {
+  const pasos: PasoDeHabilidad[] = [{ id: "activa", texto: "Habilidad activa", hecho: h.installed }];
+  if (h.pack_id === PAGOS) {
+    const cuenta = cuentaElegida(h, ctx.cuentas);
+    pasos.push({ id: "cuenta", texto: cuenta ? `Cobra con ${etiquetaDeCuenta(cuenta)}` : "Elige la cuenta Wompi", hecho: Boolean(cuenta) });
+  } else if (h.pack_id === CONOCIMIENTO) {
+    pasos.push({
+      id: "responde",
+      texto: ctx.usaEnBorrador ? "Responde con los documentos" : "Responder con los documentos",
+      hecho: ctx.usaEnBorrador,
+      sinPublicar: ctx.usaEnBorrador && !ctx.usaPublicado,
+    });
+    pasos.push({
+      id: "documentos",
+      texto: ctx.documentos > 0 ? documentosCargados(ctx.documentos) : "Sube al menos un documento",
+      hecho: ctx.documentos > 0,
+    });
+  }
+  return pasos;
+}
+
+function documentosCargados(n: number): string {
+  return n === 1 ? "1 documento cargado" : `${n} documentos cargados`;
+}
+
+/** Lo que se lee con la tarjeta cerrada: vacío si la habilidad no está agregada. */
+export function resumenDeHabilidad(h: AgentSkill, pasos: PasoDeHabilidad[]): string {
+  if (!h.installed) return "";
+  const pendientes = pasos.filter((p) => !p.hecho || p.sinPublicar);
+  if (pendientes.length === 0) {
+    return pasos
+      .filter((p) => p.id !== "activa")
+      .map((p) => p.texto)
+      .join(" · ");
+  }
+  return pendientes.length === 1 ? "Falta 1 paso" : `Faltan ${pendientes.length} pasos`;
+}
+
+/** Al cargar, la tarjeta se abre si la habilidad está agregada y le falta algo. */
+export function abiertaAlCargar(h: AgentSkill, pasos: PasoDeHabilidad[]): boolean {
+  return h.installed && pasos.some((p) => !p.hecho || p.sinPublicar);
+}

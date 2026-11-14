@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AgentFilters } from "@/app/(app)/agentes/_components/agent-filters";
-import { ConocimientoDelAgente } from "@/app/(app)/agentes/_components/conocimiento";
 import {
   ClientesDelAgente,
   ConsumoDelAgente,
@@ -279,6 +278,7 @@ export default async function AgentePage({
               <NoCargo que="los superpoderes" res={detalleRes ?? superpoderes} />
             ) : (
               <SuperpoderesDelAgente
+                key={detalle.draft.lock_version}
                 agente={detalle}
                 catalogo={superpoderes.data.items}
                 minFrases={modelos.ok ? modelos.data.min_phrases : MIN_FRASES_POR_DEFECTO}
@@ -296,26 +296,17 @@ export default async function AgentePage({
               <NoCargo que="las habilidades" res={habilidades} />
             ) : (
               <HabilidadesDelAgente
+                key={detalle?.draft.lock_version ?? 0}
                 agenteId={agente.id}
+                nombre={agente.name}
                 inicial={habilidades.data.items}
                 cuentas={cuentas?.ok ? cuentas.data : []}
                 puedeEditar={puedeEditar}
-              />
-            )}
-          </Seccion>
-        )}
-        {docs && (
-          <Seccion titulo="Documentos">
-            {!docs.ok ? (
-              <NoCargo que="los documentos" res={docs} />
-            ) : (
-              <ConocimientoDelAgente
-                agenteId={agente.id}
-                nombre={agente.name}
-                documentos={docs.data}
-                puedeEscribir={meRes.ok && puedeEscribirConocimiento(meRes.data)}
-                usaConocimiento={borrador ? usaConocimiento(borrador) : false}
-                puedeEditar={puedeEditar}
+                borrador={detalle && borrador ? { content: borrador, lockVersion: detalle.draft.lock_version } : null}
+                // La API no trae el contenido publicado: si no hay cambios sin publicar, lo publicado es el borrador.
+                usaPublicado={Boolean(detalle && borrador && !hayCambiosSinPublicar(detalle) && usaConocimiento(borrador))}
+                documentos={docs?.ok ? docs.data : null}
+                puedeEscribirDocumentos={meRes.ok && puedeEscribirConocimiento(meRes.data)}
               />
             )}
           </Seccion>
