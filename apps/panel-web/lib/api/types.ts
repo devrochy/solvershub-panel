@@ -56,6 +56,7 @@ export type PackProfile = components["schemas"]["PackProfile"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
 export type ConnectionsConsole = components["schemas"]["ConnectionsConsole"];
+export type WawebState = components["schemas"]["WawebState"];
 export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 export type TenantCreated = components["schemas"]["TenantCreated"];
