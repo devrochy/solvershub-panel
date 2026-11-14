@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatPrueba } from "@/app/(app)/asistente/_components/chat-prueba";
+import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FRASES_DE_PRUEBA, type EstadoDelAsistente } from "@/lib/onboarding";
 
 /**
@@ -11,10 +12,13 @@ export function PasoProbar({
   estado,
   conexionId,
   onRespuesta,
+  cargados = [],
 }: {
   estado: EstadoDelAsistente;
   conexionId: string | null;
   onRespuesta: () => void;
+  /** Lo cargado en el paso anterior (SPEC-45): sus nombres van primero en las frases sugeridas. */
+  cargados?: { tipo: string; nombre: string }[];
 }) {
   if (!conexionId) {
     return (
@@ -30,9 +34,16 @@ export function PasoProbar({
       </p>
       <ChatPrueba
         conexionId={conexionId}
-        sugerencias={estado.tipo ? FRASES_DE_PRUEBA[estado.tipo] : undefined}
+        sugerencias={sugerenciasDe(cargados, estado.tipo ? FRASES_DE_PRUEBA[estado.tipo] : undefined)}
         alRecibirRespuesta={onRespuesta}
       />
     </div>
   );
+}
+
+/** Frases con lo cargado primero y después las del tipo de negocio, sin repetir. */
+function sugerenciasDe(cargados: { tipo: string; nombre: string }[], delTipo: string[] | undefined): string[] | undefined {
+  const propias = sugerenciasDePrueba(cargados);
+  if (propias.length === 0) return delTipo;
+  return [...new Set([...propias, ...(delTipo ?? [])])].slice(0, 6);
 }

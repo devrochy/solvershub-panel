@@ -27,10 +27,13 @@ export function PasoLoCargado({
   agenteId,
   locales,
   resumen,
+  onRegistros,
 }: {
   agenteId: string;
   locales: RegistroDePrueba[];
   resumen: string | null;
+  /** Avisa qué se muestra (p. ej. para sugerir frases al probar en la bienvenida). */
+  onRegistros?: (registros: RegistroDePrueba[]) => void;
 }) {
   const [registros, setRegistros] = useState<RegistroDePrueba[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -39,17 +42,16 @@ export function PasoLoCargado({
     let vivo = true;
     void leerJson<RegistrosDePrueba>(`/api/agentes/${agenteId}/datos-de-prueba/registros`).then((r) => {
       if (!vivo) return;
-      if (r.ok && r.data.registros.length > 0) {
-        setRegistros(r.data.registros);
-        setTotal(r.data.total);
-      } else {
-        setRegistros(locales);
-        setTotal(locales.length);
-      }
+      const lista = r.ok && r.data.registros.length > 0 ? r.data.registros : locales;
+      setRegistros(lista);
+      setTotal(r.ok && r.data.registros.length > 0 ? r.data.total : locales.length);
+      onRegistros?.(lista);
     });
     return () => {
       vivo = false;
     };
+    // `onRegistros` es un aviso: no vuelve a pedir la lista si cambia la función.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agenteId, locales]);
 
   if (registros === null) return <p className="text-sm text-text-soft">Buscando lo que se cargó…</p>;

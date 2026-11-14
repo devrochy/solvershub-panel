@@ -8,8 +8,8 @@ import { CONTENIDO } from "@/lib/primeros-pasos";
 import { TIPOS_DE_NEGOCIO, type EstadoDelAsistente } from "@/lib/onboarding";
 
 /**
- * Paso 4: lo que el agente sabe. No duplica formularios (SPEC-39): muestra lo que ya hay cargado y enlaza a
- * la pantalla que lo resuelve, que se abre aparte para no perder el recorrido. Se puede seguir sin cargar nada.
+ * Lo que el agente sabe: muestra lo que ya hay cargado y enlaza a la pantalla que lo resuelve, que se abre aparte
+ * para no perder el recorrido. Va debajo de la carga de datos del paso 5 (SPEC-45). Se puede seguir sin cargar nada.
  */
 export function PasoConocimiento({
   estado,
