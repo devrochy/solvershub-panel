@@ -10,8 +10,10 @@ import {
   PasoSuperpoderes,
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
 import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agente";
+import { DatosDelAgente } from "@/components/domain/agentes/datos-del-agente";
 import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import { Stepper, type StepItem } from "@/components/ui/stepper";
@@ -29,6 +31,15 @@ import {
   type PasoId,
 } from "@/lib/agentes-editor";
 import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
+import {
+  conNivel,
+  cuerpoParaGuardar,
+  estadoInicial,
+  restablecida,
+  type AgenteDatos,
+  type EstadoDatos,
+  type NivelDato,
+} from "@/lib/datos-cliente";
 import type {
   AgentDetail,
   AgentRetiredNotices,
@@ -38,6 +49,7 @@ import type {
   Requirement,
   Superpower,
 } from "@/lib/api/types";
+import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { usePendientes } from "@/lib/frases-pendientes";
 import { habilidadLabel } from "@/lib/labels";
 import { esLimiteDePlan } from "@/lib/plan-limite";
@@ -72,6 +84,9 @@ export function EditorDeAgente({
   avisosRetirados = null,
   nombresDeHabilidades = {},
   gruposDeAcciones = {},
+  datosCliente = null,
+  datosClienteError,
+  puedeEditarDatos = true,
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -89,11 +104,17 @@ export function EditorDeAgente({
   nombresDeHabilidades?: Record<string, string>;
   /** Grupo de cada acción según la API (ADR-0190); sin respuesta se agrupan por su nombre. */
   gruposDeAcciones?: Record<string, string>;
+  /** Política de datos de ESTE agente (HU-CRM-28): `null` si no se pudo cargar. */
+  datosCliente?: AgenteDatos | null;
+  datosClienteError?: string;
+  /** Quien puede escribir la configuración del negocio (la política de datos la exige). */
+  puedeEditarDatos?: boolean;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
   const publicarAccion = useAction({ refresh: false });
   const activarAccion = useAction();
+  const datosAccion = useAction({ refresh: false });
 
   const [base, setBase] = useState<Contenido>(agente.draft.content);
   const [lock, setLock] = useState(agente.draft.lock_version);
@@ -113,9 +134,16 @@ export function EditorDeAgente({
   const pendientes = usePendientes();
   // Avisos de texto escrito y no agregado en una lista, por id de la lista.
   const [avisos, setAvisos] = useState<Record<string, string>>({});
+  const [datos, setDatos] = useState<EstadoDatos>(() => (datosCliente ? estadoInicial(datosCliente) : {}));
+  const [datosGuardado, setDatosGuardado] = useState<EstadoDatos>(datos);
+  const [herramientas, setHerramientas] = useState(datosCliente?.herramientas_del_agente ?? false);
+  const [herramientasGuardado, setHerramientasGuardado] = useState(herramientas);
 
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
+  const datosSinGuardar =
+    JSON.stringify(datos) !== JSON.stringify(datosGuardado) || herramientas !== herramientasGuardado;
+  useAvisarCambios("datos-cliente-agente", datosSinGuardar);
   const contenido = useMemo(() => contenidoDesdeEstado(base, estado, superpoderes), [base, estado, superpoderes]);
   // Lo retirado que está en el borrador se señala junto al superpoder (los índices `procedures[i]` son los del
   // contenido guardado, igual que los errores de la API); lo de versiones publicadas va solo en el aviso.
@@ -140,6 +168,52 @@ export function EditorDeAgente({
   function cambiar(cambio: Partial<EstadoDelEditor>) {
     setEstado((actual) => ({ ...actual, ...cambio }));
     setAvisos({});
+  }
+
+  /** Guarda la política de datos del agente si cambió. `true` = se puede continuar. */
+  async function guardarDatos(herramientasNuevas: boolean = herramientas): Promise<boolean> {
+    if (!datosCliente) return true;
+    const sucio =
+      JSON.stringify(datos) !== JSON.stringify(datosGuardado) || herramientasNuevas !== herramientasGuardado;
+    if (!sucio) return true;
+    const ok = await datosAccion.run(async () => {
+      const res = await fetch(`/api/agent-editor/${agente.id}/datos-cliente`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...cuerpoParaGuardar(datosCliente, datos),
+          herramientas_del_agente: herramientasNuevas,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
+      if (!res.ok) {
+        const texto = typeof json.error === "string" ? json.error : undefined;
+        return { ok: false, status: res.status, error: texto ?? "No se pudieron guardar los datos del cliente." };
+      }
+      return { ok: true, success: "Datos del cliente guardados." };
+    });
+    if (ok) {
+      setDatosGuardado(datos);
+      setHerramientasGuardado(herramientasNuevas);
+    }
+    return ok;
+  }
+
+  function cambiarHerramientas(activo: boolean) {
+    setHerramientas(activo);
+    void guardarDatos(activo).then((ok) => {
+      if (!ok) setHerramientas(!activo);
+    });
+  }
+
+  function cambiarNivel(accionId: string, clave: string, nivel: NivelDato) {
+    if (!datosCliente) return;
+    setDatos((actual) => conNivel(datosCliente, actual, accionId, clave, nivel));
+  }
+
+  function restablecerAccion(accionId: string) {
+    if (!datosCliente) return;
+    setDatos((actual) => restablecida(datosCliente, actual, accionId));
   }
 
   function validar(id: PasoId, actual: EstadoDelEditor = estado): Errores {
@@ -237,6 +311,7 @@ export function EditorDeAgente({
     const propios = validar(paso, completo);
     setErrores(propios);
     if (Object.keys(propios).length > 0) return;
+    if (!(await guardarDatos())) return;
     if ((await guardar(completo)) === null) return;
     const i = PASOS.findIndex((p) => p.id === paso);
     if (i < PASOS.length - 1) irA(PASOS[i + 1].id);
@@ -250,6 +325,7 @@ export function EditorDeAgente({
       mostrarErrores(todos);
       return;
     }
+    if (!(await guardarDatos())) return;
     const vigente = await guardar(completo);
     if (vigente === null) return;
     await publicarAccion.run(async () => {
@@ -348,6 +424,27 @@ export function EditorDeAgente({
         conConocimiento={estado.conocimiento.activo}
         gruposDeLaApi={gruposDeAcciones}
       />
+    ),
+    datos: datosCliente ? (
+      <DatosDelAgente
+        politica={datosCliente}
+        estado={datos}
+        herramientas={herramientas}
+        puedeEditar={puedeEditarDatos}
+        guardando={datosAccion.pending}
+        sinGuardar={datosSinGuardar}
+        onNivel={cambiarNivel}
+        onRestablecer={restablecerAccion}
+        onHerramientas={cambiarHerramientas}
+        onGuardar={() => void guardarDatos()}
+      />
+    ) : (
+      <Card>
+        <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
+          No se pudieron cargar los datos del cliente{datosClienteError ? `: ${datosClienteError}` : "."} Recarga la
+          página para intentarlo de nuevo.
+        </CardContent>
+      </Card>
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
     publicar: (

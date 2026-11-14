@@ -11,13 +11,14 @@ import { accionesDesdeContenido, aplicarAcciones, type AccionEnEditor } from "@/
 import type { Superpower } from "@/lib/api/types";
 import { aplicarConocimiento, conocimientoDesdeContenido, type ConocimientoEnEditor } from "@/lib/conocimiento";
 
-export type PasoId = "identidad" | "modelo" | "superpoderes" | "acciones" | "memoria" | "publicar";
+export type PasoId = "identidad" | "modelo" | "superpoderes" | "acciones" | "datos" | "memoria" | "publicar";
 
 export const PASOS: { id: PasoId; titulo: string; descripcion: string }[] = [
   { id: "identidad", titulo: "Identidad", descripcion: "Nombre y cómo habla tu agente." },
   { id: "modelo", titulo: "Proveedor y modelo", descripcion: "La IA que usa y lo que cuesta." },
   { id: "superpoderes", titulo: "Superpoderes", descripcion: "Qué sabe hacer y con qué frases lo reconoce." },
   { id: "acciones", titulo: "Acciones", descripcion: "Qué puede hacer, cuántas veces y si pide confirmación." },
+  { id: "datos", titulo: "Datos del cliente", descripcion: "Qué datos pide este agente en cada operación." },
   { id: "memoria", titulo: "Memoria y conocimiento", descripcion: "Cuánto recuerda y si responde con tus documentos." },
   { id: "publicar", titulo: "Publicar", descripcion: "Dónde atiende y su nueva versión." },
 ];
@@ -234,6 +235,7 @@ export function pasoDelCampo(campo: string): PasoId {
   if (campo === "name" || campo === "description" || campo.startsWith("persona")) return "identidad";
   if (campo.startsWith("model")) return "modelo";
   if (campo.startsWith("tools")) return "acciones";
+  if (campo.startsWith("datos")) return "datos";
   if (campo.startsWith("procedures") || campo.startsWith("playbooks")) return "superpoderes";
   if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "memoria";
   return "publicar";

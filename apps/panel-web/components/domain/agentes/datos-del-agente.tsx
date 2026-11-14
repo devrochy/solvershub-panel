@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Check, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,115 +9,55 @@ import { Switch } from "@/components/ui/switch";
 import {
   agruparPorModulo,
   cambiosDeAccion,
-  conNivel,
-  cuerpoParaGuardar,
   estaAjustada,
-  estadoInicial,
-  hayCambios,
-  mensajeDeErrorAlGuardar,
   NIVELES,
   pistaDePorDefecto,
-  restablecida,
+  type AgenteDatos,
   type AccionPolitica,
   type CampoPolitica,
   type EstadoDatos,
   type NivelDato,
-  type PoliticaDatos,
 } from "@/lib/datos-cliente";
-import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { cn } from "@/lib/utils";
-import { useAction } from "@/lib/use-action";
 
 /**
- * Pestaña «Datos del cliente» (HU-CRM-13): qué datos del cliente pide el agente en cada acción.
- * El dueño elige por dato Requerido, Recomendado o No pedir; «Guardar» manda el estado completo.
+ * Paso «Datos del cliente» del editor de un agente especialista (HU-CRM-28): qué datos pide ESE
+ * agente en cada operación que puede ejecutar. El estado y el guardado viven en el editor; este
+ * componente solo lo presenta.
  */
-export function DatosClienteCard({
+export function DatosDelAgente({
   politica,
-  error,
+  estado,
+  herramientas,
   puedeEditar,
+  guardando,
+  sinGuardar,
+  onNivel,
+  onRestablecer,
+  onHerramientas,
+  onGuardar,
 }: {
-  /** Lo que devolvió el servidor; `null` si no se pudo cargar (se muestra `error`). */
-  politica: PoliticaDatos | null;
-  error?: string;
+  politica: AgenteDatos;
+  estado: EstadoDatos;
+  herramientas: boolean;
   puedeEditar: boolean;
+  guardando: boolean;
+  sinGuardar: boolean;
+  onNivel: (accionId: string, clave: string, nivel: NivelDato) => void;
+  onRestablecer: (accionId: string) => void;
+  onHerramientas: (activo: boolean) => void;
+  onGuardar: () => void;
 }) {
-  if (!politica) {
-    return (
-      <Card>
-        <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-          No se pudieron cargar los datos del cliente{error ? `: ${error}` : "."} Recarga la página para intentarlo de nuevo.
-        </CardContent>
-      </Card>
-    );
-  }
-  return <Editor politica={politica} puedeEditar={puedeEditar} />;
-}
-
-function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEditar: boolean }) {
-  const [estado, setEstado] = useState<EstadoDatos>(() => estadoInicial(politica));
-  // Tras guardar, la página trae la política nueva: se parte de ella (patrón de React para props → estado).
-  const [vista, setVista] = useState(politica);
-  if (vista !== politica) {
-    setVista(politica);
-    setEstado(estadoInicial(politica));
-  }
-  const { run, pending } = useAction();
-  const [herramientas, setHerramientas] = useState(politica.herramientas_del_agente);
-  const [vistaHerramientas, setVistaHerramientas] = useState(politica.herramientas_del_agente);
-  if (vistaHerramientas !== politica.herramientas_del_agente) {
-    setVistaHerramientas(politica.herramientas_del_agente);
-    setHerramientas(politica.herramientas_del_agente);
-  }
-
-  async function cambiarHerramientas(activo: boolean) {
-    setHerramientas(activo);
-    await run(async () => {
-      const res = await fetch("/api/datos-cliente/politica", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ herramientas_del_agente: activo }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
-      if (!res.ok) {
-        setHerramientas(!activo);
-        const texto = typeof json.error === "string" ? json.error : undefined;
-        return { ok: false, status: res.status, error: mensajeDeErrorAlGuardar(res.status, texto) };
-      }
-      return {
-        ok: true,
-        success: activo ? "El agente ya puede consultar estos datos." : "El agente dejó de consultar estos datos.",
-      };
-    });
-  }
-
   const grupos = agruparPorModulo(politica.acciones);
-  const sinGuardar = hayCambios(politica, estado);
-  useAvisarCambios("datos-cliente", sinGuardar);
-
-  async function guardar() {
-    await run(async () => {
-      const res = await fetch("/api/datos-cliente/politica", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cuerpoParaGuardar(politica, estado)),
-      });
-      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
-      if (!res.ok) {
-        const texto = typeof json.error === "string" ? json.error : undefined;
-        return { ok: false, status: res.status, error: mensajeDeErrorAlGuardar(res.status, texto) };
-      }
-      return { ok: true, success: "Datos del cliente guardados." };
-    });
-  }
-
+  const procedimientos = politica.procedimientos ?? [];
+  const bloqueado = !puedeEditar || guardando;
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-display text-base font-semibold text-headline">¿Qué datos pide tu asistente al cliente?</h2>
+        <h2 className="font-display text-base font-semibold text-headline">¿Qué datos pide este agente?</h2>
         <p className="mt-1 max-w-2xl text-sm text-text-soft">
-          Elige, para cada acción, qué datos del cliente son imprescindibles, cuáles conviene pedir y cuáles no hace falta
-          pedir. Los cambios aplican a las próximas conversaciones.
+          Elige, para cada operación de este agente, qué datos son imprescindibles, cuáles conviene pedir y cuáles no
+          hace falta pedir. Se aplica a las próximas conversaciones de este agente, sin publicar una versión nueva.
         </p>
       </div>
 
@@ -126,18 +65,18 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
         <CardContent className="flex items-start justify-between gap-4 pt-5">
           <div className="min-w-0">
             <p id="herramientas-titulo" className="text-sm font-medium text-headline">
-              Que el agente consulte estos datos y el historial del cliente
+              Que este agente consulte los datos y el historial del cliente
             </p>
             <p className="mt-1 max-w-xl text-sm text-text-soft">
-              El agente verá qué datos faltan antes de pedirlos, y un resumen de lo que el cliente tiene en Ventas, Agenda,
-              Suscripciones y Cobranza. Está apagado hasta que lo enciendas; el cambio aplica a las próximas conversaciones.
+              El agente verá qué datos faltan antes de pedirlos y un resumen de lo que el cliente tiene en sus módulos.
+              Está apagado hasta que lo enciendas.
             </p>
           </div>
           <Switch
             checked={herramientas}
-            onCheckedChange={cambiarHerramientas}
-            disabled={!puedeEditar || pending}
-            aria-label="Que el agente consulte los datos y el historial del cliente"
+            onCheckedChange={onHerramientas}
+            disabled={bloqueado}
+            aria-label="Que este agente consulte los datos y el historial del cliente"
           />
         </CardContent>
       </Card>
@@ -146,8 +85,8 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
         <Card>
           <CardContent className="pt-5">
             <EmptyState
-              title="Tu negocio aún no tiene agentes que pidan datos"
-              description="Cuando actives un agente de ventas, agenda, suscripciones o cobranza, aquí podrás ajustar qué le pide al cliente."
+              title="Este agente no pide datos en sus operaciones"
+              description="Cuando enciendas una acción que necesite datos del cliente (un pedido, una cita o una inscripción), aquí podrás elegir qué le pide."
             />
           </CardContent>
         </Card>
@@ -169,24 +108,55 @@ function Editor({ politica, puedeEditar }: { politica: PoliticaDatos; puedeEdita
                   accion={accion}
                   estado={estado[accion.id] ?? {}}
                   puedeEditar={puedeEditar}
-                  deshabilitado={pending}
+                  deshabilitado={guardando}
                   ajustada={estaAjustada(politica, estado, accion.id)}
                   cambios={cambiosDeAccion(politica, estado, accion.id)}
-                  onNivel={(clave, nivel) => setEstado((e) => conNivel(politica, e, accion.id, clave, nivel))}
-                  onRestablecer={() => setEstado((e) => restablecida(politica, e, accion.id))}
+                  onNivel={(clave, nivel) => onNivel(accion.id, clave, nivel)}
+                  onRestablecer={() => onRestablecer(accion.id)}
                 />
               ))}
             </section>
           ))}
           {puedeEditar && (
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" variant="accent" disabled={pending || !sinGuardar} onClick={guardar}>
-                {pending ? "Guardando…" : "Guardar datos del cliente"}
+              <Button type="button" variant="accent" disabled={guardando || !sinGuardar} onClick={onGuardar}>
+                {guardando ? "Guardando…" : "Guardar datos del cliente"}
               </Button>
-              {sinGuardar && !pending && <span className="text-sm text-text-soft">Tienes cambios sin guardar.</span>}
+              {sinGuardar && !guardando && <span className="text-sm text-text-soft">Tienes cambios sin guardar.</span>}
             </div>
           )}
         </>
+      )}
+
+      {procedimientos.length > 0 && (
+        <Card>
+          <CardContent className="pt-5">
+            <h3 className="text-sm font-semibold text-headline">Datos que exige cada superpoder</h3>
+            <p className="mt-1 max-w-2xl text-sm text-text-soft">
+              Estos datos los define el recorrido del superpoder. No se cambian desde esta pantalla: si un superpoder
+              los necesita, el agente los pide aunque aquí no aparezcan.
+            </p>
+            <ul className="mt-3 flex flex-col gap-3">
+              {procedimientos.map((procedimiento) => (
+                <li key={procedimiento.id} className="rounded-md border border-border-soft p-3">
+                  <p className="text-sm font-medium text-headline">{procedimiento.titulo}</p>
+                  <ul className="mt-1 flex flex-wrap gap-1.5">
+                    {procedimiento.datos.map((dato) => (
+                      <li
+                        key={dato.clave}
+                        className="rounded-full border border-border-soft px-2 py-0.5 text-xs text-text-soft"
+                      >
+                        {dato.etiqueta}
+                        {dato.condicion ? ` · ${dato.condicion}` : ""}
+                        {dato.obligatorio ? "" : " · condicional"}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

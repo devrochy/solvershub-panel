@@ -60,7 +60,7 @@ function montar(props: Partial<Parameters<typeof SettingsTabs>[0]> = {}) {
         catalogo={catalogo}
         bajas={null}
         waweb={null}
-        datosCliente={{ politica: null, error: "sin datos", puedeEditar: true, aviso: null }}
+        datosCliente={{ puedeEditar: true, aviso: null }}
         {...props}
       />
     </FeedbackProviders>,

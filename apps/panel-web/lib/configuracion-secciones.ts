@@ -66,7 +66,7 @@ export const SECCIONES: Seccion[] = [
     id: "datos-cliente",
     grupo: "negocio",
     titulo: "Datos del cliente",
-    descripcion: "Qué datos pide el asistente, cómo avisas su uso y cómo se da de baja un cliente.",
+    descripcion: "Cómo avisas el uso de los datos y cómo se da de baja un cliente. Qué pide cada agente se ajusta en su editor.",
   },
   {
     id: "voz",

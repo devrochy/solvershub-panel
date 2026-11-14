@@ -8,7 +8,6 @@ import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesi
 import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
 import { BajasCard } from "@/app/(app)/configuracion/_components/bajas-card";
 import { AvisoDatosCard } from "@/app/(app)/configuracion/_components/aviso-datos-card";
-import { DatosClienteCard } from "@/app/(app)/configuracion/_components/datos-cliente-card";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
@@ -31,7 +30,6 @@ import {
   type SeccionId,
 } from "@/lib/configuracion-secciones";
 import { habilidadesEnPalabras, memoriaEnPalabras, resumenDeGrupos, temperaturaEnPalabras } from "@/lib/configuracion-resumen";
-import type { PoliticaDatos } from "@/lib/datos-cliente";
 import type {
   BajasSettings,
   CatalogoConfig,
@@ -93,10 +91,8 @@ export function SettingsTabs({
   catalogo: CatalogoConfig | null;
   bajas: BajasSettings | null;
   waweb: WawebPolitica | null;
-  /** Política de datos del cliente (HU-CRM-13): `politica` null = no se pudo cargar (`error`). */
+  /** Aviso de tratamiento de datos del negocio (HU-CRM-16); la matriz vive en cada agente (HU-CRM-28). */
   datosCliente: {
-    politica: PoliticaDatos | null;
-    error?: string;
     puedeEditar: boolean;
     aviso: AvisoDatos | null;
     avisoError?: string;
@@ -154,11 +150,8 @@ export function SettingsTabs({
     const identidad = settings.identity as unknown as Record<string, unknown>;
     if (seccion.gruposIdentidad) return resumenDeGrupos(catalogo, seccion.gruposIdentidad, identidad) || seccion.descripcion;
     switch (id) {
-      case "datos-cliente": {
-        const acciones = datosCliente.politica?.acciones.length ?? 0;
-        const aviso = datosCliente.aviso?.activo ? "aviso de datos activo" : "aviso de datos apagado";
-        return datosCliente.politica ? `${acciones === 1 ? "1 acción pide" : `${acciones} acciones piden`} datos · ${aviso}` : seccion.descripcion;
-      }
+      case "datos-cliente":
+        return datosCliente.aviso?.activo ? "aviso de datos activo" : "aviso de datos apagado";
       case "memoria":
         return memoriaEnPalabras(settings.memory);
       case "cerebro":
@@ -281,7 +274,10 @@ export function SettingsTabs({
               {abierta === "herramientas" && <SkillsForm skills={settings.skills} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
               {abierta === "datos-cliente" && (
                 <>
-                  <DatosClienteCard politica={datosCliente.politica} error={datosCliente.error} puedeEditar={datosCliente.puedeEditar} />
+                  <p className="text-sm text-text-soft">
+                    Qué datos pide cada agente en sus operaciones se ajusta en el editor de ese agente, en el paso
+                    «Datos del cliente».
+                  </p>
                   <AvisoDatosCard aviso={datosCliente.aviso} error={datosCliente.avisoError} puedeEditar={datosCliente.puedeEditar} />
                 </>
               )}

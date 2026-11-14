@@ -1,13 +1,15 @@
 /**
- * Datos del cliente que pide el agente (HU-CRM-13): lógica pura de la pestaña «Datos del cliente» de
- * Configuración. El dueño elige, por acción y por dato, si el agente lo pide sí o sí (requerido), si
- * lo pide cuando puede (recomendado) o si no lo pide. El backend (`/admin/datos-cliente/politica`)
- * guarda solo lo que difiere del valor del módulo; aquí se arma el estado editable, el cuerpo del PUT
- * y los textos legibles.
+ * Datos del cliente que pide cada agente especialista (HU-CRM-28): lógica pura del paso «Datos del
+ * cliente» del editor. El dueño elige, por operación y por dato, si el agente lo pide sí o sí
+ * (requerido), si lo pide cuando puede (recomendado) o si no lo pide. El backend
+ * (`/admin/agents/{id}/datos-cliente`) guarda solo lo que difiere del valor del módulo; aquí se
+ * arma el estado editable, el cuerpo del PUT y los textos legibles.
  */
 import type { components } from "@/lib/api/schema";
 
-export type PoliticaDatos = components["schemas"]["PoliticaDatosOut"];
+export type AgenteDatos = components["schemas"]["AgenteDatosOut"];
+export type ProcedimientoDatos = components["schemas"]["ProcedimientoDatosOut"];
+export type PoliticaDatos = AgenteDatos;
 export type AccionPolitica = components["schemas"]["AccionPoliticaOut"];
 export type CampoPolitica = components["schemas"]["CampoPoliticaOut"];
 export type NivelDato = CampoPolitica["nivel"];
