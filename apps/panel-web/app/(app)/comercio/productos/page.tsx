@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { filtroDeAliado, nombreDelAliado, type Aliado, type ModulosComercio } from "@/lib/aliados";
 import { apiFetch, getBusinessCurrency } from "@/lib/api/server";
-import type { EstadoDatosDePruebaModulo } from "@/lib/api/types";
+import type { AgentSummary, EstadoDatosDePruebaModulo } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import {
   coincide,
@@ -63,14 +63,19 @@ export default async function ProductsPage({
   const filtros: FiltrosProductos = { aliado: aliado ?? "", categoria, q, vista: vistaEnEnlace("productos", vista, guardada) };
   const abierto = uno(sp.producto);
 
-  const [productsRes, categoriesRes, alliesRes, datosPruebaRes, promosRes, moneda] = await Promise.all([
+  const [productsRes, categoriesRes, alliesRes, datosPruebaRes, promosRes, moneda, agentesRes] = await Promise.all([
     apiFetch<Producto[]>(`/pack/commerce/products${aliado ? `?ally_id=${aliado}` : ""}`),
     apiFetch<Categoria[]>("/pack/commerce/categories"),
     conAliados ? apiFetch<Aliado[]>("/pack/commerce/allies") : Promise.resolve(null),
     apiFetch<EstadoDatosDePruebaModulo>("/admin/datos-de-prueba/ventas"),
     apiFetch<Promo[]>("/pack/commerce/promotions"),
     getBusinessCurrency(),
+    // SPEC-45: los especialistas, para importar el catálogo con IA (CSV propio o fotos) desde aquí.
+    apiFetch<AgentSummary[]>("/admin/agents"),
   ]);
+  const especialistas = agentesRes.ok
+    ? agentesRes.data.filter((a) => a.kind === "specialist" && a.status !== "archived").map((a) => ({ id: a.id, name: a.name }))
+    : [];
 
   const header = (acciones?: React.ReactNode) => (
     <PageHeader title="Productos" description="Lo que el asistente puede ofrecer y cotizar." helpSection="ventas" actions={acciones} />
@@ -147,7 +152,7 @@ export default async function ProductsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      {header(<AccionesDeProductos filtros={filtros} aliados={aliados} />)}
+      {header(<AccionesDeProductos filtros={filtros} aliados={aliados} agentes={especialistas} />)}
       <RecordarVista lista="productos" vista={vista} />
       {/* VEN-09: el aviso de datos de prueba solo cuando se pueden generar. */}
       {datosPruebaRes.ok && datosPruebaRes.data.disponible && <DatosDePruebaDelModulo modulo="ventas" estado={datosPruebaRes.data} />}

@@ -1036,7 +1036,8 @@ function cargaDeDatos(metodo, ruta, cuerpo) {
   if (metodo === "POST" && ruta === "/admin/agents/from-script") {
     return [201, { agent: { id: BORRADOR_ID, key: "ventas", name: "Ventas" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
   }
-  const m = new RegExp(`^/admin/agents/${BORRADOR_ID}/(datos-de-prueba|importar-datos)(/.*)?$`).exec(ruta);
+  // El borrador del asistente y, desde Comercio › Productos, cualquier agente del negocio (SPEC-45).
+  const m = /^\/admin\/agents\/[^/]+\/(datos-de-prueba|importar-datos)(\/.*)?$/.exec(ruta);
   if (!m) return undefined;
   const [, base, resto = ""] = m;
   const prod = CARGA === "prod";
@@ -1754,7 +1755,7 @@ createServer(async (req, res) => {
     res.end(JSON.stringify(r[1]));
     return;
   }
-  if (CARGA && (ruta === "/admin/agents/from-script" || ruta.startsWith(`/admin/agents/${BORRADOR_ID}/`))) {
+  if (CARGA && (ruta === "/admin/agents/from-script" || /^\/admin\/agents\/[^/]+\/(datos-de-prueba|importar-datos)/.test(ruta))) {
     let texto = "";
     for await (const trozo of req) texto += trozo;
     let cuerpo = {};
