@@ -12,6 +12,8 @@ import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { PasoDatos, type Cargado } from "@/app/(app)/agentes/nuevo/_components/paso-datos";
+import { PasoLoCargado } from "@/app/(app)/agentes/nuevo/_components/paso-lo-cargado";
 import { PlantillasEnTarjetas } from "@/app/(app)/agentes/nuevo/_components/plantillas-en-tarjetas";
 import { RadioGroup } from "@/components/ui/radio-group";
 import {
@@ -20,6 +22,8 @@ import {
   cuerpoDeCreacion,
   elegirTipo,
   errorDelPaso,
+  indiceDeCrear,
+  indiceValido,
   pasoDelCampo,
   pasosDelAsistente,
   textoDeAvance,
@@ -63,8 +67,9 @@ function olvidar() {
 
 /**
  * Asistente de creación de agentes (HU-AOS-54, SPEC-39): hasta 10 pasos según el tipo de agente.
- * El guion viene de la API (`questions` de cada plantilla); al final se crea el borrador con
- * `from-script` y se deja al dueño en «Publicar» del editor, donde elige la conexión.
+ * El guion viene de la API (`questions` de cada plantilla); en «Revisar y crear» se crea el borrador con
+ * `from-script` y el asistente sigue (SPEC-45) con «Datos» (generar, CSV o fotos) y «Lo cargado». Al final
+ * deja al dueño en «Publicar» del editor, donde elige la conexión.
  */
 export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] }) {
   const router = useRouter();
@@ -76,12 +81,16 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
   const [existente, setExistente] = useState<string | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
   const [retomado, setRetomado] = useState(false);
+  const [cargado, setCargado] = useState<Cargado>({ registros: [], resumen: "" });
   const titulo = useRef<HTMLHeadingElement>(null);
 
   const plantilla = plantillas.find((p) => p.key === estado.plantilla) ?? null;
   const pasos = pasosDelAsistente(plantilla);
   const paso = pasos[Math.min(indice, pasos.length - 1)];
+  const crearEn = indiceDeCrear(pasos);
+  const enCrear = plantilla !== null && indice === crearEn;
   const ultimo = plantilla !== null && indice === pasos.length - 1;
+  const agenteId = estado.agenteId ?? null;
   const errorLocal = mostrarError ? errorDelPaso(paso, estado, plantilla) : undefined;
   const error = errorLocal ?? (errorDeApi?.paso === indice ? errorDeApi.mensaje : undefined);
 
@@ -91,7 +100,8 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
     if (guardado) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage solo existe en el navegador
       setEstado(guardado.estado);
-      setIndice(guardado.paso);
+      const plantillaGuardada = plantillas.find((p) => p.key === guardado.estado.plantilla) ?? null;
+      setIndice(indiceValido(guardado.paso, pasosDelAsistente(plantillaGuardada), guardado.estado));
       setRetomado(true);
     }
   }, [plantillas]);
@@ -152,10 +162,17 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
         }
         return { ok: false, status: res.status, error: json.error ?? "No se pudo crear el agente." };
       }
-      olvidar();
-      router.push(`/agentes/${json.agentId}/editar?paso=publicar`);
-      return { ok: true, success: "Agente creado: elige dónde atiende y publícalo." };
+      // SPEC-45: el borrador existe; el asistente sigue con «Datos» en vez de ir al editor.
+      const creado = { ...estado, agenteId: json.agentId ?? null };
+      setEstado(creado);
+      irA(crearEn + 1, creado);
+      return { ok: true, success: "Agente creado como borrador. Ahora cárgale datos." };
     });
+  }
+
+  function publicar() {
+    olvidar();
+    router.push(`/agentes/${agenteId}/editar?paso=publicar`);
   }
 
   function contenidoDelPaso() {
@@ -200,12 +217,19 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
         </Field>
       );
     }
-    if (paso.id === "contenido") {
-      return plantilla && plantilla.requirements.length > 0 ? (
-        <AvisoDeRequisitos requisitos={plantilla.requirements} titulo="Para que funcione del todo, configura" />
-      ) : (
-        <p className="text-sm text-body">Ya tienes cargado lo que este agente necesita. No hace falta nada más.</p>
+    if (paso.id === "datos" && agenteId) {
+      return (
+        <PasoDatos
+          agenteId={agenteId}
+          onCargado={(c) => {
+            setCargado(c);
+            irA(indice + 1);
+          }}
+        />
       );
+    }
+    if (paso.id === "cargado" && agenteId) {
+      return <PasoLoCargado agenteId={agenteId} locales={cargado.registros} resumen={cargado.resumen || null} />;
     }
     return (
       <div className="flex flex-col gap-4">
@@ -228,9 +252,9 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
           <dd className="text-headline">{estado.nombre.trim() || plantilla?.name}</dd>
         </dl>
         <p className="text-sm text-body">
-          Se crea el borrador sin publicar. Después eliges en qué conexión atiende y lo publicas; los clientes no lo ven
-          hasta que lo actives. Las frases y el modelo van con valores por defecto: los ajustas en el{" "}
-          <span className="text-headline">editor avanzado</span> si quieres.
+          Se crea el borrador sin publicar. Después le cargas datos, eliges en qué conexión atiende y lo publicas; los
+          clientes no lo ven hasta que lo actives. Las frases y el modelo van con valores por defecto: los ajustas en
+          el <span className="text-headline">editor avanzado</span> si quieres.
         </p>
         <AvisoDeRequisitos
           requisitos={plantilla?.requirements ?? []}
@@ -294,23 +318,37 @@ export function AsistenteDeAgente({ plantillas }: { plantillas: AgentTemplate[] 
       <FormFeedback error={error} />
 
       <div className="flex flex-wrap items-center gap-3">
-        {indice > 0 && (
+        {indice > 0 && indice !== crearEn + 1 && (
           <Button variant="outline" onClick={() => irA(indice - 1)} disabled={pending}>
             Atrás
           </Button>
         )}
-        {ultimo ? (
+        {enCrear ? (
           <Button variant="accent" onClick={crear} loading={pending} disabled={pending || !plantilla}>
             Crear mi agente
+          </Button>
+        ) : ultimo && agenteId ? (
+          <Button variant="accent" onClick={publicar}>
+            Elegir dónde atiende y publicar
+          </Button>
+        ) : paso.id === "datos" ? (
+          <Button variant="outline" onClick={() => irA(indice + 1)}>
+            Seguir sin cargar datos
           </Button>
         ) : (
           <Button variant="accent" onClick={avanzar} disabled={pending}>
             Siguiente
           </Button>
         )}
-        <Link className="text-sm text-link underline" href="/agentes">
-          Cancelar
-        </Link>
+        {agenteId ? (
+          <Link className="text-sm text-link underline" href={`/agentes/${agenteId}`} onClick={olvidar}>
+            Terminar después
+          </Link>
+        ) : (
+          <Link className="text-sm text-link underline" href="/agentes">
+            Cancelar
+          </Link>
+        )}
       </div>
     </section>
   );

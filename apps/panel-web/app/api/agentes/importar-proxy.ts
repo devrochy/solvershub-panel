@@ -8,13 +8,14 @@ import { mensajeDeValidacion } from "@/lib/api/validacion";
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * BFF de «Importar datos» (HU-QA-12): reenvía a `/api/v1/admin/agents/{id}/importar-datos…` con la sesión y el
- * negocio de las cookies. Acepta multipart (el archivo) y devuelve el CSV tal cual para la plantilla. En error
+ * BFF de «Importar datos» (HU-QA-12, SPEC-45): reenvía a `/api/v1/admin/agents/{id}/importar-datos…` con la sesión
+ * y el negocio de las cookies. Acepta multipart (el archivo o la foto) o JSON (la precarga editada) y devuelve el
+ * CSV tal cual para la plantilla. En error
  * conserva `{error, code}` de la API para que el panel distinga un archivo con errores de uno muy grande.
  */
 export async function reenviarImportacion(
   ruta: string,
-  init: { method: "GET" | "POST" | "DELETE"; body?: FormData },
+  init: { method: "GET" | "POST" | "DELETE"; body?: FormData | string },
 ): Promise<Response> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value ?? null;
@@ -25,7 +26,12 @@ export async function reenviarImportacion(
   try {
     res = await fetch(`${API_BASE}/api/v1/admin/agents${ruta}`, {
       method: init.method,
-      headers: { Authorization: `Bearer ${token}`, ...(tenant ? { "X-Tenant-Id": tenant } : {}) },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(tenant ? { "X-Tenant-Id": tenant } : {}),
+        // JSON para la precarga editada (SPEC-45); el multipart lleva su propio boundary.
+        ...(typeof init.body === "string" ? { "Content-Type": "application/json" } : {}),
+      },
       body: init.body,
       cache: "no-store",
     });
@@ -70,4 +76,30 @@ export async function cuerpoDeImportacion(request: Request, conSoloValidas: bool
   form.set("archivo", archivo, archivo instanceof File ? archivo.name : "datos.csv");
   if (conSoloValidas && recibido.get("solo_validas") === "true") form.set("solo_validas", "true");
   return form;
+}
+
+/** Una foto del catálogo (SPEC-45): solo la imagen viaja a la API. */
+export async function cuerpoDeFoto(request: Request): Promise<FormData | null> {
+  const recibido = await request.formData().catch(() => null);
+  const archivo = recibido?.get("archivo");
+  if (!recibido || !(archivo instanceof Blob)) return null;
+  const form = new FormData();
+  form.set("archivo", archivo, archivo instanceof File ? archivo.name : "foto");
+  return form;
+}
+
+/** Precarga editada (SPEC-45): solo `filas` ({fila, valores} con textos) y `solo_validas`; nada más llega a la API. */
+export async function cuerpoDePrecarga(request: Request): Promise<string | null> {
+  const json = (await request.json().catch(() => null)) as { filas?: unknown; solo_validas?: unknown } | null;
+  if (!json || !Array.isArray(json.filas) || json.filas.length > 1000) return null;
+  const filas: { fila: number; valores: Record<string, string> }[] = [];
+  for (const f of json.filas as { fila?: unknown; valores?: unknown }[]) {
+    if (!f || !Number.isInteger(f.fila) || !f.valores || typeof f.valores !== "object") return null;
+    const valores: Record<string, string> = {};
+    for (const [k, v] of Object.entries(f.valores as Record<string, unknown>)) {
+      if (typeof v === "string") valores[k] = v;
+    }
+    filas.push({ fila: f.fila as number, valores });
+  }
+  return JSON.stringify({ filas, solo_validas: json.solo_validas === true });
 }
