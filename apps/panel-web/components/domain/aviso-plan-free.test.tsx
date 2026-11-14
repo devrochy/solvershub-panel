@@ -67,10 +67,10 @@ describe("Aviso de plan Free (HU-BILL-15)", () => {
     expect(screen.getByRole("status")).toBeTruthy();
   });
 
-  it("no aparece en Plan y consumo", () => {
+  it("también aparece en Plan y consumo", () => {
     ruta.actual = "/plan";
     montar(<AvisoPlanFree />);
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("status")).toBeTruthy();
   });
 
   it("no aparece sin escritura en plan ni en un plan pago", () => {
@@ -96,9 +96,9 @@ describe("Aviso de plan Free (HU-BILL-15)", () => {
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
   });
 
-  it("la tarjeta tampoco aparece en Plan y consumo", () => {
+  it("la tarjeta también aparece en Plan y consumo", () => {
     ruta.actual = "/plan";
     montar(<TarjetaPlanFree onCerrar={() => {}} />);
-    expect(screen.queryByText("Estás en el plan Free")).toBeNull();
+    expect(screen.getByText("Estás en el plan Free")).toBeTruthy();
   });
 });
