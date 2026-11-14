@@ -14,6 +14,7 @@ import {
 import { NAV_GROUPS } from "@/components/shell/nav";
 import type { NotificacionDestino } from "@/lib/api/types";
 import { seccionesDePaleta, type PacksDelNegocio } from "@/lib/shell/paleta";
+import type { EstadoModulo } from "@/lib/shell/modulos";
 import type { Permisos } from "@/lib/shell/navegacion";
 
 /**
@@ -77,6 +78,35 @@ export const SEVERIDAD: Record<
 
 export function categoriaDe(valor: string): Categoria {
   return (CATEGORIAS as readonly string[]).includes(valor) ? (valor as Categoria) : "sistema";
+}
+
+/** Packs que cubren cada categoría. Sin packs = la categoría no depende de un módulo. */
+const PACKS_DE_CATEGORIA: Record<Categoria, readonly string[]> = {
+  conversaciones: [],
+  ventas: ["pack_commerce"],
+  cobros: ["pack_cobranza", "pack_subscriptions"],
+  agenda: ["pack_calendar"],
+  sistema: [],
+};
+
+/**
+ * Categorías que el negocio puede usar en el filtro: las de módulo solo cuando su pack
+ * está habilitado por un especialista publicado (`shell.modulos`). Conversaciones y Sistema
+ * van siempre. Sin datos de módulos (tests, catálogo o consulta fallida) se muestran todas,
+ * igual que el menú conserva la regla anterior. Los pagos en línea también cuentan como
+ * Cobros: son una habilidad que se instala en un agente.
+ */
+export function categoriasDisponibles(
+  modulos: Record<string, EstadoModulo> = {},
+  packs: PacksDelNegocio = {},
+): readonly Categoria[] {
+  if (Object.keys(modulos).length === 0) return CATEGORIAS;
+  return CATEGORIAS.filter((categoria) => {
+    const requeridos = PACKS_DE_CATEGORIA[categoria];
+    if (requeridos.length === 0) return true;
+    if (requeridos.some((pack) => modulos[pack] === "habilitado")) return true;
+    return categoria === "cobros" && packs.pack_payments?.enabled === true;
+  });
 }
 
 export function severidadDe(valor: string): Severidad {

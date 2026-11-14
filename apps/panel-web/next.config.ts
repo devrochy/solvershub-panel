@@ -75,6 +75,11 @@ const nextConfig: NextConfig = {
         source: "/comercio/productos",
         headers: [{ key: "Content-Security-Policy", value: CSP_FOTOS_DE_PRODUCTOS }],
       },
+      // SPEC-45: la precarga del asistente muestra la miniatura de cada foto subida (URL firmada del backend).
+      {
+        source: "/agentes/nuevo",
+        headers: [{ key: "Content-Security-Policy", value: CSP_FOTOS_DE_PRODUCTOS }],
+      },
       {
         source: "/leads",
         headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],

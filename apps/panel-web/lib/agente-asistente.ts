@@ -6,7 +6,7 @@ import type { AgentTemplate, Question } from "@/lib/api/types";
  * arma el cuerpo de `POST /admin/agents/from-script`. Las reglas de fondo siguen en la API.
  */
 
-/** Máximo de pasos del asistente, contando el de elegir el tipo y el de revisar (ADR-0171). */
+/** Máximo de pasos del asistente, contando el de elegir el tipo y los de después de crear (ADR-0171, D-49). */
 export const MAX_PASOS = 10;
 export const NOMBRE_MAX = 120;
 
@@ -14,8 +14,9 @@ export type PasoAsistente =
   | { id: "tipo"; titulo: string }
   | { id: string; titulo: string; pregunta: Question }
   | { id: "nombre"; titulo: string }
-  | { id: "contenido"; titulo: string }
-  | { id: "revisar"; titulo: string };
+  | { id: "revisar"; titulo: string }
+  | { id: "datos"; titulo: string }
+  | { id: "cargado"; titulo: string };
 
 export type EstadoDelAsistente = {
   /** Key de la plantilla elegida (paso 1). */
@@ -23,24 +24,27 @@ export type EstadoDelAsistente = {
   /** `id de la pregunta` → id de la opción (o el texto, en la de nombre). */
   respuestas: Record<string, string>;
   nombre: string;
+  /** Borrador ya creado (SPEC-45): desde aquí el asistente sigue con «Datos» y «Lo cargado». */
+  agenteId?: string | null;
 };
 
-export const ESTADO_INICIAL: EstadoDelAsistente = { plantilla: null, respuestas: {}, nombre: "" };
+export const ESTADO_INICIAL: EstadoDelAsistente = { plantilla: null, respuestas: {}, nombre: "", agenteId: null };
 
 const PASO_TIPO: PasoAsistente = { id: "tipo", titulo: "¿Qué quieres que haga?" };
 const PASOS_FINALES: PasoAsistente[] = [
   { id: "nombre", titulo: "¿Cómo se llama?" },
-  { id: "contenido", titulo: "Lo que ya tienes cargado" },
   { id: "revisar", titulo: "Revisar y crear" },
+  { id: "datos", titulo: "Carga sus datos" },
+  { id: "cargado", titulo: "Lo que quedó cargado" },
 ];
 
 /** Ids de pasos reservados: una pregunta de la API con uno de estos no puede pisarlos. */
-const RESERVADOS = new Set(["tipo", "nombre", "contenido", "revisar"]);
+const RESERVADOS = new Set(["tipo", "nombre", "contenido", "revisar", "datos", "cargado"]);
 
 /**
- * Pasos para la plantilla elegida: tipo → una por pregunta del guion → nombre → contenido → revisar.
- * Sin plantilla, solo el primero. Nunca más de `MAX_PASOS`: si el guion trae de más, sobran las últimas
- * preguntas (la API las rellena con su valor por defecto).
+ * Pasos para la plantilla elegida: tipo → una por pregunta del guion → nombre → revisar y crear → datos →
+ * lo cargado (SPEC-45). Sin plantilla, solo el primero. Nunca más de `MAX_PASOS`: si el guion trae de más,
+ * sobran las últimas preguntas (la API las rellena con su valor por defecto).
  */
 export function pasosDelAsistente(plantilla: AgentTemplate | null | undefined): PasoAsistente[] {
   if (!plantilla) return [PASO_TIPO];
@@ -60,7 +64,23 @@ export function respuestasPorDefecto(plantilla: AgentTemplate): Record<string, s
 
 /** Estado al elegir un tipo de agente: sus respuestas por defecto y el nombre vacío. */
 export function elegirTipo(plantilla: AgentTemplate): EstadoDelAsistente {
-  return { plantilla: plantilla.key, respuestas: respuestasPorDefecto(plantilla), nombre: "" };
+  return { plantilla: plantilla.key, respuestas: respuestasPorDefecto(plantilla), nombre: "", agenteId: null };
+}
+
+/** Índice del paso «Revisar y crear»: antes de él se arma el borrador; después, ya existe. */
+export function indiceDeCrear(pasos: PasoAsistente[]): number {
+  return pasos.findIndex((p) => p.id === "revisar");
+}
+
+/**
+ * Índice válido para el estado: sin borrador no se pasa de «Revisar y crear»; con borrador no se vuelve antes
+ * de «Datos» (el agente ya existe y sus respuestas no cambian aquí).
+ */
+export function indiceValido(indice: number, pasos: PasoAsistente[], estado: EstadoDelAsistente): number {
+  const crear = indiceDeCrear(pasos);
+  if (crear < 0) return 0;
+  if (estado.agenteId) return Math.min(Math.max(indice, crear + 1), pasos.length - 1);
+  return Math.min(Math.max(indice, 0), crear);
 }
 
 /** Mensaje de error del paso, o `undefined` si se puede avanzar. */
@@ -98,7 +118,7 @@ export function cuerpoDeCreacion(
 /** Índice del paso al que pertenece un error de campo de la API (`id de la pregunta` o `name`). */
 export function pasoDelCampo(campo: string, pasos: PasoAsistente[]): number {
   const i = pasos.findIndex((p) => p.id === campo || (campo === "name" && p.id === "nombre"));
-  return i >= 0 ? i : pasos.length - 1;
+  return i >= 0 ? i : Math.max(indiceDeCrear(pasos), 0);
 }
 
 /** Texto de «Paso X de N» para el indicador visible y el lector de pantalla. */

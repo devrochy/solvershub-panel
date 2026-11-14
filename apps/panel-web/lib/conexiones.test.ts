@@ -6,7 +6,6 @@ import {
   esChatWeb,
   actividadDeLaSemana,
   agentesDeLaConexion,
-  etiquetaRuteo,
   puedePausar,
   resumenConsumo,
   saludDeConexion,
@@ -110,9 +109,8 @@ describe("consola de conexiones", () => {
     expect(agentesDeLaConexion({ conversational: false, agents: [] })).toBe("—");
   });
 
-  it("salud, ruteo y consumo", () => {
+  it("salud y consumo", () => {
     expect(saludDeConexion("paused")).toEqual({ label: "Pausada", tono: "neutral" });
-    expect(etiquetaRuteo("shadow")).toBe("En sombra");
     expect(resumenConsumo({ turns: 2, conversations: 1, input_tokens: 10, output_tokens: 5, cost_usd: null })).toBe(
       "2 turnos · 1 conversaciones · 15 tokens",
     );

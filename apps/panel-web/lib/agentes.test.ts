@@ -123,10 +123,9 @@ describe("sección Agentes (HU-AOS-47)", () => {
   });
 
   it("muestra el editor solo a quien puede escribir", () => {
-    expect(puedeEditarAgentes({ role: "master" }, "legacy")).toBe(true);
-    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "v3")).toBe(true);
-    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } }, "legacy")).toBe(false);
-    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "read" } }, "v3")).toBe(false);
+    expect(puedeEditarAgentes({ role: "master" })).toBe(true);
+    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "write" } })).toBe(true);
+    expect(puedeEditarAgentes({ role: "colaborador", permissions: { settings: "read" } })).toBe(false);
   });
 });
 

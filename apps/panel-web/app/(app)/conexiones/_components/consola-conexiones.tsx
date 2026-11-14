@@ -10,7 +10,6 @@ import { estadoDeConexion, iconoDeConexion, necesitaAtencion, rutaDeFicha, subti
 import {
   actividadDeLaSemana,
   agentesDeLaConexion,
-  etiquetaRuteo,
   puedePausar,
   textoConfirmarPausa,
   type ConexionConsola,
@@ -125,12 +124,6 @@ export function ConsolaConexiones({
               </dd>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <dt className="font-medium text-headline">Enrutamiento</dt>
-            <dd>
-              <Badge variant="neutral">{etiquetaRuteo(consola.routing)}</Badge>
-            </dd>
-          </div>
           {consola.consistency && (
             <div className="flex items-center gap-2">
               <dt className="font-medium text-headline">Consistencia</dt>

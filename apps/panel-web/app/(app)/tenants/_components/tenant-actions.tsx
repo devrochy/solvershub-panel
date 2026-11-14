@@ -3,7 +3,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-import { AgentOSSection } from "@/app/(app)/tenants/_components/agent-os-section";
 import { AliadosSection } from "@/app/(app)/tenants/_components/aliados-section";
 import { AvisosPorCanalSection } from "@/app/(app)/tenants/_components/avisos-por-canal-section";
 import { OpcionesDirectasSection } from "@/app/(app)/tenants/_components/opciones-directas-section";
@@ -223,10 +222,6 @@ export function FichaDeNegocio({
               </>
             )}
             <AliadosSection tenantId={tenant.id} />
-          </Seccion>
-
-          <Seccion titulo="Asistente">
-            <AgentOSSection tenantId={tenant.id} />
           </Seccion>
         </div>
       </SheetContent>

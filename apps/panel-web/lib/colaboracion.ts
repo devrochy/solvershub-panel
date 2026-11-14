@@ -140,8 +140,6 @@ export function mensajeDeError(code: string | undefined, porDefecto?: string): s
       return "Uno de los agentes ya no existe en tu negocio. Recarga la página.";
     case "demasiados_enlaces":
       return "Son demasiados permisos (máximo 200).";
-    case "aos_runtime_legacy":
-      return "Los permisos entre agentes se activan con el Agent OS de tu negocio.";
     case "sin_release_activa":
       return "Esta conexión todavía no tiene una versión activa: publica una para probar.";
     default:
@@ -149,13 +147,12 @@ export function mensajeDeError(code: string | undefined, porDefecto?: string): s
   }
 }
 
-/** ¿Puede editar los permisos? Igual que el editor de agentes: master, o v3 con `settings` en escritura. */
-export function puedeEditarPermisos(
-  me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null },
-  runtime: string,
-): boolean {
-  if (me.role === "master") return true;
-  return runtime === "v3" && me.permissions?.settings === "write";
+/** ¿Puede editar los permisos? Igual que el editor de agentes: master, o `settings` en escritura. */
+export function puedeEditarPermisos(me: {
+  role?: string | null;
+  permissions?: Record<string, string | null | undefined> | null;
+}): boolean {
+  return me.role === "master" || me.permissions?.settings === "write";
 }
 
 // ---------------------------------------------------------------- probar una frase
@@ -184,9 +181,7 @@ export function explicarPrueba(p: RoutePreview, nombresPorKey: Record<string, st
       : "La frase no se parece a ningún recorrido: atiende el agente por defecto.";
   }
   const avisos: string[] = [];
-  if (p.mode === "off") {
-    avisos.push("Hoy el enrutamiento está apagado en tu negocio: todas las conversaciones las atiende el agente por defecto.");
-  } else if (p.mode === "shadow") {
+  if (p.mode === "shadow") {
     avisos.push("El enrutamiento está en modo de observación: decide y lo registra, pero todavía atiende el agente por defecto.");
   }
   if (p.not_evaluated_rules.length) {

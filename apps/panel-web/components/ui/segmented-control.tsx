@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent, type ReactElement } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -10,7 +10,25 @@ export type OpcionSegmentada = {
   label: string;
   /** Con `href` en todas las opciones, el control navega: el filtro viaja en la URL. */
   href?: string;
+  /**
+   * Si viene, la opción se muestra solo con el icono; `label` queda como nombre accesible. Es un
+   * elemento ya creado (`<List />`), no el componente: una página de servidor no puede pasarle una
+   * función a este componente de cliente (React no la serializa y la página no carga).
+   */
+  icon?: ReactElement;
 };
+
+function ContenidoDeOpcion({ opcion }: { opcion: OpcionSegmentada }) {
+  if (!opcion.icon) return <>{opcion.label}</>;
+  return (
+    <>
+      <span aria-hidden className="inline-flex [&>svg]:h-4 [&>svg]:w-4">
+        {opcion.icon}
+      </span>
+      <span className="sr-only">{opcion.label}</span>
+    </>
+  );
+}
 
 const PISTA = "grid grid-flow-col auto-cols-fr gap-0.5 rounded-md border border-border-soft bg-bg-deep p-[3px]";
 
@@ -50,9 +68,10 @@ export function SegmentedControl({
               key={opcion.value || "todas"}
               href={opcion.href as string}
               aria-current={activa ? "page" : undefined}
-              className={cn(OPCION, activa ? ACTIVA : INACTIVA)}
+              title={opcion.icon ? opcion.label : undefined}
+              className={cn(OPCION, opcion.icon && "min-w-9 pointer-coarse:min-w-11", activa ? ACTIVA : INACTIVA)}
             >
-              {opcion.label}
+              <ContenidoDeOpcion opcion={opcion} />
             </Link>
           );
         })}
@@ -80,9 +99,10 @@ export function SegmentedControl({
             type="button"
             aria-pressed={activa}
             onClick={() => onChange?.(opcion.value)}
-            className={cn(OPCION, activa ? ACTIVA : INACTIVA)}
+            title={opcion.icon ? opcion.label : undefined}
+            className={cn(OPCION, opcion.icon && "min-w-9 pointer-coarse:min-w-11", activa ? ACTIVA : INACTIVA)}
           >
-            {opcion.label}
+            <ContenidoDeOpcion opcion={opcion} />
           </button>
         );
       })}

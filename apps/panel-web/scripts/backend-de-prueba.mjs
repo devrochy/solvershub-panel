@@ -33,6 +33,9 @@
 //   master (Tenants › Agent OS), aviso del dueño en la lista de agentes y en el editor (/agentes/<id>/editar); publicar
 //   responde el 422 invalid_spec con error.fields. RETIRADAS=limpio: los mismos endpoints, sin nada retirado.
 //   ACCIONES=1 (con RETIRADAS=1 o =limpio): el borrador de Ventas con acciones reales para la pestaña Acciones del editor.
+//   CARGA_DE_DATOS=1 (con AGENTES=1, SPEC-45): el asistente crea el borrador y sigue con «Datos»: generar datos de prueba,
+//   CSV con mapeo de la IA (Valor con IVA → precio), fotos con cotización (la tercera foto se queda sin crédito) y «Lo cargado».
+//   CARGA_DE_DATOS=prod: como en producción (sin generar ni la API de registros).
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -51,6 +54,26 @@ const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts"
 
 const puerto = Number(process.env.PUERTO ?? 8765);
 const respuestas = { ...RESPUESTAS, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
+
+// Centro de notificaciones (ADR-0167): un feed corto para mirar los filtros por categoría.
+{
+  const ahora = new Date().toISOString();
+  respuestas["/me/notifications"] = {
+    items: [
+      { id: "noti-ventas", event_key: "commerce.order.created", category: "ventas", severity: "success", title: "Pedido nuevo", body: "Ana pidió 2 cafés para recoger.", target: { entity: "pedido", id: null, section: "pack_commerce" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-conversacion", event_key: "core.escalation", category: "conversaciones", severity: "warning", title: "Un cliente pide una persona", body: "Luis quiere hablar con alguien del equipo.", target: { entity: "conversacion", id: "test-conv-1", section: "escalations" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-sistema", event_key: "core.connection.down", category: "sistema", severity: "info", title: "Conexión revisada", body: "El chat web está al día.", target: { entity: "conexion", id: "00000000-0000-4000-8000-0000000000c1", section: "connections" }, data: {}, created_at: ahora, read: true },
+    ],
+    next_cursor: null,
+    unread_count: 2,
+  };
+  respuestas["/me/notifications/unread-count"] = { unread_count: 2 };
+  respuestas["/me/notifications/preferences"] = {
+    categories: ["conversaciones", "ventas", "cobros", "agenda", "sistema"],
+    push_off_categories: [],
+    muted_until: null,
+  };
+}
 // COBRANZA=1: un negocio con Cobranza en marcha (carteras, ruta, cliente con préstamo, promesas, auditoría).
 if (process.env.COBRANZA === "1") {
   const dia = (n) => new Date(Date.now() - 5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
@@ -120,7 +143,7 @@ if (process.env.BOT_PAUSADO === "1") {
     fila("00000000-0000-4000-8000-0000000000c4", { label: "Agenda de Google", type_id: "google_calendar", channel: "", conversational: false, pausable: false, external_id: "agenda@test.example", coordinator: null, active_release: null, usage_7d: sinUso }),
     fila("00000000-0000-4000-8000-0000000000c7", { label: "Correo del negocio", type_id: "email_smtp", channel: "email", conversational: false, pausable: false, external_id: "hola@cafeaurora.co", coordinator: null, active_release: null, usage_7d: sinUso }),
   ];
-  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, runtime: "v3", routing: "active", consistency: { pass_k: 0.92, k: 4 } };
+  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, consistency: { pass_k: 0.92, k: 4 } };
   const instancia = (a) => ({ id: a.instance_id, agent_id: a.agent_id, key: a.key, name: a.name, role: a.role, is_default: a.is_default, priority: a.priority, enabled: a.enabled, latest_version: a.latest_version });
   for (const c of items.filter((x) => x.conversational)) {
     respuestas[`/admin/connections/${c.id}/agents`] = [...(c.coordinator ? [c.coordinator] : []), ...c.agents].map(instancia);
@@ -984,11 +1007,100 @@ if (process.env.AGENTES === "1") {
     plantilla("cobranza", "Cobranza", "Recuerda pagos y registra promesas.", "pack_cobranza", ["pack_cobranza"], false),
   ], total: 3, page: 1, page_size: 100, has_more: false };
 }
+
+// Carga de datos al crear un agente (SPEC-45): estado en memoria del borrador que crea el asistente.
+const CARGA = process.env.CARGA_DE_DATOS;
+const BORRADOR_ID = "5e45a000-0000-4000-8000-000000000045";
+const PLANTILLA_PRODUCTOS = {
+  id: "productos", titulo: "Productos", ayuda: "Tu catálogo: un producto por fila.", columna_clave: "sku",
+  columnas: [
+    { nombre: "sku", descripcion: "Código único del producto", obligatoria: true },
+    { nombre: "nombre", descripcion: "Cómo se llama", obligatoria: true },
+    { nombre: "precio", descripcion: "Precio de venta", obligatoria: true },
+    { nombre: "categoria", descripcion: "Categoría («Ropa > Camisetas»)", obligatoria: false },
+    { nombre: "descripcion", descripcion: "", obligatoria: false },
+    { nombre: "stock", descripcion: "", obligatoria: false },
+    { nombre: "imagen", descripcion: "", obligatoria: false },
+  ],
+  tope_filas: 500, tope_bytes: 1_000_000, en_produccion: true, importa_fotos: true,
+};
+const carga = { registros: [], fotos: 0 };
+function vistaPrevia(filas) {
+  const errores = filas.flatMap((f) =>
+    ["sku", "nombre", "precio"].filter((c) => !String(f.valores[c] ?? "").trim()).map((c) => ({ fila: f.fila, columna: c, mensaje: "Es obligatoria." })),
+  );
+  const conErrores = new Set(errores.map((e) => e.fila)).size;
+  return { total_filas: filas.length, nuevas: filas.length - conErrores, existentes: 0, con_errores: conErrores, errores, errores_total: errores.length, columnas_ignoradas: [], columnas_faltantes: [] };
+}
+function cargaDeDatos(metodo, ruta, cuerpo) {
+  if (metodo === "POST" && ruta === "/admin/agents/from-script") {
+    return [201, { agent: { id: BORRADOR_ID, key: "ventas", name: "Ventas" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
+  }
+  const m = new RegExp(`^/admin/agents/${BORRADOR_ID}/(datos-de-prueba|importar-datos)(/.*)?$`).exec(ruta);
+  if (!m) return undefined;
+  const [, base, resto = ""] = m;
+  const prod = CARGA === "prod";
+  if (base === "datos-de-prueba") {
+    if (prod) return [404, { error: { code: "not_found", message: "No existe." } }];
+    if (resto === "/registros") return [200, { lote: null, registros: carga.registros, total: carga.registros.length, sin_detalle: 0 }];
+    if (metodo === "POST") {
+      carga.registros = [
+        { tipo: "categoria", nombre: "Panadería", detalle: null, origen: "llm" },
+        { tipo: "producto", nombre: "Pan de bono", detalle: "$2.500 · Panadería", origen: "llm" },
+        { tipo: "producto", nombre: "Almojábana", detalle: "$2.800 · Panadería", origen: "llm" },
+        { tipo: "producto", nombre: "Torta de chocolate", detalle: "$45.000 · Tortas", origen: "llm" },
+      ];
+      return [200, { lote_id: "l-1", modo: "agente", origen: "llm", motivo_plantilla: null, creado_en: new Date().toISOString(), conteos: { producto: 3, categoria: 1 }, retirados: {} }];
+    }
+    return [200, { disponible: true, motivo: null, falta_descripcion: false, lote: null }];
+  }
+  if (resto === "" && metodo === "GET") return [200, { disponible: true, motivo: null, plantilla: PLANTILLA_PRODUCTOS, importado: null }];
+  if (resto === "/mapear") {
+    const filas = [
+      { fila: 2, valores: { sku: "CAM-01", nombre: "Camiseta básica", precio: "35000", categoria: "Ropa > Camisetas" } },
+      { fila: 3, valores: { sku: "GOR-02", nombre: "Gorra bordada", precio: "", categoria: "Accesorios" } },
+      { fila: 4, valores: { sku: "MED-03", nombre: "Medias deportivas", precio: "12000", categoria: "Ropa" } },
+    ];
+    return [200, {
+      plantilla: PLANTILLA_PRODUCTOS,
+      mapeo: [
+        { cabecera: "Referencia", columna: "sku", origen: "heuristica" },
+        { cabecera: "Producto", columna: "nombre", origen: "heuristica" },
+        { cabecera: "Valor con IVA", columna: "precio", origen: "ia" },
+        { cabecera: "Línea", columna: "categoria", origen: "ia" },
+        { cabecera: "Talla", columna: null, origen: "ninguno" },
+      ],
+      columnas_faltantes: [], ia: { usada: true, motivo_fallo: null }, filas, vista_previa: vistaPrevia(filas),
+    }];
+  }
+  if (resto === "/filas/validar") return [200, vistaPrevia(cuerpo.filas ?? [])];
+  if (resto === "/filas") {
+    const filas = cuerpo.filas ?? [];
+    const v = vistaPrevia(filas);
+    if (v.con_errores && !cuerpo.solo_validas) return [422, { error: { code: "archivo_con_errores", message: "Hay filas con errores." } }];
+    const malas = new Set(v.errores.map((e) => e.fila));
+    const buenas = filas.filter((f) => !malas.has(f.fila));
+    if (!prod) carga.registros = buenas.map((f) => ({ tipo: "producto", nombre: f.valores.nombre, detalle: `$${f.valores.precio}`, origen: "importacion" }));
+    return [201, { lote_id: "i-1", plantilla: "productos", creado_en: new Date().toISOString(), creadas: buenas.length, existentes: 0, con_errores: malas.size, conteos: { producto: buenas.length } }];
+  }
+  if (resto.startsWith("/fotos/cotizacion")) {
+    const n = Number(new URL(`http://x${ruta}`).searchParams.get("fotos") ?? 1);
+    return [200, { fotos: n, creditos: n * 2, por_foto: 2, llave_propia: false, usado: 2496, limite: 2500, disponible: 4, alcanza: n * 2 <= 4 }];
+  }
+  if (resto === "/fotos") {
+    carga.fotos += 1;
+    if (carga.fotos > 2) return [409, { error: { code: "plan_limit_creditos", message: "No te alcanza el crédito del mes." } }];
+    const nombres = ["Taza de cerámica", "Bolso tejido"];
+    const nombre = nombres[(carga.fotos - 1) % 2];
+    return [200, { image_key: `fotos/${carga.fotos}.jpg`, image_url: `https://picsum.photos/seed/sh${carga.fotos}/96`, valores: { sku: `FOTO-${carga.fotos}`, nombre, precio: "", categoria: "Hogar", imagen: `fotos/${carga.fotos}.jpg` }, creditos: 2, repetida: false }];
+  }
+  return undefined;
+}
 const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
 const avisosPorCanal = new Map();
 function plataforma(metodo, ruta, cuerpo) {
-  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados|retired-references)$/.exec(ruta);
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|aliados|retired-references)$/.exec(ruta);
   if (!m) return undefined;
   if (m[2] === "retired-references") return retiradas ? [200, reporteRetiradas(m[1])] : [404, { error: { message: "Sin fixture" } }];
   if (m[2] === "avisos-por-canal") {
@@ -996,7 +1108,7 @@ function plataforma(metodo, ruta, cuerpo) {
     if (metodo === "PUT") avisosPorCanal.set(m[1], cuerpo.habilitada === true);
     return [200, { habilitada: avisosPorCanal.get(m[1]) ?? false }];
   }
-  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, m[2] === "aliados" ? ALIADOS : { runtime: "legacy", procedures: false, routing: "off", aos_connection_routing: true, ultimo_cambio: null }] : [200, { ok: true }];
+  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, ALIADOS] : [200, { ok: true }];
   const falla = process.env.PLATAFORMA;
   if (falla === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
   if (falla === "404") return [404, { error: { code: "not_found", message: "El negocio no existe." } }];
@@ -1642,6 +1754,22 @@ createServer(async (req, res) => {
     res.end(JSON.stringify(r[1]));
     return;
   }
+  if (CARGA && (ruta === "/admin/agents/from-script" || ruta.startsWith(`/admin/agents/${BORRADOR_ID}/`))) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    let cuerpo = {};
+    try {
+      cuerpo = texto && (req.headers["content-type"] ?? "").includes("json") ? JSON.parse(texto) : {};
+    } catch {
+      cuerpo = {};
+    }
+    const r = cargaDeDatos(req.method ?? "GET", ruta + (url.search ?? ""), cuerpo);
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
+      return;
+    }
+  }
   if (ruta.includes("/platform/tenants/")) {
     let texto = "";
     for await (const trozo of req) texto += trozo;
@@ -1688,6 +1816,33 @@ createServer(async (req, res) => {
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
+  }
+  if (ruta === "/me/notifications/read" && req.method === "POST") {
+    respuestas["/me/notifications"] = { ...respuestas["/me/notifications"], unread_count: 0 };
+    respuestas["/me/notifications/unread-count"] = { unread_count: 0 };
+    res.end(JSON.stringify({ unread_count: 0 }));
+    return;
+  }
+  if (ruta === "/me/notifications/preferences" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      ...JSON.parse(texto || "{}"),
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
+  }
+  if (ruta === "/me/notifications/mute" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const minutos = Number(JSON.parse(texto || "{}").minutes ?? 0);
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      muted_until: minutos > 0 ? new Date(Date.now() + minutos * 60_000).toISOString() : null,
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
   }
   const cuerpo =
     req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];

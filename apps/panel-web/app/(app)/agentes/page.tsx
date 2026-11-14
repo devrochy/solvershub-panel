@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
+import { LayoutGrid, List } from "lucide-react";
 
 import { AgentCard, EstadoDelAgente, loQueHizo, ultimaConversacion, type AgenteDeLaLista } from "@/app/(app)/agentes/_components/agent-card";
 import { AvisoDeReferenciasEnLista } from "@/components/domain/aviso-de-referencias-retiradas";
-import { DatosDePruebaParaTodos } from "@/app/(app)/agentes/_components/datos-de-prueba-para-todos";
 import { NuevoAgenteBoton } from "@/app/(app)/agentes/_components/nuevo-agente-boton";
 import { AgentIcon } from "@/components/domain/agent-icon";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
@@ -13,8 +13,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentsOverview, AgentSummary, EstadoDatosDePrueba, Me, PlanResponse, RetiredReferencesOut } from "@/lib/api/types";
-import { archivadosAlFinal, dondeAtiende, estaArchivado, papelDelAgente, puedeEditarAgentes, puedeEscribirConocimiento } from "@/lib/agentes";
+import type { AgentsOverview, AgentSummary, Me, PlanResponse, RetiredReferencesOut } from "@/lib/api/types";
+import { archivadosAlFinal, dondeAtiende, papelDelAgente, puedeEditarAgentes } from "@/lib/agentes";
 import { avisoDeTopeDeAgentes } from "@/lib/plan-limite";
 import { creditosPorAgenteId } from "@/lib/consumo";
 import { formatNumber, formatUsd } from "@/lib/format";
@@ -60,20 +60,10 @@ export default async function AgentesPage({
       </div>
     );
   }
-  const { runtime } = res.data;
   // El General «virtual» (negocio sin el agente General) solo se muestra si tiene algo que ver.
-  const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || runtime !== "v3" || a.turns > 0));
-  // «Generar datos de prueba» para todos (HU-QA-11): solo en test, donde la API de un especialista
-  // responde (fuera de test es 404), y con escritura en `agents`.
-  const especialistas = items.flatMap((a) =>
-    a.id && a.kind === "specialist" && !estaArchivado(a) ? [{ id: a.id, name: a.name }] : [],
-  );
-  const enTest =
-    especialistas.length > 0 && meRes.ok && puedeEscribirConocimiento(meRes.data)
-      ? (await apiFetch<EstadoDatosDePrueba>(`/admin/agents/${especialistas[0].id}/datos-de-prueba`)).ok
-      : false;
+  const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || a.turns > 0));
   const conAviso = new Set(retiradas.ok ? retiradas.data.agents.map((a) => a.agent_id) : []);
-  const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data, runtime);
+  const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data);
   const avisoTope = avisoDeTopeDeAgentes(res.data.cuota_agentes);
   const propositos = new Map(resumenes.ok ? resumenes.data.map((a) => [a.id, a.description]) : []);
   const delMes = creditosPorAgenteId(plan.ok ? plan.data.credit : null);
@@ -143,22 +133,14 @@ export default async function AgentesPage({
               label="Cómo ver los agentes"
               value={vista}
               options={[
-                { value: "cuadricula", label: "Cuadrícula", href: enlace("cuadricula") },
-                { value: "lista", label: "Lista", href: enlace("lista") },
+                { value: "cuadricula", label: "Cuadrícula", icon: <LayoutGrid />, href: enlace("cuadricula") },
+                { value: "lista", label: "Lista", icon: <List />, href: enlace("lista") },
               ]}
             />
           )}
-          {enTest && <DatosDePruebaParaTodos agentes={especialistas} />}
           {/* El editor (HU-AOS-24) escribe en `settings`; sin ese permiso el botón no se muestra. */}
           {puedeEditar && <NuevoAgenteBoton aviso={avisoTope} />}
         </>,
-      )}
-
-      {runtime !== "v3" && (
-        <p className="rounded-lg border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          Tu asistente todavía atiende con un solo agente, el General. Cuando tu negocio tenga especialistas (Ventas,
-          Agenda, Cobranza…), cada uno tendrá aquí su propia vista.
-        </p>
       )}
 
       <AvisoDeReferenciasEnLista avisos={retiradas.ok ? retiradas.data : null} />

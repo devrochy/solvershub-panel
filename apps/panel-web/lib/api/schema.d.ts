@@ -1322,7 +1322,7 @@ export interface paths {
         /**
          * Start Canary
          * @description Prueba la versión con una parte de las conversaciones nuevas (HU-AOS-32). Mismas reglas que
-         *     publicar: dueño o master, gate aprobado si está cerrado, `aos_runtime = v3` (409 `requiere_v3`).
+         *     publicar: dueño o master y gate aprobado si está cerrado.
          *     Si la plataforma la apagó (`CANARY_DISPONIBLE`), responde 409 `canary_no_disponible`.
          */
         post: operations["start_canary_api_v1_admin_connections__connection_id__releases__release_id__canary_post"];
@@ -3228,55 +3228,6 @@ export interface paths {
          *     con la corrida `queued` (o la que ya estaba en curso).
          */
         post: operations["run_platform_meta_app_api_v1_admin_platform_meta_app_run_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Os
-         * @description Banderas del Agent OS del negocio, la global del entorno y el último cambio (quién y cuándo).
-         */
-        get: operations["get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get"];
-        /**
-         * Put Agent Os
-         * @description Lleva el negocio al estado pedido (HU-AOS-15, orden de ADR-0112): al pasar a v3 corre los
-         *     backfills del negocio y `migrar-a-v3` (con `construir` si se pide); al volver a legacy apaga
-         *     todo. Escribe con `aos_fijar_banderas` (auditada). 422 `agent_os_orden` (combinación fuera de
-         *     orden), 409 `agent_os_bloqueado` (precondiciones; `details` trae bloqueos y avisos) o
-         *     `agent_os_en_curso` (otro cambio en curso).
-         */
-        put: operations["put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os/simular": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Simular Agent Os
-         * @description Dry-run del cambio: bloqueos, avisos y los pasos que aplicaría. No escribe nada (ni
-         *     backfills, ni releases, ni banderas). 422 `agent_os_orden` si el objetivo viola el orden.
-         */
-        post: operations["simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7024,6 +6975,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/datos-de-prueba/registros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Registros De Prueba
+         * @description Lo que el agente tiene cargado para probarlo (último lote generado e importado), en palabras.
+         *     Lo de un módulo cuya sección el usuario no puede ver no sale.
+         */
+        get: operations["registros_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_registros_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/export.csv": {
         parameters: {
             query?: never;
@@ -8457,6 +8429,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/mapear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mapear Importacion
+         * @description Propone a qué columna de la plantilla va cada cabecera (sinónimos del pack y, para las que no
+         *     reconoce, una llamada a la IA medida en el ledger) y devuelve las filas normalizadas con su vista
+         *     previa. No escribe datos: el cliente edita la precarga y la confirma con `…/importar-datos/filas`.
+         */
+        post: operations["mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/filas/validar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validar Precarga
+         * @description Vista previa de la precarga editada. No escribe.
+         */
+        post: operations["validar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_validar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/filas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Importar Precarga
+         * @description Importa la precarga editada: se vuelve a validar contra el esquema del pack. Con errores en
+         *     alguna fila responde 422 `archivo_con_errores` salvo `solo_validas`. Idempotente por clave natural.
+         */
+        post: operations["importar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/fotos/cotizacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cotizar Fotos
+         * @description Cuánto cuesta reconocer `fotos` fotos y si el crédito del mes alcanza. No escribe nada.
+         */
+        get: operations["cotizar_fotos_api_v1_admin_agents__agent_id__importar_datos_fotos_cotizacion_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/fotos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Importar Foto
+         * @description Una foto → una fila propuesta para la precarga. Cotiza y verifica el crédito antes de llamar a
+         *     la visión (409 `plan_limit_creditos` si no alcanza, sin cobrar); la misma foto otra vez se
+         *     responde sin cobrar. La fila se confirma con el resto en `…/importar-datos/filas`.
+         */
+        post: operations["importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/avatar": {
         parameters: {
             query?: never;
@@ -9401,6 +9478,24 @@ export interface components {
              */
             variables: string[];
         };
+        /** AsignacionOut */
+        AsignacionOut: {
+            /**
+             * Cabecera
+             * @description Cabecera tal como viene en el archivo.
+             */
+            cabecera: string;
+            /**
+             * Columna
+             * @description Columna de la plantilla; `null` = se ignora.
+             */
+            columna: string | null;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "heuristica" | "ia" | "ninguno";
+        };
         /** AsistenciaIn */
         AsistenciaIn: {
             /** Asistio */
@@ -9941,11 +10036,6 @@ export interface components {
              * @default []
              */
             asistente: components["schemas"]["Guion"][];
-            /**
-             * Aos Runtime
-             * @default legacy
-             */
-            aos_runtime: string;
         };
         /** CatalogoDeMensajesOut */
         CatalogoDeMensajesOut: {
@@ -10665,6 +10755,40 @@ export interface components {
              */
             by_agent: components["schemas"]["AgentCost"][];
         };
+        /** CotizacionFotos */
+        CotizacionFotos: {
+            /** Fotos */
+            fotos: number;
+            /**
+             * Creditos
+             * @description Créditos que cuestan todas las fotos (redondeado hacia arriba).
+             */
+            creditos: number;
+            /** Por Foto */
+            por_foto: number;
+            /**
+             * Llave Propia
+             * @description El negocio usa su propia llave de visión: solo se cobra el fee.
+             */
+            llave_propia: boolean;
+            /**
+             * Usado
+             * @description Créditos usados en el mes.
+             */
+            usado: number;
+            /**
+             * Limite
+             * @description Créditos del plan al mes; `null` = sin límite.
+             */
+            limite: number | null;
+            /** Disponible */
+            disponible: number | null;
+            /**
+             * Alcanza
+             * @description Si el crédito del mes alcanza para todas las fotos.
+             */
+            alcanza: boolean;
+        };
         /**
          * CrearSuscripcionBody
          * @description Inscribe a un `Customer` en un plan del catálogo (SPEC-43). El plan libre (nombre, precio,
@@ -11297,6 +11421,19 @@ export interface components {
             turns: {
                 [key: string]: unknown;
             }[];
+        };
+        /** IAMapeoOut */
+        IAMapeoOut: {
+            /**
+             * Usada
+             * @description La IA asignó al menos una columna.
+             */
+            usada: boolean;
+            /**
+             * Motivo Fallo
+             * @description Si se llamó a la IA y no ayudó; esas cabeceras quedan sin asignar.
+             */
+            motivo_fallo?: ("proveedor" | "formato") | null;
         };
         /** IdentitySettings */
         IdentitySettings: {
@@ -12064,6 +12201,21 @@ export interface components {
             values: {
                 [key: string]: unknown;
             };
+        };
+        /** MapeoPropuesto */
+        MapeoPropuesto: {
+            plantilla: components["schemas"]["PlantillaImportacionOut"];
+            /** Mapeo */
+            mapeo: components["schemas"]["AsignacionOut"][];
+            /**
+             * Columnas Faltantes
+             * @description Obligatorias sin cabecera: el cliente debe completarlas.
+             */
+            columnas_faltantes: string[];
+            ia: components["schemas"]["IAMapeoOut"];
+            /** Filas */
+            filas: components["schemas"]["FilaPrecarga"][];
+            vista_previa: components["schemas"]["VistaPreviaImportacion"];
         };
         /**
          * MePlanSummary
@@ -13681,6 +13833,16 @@ export interface components {
             /** Lng */
             lng: number;
         };
+        /** PrecargaIn */
+        PrecargaIn: {
+            /** Filas */
+            filas: components["schemas"]["FilaPrecarga"][];
+            /**
+             * Solo Validas
+             * @default false
+             */
+            solo_validas: boolean;
+        };
         /** PreflightOut */
         PreflightOut: {
             /** Key */
@@ -14799,8 +14961,6 @@ export interface components {
         /** ResumenPorAgente */
         ResumenPorAgente: {
             periodo: components["schemas"]["PeriodoOut"];
-            /** Runtime */
-            runtime: string;
             general: components["schemas"]["BloqueGeneral"];
             /** Agentes */
             agentes: components["schemas"]["AgenteResumen"][];
@@ -15025,7 +15185,7 @@ export interface components {
         RoutePreview: {
             /**
              * Mode
-             * @description `off`, `shadow` o `active`: si hoy el router decide en esta conexión.
+             * @description `active`, o `shadow` si la release de la conexión pide sombra (`routing.shadowMode`).
              */
             mode: string;
             /**
@@ -16759,87 +16919,6 @@ export interface components {
              */
             updated_at: string;
         };
-        /**
-         * AgentOSBanderas
-         * @description Estado de las banderas del Agent OS de un negocio (ADR-0112, ADR-0138).
-         */
-        AgentOSBanderas: {
-            /**
-             * Runtime
-             * @enum {string}
-             */
-            runtime: "legacy" | "v3";
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-        };
-        /** AgentOSCambio */
-        AgentOSCambio: {
-            /** Actor */
-            actor: string;
-            /**
-             * Fecha
-             * Format: date-time
-             */
-            fecha: string;
-        };
-        /** AgentOSEstado */
-        AgentOSEstado: {
-            /**
-             * Runtime
-             * @enum {string}
-             */
-            runtime: "legacy" | "v3";
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-            /** Aos Connection Routing */
-            aos_connection_routing: boolean;
-            ultimo_cambio?: components["schemas"]["AgentOSCambio"] | null;
-        };
-        /** AgentOSObjetivo */
-        AgentOSObjetivo: {
-            /**
-             * Runtime
-             * @enum {string}
-             */
-            runtime: "legacy" | "v3";
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-            /**
-             * Construir
-             * @default false
-             */
-            construir: boolean;
-        };
-        /** AgentOSResultado */
-        AgentOSResultado: {
-            /** Accion */
-            accion: string;
-            antes: components["schemas"]["AgentOSBanderas"];
-            despues: components["schemas"]["AgentOSBanderas"];
-            /** Aos Connection Routing */
-            aos_connection_routing: boolean;
-            /** Pasos */
-            pasos: string[];
-            /** Bloqueos */
-            bloqueos: string[];
-            /** Avisos */
-            avisos: string[];
-        };
         /** AgentPatch */
         AgentPatch: {
             /** Name */
@@ -18001,8 +18080,14 @@ export interface components {
         };
         /** AgentsOverview */
         AgentsOverview: {
-            /** Runtime */
-            runtime: string;
+            /**
+             * Runtime
+             * @deprecated
+             * @description Deprecado: siempre `v3` (ADR-0191). Solo para la APK instalada; no lo leas.
+             * @default v3
+             * @constant
+             */
+            runtime: "v3";
             /** Items */
             items: components["schemas"]["AgentOverviewItem"][];
             sin_atribuir: components["schemas"]["Activity"];
@@ -18185,17 +18270,6 @@ export interface components {
             page_size: number;
             /** Has More */
             has_more: boolean;
-            /**
-             * Runtime
-             * @enum {string}
-             */
-            runtime: "legacy" | "v3";
-            /**
-             * Routing
-             * @description `tenants.aos_routing`, solo lectura.
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
             /** @description pass^k del último run del negocio. */
             consistency: components["schemas"]["ConsoleConsistency"] | null;
             /**
@@ -19377,6 +19451,45 @@ export interface components {
              * @default true
              */
             false_positive: boolean;
+        };
+        /** FilaDeFoto */
+        FilaDeFoto: {
+            /** Image Key */
+            image_key: string;
+            /** Image Url */
+            image_url: string;
+            /**
+             * Valores
+             * @description Fila propuesta para la precarga (columna → texto).
+             */
+            valores: {
+                [key: string]: string;
+            };
+            /**
+             * Creditos
+             * @description Créditos cobrados por esta foto (0 si ya se había procesado).
+             */
+            creditos: number | null;
+            /**
+             * Repetida
+             * @description La misma foto ya se había procesado: se respondió sin cobrar otra vez.
+             */
+            repetida: boolean;
+        };
+        /** FilaPrecarga */
+        FilaPrecarga: {
+            /**
+             * Fila
+             * @description Número de fila en el archivo original (la cabecera es la 1).
+             */
+            fila: number;
+            /**
+             * Valores
+             * @description Columna de la plantilla → texto, como en el CSV. Lo demás se ignora.
+             */
+            valores: {
+                [key: string]: string | null;
+            };
         };
         /** PlantillaDeEnvio */
         PlantillaDeEnvio: {
@@ -22153,6 +22266,16 @@ export interface components {
              */
             solo_validas: boolean;
         };
+        /** Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post */
+        Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post: {
+            /** Archivo */
+            archivo: string;
+        };
+        /** Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post */
+        Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post: {
+            /** Archivo */
+            archivo: string;
+        };
         /** Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post */
         Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post: {
             /** Archivo */
@@ -22249,6 +22372,16 @@ export interface components {
             tope_filas: number;
             /** Tope Bytes */
             tope_bytes: number;
+            /**
+             * En Produccion
+             * @description La plantilla también se importa fuera de test (ADR-0194).
+             */
+            en_produccion: boolean;
+            /**
+             * Importa Fotos
+             * @description Se puede cargar desde fotos, una foto por fila (ADR-0194).
+             */
+            importa_fotos: boolean;
         };
         /** VistaPreviaImportacion */
         VistaPreviaImportacion: {
@@ -22944,6 +23077,43 @@ export interface components {
             limit: number | null;
             /** Allowed */
             allowed: boolean;
+        };
+        /** RegistroDePrueba */
+        RegistroDePrueba: {
+            /**
+             * Tipo
+             * @description `kind` del registro en su pack (`producto`, `tipo`, `cliente`…).
+             */
+            tipo: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Detalle
+             * @description Corto: precio y categoría, duración, cartera y deuda.
+             */
+            detalle?: string | null;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla" | "importacion";
+        };
+        /** RegistrosDePrueba */
+        RegistrosDePrueba: {
+            /** @description El último lote generado; `null` si no hay (puede haber importado). */
+            lote: components["schemas"]["LoteDePrueba"] | null;
+            /**
+             * Registros
+             * @description Lo generado y lo importado, por lote en el orden en que se cargó y dentro del lote por tipo y nombre. Hasta 200; el total está en `total`.
+             */
+            registros: components["schemas"]["RegistroDePrueba"][];
+            /** Total */
+            total: number;
+            /**
+             * Sin Detalle
+             * @description Registros de una habilidad que no se describe: existen pero no salen en la lista.
+             */
+            sin_detalle: number;
         };
     };
     responses: never;
@@ -29375,116 +29545,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMetaApp"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSEstado"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentOSObjetivo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSResultado"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentOSObjetivo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSResultado"];
                 };
             };
             /** @description Validation Error */
@@ -38049,6 +38109,40 @@ export interface operations {
             };
         };
     };
+    registros_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_registros_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrosDePrueba"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_leads_csv_api_v1_admin_leads_export_csv_get: {
         parameters: {
             query?: {
@@ -41088,6 +41182,201 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VistaPreviaImportacion"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapeoPropuesto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_validar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrecargaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaImportacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    importar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrecargaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportacionHecha"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cotizar_fotos_api_v1_admin_agents__agent_id__importar_datos_fotos_cotizacion_get: {
+        parameters: {
+            query?: {
+                fotos?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CotizacionFotos"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilaDeFoto"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

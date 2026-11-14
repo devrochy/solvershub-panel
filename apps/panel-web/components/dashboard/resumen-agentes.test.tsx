@@ -27,7 +27,6 @@ const PERIODO = {
 
 const DATOS: ResumenPorAgente = {
   periodo: PERIODO,
-  runtime: "v3",
   general: {
     kpis: [
       k({ id: "conversaciones", label: "Conversaciones", valor: 40, previo: 20, delta_pct: 100, destino: { ruta: "conversaciones", params: {} } }),

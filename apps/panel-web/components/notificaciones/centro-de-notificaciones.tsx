@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BellOff, CheckCheck, Settings2 } from "lucide-react";
 
 import { FilaNotificacion } from "@/components/notificaciones/fila-notificacion";
@@ -16,8 +16,10 @@ import {
   CATEGORIAS,
   OPCIONES_SILENCIO,
   agruparPorDia,
+  categoriasDisponibles,
   minutosHastaManana,
   rutaDeNotificacion,
+  type Categoria,
 } from "@/lib/notificaciones/tipos";
 import type { useNotificaciones } from "@/lib/notificaciones/use-notificaciones";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,18 @@ export function CentroDeNotificaciones({ n, onCerrar }: { n: Estado; onCerrar: (
   const shell = useShell();
   const [verPreferencias, setVerPreferencias] = useState(false);
   const ahora = n.ahora;
+  const { categoria, setCategoria } = n;
+  // Solo se ofrecen las categorías que el negocio puede producir (agente/módulo activo).
+  const categorias = useMemo(
+    () => categoriasDisponibles(shell?.modulos, shell?.packs),
+    [shell?.modulos, shell?.packs],
+  );
+
+  // Si la categoría elegida deja de estar disponible (se apagó el pack o el agente), se vuelve
+  // a «Todas» para no dejar un filtro invisible activo.
+  useEffect(() => {
+    if (categoria && !categorias.includes(categoria as Categoria)) setCategoria(null);
+  }, [categorias, categoria, setCategoria]);
 
   function abrirPreferencias() {
     setVerPreferencias(true);
@@ -107,7 +121,7 @@ export function CentroDeNotificaciones({ n, onCerrar }: { n: Estado; onCerrar: (
         <ChipCategoria activo={n.categoria === null} onClick={() => n.setCategoria(null)}>
           Todas
         </ChipCategoria>
-        {CATEGORIAS.map((c) => {
+        {categorias.map((c) => {
           const Icono = CATEGORIA[c].icon;
           return (
             <ChipCategoria key={c} activo={n.categoria === c} onClick={() => n.setCategoria(n.categoria === c ? null : c)}>
