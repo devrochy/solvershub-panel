@@ -942,6 +942,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/playground/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Playground Close
+         * @description Cierra la prueba y purga su data (conversación `test`, cliente sintético, mensajes, tareas, memoria, ledger y decisiones). Sin `connection_id`, cierra todas las del negocio.
+         */
+        post: operations["playground_close_api_v1_admin_playground_close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/playground/reset": {
         parameters: {
             query?: never;
@@ -15906,6 +15926,12 @@ export interface components {
              * @default false
              */
             escalated: boolean;
+            /**
+             * Simulado
+             * @description El turno ejecutó tools en modo simulado (HU-ARCH-14): no se creó data real.
+             * @default false
+             */
+            simulado: boolean;
         };
         /** TurnStep */
         TurnStep: {
@@ -25041,6 +25067,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    playground_close_api_v1_admin_playground_close_post: {
+        parameters: {
+            query?: {
+                /** @description Cierra la prueba de esa conexión. */
+                connection_id?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
