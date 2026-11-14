@@ -429,6 +429,7 @@ export function EditorDeAgente({
       <DatosDelAgente
         politica={datosCliente}
         estado={datos}
+        guardado={datosGuardado}
         herramientas={herramientas}
         puedeEditar={puedeEditarDatos}
         guardando={datosAccion.pending}

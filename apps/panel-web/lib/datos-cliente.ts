@@ -93,10 +93,20 @@ export function hayCambios(politica: PoliticaDatos, estado: EstadoDatos): boolea
   return politica.acciones.some((a) => a.campos.some((c) => (estado[a.id]?.[c.clave] ?? c.nivel) !== c.nivel));
 }
 
-/** Cuántos datos de la acción tienen cambios sin guardar. */
-export function cambiosDeAccion(politica: PoliticaDatos, estado: EstadoDatos, accionId: string): number {
+/** Cuántos datos de la acción tienen cambios sin guardar; `guardado` es la última versión guardada. */
+export function cambiosDeAccion(
+  politica: PoliticaDatos,
+  estado: EstadoDatos,
+  accionId: string,
+  guardado?: EstadoDatos,
+): number {
   const accion = politica.acciones.find((a) => a.id === accionId);
-  return accion ? accion.campos.filter((c) => (estado[accionId]?.[c.clave] ?? c.nivel) !== c.nivel).length : 0;
+  if (!accion) return 0;
+  return accion.campos.filter((c) => {
+    const actual = estado[accionId]?.[c.clave] ?? c.nivel;
+    const base = guardado?.[accionId]?.[c.clave] ?? c.nivel;
+    return actual !== base;
+  }).length;
 }
 
 /**

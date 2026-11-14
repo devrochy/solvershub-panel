@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 export function DatosDelAgente({
   politica,
   estado,
+  guardado,
   herramientas,
   puedeEditar,
   guardando,
@@ -39,6 +40,7 @@ export function DatosDelAgente({
 }: {
   politica: AgenteDatos;
   estado: EstadoDatos;
+  guardado: EstadoDatos;
   herramientas: boolean;
   puedeEditar: boolean;
   guardando: boolean;
@@ -110,7 +112,7 @@ export function DatosDelAgente({
                   puedeEditar={puedeEditar}
                   deshabilitado={guardando}
                   ajustada={estaAjustada(politica, estado, accion.id)}
-                  cambios={cambiosDeAccion(politica, estado, accion.id)}
+                  cambios={cambiosDeAccion(politica, estado, accion.id, guardado)}
                   onNivel={(clave, nivel) => onNivel(accion.id, clave, nivel)}
                   onRestablecer={() => onRestablecer(accion.id)}
                 />

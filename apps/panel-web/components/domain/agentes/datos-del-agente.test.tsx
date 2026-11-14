@@ -17,6 +17,7 @@ function montar(overrides: Partial<Parameters<typeof DatosDelAgente>[0]> = {}) {
     <DatosDelAgente
       politica={politicaDatosCliente}
       estado={estadoInicial(politicaDatosCliente)}
+      guardado={estadoInicial(politicaDatosCliente)}
       herramientas={false}
       puedeEditar
       guardando={false}
