@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import {
+  PasoFlujo,
   PasoIdentidad,
   PasoMemoria,
   PasoModelo,
@@ -23,9 +24,11 @@ import {
   estadoDesdeBorrador,
   pasoDelCampo,
   textoDeConexionPublicada,
+  type AccionDelFlujo,
   type Contenido,
   type Errores,
   type EstadoDelEditor,
+  type FlujoDelAgente,
   type PasoId,
 } from "@/lib/agentes-editor";
 import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
@@ -72,6 +75,9 @@ export function EditorDeAgente({
   avisosRetirados = null,
   nombresDeHabilidades = {},
   gruposDeAcciones = {},
+  flujoInicial = { sections: [] },
+  flujoSeeded = false,
+  accionesDelFlujo = [],
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -89,6 +95,10 @@ export function EditorDeAgente({
   nombresDeHabilidades?: Record<string, string>;
   /** Grupo de cada acción según la API (ADR-0190); sin respuesta se agrupan por su nombre. */
   gruposDeAcciones?: Record<string, string>;
+  /** Flujo del agente (ADR-0195, HU-AOS-76); si la API no responde, se abre vacío. */
+  flujoInicial?: FlujoDelAgente;
+  flujoSeeded?: boolean;
+  accionesDelFlujo?: AccionDelFlujo[];
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -97,10 +107,12 @@ export function EditorDeAgente({
 
   const [base, setBase] = useState<Contenido>(agente.draft.content);
   const [lock, setLock] = useState(agente.draft.lock_version);
-  const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes));
+  const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes, flujoInicial));
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
   const [paso, setPaso] = useState<PasoId>(pasoInicial);
   const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad", pasoInicial]));
+  // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
+  const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
@@ -172,10 +184,11 @@ export function EditorDeAgente({
     return completo;
   }
 
-  /** Guarda nombre, descripción y borrador si cambiaron. Devuelve el `lock_version` vigente o null. */
+  /** Guarda nombre, descripción, borrador y flujo si cambiaron. Devuelve el `lock_version` vigente o null. */
   async function guardar(actual: EstadoDelEditor = estado): Promise<number | null> {
     if (JSON.stringify(actual) === JSON.stringify(guardado)) return lock;
     const resultado: { lock: number | null } = { lock: null };
+    const flujoCambio = !flujoPersistido || JSON.stringify(actual.flujo) !== JSON.stringify(guardado.flujo);
     const ok = await guardarAccion.run(async () => {
       if (actual.nombre !== guardado.nombre || actual.descripcion !== guardado.descripcion) {
         const res = await fetch(`/api/agent-editor/${agente.id}`, {
@@ -202,9 +215,29 @@ export function EditorDeAgente({
             : (json.error ?? "No se pudo guardar el borrador.");
         return { ok: false, status: res.status, error };
       }
-      resultado.lock = json.lockVersion ?? lock;
-      setLock(resultado.lock);
+      let vigente = json.lockVersion ?? lock;
+      setLock(vigente);
       if (json.content) setBase(json.content);
+      if (flujoCambio) {
+        const flowRes = await fetch(`/api/agent-editor/${agente.id}/flow`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flow: actual.flujo, lock_version: vigente }),
+        });
+        const flowJson = (await flowRes.json().catch(() => ({}))) as Respuesta & { lock_version?: number };
+        if (!flowRes.ok) {
+          if (flowJson.fields) mostrarErrores(flowJson.fields);
+          const error =
+            flowJson.code === "stale_lock_version"
+              ? "Otra persona guardó este agente mientras lo editabas. Recarga la página para ver sus cambios."
+              : (flowJson.error ?? "No se pudo guardar el flujo de atención.");
+          return { ok: false, status: flowRes.status, error };
+        }
+        vigente = flowJson.lock_version ?? vigente;
+        setLock(vigente);
+        setFlujoPersistido(true);
+      }
+      resultado.lock = vigente;
       setGuardado(actual);
       void recargarAvisos();
       return { ok: true, success: "Borrador guardado." };
@@ -347,6 +380,15 @@ export function EditorDeAgente({
         errores={erroresDeLasAcciones}
         conConocimiento={estado.conocimiento.activo}
         gruposDeLaApi={gruposDeAcciones}
+      />
+    ),
+    flujo: (
+      <PasoFlujo
+        flujo={estado.flujo}
+        acciones={accionesDelFlujo}
+        cambiar={(flujo) => cambiar({ flujo })}
+        errores={errores}
+        semilla={flujoSeeded && JSON.stringify(estado.flujo) === JSON.stringify(flujoInicial)}
       />
     ),
     memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,

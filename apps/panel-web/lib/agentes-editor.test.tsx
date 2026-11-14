@@ -12,7 +12,9 @@ import {
   erroresDelPaso,
   erroresPorSuperpoder,
   estadoDesdeBorrador,
+  flujoDesdeApi,
   frasesDistintas,
+  idDeSeccion,
   nombreDeSuperpoder,
   pasoDelCampo,
   rangoCompatible,
@@ -208,7 +210,7 @@ describe("publicar (D-35)", () => {
         />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paso 6/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 7/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     await waitFor(() => expect(screen.getByLabelText("Tus frases").getAttribute("aria-invalid")).toBe("true"));
     const [, init] = fetchMock.mock.calls[0];
@@ -250,5 +252,43 @@ describe("superpoder de otro enfoque", () => {
     expect(superpoderes["pack_calendar.agendar_cita"].activo).toBe(false);
     const quitado = contenidoDesdeEstado(CITA, { ...estado, superpoderes }, [PEDIDO]);
     expect((quitado.procedures as { id: string }[]).map((p) => p.id)).toEqual([PEDIDO.id]);
+  });
+});
+
+
+describe("flujo de atención por agente (ADR-0195)", () => {
+  it("lee la respuesta de la API y descarta secciones sin id o sin nombre", () => {
+    expect(
+      flujoDesdeApi({
+        sections: [
+          { id: "cotizacion", label: "Cotización", purpose: "Preparar", tools: ["generar_cotizacion"] },
+          { id: "", label: "Sin id", tools: [] },
+          { id: "sin_nombre" },
+        ],
+      }),
+    ).toEqual({
+      sections: [{ id: "cotizacion", label: "Cotización", purpose: "Preparar", tools: ["generar_cotizacion"] }],
+    });
+  });
+
+  it("genera ids únicos a partir del nombre", () => {
+    expect(idDeSeccion("Nueva sección", [])).toBe("nueva_seccion");
+    expect(idDeSeccion("Nueva sección", ["nueva_seccion"])).toBe("nueva_seccion_2");
+  });
+
+  it("exige nombre en cada sección", () => {
+    const estado = estadoDesdeBorrador({ name: "Ventas", description: "" }, BASE, [], {
+      sections: [{ id: "a", label: "", purpose: "", tools: [] }],
+    });
+    expect(erroresDelPaso("flujo", estado, [], { minFrases: 3 })).toEqual({
+      "flow.sections[0].label": "Ponle un nombre a la sección.",
+    });
+  });
+
+  it("el flujo entra al estado del editor pero no al AgentSpec", () => {
+    const flujo = { sections: [{ id: "a", label: "A", purpose: "", tools: ["x"] }] };
+    const estado = estadoDesdeBorrador({ name: "Ventas", description: "" }, BASE, [], flujo);
+    expect(estado.flujo).toEqual(flujo);
+    expect(contenidoDesdeEstado(BASE, estado, [])).not.toHaveProperty("flow");
   });
 });

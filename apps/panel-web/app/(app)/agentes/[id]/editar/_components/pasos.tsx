@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { ListaDeFrases } from "@/components/ui/lista-de-frases";
@@ -20,11 +20,14 @@ import {
   ALCANCES_DE_MEMORIA,
   MAX_FRASES_PROPIAS,
   frasesDistintas,
+  idDeSeccion,
   nombreDeSuperpoder,
   superpoderesFueraDelEnfoque,
   textoDeCosto,
+  type AccionDelFlujo,
   type Errores,
   type EstadoDelEditor,
+  type FlujoDelAgente,
 } from "@/lib/agentes-editor";
 import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
 import { erroresDeAcciones } from "@/lib/referencias-retiradas";
@@ -32,6 +35,7 @@ import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda }
 import type { Pendiente } from "@/lib/frases-pendientes";
 import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
+import { nombreDeAccion } from "@/lib/grupos-de-acciones";
 import { cn } from "@/lib/utils";
 
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
@@ -616,6 +620,164 @@ export function PasoPublicar({
       <Field label="Qué cambió (opcional)" htmlFor="publicar-notas" help="Queda en el historial de versiones.">
         <Textarea id="publicar-notas" value={notas} maxLength={2000} rows={2} onChange={(e) => setNotas(e.target.value)} />
       </Field>
+    </div>
+  );
+}
+
+
+// ------------------------------------------------------------------ flujo de atención
+/** Editor del flujo del agente (ADR-0195, HU-AOS-76): secciones y acciones, sin tocar el AgentSpec. */
+export function PasoFlujo({
+  flujo,
+  acciones,
+  cambiar,
+  errores,
+  semilla,
+}: {
+  flujo: FlujoDelAgente;
+  acciones: AccionDelFlujo[];
+  cambiar: (flujo: FlujoDelAgente) => void;
+  errores: Errores;
+  /** true cuando el flujo que se muestra es la semilla del pack y aún no se guardó. */
+  semilla: boolean;
+}) {
+  const disponibles = acciones.filter((a) => a.enabled || a.by_superpower);
+
+  function conSeccion(i: number, cambio: Partial<FlujoDelAgente["sections"][number]>) {
+    cambiar({ sections: flujo.sections.map((s, j) => (j === i ? { ...s, ...cambio } : s)) });
+  }
+
+  function mover(i: number, delta: number) {
+    const destino = i + delta;
+    if (destino < 0 || destino >= flujo.sections.length) return;
+    const copia = [...flujo.sections];
+    [copia[i], copia[destino]] = [copia[destino], copia[i]];
+    cambiar({ sections: copia });
+  }
+
+  function quitar(i: number) {
+    cambiar({ sections: flujo.sections.filter((_, j) => j !== i) });
+  }
+
+  function agregarSeccion() {
+    const id = idDeSeccion("Nueva sección", flujo.sections.map((s) => s.id));
+    cambiar({ sections: [...flujo.sections, { id, label: "Nueva sección", purpose: "", tools: [] }] });
+  }
+
+  function agregarAccion(i: number, tool: string) {
+    if (!tool || flujo.sections[i]?.tools.includes(tool)) return;
+    conSeccion(i, { tools: [...flujo.sections[i].tools, tool] });
+  }
+
+  function quitarAccion(i: number, tool: string) {
+    conSeccion(i, { tools: flujo.sections[i].tools.filter((t) => t !== tool) });
+  }
+
+  return (
+    <div className="flex max-w-2xl flex-col gap-4">
+      <p className="text-sm text-body">
+        Estos son los pasos con los que atiende este agente. Cada sección agrupa las acciones de ese momento; solo
+        puedes elegir acciones que el agente tenga encendidas o que le conceda un superpoder.
+      </p>
+      {semilla && (
+        <p className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
+          Partimos del flujo sugerido de su habilidad. Puedes cambiarlo: este agente es independiente de los demás.
+        </p>
+      )}
+      {flujo.sections.length === 0 && <p className="text-sm text-text-soft">Todavía no hay secciones. Agrega la primera.</p>}
+      {flujo.sections.map((seccion, i) => {
+        const libres = disponibles.filter((a) => !seccion.tools.includes(a.tool));
+        return (
+          <section key={seccion.id} className="flex flex-col gap-3 rounded-md border border-border-soft p-4">
+            <div className="flex items-start gap-2">
+              <span className="mt-2 w-6 shrink-0 text-xs text-text-soft tabular-nums">{i + 1}.</span>
+              <Field label="Nombre de la sección" htmlFor={`flujo-label-${i}`} error={errores[`flow.sections[${i}].label`]} className="flex-1">
+                <Input
+                  id={`flujo-label-${i}`}
+                  value={seccion.label}
+                  maxLength={80}
+                  onChange={(e) => conSeccion(i, { label: e.target.value })}
+                />
+              </Field>
+              <div className="mt-7 flex items-center gap-1">
+                <Button type="button" variant="ghost" size="icon" aria-label="Subir sección" disabled={i === 0} onClick={() => mover(i, -1)}>
+                  <ArrowUp className="h-4 w-4" aria-hidden />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Bajar sección"
+                  disabled={i === flujo.sections.length - 1}
+                  onClick={() => mover(i, 1)}
+                >
+                  <ArrowDown className="h-4 w-4" aria-hidden />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" aria-label="Quitar sección" onClick={() => quitar(i)}>
+                  <X className="h-4 w-4" aria-hidden />
+                </Button>
+              </div>
+            </div>
+            <Field label="Para qué es" htmlFor={`flujo-purpose-${i}`} help="Una frase que el agente usa para saber qué hacer en esta etapa.">
+              <Textarea
+                id={`flujo-purpose-${i}`}
+                rows={2}
+                maxLength={500}
+                value={seccion.purpose}
+                onChange={(e) => conSeccion(i, { purpose: e.target.value })}
+              />
+            </Field>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-headline">Acciones de esta sección</span>
+              {seccion.tools.length === 0 ? (
+                <p className="text-xs text-text-soft">Sin acciones: la sección solo guía la conversación.</p>
+              ) : (
+                <ul className="flex flex-wrap gap-2">
+                  {seccion.tools.map((tool) => (
+                    <li key={tool} className="flex items-center gap-1 rounded-full border border-border-soft bg-surface px-3 py-1 text-xs">
+                      <span>{nombreDeAccion(tool)}</span>
+                      <button
+                        type="button"
+                        className="rounded-full p-0.5 hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
+                        aria-label={`Quitar ${nombreDeAccion(tool)}`}
+                        onClick={() => quitarAccion(i, tool)}
+                      >
+                        <X className="h-3 w-3" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex flex-wrap items-end gap-2">
+                <Field label="Agregar acción" htmlFor={`flujo-add-${i}`} className="min-w-56 flex-1">
+                  <Select
+                    id={`flujo-add-${i}`}
+                    value=""
+                    onChange={(e) => {
+                      agregarAccion(i, e.target.value);
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="">Elige una acción…</option>
+                    {libres.map((a) => (
+                      <option key={a.tool} value={a.tool}>
+                        {nombreDeAccion(a.tool)}
+                        {a.by_superpower && !a.enabled ? " (la concede un superpoder)" : ""}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+            </div>
+          </section>
+        );
+      })}
+      <div>
+        <Button type="button" variant="outline" onClick={agregarSeccion}>
+          <Plus className="mr-1 h-4 w-4" aria-hidden />
+          Agregar sección
+        </Button>
+      </div>
     </div>
   );
 }
