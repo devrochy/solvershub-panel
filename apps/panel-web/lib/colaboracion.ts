@@ -181,9 +181,7 @@ export function explicarPrueba(p: RoutePreview, nombresPorKey: Record<string, st
       : "La frase no se parece a ningún recorrido: atiende el agente por defecto.";
   }
   const avisos: string[] = [];
-  if (p.mode === "off") {
-    avisos.push("Hoy el enrutamiento está apagado en tu negocio: todas las conversaciones las atiende el agente por defecto.");
-  } else if (p.mode === "shadow") {
+  if (p.mode === "shadow") {
     avisos.push("El enrutamiento está en modo de observación: decide y lo registra, pero todavía atiende el agente por defecto.");
   }
   if (p.not_evaluated_rules.length) {

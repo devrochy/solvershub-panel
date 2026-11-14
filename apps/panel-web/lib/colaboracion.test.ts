@@ -105,10 +105,10 @@ describe("probar una frase", () => {
     expect(e.avisos).toEqual([]);
   });
 
-  it("avisa si el enrutamiento está apagado o hay reglas que no se evalúan", () => {
-    const e = explicarPrueba({ ...base, mode: "off", source: "default", candidates: [], not_evaluated_rules: ["vip"] }, {});
+  it("avisa si la release está en observación o hay reglas que no se evalúan", () => {
+    const e = explicarPrueba({ ...base, mode: "shadow", source: "default", candidates: [], not_evaluated_rules: ["vip"] }, {});
     expect(e.porque).toMatch(/agente por defecto/);
-    expect(e.avisos.join(" ")).toMatch(/apagado/);
+    expect(e.avisos.join(" ")).toMatch(/observación/);
     expect(e.avisos.join(" ")).toMatch(/vip/);
     expect(explicarPrueba({ ...base, source: "rule", rule_id: "boton_plan" }, {}).porque).toMatch(/boton_plan/);
   });
