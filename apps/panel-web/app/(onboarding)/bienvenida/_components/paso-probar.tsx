@@ -26,7 +26,7 @@ export function PasoProbar({
   return (
     <div className="flex max-w-2xl flex-col gap-4">
       <p className="text-body">
-        Escríbele como si fueras un cliente. Esta prueba no envía nada por WhatsApp ni cuenta en tus conversaciones.
+        Escríbele como si fueras un cliente. Esta prueba no envía nada por WhatsApp, no cuenta en tus conversaciones y no crea pedidos, clientes ni citas.
       </p>
       <ChatPrueba
         conexionId={conexionId}

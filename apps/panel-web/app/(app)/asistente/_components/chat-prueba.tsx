@@ -20,7 +20,7 @@ import { playgroundOpcionesApi } from "@/lib/playground-opciones-cliente";
 import { MensajeConBotones } from "./mensaje-con-botones";
 import { ProbarPlantilla } from "./probar-plantilla";
 
-type Turno = { role?: string; text?: string; content?: string; interactivo?: InteractivoLeido };
+type Turno = { role?: string; text?: string; content?: string; interactivo?: InteractivoLeido; simulado?: boolean };
 
 function texto(t: Turno): string {
   return t.text ?? t.content ?? JSON.stringify(t);
@@ -82,6 +82,19 @@ export function ChatPrueba({
     };
   }, [conexionId]);
 
+  // HU-ARCH-14: al salir de la prueba se cierra y se purga en el backend. `keepalive` cubre
+  // el cierre de pestaña; el backend lo trata como idempotente.
+  useEffect(() => {
+    return () => {
+      void fetch("/api/playground", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "close", ...(conexionId ? { connection_id: conexionId } : {}) }),
+        keepalive: true,
+      }).catch(() => undefined);
+    };
+  }, [conexionId]);
+
   // Baja solo la caja de mensajes: con `scrollIntoView` la página saltaba hasta el chat al abrir la
   // pestaña Probar de la ficha del agente y la cabecera y las pestañas quedaban fuera de la vista.
   useEffect(() => {
@@ -104,6 +117,7 @@ export function ChatPrueba({
       text?: string;
       image_url?: string | null;
       escalated?: boolean;
+      simulado?: boolean;
       error?: string;
     };
     setStatus({ loading: false });
@@ -113,7 +127,7 @@ export function ChatPrueba({
     }
     setTurnos((previos) => [
       ...previos,
-      { role: "assistant", text: json.text ?? "(sin respuesta)" },
+      { role: "assistant", text: json.text ?? "(sin respuesta)", simulado: json.simulado },
       ...(json.escalated ? [{ role: "assistant", text: "⚠️ Escalado a un humano" }] : []),
     ]);
     if (!json.escalated) alRecibirRespuesta?.();
@@ -211,6 +225,11 @@ export function ChatPrueba({
                     }`}
                   >
                     {texto(t)}
+                    {t.simulado && (
+                      <span className="mt-2 block text-sh-caption text-text-soft" role="status">
+                        Acción simulada: no se creó ni modificó data real.
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

@@ -17,7 +17,7 @@ export default async function AsistentePage({ searchParams }: { searchParams: Pr
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Probar asistente"
-        description="Escribe como un cliente y mira cómo responde tu asistente. No se envía nada ni cuenta en tus métricas. Para probar un agente en una conexión, usa «Probar» en su ficha."
+        description="Escribe como un cliente y mira cómo responde tu asistente. Es una prueba: no se envía nada, no cuenta en tus métricas y las acciones se simulan sin crear data. Para probar un agente en una conexión, usa «Probar» en su ficha."
         helpSection="connections"
       />
       <ChatPrueba probarOpciones={puedeProbarOpciones ? { plantillaInicial: inicial } : undefined} />

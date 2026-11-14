@@ -43,7 +43,7 @@ export function ProbarAgente({
         title={`Probar a ${nombre}`}
         description={
           conexion
-            ? "Escribe como lo haría un cliente. Responde lo que está publicado en la conexión; no se envía nada por el canal."
+            ? "Escribe como lo haría un cliente. Responde lo que está publicado en la conexión; no se envía nada por el canal ni se crea data real (las acciones se simulan)."
             : undefined
         }
         className="sm:max-w-xl"

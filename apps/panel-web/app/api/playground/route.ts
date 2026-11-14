@@ -27,8 +27,9 @@ export async function POST(request: Request) {
     | null;
   const id = conexion(body?.connection_id);
   const action = body?.action ?? "";
-  if (action === "reset") {
-    const res = await apiFetch(`/admin/playground/reset${id ? `?connection_id=${id}` : ""}`, { method: "POST" });
+  if (action === "reset" || action === "close") {
+    const ruta = action === "reset" ? "reset" : "close";
+    const res = await apiFetch(`/admin/playground/${ruta}${id ? `?connection_id=${id}` : ""}`, { method: "POST" });
     if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
     return NextResponse.json({ ok: true });
   }
