@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { TarjetaPlanFree } from "@/components/notificaciones/tarjeta-plan-free";
 import { ShellProvider } from "@/components/shell/shell-context";
 
 import { AvisoPlanFree } from "./aviso-plan-free";
+
+const { ruta } = vi.hoisted(() => ({ ruta: { actual: "/dashboard" } }));
+vi.mock("next/navigation", () => ({ usePathname: () => ruta.actual }));
 
 const PLAN_FREE = {
   plan_id: "free",
@@ -17,9 +20,12 @@ const PLAN_FREE = {
   has_plan: true,
 };
 
+beforeEach(() => {
+  ruta.actual = "/dashboard";
+});
+
 afterEach(() => {
   cleanup();
-  document.cookie = "sh_aviso_plan_free=; path=/; max-age=0";
 });
 
 function montar(ui: ReactNode, permisos = { plan: "write" }, plan = PLAN_FREE) {
@@ -31,8 +37,8 @@ function montar(ui: ReactNode, permisos = { plan: "write" }, plan = PLAN_FREE) {
 }
 
 describe("Aviso de plan Free (HU-BILL-15)", () => {
-  it("muestra días restantes, CTA y se cierra por sesión", () => {
-    montar(<AvisoPlanFree />);
+  it("se cierra en la vista actual y vuelve al cambiar de sección", () => {
+    const { rerender } = montar(<AvisoPlanFree />);
 
     const aviso = screen.getByRole("status");
     expect(aviso.textContent).toContain("Estás en el plan Free");
@@ -40,9 +46,31 @@ describe("Aviso de plan Free (HU-BILL-15)", () => {
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
 
     fireEvent.click(screen.getByRole("button", { name: "Cerrar el aviso de plan" }));
-
     expect(screen.queryByRole("status")).toBeNull();
-    expect(document.cookie).toContain("sh_aviso_plan_free=t1");
+
+    ruta.actual = "/agentes";
+    rerender(
+      <ShellProvider permisos={{ plan: "write" }} negocioId="t1" plan={PLAN_FREE}>
+        <AvisoPlanFree />
+      </ShellProvider>,
+    );
+    expect(screen.getByRole("status")).toBeTruthy();
+  });
+
+  it("vuelve tras recargar la página", () => {
+    const { unmount } = montar(<AvisoPlanFree />);
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar el aviso de plan" }));
+    expect(screen.queryByRole("status")).toBeNull();
+
+    unmount();
+    montar(<AvisoPlanFree />);
+    expect(screen.getByRole("status")).toBeTruthy();
+  });
+
+  it("no aparece en Plan y consumo", () => {
+    ruta.actual = "/plan";
+    montar(<AvisoPlanFree />);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("no aparece sin escritura en plan ni en un plan pago", () => {
@@ -66,5 +94,11 @@ describe("Aviso de plan Free (HU-BILL-15)", () => {
     montar(<TarjetaPlanFree onCerrar={() => {}} />);
     expect(screen.getByText("Estás en el plan Free")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
+  });
+
+  it("la tarjeta tampoco aparece en Plan y consumo", () => {
+    ruta.actual = "/plan";
+    montar(<TarjetaPlanFree onCerrar={() => {}} />);
+    expect(screen.queryByText("Estás en el plan Free")).toBeNull();
   });
 });

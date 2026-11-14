@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CATEGORIAS,
   agruparPorDia,
   categoriaDe,
+  categoriasDisponibles,
   etiquetaDeDia,
   minutosHastaManana,
   rutaDeNotificacion,
@@ -22,6 +24,39 @@ describe("clasificación", () => {
     expect(categoriaDe("inventada")).toBe("sistema");
     expect(severidadDe("critical")).toBe("critical");
     expect(severidadDe("inventada")).toBe("info");
+  });
+});
+
+describe("categorías según los agentes creados", () => {
+  const SIN_AGENTES = {
+    pack_commerce: "plan",
+    pack_calendar: "plan",
+    pack_cobranza: "plan",
+    pack_subscriptions: "plan",
+  } as const;
+
+  it("sin datos de módulos muestra todas (tests, catálogo o consulta fallida)", () => {
+    expect(categoriasDisponibles()).toEqual(CATEGORIAS);
+  });
+
+  it("sin especialista publicado solo quedan Conversaciones y Sistema", () => {
+    expect(categoriasDisponibles(SIN_AGENTES)).toEqual(["conversaciones", "sistema"]);
+  });
+
+  it("cada pack habilitado habilita su categoría", () => {
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_commerce: "habilitado" })).toContain("ventas");
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_cobranza: "habilitado" })).toContain("cobros");
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_subscriptions: "habilitado" })).toContain("cobros");
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_calendar: "habilitado" })).toContain("agenda");
+  });
+
+  it("un pack apagado o sin agente no habilita su categoría", () => {
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_commerce: "pack" })).not.toContain("ventas");
+    expect(categoriasDisponibles({ ...SIN_AGENTES, pack_calendar: "plan" })).not.toContain("agenda");
+  });
+
+  it("Pagos en línea mantiene Cobros aunque no haya agente de cobranza o suscripciones", () => {
+    expect(categoriasDisponibles(SIN_AGENTES, { pack_payments: { enabled: true } })).toContain("cobros");
   });
 });
 
