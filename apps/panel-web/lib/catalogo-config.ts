@@ -82,7 +82,11 @@ export function dependencia(
 /** Secciones de la pantalla de Identidad, en el orden en que se muestran. */
 export const GRUPOS_IDENTIDAD: { id: OpcionConfig["grupo"]; titulo: string; descripcion: string }[] = [
   { id: "identidad", titulo: "El negocio", descripcion: "Cómo se presenta el asistente y dónde está tu negocio." },
-  { id: "voz", titulo: "Cómo habla", descripcion: "La personalidad con la que responde a tus clientes." },
+  {
+    id: "voz",
+    titulo: "Cómo habla",
+    descripcion: "La personalidad base con la que responde a tus clientes; se aplica al publicar una versión nueva.",
+  },
   { id: "respuesta", titulo: "Cómo responde", descripcion: "El ritmo y la forma de enviar sus respuestas." },
   { id: "calidad", titulo: "Calidad de las respuestas", descripcion: "Cuándo el asistente piensa más y qué validaciones aplica." },
   { id: "escalamiento", titulo: "Pasar con una persona", descripcion: "Cuándo el asistente cede la conversación." },

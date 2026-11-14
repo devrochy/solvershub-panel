@@ -1,4 +1,5 @@
-import type { WawebPolitica } from "@/lib/api/types";
+import type { WawebPolitica, WawebState } from "@/lib/api/types";
+import { formatearIdentificador } from "@/lib/conversaciones/nombre";
 
 /**
  * Política anti-baneo de WhatsApp Web (SPEC-37, HU-CFG-05): solo la ve y la edita el master. Las
@@ -54,4 +55,35 @@ export function erroresPorClave(fields: Record<string, string> | undefined): Rec
   if (fields?.acepta_riesgo) salida.acepta_riesgo = fields.acepta_riesgo;
   if (fields?.risk_version) salida.acepta_riesgo = fields.risk_version;
   return salida;
+}
+
+/** Nombre visible del vínculo: perfil y, si no hay, nombre del negocio. */
+export function nombreVinculado(state: Pick<WawebState, "push_name" | "business_name">): string | null {
+  return state.push_name?.trim() || state.business_name?.trim() || null;
+}
+
+/** Número del vínculo: `phone` o el JID heredado, formateado para mostrar. */
+export function telefonoVinculado(state: Pick<WawebState, "phone" | "jid">): string | null {
+  const crudo = state.phone?.trim() || state.jid || "";
+  const digitos = crudo.replace(/\D/g, "");
+  if (!digitos) return null;
+  const formateado = formatearIdentificador(digitos);
+  return formateado === digitos ? `+${digitos}` : formateado;
+}
+
+const PLATAFORMAS: Record<string, string> = {
+  android: "Android",
+  iphone: "iPhone",
+  ipad: "iPad",
+  web: "WhatsApp Web",
+  windows: "Windows",
+  macos: "macOS",
+  kaios: "KaiOS",
+};
+
+/** Tipo de dispositivo en lenguaje de negocio; el valor crudo si no se conoce. */
+export function etiquetaPlataforma(platform: string | null | undefined): string | null {
+  const valor = platform?.trim();
+  if (!valor) return null;
+  return PLATAFORMAS[valor.toLowerCase()] ?? valor;
 }
