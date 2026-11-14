@@ -8429,6 +8429,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/mapear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mapear Importacion
+         * @description Propone a qué columna de la plantilla va cada cabecera (sinónimos del pack y, para las que no
+         *     reconoce, una llamada a la IA medida en el ledger) y devuelve las filas normalizadas con su vista
+         *     previa. No escribe datos: el cliente edita la precarga y la confirma con `…/importar-datos/filas`.
+         */
+        post: operations["mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/filas/validar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validar Precarga
+         * @description Vista previa de la precarga editada. No escribe.
+         */
+        post: operations["validar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_validar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/filas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Importar Precarga
+         * @description Importa la precarga editada: se vuelve a validar contra el esquema del pack. Con errores en
+         *     alguna fila responde 422 `archivo_con_errores` salvo `solo_validas`. Idempotente por clave natural.
+         */
+        post: operations["importar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/fotos/cotizacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cotizar Fotos
+         * @description Cuánto cuesta reconocer `fotos` fotos y si el crédito del mes alcanza. No escribe nada.
+         */
+        get: operations["cotizar_fotos_api_v1_admin_agents__agent_id__importar_datos_fotos_cotizacion_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/importar-datos/fotos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Importar Foto
+         * @description Una foto → una fila propuesta para la precarga. Cotiza y verifica el crédito antes de llamar a
+         *     la visión (409 `plan_limit_creditos` si no alcanza, sin cobrar); la misma foto otra vez se
+         *     responde sin cobrar. La fila se confirma con el resto en `…/importar-datos/filas`.
+         */
+        post: operations["importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/avatar": {
         parameters: {
             query?: never;
@@ -9372,6 +9477,24 @@ export interface components {
              * @description Placeholders del cuerpo, en orden.
              */
             variables: string[];
+        };
+        /** AsignacionOut */
+        AsignacionOut: {
+            /**
+             * Cabecera
+             * @description Cabecera tal como viene en el archivo.
+             */
+            cabecera: string;
+            /**
+             * Columna
+             * @description Columna de la plantilla; `null` = se ignora.
+             */
+            columna: string | null;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "heuristica" | "ia" | "ninguno";
         };
         /** AsistenciaIn */
         AsistenciaIn: {
@@ -10622,6 +10745,40 @@ export interface components {
              */
             by_agent: components["schemas"]["AgentCost"][];
         };
+        /** CotizacionFotos */
+        CotizacionFotos: {
+            /** Fotos */
+            fotos: number;
+            /**
+             * Creditos
+             * @description Créditos que cuestan todas las fotos (redondeado hacia arriba).
+             */
+            creditos: number;
+            /** Por Foto */
+            por_foto: number;
+            /**
+             * Llave Propia
+             * @description El negocio usa su propia llave de visión: solo se cobra el fee.
+             */
+            llave_propia: boolean;
+            /**
+             * Usado
+             * @description Créditos usados en el mes.
+             */
+            usado: number;
+            /**
+             * Limite
+             * @description Créditos del plan al mes; `null` = sin límite.
+             */
+            limite: number | null;
+            /** Disponible */
+            disponible: number | null;
+            /**
+             * Alcanza
+             * @description Si el crédito del mes alcanza para todas las fotos.
+             */
+            alcanza: boolean;
+        };
         /**
          * CrearSuscripcionBody
          * @description Inscribe a un `Customer` en un plan del catálogo (SPEC-43). El plan libre (nombre, precio,
@@ -11254,6 +11411,19 @@ export interface components {
             turns: {
                 [key: string]: unknown;
             }[];
+        };
+        /** IAMapeoOut */
+        IAMapeoOut: {
+            /**
+             * Usada
+             * @description La IA asignó al menos una columna.
+             */
+            usada: boolean;
+            /**
+             * Motivo Fallo
+             * @description Si se llamó a la IA y no ayudó; esas cabeceras quedan sin asignar.
+             */
+            motivo_fallo?: ("proveedor" | "formato") | null;
         };
         /** IdentitySettings */
         IdentitySettings: {
@@ -12021,6 +12191,21 @@ export interface components {
             values: {
                 [key: string]: unknown;
             };
+        };
+        /** MapeoPropuesto */
+        MapeoPropuesto: {
+            plantilla: components["schemas"]["PlantillaImportacionOut"];
+            /** Mapeo */
+            mapeo: components["schemas"]["AsignacionOut"][];
+            /**
+             * Columnas Faltantes
+             * @description Obligatorias sin cabecera: el cliente debe completarlas.
+             */
+            columnas_faltantes: string[];
+            ia: components["schemas"]["IAMapeoOut"];
+            /** Filas */
+            filas: components["schemas"]["FilaPrecarga"][];
+            vista_previa: components["schemas"]["VistaPreviaImportacion"];
         };
         /**
          * MePlanSummary
@@ -13637,6 +13822,16 @@ export interface components {
             lat: number;
             /** Lng */
             lng: number;
+        };
+        /** PrecargaIn */
+        PrecargaIn: {
+            /** Filas */
+            filas: components["schemas"]["FilaPrecarga"][];
+            /**
+             * Solo Validas
+             * @default false
+             */
+            solo_validas: boolean;
         };
         /** PreflightOut */
         PreflightOut: {
@@ -19230,6 +19425,45 @@ export interface components {
              */
             false_positive: boolean;
         };
+        /** FilaDeFoto */
+        FilaDeFoto: {
+            /** Image Key */
+            image_key: string;
+            /** Image Url */
+            image_url: string;
+            /**
+             * Valores
+             * @description Fila propuesta para la precarga (columna → texto).
+             */
+            valores: {
+                [key: string]: string;
+            };
+            /**
+             * Creditos
+             * @description Créditos cobrados por esta foto (0 si ya se había procesado).
+             */
+            creditos: number | null;
+            /**
+             * Repetida
+             * @description La misma foto ya se había procesado: se respondió sin cobrar otra vez.
+             */
+            repetida: boolean;
+        };
+        /** FilaPrecarga */
+        FilaPrecarga: {
+            /**
+             * Fila
+             * @description Número de fila en el archivo original (la cabecera es la 1).
+             */
+            fila: number;
+            /**
+             * Valores
+             * @description Columna de la plantilla → texto, como en el CSV. Lo demás se ignora.
+             */
+            valores: {
+                [key: string]: string | null;
+            };
+        };
         /** PlantillaDeEnvio */
         PlantillaDeEnvio: {
             /**
@@ -22005,6 +22239,16 @@ export interface components {
              */
             solo_validas: boolean;
         };
+        /** Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post */
+        Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post: {
+            /** Archivo */
+            archivo: string;
+        };
+        /** Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post */
+        Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post: {
+            /** Archivo */
+            archivo: string;
+        };
         /** Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post */
         Body_validar_importacion_api_v1_admin_agents__agent_id__importar_datos_validar_post: {
             /** Archivo */
@@ -22101,6 +22345,16 @@ export interface components {
             tope_filas: number;
             /** Tope Bytes */
             tope_bytes: number;
+            /**
+             * En Produccion
+             * @description La plantilla también se importa fuera de test (ADR-0194).
+             */
+            en_produccion: boolean;
+            /**
+             * Importa Fotos
+             * @description Se puede cargar desde fotos, una foto por fila (ADR-0194).
+             */
+            importa_fotos: boolean;
         };
         /** VistaPreviaImportacion */
         VistaPreviaImportacion: {
@@ -40901,6 +41155,201 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VistaPreviaImportacion"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapeoPropuesto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_validar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrecargaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaImportacion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    importar_precarga_api_v1_admin_agents__agent_id__importar_datos_filas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrecargaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportacionHecha"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cotizar_fotos_api_v1_admin_agents__agent_id__importar_datos_fotos_cotizacion_get: {
+        parameters: {
+            query?: {
+                fotos?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CotizacionFotos"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_importar_foto_api_v1_admin_agents__agent_id__importar_datos_fotos_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilaDeFoto"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
