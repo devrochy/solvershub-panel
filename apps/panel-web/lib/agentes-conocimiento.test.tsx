@@ -10,8 +10,8 @@ import { violacionesGraves } from "@/lib/testing/axe";
 import { agentes, me } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-// Pestaña «Conocimiento» de la ficha del agente (HU-AOS-49): solo especialistas, aviso si el agente
-// todavía no usa sus documentos, subida con el tope del plan y borrado con confirmación.
+// Documentos del agente (HU-AOS-49) dentro de la habilidad «Conocimiento» de «Lo que sabe»: solo especialistas,
+// solo con la habilidad agregada, subida con el tope del plan y borrado con confirmación.
 
 const respuestas: Record<string, unknown> = {};
 const llamadas: string[] = [];
@@ -113,8 +113,6 @@ function pestana(props: Partial<Parameters<typeof ConocimientoDelAgente>[0]> = {
         nombre="Ventas"
         documentos={[]}
         puedeEscribir
-        usaConocimiento
-        puedeEditar
         {...props}
       />
     </FeedbackProviders>,
@@ -122,25 +120,55 @@ function pestana(props: Partial<Parameters<typeof ConocimientoDelAgente>[0]> = {
 }
 
 describe("ficha del agente", () => {
-  it("un especialista tiene «Lo que sabe», con sus documentos y sin filtros de período (también desde ?tab=conocimiento)", async () => {
+  it("un especialista tiene «Lo que sabe», con sus documentos dentro de Conocimiento (también desde ?tab=conocimiento)", async () => {
     Object.assign(respuestas, {
       "/admin/agents/overview": agentes,
       "/admin/me": me,
       [`/pack/pack_knowledge/agents/${AGENTE}/documents`]: [documento()],
-      [`/admin/agents/${AGENTE}`]: { description: "", latest_version: 1, versions: [], draft: { content: { tools: [] } } },
+      [`/admin/agents/${AGENTE}/skills`]: {
+        items: [{ pack_id: "pack_knowledge", installed: true, status: "active", config: {} }],
+        total: 1,
+        page: 1,
+        has_more: false,
+      },
+      [`/admin/agents/${AGENTE}`]: {
+        description: "",
+        latest_version: 1,
+        versions: [],
+        draft: { content: { tools: [] }, lock_version: 3 },
+      },
     });
     const { container } = await abrir(VENTAS.ref, { tab: "conocimiento" });
     expect(screen.getByRole("link", { name: "Lo que sabe" }).getAttribute("aria-current")).toBe("page");
+    // La habilidad está agregada y le falta un paso: la tarjeta arranca abierta con sus documentos.
+    expect(screen.getByRole("button", { name: /Conocimiento/, expanded: true })).toBeTruthy();
     expect(screen.getByText("Preguntas frecuentes")).toBeTruthy();
     expect(screen.getByText("2 KB · 3 páginas · 5 fragmentos")).toBeTruthy();
-    // El borrador no declara la búsqueda: lo dice y lleva al editor.
-    expect(screen.getByText(/todavía no responde con estos documentos/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Editar agente → Memoria y conocimiento/ }).getAttribute("href")).toBe(
-      `/agentes/${AGENTE}/editar`,
-    );
+    // El borrador no declara la búsqueda: el paso queda pendiente con su botón.
+    expect(screen.getByText(/Responder con los documentos/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Activar" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Documentos" })).toBeNull();
     expect(screen.queryByLabelText(/Período/i)).toBeNull();
     expect(llamadas).toContain(`/pack/pack_knowledge/agents/${AGENTE}/documents`);
     expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("con Conocimiento sin agregar no se ven los documentos", async () => {
+    Object.assign(respuestas, {
+      "/admin/agents/overview": agentes,
+      "/admin/me": me,
+      [`/pack/pack_knowledge/agents/${AGENTE}/documents`]: [documento()],
+      [`/admin/agents/${AGENTE}/skills`]: {
+        items: [{ pack_id: "pack_knowledge", installed: false, status: null, config: {} }],
+        total: 1,
+        page: 1,
+        has_more: false,
+      },
+      [`/admin/agents/${AGENTE}`]: { description: "", latest_version: 1, versions: [], draft: { content: { tools: [] }, lock_version: 1 } },
+    });
+    await abrir(VENTAS.ref, { tab: "sabe" });
+    expect(screen.getByText("Sin agregar")).toBeTruthy();
+    expect(screen.queryByText("Preguntas frecuentes")).toBeNull();
   });
 
   it("el Coordinador no tiene «Lo que sabe»", async () => {

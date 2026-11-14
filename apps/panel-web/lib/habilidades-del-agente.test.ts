@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import type { AgentSkill, PaymentAccount } from "@/lib/api/types";
-import { PAGOS, cuentaElegida, estadoDeHabilidad, etiquetaDeCuenta, textoDeHabilidad } from "@/lib/habilidades-del-agente";
+import {
+  CONOCIMIENTO,
+  PAGOS,
+  abiertaAlCargar,
+  cuentaElegida,
+  estadoDeHabilidad,
+  etiquetaDeCuenta,
+  pasosDeHabilidad,
+  resumenDeHabilidad,
+  textoDeHabilidad,
+} from "@/lib/habilidades-del-agente";
 
 const cuenta = (id: string, sandbox = true): PaymentAccount => ({
   id,
@@ -32,5 +42,40 @@ describe("habilidades del agente", () => {
     expect(cuentaElegida(h, [cuenta("a"), cuenta("b")])?.id).toBe("b");
     expect(cuentaElegida(h, [cuenta("a")])).toBeUndefined();
     expect(etiquetaDeCuenta(cuenta("a", false))).toBe("Cuenta a · producción");
+  });
+
+  const ctx = { cuentas: [cuenta("a", false)], usaEnBorrador: false, usaPublicado: false, documentos: 0 };
+
+  it("pagos: falta elegir la cuenta hasta que haya una que siga existiendo", () => {
+    const sin: AgentSkill = { pack_id: PAGOS, installed: true, status: "pending_config", config: {} };
+    const pasos = pasosDeHabilidad(sin, ctx);
+    expect(pasos.map((p) => [p.id, p.hecho])).toEqual([["activa", true], ["cuenta", false]]);
+    expect(abiertaAlCargar(sin, pasos)).toBe(true);
+    expect(resumenDeHabilidad(sin, pasos)).toBe("Falta 1 paso");
+
+    const con: AgentSkill = { ...sin, status: "active", config: { cuenta_id: "a" } };
+    const listos = pasosDeHabilidad(con, ctx);
+    expect(abiertaAlCargar(con, listos)).toBe(false);
+    expect(resumenDeHabilidad(con, listos)).toBe("Cobra con Cuenta a · producción");
+  });
+
+  it("conocimiento: búsqueda en el borrador, publicada y documentos", () => {
+    const h: AgentSkill = { pack_id: CONOCIMIENTO, installed: true, status: "active", config: {} };
+    expect(resumenDeHabilidad(h, pasosDeHabilidad(h, ctx))).toBe("Faltan 2 pasos");
+
+    const enBorrador = pasosDeHabilidad(h, { ...ctx, usaEnBorrador: true, documentos: 1 });
+    expect(enBorrador.find((p) => p.id === "responde")).toMatchObject({ hecho: true, sinPublicar: true });
+    expect(abiertaAlCargar(h, enBorrador)).toBe(true);
+
+    const listo = pasosDeHabilidad(h, { ...ctx, usaEnBorrador: true, usaPublicado: true, documentos: 3 });
+    expect(abiertaAlCargar(h, listo)).toBe(false);
+    expect(resumenDeHabilidad(h, listo)).toBe("Responde con los documentos · 3 documentos cargados");
+  });
+
+  it("sin agregar: cerrada y sin resumen", () => {
+    const h: AgentSkill = { pack_id: CONOCIMIENTO, installed: false, status: null, config: {} };
+    const pasos = pasosDeHabilidad(h, ctx);
+    expect(abiertaAlCargar(h, pasos)).toBe(false);
+    expect(resumenDeHabilidad(h, pasos)).toBe("");
   });
 });
