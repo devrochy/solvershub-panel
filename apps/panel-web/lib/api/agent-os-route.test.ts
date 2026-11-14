@@ -47,8 +47,8 @@ describe("BFF del Agent OS", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toMatch(/\/agent-os\/simular$/);
     expect(init.method).toBe("POST");
-    // `runtime: "v3"` fijo mientras la API lo pida (HU-AOS-69); `construir` ya no se reenvía.
-    expect(JSON.parse(String(init.body))).toEqual({ runtime: "v3", procedures: false, routing: "off" });
+    // Ni `runtime` ni `construir`: la API ya no los recibe (HU-AOS-69).
+    expect(JSON.parse(String(init.body))).toEqual({ procedures: false, routing: "off" });
   });
 
   it("un estado inválido no llega a la API", async () => {
