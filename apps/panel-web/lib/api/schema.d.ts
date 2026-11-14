@@ -6975,6 +6975,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/datos-de-prueba/registros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Registros De Prueba
+         * @description Lo que el agente tiene cargado para probarlo (último lote generado e importado), en palabras.
+         *     Lo de un módulo cuya sección el usuario no puede ver no sale.
+         */
+        get: operations["registros_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_registros_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/export.csv": {
         parameters: {
             query?: never;
@@ -22776,6 +22797,43 @@ export interface components {
             /** Allowed */
             allowed: boolean;
         };
+        /** RegistroDePrueba */
+        RegistroDePrueba: {
+            /**
+             * Tipo
+             * @description `kind` del registro en su pack (`producto`, `tipo`, `cliente`…).
+             */
+            tipo: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Detalle
+             * @description Corto: precio y categoría, duración, cartera y deuda.
+             */
+            detalle?: string | null;
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "llm" | "plantilla" | "importacion";
+        };
+        /** RegistrosDePrueba */
+        RegistrosDePrueba: {
+            /** @description El último lote generado; `null` si no hay (puede haber importado). */
+            lote: components["schemas"]["LoteDePrueba"] | null;
+            /**
+             * Registros
+             * @description Lo generado y lo importado, por lote en el orden en que se cargó y dentro del lote por tipo y nombre. Hasta 200; el total está en `total`.
+             */
+            registros: components["schemas"]["RegistroDePrueba"][];
+            /** Total */
+            total: number;
+            /**
+             * Sin Detalle
+             * @description Registros de una habilidad que no se describe: existen pero no salen en la lista.
+             */
+            sin_detalle: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -37757,6 +37815,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatosRetirados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registros_de_prueba_api_v1_admin_agents__agent_id__datos_de_prueba_registros_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrosDePrueba"];
                 };
             };
             /** @description Validation Error */
