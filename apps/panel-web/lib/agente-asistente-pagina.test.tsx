@@ -115,15 +115,4 @@ describe("página Nuevo agente", () => {
     expect(screen.getByText(/permite 1 agente publicado y ya tienes 1/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
   });
-
-  it("un negocio legacy que no es de master ve el aviso del General", async () => {
-    Object.assign(respuestas, {
-      "/admin/agent-templates": PLANTILLAS,
-      "/admin/me": me,
-      "/admin/agents/overview": { ...agentes, runtime: "legacy" },
-    });
-    await abrir();
-    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga?" })).toBeNull();
-    expect(screen.getByText(/solo agente, el General/)).toBeTruthy();
-  });
 });

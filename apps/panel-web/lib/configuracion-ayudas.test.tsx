@@ -30,8 +30,7 @@ const opcion = (clave: string, grupo: Opcion["grupo"], tipo: Opcion["tipo"], exp
   ...extra,
 });
 
-const catalogo = (runtime: "legacy" | "v3", opciones: Opcion[] = []): CatalogoConfig => ({
-  aos_runtime: runtime,
+const catalogo = (opciones: Opcion[] = []): CatalogoConfig => ({
   version: "test",
   opciones: [opcion("assistant_name", "identidad", "texto", "Nombre del asistente."), ...opciones],
   asistente: [],
@@ -84,7 +83,7 @@ afterEach(cleanup);
 describe("ayudas del catálogo (HU-CFG-09)", () => {
   it("Cerebro y Memoria muestran la ayuda del catálogo, con su rango", async () => {
     montar(
-      catalogo("legacy", [
+      catalogo([
         opcion("model_temperature", "cerebro", "decimal", "Ayuda del catálogo para la temperatura.", { minimo: 0, maximo: 2 }),
         opcion("rag_top_k", "memoria", "entero", "Ayuda del catálogo para los fragmentos.", { minimo: 0, maximo: 20 }),
       ]),
@@ -97,7 +96,7 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
   });
 
   it("sin la opción en el catálogo (un backend anterior) queda el texto de respaldo", async () => {
-    montar(catalogo("legacy"));
+    montar(catalogo());
     await irA("Cerebro y modelos", "Cerebro y modelos");
     expect(screen.getByText(/cerca de 0 el asistente es más predecible/)).toBeTruthy();
     await irA("Memoria", "Memoria");
@@ -113,18 +112,12 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
   });
 });
 
-describe("aviso del runtime v3 en Identidad", () => {
+describe("aviso de la voz del agente en Identidad", () => {
   const AVISO = /Tu negocio usa el Agent OS/;
 
-  it("con v3 avisa que nombre, descripción y voz se aplican al publicar una versión", async () => {
-    montar(catalogo("v3"));
+  it("avisa que nombre, descripción y voz se aplican al publicar una versión", async () => {
+    montar(catalogo());
     await irA("Identidad", "Identidad");
     expect(screen.getAllByText(AVISO).length).toBeGreaterThan(0);
-  });
-
-  it("con legacy no hay aviso", async () => {
-    montar(catalogo("legacy"));
-    await irA("Identidad", "Identidad");
-    expect(screen.queryByText(AVISO)).toBeNull();
   });
 });

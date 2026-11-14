@@ -37,7 +37,6 @@ const opcion = (clave: string, grupo: Opcion["grupo"], tipo: Opcion["tipo"], eti
 });
 
 const catalogo: CatalogoConfig = {
-  aos_runtime: "legacy",
   version: "test",
   opciones: [
     opcion("assistant_name", "identidad", "texto", "Nombre del asistente"),

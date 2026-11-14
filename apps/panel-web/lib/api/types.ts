@@ -61,9 +61,6 @@ export type PlatformTenant = components["schemas"]["PlatformTenant"];
 export type PlatformTenantPage = components["schemas"]["Page_PlatformTenant_"];
 export type TenantCreated = components["schemas"]["TenantCreated"];
 export type TenantOwnerInvitation = components["schemas"]["TenantOwnerInvitation"];
-export type AgentOSEstado = components["schemas"]["AgentOSEstado"];
-export type AgentOSObjetivo = components["schemas"]["AgentOSObjetivo"];
-export type AgentOSResultado = components["schemas"]["AgentOSResultado"];
 // Referencias retiradas en agentes y releases (HU-AOS-59): solo lectura.
 export type RetiredReferencesReport = components["schemas"]["RetiredReferencesReport"];
 export type RetiredReferenceRow = components["schemas"]["RetiredReferenceRow"];

@@ -49,9 +49,9 @@ function responder(url: string, init?: RequestInit): Response {
   return new Response(null, { status: 404 });
 }
 
-function montar() {
+function montar(modulos?: Record<string, "habilitado" | "plan" | "pack">) {
   return render(
-    <ShellProvider permisos={{ conversations: "write", escalations: "write" }}>
+    <ShellProvider permisos={{ conversations: "write", escalations: "write" }} modulos={modulos}>
       <FeedbackProviders>
         <header>
           <CampanaNotificaciones />
@@ -128,6 +128,26 @@ describe("campana de notificaciones", () => {
     await waitFor(() => expect(llamadas.some((l) => l.url.includes("category=ventas"))).toBe(true));
     fireEvent.click(within(dialogo).getByRole("tab", { name: /No leídas/ }));
     await waitFor(() => expect(llamadas.some((l) => l.url.includes("unread=true"))).toBe(true));
+  });
+
+  it("sin agente de módulo oculta sus filtros y deja Conversaciones y Sistema", async () => {
+    montar({ pack_commerce: "plan", pack_calendar: "plan", pack_cobranza: "plan", pack_subscriptions: "plan" });
+    fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));
+    const dialogo = await screen.findByRole("dialog", { name: "Notificaciones" });
+    expect(within(dialogo).getByRole("button", { name: "Conversaciones" })).toBeTruthy();
+    expect(within(dialogo).getByRole("button", { name: "Sistema" })).toBeTruthy();
+    expect(within(dialogo).queryByRole("button", { name: "Ventas" })).toBeNull();
+    expect(within(dialogo).queryByRole("button", { name: "Cobros" })).toBeNull();
+    expect(within(dialogo).queryByRole("button", { name: "Agenda" })).toBeNull();
+  });
+
+  it("con los módulos habilitados muestra todos los filtros", async () => {
+    montar({ pack_commerce: "habilitado", pack_calendar: "habilitado", pack_cobranza: "habilitado", pack_subscriptions: "plan" });
+    fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));
+    const dialogo = await screen.findByRole("dialog", { name: "Notificaciones" });
+    for (const label of ["Conversaciones", "Ventas", "Cobros", "Agenda", "Sistema"]) {
+      expect(within(dialogo).getByRole("button", { name: label })).toBeTruthy();
+    }
   });
 
   it("preferencias: apaga el push de una categoría y silencia", async () => {

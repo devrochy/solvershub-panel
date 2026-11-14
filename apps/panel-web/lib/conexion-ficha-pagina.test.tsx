@@ -94,7 +94,7 @@ const ITEMS: ConexionConsola[] = [
   }),
 ];
 
-const CONSOLA: ConnectionsConsole = { ...consolaConexiones, items: ITEMS, total: ITEMS.length, runtime: "v3" };
+const CONSOLA: ConnectionsConsole = { ...consolaConexiones, items: ITEMS, total: ITEMS.length };
 
 function preparar(extra: Record<string, unknown> = {}) {
   Object.assign(respuestas, { "/admin/connections/console": CONSOLA, "/admin/me": me }, extra);
@@ -219,13 +219,6 @@ describe("pestaña Agentes", () => {
     expect(screen.getByRole("button", { name: "Asignar agente" }).hasAttribute("disabled")).toBe(false);
     expect(screen.getByText(/aplican con la próxima versión/)).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
-  });
-
-  it("sin el Agent OS: aviso y sin acciones", async () => {
-    await abrir({ "/admin/connections/console": { ...CONSOLA, runtime: "legacy" } });
-    expect(screen.getByText(/el equipo de SolversHub cambia los agentes/)).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Asignar agente" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Quitar" })).toBeNull();
   });
 
   it("sin Coordinador: aviso y no deja asignar", async () => {

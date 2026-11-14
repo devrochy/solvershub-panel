@@ -35,8 +35,7 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
       </SeccionFicha>
     );
   }
-  const runtime = ficha.consola.runtime;
-  const puedeEditar = meRes.ok && puedeEditarAgentesDeConexion(meRes.data, runtime);
+  const puedeEditar = meRes.ok && puedeEditarAgentesDeConexion(meRes.data);
   // La versión que corre sale de la consola (release activa); la instancia trae solo la última publicada.
   const deConsola = new Map([...(c.coordinator ? [c.coordinator] : []), ...c.agents].map((a) => [a.instance_id, a]));
   const filas: FilaAgente[] = instanciasRes.data.map((i) => ({
@@ -57,11 +56,6 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
 
   return (
     <SeccionFicha titulo="Agentes" descripcion="Quién atiende a tus clientes por esta conexión.">
-      {runtime !== "v3" && (
-        <p role="note" className="rounded-md border border-status-info-border bg-status-info-bg px-4 py-3 text-sm text-body">
-          Por ahora el equipo de SolversHub cambia los agentes de tu negocio. Aquí ves quién atiende.
-        </p>
-      )}
       {!tieneCoordinador && (
         <p role="note" className="rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3 text-sm text-headline">
           Esta conexión todavía no tiene Coordinador: sin él no se pueden sumar especialistas. Se crea solo con la próxima

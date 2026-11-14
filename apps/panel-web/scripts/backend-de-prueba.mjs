@@ -51,6 +51,26 @@ const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts"
 
 const puerto = Number(process.env.PUERTO ?? 8765);
 const respuestas = { ...RESPUESTAS, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
+
+// Centro de notificaciones (ADR-0167): un feed corto para mirar los filtros por categoría.
+{
+  const ahora = new Date().toISOString();
+  respuestas["/me/notifications"] = {
+    items: [
+      { id: "noti-ventas", event_key: "commerce.order.created", category: "ventas", severity: "success", title: "Pedido nuevo", body: "Ana pidió 2 cafés para recoger.", target: { entity: "pedido", id: null, section: "pack_commerce" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-conversacion", event_key: "core.escalation", category: "conversaciones", severity: "warning", title: "Un cliente pide una persona", body: "Luis quiere hablar con alguien del equipo.", target: { entity: "conversacion", id: "test-conv-1", section: "escalations" }, data: {}, created_at: ahora, read: false },
+      { id: "noti-sistema", event_key: "core.connection.down", category: "sistema", severity: "info", title: "Conexión revisada", body: "El chat web está al día.", target: { entity: "conexion", id: "00000000-0000-4000-8000-0000000000c1", section: "connections" }, data: {}, created_at: ahora, read: true },
+    ],
+    next_cursor: null,
+    unread_count: 2,
+  };
+  respuestas["/me/notifications/unread-count"] = { unread_count: 2 };
+  respuestas["/me/notifications/preferences"] = {
+    categories: ["conversaciones", "ventas", "cobros", "agenda", "sistema"],
+    push_off_categories: [],
+    muted_until: null,
+  };
+}
 // COBRANZA=1: un negocio con Cobranza en marcha (carteras, ruta, cliente con préstamo, promesas, auditoría).
 if (process.env.COBRANZA === "1") {
   const dia = (n) => new Date(Date.now() - 5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
@@ -120,7 +140,7 @@ if (process.env.BOT_PAUSADO === "1") {
     fila("00000000-0000-4000-8000-0000000000c4", { label: "Agenda de Google", type_id: "google_calendar", channel: "", conversational: false, pausable: false, external_id: "agenda@test.example", coordinator: null, active_release: null, usage_7d: sinUso }),
     fila("00000000-0000-4000-8000-0000000000c7", { label: "Correo del negocio", type_id: "email_smtp", channel: "email", conversational: false, pausable: false, external_id: "hola@cafeaurora.co", coordinator: null, active_release: null, usage_7d: sinUso }),
   ];
-  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, runtime: "v3", routing: "active", consistency: { pass_k: 0.92, k: 4 } };
+  respuestas["/admin/connections/console"] = { ...respuestas["/admin/connections/console"], items, total: items.length, consistency: { pass_k: 0.92, k: 4 } };
   const instancia = (a) => ({ id: a.instance_id, agent_id: a.agent_id, key: a.key, name: a.name, role: a.role, is_default: a.is_default, priority: a.priority, enabled: a.enabled, latest_version: a.latest_version });
   for (const c of items.filter((x) => x.conversational)) {
     respuestas[`/admin/connections/${c.id}/agents`] = [...(c.coordinator ? [c.coordinator] : []), ...c.agents].map(instancia);
@@ -988,7 +1008,7 @@ const ALIADOS = { habilitado: false };
 // Avisos por canal (ADR-0178 D2): su bandera por negocio también vive en memoria (apagada al inicio).
 const avisosPorCanal = new Map();
 function plataforma(metodo, ruta, cuerpo) {
-  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|agent-os|aliados|retired-references)$/.exec(ruta);
+  const m = /^\/(?:admin|pack\/commerce)\/platform\/tenants\/([^/]+)\/(opciones-directas|avisos-por-canal|aliados|retired-references)$/.exec(ruta);
   if (!m) return undefined;
   if (m[2] === "retired-references") return retiradas ? [200, reporteRetiradas(m[1])] : [404, { error: { message: "Sin fixture" } }];
   if (m[2] === "avisos-por-canal") {
@@ -996,7 +1016,7 @@ function plataforma(metodo, ruta, cuerpo) {
     if (metodo === "PUT") avisosPorCanal.set(m[1], cuerpo.habilitada === true);
     return [200, { habilitada: avisosPorCanal.get(m[1]) ?? false }];
   }
-  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, m[2] === "aliados" ? ALIADOS : { runtime: "legacy", procedures: false, routing: "off", aos_connection_routing: true, ultimo_cambio: null }] : [200, { ok: true }];
+  if (m[2] !== "opciones-directas") return metodo === "GET" ? [200, ALIADOS] : [200, { ok: true }];
   const falla = process.env.PLATAFORMA;
   if (falla === "403") return [403, { error: { code: "forbidden", message: "Solo el admin master." } }];
   if (falla === "404") return [404, { error: { code: "not_found", message: "El negocio no existe." } }];
@@ -1688,6 +1708,33 @@ createServer(async (req, res) => {
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
+  }
+  if (ruta === "/me/notifications/read" && req.method === "POST") {
+    respuestas["/me/notifications"] = { ...respuestas["/me/notifications"], unread_count: 0 };
+    respuestas["/me/notifications/unread-count"] = { unread_count: 0 };
+    res.end(JSON.stringify({ unread_count: 0 }));
+    return;
+  }
+  if (ruta === "/me/notifications/preferences" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      ...JSON.parse(texto || "{}"),
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
+  }
+  if (ruta === "/me/notifications/mute" && req.method === "PUT") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const minutos = Number(JSON.parse(texto || "{}").minutes ?? 0);
+    respuestas["/me/notifications/preferences"] = {
+      ...respuestas["/me/notifications/preferences"],
+      muted_until: minutos > 0 ? new Date(Date.now() + minutos * 60_000).toISOString() : null,
+    };
+    res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
+    return;
   }
   const cuerpo =
     req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];

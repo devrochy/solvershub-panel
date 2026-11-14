@@ -99,10 +99,9 @@ describe("textos y permisos", () => {
   });
 
   it("opera el master, o el propietario con el Agent OS activo", () => {
-    expect(puedeOperarVersiones({ role: "master" }, "legacy")).toBe(true);
-    expect(puedeOperarVersiones({ role: "colaborador", tenant: { role: "owner" }, permissions: { connections: "write" } }, "v3")).toBe(true);
-    expect(puedeOperarVersiones({ role: "colaborador", tenant: { role: "member" }, permissions: { connections: "write" } }, "v3")).toBe(false);
-    expect(puedeOperarVersiones({ role: "colaborador", tenant: { role: "owner" }, permissions: { connections: "write" } }, "legacy")).toBe(false);
+    expect(puedeOperarVersiones({ role: "master" })).toBe(true);
+    expect(puedeOperarVersiones({ role: "colaborador", tenant: { role: "owner" }, permissions: { connections: "write" } })).toBe(true);
+    expect(puedeOperarVersiones({ role: "colaborador", tenant: { role: "member" }, permissions: { connections: "write" } })).toBe(false);
   });
 
   it("los códigos de la API tienen un mensaje claro", () => {
