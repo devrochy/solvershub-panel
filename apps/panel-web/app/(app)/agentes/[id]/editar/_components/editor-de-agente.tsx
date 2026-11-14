@@ -111,6 +111,8 @@ export function EditorDeAgente({
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
   const [paso, setPaso] = useState<PasoId>(pasoInicial);
   const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad", pasoInicial]));
+  // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
+  const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
@@ -186,7 +188,7 @@ export function EditorDeAgente({
   async function guardar(actual: EstadoDelEditor = estado): Promise<number | null> {
     if (JSON.stringify(actual) === JSON.stringify(guardado)) return lock;
     const resultado: { lock: number | null } = { lock: null };
-    const flujoCambio = JSON.stringify(actual.flujo) !== JSON.stringify(guardado.flujo);
+    const flujoCambio = !flujoPersistido || JSON.stringify(actual.flujo) !== JSON.stringify(guardado.flujo);
     const ok = await guardarAccion.run(async () => {
       if (actual.nombre !== guardado.nombre || actual.descripcion !== guardado.descripcion) {
         const res = await fetch(`/api/agent-editor/${agente.id}`, {
@@ -233,6 +235,7 @@ export function EditorDeAgente({
         }
         vigente = flowJson.lock_version ?? vigente;
         setLock(vigente);
+        setFlujoPersistido(true);
       }
       resultado.lock = vigente;
       setGuardado(actual);
