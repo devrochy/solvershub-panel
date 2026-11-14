@@ -35,7 +35,6 @@ export const cargarConsola = cache(async (): Promise<{ ok: true; data: ConsolaCo
     data: {
       items,
       total: p.total,
-      routing: p.routing,
       consistency: p.consistency,
       can_edit: p.can_edit,
       unassigned_agents: p.unassigned_agents,

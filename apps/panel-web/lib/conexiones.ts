@@ -31,16 +31,6 @@ export function saludDeConexion(health: ConexionConsola["health"]): { label: str
   return SALUD[health];
 }
 
-const RUTEO: Record<ConnectionsConsole["routing"], string> = {
-  off: "Apagado",
-  shadow: "En sombra",
-  active: "Activo",
-};
-
-export function etiquetaRuteo(routing: ConnectionsConsole["routing"]): string {
-  return RUTEO[routing];
-}
-
 /** «v3» si corre en la release activa; «v4 en la próxima versión» si todavía no entró. */
 export function versionDeAgente(a: Pick<AgenteConsola, "release_version" | "latest_version">): string {
   if (a.release_version != null) {

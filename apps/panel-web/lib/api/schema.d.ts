@@ -3234,53 +3234,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Os
-         * @description Banderas del Agent OS del negocio y el último cambio (quién y cuándo).
-         */
-        get: operations["get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get"];
-        /**
-         * Put Agent Os
-         * @description Lleva el negocio al estado pedido (HU-AOS-15, orden de ADR-0112 y ADR-0138). Escribe con
-         *     `aos_fijar_banderas` (auditada). 422 `agent_os_orden` (modo de enrutamiento no válido) o 409
-         *     `agent_os_en_curso` (otro cambio en curso).
-         */
-        put: operations["put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/platform/tenants/{tenant_id}/agent-os/simular": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Simular Agent Os
-         * @description Dry-run del cambio: avisos y los pasos que aplicaría. No escribe nada. 422 `agent_os_orden`
-         *     si el modo de enrutamiento no es válido.
-         */
-        post: operations["simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/platform/tenants/{tenant_id}/retired-references": {
         parameters: {
             query?: never;
@@ -15006,7 +14959,7 @@ export interface components {
         RoutePreview: {
             /**
              * Mode
-             * @description `off`, `shadow` o `active`: si hoy el router decide en esta conexión.
+             * @description `active`, o `shadow` si la release de la conexión pide sombra (`routing.shadowMode`).
              */
             mode: string;
             /**
@@ -16728,64 +16681,6 @@ export interface components {
              */
             updated_at: string;
         };
-        /**
-         * AgentOSBanderas
-         * @description Estado de las banderas del Agent OS de un negocio (ADR-0112, ADR-0138). El runtime ya no es
-         *     bandera: todo negocio corre en el Agent OS (ADR-0191).
-         */
-        AgentOSBanderas: {
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-        };
-        /** AgentOSCambio */
-        AgentOSCambio: {
-            /** Actor */
-            actor: string;
-            /**
-             * Fecha
-             * Format: date-time
-             */
-            fecha: string;
-        };
-        /** AgentOSEstado */
-        AgentOSEstado: {
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-            ultimo_cambio?: components["schemas"]["AgentOSCambio"] | null;
-        };
-        /** AgentOSObjetivo */
-        AgentOSObjetivo: {
-            /** Procedures */
-            procedures: boolean;
-            /**
-             * Routing
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
-        };
-        /** AgentOSResultado */
-        AgentOSResultado: {
-            /** Accion */
-            accion: string;
-            antes: components["schemas"]["AgentOSBanderas"];
-            despues: components["schemas"]["AgentOSBanderas"];
-            /** Pasos */
-            pasos: string[];
-            /** Bloqueos */
-            bloqueos: string[];
-            /** Avisos */
-            avisos: string[];
-        };
         /** AgentPatch */
         AgentPatch: {
             /** Name */
@@ -18137,12 +18032,6 @@ export interface components {
             page_size: number;
             /** Has More */
             has_more: boolean;
-            /**
-             * Routing
-             * @description `tenants.aos_routing`, solo lectura.
-             * @enum {string}
-             */
-            routing: "off" | "shadow" | "active";
             /** @description pass^k del último run del negocio. */
             consistency: components["schemas"]["ConsoleConsistency"] | null;
             /**
@@ -29317,116 +29206,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMetaApp"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSEstado"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    put_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentOSObjetivo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSResultado"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    simular_agent_os_api_v1_admin_platform_tenants__tenant_id__agent_os_simular_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentOSObjetivo"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentOSResultado"];
                 };
             };
             /** @description Validation Error */

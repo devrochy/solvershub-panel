@@ -538,7 +538,6 @@ export const consolaConexiones: ConnectionsConsole = {
   page: 1,
   page_size: 50,
   has_more: false,
-  routing: "active",
   consistency: null,
   can_edit: true,
   unassigned_agents: [],
