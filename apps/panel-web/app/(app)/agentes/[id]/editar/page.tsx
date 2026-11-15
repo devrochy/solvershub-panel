@@ -5,6 +5,7 @@ import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/edit
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { flujoDesdeApi } from "@/lib/agentes-editor";
 import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
 import type { AgenteDatos } from "@/lib/datos-cliente";
@@ -12,6 +13,8 @@ import { apiFetch } from "@/lib/api/server";
 import type {
   AgentActionPage,
   AgentDetail,
+  AgentFlowOptionsOut,
+  AgentFlowOut,
   AgentRetiredNotices,
   LlmModelCatalog,
   Me,
@@ -38,7 +41,7 @@ export default async function EditarAgentePage({
   // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
   const pasoInicial = paso === "publicar" ? "publicar" : undefined;
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
     apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
@@ -53,6 +56,9 @@ export default async function EditarAgentePage({
     apiFetch<AgentActionPage>(`/admin/agents/${id}/actions?page_size=100`),
     // Datos del cliente de ESTE agente (HU-CRM-28): la matriz y los datos de sus superpoderes.
     apiFetch<AgenteDatos>(`/admin/agents/${id}/datos-cliente`),
+    // Flujo de atención por agente (ADR-0195, HU-AOS-76); sin respuesta, el paso abre vacío.
+    apiFetch<AgentFlowOut>(`/admin/agents/${id}/flow`),
+    apiFetch<AgentFlowOptionsOut>(`/admin/agents/${id}/flow/options`),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -115,6 +121,9 @@ export default async function EditarAgentePage({
         datosCliente={datosCliente.ok ? datosCliente.data : null}
         datosClienteError={datosCliente.ok ? undefined : datosCliente.error}
         puedeEditarDatos={puedeEditarDatos}
+        flujoInicial={flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] }}
+        flujoSeeded={flujo.ok ? flujo.data.seeded : false}
+        accionesDelFlujo={opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : []}
       />
     </div>
   );

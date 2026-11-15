@@ -273,10 +273,16 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(llamadas.filter((r) => r.startsWith("/admin/connections")).length).toBe(1);
   });
 
-  it("Lo que sabe (también desde ?tab=superpoderes): interruptores con la habilidad de origen y los documentos", async () => {
+  it("Lo que sabe (también desde ?tab=superpoderes): interruptores con la habilidad de origen y las habilidades", async () => {
     base();
     Object.assign(respuestas, {
       [`/pack/pack_knowledge/agents/${ID}/documents`]: [],
+      [`/admin/agents/${ID}/skills`]: {
+        items: [{ pack_id: "pack_knowledge", installed: false, status: null, config: {} }],
+        total: 1,
+        page: 1,
+        has_more: false,
+      },
       "/admin/agent-superpowers": {
         items: [
           { id: "pack_commerce.tomar_pedido", version: "1.0.0", skill: "pack_commerce", title: "Tomar pedidos", description: "", phrases: ["a", "b", "c"] },
@@ -291,7 +297,9 @@ describe("ficha del agente (HU-UX-09)", () => {
     const { container } = await abrir(ID, { tab: "superpoderes" });
     expect(screen.getByRole("switch", { name: "Tomar pedidos" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByText("De la habilidad Comercio")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Documentos" })).toBeTruthy();
+    // Los documentos ya no van sueltos: viven dentro de la tarjeta de Conocimiento.
+    expect(screen.getByRole("heading", { name: "Habilidades" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Documentos" })).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 

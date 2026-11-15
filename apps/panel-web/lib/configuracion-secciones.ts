@@ -122,8 +122,8 @@ export const SECCIONES: Seccion[] = [
   {
     id: "agentspec",
     grupo: "avanzado",
-    titulo: "AgentSpec y proveedor",
-    descripcion: "Versiones del agente, editor crudo del AgentSpec, proveedor de IA y reglas personalizadas.",
+    titulo: "Cuenta y proveedor",
+    descripcion: "Proveedor de IA, llave BYOK y la configuración técnica del negocio. El flujo de cada agente se edita en su ficha.",
   },
   {
     id: "accesibilidad",
