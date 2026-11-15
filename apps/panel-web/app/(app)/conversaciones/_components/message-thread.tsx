@@ -1,4 +1,4 @@
-import { Bot, MessageSquare, SearchCode, Wrench } from "lucide-react";
+import { Bot, MessageSquare, Mic, SearchCode, Wrench } from "lucide-react";
 
 import type { MessageItem } from "@/lib/api/types";
 import { formatDate, formatHoraChat } from "@/lib/format";
@@ -26,6 +26,105 @@ function textoDeDia(fecha: string, ahora: Date = new Date()): string {
   if (dia.toDateString() === hoy.toDateString()) return "Hoy";
   if (dia.toDateString() === ayer.toDateString()) return "Ayer";
   return `${PREFIJO_DEL_DIA}${formatDate(fecha)}`;
+}
+
+const PLACEHOLDERS_DE_MEDIA = new Set([
+  "[Nota de voz]",
+  "[Imagen]",
+  "[Imagen adjunta]",
+  "[Archivo adjunto]",
+]);
+
+/** Texto que se muestra junto al media: un caption real, nunca el placeholder del canal. */
+function textoVisible(message: MessageItem): string {
+  if (!message.media_type) return message.content;
+  const texto = message.content.trim();
+  if (!texto || PLACEHOLDERS_DE_MEDIA.has(texto)) return "";
+  return message.content;
+}
+
+/** Audio, imagen o archivo del mensaje (ADR-0196/0197). */
+function MediaDelMensaje({ message, inbound }: { message: MessageItem; inbound: boolean }) {
+  const tipo = message.media_type ?? "";
+  const url = message.media_url ?? undefined;
+  if (!tipo) return null;
+
+  if (tipo === "audio/tts") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs italic opacity-80">
+        <Mic aria-hidden className="h-3.5 w-3.5" />
+        Preparando nota de voz…
+      </span>
+    );
+  }
+
+  if (tipo.startsWith("audio/")) {
+    if (!url) {
+      return <span className="text-xs italic opacity-80">Nota de voz no disponible.</span>;
+    }
+    return (
+      <div className="flex flex-col gap-1.5">
+        <audio
+          controls
+          preload="none"
+          src={url}
+          aria-label={inbound ? "Nota de voz del cliente" : "Nota de voz del agente"}
+          className="h-9 max-w-full"
+        >
+          Tu navegador no puede reproducir este audio.
+        </audio>
+        {message.media_transcription &&
+          (inbound ? (
+            <p className="whitespace-pre-wrap break-words text-xs leading-relaxed opacity-80">
+              {message.media_transcription}
+            </p>
+          ) : (
+            <details className="text-xs opacity-80">
+              <summary className="cursor-pointer select-none">Ver transcripción</summary>
+              <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed">
+                {message.media_transcription}
+              </p>
+            </details>
+          ))}
+      </div>
+    );
+  }
+
+  if (tipo === "image" || tipo.startsWith("image/")) {
+    if (!url) {
+      return <span className="text-xs italic opacity-80">Imagen no disponible.</span>;
+    }
+    return (
+      <figure className="flex flex-col gap-1.5">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+          <img
+            src={url}
+            alt={message.media_transcription ? `Imagen: ${message.media_transcription}` : "Imagen del mensaje"}
+            loading="lazy"
+            className="max-h-80 max-w-full rounded-lg object-contain"
+          />
+        </a>
+        {inbound && message.media_transcription && (
+          <details className="text-xs opacity-80">
+            <summary className="cursor-pointer select-none">Descripción automática</summary>
+            <p className="mt-1 leading-relaxed">{message.media_transcription}</p>
+          </details>
+        )}
+      </figure>
+    );
+  }
+
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-xs font-medium underline underline-offset-2"
+    >
+      Abrir archivo
+    </a>
+  );
 }
 
 /** Herramientas que usó el agente en el turno, plegadas (HU-UX-15). */
@@ -151,7 +250,14 @@ function MensajeDelHilo({
           !inbound && !esAgente && "rounded-tr-md bg-action text-white",
         )}
       >
-        {message.content || <span className="italic opacity-70">(sin texto)</span>}
+        {message.media_type && (
+          <MediaDelMensaje message={message} inbound={inbound} />
+        )}
+        {textoVisible(message) ? (
+          <div className={cn(message.media_type && "mt-1.5")}>{textoVisible(message)}</div>
+        ) : (
+          !message.media_type && <span className="italic opacity-70">(sin texto)</span>
+        )}
       </div>
       {((message.tool_calls?.length ?? 0) > 0 || (onVerTurno && message.turn_id)) && (
         <div className="flex flex-wrap items-center gap-3 px-1">
