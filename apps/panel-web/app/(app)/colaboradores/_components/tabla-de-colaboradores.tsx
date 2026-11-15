@@ -188,7 +188,7 @@ export function TablaDeColaboradores({
       ),
     },
     { key: "rol", header: "Rol", cell: (c) => rolDeCuenta(c) },
-    { key: "estado", header: "Estado", cell: (c) => <EstadoDeCuenta activa={c.active} eliminada={c.deleted} /> },
+    { key: "estado", header: "Estado", cell: (c) => <EstadoDeCuenta activa={c.active} eliminada={c.deleted === true} /> },
     {
       key: "permisos",
       header: "Permisos",
