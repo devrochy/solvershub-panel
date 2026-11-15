@@ -9090,11 +9090,13 @@ export interface paths {
         /**
          * Get Politica Deprecada
          * @deprecated
+         * @description Deprecado: la política es de cada agente. Devuelve la del especialista por defecto.
          */
         get: operations["get_politica_deprecada_api_v1_admin_datos_cliente_politica_get"];
         /**
          * Save Politica Deprecado
          * @deprecated
+         * @description Deprecado: aplica el cuerpo al especialista por defecto, ignorando lo que ese agente no tenga.
          */
         put: operations["save_politica_deprecado_api_v1_admin_datos_cliente_politica_put"];
         post?: never;
@@ -23327,6 +23329,35 @@ export interface components {
             titulo: string;
             /** Datos */
             datos: components["schemas"]["ProcedimientoDatoOut"][];
+        };
+        /**
+         * PoliticaDatosOut
+         * @description Contrato legado de la política global; se conserva un release, deprecado.
+         */
+        PoliticaDatosOut: {
+            /** Niveles */
+            niveles: ("requerido" | "recomendado" | "no_pedir")[];
+            /** Acciones */
+            acciones: components["schemas"]["AccionPoliticaOut"][];
+            /**
+             * Herramientas Del Agente
+             * @default false
+             */
+            herramientas_del_agente: boolean;
+        };
+        /**
+         * PoliticaDatosUpdate
+         * @description Cuerpo legado. Se aplica al especialista por defecto del negocio; lo que no tenga se ignora.
+         */
+        PoliticaDatosUpdate: {
+            /** Politica */
+            politica?: {
+                [key: string]: {
+                    [key: string]: "requerido" | "recomendado" | "no_pedir";
+                };
+            } | null;
+            /** Herramientas Del Agente */
+            herramientas_del_agente?: boolean | null;
         };
     };
     responses: never;
@@ -43059,12 +43090,12 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            410: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["PoliticaDatosOut"];
                 };
             };
             /** @description Validation Error */
@@ -43088,15 +43119,19 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoliticaDatosUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
-            410: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["PoliticaDatosOut"];
                 };
             };
             /** @description Validation Error */
