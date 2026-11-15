@@ -1,16 +1,25 @@
 /**
- * Datos del cliente que pide el agente (HU-CRM-13): lógica pura de la pestaña «Datos del cliente» de
- * Configuración. El dueño elige, por acción y por dato, si el agente lo pide sí o sí (requerido), si
- * lo pide cuando puede (recomendado) o si no lo pide. El backend (`/admin/datos-cliente/politica`)
- * guarda solo lo que difiere del valor del módulo; aquí se arma el estado editable, el cuerpo del PUT
- * y los textos legibles.
+ * Datos del cliente que pide cada agente especialista (HU-CRM-28): lógica pura del paso «Datos del
+ * cliente» del editor. El dueño elige, por operación y por dato, si el agente lo pide sí o sí
+ * (requerido), si lo pide cuando puede (recomendado) o si no lo pide. El backend
+ * (`/admin/agents/{id}/datos-cliente`) guarda solo lo que difiere del valor del módulo; aquí se
+ * arma el estado editable, el cuerpo del PUT y los textos legibles.
  */
 import type { components } from "@/lib/api/schema";
 
-export type PoliticaDatos = components["schemas"]["PoliticaDatosOut"];
+export type MetodoEntrega = "domicilio" | "recoger_en_tienda";
+export type AgenteDatos = components["schemas"]["AgenteDatosOut"];
+export type ProcedimientoDatos = components["schemas"]["ProcedimientoDatosOut"];
+export type PoliticaDatos = AgenteDatos;
 export type AccionPolitica = components["schemas"]["AccionPoliticaOut"];
 export type CampoPolitica = components["schemas"]["CampoPoliticaOut"];
 export type NivelDato = CampoPolitica["nivel"];
+
+/** Métodos de entrega que el agente puede ofrecer (HU-CRM-28). */
+export const METODOS_ENTREGA: { id: MetodoEntrega; etiqueta: string; ayuda: string }[] = [
+  { id: "domicilio", etiqueta: "A domicilio", ayuda: "El agente pide la dirección y lleva el pedido." },
+  { id: "recoger_en_tienda", etiqueta: "Recoger en tienda", ayuda: "El cliente recoge el pedido en el negocio." },
+];
 
 /** Niveles que ve el dueño, en el orden en que se ofrecen. */
 export const NIVELES: { id: NivelDato; etiqueta: string; ayuda: string }[] = [
@@ -91,10 +100,20 @@ export function hayCambios(politica: PoliticaDatos, estado: EstadoDatos): boolea
   return politica.acciones.some((a) => a.campos.some((c) => (estado[a.id]?.[c.clave] ?? c.nivel) !== c.nivel));
 }
 
-/** Cuántos datos de la acción tienen cambios sin guardar. */
-export function cambiosDeAccion(politica: PoliticaDatos, estado: EstadoDatos, accionId: string): number {
+/** Cuántos datos de la acción tienen cambios sin guardar; `guardado` es la última versión guardada. */
+export function cambiosDeAccion(
+  politica: PoliticaDatos,
+  estado: EstadoDatos,
+  accionId: string,
+  guardado?: EstadoDatos,
+): number {
   const accion = politica.acciones.find((a) => a.id === accionId);
-  return accion ? accion.campos.filter((c) => (estado[accionId]?.[c.clave] ?? c.nivel) !== c.nivel).length : 0;
+  if (!accion) return 0;
+  return accion.campos.filter((c) => {
+    const actual = estado[accionId]?.[c.clave] ?? c.nivel;
+    const base = guardado?.[accionId]?.[c.clave] ?? c.nivel;
+    return actual !== base;
+  }).length;
 }
 
 /**

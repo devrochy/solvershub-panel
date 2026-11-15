@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-
+import { invalido, responder, UUID } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
+import type { AgenteDatos } from "@/lib/datos-cliente";
 
 const NIVELES = new Set(["requerido", "recomendado", "no_pedir"]);
 
@@ -16,9 +16,17 @@ function politicaValida(valor: unknown): valor is Record<string, Record<string, 
   );
 }
 
-/** BFF: guarda qué datos del cliente pide el agente y/o si el agente puede consultarlos como herramienta,
- * reenviando el Bearer y el negocio activo. Cada parte es opcional; debe venir al menos una. */
-export async function PUT(request: Request) {
+/** BFF: datos del cliente de ESTE agente (HU-CRM-28). */
+export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
+  const { id } = await ctx.params;
+  if (!UUID.test(id)) return invalido();
+  const res = await apiFetch<AgenteDatos>(`/admin/agents/${id}/datos-cliente`);
+  return responder(res);
+}
+
+export async function PUT(request: Request, ctx: { params: Promise<{ id: string }> }) {
+  const { id } = await ctx.params;
+  if (!UUID.test(id)) return invalido();
   const body = (await request.json().catch(() => null)) as {
     politica?: unknown;
     herramientas_del_agente?: unknown;
@@ -31,20 +39,14 @@ export async function PUT(request: Request) {
     (hayPolitica && !politicaValida(body.politica)) ||
     (hayHerramientas && typeof body.herramientas_del_agente !== "boolean")
   ) {
-    return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
+    return invalido("Cuerpo inválido.");
   }
-  const res = await apiFetch("/admin/datos-cliente/politica", {
+  const res = await apiFetch<AgenteDatos>(`/admin/agents/${id}/datos-cliente`, {
     method: "PUT",
     body: {
       ...(hayPolitica ? { politica: body.politica } : {}),
       ...(hayHerramientas ? { herramientas_del_agente: body.herramientas_del_agente } : {}),
     },
   });
-  if (!res.ok) {
-    return NextResponse.json(
-      { error: res.error, ...(res.fields ? { fields: res.fields } : {}) },
-      { status: res.status },
-    );
-  }
-  return NextResponse.json(res.data);
+  return responder(res);
 }

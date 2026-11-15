@@ -47,7 +47,7 @@ function montar(cat: CatalogoConfig | null) {
         catalogo={cat}
         bajas={null}
         waweb={null}
-        datosCliente={{ politica: null, error: "sin datos", puedeEditar: true, aviso: null }}
+        datosCliente={{ puedeEditar: true, aviso: null }}
       />
     </FeedbackProviders>,
   );

@@ -4,7 +4,6 @@ import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { PageHeader } from "@/components/ui/page-header";
 import type { AvisoDatos } from "@/lib/aviso-datos";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
-import type { PoliticaDatos } from "@/lib/datos-cliente";
 import { apiFetch } from "@/lib/api/server";
 import type {
   BajasSettings,
@@ -33,7 +32,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string; seccion?: string }>;
 }) {
   const { tab, seccion } = await searchParams;
-  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, datosRes, avisoRes, meRes, habilidadesRes, fallidosRes] = await Promise.all([
+  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, avisoRes, meRes, habilidadesRes, fallidosRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
     apiFetch<WebChatSettings>("/admin/settings/web-chat"),
@@ -41,8 +40,6 @@ export default async function SettingsPage({
     // Catálogo de opciones (SPEC-37): etiquetas, ayudas y rangos vienen del backend.
     apiFetch<CatalogoConfig>("/admin/settings/catalog"),
     apiFetch<BajasSettings>("/admin/settings/bajas"),
-    // Qué datos del cliente pide cada acción del agente (HU-CRM-13).
-    apiFetch<PoliticaDatos>("/admin/datos-cliente/politica"),
     // Aviso de tratamiento de datos y consentimiento del cliente (HU-CRM-16).
     apiFetch<AvisoDatos>("/admin/datos-cliente/aviso"),
     apiFetch<Me>("/admin/me"),
@@ -102,9 +99,7 @@ export default async function SettingsPage({
         bajas={bajasRes.ok ? bajasRes.data : null}
         waweb={wawebRes?.ok ? wawebRes.data : null}
         datosCliente={{
-          politica: datosRes.ok ? datosRes.data : null,
-          error: datosRes.ok ? undefined : datosRes.error,
-          // Datos del cliente conserva su criterio: sin saber quién es, solo lectura.
+          // El aviso conserva su criterio: sin saber quién es, solo lectura.
           puedeEditar: meRes.ok && puedeEditarConfiguracion(meRes.data),
           aviso: avisoRes.ok ? avisoRes.data : null,
           avisoError: avisoRes.ok ? undefined : avisoRes.error,

@@ -210,7 +210,7 @@ describe("publicar (D-35)", () => {
         />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paso 7/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 8/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     await waitFor(() => expect(screen.getByLabelText("Tus frases").getAttribute("aria-invalid")).toBe("true"));
     const [, init] = fetchMock.mock.calls[0];

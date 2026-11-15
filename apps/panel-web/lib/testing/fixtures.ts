@@ -1304,6 +1304,7 @@ export const catalogoDeMensajes: CatalogoDeMensajes = {
 
 /** `/admin/datos-cliente/politica` (HU-CRM-13): qué datos del cliente pide cada acción del agente. */
 export const politicaDatosCliente: PoliticaDatos = {
+  agente_id: "11111111-1111-1111-1111-111111111111",
   niveles: ["requerido", "recomendado", "no_pedir"],
   herramientas_del_agente: false,
   acciones: [
@@ -1326,6 +1327,7 @@ export const politicaDatosCliente: PoliticaDatos = {
       ],
     },
   ],
+  procedimientos: [],
 };
 
 export const avisoDatos: AvisoDatos = {
@@ -1456,7 +1458,6 @@ export const ejecucionesDeCron: CronEjecucionesPage = {
 };
 
 export const RESPUESTAS: Record<string, unknown> = {
-  "/admin/datos-cliente/politica": politicaDatosCliente,
   "/admin/datos-cliente/aviso": avisoDatos,
   "/mensajes/catalogo": catalogoDeMensajes,
   "/admin/me": me,
