@@ -29,6 +29,7 @@ const CHANNELS: Record<string, Canal> = {
   whatsapp: { logo: "whatsapp", label: "WhatsApp" },
   whatsapp_cloud: { logo: "whatsapp", label: "WhatsApp Cloud" },
   whatsapp_waweb: { logo: "whatsapp", label: "WhatsApp Web (QR)" },
+  whatsapp_twilio: { logo: "whatsapp", label: "WhatsApp vía Twilio" },
   instagram: { logo: "instagram", label: "Instagram" },
   instagram_meta: { logo: "instagram", label: "Instagram" },
   messenger: { logo: "messenger", label: "Messenger" },

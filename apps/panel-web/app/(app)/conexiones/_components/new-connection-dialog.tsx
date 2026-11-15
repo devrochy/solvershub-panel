@@ -13,6 +13,8 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { destinoDeAlta } from "@/lib/conexiones";
 
+import { AltaTwilio } from "./twilio/alta-twilio";
+
 type TypeItem = {
   id: string;
   label: string;
@@ -55,6 +57,7 @@ export function NewConnectionDialog() {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<Category[] | null>(null);
   const [form, setForm] = useState<ManualForm | null>(null);
+  const [twilio, setTwilio] = useState(false);
   const [label, setLabel] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +96,11 @@ export function NewConnectionDialog() {
       void openType(type);
       return;
     }
+    if (destino.tipo === "twilio") {
+      setError(null);
+      setTwilio(true);
+      return;
+    }
     setOpen(false);
     if (destino.tipo === "externo") {
       window.location.assign(destino.href);
@@ -104,6 +112,7 @@ export function NewConnectionDialog() {
   function toggle(next: boolean) {
     setOpen(next);
     setForm(null);
+    setTwilio(false);
     setError(null);
     setBusqueda("");
     if (next && categories === null) void loadCatalog();
@@ -130,16 +139,24 @@ export function NewConnectionDialog() {
         <Button variant="accent">Agregar conexión</Button>
       </DialogTrigger>
       <DialogContent
-        title={form ? `Nueva conexión · ${form.label}` : "Agregar conexión"}
+        title={
+          form ? `Nueva conexión · ${form.label}` : twilio ? "Nueva conexión · WhatsApp vía Twilio" : "Agregar conexión"
+        }
         description={
-          form ? form.description ?? undefined : "¿Por dónde quieres que atienda tu agente?"
+          form
+            ? form.description ?? undefined
+            : twilio
+              ? "Conecta un número de WhatsApp que ya tienes en tu cuenta de Twilio."
+              : "¿Por dónde quieres que atienda tu agente?"
         }
         className="max-w-2xl"
       >
         <div className="max-h-[70vh] overflow-y-auto pr-1">
           {error && <FormFeedback error={error} className="mb-4" />}
 
-          {!form && categories && (
+          {twilio && <AltaTwilio onVolver={() => setTwilio(false)} onConectada={() => setOpen(false)} />}
+
+          {!form && !twilio && categories && (
             <Input
               aria-label="Buscar tipo de conexión"
               className="mb-4"
@@ -149,7 +166,7 @@ export function NewConnectionDialog() {
             />
           )}
 
-          {!form && categoriasVisibles.map((group) => (
+          {!form && !twilio && categoriasVisibles.map((group) => (
             <section key={group.category} aria-labelledby={`alta-${group.category}`} className="mb-5">
               <h3 id={`alta-${group.category}`} className="mb-2 text-sm font-medium text-headline">
                 {group.label}
@@ -183,7 +200,7 @@ export function NewConnectionDialog() {
             </section>
           ))}
 
-          {!form && filtro && categoriasVisibles.length === 0 && (
+          {!form && !twilio && filtro && categoriasVisibles.length === 0 && (
             <p className="text-sm text-text-soft">Ningún canal coincide con «{busqueda}».</p>
           )}
 

@@ -17,11 +17,15 @@ export type TipoDeFicha =
   | "messenger"
   | "google_calendar"
   | "smtp"
-  /** Otros canales manuales (Twilio, Plivo): credenciales y agentes. */
+  /** WhatsApp vía Twilio (ADR-0186): alta guiada, salud, prueba, credenciales y costos propios. */
+  | "whatsapp_twilio"
+  /** Otros canales manuales (Plivo): credenciales y agentes. */
   | "manual";
 
 export type Pestana =
   | "salud"
+  | "resumen"
+  | "prueba"
   | "numeros"
   | "plantillas"
   | "webhook"
@@ -39,6 +43,8 @@ export type Pestana =
 
 const ETIQUETAS: Record<Pestana, string> = {
   salud: "Salud",
+  resumen: "Resumen y salud",
+  prueba: "Prueba",
   numeros: "Números",
   plantillas: "Plantillas",
   webhook: "Webhook",
@@ -64,6 +70,7 @@ export const PESTANAS_POR_TIPO: Record<TipoDeFicha, Pestana[]> = {
   messenger: ["cuenta", "agentes", "versiones"],
   google_calendar: ["cuenta", "agenda"],
   smtp: ["credenciales"],
+  whatsapp_twilio: ["resumen", "agentes", "prueba", "credenciales", "costos", "versiones"],
   manual: ["credenciales", "agentes", "versiones"],
 };
 
@@ -95,6 +102,8 @@ export function tipoDeFicha(c: ConTipo): TipoDeFicha {
       return "google_calendar";
     case "email_smtp":
       return "smtp";
+    case "whatsapp_twilio":
+      return "whatsapp_twilio";
   }
   // Filas viejas sin `type_id` que salen por una cuenta de Meta: el WhatsApp oficial.
   if (!c.type_id && c.meta_connection_id) return "whatsapp_meta";
@@ -136,6 +145,7 @@ const TIPO_LEGIBLE: Record<TipoDeFicha, string> = {
   messenger: "Messenger",
   google_calendar: "Google Calendar",
   smtp: "Correo",
+  whatsapp_twilio: "WhatsApp vía Twilio",
   manual: "Canal manual",
 };
 
@@ -174,8 +184,14 @@ export function subtituloDeFicha(
     const detalle = [nombre, numero].filter(Boolean).join(" · ");
     return detalle ? `${tipoLegible(tipo)} · ${detalle}` : tipoLegible(tipo);
   }
-  // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo.
-  const numero = tipo === "whatsapp_meta" ? numeroVisible(c) : null;
+  // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo. En
+  // Twilio `external_id` es el número del sender (`sender_e164`).
+  const numero =
+    tipo === "whatsapp_meta"
+      ? numeroVisible(c)
+      : tipo === "whatsapp_twilio"
+        ? numeroVisible({ display_phone_number: c.external_id })
+        : null;
   if (numero) return `${tipoLegible(tipo)} · ${numero}`;
   const crudo = c.external_id?.trim();
   // Un número sin «+» se muestra como teléfono; un id numérico largo de Meta (Instagram) no dice nada al dueño.
@@ -317,5 +333,5 @@ export function enlaceSaludMeta(metaIds: string[]): string {
 
 /** Id de `ChannelIcon` para la conexión (el catálogo de íconos no conoce `whatsapp_meta`). */
 export function iconoDeConexion(c: Pick<ConexionConsola, "type_id" | "channel">): string {
-  return c.type_id === "whatsapp_meta" ? "whatsapp" : (c.type_id ?? c.channel);
+  return c.type_id === "whatsapp_meta" || c.type_id === "whatsapp_twilio" ? "whatsapp" : (c.type_id ?? c.channel);
 }
