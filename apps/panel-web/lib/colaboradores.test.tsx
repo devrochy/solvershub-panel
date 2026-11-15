@@ -17,6 +17,8 @@ import {
   permisoLegible,
   permisosAGuardar,
   puedeActuarSobre,
+  puedeEliminar,
+  puedeReactivar,
   resumenDePerfiles,
   resumenDePermisos,
   rolDeCuenta,
@@ -47,6 +49,9 @@ function cuenta(extra: Partial<CollaboratorItem>): CollaboratorItem {
     permissions: [],
     links: [{ role: "colaborador", ...NORTE }],
     pack_profiles: [],
+    deleted: false,
+    can_delete: false,
+    can_reactivate: false,
     ...extra,
   };
 }
@@ -98,6 +103,15 @@ describe("reglas de Colaboradores (lógica pura)", () => {
     expect(puedeActuarSobre(MASTER, false)).toBe(false);
     expect(puedeActuarSobre(TESTER, false)).toBe(false);
     for (const fila of [OTRO_DUENO, MASTER, TESTER]) expect(puedeActuarSobre(fila, true)).toBe(true);
+  });
+
+  it("la baja y la reactivación siguen lo que calcula la API", () => {
+    expect(puedeEliminar(cuenta({ can_delete: true }))).toBe(true);
+    expect(puedeEliminar(cuenta({ can_delete: true, is_self: true }))).toBe(false);
+    expect(puedeEliminar(cuenta({ can_delete: false }))).toBe(false);
+    const borrada = cuenta({ deleted: true, active: false, can_reactivate: true });
+    expect(puedeReactivar(borrada)).toBe(true);
+    expect(puedeReactivar(cuenta({ deleted: false, can_reactivate: true }))).toBe(false);
   });
 
   it("negocios de las filas y filtro", () => {
@@ -172,7 +186,7 @@ describe("tabla de colaboradores", () => {
   it("para un dueño: rol y estado en palabras, la fila abre la ficha y sin acciones sobre otro dueño ni el master", () => {
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO, OTRO_DUENO, MASTER, OPERADOR]} secciones={["conversations"]} esMaster={false} />
+        <TablaDeColaboradores eliminadas={[]} filas={[YO, OTRO_DUENO, MASTER, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
     const tabla = screen.getByRole("table");
@@ -193,6 +207,32 @@ describe("tabla de colaboradores", () => {
     expect(within(lista).getByText("Colaborador · Activa")).toBeTruthy();
   });
 
+  it("«Ver eliminadas» muestra la baja y ofrece reactivarla desde su ficha", () => {
+    const borrada = cuenta({
+      id: "baja",
+      email: "baja@test",
+      active: false,
+      deleted: true,
+      can_reactivate: true,
+      links: [],
+    });
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores
+          eliminadas={[borrada]}
+          filas={[OPERADOR]}
+          secciones={["conversations"]}
+          esMaster={false}
+          abierta={{ id: "baja", pestana: "acceso", contrasena: false }}
+        />
+      </FeedbackProviders>,
+    );
+    fireEvent.click(screen.getByLabelText("Ver eliminadas"));
+    expect(screen.getAllByText("Eliminada").length).toBeGreaterThan(0);
+    expect(screen.getByText("Esta cuenta está eliminada")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reactivar cuenta" })).toBeTruthy();
+  });
+
   it("para el master: conmutador «Todas las cuentas» que recarga la lista", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
       if (String(input).includes("?todos=1")) {
@@ -203,7 +243,7 @@ describe("tabla de colaboradores", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[OTRO_DUENO]} secciones={["conversations"]} esMaster />
+        <TablaDeColaboradores eliminadas={[]} filas={[OTRO_DUENO]} secciones={["conversations"]} esMaster />
       </FeedbackProviders>,
     );
     fireEvent.click(screen.getByRole("checkbox", { name: "Todas las cuentas" }));
@@ -228,7 +268,7 @@ describe("tabla de colaboradores", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores
+        <TablaDeColaboradores eliminadas={[]}
           filas={[OPERADOR]}
           secciones={["conversations", "leads"]}
           esMaster={false}
@@ -268,7 +308,7 @@ describe("tabla de colaboradores", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores
+        <TablaDeColaboradores eliminadas={[]}
           filas={[OPERADOR]}
           secciones={["conversations"]}
           esMaster={false}
@@ -297,7 +337,7 @@ describe("tabla de colaboradores", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores
+        <TablaDeColaboradores eliminadas={[]}
           filas={[OPERADOR]}
           secciones={["conversations"]}
           esMaster={false}
@@ -318,7 +358,7 @@ describe("tabla de colaboradores", () => {
   it("un dueño no tiene pestaña de permisos: ya lo ve todo", async () => {
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO]} secciones={["conversations"]} esMaster={false} abierta={{ id: "yo", pestana: "permisos", contrasena: false }} />
+        <TablaDeColaboradores eliminadas={[]} filas={[YO]} secciones={["conversations"]} esMaster={false} abierta={{ id: "yo", pestana: "permisos", contrasena: false }} />
       </FeedbackProviders>,
     );
     const ficha = await screen.findByRole("dialog", { name: "duena@test" });
@@ -370,7 +410,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
+        <TablaDeColaboradores eliminadas={[]} filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
     expect(screen.getByText("Gestor · 2 carteras")).toBeTruthy();
@@ -384,7 +424,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
   it("sin ningún perfil la columna no existe", () => {
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[YO, OPERADOR]} secciones={["conversations"]} esMaster={false} />
+        <TablaDeColaboradores eliminadas={[]} filas={[YO, OPERADOR]} secciones={["conversations"]} esMaster={false} />
       </FeedbackProviders>,
     );
     expect(screen.queryByRole("columnheader", { name: /En Cobranza/ })).toBeNull();
@@ -398,7 +438,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
+        <TablaDeColaboradores eliminadas={[]} filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
     const ficha = await screen.findByRole("dialog", { name: "gestor@test" });
@@ -417,7 +457,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
     render(
       <FeedbackProviders>
-        <TablaDeColaboradores filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
+        <TablaDeColaboradores eliminadas={[]} filas={[gestor]} secciones={[]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
       </FeedbackProviders>,
     );
 
@@ -490,6 +530,16 @@ describe("invitar a alguien (EQU-11)", () => {
       expect(body.email).toBe("socia@x.test");
       expect(body.password).toBeUndefined();
     });
+  });
+
+  it("si el correo pertenece a una cuenta eliminada, no avanza y pide reactivarla", async () => {
+    fetchPorRuta({ "/existe": { existe: false, eliminada: true } });
+    const dialogo = await abrirDialogo();
+    fireEvent.change(within(dialogo).getByLabelText(/Correo/), { target: { value: "baja@x.test" } });
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Continuar" }));
+
+    expect(await within(dialogo).findByText(/Esa cuenta fue eliminada/)).toBeTruthy();
+    expect(within(dialogo).queryByLabelText(/Nombre completo/)).toBeNull();
   });
 
   it("crea una cuenta nueva con nombre, usuario y teléfono", async () => {

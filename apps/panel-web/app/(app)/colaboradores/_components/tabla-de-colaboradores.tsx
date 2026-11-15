@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useAlternarAcceso } from "@/app/(app)/colaboradores/_components/acceso-de-persona";
+import {
+  useAlternarAcceso,
+  useEliminarPersona,
+  useReactivarPersona,
+} from "@/app/(app)/colaboradores/_components/acceso-de-persona";
 import {
   FichaDePersona,
   tienePermisosEditables,
@@ -17,7 +21,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { Column } from "@/components/ui/data-table";
 import { DropdownMenuItem, DropdownMenuLinkItem } from "@/components/ui/dropdown-menu";
 import type { CollaboratorItem } from "@/lib/api/types";
-import { puedeActuarSobre, resumenDePerfiles, resumenDePermisos, rolDeCuenta } from "@/lib/colaboradores";
+import {
+  puedeActuarSobre,
+  puedeEliminar,
+  puedeReactivar,
+  resumenDePerfiles,
+  resumenDePermisos,
+  rolDeCuenta,
+} from "@/lib/colaboradores";
 
 export type FichaAbierta = { id: string; pestana: PestanaDeFicha; contrasena: boolean };
 
@@ -29,7 +40,8 @@ export function hrefDeFicha(id: string, pestana: PestanaDeFicha = "acceso", cont
   return `/colaboradores?${query.toString()}`;
 }
 
-function EstadoDeCuenta({ activa }: { activa: boolean }) {
+function EstadoDeCuenta({ activa, eliminada }: { activa: boolean; eliminada: boolean }) {
+  if (eliminada) return <Badge variant="neutral">Eliminada</Badge>;
   return <Badge variant={activa ? "success" : "neutral"}>{activa ? "Activa" : "Desactivada"}</Badge>;
 }
 
@@ -44,7 +56,23 @@ function AccionesDePersona({
   secciones: string[];
 }) {
   const { alternar } = useAlternarAcceso(persona);
+  const { eliminar } = useEliminarPersona(persona);
+  const { reactivar } = useReactivarPersona(persona);
   const nombre = persona.nombre || persona.email;
+
+  if (persona.deleted) {
+    return (
+      <MenuDeFila etiqueta={`Más acciones de ${nombre}`}>
+        <DropdownMenuLinkItem href={hrefDeFicha(persona.id)} scroll={false}>
+          Ver la ficha
+        </DropdownMenuLinkItem>
+        {puedeReactivar(persona) && (
+          <DropdownMenuItem onSelect={() => void reactivar()}>Reactivar cuenta</DropdownMenuItem>
+        )}
+      </MenuDeFila>
+    );
+  }
+
   return (
     <MenuDeFila etiqueta={`Más acciones de ${nombre}`}>
       <DropdownMenuLinkItem href={hrefDeFicha(persona.id)} scroll={false}>Ver el acceso y los negocios</DropdownMenuLinkItem>
@@ -60,6 +88,11 @@ function AccionesDePersona({
         ) : (
           <DropdownMenuItem onSelect={() => void alternar(true)}>Activar el acceso</DropdownMenuItem>
         ))}
+      {puedeEliminar(persona) && (
+        <DropdownMenuItem tone="danger" onSelect={() => void eliminar()}>
+          Eliminar del equipo
+        </DropdownMenuItem>
+      )}
     </MenuDeFila>
   );
 }
@@ -68,14 +101,20 @@ function AccionesDePersona({
  * Equipo (EQU-01, 02, 04, 08, 09 y 12): una fila por persona con su rol y su estado en palabras,
  * un resumen de permisos y de Cobranza, y un menú con las acciones escritas. La fila abre su
  * ficha. En el celular, una fila de un toque. El master puede ver todas las cuentas.
+ *
+ * «Ver eliminadas» (ADR-0198) muestra las cuentas dadas de baja para poder reactivarlas con su
+ * mismo correo, historial y perfil de Gestor.
  */
 export function TablaDeColaboradores({
   filas,
+  eliminadas,
   secciones,
   esMaster,
   abierta = null,
 }: {
   filas: CollaboratorItem[];
+  /** Cuentas dadas de baja visibles para esta sesión (master: todas; dueño: las suyas). */
+  eliminadas: CollaboratorItem[];
   /** Secciones que se pueden otorgar o revocar desde esta sesión. */
   secciones: string[];
   esMaster: boolean;
@@ -86,10 +125,15 @@ export function TablaDeColaboradores({
   const [todas, setTodas] = useState(false);
   const [todasFilas, setTodasFilas] = useState<CollaboratorItem[] | null>(null);
   const [cargandoTodas, setCargandoTodas] = useState(false);
+  const [verEliminadas, setVerEliminadas] = useState(false);
   // Con «Todas las cuentas» apagado se muestran SIEMPRE las filas del servidor, así un
   // `router.refresh()` (por ejemplo al cambiar el estado) se ve al instante.
-  const actuales = todas && todasFilas ? todasFilas : filas;
-  const personaAbierta = abierta ? actuales.find((c) => c.id === abierta.id) ?? filas.find((c) => c.id === abierta.id) : undefined;
+  const actuales = verEliminadas ? eliminadas : todas && todasFilas ? todasFilas : filas;
+  const personaAbierta = abierta
+    ? actuales.find((c) => c.id === abierta.id) ??
+      filas.find((c) => c.id === abierta.id) ??
+      eliminadas.find((c) => c.id === abierta.id)
+    : undefined;
 
   async function alternarTodas(verTodas: boolean) {
     setTodas(verTodas);
@@ -97,6 +141,7 @@ export function TablaDeColaboradores({
       setTodasFilas(null);
       return;
     }
+    setVerEliminadas(false);
     setCargandoTodas(true);
     try {
       const res = await fetch("/api/collaborators?todos=1");
@@ -107,11 +152,23 @@ export function TablaDeColaboradores({
     }
   }
 
-  // La columna solo existe si alguna cuenta tiene perfil de un pack: sin cobranza no aparece vacía.
+  function alternarEliminadas(ver: boolean) {
+    setVerEliminadas(ver);
+    if (ver) {
+      setTodas(false);
+      setTodasFilas(null);
+    }
+  }
+
+  // La columna solo existe si alguna cuenta viva tiene perfil de un pack: sin cobranza no aparece vacía.
   const hayPerfiles = actuales.some((c) => (c.pack_profiles ?? []).length > 0);
   const nombreDe = (c: CollaboratorItem) => c.nombre || c.email;
-  const acciones = (c: CollaboratorItem) =>
-    puedeActuarSobre(c, esMaster) ? <AccionesDePersona persona={c} esMaster={esMaster} secciones={secciones} /> : null;
+  const acciones = (c: CollaboratorItem) => {
+    if (c.deleted) return <AccionesDePersona persona={c} esMaster={esMaster} secciones={secciones} />;
+    return puedeActuarSobre(c, esMaster) ? (
+      <AccionesDePersona persona={c} esMaster={esMaster} secciones={secciones} />
+    ) : null;
+  };
 
   const columns: Column<CollaboratorItem>[] = [
     {
@@ -131,11 +188,12 @@ export function TablaDeColaboradores({
       ),
     },
     { key: "rol", header: "Rol", cell: (c) => rolDeCuenta(c) },
-    { key: "estado", header: "Estado", cell: (c) => <EstadoDeCuenta activa={c.active} /> },
+    { key: "estado", header: "Estado", cell: (c) => <EstadoDeCuenta activa={c.active} eliminada={c.deleted === true} /> },
     {
       key: "permisos",
       header: "Permisos",
       cell: (c) => {
+        if (c.deleted) return <span className="text-text-soft">—</span>;
         const resumen = resumenDePermisos(c);
         return <span className={resumen === "Según su rol" ? "text-text-soft" : "text-body"}>{resumen}</span>;
       },
@@ -152,22 +210,30 @@ export function TablaDeColaboradores({
     },
   ];
 
+  const etiqueta = verEliminadas ? "Cuentas eliminadas" : "Personas del equipo";
+
   return (
     <div className="flex flex-col gap-3">
-      {esMaster && (
-        <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-4">
+        <Checkbox
+          id="ver-eliminadas"
+          label="Ver eliminadas"
+          checked={verEliminadas}
+          onCheckedChange={(v) => alternarEliminadas(v)}
+        />
+        {esMaster && (
           <Checkbox
             id="ver-todas"
             label="Todas las cuentas"
             checked={todas}
-            disabled={cargandoTodas}
+            disabled={cargandoTodas || verEliminadas}
             onCheckedChange={(v) => void alternarTodas(v)}
           />
-        </div>
-      )}
+        )}
+      </div>
       <TablaResponsiva
-        etiqueta="Personas del equipo"
-        caption="Personas del equipo"
+        etiqueta={etiqueta}
+        caption={etiqueta}
         columns={columns}
         rows={actuales}
         loading={cargandoTodas}
@@ -176,17 +242,25 @@ export function TablaDeColaboradores({
         getRowLabel={(c) => `Abrir la ficha de ${nombreDe(c)}`}
         scrollAlAbrir={false}
         density="comfortable"
-        emptyTitle="Por ahora no hay nadie más"
-        emptyDescription="Invita a quien te ayuda con el negocio. Tú eliges qué puede ver y qué puede cambiar."
+        emptyTitle={verEliminadas ? "No hay cuentas eliminadas" : "Por ahora no hay nadie más"}
+        emptyDescription={
+          verEliminadas
+            ? "Las cuentas que elimines aparecerán aquí para poder reactivarlas con su historial."
+            : "Invita a quien te ayuda con el negocio. Tú eliges qué puede ver y qué puede cambiar."
+        }
         filaCelular={(c) => ({
           inicio: <Avatar name={nombreDe(c)} src={c.avatar_url ? `/api/avatar/${c.id}` : null} size="md" />,
           titulo: `${nombreDe(c)}${c.is_self ? " (tú)" : ""}`,
-          detalle: `${rolDeCuenta(c)} · ${c.active ? "Activa" : "Desactivada"}`,
+          detalle: `${rolDeCuenta(c)} · ${c.deleted ? "Eliminada" : c.active ? "Activa" : "Desactivada"}`,
           href: hrefDeFicha(c.id),
           accion: acciones(c),
         })}
       />
-      <p className="text-xs text-text-soft">Toca una persona para ver y cambiar su acceso, sus permisos y sus negocios.</p>
+      <p className="text-xs text-text-soft">
+        {verEliminadas
+          ? "Estas cuentas no pueden entrar. Reactívalas para devolverles el acceso con su historial."
+          : "Toca una persona para ver y cambiar su acceso, sus permisos y sus negocios."}
+      </p>
 
       {personaAbierta && abierta && (
         <FichaDePersona

@@ -83,7 +83,13 @@ export function NewCollaboratorDialog({
     setBuscando(true);
     try {
       const res = await fetch(`/api/collaborators/existe?email=${encodeURIComponent(correo)}`);
-      const json = (await res.json().catch(() => null)) as { existe?: boolean } | null;
+      const json = (await res.json().catch(() => null)) as { existe?: boolean; eliminada?: boolean } | null;
+      if (json?.eliminada) {
+        setEmailError(
+          "Esa cuenta fue eliminada. Un administrador de la plataforma puede reactivarla desde Equipo, o el dueño que la dio de baja.",
+        );
+        return;
+      }
       setExiste(json?.existe ?? false);
       setPaso("perfil");
     } catch {

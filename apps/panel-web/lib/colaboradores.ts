@@ -82,6 +82,16 @@ export function puedeActuarSobre(fila: CollaboratorItem, esMaster: boolean): boo
   return !esDueno;
 }
 
+/** ¿La sesión puede dar de baja esta cuenta? La API ya lo calcula (`can_delete`). */
+export function puedeEliminar(fila: CollaboratorItem): boolean {
+  return fila.can_delete === true && !fila.is_self;
+}
+
+/** ¿La sesión puede reactivar esta cuenta eliminada? (`can_reactivate` de la API). */
+export function puedeReactivar(fila: CollaboratorItem): boolean {
+  return fila.deleted === true && fila.can_reactivate === true;
+}
+
 /** Secciones que se pueden otorgar o revocar desde esta sesión, ordenadas. */
 export function seccionesOtorgables(permisos: Me["permissions"] | null | undefined, esMaster: boolean): string[] {
   return Object.keys(permisos ?? {})
