@@ -9863,6 +9863,8 @@ export interface components {
             ref: string;
             /** Key */
             key: string;
+            /** Source Template */
+            source_template?: string | null;
             /** Name */
             name: string;
             /** Kind */
@@ -16181,6 +16183,21 @@ export interface components {
              * @description Turno del agente que lo envió; null salvo en los mensajes del agente.
              */
             turn_id?: string | null;
+            /**
+             * Media Type
+             * @description MIME del archivo (audio/ogg, image/jpeg…).
+             */
+            media_type?: string | null;
+            /**
+             * Media Url
+             * @description URL firmada para descargar o reproducir el archivo.
+             */
+            media_url?: string | null;
+            /**
+             * Media Transcription
+             * @description Transcripción del audio o descripción de la imagen.
+             */
+            media_transcription?: string | null;
         };
         /** MessageTemplatesSettings */
         MessageTemplatesSettings: {
