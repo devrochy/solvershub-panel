@@ -90,6 +90,10 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     const tw = conexion({ ...sinMeta, type_id: "whatsapp_twilio", external_id: "+573005550101", display_phone_number: null });
     expect(subtituloDeFicha(tw, "whatsapp_twilio")).toBe("WhatsApp vía Twilio · +57 300 555 0101");
     expect(subtituloDeFicha({ ...tw, external_id: "+14155550100" }, "whatsapp_twilio")).toBe("WhatsApp vía Twilio · +14155550100");
+    // El Sandbox (HU-CONN-20) no muestra su `sandbox:<AccountSid>` como si fuera el número.
+    expect(subtituloDeFicha({ ...tw, external_id: `sandbox:AC${"a".repeat(32)}` }, "whatsapp_twilio")).toBe(
+      "WhatsApp vía Twilio · Sandbox",
+    );
     expect(iconoDeConexion(tw)).toBe("whatsapp");
   });
 

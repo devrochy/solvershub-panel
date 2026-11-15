@@ -18,7 +18,7 @@ async function reenviar(request: Request, ctx: Contexto) {
   if (!destino) return NextResponse.json({ error: "Ruta no encontrada." }, { status: 404 });
 
   let body: unknown;
-  if (request.method === "POST" || request.method === "PUT") {
+  if (request.method === "POST" || request.method === "PUT" || request.method === "PATCH") {
     // Refrescar y re-registrar no llevan cuerpo: un cuerpo vacío es `{}`.
     const texto = await request.text();
     try {
@@ -31,10 +31,10 @@ async function reenviar(request: Request, ctx: Contexto) {
     }
   }
   const res = await apiFetch<unknown>(destino, {
-    method: request.method as "GET" | "POST" | "PUT",
+    method: request.method as "GET" | "POST" | "PUT" | "PATCH",
     ...(body === undefined ? {} : { body }),
   });
   return responder(res);
 }
 
-export { reenviar as GET, reenviar as POST, reenviar as PUT };
+export { reenviar as GET, reenviar as PATCH, reenviar as POST, reenviar as PUT };

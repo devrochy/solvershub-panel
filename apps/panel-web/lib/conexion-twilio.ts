@@ -10,6 +10,7 @@ export type ConexionTwilio = components["schemas"]["ConexionTwilioOut"];
 export type DescubrirTwilio = components["schemas"]["TwilioDescubrirOut"];
 export type SenderTwilio = components["schemas"]["TwilioSenderOut"];
 export type CostosTwilio = components["schemas"]["TwilioCostosOut"];
+export type CapacidadesTwilio = components["schemas"]["TwilioCapacidadesOut"];
 
 type Tono = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -54,6 +55,12 @@ const ERRORES: Record<string, string> = {
   twilio_unavailable: "Twilio no respondió. Vuelve a intentar en unos minutos.",
   webhooks_no_restaurados:
     "No se pudieron devolver los webhooks anteriores al número, así que no se desconectó nada. Vuelve a intentar, o desconecta sin devolverlos.",
+  join_code_invalido: "El código de unión son las palabras que siguen a «join», por ejemplo cloud-forgotten.",
+  sandbox_webhook_manual:
+    "En el Sandbox las direcciones se pegan a mano en la consola de Twilio (Sandbox settings): cópialas de Recepción de mensajes.",
+  sandbox_otra_cuenta: "Este sandbox es de otra cuenta de Twilio. Para usar otra cuenta, conecta su sandbox aparte.",
+  no_aplica_sandbox: "En el Sandbox solo sirven las plantillas preaprobadas de Twilio: usa Sincronizar para traerlas.",
+  no_es_sandbox: "Esta conexión no es del Sandbox de Twilio.",
   password_required: "Escribe tu contraseña para continuar.",
   password_incorrect: "La contraseña no es correcta.",
 };
@@ -79,8 +86,47 @@ const ESTADOS: Record<string, { label: string; tono: Tono; detalle: string }> = 
 };
 
 /** Estado de la conexión de Twilio en palabras, con su tono y qué hacer. */
-export function estadoTwilio(status: string): { label: string; tono: Tono; detalle: string } {
+export function estadoTwilio(status: string, modo?: string): { label: string; tono: Tono; detalle: string } {
+  if (modo === MODO_SANDBOX && status === "pending") {
+    return {
+      label: "Falta un paso",
+      tono: "info",
+      detalle:
+        "Pega las dos direcciones de Recepción de mensajes en la consola de Twilio y escríbele al sandbox: con el primer mensaje queda funcionando.",
+    };
+  }
   return ESTADOS[status] ?? { label: status || "Sin revisar", tono: "neutral", detalle: "" };
+}
+
+/** Modo Sandbox de WhatsApp de Twilio (HU-CONN-20): número compartido, solo en el entorno de pruebas. */
+export const MODO_SANDBOX = "sandbox";
+
+export function esSandbox(c: Pick<ConexionTwilio, "modo">): boolean {
+  return c.modo === MODO_SANDBOX;
+}
+
+const JOIN_CODE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/** El código de unión es opcional en el alta; si viene, en minúsculas, números y guiones (máx. 64). */
+export function errorDeJoinCode(codigo: string): string | undefined {
+  const limpio = codigo.trim().toLowerCase();
+  if (!limpio) return undefined;
+  if (limpio.length > 64 || !JOIN_CODE.test(limpio)) {
+    return "Escribe solo las palabras que siguen a «join», por ejemplo cloud-forgotten.";
+  }
+  return undefined;
+}
+
+/** Lo que cada teléfono de prueba le manda al sandbox para unirse: «join cloud-forgotten». */
+export function mensajeDeUnion(joinCode: string | null | undefined): string {
+  const codigo = (joinCode ?? "").trim();
+  return codigo ? `join ${codigo}` : "join <tu código>";
+}
+
+/** «+14155238886» → «+1 415 523 8886» (el número del sandbox, que es de EE. UU.). */
+export function numeroLegible(e164: string): string {
+  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(e164);
+  return m ? `+1 ${m[1]} ${m[2]} ${m[3]}` : e164;
 }
 
 /** Por qué un número de la cuenta no se puede elegir en el paso 2 (`motivo` del discover). */
@@ -127,7 +173,14 @@ export function totalDeMoneda(m: Pick<CostosTwilio["por_moneda"][number], "moned
  * Aviso al terminar de desconectar (`webhooks_restaurados` de la respuesta). Sin restaurar puede ser porque no se
  * pidió o porque el número ya mandaba sus mensajes a otra integración (el backend no la pisa).
  */
-export function avisoDesconectado(webhooksRestaurados: boolean, seRestauraba: boolean): string {
+export function avisoDesconectado(
+  webhooksRestaurados: boolean,
+  seRestauraba: boolean,
+  requiereLimpiarConsola = false,
+): string {
+  if (requiereLimpiarConsola) {
+    return "Sandbox desconectado. Borra las dos direcciones de Sandbox settings en la consola de Twilio: mientras sigan ahí, Twilio recibe un error sin efecto.";
+  }
   if (webhooksRestaurados) return "Número desconectado. Sus webhooks volvieron a la dirección que tenían antes.";
   if (seRestauraba) return "Número desconectado. Sus webhooks ya apuntaban a otra dirección y no se tocaron.";
   return "Número desconectado. Sus webhooks quedaron como estaban en Twilio.";
@@ -139,7 +192,7 @@ const POST_DE_CONEXION = new Set(["refresh", "webhooks", "test-message", "discon
 
 /**
  * Rutas del BFF (`/api/connections/twilio/**`) → ruta del backend (`/admin/connections/twilio/**`). Lista cerrada:
- * solo se reenvía lo que usa el alta y la ficha (P-1, más desconectar), con su método y un id con forma de UUID. Los días de Costos
+ * solo se reenvía lo que usa el alta y la ficha (P-1, más desconectar y el Sandbox de HU-CONN-20), con su método y un id con forma de UUID. Los días de Costos
  * se acotan a 1–90 como el backend.
  */
 export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[], dias?: string | null): string | null {
@@ -148,12 +201,15 @@ export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[]
   const [primero, segundo] = segmentos;
   if (segmentos.length === 1) {
     if (m === "POST" && primero === "discover") return `${BASE_BACKEND}/discover`;
+    if (m === "GET" && primero === "capabilities") return `${BASE_BACKEND}/capabilities`;
+    if (m === "POST" && primero === "sandbox") return `${BASE_BACKEND}/sandbox`;
     if (m === "GET" && UUID.test(primero)) return `${BASE_BACKEND}/${primero}`;
     return null;
   }
   if (segmentos.length !== 2 || !UUID.test(primero)) return null;
   if (m === "POST" && POST_DE_CONEXION.has(segundo)) return `${BASE_BACKEND}/${primero}/${segundo}`;
   if (m === "PUT" && segundo === "credentials") return `${BASE_BACKEND}/${primero}/credentials`;
+  if (m === "PATCH" && segundo === "sandbox") return `${BASE_BACKEND}/${primero}/sandbox`;
   if (m === "GET" && segundo === "costs") {
     const n = Number(dias ?? 30);
     const acotado = Number.isInteger(n) ? Math.min(90, Math.max(1, n)) : 30;

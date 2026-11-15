@@ -2484,6 +2484,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/twilio/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Capacidades
+         * @description Qué modos de alta ofrece este ambiente. Sin la bandera del negocio, 404.
+         */
+        get: operations["capacidades_api_v1_admin_connections_twilio_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/sandbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Conectar Sandbox
+         * @description Conecta el Sandbox de WhatsApp de la cuenta de Twilio (solo en test). Queda `pending` y con
+         *     `requiere_accion_manual` hasta que se peguen las dos URL en la consola de Twilio y llegue el primer mensaje.
+         *     201 si se creó; 200 si ya existía.
+         */
+        post: operations["conectar_sandbox_api_v1_admin_connections_twilio_sandbox_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/twilio/{connection_id}/sandbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Fijar Join Code
+         * @description Cambia el código de unión del sandbox que se muestra para `join <código>`.
+         */
+        patch: operations["fijar_join_code_api_v1_admin_connections_twilio__connection_id__sandbox_patch"];
+        trace?: never;
+    };
     "/api/v1/admin/connections/twilio/{connection_id}": {
         parameters: {
             query?: never;
@@ -12095,6 +12157,28 @@ export interface components {
             last_error_code: number | null;
             /** Active */
             active: boolean;
+            /**
+             * Modo
+             * @description `sender` (número propio) o `sandbox` (Sandbox de Twilio, solo en test).
+             * @default sender
+             */
+            modo: string;
+            /**
+             * Sandbox Join Code
+             * @description Sandbox: lo que sigue a `join` para unirse. No es secreto.
+             */
+            sandbox_join_code?: string | null;
+            /**
+             * Webhook Confirmado At
+             * @description Primer entrante o estado con firma válida.
+             */
+            webhook_confirmado_at?: string | null;
+            /**
+             * Requiere Accion Manual
+             * @description Sandbox sin confirmar: hay que pegar `webhook_inbound_url` y `webhook_status_url` en la consola de Twilio (Sandbox settings).
+             * @default false
+             */
+            requiere_accion_manual: boolean;
         };
         /** ConfiguredSecret */
         ConfiguredSecret: {
@@ -22306,6 +22390,19 @@ export interface components {
              */
             confirm_overwrite_webhook: boolean;
         };
+        /** TwilioCapacidadesOut */
+        TwilioCapacidadesOut: {
+            /**
+             * Sandbox Disponible
+             * @description Este ambiente permite conectar el Sandbox de Twilio.
+             */
+            sandbox_disponible: boolean;
+            /**
+             * Sandbox E164
+             * @description Número compartido del sandbox (`""` si no está disponible).
+             */
+            sandbox_e164: string;
+        };
         /** TwilioCostoMoneda */
         TwilioCostoMoneda: {
             /** Moneda */
@@ -22373,12 +22470,23 @@ export interface components {
         TwilioDesconectarOut: {
             /** Webhooks Restaurados */
             webhooks_restaurados: boolean;
+            /**
+             * Requiere Limpiar Consola
+             * @description Sandbox: hay que borrar a mano las URL de la consola de Twilio (Sandbox settings). Mientras tanto Twilio recibe 404, sin efecto.
+             * @default false
+             */
+            requiere_limpiar_consola: boolean;
         };
         /** TwilioDescubrirOut */
         TwilioDescubrirOut: {
             account: components["schemas"]["TwilioCuentaOut"];
             /** Senders */
             senders: components["schemas"]["TwilioSenderOut"][];
+        };
+        /** TwilioJoinCodeIn */
+        TwilioJoinCodeIn: {
+            /** Join Code */
+            join_code: string;
         };
         /** TwilioPlantillaIn */
         TwilioPlantillaIn: {
@@ -22484,6 +22592,29 @@ export interface components {
              * @default false
              */
             confirm_overwrite_webhook: boolean;
+        };
+        /** TwilioSandboxIn */
+        TwilioSandboxIn: {
+            /**
+             * Account Sid
+             * @description Account SID de Twilio (`AC…`).
+             */
+            account_sid: string;
+            /**
+             * Auth Token
+             * @description Auth Token de la cuenta. No se devuelve nunca.
+             */
+            auth_token: string;
+            /**
+             * Join Code
+             * @description Lo que sigue a `join` en la consola de Twilio (p. ej. `cloud-forgotten`).
+             */
+            join_code?: string | null;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
         };
         /** TwilioSenderOut */
         TwilioSenderOut: {
@@ -28833,6 +28964,157 @@ export interface operations {
             };
         };
     };
+    capacidades_api_v1_admin_connections_twilio_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioCapacidadesOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    conectar_sandbox_api_v1_admin_connections_twilio_sandbox_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioSandboxIn"];
+            };
+        };
+        responses: {
+            /** @description El sandbox de esa cuenta ya estaba conectado en este negocio: se actualizó. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para el negocio o el sandbox no está en este ambiente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `cuenta_en_otro_negocio`, `conexion_pausada`, `twilio_account_suspended` o `conflicto`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_credentials_invalid` o `join_code_invalido`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `twilio_unavailable` o `twilio_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    fijar_join_code_api_v1_admin_connections_twilio__connection_id__sandbox_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwilioJoinCodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTwilioOut"];
+                };
+            };
+            /** @description Twilio no está habilitado para este negocio, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `no_es_sandbox`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `join_code_invalido`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ver_api_v1_admin_connections_twilio__connection_id__get: {
         parameters: {
             query?: never;
@@ -28945,6 +29227,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description `sandbox_webhook_manual`: en el Sandbox las URL se pegan en la consola de Twilio (`details.webhook_inbound_url` y `details.webhook_status_url`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -28997,7 +29286,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description `numero_invalido`. */
+            /** @description `numero_invalido`, o `participante_no_unido` (Sandbox: el número no mandó `join <código>` o su unión venció; `details.join` y `details.sandbox_e164`). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -29249,7 +29538,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            /** @description `nombre_en_uso`, `plantilla_sin_crear` o `no_aplica_sandbox` (en el Sandbox solo sirven las plantillas preaprobadas de Twilio: crear, enviar a aprobación y borrar no aplican). */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -29309,7 +29598,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            /** @description `nombre_en_uso`, `plantilla_sin_crear` o `no_aplica_sandbox` (en el Sandbox solo sirven las plantillas preaprobadas de Twilio: crear, enviar a aprobación y borrar no aplican). */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -29370,7 +29659,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            /** @description `nombre_en_uso`, `plantilla_sin_crear` o `no_aplica_sandbox` (en el Sandbox solo sirven las plantillas preaprobadas de Twilio: crear, enviar a aprobación y borrar no aplican). */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -29431,7 +29720,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description `nombre_en_uso` o `plantilla_sin_crear`. */
+            /** @description `nombre_en_uso`, `plantilla_sin_crear` o `no_aplica_sandbox` (en el Sandbox solo sirven las plantillas preaprobadas de Twilio: crear, enviar a aprobación y borrar no aplican). */
             409: {
                 headers: {
                     [name: string]: unknown;

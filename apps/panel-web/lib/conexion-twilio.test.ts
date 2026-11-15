@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   avisoDesconectado,
+  errorDeJoinCode,
   erroresDeCredenciales,
+  esSandbox,
   estadoTwilio,
   etiquetaDeSender,
+  mensajeDeUnion,
   mensajeErrorTwilio,
   motivoDeSender,
+  numeroLegible,
   puedeEscribirTwilio,
   rutaTwilioDeBackend,
   totalDeMoneda,
@@ -121,5 +125,55 @@ describe("WhatsApp vía Twilio: desconectar", () => {
     expect(mensajeErrorTwilio("webhooks_no_restaurados", "x")).toContain("no se desconectó nada");
     expect(mensajeErrorTwilio("password_incorrect", "x")).toBe("La contraseña no es correcta.");
     expect(mensajeErrorTwilio("password_required", "x")).toContain("contraseña");
+  });
+});
+
+describe("WhatsApp vía Twilio: Sandbox (HU-CONN-20)", () => {
+  it("el BFF reenvía capabilities, el alta del sandbox y el PATCH del código, y nada más", () => {
+    expect(rutaTwilioDeBackend("GET", ["capabilities"])).toBe("/admin/connections/twilio/capabilities");
+    expect(rutaTwilioDeBackend("POST", ["sandbox"])).toBe("/admin/connections/twilio/sandbox");
+    expect(rutaTwilioDeBackend("PATCH", [ID, "sandbox"])).toBe(`/admin/connections/twilio/${ID}/sandbox`);
+    expect(rutaTwilioDeBackend("POST", ["capabilities"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", ["sandbox"])).toBeNull();
+    expect(rutaTwilioDeBackend("PATCH", ["no-es-uuid", "sandbox"])).toBeNull();
+    expect(rutaTwilioDeBackend("PATCH", [ID, "credentials"])).toBeNull();
+    expect(rutaTwilioDeBackend("PATCH", [])).toBeNull();
+  });
+
+  it("un sandbox pendiente pide pegar las direcciones; uno conectado se ve como cualquiera", () => {
+    expect(estadoTwilio("pending", "sandbox").label).toBe("Falta un paso");
+    expect(estadoTwilio("pending", "sandbox").detalle).toContain("consola de Twilio");
+    expect(estadoTwilio("pending", "sender").label).toBe("Sin terminar");
+    expect(estadoTwilio("connected", "sandbox").label).toBe("Funciona");
+    expect(esSandbox({ modo: "sandbox" })).toBe(true);
+    expect(esSandbox({ modo: "sender" })).toBe(false);
+  });
+
+  it("el código de unión es opcional y con el formato de Twilio", () => {
+    expect(errorDeJoinCode("")).toBeUndefined();
+    expect(errorDeJoinCode("cloud-forgotten")).toBeUndefined();
+    expect(errorDeJoinCode("Cloud-Forgotten")).toBeUndefined();
+    expect(errorDeJoinCode("join cloud")).toBeDefined();
+    expect(errorDeJoinCode("-x")).toBeDefined();
+    expect(errorDeJoinCode("a".repeat(65))).toBeDefined();
+  });
+
+  it("muestra el mensaje para unirse y el número legible", () => {
+    expect(mensajeDeUnion("cloud-forgotten")).toBe("join cloud-forgotten");
+    expect(mensajeDeUnion(null)).toBe("join <tu código>");
+    expect(numeroLegible("+14155238886")).toBe("+1 415 523 8886");
+    expect(numeroLegible("+573001234567")).toBe("+573001234567");
+  });
+
+  it("al desconectar un sandbox recuerda borrar las direcciones de la consola", () => {
+    expect(avisoDesconectado(false, true, true)).toContain("Sandbox settings");
+    expect(avisoDesconectado(true, true)).toContain("volvieron");
+  });
+
+  it("traduce los errores propios del sandbox", () => {
+    expect(mensajeErrorTwilio("join_code_invalido", "x")).toContain("join");
+    expect(mensajeErrorTwilio("no_aplica_sandbox", "x")).toContain("preaprobadas");
+    // El 422 de participante sin unir trae el código exacto en el texto de la API: se muestra tal cual.
+    expect(mensajeErrorTwilio("participante_no_unido", "Envía «join abc»")).toBe("Envía «join abc»");
   });
 });

@@ -57,14 +57,25 @@ export function DesconectarTwilioDialog({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password, restore_webhooks: restaurar, continuar_si_falla: continuarSiFalla }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string; webhooks_restaurados?: boolean };
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      code?: string;
+      webhooks_restaurados?: boolean;
+      requiere_limpiar_consola?: boolean;
+    };
     setEnviando(false);
     if (!res.ok) {
       setSinRestaurar(json.code === "webhooks_no_restaurados");
       setError(mensajeErrorTwilio(json.code, json.error ?? "No se pudo desconectar el número."));
       return;
     }
-    toast.success(avisoDesconectado(json.webhooks_restaurados === true, restaurar && !continuarSiFalla));
+    toast.success(
+      avisoDesconectado(
+        json.webhooks_restaurados === true,
+        restaurar && !continuarSiFalla,
+        json.requiere_limpiar_consola === true,
+      ),
+    );
     alCambiar(false);
     if (redirectTo) router.push(redirectTo);
     else router.refresh();
