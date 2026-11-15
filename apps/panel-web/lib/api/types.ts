@@ -25,7 +25,13 @@ export type UsageMetric = components["schemas"]["UsageMetric"];
 
 export type ConversationSummary = components["schemas"]["ConversationSummary"];
 export type ConversationDetail = components["schemas"]["ConversationDetail"];
-export type MessageItem = components["schemas"]["MessageItem"];
+// ADR-0196/0197: campos de multimedia que llegan con devrochy/agent-core#780. Se declaran aquí
+// hasta que el OpenAPI de develop los incluya; luego basta con regenerar `schema.d.ts`.
+export type MessageItem = components["schemas"]["MessageItem"] & {
+  media_type?: string | null;
+  media_url?: string | null;
+  media_transcription?: string | null;
+};
 export type MessagesSince = components["schemas"]["MessagesSince"];
 export type ConversationConnection = components["schemas"]["ConversationConnection"];
 export type ActiveEscalation = components["schemas"]["ActiveEscalation"];
