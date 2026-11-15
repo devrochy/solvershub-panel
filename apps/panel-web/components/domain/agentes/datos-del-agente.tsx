@@ -10,8 +10,10 @@ import {
   agruparPorModulo,
   cambiosDeAccion,
   estaAjustada,
+  METODOS_ENTREGA,
   NIVELES,
   pistaDePorDefecto,
+  type MetodoEntrega,
   type AgenteDatos,
   type AccionPolitica,
   type CampoPolitica,
@@ -30,28 +32,33 @@ export function DatosDelAgente({
   estado,
   guardado,
   herramientas,
+  metodos,
   puedeEditar,
   guardando,
   sinGuardar,
   onNivel,
   onRestablecer,
   onHerramientas,
+  onMetodo,
   onGuardar,
 }: {
   politica: AgenteDatos;
   estado: EstadoDatos;
   guardado: EstadoDatos;
   herramientas: boolean;
+  metodos: MetodoEntrega[];
   puedeEditar: boolean;
   guardando: boolean;
   sinGuardar: boolean;
   onNivel: (accionId: string, clave: string, nivel: NivelDato) => void;
   onRestablecer: (accionId: string) => void;
   onHerramientas: (activo: boolean) => void;
+  onMetodo: (metodo: MetodoEntrega, activo: boolean) => void;
   onGuardar: () => void;
 }) {
   const grupos = agruparPorModulo(politica.acciones);
   const procedimientos = politica.procedimientos ?? [];
+  const conVentas = grupos.some((grupo) => grupo.modulo === "ventas");
   const bloqueado = !puedeEditar || guardando;
   return (
     <div className="flex flex-col gap-6">
@@ -82,6 +89,40 @@ export function DatosDelAgente({
           />
         </CardContent>
       </Card>
+
+      {conVentas && (
+      <Card>
+        <CardContent className="pt-5">
+          <p className="text-sm font-medium text-headline">Métodos de entrega que puede ofrecer</p>
+          <p className="mt-1 max-w-xl text-sm text-text-soft">
+            El agente solo ofrecerá los métodos encendidos. Deja al menos uno para que pueda cerrar pedidos.
+          </p>
+          <ul className="mt-3 flex flex-col gap-3">
+            {METODOS_ENTREGA.map((metodo) => {
+              const activo = metodos.includes(metodo.id);
+              const ultimo = activo && metodos.length === 1;
+              return (
+                <li key={metodo.id} className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm text-headline">{metodo.etiqueta}</p>
+                    <p className="text-xs text-text-soft">
+                      {metodo.ayuda}
+                      {ultimo ? " Debe quedar al menos uno." : ""}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={activo}
+                    onCheckedChange={(valor) => onMetodo(metodo.id, valor)}
+                    disabled={bloqueado || ultimo}
+                    aria-label={`Ofrecer ${metodo.etiqueta.toLowerCase()}`}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+      )}
 
       {grupos.length === 0 ? (
         <Card>

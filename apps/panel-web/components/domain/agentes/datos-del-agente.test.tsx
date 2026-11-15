@@ -12,6 +12,7 @@ function montar(overrides: Partial<Parameters<typeof DatosDelAgente>[0]> = {}) {
   const onNivel = vi.fn();
   const onRestablecer = vi.fn();
   const onHerramientas = vi.fn();
+  const onMetodo = vi.fn();
   const onGuardar = vi.fn();
   render(
     <DatosDelAgente
@@ -19,17 +20,19 @@ function montar(overrides: Partial<Parameters<typeof DatosDelAgente>[0]> = {}) {
       estado={estadoInicial(politicaDatosCliente)}
       guardado={estadoInicial(politicaDatosCliente)}
       herramientas={false}
+      metodos={["domicilio", "recoger_en_tienda"]}
       puedeEditar
       guardando={false}
       sinGuardar={false}
       onNivel={onNivel}
       onRestablecer={onRestablecer}
       onHerramientas={onHerramientas}
+      onMetodo={onMetodo}
       onGuardar={onGuardar}
       {...overrides}
     />,
   );
-  return { onNivel, onRestablecer, onHerramientas, onGuardar };
+  return { onNivel, onRestablecer, onHerramientas, onMetodo, onGuardar };
 }
 
 describe("DatosDelAgente", () => {
@@ -56,6 +59,15 @@ describe("DatosDelAgente", () => {
     expect(onNivel).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("switch", { name: /consulte los datos/ }));
     expect(onHerramientas).toHaveBeenCalledWith(true);
+  });
+
+  it("permite apagar un método de entrega, pero no el último", () => {
+    const { onMetodo } = montar({ metodos: ["domicilio"] });
+    const domicilio = screen.getByRole("switch", { name: "Ofrecer a domicilio" });
+    expect(domicilio).toHaveProperty("disabled", true);
+    const recoger = screen.getByRole("switch", { name: "Ofrecer recoger en tienda" });
+    fireEvent.click(recoger);
+    expect(onMetodo).toHaveBeenCalledWith("recoger_en_tienda", true);
   });
 
   it("muestra los datos de los superpoderes en solo lectura", () => {

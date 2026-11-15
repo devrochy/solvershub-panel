@@ -7,12 +7,19 @@
  */
 import type { components } from "@/lib/api/schema";
 
+export type MetodoEntrega = "domicilio" | "recoger_en_tienda";
 export type AgenteDatos = components["schemas"]["AgenteDatosOut"];
 export type ProcedimientoDatos = components["schemas"]["ProcedimientoDatosOut"];
 export type PoliticaDatos = AgenteDatos;
 export type AccionPolitica = components["schemas"]["AccionPoliticaOut"];
 export type CampoPolitica = components["schemas"]["CampoPoliticaOut"];
 export type NivelDato = CampoPolitica["nivel"];
+
+/** Métodos de entrega que el agente puede ofrecer (HU-CRM-28). */
+export const METODOS_ENTREGA: { id: MetodoEntrega; etiqueta: string; ayuda: string }[] = [
+  { id: "domicilio", etiqueta: "A domicilio", ayuda: "El agente pide la dirección y lleva el pedido." },
+  { id: "recoger_en_tienda", etiqueta: "Recoger en tienda", ayuda: "El cliente recoge el pedido en el negocio." },
+];
 
 /** Niveles que ve el dueño, en el orden en que se ofrecen. */
 export const NIVELES: { id: NivelDato; etiqueta: string; ayuda: string }[] = [

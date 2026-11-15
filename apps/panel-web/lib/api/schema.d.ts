@@ -23132,6 +23132,8 @@ export interface components {
              * @default false
              */
             herramientas_del_agente: boolean;
+            /** Metodos Entrega */
+            metodos_entrega?: ("domicilio" | "recoger_en_tienda")[];
         };
         /** ProcedimientoDatoOut */
         ProcedimientoDatoOut: {
@@ -23172,6 +23174,8 @@ export interface components {
             } | null;
             /** Herramientas Del Agente */
             herramientas_del_agente?: boolean | null;
+            /** Metodos Entrega */
+            metodos_entrega?: ("domicilio" | "recoger_en_tienda")[] | null;
         };
     };
     responses: never;

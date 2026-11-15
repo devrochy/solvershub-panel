@@ -35,9 +35,11 @@ import {
   conNivel,
   cuerpoParaGuardar,
   estadoInicial,
+  METODOS_ENTREGA,
   restablecida,
   type AgenteDatos,
   type EstadoDatos,
+  type MetodoEntrega,
   type NivelDato,
 } from "@/lib/datos-cliente";
 import type {
@@ -138,11 +140,17 @@ export function EditorDeAgente({
   const [datosGuardado, setDatosGuardado] = useState<EstadoDatos>(datos);
   const [herramientas, setHerramientas] = useState(datosCliente?.herramientas_del_agente ?? false);
   const [herramientasGuardado, setHerramientasGuardado] = useState(herramientas);
+  const [metodos, setMetodos] = useState<MetodoEntrega[]>(
+    () => datosCliente?.metodos_entrega ?? METODOS_ENTREGA.map((m) => m.id),
+  );
+  const [metodosGuardado, setMetodosGuardado] = useState<MetodoEntrega[]>(metodos);
 
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
   const datosSinGuardar =
-    JSON.stringify(datos) !== JSON.stringify(datosGuardado) || herramientas !== herramientasGuardado;
+    JSON.stringify(datos) !== JSON.stringify(datosGuardado) ||
+    herramientas !== herramientasGuardado ||
+    JSON.stringify(metodos) !== JSON.stringify(metodosGuardado);
   useAvisarCambios("datos-cliente-agente", datosSinGuardar);
   const contenido = useMemo(() => contenidoDesdeEstado(base, estado, superpoderes), [base, estado, superpoderes]);
   // Lo retirado que está en el borrador se señala junto al superpoder (los índices `procedures[i]` son los del
@@ -174,7 +182,9 @@ export function EditorDeAgente({
   async function guardarDatos(herramientasNuevas: boolean = herramientas): Promise<boolean> {
     if (!datosCliente) return true;
     const sucio =
-      JSON.stringify(datos) !== JSON.stringify(datosGuardado) || herramientasNuevas !== herramientasGuardado;
+      JSON.stringify(datos) !== JSON.stringify(datosGuardado) ||
+      herramientasNuevas !== herramientasGuardado ||
+      JSON.stringify(metodos) !== JSON.stringify(metodosGuardado);
     if (!sucio) return true;
     const ok = await datosAccion.run(async () => {
       const res = await fetch(`/api/agent-editor/${agente.id}/datos-cliente`, {
@@ -183,6 +193,7 @@ export function EditorDeAgente({
         body: JSON.stringify({
           ...cuerpoParaGuardar(datosCliente, datos),
           herramientas_del_agente: herramientasNuevas,
+          metodos_entrega: metodos,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: unknown };
@@ -195,6 +206,7 @@ export function EditorDeAgente({
     if (ok) {
       setDatosGuardado(datos);
       setHerramientasGuardado(herramientasNuevas);
+      setMetodosGuardado(metodos);
     }
     return ok;
   }
@@ -203,6 +215,13 @@ export function EditorDeAgente({
     setHerramientas(activo);
     void guardarDatos(activo).then((ok) => {
       if (!ok) setHerramientas(!activo);
+    });
+  }
+
+  function cambiarMetodo(metodo: MetodoEntrega, activo: boolean) {
+    setMetodos((actual) => {
+      if (activo) return METODOS_ENTREGA.map((m) => m.id).filter((id) => id === metodo || actual.includes(id));
+      return actual.length === 1 ? actual : actual.filter((id) => id !== metodo);
     });
   }
 
@@ -431,12 +450,14 @@ export function EditorDeAgente({
         estado={datos}
         guardado={datosGuardado}
         herramientas={herramientas}
+        metodos={metodos}
         puedeEditar={puedeEditarDatos}
         guardando={datosAccion.pending}
         sinGuardar={datosSinGuardar}
         onNivel={cambiarNivel}
         onRestablecer={restablecerAccion}
         onHerramientas={cambiarHerramientas}
+        onMetodo={cambiarMetodo}
         onGuardar={() => void guardarDatos()}
       />
     ) : (
