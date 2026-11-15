@@ -9863,6 +9863,8 @@ export interface components {
             ref: string;
             /** Key */
             key: string;
+            /** Source Template */
+            source_template?: string | null;
             /** Name */
             name: string;
             /** Kind */

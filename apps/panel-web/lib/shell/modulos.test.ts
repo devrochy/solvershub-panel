@@ -85,6 +85,11 @@ describe("módulos del negocio", () => {
     ]);
   });
 
+  it("dos agentes del mismo tipo con keys distintas habilitan el pack por source_template", () => {
+    const items = [agente({ key: "ventas_2", source_template: "ventas", ref: "a-2" })];
+    expect([...packsConAgente({ items })]).toEqual(["pack_commerce"]);
+  });
+
   it("una entrada sin pack siempre está habilitada", () => {
     expect(moduloHabilitado({ pack_commerce: "plan" }, undefined)).toBe(true);
     expect(moduloHabilitado({ pack_commerce: "plan" }, "pack_commerce")).toBe(false);
