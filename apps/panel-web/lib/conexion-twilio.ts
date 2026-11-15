@@ -52,6 +52,10 @@ const ERRORES: Record<string, string> = {
   too_many_tests: "Espera unos segundos antes de mandar otra prueba.",
   daily_limit: "Ya mandaste las 10 pruebas de hoy. Vuelve a intentar mañana.",
   twilio_unavailable: "Twilio no respondió. Vuelve a intentar en unos minutos.",
+  webhooks_no_restaurados:
+    "No se pudieron devolver los webhooks anteriores al número, así que no se desconectó nada. Vuelve a intentar, o desconecta sin devolverlos.",
+  password_required: "Escribe tu contraseña para continuar.",
+  password_incorrect: "La contraseña no es correcta.",
 };
 
 export function mensajeErrorTwilio(code: string | undefined, fallback: string): string {
@@ -119,13 +123,23 @@ export function totalDeMoneda(m: Pick<CostosTwilio["por_moneda"][number], "moned
   }
 }
 
+/**
+ * Aviso al terminar de desconectar (`webhooks_restaurados` de la respuesta). Sin restaurar puede ser porque no se
+ * pidió o porque el número ya mandaba sus mensajes a otra integración (el backend no la pisa).
+ */
+export function avisoDesconectado(webhooksRestaurados: boolean, seRestauraba: boolean): string {
+  if (webhooksRestaurados) return "Número desconectado. Sus webhooks volvieron a la dirección que tenían antes.";
+  if (seRestauraba) return "Número desconectado. Sus webhooks ya apuntaban a otra dirección y no se tocaron.";
+  return "Número desconectado. Sus webhooks quedaron como estaban en Twilio.";
+}
+
 const BASE_BACKEND = "/admin/connections/twilio";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const POST_DE_CONEXION = new Set(["refresh", "webhooks", "test-message"]);
+const POST_DE_CONEXION = new Set(["refresh", "webhooks", "test-message", "disconnect"]);
 
 /**
  * Rutas del BFF (`/api/connections/twilio/**`) → ruta del backend (`/admin/connections/twilio/**`). Lista cerrada:
- * solo se reenvía lo que usa el alta y la ficha (P-1), con su método y un id con forma de UUID. Los días de Costos
+ * solo se reenvía lo que usa el alta y la ficha (P-1, más desconectar), con su método y un id con forma de UUID. Los días de Costos
  * se acotan a 1–90 como el backend.
  */
 export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[], dias?: string | null): string | null {

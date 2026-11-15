@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  avisoDesconectado,
   erroresDeCredenciales,
   estadoTwilio,
   etiquetaDeSender,
@@ -88,12 +89,14 @@ describe("WhatsApp vía Twilio: rutas del BFF (lista cerrada)", () => {
 
   it("acciones de una conexión, solo con id UUID", () => {
     expect(rutaTwilioDeBackend("GET", [ID])).toBe(`/admin/connections/twilio/${ID}`);
-    for (const accion of ["refresh", "webhooks", "test-message"]) {
+    for (const accion of ["refresh", "webhooks", "test-message", "disconnect"]) {
       expect(rutaTwilioDeBackend("POST", [ID, accion])).toBe(`/admin/connections/twilio/${ID}/${accion}`);
     }
     expect(rutaTwilioDeBackend("PUT", [ID, "credentials"])).toBe(`/admin/connections/twilio/${ID}/credentials`);
     expect(rutaTwilioDeBackend("POST", ["no-es-uuid", "refresh"])).toBeNull();
-    expect(rutaTwilioDeBackend("POST", [ID, "disconnect"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "disconnect"])).toBeNull();
+    expect(rutaTwilioDeBackend("PUT", [ID, "disconnect"])).toBeNull();
+    expect(rutaTwilioDeBackend("POST", ["no-es-uuid", "disconnect"])).toBeNull();
     expect(rutaTwilioDeBackend("POST", [ID, "templates"])).toBeNull();
     expect(rutaTwilioDeBackend("GET", [ID, "credentials"])).toBeNull();
     expect(rutaTwilioDeBackend("POST", [ID, "refresh", "x"])).toBeNull();
@@ -104,5 +107,19 @@ describe("WhatsApp vía Twilio: rutas del BFF (lista cerrada)", () => {
     expect(rutaTwilioDeBackend("GET", [ID, "costs"], "7")).toBe(`/admin/connections/twilio/${ID}/costs?dias=7`);
     expect(rutaTwilioDeBackend("GET", [ID, "costs"], "500")).toBe(`/admin/connections/twilio/${ID}/costs?dias=90`);
     expect(rutaTwilioDeBackend("GET", [ID, "costs"], "abc")).toBe(`/admin/connections/twilio/${ID}/costs?dias=30`);
+  });
+});
+
+describe("WhatsApp vía Twilio: desconectar", () => {
+  it("el aviso dice qué pasó con los webhooks", () => {
+    expect(avisoDesconectado(true, true)).toContain("volvieron");
+    expect(avisoDesconectado(false, true)).toContain("otra dirección");
+    expect(avisoDesconectado(false, false)).toContain("quedaron como estaban");
+  });
+
+  it("los errores de la desconexión salen en palabras", () => {
+    expect(mensajeErrorTwilio("webhooks_no_restaurados", "x")).toContain("no se desconectó nada");
+    expect(mensajeErrorTwilio("password_incorrect", "x")).toBe("La contraseña no es correcta.");
+    expect(mensajeErrorTwilio("password_required", "x")).toContain("contraseña");
   });
 });

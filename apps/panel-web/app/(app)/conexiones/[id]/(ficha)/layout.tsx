@@ -74,6 +74,7 @@ export default async function FichaDeConexionLayout({
                 manual={manual}
                 conActivar={!pausable}
                 redirectTo="/conexiones"
+                twilio={tipo === "whatsapp_twilio"}
               />
             </>
           ) : undefined
