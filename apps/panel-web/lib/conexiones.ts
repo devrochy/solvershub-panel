@@ -94,6 +94,8 @@ export function puedePausar(
 export type DestinoAlta =
   | { tipo: "formulario" }
   | { tipo: "navegar"; href: string }
+  // WhatsApp vía Twilio (ADR-0186): el alta guiada en tres pasos va dentro del mismo diálogo.
+  | { tipo: "twilio" }
   // Navegación dura (`<a>`/`location`): el inicio del OAuth no se pre-carga con el router (HU-CAL-07).
   | { tipo: "externo"; href: string };
 
@@ -117,6 +119,7 @@ export function destinoDeAlta(type: {
 }): DestinoAlta | null {
   if (!type.available) return null;
   if (type.setup_kind === "manual" && type.has_schema) return { tipo: "formulario" };
+  if (type.id === "whatsapp_twilio") return { tipo: "twilio" };
   if (type.id === "google_calendar") return { tipo: "externo", href: ALTA_GOOGLE_CALENDAR };
   const href = RUTA_DE_ALTA[type.id];
   return href ? { tipo: "navegar", href } : null;

@@ -7,6 +7,7 @@ import {
   destinoDeRutaMeta,
   enlaceSaludMeta,
   estadoDeConexion,
+  iconoDeConexion,
   mensajeErrorAgentes,
   muestraSalud,
   numerosDeLaCuenta,
@@ -71,8 +72,29 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     expect(tienePestana("smtp", "agentes")).toBe(false);
   });
 
-  it("otros canales manuales (Twilio, Plivo) y filas viejas sin tipo", () => {
-    expect(etiquetas({ ...sinMeta, type_id: "whatsapp_twilio" })).toEqual(["Credenciales", "Agentes", "Versiones"]);
+  it("WhatsApp vía Twilio: Resumen y salud primero, con Agentes, Prueba, Credenciales, Costos y Versiones", () => {
+    expect(etiquetas({ ...sinMeta, type_id: "whatsapp_twilio" })).toEqual([
+      "Resumen y salud",
+      "Agentes",
+      "Prueba",
+      "Credenciales",
+      "Costos",
+      "Versiones",
+    ]);
+    expect(pestanasDeFicha("c1", "whatsapp_twilio").every((p) => !p.avanzada)).toBe(true);
+    expect(tienePestana("whatsapp_twilio", "salud")).toBe(false);
+    expect(tienePestana("whatsapp_twilio", "plantillas")).toBe(false);
+  });
+
+  it("WhatsApp vía Twilio: el subtítulo lleva el número del sender y el ícono es el de WhatsApp", () => {
+    const tw = conexion({ ...sinMeta, type_id: "whatsapp_twilio", external_id: "+573005550101", display_phone_number: null });
+    expect(subtituloDeFicha(tw, "whatsapp_twilio")).toBe("WhatsApp vía Twilio · +57 300 555 0101");
+    expect(subtituloDeFicha({ ...tw, external_id: "+14155550100" }, "whatsapp_twilio")).toBe("WhatsApp vía Twilio · +14155550100");
+    expect(iconoDeConexion(tw)).toBe("whatsapp");
+  });
+
+  it("otros canales manuales (Plivo) y filas viejas sin tipo", () => {
+    expect(etiquetas({ ...sinMeta, type_id: "whatsapp_plivo" })).toEqual(["Credenciales", "Agentes", "Versiones"]);
     expect(tipoDeFicha(conexion({ type_id: null }))).toBe("whatsapp_meta");
     expect(tipoDeFicha(conexion({ ...sinMeta, type_id: null, conversational: false }))).toBe("smtp");
   });

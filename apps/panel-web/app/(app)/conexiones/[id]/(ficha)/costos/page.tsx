@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { CostosTwilioSeccion } from "@/app/(app)/conexiones/_components/twilio/costos-twilio";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { MetaCosts } from "@/components/domain/meta-costs";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
@@ -16,12 +17,13 @@ export const metadata = { title: "Costos" };
 type CuentaDeCreditos = { id: string; label: string | null; channel: string; business_id: string | null };
 
 /**
- * Costos de WhatsApp de la cuenta de Meta del número (30 días, CON-17): el total arriba, el
+ * Costos de WhatsApp de la cuenta de Meta del número (30 días, CON-17); los de Twilio, por moneda, en su sección: el total arriba, el
  * consumo por número y los créditos. Los costos de todo el negocio están en Plataforma › Costos técnicos (solo master).
  */
 export default async function CostosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ficha = await fichaDePestana(id, "costos");
+  if (ficha?.tipo === "whatsapp_twilio") return <CostosTwilioSeccion connectionId={id} />;
   const metaId = ficha?.conexion.meta_connection_id;
   if (!ficha || !metaId) return null;
   const [res, creditosRes, me] = await Promise.all([

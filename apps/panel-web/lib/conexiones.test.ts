@@ -130,6 +130,15 @@ describe("gestión y alta de conexiones", () => {
     ).toBeNull();
   });
 
+  it("WhatsApp vía Twilio abre su alta guiada en el mismo diálogo, solo si el catálogo lo marca disponible", () => {
+    expect(
+      destinoDeAlta({ id: "whatsapp_twilio", available: true, setup_kind: "wizard", has_schema: true }),
+    ).toEqual({ tipo: "twilio" });
+    expect(
+      destinoDeAlta({ id: "whatsapp_twilio", available: false, setup_kind: "wizard", has_schema: true }),
+    ).toBeNull();
+  });
+
   it("Instagram se conecta en su propia pantalla", () => {
     expect(
       destinoDeAlta({ id: "instagram_meta", available: true, setup_kind: "wizard", has_schema: false }),
