@@ -100,16 +100,16 @@ describe("resumen de Configuración (rediseño B)", () => {
     // Memoria se lee en palabras.
     expect(fila("Memoria").textContent).toMatch(/Recuerda \d+ mensajes/);
     expect(fila("Chat web").textContent).toMatch(/Apagado|Activo en/);
-    // WhatsApp Web y AgentSpec son del equipo de SolversHub: sin master no aparecen (CFG-04).
+    // WhatsApp Web y Cuenta y proveedor son del equipo de SolversHub: sin master no aparecen (CFG-04).
     expect(screen.queryByRole("button", { name: /^WhatsApp Web/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^AgentSpec/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Cuenta y proveedor/ })).toBeNull();
     // Sin sección pedida no hay cajón abierto.
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("el master ve AgentSpec y proveedor", () => {
+  it("el master ve Cuenta y proveedor", () => {
     montar({ esMaster: true });
-    expect(fila("AgentSpec y proveedor")).toBeTruthy();
+    expect(fila("Cuenta y proveedor")).toBeTruthy();
   });
 
   it("habilidades y mensajes fallidos son filas más, con su estado (CFG-11)", () => {
@@ -143,7 +143,7 @@ describe("resumen de Configuración (rediseño B)", () => {
     expect(titulo().textContent).toBe("Chat web");
     cleanup();
     montar({ defaultTab: "avanzado", esMaster: true });
-    expect(titulo().textContent).toBe("AgentSpec y proveedor");
+    expect(titulo().textContent).toBe("Cuenta y proveedor");
   });
 
   it("Horario muestra solo sus campos del formulario de identidad", () => {

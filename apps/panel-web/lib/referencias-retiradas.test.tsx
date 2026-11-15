@@ -336,7 +336,7 @@ describe("editor de agentes con referencias retiradas", () => {
       ),
     );
     editor(null);
-    fireEvent.click(screen.getByRole("button", { name: /Paso 6/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Paso 7/ }));
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     // Lleva al paso Acciones y pinta el texto junto a la acción.
     const alerta = await waitFor(() => {

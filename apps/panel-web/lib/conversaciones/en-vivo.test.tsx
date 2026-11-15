@@ -153,6 +153,7 @@ describe("useBandejaEnVivo", () => {
       channel: "whatsapp",
       status: "open",
       bot_paused: false,
+      pending_count: 0,
       started_at: "2026-10-09T15:00:00Z",
     };
     const fetchMock = vi.fn<(url: string) => Promise<Response>>(() =>
@@ -178,6 +179,7 @@ describe("useBandejaEnVivo", () => {
       channel: "whatsapp",
       status: "open",
       bot_paused: false,
+      pending_count: 0,
       started_at: "2026-10-09T14:00:00Z",
       last_message_at: "2026-10-09T15:00:00Z",
     };
@@ -213,6 +215,7 @@ describe("unirChats", () => {
     channel: "whatsapp",
     status: "open",
     bot_paused: false,
+    pending_count: 0,
     started_at: "2026-10-09T14:00:00Z",
     last_message_at,
   });
@@ -233,6 +236,7 @@ describe("ordenarPorLlegada", () => {
       channel: "whatsapp",
       status: "open",
       bot_paused: false,
+      pending_count: 0,
       started_at,
       last_message_at,
     };
@@ -260,6 +264,7 @@ describe("useBandejaEnVivo · orden", () => {
       channel: "whatsapp",
       status: "open",
       bot_paused: false,
+      pending_count: 0,
     };
     const viejo = { ...base, id: "c1", started_at: "2026-10-09T14:00:00Z", last_message_at: "2026-10-09T15:00:00Z" };
     const nuevo = { ...base, id: "c2", started_at: "2026-10-09T14:00:00Z", last_message_at: "2026-10-09T16:00:00Z" };
