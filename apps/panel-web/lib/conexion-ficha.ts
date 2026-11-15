@@ -184,6 +184,9 @@ export function subtituloDeFicha(
     const detalle = [nombre, numero].filter(Boolean).join(" · ");
     return detalle ? `${tipoLegible(tipo)} · ${detalle}` : tipoLegible(tipo);
   }
+  // En el Sandbox de Twilio (HU-CONN-20) `external_id` es `sandbox:<AccountSid>`: el número es el compartido de Twilio
+  // y no identifica a la conexión, así que se dice que es el Sandbox.
+  if (tipo === "whatsapp_twilio" && c.external_id?.startsWith("sandbox:")) return `${tipoLegible(tipo)} · Sandbox`;
   // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo. En
   // Twilio `external_id` es el número del sender (`sender_e164`).
   const numero =

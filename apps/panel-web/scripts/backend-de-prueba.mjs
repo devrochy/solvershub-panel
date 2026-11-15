@@ -17,6 +17,8 @@
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
 //   SIN_CONEXIONES=1 (el negocio no tiene conexión de WhatsApp: «Publicar en Meta» muestra su estado vacío)
+//   TWILIO_SANDBOX=1 (HU-CONN-20: «Agregar conexión» ofrece «Usar el Sandbox» y hay un sandbox de Twilio sin confirmar;
+//   TWILIO_SANDBOX=confirmado lo muestra ya funcionando)
 //   SESION_REAL=1 (sin cookie de sesión, `/admin/me` responde 401: deja ver el login)
 //   BIENVENIDA=1 (asistente de primer uso en curso; con AGENTES=1, las plantillas de agente)
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -267,6 +269,39 @@ if (process.env.CONEXIONES === "1") {
 }
 
 // AGENDAS=2: el negocio tiene dos agendas (HU-CAL-08) y el calendario trae una cita de cada una.
+const TWILIO_SBX = "00000000-0000-4000-8000-0000000000c9";
+const twilioSandbox = process.env.TWILIO_SANDBOX;
+if (twilioSandbox) {
+  const consola = respuestas["/admin/connections/console"];
+  const base = consola.items.find((x) => x.id === "00000000-0000-4000-8000-0000000000c1");
+  respuestas["/admin/connections/console"] = {
+    ...consola,
+    items: [
+      ...consola.items,
+      { ...base, id: TWILIO_SBX, label: "WhatsApp Sandbox de Twilio", type_id: "whatsapp_twilio", channel: "whatsapp", provider: "twilio", external_id: `sandbox:AC${"a".repeat(32)}`, meta_connection_id: null, is_primary: false, agents: [] },
+    ],
+  };
+  const confirmado = twilioSandbox === "confirmado";
+  respuestas[`/admin/connections/twilio/${TWILIO_SBX}`] = {
+    connection_id: TWILIO_SBX, label: "WhatsApp Sandbox de Twilio", sender_e164: "+14155238886", sender_sid: "", sender_status: "",
+    display_name: "Sandbox de Twilio", status: confirmado ? "connected" : "pending", account_sid: `AC${"a".repeat(32)}`,
+    webhook_inbound_url: "https://api.test.example/webhooks/twilio/Xy7pQ2rT9vL4mN8kB3cD5fGh/inbound",
+    webhook_status_url: "https://api.test.example/webhooks/twilio/Xy7pQ2rT9vL4mN8kB3cD5fGh/status",
+    tenia_webhook_previo: false, last_error_code: null, active: true, modo: "sandbox", sandbox_join_code: "cloud-forgotten",
+    webhook_confirmado_at: confirmado ? "2026-11-15T14:30:00Z" : null, requiere_accion_manual: !confirmado,
+  };
+  respuestas["/admin/connections/twilio/capabilities"] = { sandbox_disponible: true, sandbox_e164: "+14155238886" };
+  const catalogo = respuestas["/admin/connections/catalog"] ?? { categories: [{ category: "comunicacion", label: "Comunicación", items: [] }] };
+  respuestas["/admin/connections/catalog"] = { ...catalogo, categories: catalogo.categories.map((c) => ({
+    ...c,
+    items: c.items.some((i) => i.id === "whatsapp_twilio")
+      ? c.items.map((i) => (i.id === "whatsapp_twilio" ? { ...i, available: true, setup_kind: "wizard", has_schema: false } : i))
+      : c.category === "comunicacion"
+        ? [...c.items, { id: "whatsapp_twilio", label: "WhatsApp vía Twilio", description: "Por Twilio, con tu propia cuenta.", available: true, setup_kind: "wizard", url: null, has_schema: false }]
+        : c.items,
+  })) };
+}
+
 if (process.env.AGENDAS === "2") {
   respuestas["/pack/calendar/calendars"] = dosAgendas;
   // Una semana con trabajo: además de las tres de hoy, citas de lunes a sábado en las dos agendas.
@@ -1817,6 +1852,19 @@ createServer(async (req, res) => {
       res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
+  }
+  if (twilioSandbox && ruta === "/admin/connections/twilio/sandbox" && req.method === "POST") {
+    res.statusCode = 201;
+    res.end(JSON.stringify(respuestas[`/admin/connections/twilio/${TWILIO_SBX}`]));
+    return;
+  }
+  if (twilioSandbox && ruta === `/admin/connections/twilio/${TWILIO_SBX}/sandbox` && req.method === "PATCH") {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const actual = respuestas[`/admin/connections/twilio/${TWILIO_SBX}`];
+    respuestas[`/admin/connections/twilio/${TWILIO_SBX}`] = { ...actual, sandbox_join_code: JSON.parse(texto || "{}").join_code ?? actual.sandbox_join_code };
+    res.end(JSON.stringify(respuestas[`/admin/connections/twilio/${TWILIO_SBX}`]));
+    return;
   }
   if (ruta === "/me/notifications/read" && req.method === "POST") {
     respuestas["/me/notifications"] = { ...respuestas["/me/notifications"], unread_count: 0 };
