@@ -14,9 +14,13 @@ const PATHS: Record<string, string> = {
   // `{permissions: {sección → none|read|write}, tenant}`.
   permissions: "permissions",
   toggle: "toggle",
+  // Baja lógica de la cuenta (ADR-0198): `{reason?}`. No borra el historial.
+  delete: "delete",
+  // Reactiva la MISMA cuenta eliminada: `{tenant?}`. Solo master o el dueño que la dio de baja.
+  reactivate: "reactivate",
 };
 
-/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, desvincular, activar). */
+/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, baja/reactivación, activar). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as

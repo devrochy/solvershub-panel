@@ -53,6 +53,26 @@ describe("BFF de colaboradores", () => {
     expect(JSON.parse(String(init.body))).toEqual({ tenant: "tienda-norte" });
   });
 
+  it("eliminar va a /delete y reactivar a /reactivate", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    let res = await ACCION(pedido(`/api/collaborators/${ID}`, { action: "delete" }), {
+      params: Promise.resolve({ id: ID }),
+    });
+    expect(res.status).toBe(200);
+    let [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(new RegExp(`/admin/collaborators/${ID}/delete$`));
+    expect(init.method).toBe("POST");
+
+    fetchMock.mockClear();
+    res = await ACCION(pedido(`/api/collaborators/${ID}`, { action: "reactivate" }), {
+      params: Promise.resolve({ id: ID }),
+    });
+    expect(res.status).toBe(200);
+    [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(new RegExp(`/admin/collaborators/${ID}/reactivate$`));
+    expect(init.method).toBe("POST");
+  });
+
   it("una acción desconocida se rechaza sin llamar a la API", async () => {
     const res = await ACCION(pedido(`/api/collaborators/${ID}`, { action: "purge" }), { params: Promise.resolve({ id: ID }) });
     expect(res.status).toBe(400);

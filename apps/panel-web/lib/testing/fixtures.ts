@@ -348,6 +348,9 @@ export const colaboradores: CollaboratorItem[] = [
     permissions: [],
     links: [{ role: "owner", slug: "negocio-de-prueba", name: TENANT.name }],
     pack_profiles: [],
+    deleted: false,
+    can_delete: false,
+    can_reactivate: false,
   },
   {
     id: "test-admin-2",
@@ -363,6 +366,9 @@ export const colaboradores: CollaboratorItem[] = [
     permissions: [{ section: "conversations", access: "write", scope: "tenant" }],
     links: [{ role: "collaborator", slug: "negocio-de-prueba", name: TENANT.name }],
     pack_profiles: [],
+    deleted: false,
+    can_delete: false,
+    can_reactivate: false,
   },
 ];
 

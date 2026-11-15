@@ -13,11 +13,11 @@ import { InputPassword } from "@/components/ui/input-password";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import type { CollaboratorItem } from "@/lib/api/types";
-import { esDueno, perfilDePack, rolDeCuenta } from "@/lib/colaboradores";
+import { esDueno, perfilDePack, puedeEliminar, rolDeCuenta } from "@/lib/colaboradores";
 import { rolLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
-type Accion = "toggle" | "password" | "link" | "unlink";
+type Accion = "toggle" | "password" | "link" | "unlink" | "delete" | "reactivate";
 
 /** POST al BFF de una cuenta, con el formato que espera `useAction`. */
 async function enviar(id: string, action: Accion, payload: Record<string, unknown>, success: string) {
@@ -54,6 +54,56 @@ export function useAlternarAcceso(persona: CollaboratorItem) {
   }
 
   return { alternar, pending };
+}
+
+/**
+ * Baja lógica de una persona del equipo (ADR-0198). Pide confirmación porque corta el acceso y
+ * la saca de Equipo; el historial, los registros de cartera y el Gestor se conservan.
+ */
+export function useEliminarPersona(persona: CollaboratorItem) {
+  const confirm = useConfirm();
+  const { run, pending } = useAction();
+  const router = useRouter();
+  const nombre = persona.nombre || persona.email;
+
+  async function eliminar() {
+    const aceptado = await confirm({
+      title: `Eliminar a ${nombre} del equipo`,
+      description:
+        "Deja de entrar al panel y desaparece del equipo. Se conservan su historial y los registros que hizo en las carteras (pagos, notas, gastos). El correo no se reasigna: si vuelve, se reactiva esta misma cuenta.",
+      confirmLabel: "Eliminar del equipo",
+      destructive: true,
+    });
+    if (!aceptado) return false;
+    const ok = await run(() => enviar(persona.id, "delete", {}, "Cuenta eliminada."));
+    if (ok) router.replace("/colaboradores", { scroll: false });
+    return ok;
+  }
+
+  return { eliminar, pending };
+}
+
+/** Reactiva la MISMA cuenta eliminada, con su correo, historial y perfil de Gestor (ADR-0198). */
+export function useReactivarPersona(persona: CollaboratorItem) {
+  const confirm = useConfirm();
+  const { run, pending } = useAction();
+  const router = useRouter();
+  const nombre = persona.nombre || persona.email;
+
+  async function reactivar() {
+    const aceptado = await confirm({
+      title: `Reactivar a ${nombre}`,
+      description:
+        "Vuelve a entrar al panel y a su lugar en el equipo. Su historial, sus carteras y su perfil de Cobranza siguen asociados a esta misma cuenta. Restablécele la contraseña si no la recuerda.",
+      confirmLabel: "Reactivar cuenta",
+    });
+    if (!aceptado) return false;
+    const ok = await run(() => enviar(persona.id, "reactivate", {}, "Cuenta reactivada."));
+    if (ok) router.replace("/colaboradores", { scroll: false });
+    return ok;
+  }
+
+  return { reactivar, pending };
 }
 
 /** Qué hace cada rol, para leerlo en la ficha. */
@@ -98,6 +148,8 @@ export function AccesoDePersona({
   const confirm = useConfirm();
   const { run, pending } = useAction();
   const { alternar, pending: alternando } = useAlternarAcceso(persona);
+  const { eliminar, pending: eliminando } = useEliminarPersona(persona);
+  const { reactivar, pending: reactivando } = useReactivarPersona(persona);
   const [activa, setActiva] = useState(persona.active);
   const [cambiandoClave, setCambiandoClave] = useState(abrirContrasena);
   const [negocio, setNegocio] = useState<{ slug: string; name: string } | null>(null);
@@ -138,6 +190,33 @@ export function AccesoDePersona({
     const password = String(new FormData(event.currentTarget).get("password") ?? "");
     const ok = await run(() => enviar(persona.id, "password", { password }, "Contraseña cambiada."));
     if (ok) setCambiandoClave(false);
+  }
+
+  if (persona.deleted) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1 rounded-lg border border-border-soft bg-surface-2 p-4">
+          <span className="text-sm font-medium text-headline">Esta cuenta está eliminada</span>
+          <span className="text-xs text-text-soft">
+            No puede entrar al panel. Su historial, sus carteras y los registros que hizo se conservan.
+          </span>
+        </div>
+        {persona.can_reactivate ? (
+          <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            className="self-start"
+            onClick={() => void reactivar()}
+            loading={reactivando}
+          >
+            Reactivar cuenta
+          </Button>
+        ) : (
+          <p className="text-xs text-text-soft">Un administrador de la plataforma puede reactivarla.</p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -289,6 +368,25 @@ export function AccesoDePersona({
               Restablecer la contraseña
             </Button>
           )}
+        </Bloque>
+      )}
+
+      {puedeEliminar(persona) && (
+        <Bloque titulo="Zona de riesgo">
+          <p className="text-xs text-text-soft">
+            Eliminar la cuenta le quita el acceso y la saca del equipo. Su historial y los registros
+            que hizo en las carteras se conservan; el correo no se reasigna.
+          </p>
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            className="self-start"
+            onClick={() => void eliminar()}
+            loading={eliminando}
+          >
+            Eliminar del equipo
+          </Button>
         </Bloque>
       )}
     </div>

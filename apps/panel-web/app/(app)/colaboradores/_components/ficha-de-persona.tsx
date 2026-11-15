@@ -14,7 +14,13 @@ export type PestanaDeFicha = "acceso" | "permisos";
 
 /** ¿Tiene permisos propios que cambiar? Un dueño o el master ya lo ven todo. */
 export function tienePermisosEditables(persona: CollaboratorItem, esMaster: boolean, secciones: string[]): boolean {
-  return puedeActuarSobre(persona, esMaster) && !persona.is_platform_master && !esDueno(persona) && secciones.length > 0;
+  return (
+    !persona.deleted &&
+    puedeActuarSobre(persona, esMaster) &&
+    !persona.is_platform_master &&
+    !esDueno(persona) &&
+    secciones.length > 0
+  );
 }
 
 /**
@@ -39,7 +45,7 @@ export function FichaDePersona({
   const conPermisos = tienePermisosEditables(persona, esMaster, secciones);
   const [pestana, setPestana] = useState<PestanaDeFicha>(conPermisos ? pestanaInicial : "acceso");
   const nombre = persona.nombre || persona.email;
-  const estado = persona.active ? "Activa" : "Desactivada";
+  const estado = persona.deleted ? "Eliminada" : persona.active ? "Activa" : "Desactivada";
 
   return (
     <Sheet open onOpenChange={(abierta) => !abierta && onClose()}>

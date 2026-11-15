@@ -27,8 +27,9 @@ export default async function CollaboratorsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [res, meRes, rolesRes, invRes, params] = await Promise.all([
+  const [res, eliminadasRes, meRes, rolesRes, invRes, params] = await Promise.all([
     apiFetch<CollaboratorItem[]>("/admin/collaborators"),
+    apiFetch<CollaboratorItem[]>("/admin/collaborators?eliminadas=1"),
     apiFetch<Me>("/admin/me"),
     apiFetch<{ value: string; label: string }[]>("/admin/collaborators/pack-roles"),
     apiFetch<InvitacionPendiente[]>("/admin/invitations/outgoing"),
@@ -60,7 +61,13 @@ export default async function CollaboratorsPage({
         actions={invitar}
       />
       <InvitacionesPendientes invitaciones={invitaciones} />
-      <TablaDeColaboradores filas={res.data} secciones={secciones} esMaster={esMaster} abierta={fichaDeLaUrl(params)} />
+      <TablaDeColaboradores
+        filas={res.data}
+        eliminadas={eliminadasRes.ok ? eliminadasRes.data : []}
+        secciones={secciones}
+        esMaster={esMaster}
+        abierta={fichaDeLaUrl(params)}
+      />
     </div>
   );
 }
