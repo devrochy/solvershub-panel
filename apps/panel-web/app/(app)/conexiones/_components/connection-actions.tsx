@@ -14,11 +14,13 @@ import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
 import { EliminarCuentaDialog } from "./eliminar-cuenta-dialog";
+import { DesconectarTwilioDialog } from "./twilio/desconectar-twilio-dialog";
 import { VerCredencialesDialog } from "./ver-credenciales-dialog";
 
 /**
  * Menú de acciones de una conexión, en la cabecera de su ficha: ver y editar los datos de una
- * manual, activarla cuando no se pausa con el botón Pausar, hacerla la principal y eliminarla.
+ * manual, activarla cuando no se pausa con el botón Pausar, hacerla la principal y eliminarla. Un número de
+ * WhatsApp vía Twilio se desconecta con su propia ruta, que puede devolverle sus webhooks previos.
  */
 export function ConnectionActions({
   connectionId,
@@ -30,6 +32,7 @@ export function ConnectionActions({
   manual = false,
   conActivar = false,
   redirectTo,
+  twilio = false,
 }: {
   connectionId: string;
   label: string;
@@ -43,6 +46,8 @@ export function ConnectionActions({
   conActivar?: boolean;
   /** A dónde ir después de eliminarla. */
   redirectTo?: string;
+  /** Es un número de WhatsApp vía Twilio: «Desconectar» con `DesconectarTwilioDialog`. */
+  twilio?: boolean;
 }) {
   const router = useRouter();
   const confirm = useConfirm();
@@ -119,7 +124,7 @@ export function ConnectionActions({
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem icon={<Trash2 />} tone="danger" disabled={pending} onSelect={() => setDeleteOpen(true)}>
-          {kind === "meta_connection" ? "Eliminar la cuenta" : "Eliminar"}
+          {kind === "meta_connection" ? "Eliminar la cuenta" : twilio ? "Desconectar" : "Eliminar"}
         </DropdownMenuItem>
       </MenuDeFila>
 
@@ -153,14 +158,24 @@ export function ConnectionActions({
       </Dialog>
 
       <VerCredencialesDialog connectionId={connectionId} label={label} open={datosOpen} onOpenChange={setDatosOpen} />
-      <EliminarCuentaDialog
-        connectionId={connectionId}
-        label={label}
-        kind={kind}
-        redirectTo={redirectTo}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {twilio ? (
+        <DesconectarTwilioDialog
+          connectionId={connectionId}
+          label={label}
+          redirectTo={redirectTo}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      ) : (
+        <EliminarCuentaDialog
+          connectionId={connectionId}
+          label={label}
+          kind={kind}
+          redirectTo={redirectTo}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </>
   );
 }
