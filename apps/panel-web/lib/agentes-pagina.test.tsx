@@ -83,6 +83,8 @@ function fraseDeLaSemana(): string | undefined {
   return Array.from(document.querySelectorAll("p")).find((p) => p.textContent?.includes("esta semana"))?.textContent ?? undefined;
 }
 
+// Los tests que montan la página y corren axe usan 15 s, como lib/a11y/paginas.test.tsx: en el
+// runner del CI con carga, el primer import de la página y axe pasan de los 5 s por defecto.
 describe("vista de un agente", () => {
   it("muestra sus conversaciones, las cuatro pestañas y «Probar» como botón (AGT-04)", async () => {
     Object.assign(respuestas, {
@@ -105,7 +107,7 @@ describe("vista de un agente", () => {
     expect(screen.queryByRole("button", { name: "Filtrar" })).toBeNull();
     expect(llamadas.some((r) => r.startsWith("/admin/agents/00000000-0000-4000-8000-000000000001/conversations?desde="))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, 15_000);
 
   it("sin datos explica qué va a aparecer y cómo probarlo", async () => {
     Object.assign(respuestas, {
@@ -257,7 +259,7 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(llamadas.some((r) => r.startsWith(`/admin/agents/${ID}/usage`))).toBe(false);
     expect(llamadas.some((r) => r.startsWith(`/admin/agents/${ID}/conversations?desde=`) && r.includes("page_size=1"))).toBe(true);
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, 15_000);
 
   it("Dónde atiende (también desde ?tab=conexiones): filas que abren la conexión y sin período", async () => {
     base();
@@ -301,7 +303,7 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(screen.getByRole("heading", { name: "Habilidades" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Documentos" })).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, 15_000);
 
   it("?tab=probar abre el cajón de prueba por la conexión principal del agente", async () => {
     base();
