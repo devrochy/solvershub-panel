@@ -57,13 +57,7 @@ export type LeadRow = components["schemas"]["LeadRow"];
 export type CostsResponse = components["schemas"]["CostsResponse"];
 export type PlanResponse = components["schemas"]["PlanResponse"];
 
-export type CollaboratorItem = components["schemas"]["CollaboratorItem"] & {
-  // ADR-0198 (agent-core#786): baja lógica y reactivación. Se declaran aquí hasta que el
-  // contrato de agent-core `develop` los traiga; el campo es opcional para paneles viejos.
-  deleted?: boolean;
-  can_delete?: boolean;
-  can_reactivate?: boolean;
-};
+export type CollaboratorItem = components["schemas"]["CollaboratorItem"];
 export type PackProfile = components["schemas"]["PackProfile"];
 export type ConnectionItem = components["schemas"]["ConnectionItem"];
 export type ConnectionsResponse = components["schemas"]["ConnectionsResponse"];
