@@ -33,7 +33,7 @@ export type PacksDelNegocio = Record<string, { enabled: boolean }>;
  * `backoffice` (los dos atienden trabajo del negocio); nunca el Coordinador (`core`).
  */
 export function cuentaParaModulo(
-  agente: Pick<AgentOverviewItem, "key" | "kind" | "published" | "virtual">,
+  agente: Pick<AgentOverviewItem, "key" | "source_template" | "kind" | "published" | "virtual">,
 ): boolean {
   return agente.kind !== "core" && agente.published && !agente.virtual;
 }
@@ -43,7 +43,9 @@ export function packsConAgente(agentes: Pick<AgentsOverview, "items"> | null): S
   const packs = new Set<string>();
   for (const agente of agentes?.items ?? []) {
     if (!cuentaParaModulo(agente)) continue;
-    const pack = PACK_DEL_AGENTE[agente.key];
+    // `source_template` es el tipo real del agente; la key puede ser `ventas_2` en el segundo
+    // agente del mismo tipo (HU-AOS-68).
+    const pack = PACK_DEL_AGENTE[agente.source_template ?? agente.key] ?? PACK_DEL_AGENTE[agente.key];
     if (pack) packs.add(pack);
   }
   return packs;
