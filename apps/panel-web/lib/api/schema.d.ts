@@ -3893,6 +3893,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/whatsapp-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Matriz
+         * @description Cada plantilla del negocio una vez (nombre e idioma) con su estado en cada conexión de WhatsApp, y los avisos
+         *     por evento cuya plantilla falta o no está aprobada en una conexión activa.
+         */
+        get: operations["matriz_api_v1_admin_whatsapp_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/whatsapp-templates/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copiar
+         * @description Copia una plantilla aprobada a otras conexiones (crea y envía a aprobación). Resultado por destino; repetirla
+         *     no duplica.
+         */
+        post: operations["copiar_api_v1_admin_whatsapp_templates_copy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/whatsapp-templates/copy-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copiar Todas
+         * @description Copia a otra conexión las plantillas aprobadas del origen que le falten. Si quedan `restantes`, repetir.
+         */
+        post: operations["copiar_todas_api_v1_admin_whatsapp_templates_copy_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/meta/wizard": {
         parameters: {
             query?: never;
@@ -18414,6 +18476,164 @@ export interface components {
              */
             importa_fotos: boolean;
         };
+        /** PlantillasNegocioAvisoFaltanteOut */
+        PlantillasNegocioAvisoFaltanteOut: {
+            /** Evento */
+            evento: string;
+            /** Nombre */
+            nombre: string;
+            /** Idioma */
+            idioma: string;
+            /**
+             * Conexion
+             * @description `clave` de la conexión por la que el aviso no saldrá con plantilla.
+             */
+            conexion: string;
+            /** Estado */
+            estado: string;
+        };
+        /** PlantillasNegocioCeldaOut */
+        PlantillasNegocioCeldaOut: {
+            /**
+             * Estado
+             * @description `aprobada`, `pendiente`, `sin_enviar`, `rechazada`, `pausada`, `falta` o `no_replicable`.
+             */
+            estado: string;
+            /**
+             * Distinta
+             * @description Mismo nombre e idioma con otro texto que el de la fila.
+             */
+            distinta: boolean;
+            /** Plantilla Id */
+            plantilla_id: string | null;
+            /**
+             * Motivo
+             * @description Motivo del rechazo o de por qué no se puede copiar.
+             */
+            motivo: string;
+        };
+        /** PlantillasNegocioConexionOut */
+        PlantillasNegocioConexionOut: {
+            /**
+             * Clave
+             * @description `proveedor:id`, la llave de las celdas.
+             */
+            clave: string;
+            /**
+             * Proveedor
+             * @enum {string}
+             */
+            proveedor: "meta" | "twilio";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Etiqueta */
+            etiqueta: string;
+            /** Activa */
+            activa: boolean;
+            /** Motivo Pausa */
+            motivo_pausa: string | null;
+            /** Sandbox */
+            sandbox: boolean;
+            /**
+             * Destinable
+             * @description Activa y fuera del Sandbox: se puede copiar a ella.
+             */
+            destinable: boolean;
+        };
+        /** PlantillasNegocioConexionRef */
+        PlantillasNegocioConexionRef: {
+            /**
+             * Proveedor
+             * @enum {string}
+             */
+            proveedor: "meta" | "twilio";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** PlantillasNegocioCopiarIn */
+        PlantillasNegocioCopiarIn: {
+            origen: components["schemas"]["PlantillasNegocioConexionRef"];
+            /** Nombre */
+            nombre: string;
+            /** Idioma */
+            idioma: string;
+            /** Destinos */
+            destinos: components["schemas"]["PlantillasNegocioConexionRef"][];
+        };
+        /** PlantillasNegocioCopiarTodasIn */
+        PlantillasNegocioCopiarTodasIn: {
+            origen: components["schemas"]["PlantillasNegocioConexionRef"];
+            destino: components["schemas"]["PlantillasNegocioConexionRef"];
+        };
+        /** PlantillasNegocioFilaOut */
+        PlantillasNegocioFilaOut: {
+            /** Nombre */
+            nombre: string;
+            /** Idioma */
+            idioma: string;
+            /** Categoria */
+            categoria: string;
+            /** Cuerpo */
+            cuerpo: string;
+            /**
+             * Celdas
+             * @description Por `clave` de conexión.
+             */
+            celdas: {
+                [key: string]: components["schemas"]["PlantillasNegocioCeldaOut"];
+            };
+        };
+        /** PlantillasNegocioMatrizOut */
+        PlantillasNegocioMatrizOut: {
+            /** Conexiones */
+            conexiones: components["schemas"]["PlantillasNegocioConexionOut"][];
+            /** Filas */
+            filas: components["schemas"]["PlantillasNegocioFilaOut"][];
+            /** Avisos Faltantes */
+            avisos_faltantes: components["schemas"]["PlantillasNegocioAvisoFaltanteOut"][];
+        };
+        /** PlantillasNegocioResultadoOut */
+        PlantillasNegocioResultadoOut: {
+            /** Conexion */
+            conexion: string;
+            /**
+             * Resultado
+             * @enum {string}
+             */
+            resultado: "creada" | "ya_existia" | "distinta" | "no_replicable" | "error";
+            /** Motivo */
+            motivo: string;
+            /** Nombre */
+            nombre: string;
+            /** Idioma */
+            idioma: string;
+        };
+        /** PlantillasNegocioResumenOut */
+        PlantillasNegocioResumenOut: {
+            /** Creadas */
+            creadas: number;
+            /** Ya Existian */
+            ya_existian: number;
+            /** Distintas */
+            distintas: number;
+            /** No Replicables */
+            no_replicables: number;
+            /** Errores */
+            errores: number;
+            /**
+             * Restantes
+             * @description Las que faltan por copiar (hasta 10 por pedido): repetir el pedido.
+             */
+            restantes: number;
+            /** Detalle */
+            detalle: components["schemas"]["PlantillasNegocioResultadoOut"][];
+        };
         /**
          * PlatformMetaApp
          * @description Checklist de la app de Meta de la plataforma y la infraestructura (solo master).
@@ -31952,6 +32172,134 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    matriz_api_v1_admin_whatsapp_templates_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantillasNegocioMatrizOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copiar_api_v1_admin_whatsapp_templates_copy_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlantillasNegocioCopiarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantillasNegocioResultadoOut"][];
+                };
+            };
+            /** @description `not_found` o `plantilla_no_encontrada`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `origen_no_aprobada` o `no_es_destino` (Sandbox o conexión pausada). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `mismo_destino`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    copiar_todas_api_v1_admin_whatsapp_templates_copy_all_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlantillasNegocioCopiarTodasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantillasNegocioResumenOut"];
+                };
+            };
+            /** @description `not_found` o `plantilla_no_encontrada`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `origen_no_aprobada` o `no_es_destino` (Sandbox o conexión pausada). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `mismo_destino`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
