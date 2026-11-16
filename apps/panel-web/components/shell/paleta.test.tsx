@@ -158,7 +158,7 @@ describe("paleta de comandos (HU-DS-05)", () => {
     pulsar("Enter", {}, entrada);
     const dialogo = await screen.findByRole("alertdialog");
     expect(within(dialogo).getByText("¿Pausar el asistente?")).toBeTruthy();
-    expect(within(dialogo).getByText(/Dejará de responder a los clientes/)).toBeTruthy();
+    expect(within(dialogo).getByText(/no saldrá nada automático a tus clientes/)).toBeTruthy();
     fireEvent.click(within(dialogo).getByRole("button", { name: "Pausar asistente" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls.find(([u]) => u === "/api/settings/asistente") as [string, RequestInit];

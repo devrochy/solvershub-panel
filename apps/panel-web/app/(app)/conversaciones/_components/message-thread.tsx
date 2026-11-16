@@ -3,6 +3,7 @@ import { Bot, MessageSquare, Mic, SearchCode, Wrench } from "lucide-react";
 import type { MessageItem } from "@/lib/api/types";
 import { formatDate, formatHoraChat } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { textoDeNoEnviado } from "@/lib/motivo-no-enviado";
 
 const SENDER_LABEL: Record<string, string> = {
   customer: "Cliente",
@@ -281,9 +282,7 @@ function MensajeDelHilo({
       )}
       {message.status === "failed" && (
         <span className="px-1 text-xs text-status-danger-fg">
-          {message.error_reason === "sin_plantilla"
-            ? "No enviado: el cliente llevaba más de 24 h sin escribir y el aviso no tiene plantilla."
-            : "No enviado."}
+          {textoDeNoEnviado(message.error_reason)}
         </span>
       )}
     </div>
