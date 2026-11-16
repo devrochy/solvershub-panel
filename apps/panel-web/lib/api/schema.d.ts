@@ -2626,6 +2626,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/twilio/{connection_id}/test-message/{message_sid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resultado De Prueba
+         * @description Resultado de la última prueba: Twilio acepta el envío y el rechazo (63015 del Sandbox, 63016 fuera de la
+         *     ventana…) llega después por el status callback. El panel lo consulta unos segundos tras enviar.
+         */
+        get: operations["resultado_de_prueba_api_v1_admin_connections_twilio__connection_id__test_message__message_sid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections/twilio/{connection_id}/credentials": {
         parameters: {
             query?: never;
@@ -22776,6 +22797,41 @@ export interface components {
             /** Aprobada At */
             aprobada_at: string | null;
         };
+        /** TwilioPruebaEstadoOut */
+        TwilioPruebaEstadoOut: {
+            /** Message Sid */
+            message_sid: string;
+            /**
+             * Estado
+             * @description `queued` (Twilio la aceptó), `sent`, `delivered`, `read` o `failed`. Solo avanza.
+             */
+            estado: string;
+            /**
+             * Provider Status
+             * @description El `MessageStatus` de Twilio (`undelivered`, `failed`…).
+             */
+            provider_status: string;
+            /**
+             * Error Code
+             * @description Código de Twilio cuando no llegó (63015, 63016…).
+             */
+            error_code: number | null;
+            /**
+             * Motivo
+             * @description Por qué no llegó, en palabras, para mostrarlo tal cual.
+             */
+            motivo: string | null;
+            /**
+             * Enviado At
+             * Format: date-time
+             */
+            enviado_at: string;
+            /**
+             * Actualizado At
+             * Format: date-time
+             */
+            actualizado_at: string;
+        };
         /** TwilioPruebaIn */
         TwilioPruebaIn: {
             /**
@@ -29519,6 +29575,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    resultado_de_prueba_api_v1_admin_connections_twilio__connection_id__test_message__message_sid__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+                message_sid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwilioPruebaEstadoOut"];
+                };
+            };
+            /** @description La conexión no existe, o ese SID no es su última prueba (o ya pasó un día). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
