@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
 import type { MessageTemplatesSettings } from "@/lib/api/types";
 
+import { AvisosSinPlantillaPorConexion } from "../_components/avisos-sin-plantilla";
 import { EventTemplatesEditor } from "./_components/event-templates-editor";
 
 export const metadata = { title: "Avisos por evento" };
@@ -19,6 +20,7 @@ export default async function PlantillasPorEventoPage() {
         breadcrumbs={[{ label: "Mensajes", href: "/mensajes" }, { label: "Avisos por evento" }]}
       />
       <MissingTemplatesBanner enLaPagina="eventos" />
+      <AvisosSinPlantillaPorConexion enlace />
       {res.ok ? <EventTemplatesEditor initial={res.data} /> : <ErrorDeCarga titulo="No pudimos cargar los avisos" detalle={res.error} />}
     </div>
   );
