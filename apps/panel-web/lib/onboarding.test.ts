@@ -7,6 +7,9 @@ import {
   HORARIO_INICIAL,
   accionDelAviso,
   agregarFrase,
+  PASOS,
+  PASOS_DEL_NEGOCIO,
+  TOTAL_PASOS,
   cambiosDelPaso,
   errorDelPaso,
   estadoDesdeIdentidad,
@@ -23,7 +26,7 @@ import {
   type Recorrido,
 } from "./onboarding";
 
-const RECORRIDO: Recorrido = { estado: "omitido", paso: 3, total_pasos: 6, aplica: true, abrir: false, avisar: true };
+const RECORRIDO: Recorrido = { estado: "omitido", paso: 3, total_pasos: 9, aplica: true, abrir: false, avisar: true };
 const listo: EstadoDelAsistente = {
   ...ESTADO_INICIAL,
   tipo: "ventas",
@@ -32,11 +35,23 @@ const listo: EstadoDelAsistente = {
 };
 
 describe("pasos del asistente", () => {
-  it("exige tipo, una frase del negocio y un nombre antes de salir del primer paso", () => {
+  it("exige tipo y una frase del negocio en «Tu negocio», y el nombre del agente en «Identidad» (SPEC-47)", () => {
     expect(errorDelPaso("negocio", ESTADO_INICIAL)).toMatch(/Elige a qué se dedica/);
     expect(errorDelPaso("negocio", { ...listo, descripcion: "corta" })).toMatch(/en una frase/);
-    expect(errorDelPaso("negocio", { ...listo, nombreDelAgente: "  " })).toMatch(/nombre/);
+    expect(errorDelPaso("negocio", { ...listo, nombreDelAgente: "  " })).toBeUndefined();
+    expect(errorDelPaso("identidad", { ...listo, nombreDelAgente: "  " })).toMatch(/nombre/);
     expect(errorDelPaso("negocio", listo)).toBeUndefined();
+    expect(errorDelPaso("identidad", listo)).toBeUndefined();
+  });
+
+  it("nueve pasos: los cuatro del negocio y los cinco del recorrido del agente (SPEC-47)", () => {
+    expect(PASOS.map((p) => p.id)).toEqual([
+      "negocio", "identidad", "voz", "reglas", "habilidades", "flujo", "conocimiento", "probar", "publicar",
+    ]);
+    expect(TOTAL_PASOS).toBe(9);
+    expect(PASOS_DEL_NEGOCIO).toBe(4);
+    expect(cambiosDelPaso("negocio", listo)).not.toHaveProperty("assistant_name");
+    expect(cambiosDelPaso("identidad", listo)).toEqual({ assistant_name: listo.nombreDelAgente.trim() });
   });
 
   it("no deja salir del horario sin ningún día, pero deja salir sin horario", () => {
@@ -167,9 +182,9 @@ describe("retomar", () => {
 
 describe("aviso", () => {
   it("cuenta los pasos que faltan y cambia el verbo del botón", () => {
-    expect(pasosQueFaltan(RECORRIDO)).toBe(4);
-    expect(textoDelAviso(RECORRIDO)).toBe("Tu agente aún no está listo para probar. Faltan 4 pasos.");
-    expect(textoDelAviso({ ...RECORRIDO, paso: 6 })).toMatch(/Falta 1 paso\./);
+    expect(pasosQueFaltan(RECORRIDO)).toBe(7);
+    expect(textoDelAviso(RECORRIDO)).toBe("Tu agente aún no está listo para probar. Faltan 7 pasos.");
+    expect(textoDelAviso({ ...RECORRIDO, paso: 9 })).toMatch(/Falta 1 paso\./);
     expect(accionDelAviso(RECORRIDO)).toBe("Continuar");
     expect(accionDelAviso({ ...RECORRIDO, paso: 1, estado: "omitido" })).toBe("Empezar");
     expect(pasosQueFaltan({ ...RECORRIDO, estado: "completo" })).toBe(0);

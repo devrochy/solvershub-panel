@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
+import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { ReferenciasRetiradas } from "@/app/(app)/tenants/_components/referencias-retiradas";
 import {
   AvisoDeReferenciasEnLista,

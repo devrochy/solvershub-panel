@@ -13,14 +13,13 @@ import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { CONVERSATION_STATUS, PAYMENT_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
-import { TarjetaDelAgente } from "@/app/(onboarding)/bienvenida/_components/tarjeta-del-agente";
 import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
 import { TarjetaElegible } from "@/components/ui/elegibles";
 import { BarraDePasos } from "@/components/ui/barra-de-pasos";
 import { VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import { conversacionDeHabilidad } from "@/lib/vista-previa";
 import { Marca } from "@/components/ui/marca";
-import { ESTADO_INICIAL, HORARIO_INICIAL, type HorarioElegido } from "@/lib/onboarding";
+import { HORARIO_INICIAL, type HorarioElegido } from "@/lib/onboarding";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -937,7 +936,7 @@ export function Catalogo() {
           <Seccion
             id="primer-uso"
             titulo="Asistente de primer uso"
-            cuando="alguien abre el panel por primera vez: seis pasos, tarjetas de un clic y la tarjeta viva del agente."
+            cuando="alguien abre el panel por primera vez: nueve pasos con el recorrido del agente, tarjetas de un clic y el teléfono con la vista previa."
             piezas="SPEC-41 · Marca"
           >
             <div className="flex flex-col gap-6">
@@ -945,7 +944,7 @@ export function Catalogo() {
                 <Marca pieza="horizontal" className="h-16 w-auto" />
                 <Marca pieza="horizontal-simple" className="h-9 w-auto" />
               </div>
-              <AvisoDeOnboarding recorrido={{ estado: "omitido", paso: 3, total_pasos: 6, aplica: true, abrir: false, avisar: true }} />
+              <AvisoDeOnboarding recorrido={{ estado: "omitido", paso: 3, total_pasos: 9, aplica: true, abrir: false, avisar: true }} />
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
                   { id: "ventas", titulo: "Vendo productos", ayuda: "Responde dudas, cotiza y toma el pedido." },
@@ -962,10 +961,7 @@ export function Catalogo() {
                   />
                 ))}
               </div>
-              <div className="grid gap-8 lg:grid-cols-[1fr_21rem]">
-                <SelectorDeHorario valor={horario} onCambiar={setHorario} />
-                <TarjetaDelAgente estado={{ ...ESTADO_INICIAL, tipo: "ventas", nombreDelAgente: "Sofía", negocio: "Sport Plus", horario }} />
-              </div>
+              <SelectorDeHorario valor={horario} onCambiar={setHorario} />
             </div>
           </Seccion>
           <Seccion

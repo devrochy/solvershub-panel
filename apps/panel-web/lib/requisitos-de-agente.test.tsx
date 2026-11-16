@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
-import { PasoPublicar, PasoSuperpoderes } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { PasoPublicar, PasoSuperpoderes } from "@/components/domain/agentes/recorrido/pasos";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import type { Requirement } from "@/lib/api/types";
 
