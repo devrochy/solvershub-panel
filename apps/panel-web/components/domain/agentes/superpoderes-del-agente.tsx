@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { PasoSuperpoderes } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { PasoSuperpoderes } from "@/components/domain/agentes/recorrido/pasos";
 import { Button } from "@/components/ui/button";
 import {
   contenidoDesdeEstado,

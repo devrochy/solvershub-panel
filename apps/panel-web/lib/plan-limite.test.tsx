@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
+import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { NewCollaboratorDialog } from "@/app/(app)/colaboradores/_components/new-collaborator-dialog";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpower } from "@/lib/api/types";

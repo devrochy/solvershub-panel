@@ -17,7 +17,10 @@ export async function POST(request: Request, ctx: { params: Promise<{ accion: st
   if (accion === "avanzar") {
     const paso = body?.paso;
     if (!Number.isInteger(paso) || (paso as number) < 1 || (paso as number) > TOTAL_PASOS) return invalido("Paso inválido.");
-    return responder(await apiFetch<Recorrido>("/admin/onboarding/avanzar", { method: "POST", body: { paso } }));
+    // `pasos` dice que el paso va sobre 9 (SPEC-47); sin él, el servidor lo toma del asistente de 6.
+    return responder(
+      await apiFetch<Recorrido>("/admin/onboarding/avanzar", { method: "POST", body: { paso, pasos: TOTAL_PASOS } }),
+    );
   }
   if (accion === "dejar-listo") {
     const agente = body?.agent_id;

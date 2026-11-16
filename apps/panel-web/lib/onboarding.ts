@@ -8,17 +8,28 @@ import type { Franja } from "@/lib/horario-atencion";
 
 export type Recorrido = PrimerosPasos["recorrido"];
 
-export const TOTAL_PASOS = 6;
+/**
+ * Los 9 pasos de la bienvenida (SPEC-47, D-75): «Tu negocio» más los 8 del recorrido común de Nuevo agente
+ * y Editar. Los cuatro primeros escriben en la identidad del negocio y viven en `/bienvenida`; al salir de
+ * «Horario y reglas» se crea el agente y los cinco siguientes son el editor a pantalla completa
+ * (`/bienvenida/agente/[id]`).
+ */
+export const TOTAL_PASOS = 9;
 
 export const PASOS = [
   { id: "negocio", titulo: "Cuéntanos de tu negocio", corto: "Tu negocio" },
+  { id: "identidad", titulo: "¿Cómo se llama tu agente?", corto: "Identidad" },
   { id: "voz", titulo: "¿Cómo quieres que hable?", corto: "Cómo habla" },
-  { id: "reglas", titulo: "Horario y reglas", corto: "Horario y reglas" },
-  // SPEC-45: primero se crea el agente y después se le cargan datos (generar, CSV o fotos), para probarlo con ellos.
-  { id: "crear", titulo: "Crea tu agente", corto: "Crear" },
-  { id: "datos", titulo: "Carga sus datos", corto: "Datos" },
-  { id: "probar", titulo: "Pruébalo", corto: "Probar" },
+  { id: "reglas", titulo: "Horario y reglas", corto: "Horario" },
+  { id: "habilidades", titulo: "¿Qué sabe hacer tu agente?", corto: "Habilidades" },
+  { id: "flujo", titulo: "¿Con qué pasos atiende?", corto: "Flujo" },
+  { id: "conocimiento", titulo: "¿Qué recuerda y qué conoce?", corto: "Conocimiento" },
+  { id: "probar", titulo: "Pruébalo", corto: "Pruébalo" },
+  { id: "publicar", titulo: "Déjalo listo", corto: "Publicar" },
 ] as const;
+
+/** Los pasos que viven en `/bienvenida` (escriben en el negocio); del 5 en adelante va el editor del agente. */
+export const PASOS_DEL_NEGOCIO = 4;
 
 export type IdDePaso = (typeof PASOS)[number]["id"];
 
@@ -288,6 +299,8 @@ export function errorDelPaso(id: IdDePaso, estado: EstadoDelAsistente): string |
       return "Cuéntanos en una frase a qué se dedica tu negocio.";
     }
     if (estado.descripcion.trim().length > DESCRIPCION_MAX) return `Máximo ${DESCRIPCION_MAX} caracteres.`;
+  }
+  if (id === "identidad") {
     if (!estado.nombreDelAgente.trim()) return "Ponle un nombre a tu agente.";
     if (estado.nombreDelAgente.trim().length > NOMBRE_AGENTE_MAX) return `Máximo ${NOMBRE_AGENTE_MAX} caracteres.`;
   }
@@ -334,9 +347,11 @@ export type CambiosDeIdentidad = Partial<
 export function cambiosDelPaso(id: IdDePaso, estado: EstadoDelAsistente): CambiosDeIdentidad {
   if (id === "negocio") {
     return {
-      assistant_name: estado.nombreDelAgente.trim(),
       business_description: [estado.negocio.trim(), estado.descripcion.trim()].filter(Boolean).join(". "),
     };
+  }
+  if (id === "identidad") {
+    return { assistant_name: estado.nombreDelAgente.trim() };
   }
   if (id === "voz") {
     const largo = LARGOS.find((l) => l.id === estado.largo) ?? LARGOS[1];
