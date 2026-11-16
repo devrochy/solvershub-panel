@@ -156,7 +156,7 @@ describe("409 de tope del plan", () => {
     } as unknown as AgentDetail;
     const modelos = {
       items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null,
-      avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3,
+      avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3, business_model: "deepseek-flash",
     } as LlmModelCatalog;
     const conexion: PublishTarget = {
       connection_id: "22222222-2222-4222-8222-222222222222",

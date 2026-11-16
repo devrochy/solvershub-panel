@@ -175,6 +175,7 @@ describe("publicar (D-35)", () => {
     avg_output_tokens: null,
     sample_turns: 0,
     min_phrases: 3,
+    business_model: "deepseek-flash",
   } as LlmModelCatalog;
   const conexion: PublishTarget = {
     connection_id: "22222222-2222-4222-8222-222222222222",
