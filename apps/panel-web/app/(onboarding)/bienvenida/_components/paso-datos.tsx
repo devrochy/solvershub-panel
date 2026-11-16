@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { PasoDatos, type Cargado } from "@/app/(app)/agentes/nuevo/_components/paso-datos";
-import { PasoLoCargado } from "@/app/(app)/agentes/nuevo/_components/paso-lo-cargado";
+import { PasoDatos, type Cargado } from "@/components/domain/agentes/paso-datos";
+import { PasoLoCargado } from "@/components/domain/agentes/paso-lo-cargado";
 import { Button } from "@/components/ui/button";
 import type { PasoPrimerosPasos, RegistroDePrueba } from "@/lib/api/types";
 import type { EstadoDelAsistente } from "@/lib/onboarding";

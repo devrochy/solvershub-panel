@@ -1,6 +1,6 @@
 "use client";
 
-import { FichaMultiple, FichaUnica, GrupoDeOpciones } from "./elegibles";
+import { FichaMultiple, FichaUnica, GrupoDeOpciones } from "@/components/ui/elegibles";
 import {
   BLOQUES_DE_HORAS,
   DIAS,

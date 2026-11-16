@@ -14,7 +14,7 @@ import {
   type TipoDeNegocio,
 } from "@/lib/onboarding";
 
-import { FichaUnica, GrupoDeOpciones, TarjetaElegible } from "./elegibles";
+import { FichaUnica, GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 
 const ICONOS: Record<TipoDeNegocio, React.ReactNode> = {
   ventas: <ShoppingBag className="h-6 w-6" />,
