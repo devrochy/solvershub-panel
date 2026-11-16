@@ -49,7 +49,10 @@ beforeAll(() => {
   };
 });
 
-const hace = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+// Hora fija a media tarde en Bogotá: los eventos de hace 1 a 3 horas caen siempre en «Hoy», también
+// cuando el CI corre entre la medianoche y las 3 a. m. (antes daba «Ayer» y el test fallaba).
+const AHORA = Date.parse("2026-11-16T15:00:00-05:00");
+const hace = (h: number) => new Date(AHORA - h * 3600_000).toISOString();
 const cuenta = (id: string, nombre: string | null, email: string, rol: "owner" | "colaborador" = "colaborador") => ({ id, nombre, email, rol });
 const equipo = (id: string, parcial: Partial<DispositivoAcceso>): DispositivoAcceso => ({
   id, cuenta: cuenta("g-1", "Gestor Uno", "gestor@test.example"), device_id_corto: "a1b2c3", device_label: "Samsung A15", plataforma: "android",
@@ -68,6 +71,8 @@ const FALLIDO = evento("e2", { tipo: "login_fallido", cuenta: null, device_id_co
 const POLITICA: PoliticaAcceso = { owner: "abierto", colaborador: "abierto", gestor: "restringido" };
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(AHORA);
   respuestas = {
     ...RESPUESTAS,
     "/access/devices": { items: [PENDIENTE, ACTIVO, BLOQUEADO], next_cursor: null },
@@ -84,6 +89,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 async function pintar(nodo: ReactNode) {
