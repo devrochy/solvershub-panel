@@ -13,6 +13,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { destinoDeAlta } from "@/lib/conexiones";
 
+import { AltaTelegram } from "./telegram/alta-telegram";
 import { AltaTwilio } from "./twilio/alta-twilio";
 
 type TypeItem = {
@@ -58,6 +59,7 @@ export function NewConnectionDialog() {
   const [categories, setCategories] = useState<Category[] | null>(null);
   const [form, setForm] = useState<ManualForm | null>(null);
   const [twilio, setTwilio] = useState(false);
+  const [telegram, setTelegram] = useState(false);
   const [label, setLabel] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +103,11 @@ export function NewConnectionDialog() {
       setTwilio(true);
       return;
     }
+    if (destino.tipo === "telegram") {
+      setError(null);
+      setTelegram(true);
+      return;
+    }
     setOpen(false);
     if (destino.tipo === "externo") {
       window.location.assign(destino.href);
@@ -113,6 +120,7 @@ export function NewConnectionDialog() {
     setOpen(next);
     setForm(null);
     setTwilio(false);
+    setTelegram(false);
     setError(null);
     setBusqueda("");
     if (next && categories === null) void loadCatalog();
@@ -140,14 +148,22 @@ export function NewConnectionDialog() {
       </DialogTrigger>
       <DialogContent
         title={
-          form ? `Nueva conexión · ${form.label}` : twilio ? "Nueva conexión · WhatsApp vía Twilio" : "Agregar conexión"
+          form
+            ? `Nueva conexión · ${form.label}`
+            : twilio
+              ? "Nueva conexión · WhatsApp vía Twilio"
+              : telegram
+                ? "Nueva conexión · Telegram"
+                : "Agregar conexión"
         }
         description={
           form
             ? form.description ?? undefined
             : twilio
               ? "Conecta un número de WhatsApp que ya tienes en tu cuenta de Twilio."
-              : "¿Por dónde quieres que atienda tu agente?"
+              : telegram
+                ? "Conecta un bot de Telegram propio: lo creas en @BotFather y pegas su token."
+                : "¿Por dónde quieres que atienda tu agente?"
         }
         className="max-w-2xl"
       >
@@ -155,8 +171,9 @@ export function NewConnectionDialog() {
           {error && <FormFeedback error={error} className="mb-4" />}
 
           {twilio && <AltaTwilio onVolver={() => setTwilio(false)} onConectada={() => setOpen(false)} />}
+          {telegram && <AltaTelegram onVolver={() => setTelegram(false)} onConectada={() => setOpen(false)} />}
 
-          {!form && !twilio && categories && (
+          {!form && !twilio && !telegram && categories && (
             <Input
               aria-label="Buscar tipo de conexión"
               className="mb-4"
@@ -166,7 +183,7 @@ export function NewConnectionDialog() {
             />
           )}
 
-          {!form && !twilio && categoriasVisibles.map((group) => (
+          {!form && !twilio && !telegram && categoriasVisibles.map((group) => (
             <section key={group.category} aria-labelledby={`alta-${group.category}`} className="mb-5">
               <h3 id={`alta-${group.category}`} className="mb-2 text-sm font-medium text-headline">
                 {group.label}
@@ -200,7 +217,7 @@ export function NewConnectionDialog() {
             </section>
           ))}
 
-          {!form && !twilio && filtro && categoriasVisibles.length === 0 && (
+          {!form && !twilio && !telegram && filtro && categoriasVisibles.length === 0 && (
             <p className="text-sm text-text-soft">Ningún canal coincide con «{busqueda}».</p>
           )}
 

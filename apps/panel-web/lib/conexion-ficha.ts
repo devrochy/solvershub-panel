@@ -19,6 +19,8 @@ export type TipoDeFicha =
   | "smtp"
   /** WhatsApp vía Twilio (ADR-0186): alta guiada, salud, prueba, credenciales y costos propios. */
   | "whatsapp_twilio"
+  /** Telegram con bot propio (ADR-0199): alta con el token de @BotFather, salud, prueba y credenciales. */
+  | "telegram"
   /** Otros canales manuales (Plivo): credenciales y agentes. */
   | "manual";
 
@@ -71,6 +73,7 @@ export const PESTANAS_POR_TIPO: Record<TipoDeFicha, Pestana[]> = {
   google_calendar: ["cuenta", "agenda"],
   smtp: ["credenciales"],
   whatsapp_twilio: ["resumen", "agentes", "plantillas", "prueba", "credenciales", "costos", "versiones"],
+  telegram: ["resumen", "agentes", "prueba", "credenciales", "versiones"],
   manual: ["credenciales", "agentes", "versiones"],
 };
 
@@ -104,6 +107,8 @@ export function tipoDeFicha(c: ConTipo): TipoDeFicha {
       return "smtp";
     case "whatsapp_twilio":
       return "whatsapp_twilio";
+    case "telegram":
+      return "telegram";
   }
   // Filas viejas sin `type_id` que salen por una cuenta de Meta: el WhatsApp oficial.
   if (!c.type_id && c.meta_connection_id) return "whatsapp_meta";
@@ -146,6 +151,7 @@ const TIPO_LEGIBLE: Record<TipoDeFicha, string> = {
   google_calendar: "Google Calendar",
   smtp: "Correo",
   whatsapp_twilio: "WhatsApp vía Twilio",
+  telegram: "Telegram",
   manual: "Canal manual",
 };
 
@@ -187,6 +193,12 @@ export function subtituloDeFicha(
   // En el Sandbox de Twilio (HU-CONN-20) `external_id` es `sandbox:<AccountSid>`: el número es el compartido de Twilio
   // y no identifica a la conexión, así que se dice que es el Sandbox.
   if (tipo === "whatsapp_twilio" && c.external_id?.startsWith("sandbox:")) return `${tipoLegible(tipo)} · Sandbox`;
+  // En Telegram `external_id` es el id del bot (de `getMe`): no le dice nada al dueño. El @usuario llega como
+  // `display_name` (consola de conexiones, ADR-0199).
+  if (tipo === "telegram") {
+    const usuario = c.display_name?.trim();
+    return usuario ? `${tipoLegible(tipo)} · ${usuario}` : tipoLegible(tipo);
+  }
   // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo. En
   // Twilio `external_id` es el número del sender (`sender_e164`).
   const numero =
@@ -336,5 +348,6 @@ export function enlaceSaludMeta(metaIds: string[]): string {
 
 /** Id de `ChannelIcon` para la conexión (el catálogo de íconos no conoce `whatsapp_meta`). */
 export function iconoDeConexion(c: Pick<ConexionConsola, "type_id" | "channel">): string {
+  if (c.type_id === "telegram") return "telegram";
   return c.type_id === "whatsapp_meta" || c.type_id === "whatsapp_twilio" ? "whatsapp" : (c.type_id ?? c.channel);
 }

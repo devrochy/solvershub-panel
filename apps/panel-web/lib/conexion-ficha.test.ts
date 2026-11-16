@@ -87,6 +87,22 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     expect(tienePestana("whatsapp_twilio", "plantillas")).toBe(true);
   });
 
+  it("Telegram: Resumen y salud primero, con Agentes, Prueba, Credenciales y Versiones; sin el id del bot en el subtítulo", () => {
+    expect(etiquetas({ ...sinMeta, type_id: "telegram" })).toEqual([
+      "Resumen y salud",
+      "Agentes",
+      "Prueba",
+      "Credenciales",
+      "Versiones",
+    ]);
+    const tg = conexion({ ...sinMeta, type_id: "telegram", channel: "telegram", external_id: "1234567890", display_phone_number: null });
+    expect(tipoDeFicha(tg)).toBe("telegram");
+    expect(subtituloDeFicha(tg, "telegram")).toBe("Telegram");
+    expect(subtituloDeFicha({ ...tg, display_name: "@mitienda_bot" }, "telegram")).toBe("Telegram · @mitienda_bot");
+    expect(iconoDeConexion(tg)).toBe("telegram");
+    expect(tienePestana("telegram", "plantillas")).toBe(false);
+  });
+
   it("WhatsApp vía Twilio: el subtítulo lleva el número del sender y el ícono es el de WhatsApp", () => {
     const tw = conexion({ ...sinMeta, type_id: "whatsapp_twilio", external_id: "+573005550101", display_phone_number: null });
     expect(subtituloDeFicha(tw, "whatsapp_twilio")).toBe("WhatsApp vía Twilio · +57 300 555 0101");

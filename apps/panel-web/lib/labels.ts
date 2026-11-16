@@ -11,6 +11,7 @@ export const CANAL: Record<string, string> = {
   instagram: "Instagram",
   messenger: "Messenger",
   facebook: "Facebook",
+  telegram: "Telegram",
   email: "Correo",
   sms: "SMS",
   webchat: "Chat web",

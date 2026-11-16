@@ -20,7 +20,8 @@ describe("labels (HU-UI-02)", () => {
   it("etiqueta canales conocidos y cae al id", () => {
     expect(canalLabel("whatsapp")).toBe("WhatsApp");
     expect(canalLabel("whatsapp_waweb")).toBe("WhatsApp Web (QR)");
-    expect(canalLabel("telegram")).toBe("telegram");
+    expect(canalLabel("telegram")).toBe("Telegram");
+    expect(canalLabel("canal_inexistente")).toBe("canal_inexistente");
     expect(canalLabel(null)).toBe("Canal");
   });
 
