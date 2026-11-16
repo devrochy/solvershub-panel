@@ -851,7 +851,7 @@ if (retiradas) {
   respuestas["/admin/agent-superpowers"] = pagina([
     { id: "pack_commerce.tomar_pedido", version: "1.2.0", skill: "pack_commerce", title: "Tomar un pedido", description: "Arma el pedido con el cliente.", phrases: ["quiero comprar", "hacer un pedido", "me lo vendes"] },
   ]);
-  respuestas["/admin/agent-models"] = { items: [{ provider: "deepseek", model: "deepseek-flash", input_usd_per_mtok: 0.14, output_usd_per_mtok: 0.28, selectable: true, retired: false }], total: 1, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
+  respuestas["/admin/agent-models"] = { items: [{ provider: "deepseek", model: "deepseek-flash", input_usd_per_mtok: 0.14, output_usd_per_mtok: 0.28, selectable: true, retired: false }], total: 1, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3, business_model: "deepseek-flash", effective_model: "deepseek-flash", effective_source: "negocio" };
   respuestas[`/admin/agents/${VENTAS_ID}/publish-targets`] = pagina([{ connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: true, covers_skills: true, missing_skills: [], active_release_id: null }]);
   respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
 }
@@ -917,7 +917,7 @@ if (process.env.FICHA_AGENTE === "1" || process.env.AGENTES === "1") {
     { id: "pack_commerce.consultar_catalogo", version: "1.0.0", skill: "pack_commerce", title: "Consultar el catálogo", description: "Busca productos, precios y existencias.", phrases: ["qué tienen", "cuánto vale", "hay en talla M"] },
     { id: "pack_calendar.agendar_cita", version: "2.1.0", skill: "pack_calendar", title: "Agendar una entrega", description: "Busca un espacio libre en la agenda.", phrases: ["cuándo me llega", "agéndame la entrega", "tienen turno mañana"] },
   ]);
-  respuestas["/admin/agent-models"] ??= { items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3 };
+  respuestas["/admin/agent-models"] ??= { items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3, business_model: "deepseek-flash", effective_model: "deepseek-flash", effective_source: "negocio" };
   respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([]);
   respuestas["/admin/reliability"] = {
     period: { desde: "2026-10-30T00:00:00Z", hasta: "2026-11-06T00:00:00Z" }, minimum_sample: { turns: 30, tasks: 5 },

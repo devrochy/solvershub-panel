@@ -17,9 +17,12 @@ import {
   idDeSeccion,
   nombreDeSuperpoder,
   pasoDelCampo,
+  pasoDesdeParametro,
+  pasosConCambios,
+  preguntaDelPaso,
+  PASOS,
   rangoCompatible,
   superpoderesFueraDelEnfoque,
-  textoDeCosto,
 } from "./agentes-editor";
 
 vi.mock("next/navigation", () => ({
@@ -84,7 +87,7 @@ describe("validación del editor", () => {
   it("frases mínimas: las copias de la habilidad no suman", () => {
     expect(frasesDistintas(PEDIDO, ["Quiero COMPRAR", "quiéro comprar"])).toBe(1);
     expect(frasesDistintas(PEDIDO, ["hacer un pedido", "me lo vendes"])).toBe(3);
-    const errores = erroresDelPaso("superpoderes", estado, [PEDIDO, PLAN], { minFrases: 3 });
+    const errores = erroresDelPaso("habilidades", estado, [PEDIDO, PLAN], { minFrases: 3 });
     expect(errores).toEqual({
       "procedures[0].overrides.examples": "«Tomar un pedido» necesita al menos 3 frases distintas de clientes: agrega 2 más.",
     });
@@ -92,26 +95,44 @@ describe("validación del editor", () => {
 
   it("al menos un superpoder, un nombre y una conexión", () => {
     const sin = { ...estado, nombre: " ", superpoderes: {} };
-    expect(erroresDelPaso("superpoderes", sin, [PEDIDO], { minFrases: 3 })).toHaveProperty("procedures");
+    expect(erroresDelPaso("habilidades", sin, [PEDIDO], { minFrases: 3 })).toHaveProperty("procedures");
     expect(erroresDelPaso("identidad", sin, [PEDIDO], { minFrases: 3 })).toHaveProperty("name");
     expect(erroresDelPaso("publicar", sin, [PEDIDO], { minFrases: 3, conexiones: [] })).toHaveProperty("connection_ids");
   });
 
+  it("ocho pasos comunes, sin «Proveedor y modelo», y los ids de antes siguen abriendo algo", () => {
+    expect(PASOS.map((p) => p.id)).toEqual(["identidad", "voz", "reglas", "habilidades", "flujo", "conocimiento", "probar", "publicar"]);
+    expect(PASOS.some((p) => p.titulo.includes("modelo"))).toBe(false);
+    expect(pasoDesdeParametro("publicar")).toBe("publicar");
+    expect(pasoDesdeParametro("modelo")).toBe("publicar");
+    expect(pasoDesdeParametro("superpoderes")).toBe("habilidades");
+    expect(pasoDesdeParametro("memoria")).toBe("conocimiento");
+    expect(pasoDesdeParametro("otro")).toBeUndefined();
+    expect(preguntaDelPaso("voz", "Sofía")).toBe("¿Cómo quieres que hable Sofía?");
+    expect(preguntaDelPaso("voz", " ")).toBe("¿Cómo quieres que hable tu agente?");
+  });
+
+  it("marca los pasos con cambios sin guardar", () => {
+    expect(pasosConCambios(estado, estado).size).toBe(0);
+    const cambiado = { ...estado, nombre: "Otra", frasesProhibidas: ["te lo regalo"], alcances: [] };
+    expect([...pasosConCambios(cambiado, estado)].sort()).toEqual(["conocimiento", "identidad", "voz"]);
+    // El modelo no tiene paso: cambiarlo no marca ninguno.
+    expect(pasosConCambios({ ...estado, modelo: "otro" }, estado).size).toBe(0);
+  });
+
   it("cada error de la API va a su paso y a su superpoder", () => {
-    expect(pasoDelCampo("model.primary")).toBe("modelo");
-    expect(pasoDelCampo("procedures[1].overrides.examples")).toBe("superpoderes");
-    expect(pasoDelCampo("tools[2].tool")).toBe("acciones");
-    expect(pasoDelCampo("memory.readScopes")).toBe("memoria");
+    expect(pasoDelCampo("model.primary")).toBe("publicar");
+    expect(pasoDelCampo("procedures[1].overrides.examples")).toBe("habilidades");
+    expect(pasoDelCampo("tools[2].tool")).toBe("habilidades");
+    expect(pasoDelCampo("datos.crear_pedido")).toBe("habilidades");
+    expect(pasoDelCampo("memory.readScopes")).toBe("conocimiento");
+    expect(pasoDelCampo("flow.sections[0].label")).toBe("flujo");
     expect(pasoDelCampo("connection_ids[0]")).toBe("publicar");
-    expect(pasoDelCampo("persona.maxLength")).toBe("identidad");
+    expect(pasoDelCampo("persona.maxLength")).toBe("voz");
+    expect(pasoDelCampo("name")).toBe("identidad");
     expect(erroresPorSuperpoder({ "procedures[0].overrides.examples": "Faltan frases." }, BASE)).toEqual({
       [PEDIDO.id]: "Faltan frases.",
     });
-  });
-
-  it("costo estimado: sin consumo lo dice", () => {
-    expect(textoDeCosto(null)).toMatch(/Sin estimado/);
-    expect(textoDeCosto(0.392)).toMatch(/0,392 por cada 1\.000 respuestas/);
   });
 });
 
@@ -211,7 +232,7 @@ describe("publicar (D-35)", () => {
         />
       </FeedbackProviders>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paso 8/ }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Publicar$/ })[0]);
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     await waitFor(() => expect(screen.getByLabelText("Tus frases").getAttribute("aria-invalid")).toBe("true"));
     const [, init] = fetchMock.mock.calls[0];
@@ -220,6 +241,104 @@ describe("publicar (D-35)", () => {
     expect(document.getElementById(campo.getAttribute("aria-describedby") ?? "")?.textContent).toMatch(
       /necesita al menos 3 frases distintas/,
     );
+  });
+});
+
+describe("editar con el recorrido común (HU-AOS-78)", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  const agente = {
+    id: "11111111-1111-4111-8111-111111111111",
+    key: "ventas",
+    kind: "specialist",
+    contract: "agentspec/3",
+    name: "Ventas",
+    description: "",
+    status: "active",
+    latest_version: null,
+    created_at: "2026-10-18T00:00:00Z",
+    draft: { content: BASE, lock_version: 1, base_version_id: null, updated_at: "2026-10-18T00:00:00Z" },
+    versions: [],
+  } as unknown as AgentDetail;
+  const modelos = {
+    items: [],
+    total: 0,
+    page: 1,
+    page_size: 100,
+    has_more: false,
+    provider: "deepseek",
+    byok_model: null,
+    avg_input_tokens: null,
+    avg_output_tokens: null,
+    sample_turns: 0,
+    min_phrases: 3,
+    business_model: "deepseek-flash",
+  } as LlmModelCatalog;
+  const segmento = (nombre: RegExp) => screen.getAllByRole("button", { name: nombre })[0];
+
+  function abrir(props: Partial<Parameters<typeof EditorDeAgente>[0]> = {}) {
+    return render(
+      <FeedbackProviders>
+        <EditorDeAgente
+          agente={agente}
+          superpoderes={[PEDIDO]}
+          modelos={modelos}
+          destinos={[]}
+          destinosError={null}
+          puedeActivar
+          modeloEfectivo={{ nombre: "deepseek-flash", origen: "negocio" }}
+          {...props}
+        />
+      </FeedbackProviders>,
+    );
+  }
+
+  it("ocho pasos libres y sin «Proveedor y modelo»; Publicar dice el modelo del negocio", () => {
+    abrir();
+    expect(screen.getByRole("heading", { level: 2, name: "¿Cómo se llama tu agente y para qué sirve?" })).toBeTruthy();
+    expect(screen.queryByText(/Proveedor y modelo/)).toBeNull();
+    fireEvent.click(segmento(/^Publicar$/));
+    expect(screen.getByText(/Usa el modelo de tu negocio:/).textContent).toContain("deepseek-flash");
+    fireEvent.click(segmento(/^Flujo/));
+    expect(screen.getByRole("heading", { level: 2, name: "¿Con qué pasos atiende Ventas?" })).toBeTruthy();
+  });
+
+  it("cambiar de paso no guarda: marca «con cambios» y guarda con «Guardar cambios»", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    abrir();
+    const guardar = screen.getByRole("button", { name: "Guardar cambios" });
+    expect((guardar as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Nombre/), { target: { value: "Ventas Centro" } });
+    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(segmento(/Identidad, con cambios/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`/api/agent-editor/${agente.id}`);
+    expect(JSON.parse(init.body)).toMatchObject({ name: "Ventas Centro" });
+  });
+
+  it("los ids de antes abren el paso que los contiene", () => {
+    abrir({ pasoInicial: "habilidades" });
+    expect(screen.getByRole("heading", { level: 2, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
+  });
+
+  it("sin permiso de escritura se ve todo, sin guardar ni publicar", () => {
+    abrir({ puedeEditar: false, pasoInicial: "publicar" });
+    expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Publicar versión" })).toBeNull();
+    fireEvent.click(segmento(/^Identidad$/));
+    expect(screen.getByLabelText(/Nombre/).matches(":disabled")).toBe(true);
   });
 });
 

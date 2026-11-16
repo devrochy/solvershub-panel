@@ -5,7 +5,7 @@ import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/edit
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { flujoDesdeApi } from "@/lib/agentes-editor";
+import { flujoDesdeApi, negocioDesdeIdentidad, pasoDesdeParametro } from "@/lib/agentes-editor";
 import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
 import type { AgenteDatos } from "@/lib/datos-cliente";
@@ -21,6 +21,7 @@ import type {
   PluginSummary,
   PublishTargetPage,
   RequirementPage,
+  SettingsResponse,
   SuperpowerPage,
 } from "@/lib/api/types";
 
@@ -28,7 +29,7 @@ export const metadata = { title: "Editar agente" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Editor por pasos de un agente especialista (HU-AOS-24). */
+/** Editor de un agente especialista con el recorrido común (HU-AOS-24, HU-AOS-78). */
 export default async function EditarAgentePage({
   params,
   searchParams,
@@ -38,13 +39,15 @@ export default async function EditarAgentePage({
 }) {
   const { id } = await params;
   const { paso } = await searchParams;
-  // El asistente de creación (HU-AOS-54) deja al dueño directo en «Publicar».
-  const pasoInicial = paso === "publicar" ? "publicar" : undefined;
+  // `?paso=` abre en ese paso (el asistente de HU-AOS-54 deja al dueño en «Publicar»); los ids del
+  // editor anterior se traducen al paso que los contiene.
+  const pasoInicial = pasoDesdeParametro(paso);
   if (!UUID.test(id)) notFound();
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo] = await Promise.all([
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes] = await Promise.all([
     apiFetch<AgentDetail>(`/admin/agents/${id}`),
     apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
-    apiFetch<LlmModelCatalog>("/admin/agent-models?page_size=100"),
+    // Con `agent_id`, el modelo con el que atenderá este agente (HU-AOS-79), para la línea de Publicar.
+    apiFetch<LlmModelCatalog>(`/admin/agent-models?agent_id=${id}&page_size=100`),
     apiFetch<PublishTargetPage>(`/admin/agents/${id}/publish-targets?page_size=100`),
     apiFetch<Me>("/admin/me"),
     apiFetch<RequirementPage>(`/admin/agents/${id}/requirements?page_size=100`),
@@ -59,6 +62,8 @@ export default async function EditarAgentePage({
     // Flujo de atención por agente (ADR-0195, HU-AOS-76); sin respuesta, el paso abre vacío.
     apiFetch<AgentFlowOut>(`/admin/agents/${id}/flow`),
     apiFetch<AgentFlowOptionsOut>(`/admin/agents/${id}/flow/options`),
+    // Voz, horario y reglas del negocio: se muestran en «Cómo habla» y «Horario y reglas», no se editan aquí.
+    apiFetch<SettingsResponse>("/admin/settings"),
   ]);
   if (!agente.ok && agente.status === 404) notFound();
 
@@ -95,13 +100,20 @@ export default async function EditarAgentePage({
   const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
   const puedeActivar = me.ok && (me.data.role === "master" || me.data.tenant?.role === "owner");
   const puedeEditarDatos = me.ok && puedeEditarConfiguracion(me.data);
+  const negocio = negocioDesdeIdentidad(
+    me.ok ? (me.data.tenant?.name ?? "") : "",
+    ajustes.ok ? ajustes.data.identity : null,
+  );
+  const efectivo = modelos.data.effective_model
+    ? { nombre: modelos.data.effective_model, origen: modelos.data.effective_source === "agente" ? ("agente" as const) : ("negocio" as const) }
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
       {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
       <PageHeader
         title={titulo}
-        description="Ajusta tu agente paso a paso. Lo avanzado está plegado: no hace falta tocarlo."
+        description="Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
         breadcrumbs={migas}
         tabs={false}
         actions={volver}
@@ -124,6 +136,9 @@ export default async function EditarAgentePage({
         flujoInicial={flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] }}
         flujoSeeded={flujo.ok ? flujo.data.seeded : false}
         accionesDelFlujo={opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : []}
+        negocio={negocio}
+        modeloEfectivo={efectivo}
+        puedeEditar={puedeEditarDatos}
       />
     </div>
   );

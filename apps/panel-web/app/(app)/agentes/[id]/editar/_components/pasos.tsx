@@ -23,17 +23,15 @@ import {
   idDeSeccion,
   nombreDeSuperpoder,
   superpoderesFueraDelEnfoque,
-  textoDeCosto,
   type AccionDelFlujo,
   type Errores,
   type EstadoDelEditor,
   type FlujoDelAgente,
 } from "@/lib/agentes-editor";
-import type { LlmModelCatalog, PublishTarget, Requirement, Superpower } from "@/lib/api/types";
+import type { PublishTarget, Requirement, Superpower } from "@/lib/api/types";
 import { erroresDeAcciones } from "@/lib/referencias-retiradas";
 import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda } from "@/lib/conocimiento";
 import type { Pendiente } from "@/lib/frases-pendientes";
-import { formatUsd } from "@/lib/format";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 import { nombreDeAccion } from "@/lib/grupos-de-acciones";
 import { cn } from "@/lib/utils";
@@ -41,17 +39,6 @@ import { cn } from "@/lib/utils";
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
 /** Enlaza una lista de frases (por su id) con el texto pendiente del editor (`usePendientes`). */
 type RegistrarPendiente = (id: string) => (pendiente: Pendiente | null) => void;
-
-const PROVEEDORES: Record<string, string> = {
-  deepseek: "DeepSeek",
-  openai: "OpenAI",
-  anthropic: "Anthropic",
-  openai_compatible: "Compatible con OpenAI",
-};
-
-function nombreDeProveedor(id: string): string {
-  return PROVEEDORES[id] ?? id;
-}
 
 /** Error de un campo que no es un control único (listas, grupos): con ícono y `id` para describirlo. */
 function ErrorDeCampo({ id, mensaje }: { id: string; mensaje?: string }) {
@@ -78,12 +65,10 @@ export function PasoIdentidad({
   estado,
   cambiar,
   errores,
-  registrarPendiente,
 }: {
   estado: EstadoDelEditor;
   cambiar: Cambiar;
   errores: Errores;
-  registrarPendiente?: RegistrarPendiente;
 }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
@@ -104,6 +89,36 @@ export function PasoIdentidad({
           onChange={(e) => cambiar({ descripcion: e.target.value })}
         />
       </Field>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ 2. cómo habla
+export function PasoVoz({
+  estado,
+  cambiar,
+  errores,
+  registrarPendiente,
+  vozDelNegocio,
+}: {
+  estado: EstadoDelEditor;
+  cambiar: Cambiar;
+  errores: Errores;
+  registrarPendiente?: RegistrarPendiente;
+  /** «Cercano · calidez 4 · pocos emojis»: la voz que el negocio fijó en Configuración. */
+  vozDelNegocio: string | null;
+}) {
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <div className="flex flex-col gap-1 rounded-md border border-border-soft bg-surface p-4">
+        <p className="text-sm font-medium text-headline">La voz de tu negocio</p>
+        <p className="text-sm text-body">
+          {vozDelNegocio ?? "No pudimos leer la voz de tu negocio."}{" "}
+          <Link href="/configuracion?seccion=voz" className="text-link underline-offset-2 hover:underline">
+            Cambiar en Configuración
+          </Link>
+        </p>
+      </div>
       <div className="flex items-start gap-3">
         <Switch
           id="agente-voz"
@@ -119,6 +134,23 @@ export function PasoIdentidad({
             Usa el tono, la calidez y los emojis que configuraste para cada canal.
           </p>
         </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="agente-prohibidas" className="text-sm font-medium text-headline">
+          Frases que el agente nunca dice
+        </label>
+        <ListaDeFrases
+          id="agente-prohibidas"
+          frases={estado.frasesProhibidas}
+          onChange={(frasesProhibidas) => cambiar({ frasesProhibidas })}
+          placeholder="Por ejemplo: te lo regalo"
+          agregarLabel="Agregar frase"
+          max={100}
+          onPendiente={registrarPendiente?.("agente-prohibidas")}
+          invalido={Boolean(errores["persona.forbiddenPhrases"])}
+          describedBy={errores["persona.forbiddenPhrases"] ? "agente-prohibidas-error" : undefined}
+        />
+        <ErrorDeCampo id="agente-prohibidas-error" mensaje={errores["persona.forbiddenPhrases"]} />
       </div>
       <Avanzado>
         <Field
@@ -136,109 +168,41 @@ export function PasoIdentidad({
             className="max-w-40"
           />
         </Field>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="agente-prohibidas" className="text-sm font-medium text-headline">
-            Frases que el agente nunca dice
-          </label>
-          <ListaDeFrases
-            id="agente-prohibidas"
-            frases={estado.frasesProhibidas}
-            onChange={(frasesProhibidas) => cambiar({ frasesProhibidas })}
-            placeholder="Por ejemplo: te lo regalo"
-            agregarLabel="Agregar frase"
-            max={100}
-            onPendiente={registrarPendiente?.("agente-prohibidas")}
-            invalido={Boolean(errores["persona.forbiddenPhrases"])}
-            describedBy={errores["persona.forbiddenPhrases"] ? "agente-prohibidas-error" : undefined}
-          />
-          <ErrorDeCampo id="agente-prohibidas-error" mensaje={errores["persona.forbiddenPhrases"]} />
-        </div>
       </Avanzado>
     </div>
   );
 }
 
-// ------------------------------------------------------------------ 2. modelo
-export function PasoModelo({
-  estado,
-  cambiar,
-  errores,
-  catalogo,
-}: {
-  estado: EstadoDelEditor;
-  cambiar: Cambiar;
-  errores: Errores;
-  catalogo: LlmModelCatalog;
-}) {
-  const elegido = catalogo.items.find((m) => m.model === estado.modelo);
-  const fueraDeTabla = estado.modelo && !elegido;
+// ------------------------------------------------------------------ 3. horario y reglas
+export function PasoReglas({ horario, motivos }: { horario: string | null; motivos: string[] | null }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
-      <p className="text-sm text-body">
-        Tu negocio usa <strong className="text-headline">{nombreDeProveedor(catalogo.provider)}</strong>. Elige uno de sus
-        modelos: los más caros entienden mejor los casos difíciles.
+      <p className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
+        El horario y cuándo pasar a una persona son de todo el negocio: aplican a todos tus agentes.
       </p>
-      {catalogo.byok_model && (
-        <p className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
-          En Configuración fijaste el modelo {catalogo.byok_model}: ese manda sobre el que elijas aquí.
-        </p>
-      )}
-      <Field label="Modelo" htmlFor="agente-modelo" required error={errores["model.primary"]}>
-        <Select id="agente-modelo" value={estado.modelo} onChange={(e) => cambiar({ modelo: e.target.value })}>
-          {fueraDeTabla && <option value={estado.modelo}>{estado.modelo} (configurado a mano)</option>}
-          {catalogo.items.map((m) => (
-            <option key={m.model} value={m.model} disabled={!m.selectable}>
-              {nombreDeProveedor(m.provider)} · {m.model}
-              {m.retired ? " (retirado)" : !m.selectable ? " (otro proveedor)" : ""}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      {elegido && (
-        <dl className="grid grid-cols-1 gap-3 rounded-md border border-border-soft p-4 text-sm sm:grid-cols-3">
-          <div>
-            <dt className="text-text-soft">Lectura</dt>
-            <dd className="text-headline tabular-nums">{formatUsd(elegido.input_usd_per_mtok)} / millón de tokens</dd>
-          </div>
-          <div>
-            <dt className="text-text-soft">Escritura</dt>
-            <dd className="text-headline tabular-nums">{formatUsd(elegido.output_usd_per_mtok)} / millón de tokens</dd>
-          </div>
-          <div>
-            <dt className="text-text-soft">Costo estimado</dt>
-            <dd className="text-headline">{textoDeCosto(elegido.estimated_usd_per_1000_turns)}</dd>
-          </div>
-        </dl>
-      )}
-      {catalogo.sample_turns > 0 && (
-        <p className="text-xs text-text-soft">
-          Estimado con el promedio de {catalogo.sample_turns} respuestas de tu negocio en los últimos 30 días.
-        </p>
-      )}
-      <Avanzado>
-        <Field
-          label="Creatividad (temperatura)"
-          htmlFor="agente-temperatura"
-          help="Entre 0 (siempre igual) y 2 (más variado). Recomendado: 0,3."
-          error={errores["model.temperature"]}
-        >
-          <InputNumero
-            id="agente-temperatura"
-            decimal
-            step={0.1}
-            min={0}
-            max={2}
-            value={estado.temperatura}
-            onValueChange={(temperatura) => cambiar({ temperatura })}
-            className="max-w-32"
-          />
-        </Field>
-      </Avanzado>
+      <dl className="flex flex-col gap-3 rounded-md border border-border-soft bg-surface p-4 text-sm">
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-text-soft">Atiende tu equipo</dt>
+          <dd className="text-headline">{horario === null ? "No pudimos leer el horario." : horario || "Sin horario definido"}</dd>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-text-soft">Pasa a una persona si</dt>
+          <dd className="text-headline">
+            {motivos === null ? "No pudimos leer las reglas." : motivos.length ? motivos.join(", ") : "Aún sin reglas"}
+          </dd>
+        </div>
+      </dl>
+      <p className="text-sm text-text-soft">
+        Tu agente responde las 24 horas; el horario le dice cuándo te pueden atender.{" "}
+        <Link href="/configuracion?seccion=horario" className="text-link underline-offset-2 hover:underline">
+          Cambiar en Configuración
+        </Link>
+      </p>
     </div>
   );
 }
 
-// ------------------------------------------------------------------ 3. superpoderes
+// ------------------------------------------------------------------ 4. habilidades: superpoderes
 export function PasoSuperpoderes({
   estado,
   cambiar,
@@ -562,6 +526,7 @@ export function PasoPublicar({
   notas,
   setNotas,
   requisitos = [],
+  modelo = null,
 }: {
   destinos: PublishTarget[];
   destinosError: string | null;
@@ -571,9 +536,20 @@ export function PasoPublicar({
   notas: string;
   setNotas: (notas: string) => void;
   requisitos?: Requirement[];
+  /** Modelo con el que atenderá y de dónde sale (HU-AOS-79). Solo se muestra: el dueño no lo elige aquí. */
+  modelo?: { nombre: string; origen: "negocio" | "agente" } | null;
 }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
+      {modelo && (
+        <p className="text-sm text-body">
+          {modelo.origen === "negocio" ? "Usa el modelo de tu negocio: " : "Usa el modelo fijado para este agente: "}
+          <span className="font-medium text-headline">{modelo.nombre}</span>.{" "}
+          <Link href="/configuracion" className="text-link underline-offset-2 hover:underline">
+            Cambiar en Configuración
+          </Link>
+        </p>
+      )}
       <AvisoDeRequisitos
         requisitos={requisitos}
         titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"

@@ -40,10 +40,12 @@ export function RecorridoDelAgente({
   onIr,
   etiquetaDePasos = "Pasos del agente",
   pregunta,
+  nivelDePregunta = "h1",
   vistaPrevia,
   atras,
   guardar,
   principal,
+  dentroDelPanel = false,
   children,
   className,
 }: {
@@ -53,14 +55,23 @@ export function RecorridoDelAgente({
   onIr?: (id: string) => void;
   etiquetaDePasos?: string;
   pregunta: string;
+  /** `h2` cuando la página ya tiene su `PageHeader` con el único `h1` (dentro del shell). */
+  nivelDePregunta?: "h1" | "h2";
   vistaPrevia?: VistaPreviaDelPaso;
   atras?: AccionDelPie;
   guardar?: AccionDelPie;
-  principal: AccionDelPie;
+  /** Sin acción principal (solo lectura), el pie solo deja moverse con «Atrás». */
+  principal?: AccionDelPie;
+  /**
+   * Dentro del shell del panel: su `main` tiene relleno abajo (24 px, 32 px desde `md`) y el pie
+   * pegado se estira hasta el borde para no dejar ver el contenido por debajo.
+   */
+  dentroDelPanel?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   const titulo = useRef<HTMLHeadingElement>(null);
+  const Pregunta = nivelDePregunta;
   const primero = useRef(true);
   useEffect(() => {
     // Al cambiar de paso el foco va a la pregunta; al montar no se roba el foco.
@@ -77,26 +88,38 @@ export function RecorridoDelAgente({
         <BarraDePasos pasos={pasos} actual={actual} modo={modo} onIr={onIr} etiqueta={etiquetaDePasos} />
         <div className={cn("grid flex-1 gap-10", vistaPrevia && "lg:grid-cols-[minmax(0,1fr)_21rem]")}>
           <div className="flex min-w-0 flex-col gap-8 pb-6">
-            <h1 ref={titulo} tabIndex={-1} className="font-display text-sh-h1 text-headline outline-none">
+            <Pregunta ref={titulo} tabIndex={-1} className="font-display text-sh-h1 text-headline outline-none">
               {pregunta}
-            </h1>
+            </Pregunta>
             {children}
           </div>
           {vistaPrevia && <VistaPreviaWhatsApp {...vistaPrevia} className="sticky top-6 hidden self-start lg:flex" />}
         </div>
       </div>
-      <div className="sticky bottom-0 z-10 -mx-4 md:-mx-6">
+      <div
+        className={cn(
+          "sticky bottom-0 z-10 -mx-4 md:-mx-6",
+          dentroDelPanel && "-bottom-6 -mb-6 md:-bottom-8 md:-mb-8",
+        )}
+      >
         {vistaPrevia && <HojaDeVistaPrevia {...vistaPrevia} className="lg:hidden" />}
-        <footer className="flex items-center justify-between gap-3 border-t border-border-soft bg-surface px-4 py-3 md:px-6">
-          <div>
+        <footer className="flex items-center justify-between gap-2 border-t border-border-soft bg-surface px-4 py-3 sm:gap-3 md:px-6">
+          <div className="shrink-0">
             {atras && (
-              <Button variant="outline" size="lg" onClick={atras.onClick} disabled={atras.deshabilitado || atras.cargando}>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={atras.onClick}
+                disabled={atras.deshabilitado || atras.cargando}
+                className="px-3 sm:px-5"
+              >
                 <ArrowLeft className="h-4 w-4" aria-hidden />
-                {atras.texto}
+                {/* En el celular solo la flecha: el nombre sigue para el lector de pantalla. */}
+                <span className="sr-only sm:not-sr-only">{atras.texto}</span>
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             {guardar && (
               <Button
                 variant="outline"
@@ -108,16 +131,18 @@ export function RecorridoDelAgente({
                 {guardar.texto}
               </Button>
             )}
-            <Button
-              variant="accent"
-              size="lg"
-              onClick={principal.onClick}
-              loading={principal.cargando}
-              disabled={principal.deshabilitado}
-            >
-              {principal.texto}
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
+            {principal && (
+              <Button
+                variant="accent"
+                size="lg"
+                onClick={principal.onClick}
+                loading={principal.cargando}
+                disabled={principal.deshabilitado}
+              >
+                {principal.texto}
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Button>
+            )}
           </div>
         </footer>
       </div>

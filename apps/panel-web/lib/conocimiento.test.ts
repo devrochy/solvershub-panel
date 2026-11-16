@@ -113,6 +113,6 @@ describe("borrador del agente", () => {
     const contenido = contenidoDesdeEstado(BASE, { ...estado, conocimiento: { ...estado.conocimiento, activo: true } }, []);
     expect(usaConocimiento(contenido)).toBe(true);
     expect(contenido.knowledge).toEqual({ mode: "hibrida", topK: 4 });
-    expect(pasoDelCampo("knowledge.topK")).toBe("memoria");
+    expect(pasoDelCampo("knowledge.topK")).toBe("conocimiento");
   });
 });
