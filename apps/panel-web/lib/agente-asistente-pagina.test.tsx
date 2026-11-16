@@ -8,7 +8,7 @@ import type { AgentTemplatePage } from "@/lib/api/types";
 import { agentes, me } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-// Página «Nuevo agente» (HU-AOS-54): el asistente solo para quien puede escribir en un negocio v3;
+// Página «Nuevo agente» (HU-AOS-54, HU-AOS-77): el paso Identidad del recorrido solo para quien puede escribir en un negocio v3;
 // el resto ve un aviso claro. Lee el runtime de `/admin/agents/overview`, no de otra ruta.
 
 const respuestas: Record<string, unknown> = {};
@@ -89,7 +89,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": agentes,
     });
     await abrir();
-    expect(screen.getByRole("heading", { name: "¿Qué quieres que haga?" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeTruthy();
     expect(llamadas).toContain("/admin/agents/overview");
   });
 
@@ -100,7 +100,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": agentes,
     });
     await abrir();
-    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga?" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeNull();
     expect(screen.getByText(/permiso de escritura/)).toBeTruthy();
   });
 
@@ -111,7 +111,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": { ...agentes, cuota_agentes: { used: 1, limit: 1, allowed: false } },
     });
     await abrir();
-    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga?" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeNull();
     expect(screen.getByText(/permite 1 agente publicado y ya tienes 1/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
   });
