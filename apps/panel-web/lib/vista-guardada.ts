@@ -9,6 +9,7 @@ export const VISTAS = {
   categorias: { cookie: "panel_vista_categorias", opciones: ["lista", "vitrina"], porDefecto: "lista" },
   pedidos: { cookie: "panel_vista_pedidos", opciones: ["lista", "etapas"], porDefecto: "lista" },
   agentes: { cookie: "panel_vista_agentes", opciones: ["cuadricula", "lista"], porDefecto: "cuadricula" },
+  conexiones: { cookie: "panel_vista_conexiones", opciones: ["lista", "cuadricula"], porDefecto: "lista" },
 } as const;
 
 export type ListaConVista = keyof typeof VISTAS;

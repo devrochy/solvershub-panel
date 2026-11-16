@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MenuPausar } from "@/app/(app)/conexiones/_components/pausar-conexion";
+import { TarjetaDeConexion } from "@/app/(app)/conexiones/_components/tarjeta-de-conexion";
 import { ChannelIcon } from "@/components/domain/channel-icon";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { Badge } from "@/components/ui/badge";
@@ -16,19 +17,21 @@ import {
 } from "@/lib/conexiones";
 
 /**
- * Lista de conexiones (HU-AOS-23, rediseñada en CON-03): una tabla con un solo estado, quién
- * atiende y lo de la semana; la fila abre la ficha, donde están Pausar y el resto de acciones.
- * Arriba, lo que pide atención. Los datos técnicos del negocio (webhook, enrutamiento y
- * consistencia) solo los ve la plataforma. Recibe los datos; no hace fetch.
+ * Lista de conexiones (HU-AOS-23, rediseñada en CON-03): un solo estado, quién atiende y lo de la
+ * semana, en tabla o en cuadrícula de tarjetas (CON-21). Cada fila o tarjeta abre la ficha, donde
+ * están Pausar y el resto de acciones. Arriba, lo que pide atención. Los datos técnicos del negocio
+ * (webhook, enrutamiento y consistencia) solo los ve la plataforma. Recibe los datos; no hace fetch.
  */
 export function ConsolaConexiones({
   consola,
   webhookUrl,
   esPlataforma = false,
+  vista = "lista",
 }: {
   consola: ConnectionsConsole;
   webhookUrl: string | null;
   esPlataforma?: boolean;
+  vista?: "lista" | "cuadricula";
 }) {
   const atencion = consola.items.filter(necesitaAtencion);
   const menu = (c: ConexionConsola) =>
@@ -137,26 +140,36 @@ export function ConsolaConexiones({
         </dl>
       )}
 
-      <TablaResponsiva
-        etiqueta="Conexiones del negocio"
-        columns={columns}
-        rows={consola.items}
-        getRowKey={(c) => c.id}
-        getRowHref={rutaDeFicha}
-        getRowLabel={(c) => `Abrir ${c.label}`}
-        emptyTitle="Conecta tu primer canal"
-        emptyDescription="Tu agente empieza a atender cuando tiene por dónde hablar con tus clientes."
-        filaCelular={(c) => {
-          const estado = estadoDeConexion(c);
-          return {
-            inicio: <ChannelIcon id={iconoDeConexion(c)} />,
-            titulo: c.label,
-            detalle: `${estado.label} · ${c.conversational ? agentesDeLaConexion(c) : "Integración"}`,
-            href: rutaDeFicha(c),
-            accion: menu(c),
-          };
-        }}
-      />
+      {vista === "cuadricula" && consola.items.length > 0 ? (
+        <ul aria-label="Conexiones del negocio" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {consola.items.map((c) => (
+            <li key={c.id} className="flex">
+              <TarjetaDeConexion conexion={c} accion={menu(c)} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <TablaResponsiva
+          etiqueta="Conexiones del negocio"
+          columns={columns}
+          rows={consola.items}
+          getRowKey={(c) => c.id}
+          getRowHref={rutaDeFicha}
+          getRowLabel={(c) => `Abrir ${c.label}`}
+          emptyTitle="Conecta tu primer canal"
+          emptyDescription="Tu agente empieza a atender cuando tiene por dónde hablar con tus clientes."
+          filaCelular={(c) => {
+            const estado = estadoDeConexion(c);
+            return {
+              inicio: <ChannelIcon id={iconoDeConexion(c)} />,
+              titulo: c.label,
+              detalle: `${estado.label} · ${c.conversational ? agentesDeLaConexion(c) : "Integración"}`,
+              href: rutaDeFicha(c),
+              accion: menu(c),
+            };
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -238,7 +238,7 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 ## Conexiones (SPEC-29)
 
 - Una conexión tiene un solo estado (`estadoDeConexion`): Funciona, Con avisos, No funciona, Sin terminar o Pausada. La salud de Meta solo cuenta en las conexiones con cuenta de Meta.
-- La lista es `TablaResponsiva`; arriba, un enlace por cada conexión que pide atención. Webhook, enrutamiento y consistencia solo los ve la plataforma.
+- La lista se ve en lista (`TablaResponsiva`) o en cuadrícula (tarjetas con estado, agentes y la semana); la vista viaja en `?vista=` y se recuerda en este navegador (`lib/vista-guardada.ts`). Arriba, un enlace por cada conexión que pide atención. Webhook, enrutamiento y consistencia solo los ve la plataforma.
 - En la ficha, el ícono va antes del título y el estado después. Pausar es el único botón; lo demás va en el menú «Más acciones».
 - Pestañas: las de todos los días a la vista; Webhook, Producción y Versiones en «Avanzado», que muestra la elegida («Avanzado: Webhook»).
 - Nada técnico a la vista: estados, categorías, idiomas y motivos de Meta en palabras (`lib/labels.ts`); los identificadores de Meta van en el CSV o entre paréntesis en el campo que los pide.
