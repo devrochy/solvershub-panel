@@ -752,9 +752,20 @@ let seguridad = null;
 }
 
 // BIENVENIDA=1: el asistente de primer uso a medio camino (con AGENTES=1 trae las plantillas de agente).
-if (process.env.BIENVENIDA === "1") {
+// BIENVENIDA=agente (con AGENTES=1): ya creó el agente Ventas y va por «Habilidades», el paso 5 de 9 (SPEC-47).
+if (process.env.BIENVENIDA === "1" || process.env.BIENVENIDA === "agente") {
   const pp = respuestas["/admin/onboarding"];
-  respuestas["/admin/onboarding"] = { ...pp, recorrido: { ...pp.recorrido, estado: "en_curso", paso: 1, total_pasos: 6, aplica: true, abrir: true, avisar: true } };
+  const conAgente = process.env.BIENVENIDA === "agente"
+    ? { paso: 5, agente_id: "00000000-0000-4000-8000-000000000002", conexion_id: "00000000-0000-4000-8000-0000000000c1" }
+    : { paso: 1 };
+  respuestas["/admin/onboarding"] = { ...pp, recorrido: { ...pp.recorrido, estado: "en_curso", total_pasos: 9, aplica: true, abrir: true, avisar: true, ...conAgente } };
+  // «Dejar listo» publica en el chat de pruebas y devuelve la conexión con la que se prueba.
+  respuestas["/admin/onboarding/dejar-listo"] = {
+    conexion_id: "00000000-0000-4000-8000-0000000000c1",
+    listo: true,
+    pasos: [],
+    recorrido: respuestas["/admin/onboarding"].recorrido,
+  };
 }
 
 // SOLO_LECTURA=1: quien mira no es el propietario (plantillas con opciones en solo lectura).
@@ -1894,7 +1905,9 @@ createServer(async (req, res) => {
     return;
   }
   const cuerpo =
-    req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];
+    req.method === "POST" && ruta === "/admin/onboarding/dejar-listo" && respuestas[ruta]
+      ? respuestas[ruta]
+      : req.method !== "GET" ? { ok: true } : ruta === "/search" ? buscar(url.searchParams.get("q") ?? "") : respuestas[ruta];
   if (cuerpo === undefined) {
     res.statusCode = 404;
     res.end(JSON.stringify({ error: { message: `Sin fixture para ${ruta}` } }));

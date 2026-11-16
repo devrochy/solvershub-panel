@@ -10945,6 +10945,11 @@ export interface components {
              * @description Paso al que llega la persona.
              */
             paso: number;
+            /**
+             * Pasos
+             * @description Total de pasos con que el cliente numera `paso` (9 desde SPEC-47). Sin él, el paso es del asistente de 6 (panel o APK anteriores) y se guarda traducido a su equivalente de 9.
+             */
+            pasos?: number | null;
         };
         /** AvisoDatosOut */
         AvisoDatosOut: {

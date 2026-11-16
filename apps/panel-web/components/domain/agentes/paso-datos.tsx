@@ -44,8 +44,8 @@ export function PasoDatos({ agenteId, onCargado }: { agenteId: string; onCargado
     ]).then(([p, i]) => {
       if (!vivo) return;
       // Un 404 quiere decir que la opción no existe aquí (p. ej. generar fuera de test): se oculta.
-      setPrueba(p.ok && p.data.disponible ? p.data : null);
-      setImportacion(i.ok && i.data.disponible && i.data.plantilla ? i.data : null);
+      setPrueba(p.ok && p.data?.disponible ? p.data : null);
+      setImportacion(i.ok && i.data?.disponible && i.data.plantilla ? i.data : null);
       setCargando(false);
     });
     return () => {

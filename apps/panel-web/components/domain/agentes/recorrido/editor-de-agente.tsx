@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import {
@@ -11,7 +11,7 @@ import {
   PasoReglas,
   PasoSuperpoderes,
   PasoVoz,
-} from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+} from "@/components/domain/agentes/recorrido/pasos";
 import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agente";
 import { DatosDelAgente } from "@/components/domain/agentes/datos-del-agente";
 import { PasoDatos, type Cargado } from "@/components/domain/agentes/paso-datos";
@@ -73,6 +73,9 @@ import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { conversacionDeFlujo, conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
+/** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
+const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "flujo", "conocimiento", "probar", "publicar"];
+
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
 
@@ -82,6 +85,29 @@ type Respuesta = {
   fields?: Record<string, string>;
   /** El 422 `invalid_spec` trae aquí `retired_references` (HU-AOS-59). */
   details?: Record<string, unknown>;
+};
+
+/**
+ * La bienvenida (HU-UX-23) usa el editor para sus pasos 5 a 9. Los cuatro primeros (Tu negocio, Identidad,
+ * Cómo habla y Horario y reglas) escriben en el negocio y viven en `/bienvenida`: aquí se ven hechos en la
+ * barra y volver a uno de ellos lo decide `volverA`.
+ */
+export type BienvenidaDelEditor = {
+  /** Los cuatro pasos del negocio, para la barra de 9 (ids propios, distintos de los del editor). */
+  pasosDelNegocio: PasoDeLaBarra[];
+  /** Vuelve a uno de los pasos del negocio (1 a 4). */
+  volverA: (numero: number) => void;
+  /** Guarda en el recorrido el paso (1 a 9) al que se llega. */
+  avanzar: (numero: number) => void;
+  /** Vuelve a dejar el agente listo antes de «Pruébalo», con lo último configurado. Devuelve el error, si hubo. */
+  prepararPrueba: () => Promise<string | null>;
+  /** El chat de prueba de la bienvenida. */
+  prueba: ReactNode;
+  /** Ya le escribió a su agente: se puede terminar. */
+  probado: boolean;
+  /** Deja el agente listo con lo último y da por terminado el recorrido. */
+  terminar: () => Promise<void>;
+  terminando: boolean;
 };
 
 /**
@@ -116,6 +142,7 @@ export function EditorDeAgente({
   modeloEfectivo = null,
   puedeEditar = true,
   modo = "editar",
+  bienvenida,
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -147,10 +174,15 @@ export function EditorDeAgente({
   modeloEfectivo?: { nombre: string; origen: "negocio" | "agente" } | null;
   /** Sin permiso de escritura: se ve todo, sin guardar ni publicar. */
   puedeEditar?: boolean;
-  /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). */
-  modo?: "crear" | "editar";
+  /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). `bienvenida`: pasos 5 a 9 del primer uso. */
+  modo?: "crear" | "editar" | "bienvenida";
+  bienvenida?: BienvenidaDelEditor;
 }) {
-  const creando = modo === "crear";
+  // Crear y la bienvenida van en orden y «Siguiente» guarda; la bienvenida además vive fuera del shell.
+  const creando = modo !== "editar";
+  const enBienvenida = modo === "bienvenida" && bienvenida !== undefined;
+  const [preparando, setPreparando] = useState(false);
+  const [errorDeBienvenida, setErrorDeBienvenida] = useState<string | null>(null);
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
   const publicarAccion = useAction({ refresh: false });
@@ -393,7 +425,17 @@ export function EditorDeAgente({
   function mover(delta: 1 | -1) {
     const i = PASOS.findIndex((p) => p.id === paso);
     const destino = PASOS[i + delta];
+    // En la bienvenida, antes de «Habilidades» van los pasos del negocio, que viven en `/bienvenida`.
+    if (enBienvenida && (!destino || PASOS_DE_LA_BIENVENIDA.indexOf(destino.id) < 0)) {
+      if (delta < 0) bienvenida.volverA(bienvenida.pasosDelNegocio.length);
+      return;
+    }
     if (destino) irA(destino.id);
+  }
+
+  /** Número (1 a 9) de un paso del editor en la bienvenida. */
+  function numeroEnBienvenida(id: PasoId): number {
+    return (bienvenida?.pasosDelNegocio.length ?? 0) + PASOS_DE_LA_BIENVENIDA.indexOf(id) + 1;
   }
 
   /** Guarda todo lo cambiado sin publicar. Las reglas de publicación (frases mínimas) no frenan un borrador. */
@@ -412,7 +454,22 @@ export function EditorDeAgente({
     const propios = validar(paso, completo);
     setErrores(propios);
     if (Object.keys(propios).length > 0) return;
-    if (await guardarCambios()) mover(1);
+    if (!(await guardarCambios())) return;
+    if (enBienvenida) {
+      const i = PASOS_DE_LA_BIENVENIDA.indexOf(paso);
+      const destino = PASOS_DE_LA_BIENVENIDA[i + 1];
+      if (!destino) return;
+      if (destino === "probar") {
+        // La prueba tiene que hablar con lo que el dueño acaba de configurar.
+        setPreparando(true);
+        const error = await bienvenida.prepararPrueba();
+        setPreparando(false);
+        setErrorDeBienvenida(error);
+        if (error) return;
+      }
+      bienvenida.avanzar(numeroEnBienvenida(destino));
+    }
+    mover(1);
   }
 
   async function publicar() {
@@ -603,7 +660,9 @@ export function EditorDeAgente({
         </section>
       </div>
     ),
-    probar: creando ? (
+    probar: enBienvenida ? (
+      bienvenida.prueba
+    ) : creando ? (
       <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />
     ) : (
       <div className="flex max-w-xl flex-col gap-4">
@@ -619,7 +678,19 @@ export function EditorDeAgente({
         </div>
       </div>
     ),
-    publicar: (
+    publicar: enBienvenida ? (
+      <div className="flex max-w-xl flex-col gap-4">
+        <p className="text-body">
+          Tu agente queda listo en tu chat de pruebas, cerrado al público, con todo lo que configuraste. Cuando conectes tu
+          WhatsApp, lo activas ahí desde Conexiones.
+        </p>
+        {!bienvenida.probado && (
+          <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+            Para terminar, escríbele al menos un mensaje en «Pruébalo».
+          </p>
+        )}
+      </div>
+    ) : (
       <PasoPublicar
         destinos={destinos}
         destinosError={destinosError}
@@ -674,12 +745,15 @@ export function EditorDeAgente({
   const conCambios = pasosConCambios(estado, guardado);
   if (datosSinGuardar) conCambios.add("habilidades");
   const conError = new Set(Object.keys(errores).map(pasoDelCampo));
-  const pasos: PasoDeLaBarra[] = PASOS.map((p) => ({
-    id: p.id,
-    titulo: p.titulo,
-    corto: p.corto,
-    marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
-  }));
+  const pasosDelEditor: PasoDeLaBarra[] = (enBienvenida ? PASOS.filter((p) => PASOS_DE_LA_BIENVENIDA.includes(p.id)) : PASOS).map(
+    (p) => ({
+      id: p.id,
+      titulo: p.titulo,
+      corto: p.corto,
+      marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
+    }),
+  );
+  const pasos: PasoDeLaBarra[] = enBienvenida ? [...bienvenida.pasosDelNegocio, ...pasosDelEditor] : pasosDelEditor;
   const indice = PASOS.findIndex((p) => p.id === paso);
   const ultimo = indice === PASOS.length - 1;
   const hayCambios = cambios || datosSinGuardar;
@@ -692,13 +766,17 @@ export function EditorDeAgente({
         pasos={pasos}
         actual={paso}
         modo={creando ? "en-orden" : "libre"}
-        onIr={(id) => irA(id as PasoId)}
-        etiquetaDePasos={creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
+        onIr={(id) => {
+          const delNegocio = bienvenida?.pasosDelNegocio.findIndex((p) => p.id === id) ?? -1;
+          if (enBienvenida && delNegocio >= 0) bienvenida.volverA(delNegocio + 1);
+          else irA(id as PasoId);
+        }}
+        etiquetaDePasos={enBienvenida ? "Pasos del primer uso" : creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
         pregunta={preguntaDelPaso(paso, estado.nombre)}
-        nivelDePregunta="h2"
-        dentroDelPanel
+        nivelDePregunta={enBienvenida ? "h1" : "h2"}
+        dentroDelPanel={!enBienvenida}
         vistaPrevia={vistaPrevia}
-        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: indice === 0 }}
+        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: indice === 0 && !enBienvenida }}
         guardar={
           puedeEditar && !creando
             ? {
@@ -710,7 +788,14 @@ export function EditorDeAgente({
             : undefined
         }
         principal={
-          ultimo
+          ultimo && enBienvenida
+            ? {
+                texto: "Terminar",
+                onClick: () => void bienvenida.terminar(),
+                cargando: bienvenida.terminando,
+                deshabilitado: !bienvenida.probado || bienvenida.terminando,
+              }
+            : ultimo
             ? puedeEditar
               ? {
                   texto: creando ? "Publicar" : "Publicar versión",
@@ -720,7 +805,7 @@ export function EditorDeAgente({
                 }
               : undefined
             : creando
-              ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending }
+              ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }
               : { texto: "Siguiente", onClick: () => mover(1) }
         }
       >
@@ -728,6 +813,11 @@ export function EditorDeAgente({
           <legend className="sr-only">{PASOS[indice]?.titulo}</legend>
           {contenidoDelPaso[paso]}
           {ultimo && limite && <AvisoLimiteDePlan mensaje={limite} />}
+          {errorDeBienvenida && (
+            <p role="alert" className="max-w-xl text-sm text-status-danger-fg">
+              {errorDeBienvenida}
+            </p>
+          )}
         </fieldset>
       </RecorridoDelAgente>
 

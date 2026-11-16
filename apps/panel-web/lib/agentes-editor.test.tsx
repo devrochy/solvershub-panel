@@ -2,8 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { EditorDeAgente } from "@/app/(app)/agentes/[id]/editar/_components/editor-de-agente";
-import { PasoSuperpoderes } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
+import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
+import { PasoSuperpoderes } from "@/components/domain/agentes/recorrido/pasos";
 import { FeedbackProviders } from "@/components/ui/providers";
 import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
 import type { AgentDetail, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
@@ -346,6 +346,55 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
     await waitFor(() => expect(screen.getByText("Paso 3 de 8 · Horario")).toBeTruthy());
     expect(fetchMock.mock.calls.some(([u]) => String(u) === `/api/agent-editor/${agente.id}/draft`)).toBe(true);
+  });
+
+  it("en la bienvenida (HU-UX-23) son los pasos 5 a 9 de 9, vuelve a los del negocio y prepara la prueba", async () => {
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
+    const volverA = vi.fn();
+    const avanzar = vi.fn();
+    const prepararPrueba = vi.fn(async () => null);
+    const terminar = vi.fn(async () => {});
+    const bienvenida = {
+      pasosDelNegocio: ["Tu negocio", "Identidad", "Cómo habla", "Horario"].map((t, i) => ({ id: `negocio-${i}`, titulo: t })),
+      volverA,
+      avanzar,
+      prepararPrueba,
+      prueba: <p>Chat de prueba</p>,
+      probado: false,
+      terminar,
+      terminando: false,
+    };
+    abrir({ modo: "bienvenida", pasoInicial: "habilidades", bienvenida });
+    expect(screen.getByText("Paso 5 de 9 · Habilidades")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Atrás/ }));
+    expect(volverA).toHaveBeenCalledWith(4);
+
+    cleanup();
+    abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida });
+    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+    await waitFor(() => expect(screen.getByText("Paso 8 de 9 · Pruébalo")).toBeTruthy());
+    expect(prepararPrueba).toHaveBeenCalled();
+    expect(avanzar).toHaveBeenCalledWith(8);
+    expect(screen.getByText("Chat de prueba")).toBeTruthy();
+  });
+
+  it("en la bienvenida «Terminar» espera a que le escriba a su agente", () => {
+    const terminar = vi.fn(async () => {});
+    const bienvenida = {
+      pasosDelNegocio: [{ id: "negocio-0", titulo: "Tu negocio" }],
+      volverA: vi.fn(),
+      avanzar: vi.fn(),
+      prepararPrueba: vi.fn(async () => null),
+      prueba: null,
+      probado: false,
+      terminar,
+      terminando: false,
+    };
+    abrir({ modo: "bienvenida", pasoInicial: "publicar", bienvenida });
+    expect((screen.getByRole("button", { name: /Terminar/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/escríbele al menos un mensaje/)).toBeTruthy();
   });
 
   it("sin permiso de escritura se ve todo, sin guardar ni publicar", () => {

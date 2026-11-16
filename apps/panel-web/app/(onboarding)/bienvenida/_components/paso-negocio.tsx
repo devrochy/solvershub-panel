@@ -8,13 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { habilidadLabel } from "@/lib/labels";
 import {
   DESCRIPCION_MAX,
-  NOMBRE_AGENTE_MAX,
   TIPOS_DE_NEGOCIO,
   type EstadoDelAsistente,
   type TipoDeNegocio,
 } from "@/lib/onboarding";
 
-import { FichaUnica, GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
+import { TarjetaElegible } from "@/components/ui/elegibles";
 
 const ICONOS: Record<TipoDeNegocio, React.ReactNode> = {
   ventas: <ShoppingBag className="h-6 w-6" />,
@@ -23,7 +22,7 @@ const ICONOS: Record<TipoDeNegocio, React.ReactNode> = {
   suscripciones: <Repeat className="h-6 w-6" />,
 };
 
-/** Paso 1: a qué se dedica el negocio (tipo de agente), una frase y cómo se llama el agente. */
+/** Paso 1: a qué se dedica el negocio (tipo de agente) y una frase. El nombre del agente va en «Identidad». */
 export function PasoNegocio({
   estado,
   onCambiar,
@@ -37,7 +36,6 @@ export function PasoNegocio({
   /** Habilidades que se activarán al crear el agente de cada tipo. */
   habilitara: Partial<Record<TipoDeNegocio, string[]>>;
 }) {
-  const tipo = TIPOS_DE_NEGOCIO.find((t) => t.id === estado.tipo);
   const porActivar = (estado.tipo && habilitara[estado.tipo]) || [];
   return (
     <div className="flex flex-col gap-8">
@@ -94,29 +92,6 @@ export function PasoNegocio({
             onChange={(e) => onCambiar({ descripcion: e.target.value })}
           />
         </Field>
-        <Field label="Nombre de tu agente" htmlFor="onb-agente" required>
-          <Input
-            id="onb-agente"
-            value={estado.nombreDelAgente}
-            maxLength={NOMBRE_AGENTE_MAX}
-            onChange={(e) => onCambiar({ nombreDelAgente: e.target.value })}
-          />
-        </Field>
-        {tipo && (
-          <GrupoDeOpciones titulo="Ideas de nombre">
-            {tipo.nombres.map((n) => (
-              <FichaUnica
-                key={n}
-                nombre="nombre-sugerido"
-                valor={n}
-                elegida={estado.nombreDelAgente === n}
-                onElegir={(v) => onCambiar({ nombreDelAgente: v })}
-              >
-                {n}
-              </FichaUnica>
-            ))}
-          </GrupoDeOpciones>
-        )}
       </div>
     </div>
   );
