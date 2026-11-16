@@ -1,30 +1,34 @@
 import Link from "next/link";
 
-import { AsistenteDeAgente } from "@/app/(app)/agentes/nuevo/_components/asistente-de-agente";
+import { NuevoAgente } from "@/app/(app)/agentes/nuevo/_components/nuevo-agente";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { PageHeader } from "@/components/ui/page-header";
 import { puedeEditarAgentes } from "@/lib/agentes";
+import { negocioDesdeIdentidad } from "@/lib/agentes-editor";
 import { avisoDeTopeDeAgentes } from "@/lib/plan-limite";
 import { apiFetch } from "@/lib/api/server";
-import type { AgentsOverview, AgentTemplatePage, Me } from "@/lib/api/types";
+import type { AgentsOverview, AgentTemplatePage, Me, SettingsResponse } from "@/lib/api/types";
 
 export const metadata = { title: "Nuevo agente" };
 
-/** Crear un agente con el asistente de hasta 10 pasos (HU-AOS-54, SPEC-39). */
+/** Crear un agente con el recorrido común (HU-AOS-77, SPEC-47): aquí va «Identidad»; el resto, en el editor en modo crear. */
 export default async function NuevoAgentePage() {
-  const [plantillas, me, agentes] = await Promise.all([
+  const [plantillas, me, agentes, ajustes] = await Promise.all([
     apiFetch<AgentTemplatePage>("/admin/agent-templates?page_size=100"),
     apiFetch<Me>("/admin/me"),
     apiFetch<AgentsOverview>("/admin/agents/overview"),
+    // La voz del negocio para la vista previa; sin ella, el paso se ve sin teléfono.
+    apiFetch<SettingsResponse>("/admin/settings"),
   ]);
+  const negocio = negocioDesdeIdentidad(me.ok ? (me.data.tenant?.name ?? "") : "", ajustes.ok ? ajustes.data.identity : null);
   const puede = me.ok && puedeEditarAgentes(me.data);
   const avisoTope = agentes.ok ? avisoDeTopeDeAgentes(agentes.data.cuota_agentes) : null;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Nuevo agente"
-        description="Responde unas preguntas según lo que quieres que haga: el asistente deja tu agente configurado y tú lo publicas."
+        description="Los mismos pasos que al editar: eliges qué hace, ajustas cómo habla y lo que sabe, y lo publicas al final."
         breadcrumbs={[{ label: "Agentes" }, { label: "Nuevo agente" }]}
       />
       {!puede ? (
@@ -43,7 +47,7 @@ export default async function NuevoAgentePage() {
         </div>
       ) : plantillas.ok ? (
         plantillas.data.items.length > 0 ? (
-          <AsistenteDeAgente plantillas={plantillas.data.items} />
+          <NuevoAgente plantillas={plantillas.data.items} negocio={negocio} />
         ) : (
           <p className="text-sm text-body">Todavía no hay tipos de agente disponibles.</p>
         )

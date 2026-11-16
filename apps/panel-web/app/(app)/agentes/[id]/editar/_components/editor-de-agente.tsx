@@ -14,6 +14,9 @@ import {
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
 import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agente";
 import { DatosDelAgente } from "@/components/domain/agentes/datos-del-agente";
+import { PasoDatos, type Cargado } from "@/components/domain/agentes/paso-datos";
+import { PasoLoCargado } from "@/components/domain/agentes/paso-lo-cargado";
+import { PasoProbarBorrador } from "@/components/domain/agentes/paso-probar-borrador";
 import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { RecorridoDelAgente, type VistaPreviaDelPaso } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
@@ -55,6 +58,7 @@ import type {
   AgentDetail,
   AgentRetiredNotices,
   EditorPublishOut,
+  RegistroDePrueba,
   LlmModelCatalog,
   PublishTarget,
   Requirement,
@@ -66,6 +70,7 @@ import { habilidadLabel } from "@/lib/labels";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
+import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { conversacionDeFlujo, conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
@@ -85,6 +90,9 @@ type Respuesta = {
  * guarda: «Guardar cambios» guarda todo lo cambiado sin publicar, y «Publicar versión» valida los
  * ocho pasos, publica en las conexiones elegidas (D-35) y deja la versión lista para activar.
  * «Proveedor y modelo» ya no es un paso: el agente usa el modelo del negocio (HU-AOS-79).
+ *
+ * Con `modo="crear"` (HU-AOS-77) es la continuación de Nuevo agente: los pasos van en orden y
+ * «Siguiente» valida y guarda el paso antes de avanzar; no hay «Guardar cambios» aparte.
  */
 export function EditorDeAgente({
   agente,
@@ -107,6 +115,7 @@ export function EditorDeAgente({
   negocio = { nombre: "", voz: null, resumenDeVoz: null, horario: null, motivos: null },
   modeloEfectivo = null,
   puedeEditar = true,
+  modo = "editar",
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -138,7 +147,10 @@ export function EditorDeAgente({
   modeloEfectivo?: { nombre: string; origen: "negocio" | "agente" } | null;
   /** Sin permiso de escritura: se ve todo, sin guardar ni publicar. */
   puedeEditar?: boolean;
+  /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). */
+  modo?: "crear" | "editar";
 }) {
+  const creando = modo === "crear";
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
   const publicarAccion = useAction({ refresh: false });
@@ -151,6 +163,9 @@ export function EditorDeAgente({
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
   const [paso, setPaso] = useState<PasoId>(pasoInicial);
   const [frasePrueba, setFrasePrueba] = useState<string | null>(null);
+  // Datos cargados en «Conocimiento y datos» (SPEC-45): null = nada en esta visita.
+  const [cargado, setCargado] = useState<Cargado | null>(null);
+  const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
   // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
   const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   const [errores, setErrores] = useState<Errores>({});
@@ -382,12 +397,22 @@ export function EditorDeAgente({
   }
 
   /** Guarda todo lo cambiado sin publicar. Las reglas de publicación (frases mínimas) no frenan un borrador. */
-  async function guardarCambios() {
+  async function guardarCambios(): Promise<boolean> {
+    const completo = plegarPendientes();
+    if (!completo) return false;
+    setErrores({});
+    if (!(await guardarDatos())) return false;
+    return (await guardar(completo)) !== null;
+  }
+
+  /** Al crear, «Siguiente» valida el paso y lo guarda antes de avanzar. */
+  async function siguienteAlCrear() {
     const completo = plegarPendientes();
     if (!completo) return;
-    setErrores({});
-    if (!(await guardarDatos())) return;
-    await guardar(completo);
+    const propios = validar(paso, completo);
+    setErrores(propios);
+    if (Object.keys(propios).length > 0) return;
+    if (await guardarCambios()) mover(1);
   }
 
   async function publicar() {
@@ -550,8 +575,37 @@ export function EditorDeAgente({
         semilla={flujoSeeded && JSON.stringify(estado.flujo) === JSON.stringify(flujoInicial)}
       />
     ),
-    conocimiento: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
-    probar: (
+    conocimiento: (
+      <div className="flex flex-col gap-10">
+        <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />
+        <section aria-labelledby="conocimiento-datos" className="flex flex-col gap-4">
+          <h3 id="conocimiento-datos" className="font-display text-sh-block text-headline">
+            Carga sus datos
+          </h3>
+          {cargado ? (
+            <div className="flex flex-col gap-4">
+              <PasoLoCargado agenteId={agente.id} locales={cargado.registros} resumen={cargado.resumen || null} onRegistros={setCargados} />
+              <div>
+                <Button variant="outline" onClick={() => setCargado(null)}>
+                  Cargar otros datos
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <PasoDatos
+              agenteId={agente.id}
+              onCargado={(c) => {
+                setCargado(c);
+                setCargados(c.registros);
+              }}
+            />
+          )}
+        </section>
+      </div>
+    ),
+    probar: creando ? (
+      <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />
+    ) : (
       <div className="flex max-w-xl flex-col gap-4">
         <p className="text-sm text-body">
           El chat de prueba responde con la versión <strong className="text-headline">activa</strong> de una conexión
@@ -637,16 +691,16 @@ export function EditorDeAgente({
       <RecorridoDelAgente
         pasos={pasos}
         actual={paso}
-        modo="libre"
+        modo={creando ? "en-orden" : "libre"}
         onIr={(id) => irA(id as PasoId)}
-        etiquetaDePasos="Pasos del editor de agentes"
+        etiquetaDePasos={creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
         pregunta={preguntaDelPaso(paso, estado.nombre)}
         nivelDePregunta="h2"
         dentroDelPanel
         vistaPrevia={vistaPrevia}
         atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: indice === 0 }}
         guardar={
-          puedeEditar
+          puedeEditar && !creando
             ? {
                 texto: "Guardar cambios",
                 onClick: () => void guardarCambios(),
@@ -659,13 +713,15 @@ export function EditorDeAgente({
           ultimo
             ? puedeEditar
               ? {
-                  texto: "Publicar versión",
+                  texto: creando ? "Publicar" : "Publicar versión",
                   onClick: () => void publicar(),
                   cargando: publicarAccion.pending,
                   deshabilitado: publicarAccion.pending || guardarAccion.pending || destinos.length === 0,
                 }
               : undefined
-            : { texto: "Siguiente", onClick: () => mover(1) }
+            : creando
+              ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending }
+              : { texto: "Siguiente", onClick: () => mover(1) }
         }
       >
         <fieldset disabled={!puedeEditar} className="flex min-w-0 flex-col gap-6">
@@ -680,6 +736,15 @@ export function EditorDeAgente({
           <h2 id="publicado-titulo" className="font-display text-base font-semibold text-headline">
             Versión {publicado.version.version} publicada
           </h2>
+          {creando && (
+            <p className="text-sm text-body">
+              Tu agente quedó creado. Actívalo en una conexión para que tus clientes hablen con él, o{" "}
+              <Link href={`/agentes/${agente.id}`} className="text-link underline-offset-2 hover:underline">
+                ve a su ficha
+              </Link>
+              .
+            </p>
+          )}
           {publicado.warnings.map((aviso) => (
             <p key={aviso} className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
               {aviso}

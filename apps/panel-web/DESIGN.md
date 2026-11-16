@@ -384,6 +384,8 @@ sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro d
 | `components/ui/elegibles.tsx` y `components/domain/agentes/paso-datos.tsx`, `paso-lo-cargado.tsx` | Compartidos por los tres flujos; ningún recorrido tiene su copia |
 | Pie | `bg-surface` sólido, sin `backdrop-blur` |
 | Editar (`/agentes/[id]/editar`, HU-AOS-78) | Dentro del shell: el `PageHeader` conserva el único `h1` y la pregunta va en `h2` (`nivelDePregunta="h2"`); el pie usa `dentroDelPanel` para cubrir el relleno del `main`. Modo libre: cambiar de paso no guarda, «Guardar cambios» guarda todo (datos del cliente, nombre, borrador y flujo) sin publicar y «Publicar versión» valida los ocho pasos. Sin permiso de escritura, los pasos van en un `fieldset disabled` y no hay ni guardar ni publicar. Habilidades junta Superpoderes, Acciones y Datos del cliente; Horario y reglas solo se lee (es del negocio) |
+| Nuevo agente (`/agentes/nuevo`, HU-AOS-77) | Es el paso «Identidad» del recorrido en orden: plantilla en tarjetas, el guion con lo sugerido ya marcado, nombre y descripción. «Crear borrador y seguir» crea el borrador (`from-script`) y lleva al editor con `?modo=crear&paso=voz`. En modo crear el editor va en orden, «Siguiente» valida y guarda el paso, no hay «Guardar cambios» y las migas dicen «Nuevo agente»; al publicar ofrece activar y la ficha. El borrador nace al salir de Identidad porque la voz y lo demás se guardan en él |
+| Conocimiento y datos | En los dos modos suma «Carga sus datos» (`PasoDatos`, `PasoLoCargado`, SPEC-45) bajo la memoria y los documentos |
 
 ## Copy
 

@@ -333,6 +333,19 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
   });
 
+  it("al crear (HU-AOS-77) los pasos van en orden y «Siguiente» guarda antes de avanzar", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
+    abrir({ modo: "crear", pasoInicial: "voz" });
+    expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
+    expect(screen.getByText("Paso 2 de 8 · Cómo habla")).toBeTruthy();
+    // En orden: no se puede saltar a un paso futuro desde la barra.
+    expect(screen.queryAllByRole("button", { name: /^Publicar$/ })).toHaveLength(0);
+    fireEvent.click(screen.getByRole("switch", { name: /voz de la conexión/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+    await waitFor(() => expect(screen.getByText("Paso 3 de 8 · Horario")).toBeTruthy());
+    expect(fetchMock.mock.calls.some(([u]) => String(u) === `/api/agent-editor/${agente.id}/draft`)).toBe(true);
+  });
+
   it("sin permiso de escritura se ve todo, sin guardar ni publicar", () => {
     abrir({ puedeEditar: false, pasoInicial: "publicar" });
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
