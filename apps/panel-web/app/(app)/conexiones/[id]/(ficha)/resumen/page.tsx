@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { ReregistrarWebhooksTwilio, RefrescarTwilio } from "@/app/(app)/conexiones/_components/twilio/acciones-twilio";
 import { CodigoDeUnionTwilio, CopiarTwilio } from "@/app/(app)/conexiones/_components/twilio/sandbox-twilio";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
+import { ResumenTelegram } from "@/app/(app)/conexiones/_components/telegram/resumen-telegram";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +53,8 @@ export default async function ResumenTwilioPage({
   const [{ id }, { alta }] = await Promise.all([params, searchParams]);
   const ficha = await fichaDePestana(id, "resumen");
   if (!ficha) return null;
+  // Telegram (ADR-0199) tiene su propio resumen: bot, webhook y pendientes.
+  if (ficha.tipo === "telegram") return <ResumenTelegram id={id} alta={alta} />;
   const [res, me] = await Promise.all([
     apiFetch<ConexionTwilio>(`/admin/connections/twilio/${encodeURIComponent(id)}`),
     apiFetch<Me>("/admin/me"),

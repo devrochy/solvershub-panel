@@ -270,7 +270,7 @@ describe("editor de agentes con referencias retiradas", () => {
     versions: [],
   } as unknown as AgentDetail;
   const modelos = {
-    items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null,
+    items: [], total: 0, page: 1, page_size: 100, has_more: false, provider: "deepseek", byok_model: null, business_model: "deepseek-chat",
     avg_input_tokens: null, avg_output_tokens: null, sample_turns: 0, min_phrases: 3,
   } as LlmModelCatalog;
   const conexion: PublishTarget = {

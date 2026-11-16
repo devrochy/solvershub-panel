@@ -139,6 +139,13 @@ describe("gestión y alta de conexiones", () => {
     ).toBeNull();
   });
 
+  it("Telegram abre su alta con el token de @BotFather en el mismo diálogo, solo si el catálogo lo marca disponible", () => {
+    expect(destinoDeAlta({ id: "telegram", available: true, setup_kind: "wizard", has_schema: true })).toEqual({
+      tipo: "telegram",
+    });
+    expect(destinoDeAlta({ id: "telegram", available: false, setup_kind: "wizard", has_schema: true })).toBeNull();
+  });
+
   it("Instagram se conecta en su propia pantalla", () => {
     expect(
       destinoDeAlta({ id: "instagram_meta", available: true, setup_kind: "wizard", has_schema: false }),

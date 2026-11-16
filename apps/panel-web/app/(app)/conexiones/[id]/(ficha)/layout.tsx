@@ -75,6 +75,7 @@ export default async function FichaDeConexionLayout({
                 conActivar={!pausable}
                 redirectTo="/conexiones"
                 twilio={tipo === "whatsapp_twilio"}
+                telegram={tipo === "telegram"}
               />
             </>
           ) : undefined

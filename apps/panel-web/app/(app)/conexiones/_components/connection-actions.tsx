@@ -14,13 +14,15 @@ import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
 import { EliminarCuentaDialog } from "./eliminar-cuenta-dialog";
+import { DesconectarTelegramDialog } from "./telegram/desconectar-telegram-dialog";
 import { DesconectarTwilioDialog } from "./twilio/desconectar-twilio-dialog";
 import { VerCredencialesDialog } from "./ver-credenciales-dialog";
 
 /**
  * Menú de acciones de una conexión, en la cabecera de su ficha: ver y editar los datos de una
  * manual, activarla cuando no se pausa con el botón Pausar, hacerla la principal y eliminarla. Un número de
- * WhatsApp vía Twilio se desconecta con su propia ruta, que puede devolverle sus webhooks previos.
+ * WhatsApp vía Twilio se desconecta con su propia ruta, que puede devolverle sus webhooks previos; un bot de
+ * Telegram, con la suya, que le quita el webhook (el borrado genérico de un bot responde 409).
  */
 export function ConnectionActions({
   connectionId,
@@ -33,6 +35,7 @@ export function ConnectionActions({
   conActivar = false,
   redirectTo,
   twilio = false,
+  telegram = false,
 }: {
   connectionId: string;
   label: string;
@@ -48,6 +51,8 @@ export function ConnectionActions({
   redirectTo?: string;
   /** Es un número de WhatsApp vía Twilio: «Desconectar» con `DesconectarTwilioDialog`. */
   twilio?: boolean;
+  /** Es un bot de Telegram: «Desconectar» con `DesconectarTelegramDialog`. */
+  telegram?: boolean;
 }) {
   const router = useRouter();
   const confirm = useConfirm();
@@ -124,7 +129,7 @@ export function ConnectionActions({
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem icon={<Trash2 />} tone="danger" disabled={pending} onSelect={() => setDeleteOpen(true)}>
-          {kind === "meta_connection" ? "Eliminar la cuenta" : twilio ? "Desconectar" : "Eliminar"}
+          {kind === "meta_connection" ? "Eliminar la cuenta" : twilio || telegram ? "Desconectar" : "Eliminar"}
         </DropdownMenuItem>
       </MenuDeFila>
 
@@ -158,7 +163,15 @@ export function ConnectionActions({
       </Dialog>
 
       <VerCredencialesDialog connectionId={connectionId} label={label} open={datosOpen} onOpenChange={setDatosOpen} />
-      {twilio ? (
+      {telegram ? (
+        <DesconectarTelegramDialog
+          connectionId={connectionId}
+          label={label}
+          redirectTo={redirectTo}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      ) : twilio ? (
         <DesconectarTwilioDialog
           connectionId={connectionId}
           label={label}

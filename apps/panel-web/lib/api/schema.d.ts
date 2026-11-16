@@ -2812,6 +2812,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/connections/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar
+         * @description Los bots de Telegram conectados en el negocio.
+         */
+        get: operations["listar_api_v1_admin_connections_telegram_get"];
+        put?: never;
+        /**
+         * Conectar
+         * @description Conecta el bot: valida el token con `getMe`, guarda la conexión, registra el webhook con un secreto propio y
+         *     lo confirma con `getWebhookInfo`. 201 si se creó; 200 si el bot ya estaba conectado en este negocio.
+         */
+        post: operations["conectar_api_v1_admin_connections_telegram_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver
+         * @description Resumen de un bot conectado: usuario, estado, webhook y lo último que dijo Telegram.
+         */
+        get: operations["ver_api_v1_admin_connections_telegram__connection_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refrescar
+         * @description Revisa ahora el token y el webhook contra Telegram (lo mismo que el chequeo de cada 15 min).
+         */
+        post: operations["refrescar_api_v1_admin_connections_telegram__connection_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reparar
+         * @description Vuelve a apuntar el webhook del bot a solvershub (si otro sistema lo cambió).
+         */
+        post: operations["reparar_api_v1_admin_connections_telegram__connection_id__webhooks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}/test-message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mensaje De Prueba
+         * @description Manda un texto de prueba a un chat que ya le escribió al bot.
+         */
+        post: operations["mensaje_de_prueba_api_v1_admin_connections_telegram__connection_id__test_message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Rotar Credenciales
+         * @description Cambia el token del mismo bot (tras revocarlo en @BotFather). Pide la contraseña; se valida contra Telegram
+         *     antes de guardar. Conserva el `public_id` y rota el secreto del webhook.
+         */
+        put: operations["rotar_credenciales_api_v1_admin_connections_telegram__connection_id__credentials_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/connections/telegram/{connection_id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desconectar
+         * @description Quita el webhook del bot y borra lógicamente la conexión (libera el bot para otro negocio).
+         */
+        post: operations["desconectar_api_v1_admin_connections_telegram__connection_id__disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/connections": {
         parameters: {
             query?: never;
@@ -12206,6 +12352,55 @@ export interface components {
             /** Motivo Pausa */
             motivo_pausa?: string | null;
         };
+        /** ConexionTelegramOut */
+        ConexionTelegramOut: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Label */
+            label: string;
+            /**
+             * Bot Id
+             * @description Id del bot en Telegram (de `getMe`).
+             */
+            bot_id: string;
+            /**
+             * Bot Username
+             * @description `@usuario` del bot, sin la arroba.
+             */
+            bot_username: string;
+            /** Bot Name */
+            bot_name: string;
+            /**
+             * Status
+             * @description `pending`, `connected`, `degraded`, `revoked` o `error`.
+             */
+            status: string;
+            /**
+             * Webhook Url
+             * @description URL registrada en el bot (`""` para quien no administra la conexión).
+             */
+            webhook_url: string;
+            /** Webhook Confirmado At */
+            webhook_confirmado_at: string | null;
+            /**
+             * Pending Update Count
+             * @description Updates que Telegram tiene esperando entrega.
+             */
+            pending_update_count: number;
+            /** Last Error Message */
+            last_error_message: string | null;
+            /** Last Error At */
+            last_error_at: string | null;
+            /** Last Update At */
+            last_update_at: string | null;
+            /** Last Checked At */
+            last_checked_at: string | null;
+            /** Active */
+            active: boolean;
+        };
         /** ConexionTwilioOut */
         ConexionTwilioOut: {
             /**
@@ -15833,6 +16028,12 @@ export interface components {
             sample_turns: number;
             /** Min Phrases */
             min_phrases: number;
+            /** Business Model */
+            business_model: string;
+            /** Effective Model */
+            effective_model?: string | null;
+            /** Effective Source */
+            effective_source?: ("negocio" | "agente") | null;
         };
         /** LlmSettings */
         LlmSettings: {
@@ -20581,12 +20782,12 @@ export interface components {
             aplica: boolean;
             /**
              * Abrir
-             * @description El panel debe abrir el asistente solo: nunca se tocó y quien consulta es propietario del negocio.
+             * @description El panel debe abrir el asistente solo: nunca se tocó, el negocio no tiene agente creado y quien consulta es propietario del negocio.
              */
             abrir: boolean;
             /**
              * Avisar
-             * @description Aviso persistente: empezó o saltó el recorrido y no lo terminó.
+             * @description Aviso persistente: empezó o saltó el recorrido, no lo terminó y el negocio no tiene agente creado.
              */
             avisar: boolean;
             /** Omitido En */
@@ -21911,6 +22112,76 @@ export interface components {
             confirmed: boolean;
             /** Data Class */
             data_class?: string | null;
+        };
+        /** TelegramAltaIn */
+        TelegramAltaIn: {
+            /**
+             * Bot Token
+             * @description Token del bot que da @BotFather (`123456789:AAH…`). No se devuelve nunca.
+             */
+            bot_token: string;
+            /**
+             * Confirm Overwrite Webhook
+             * @description Reemplazar el webhook que el bot ya tenía hacia otra dirección (otra integración).
+             * @default false
+             */
+            confirm_overwrite_webhook: boolean;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+        };
+        /** TelegramDesconectarIn */
+        TelegramDesconectarIn: {
+            /**
+             * Password
+             * @description Contraseña del usuario (confirmación).
+             */
+            password?: string | null;
+            /**
+             * Continuar Si Falla
+             * @description Desconectar aunque no se pueda quitar el webhook del bot (si no, 502 `webhook_no_eliminado` y no se borra nada).
+             * @default false
+             */
+            continuar_si_falla: boolean;
+        };
+        /** TelegramDesconectarOut */
+        TelegramDesconectarOut: {
+            /** Webhook Quitado */
+            webhook_quitado: boolean;
+        };
+        /** TelegramPruebaIn */
+        TelegramPruebaIn: {
+            /**
+             * Chat Id
+             * @description Id del chat de Telegram de destino. Tiene que haberle escrito al bot antes (/start).
+             */
+            chat_id: number;
+        };
+        /** TelegramPruebaOut */
+        TelegramPruebaOut: {
+            /** Message Id */
+            message_id: number;
+        };
+        /** TelegramRotarIn */
+        TelegramRotarIn: {
+            /**
+             * Bot Token
+             * @description Token del bot que da @BotFather (`123456789:AAH…`). No se devuelve nunca.
+             */
+            bot_token: string;
+            /**
+             * Confirm Overwrite Webhook
+             * @description Reemplazar el webhook que el bot ya tenía hacia otra dirección (otra integración).
+             * @default false
+             */
+            confirm_overwrite_webhook: boolean;
+            /**
+             * Password
+             * @description Contraseña del usuario (confirmación).
+             */
+            password?: string | null;
         };
         /**
          * TemplateCreate
@@ -28790,6 +29061,7 @@ export interface operations {
     list_models_api_v1_admin_agent_models_get: {
         parameters: {
             query?: {
+                agent_id?: string | null;
                 page?: number;
                 page_size?: number;
             };
@@ -30105,6 +30377,447 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    listar_api_v1_admin_connections_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"][];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    conectar_api_v1_admin_connections_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramAltaIn"];
+            };
+        };
+        responses: {
+            /** @description El bot ya estaba conectado en este negocio: se actualizó. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `bot_en_otro_negocio`, `webhook_ajeno` (con `details.webhook_url`), `conexion_pausada` o `conflicto`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `telegram_token_invalido`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `telegram_unavailable`, `telegram_error` o `telegram_webhook_no_registrado` (la conexión quedó guardada en `details.connection_id`; repetir el pedido es idempotente). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `url_publica_no_https`: el ambiente no tiene una URL pública https. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ver_api_v1_admin_connections_telegram__connection_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refrescar_api_v1_admin_connections_telegram__connection_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reparar_api_v1_admin_connections_telegram__connection_id__webhooks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `conexion_pausada`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description `url_publica_no_https`: el ambiente no tiene una URL pública https. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mensaje_de_prueba_api_v1_admin_connections_telegram__connection_id__test_message_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramPruebaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramPruebaOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `chat_no_iniciado`, `token_revocado` o `conexion_pausada`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description `too_many_tests` (1 cada 30 s) o `daily_limit` (10 al día). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `telegram_unavailable` o `telegram_error`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rotar_credenciales_api_v1_admin_connections_telegram__connection_id__credentials_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramRotarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConexionTelegramOut"];
+                };
+            };
+            /** @description Telegram no está disponible, o la conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `otro_bot` (el token es de otro bot), `conexion_pausada` o `webhook_ajeno`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `telegram_token_invalido`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `telegram_unavailable`, `telegram_error` o `telegram_webhook_no_registrado` (la conexión quedó guardada en `details.connection_id`; repetir el pedido es idempotente). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `url_publica_no_https`: el ambiente no tiene una URL pública https. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    desconectar_api_v1_admin_connections_telegram__connection_id__disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramDesconectarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramDesconectarOut"];
+                };
+            };
+            /** @description `password_required`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `password_incorrect`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La conexión no existe. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description `webhook_no_eliminado`. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
