@@ -70,11 +70,11 @@ export const PESTANAS_POR_TIPO: Record<TipoDeFicha, Pestana[]> = {
   messenger: ["cuenta", "agentes", "versiones"],
   google_calendar: ["cuenta", "agenda"],
   smtp: ["credenciales"],
-  whatsapp_twilio: ["resumen", "agentes", "prueba", "credenciales", "costos", "versiones"],
+  whatsapp_twilio: ["resumen", "agentes", "plantillas", "prueba", "credenciales", "costos", "versiones"],
   manual: ["credenciales", "agentes", "versiones"],
 };
 
-/** Pestañas que muestran datos de la cuenta de Meta (`meta_connection_id`), no del número. */
+/** Pestañas que muestran datos de la cuenta de Meta (`meta_connection_id`), no del número. En Twilio, Plantillas es de la conexión. */
 export const PESTANAS_DE_CUENTA_META: ReadonlySet<Pestana> = new Set([
   "salud",
   "numeros",

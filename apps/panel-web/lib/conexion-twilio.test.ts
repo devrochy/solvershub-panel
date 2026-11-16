@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  accionesDePlantilla,
   avisoDesconectado,
+  cuerpoDePlantilla,
+  erroresDePlantilla,
+  estadoPlantillaTwilio,
   errorDeJoinCode,
   erroresDeCredenciales,
   esSandbox,
@@ -14,6 +18,7 @@ import {
   puedeEscribirTwilio,
   rutaTwilioDeBackend,
   totalDeMoneda,
+  variablesDeCuerpo,
   webhookPrevio,
 } from "@/lib/conexion-twilio";
 
@@ -101,7 +106,6 @@ describe("WhatsApp vía Twilio: rutas del BFF (lista cerrada)", () => {
     expect(rutaTwilioDeBackend("GET", [ID, "disconnect"])).toBeNull();
     expect(rutaTwilioDeBackend("PUT", [ID, "disconnect"])).toBeNull();
     expect(rutaTwilioDeBackend("POST", ["no-es-uuid", "disconnect"])).toBeNull();
-    expect(rutaTwilioDeBackend("POST", [ID, "templates"])).toBeNull();
     expect(rutaTwilioDeBackend("GET", [ID, "credentials"])).toBeNull();
     expect(rutaTwilioDeBackend("POST", [ID, "refresh", "x"])).toBeNull();
   });
@@ -175,5 +179,98 @@ describe("WhatsApp vía Twilio: Sandbox (HU-CONN-20)", () => {
     expect(mensajeErrorTwilio("no_aplica_sandbox", "x")).toContain("preaprobadas");
     // El 422 de participante sin unir trae el código exacto en el texto de la API: se muestra tal cual.
     expect(mensajeErrorTwilio("participante_no_unido", "Envía «join abc»")).toBe("Envía «join abc»");
+  });
+});
+
+describe("WhatsApp vía Twilio: plantillas (HU-CONN-14)", () => {
+  const TID = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+  const BASE = `/admin/connections/twilio/${ID}/templates`;
+  const valida = { nombre: "recordatorio_cita", idioma: "es", categoria: "UTILITY", cuerpo: "Hola {{1}}, tu cita es el {{2}}.", ejemplos: { "1": "Ana", "2": "lunes" } };
+
+  it("rutas del BFF: listar, crear, sincronizar, enviar, refrescar y borrar; nada más", () => {
+    expect(rutaTwilioDeBackend("GET", [ID, "templates"])).toBe(BASE);
+    expect(rutaTwilioDeBackend("POST", [ID, "templates"])).toBe(BASE);
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", "sync"])).toBe(`${BASE}/sync`);
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", TID, "submit"])).toBe(`${BASE}/${TID}/submit`);
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", TID, "refresh"])).toBe(`${BASE}/${TID}/refresh`);
+    expect(rutaTwilioDeBackend("DELETE", [ID, "templates", TID])).toBe(`${BASE}/${TID}`);
+
+    expect(rutaTwilioDeBackend("DELETE", [ID, "templates"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "templates", "sync"])).toBeNull();
+    expect(rutaTwilioDeBackend("DELETE", [ID, "templates", "sync"])).toBeNull();
+    expect(rutaTwilioDeBackend("DELETE", [ID, "templates", "no-es-uuid"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "templates", TID])).toBeNull();
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", TID, "otra"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "templates", TID, "submit"])).toBeNull();
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", "no-es-uuid", "submit"])).toBeNull();
+    expect(rutaTwilioDeBackend("POST", [ID, "templates", TID, "submit", "x"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", ["no-es-uuid", "templates"])).toBeNull();
+    // Borrar fuera de las plantillas no existe en la lista cerrada.
+    expect(rutaTwilioDeBackend("DELETE", [ID])).toBeNull();
+  });
+
+  it("las variables se leen como el backend (con espacios dentro de las llaves, sin repetir)", () => {
+    expect(variablesDeCuerpo("Hola {{1}} y {{ 2 }}, otra vez {{1}}")).toEqual([1, 2]);
+    expect(variablesDeCuerpo("Sin variables")).toEqual([]);
+    expect(variablesDeCuerpo("{{3}} {{1}}")).toEqual([1, 3]);
+  });
+
+  it("una plantilla válida no tiene errores", () => {
+    expect(erroresDePlantilla(valida)).toEqual({});
+    expect(erroresDePlantilla({ ...valida, cuerpo: "Sin variables", ejemplos: {} })).toEqual({});
+    expect(erroresDePlantilla({ ...valida, idioma: "es_CO" })).toEqual({});
+  });
+
+  it("nombre, idioma, categoría y mensaje siguen las reglas de WhatsApp", () => {
+    expect(erroresDePlantilla({ ...valida, nombre: "Recordatorio Cita" }).nombre).toContain("minúsculas");
+    expect(erroresDePlantilla({ ...valida, nombre: "a".repeat(65) }).nombre).toBeDefined();
+    expect(erroresDePlantilla({ ...valida, idioma: "español" }).idioma).toBeDefined();
+    expect(erroresDePlantilla({ ...valida, idioma: "es_co" }).idioma).toBeDefined();
+    expect(erroresDePlantilla({ ...valida, categoria: "OTRA" }).categoria).toBeDefined();
+    expect(erroresDePlantilla({ ...valida, cuerpo: "   ", ejemplos: {} }).cuerpo).toContain("Escribe");
+    expect(erroresDePlantilla({ ...valida, cuerpo: "x".repeat(1025), ejemplos: {} }).cuerpo).toContain("1024");
+  });
+
+  it("las variables van de {{1}} en adelante sin saltos", () => {
+    const e = erroresDePlantilla({ ...valida, cuerpo: "Hola {{1}}, {{3}}", ejemplos: { "1": "Ana", "3": "x" } });
+    expect(e.cuerpo).toContain("sin saltos");
+    expect(e.cuerpo).toContain("{{3}}");
+    expect(erroresDePlantilla({ ...valida, cuerpo: "Hola {{2}}", ejemplos: { "2": "Ana" } }).cuerpo).toContain("sin saltos");
+  });
+
+  it("cada variable trae su ejemplo, corto, y no sobran ejemplos", () => {
+    expect(erroresDePlantilla({ ...valida, ejemplos: { "1": "Ana" } }).ejemplos).toContain("{{2}}");
+    expect(erroresDePlantilla({ ...valida, ejemplos: { "1": "Ana", "2": "  " } }).ejemplos).toContain("{{2}}");
+    expect(erroresDePlantilla({ ...valida, ejemplos: { "1": "Ana", "2": "x".repeat(257) } }).ejemplos).toContain("256");
+    expect(erroresDePlantilla({ ...valida, ejemplos: { "1": "Ana", "2": "lunes", "3": "x" } }).ejemplos).toContain("ya no usa");
+  });
+
+  it("el cuerpo del POST lleva solo los ejemplos de las variables del texto, sin espacios", () => {
+    expect(
+      cuerpoDePlantilla({ ...valida, nombre: " recordatorio_cita ", ejemplos: { "1": " Ana ", "2": "lunes", "3": "viejo" } }),
+    ).toEqual({ ...valida, ejemplos: { "1": "Ana", "2": "lunes" } });
+  });
+
+  it("el estado de la aprobación sale en palabras y con tono", () => {
+    expect(estadoPlantillaTwilio("approved")).toEqual({ label: "Aprobada", tono: "success" });
+    expect(estadoPlantillaTwilio("rejected").tono).toBe("danger");
+    expect(estadoPlantillaTwilio("pending").label).toBe("En revisión");
+    expect(estadoPlantillaTwilio("unsubmitted").label).toBe("Sin enviar");
+    expect(estadoPlantillaTwilio("nuevo")).toEqual({ label: "nuevo", tono: "neutral" });
+  });
+
+  it("acciones: enviar solo sin enviar y creada en Twilio; en el Sandbox no se envía ni se borra", () => {
+    const creada = { estado: "unsubmitted", content_sid: `HX${"a".repeat(32)}` };
+    expect(accionesDePlantilla(creada, false)).toEqual({ enviar: true, refrescar: true, borrar: true });
+    expect(accionesDePlantilla({ ...creada, estado: "pending" }, false)).toEqual({ enviar: false, refrescar: true, borrar: true });
+    expect(accionesDePlantilla({ estado: "creating", content_sid: null }, false)).toEqual({ enviar: false, refrescar: false, borrar: true });
+    expect(accionesDePlantilla({ ...creada, estado: "approved" }, true)).toEqual({ enviar: false, refrescar: true, borrar: false });
+    expect(accionesDePlantilla(creada, true).enviar).toBe(false);
+  });
+
+  it("los errores de las plantillas salen en palabras", () => {
+    expect(mensajeErrorTwilio("nombre_en_uso", "x")).toContain("otro nombre");
+    expect(mensajeErrorTwilio("sync_rate_limited", "x")).toContain("minuto");
+    expect(mensajeErrorTwilio("plantilla_sin_crear", "x")).toContain("todavía no existe");
   });
 });

@@ -11,6 +11,8 @@ export type DescubrirTwilio = components["schemas"]["TwilioDescubrirOut"];
 export type SenderTwilio = components["schemas"]["TwilioSenderOut"];
 export type CostosTwilio = components["schemas"]["TwilioCostosOut"];
 export type CapacidadesTwilio = components["schemas"]["TwilioCapacidadesOut"];
+export type PlantillaTwilio = components["schemas"]["TwilioPlantillaOut"];
+export type PlantillaTwilioIn = components["schemas"]["TwilioPlantillaIn"];
 
 type Tono = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -61,6 +63,9 @@ const ERRORES: Record<string, string> = {
   sandbox_otra_cuenta: "Este sandbox es de otra cuenta de Twilio. Para usar otra cuenta, conecta su sandbox aparte.",
   no_aplica_sandbox: "En el Sandbox solo sirven las plantillas preaprobadas de Twilio: usa Sincronizar para traerlas.",
   no_es_sandbox: "Esta conexión no es del Sandbox de Twilio.",
+  nombre_en_uso: "Ya hay una plantilla con ese nombre en esta conexión. Usa otro nombre.",
+  plantilla_sin_crear: "La plantilla todavía no existe en Twilio: créala de nuevo con el mismo nombre.",
+  sync_rate_limited: "Ya sincronizaste hace un momento. Espera un minuto y vuelve a intentar.",
   password_required: "Escribe tu contraseña para continuar.",
   password_incorrect: "La contraseña no es correcta.",
 };
@@ -192,8 +197,8 @@ const POST_DE_CONEXION = new Set(["refresh", "webhooks", "test-message", "discon
 
 /**
  * Rutas del BFF (`/api/connections/twilio/**`) → ruta del backend (`/admin/connections/twilio/**`). Lista cerrada:
- * solo se reenvía lo que usa el alta y la ficha (P-1, más desconectar y el Sandbox de HU-CONN-20), con su método y un id con forma de UUID. Los días de Costos
- * se acotan a 1–90 como el backend.
+ * solo se reenvía lo que usa el alta y la ficha (P-1, más desconectar, el Sandbox de HU-CONN-20 y las plantillas de
+ * P-2), con su método y un id con forma de UUID. Los días de Costos se acotan a 1–90 como el backend.
  */
 export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[], dias?: string | null): string | null {
   const m = metodo.toUpperCase();
@@ -206,7 +211,9 @@ export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[]
     if (m === "GET" && UUID.test(primero)) return `${BASE_BACKEND}/${primero}`;
     return null;
   }
-  if (segmentos.length !== 2 || !UUID.test(primero)) return null;
+  if (!UUID.test(primero)) return null;
+  if (segundo === "templates") return rutaDePlantillas(m, `${BASE_BACKEND}/${primero}/templates`, segmentos.slice(2));
+  if (segmentos.length !== 2) return null;
   if (m === "POST" && POST_DE_CONEXION.has(segundo)) return `${BASE_BACKEND}/${primero}/${segundo}`;
   if (m === "PUT" && segundo === "credentials") return `${BASE_BACKEND}/${primero}/credentials`;
   if (m === "PATCH" && segundo === "sandbox") return `${BASE_BACKEND}/${primero}/sandbox`;
@@ -216,4 +223,108 @@ export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[]
     return `${BASE_BACKEND}/${primero}/costs?dias=${acotado}`;
   }
   return null;
+}
+
+/** Plantillas de una conexión: listar y crear, sincronizar, y enviar, refrescar o borrar una (con id UUID). */
+function rutaDePlantillas(metodo: string, base: string, resto: readonly string[]): string | null {
+  const [primero, segundo] = resto;
+  if (resto.length === 0) return metodo === "GET" || metodo === "POST" ? base : null;
+  if (resto.length === 1) {
+    if (primero === "sync") return metodo === "POST" ? `${base}/sync` : null;
+    return metodo === "DELETE" && UUID.test(primero) ? `${base}/${primero}` : null;
+  }
+  if (resto.length === 2 && metodo === "POST" && UUID.test(primero) && (segundo === "submit" || segundo === "refresh")) {
+    return `${base}/${primero}/${segundo}`;
+  }
+  return null;
+}
+
+// --------------------------------------------------------------------------- plantillas (HU-CONN-14, P-2)
+
+/** Categorías de WhatsApp que acepta el backend (`TwilioPlantillaIn.categoria`). */
+export const CATEGORIAS_PLANTILLA_TWILIO = ["UTILITY", "MARKETING", "AUTHENTICATION"] as const;
+
+const NOMBRE_PLANTILLA = /^[a-z0-9_]{1,64}$/;
+const IDIOMA_PLANTILLA = /^[a-z]{2}(_[A-Z]{2})?$/;
+// La misma expresión que `_PLACEHOLDER` del paquete de Twilio: admite espacios dentro de las llaves.
+const VARIABLE = /\{\{\s*(\d+)\s*\}\}/g;
+export const MAX_CUERPO_PLANTILLA = 1024;
+export const MAX_EJEMPLO_PLANTILLA = 256;
+
+/** Números de las variables `{{n}}` del texto, ordenados y sin repetir. */
+export function variablesDeCuerpo(cuerpo: string): number[] {
+  const vistos = new Set<number>();
+  for (const m of cuerpo.matchAll(VARIABLE)) vistos.add(Number(m[1]));
+  return [...vistos].sort((a, b) => a - b);
+}
+
+export type ErroresDePlantilla = Partial<Record<"nombre" | "idioma" | "categoria" | "cuerpo" | "ejemplos", string>>;
+
+/**
+ * Las reglas del backend (`plantillas.validar` y `validate_variables`) antes de llamar a Twilio: nombre en minúsculas,
+ * números y guion bajo; idioma `es` o `es_CO`; las variables de `{{1}}` en adelante sin saltos y cada una con su
+ * ejemplo (WhatsApp la rechaza si no); ningún ejemplo de una variable que el texto no usa.
+ */
+export function erroresDePlantilla(p: PlantillaTwilioIn): ErroresDePlantilla {
+  const errores: ErroresDePlantilla = {};
+  if (!NOMBRE_PLANTILLA.test(p.nombre.trim())) {
+    errores.nombre = "Usa minúsculas, números y guion bajo (hasta 64), por ejemplo recordatorio_cita.";
+  }
+  if (!IDIOMA_PLANTILLA.test(p.idioma.trim())) errores.idioma = "Elige un idioma.";
+  if (!(CATEGORIAS_PLANTILLA_TWILIO as readonly string[]).includes(p.categoria)) errores.categoria = "Elige una categoría.";
+  if (!p.cuerpo.trim()) errores.cuerpo = "Escribe el mensaje.";
+  else if (p.cuerpo.length > MAX_CUERPO_PLANTILLA) errores.cuerpo = `El mensaje no puede pasar de ${MAX_CUERPO_PLANTILLA} caracteres.`;
+  const usadas = variablesDeCuerpo(p.cuerpo);
+  const consecutivas = usadas.every((n, i) => n === i + 1);
+  if (!consecutivas) {
+    errores.cuerpo ??= `Las variables van de {{1}} a {{${usadas.length}}} sin saltos (hay ${usadas.map((n) => `{{${n}}}`).join(", ")}).`;
+    return errores;
+  }
+  const ejemplos = p.ejemplos ?? {};
+  const faltan = usadas.filter((n) => !(ejemplos[String(n)] ?? "").trim());
+  const largos = usadas.filter((n) => (ejemplos[String(n)] ?? "").length > MAX_EJEMPLO_PLANTILLA);
+  const sobran = Object.keys(ejemplos).filter((k) => !usadas.includes(Number(k)) || !/^\d+$/.test(k));
+  if (faltan.length > 0) errores.ejemplos = `Escribe un ejemplo para ${faltan.map((n) => `{{${n}}}`).join(", ")}: WhatsApp lo pide para aprobarla.`;
+  else if (largos.length > 0) errores.ejemplos = `Cada ejemplo tiene hasta ${MAX_EJEMPLO_PLANTILLA} caracteres.`;
+  else if (sobran.length > 0) errores.ejemplos = "Hay ejemplos de variables que el mensaje ya no usa.";
+  return errores;
+}
+
+/** El cuerpo de `POST …/templates`: solo los ejemplos de las variables que usa el texto, sin espacios sobrantes. */
+export function cuerpoDePlantilla(p: PlantillaTwilioIn): PlantillaTwilioIn {
+  const usadas = variablesDeCuerpo(p.cuerpo);
+  const ejemplos = Object.fromEntries(usadas.map((n) => [String(n), (p.ejemplos?.[String(n)] ?? "").trim()]));
+  return { nombre: p.nombre.trim(), idioma: p.idioma.trim(), categoria: p.categoria, cuerpo: p.cuerpo, ejemplos };
+}
+
+const ESTADOS_PLANTILLA: Record<string, { label: string; tono: Tono }> = {
+  creating: { label: "Creándose", tono: "info" },
+  unsubmitted: { label: "Sin enviar", tono: "neutral" },
+  received: { label: "En revisión", tono: "warning" },
+  pending: { label: "En revisión", tono: "warning" },
+  approved: { label: "Aprobada", tono: "success" },
+  rejected: { label: "Rechazada", tono: "danger" },
+  paused: { label: "Pausada", tono: "warning" },
+  disabled: { label: "Desactivada", tono: "danger" },
+};
+
+/** Estado de la aprobación de WhatsApp en palabras (Twilio lo da en minúsculas). */
+export function estadoPlantillaTwilio(estado: string): { label: string; tono: Tono } {
+  return ESTADOS_PLANTILLA[estado] ?? { label: estado || "Sin estado", tono: "neutral" };
+}
+
+/**
+ * Qué se puede hacer con una plantilla. En el Sandbox (HU-CONN-20) solo sirven las preaprobadas de Twilio: no se
+ * envían ni se borran (el backend responde 409 `no_aplica_sandbox`). Sin `content_sid` todavía no existe en Twilio:
+ * se repite la creación con el mismo nombre.
+ */
+export function accionesDePlantilla(
+  p: Pick<PlantillaTwilio, "estado" | "content_sid">,
+  sandbox: boolean,
+): { enviar: boolean; refrescar: boolean; borrar: boolean } {
+  return {
+    enviar: !sandbox && Boolean(p.content_sid) && p.estado === "unsubmitted",
+    refrescar: Boolean(p.content_sid),
+    borrar: !sandbox,
+  };
 }

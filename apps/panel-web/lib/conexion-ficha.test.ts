@@ -72,10 +72,11 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     expect(tienePestana("smtp", "agentes")).toBe(false);
   });
 
-  it("WhatsApp vía Twilio: Resumen y salud primero, con Agentes, Prueba, Credenciales, Costos y Versiones", () => {
+  it("WhatsApp vía Twilio: Resumen y salud primero, con Agentes, Plantillas, Prueba, Credenciales, Costos y Versiones", () => {
     expect(etiquetas({ ...sinMeta, type_id: "whatsapp_twilio" })).toEqual([
       "Resumen y salud",
       "Agentes",
+      "Plantillas",
       "Prueba",
       "Credenciales",
       "Costos",
@@ -83,7 +84,7 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     ]);
     expect(pestanasDeFicha("c1", "whatsapp_twilio").every((p) => !p.avanzada)).toBe(true);
     expect(tienePestana("whatsapp_twilio", "salud")).toBe(false);
-    expect(tienePestana("whatsapp_twilio", "plantillas")).toBe(false);
+    expect(tienePestana("whatsapp_twilio", "plantillas")).toBe(true);
   });
 
   it("WhatsApp vía Twilio: el subtítulo lleva el número del sender y el ícono es el de WhatsApp", () => {

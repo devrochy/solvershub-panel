@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { MenuPlantilla, SyncTemplatesButton } from "@/app/(app)/conexiones/_components/meta/plantillas/template-actions";
 import { NewTemplateDialog } from "@/app/(app)/conexiones/_components/meta/plantillas/new-template-dialog";
+import { PlantillasTwilioSeccion } from "@/app/(app)/conexiones/_components/twilio/plantillas-twilio-seccion";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
@@ -41,11 +42,12 @@ const TONO_ESTADO: Record<string, "success" | "warning" | "danger" | "neutral"> 
 /**
  * Plantillas de WhatsApp de la cuenta (rediseñada en CON-12): estado, categoría e idioma en
  * palabras, el motivo de un rechazo debajo y Eliminar en el menú de la fila. «Traer de Meta» es
- * secundaria; la acción principal es crear una.
+ * secundaria; la acción principal es crear una. En WhatsApp vía Twilio las plantillas son de la conexión (HU-CONN-14).
  */
 export default async function TemplatesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ficha = await fichaDePestana(id, "plantillas");
+  if (ficha?.tipo === "whatsapp_twilio") return <PlantillasTwilioSeccion connectionId={id} activa={ficha.conexion.active} />;
   const connectionId = ficha?.conexion.meta_connection_id;
   if (!connectionId) return null;
   const puedeEditar = ficha.consola.can_edit;
