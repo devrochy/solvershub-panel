@@ -2,8 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { PasoDatos } from "@/app/(app)/agentes/nuevo/_components/paso-datos";
-import { PasoLoCargado } from "@/app/(app)/agentes/nuevo/_components/paso-lo-cargado";
+import { PasoDatos } from "@/components/domain/agentes/paso-datos";
+import { PasoLoCargado } from "@/components/domain/agentes/paso-lo-cargado";
 import { ImportarCatalogoDialog } from "@/app/(app)/comercio/productos/_components/importar-catalogo-dialog";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { CotizacionFotos, MapeoPropuesto, PlantillaImportacion } from "@/lib/api/types";
