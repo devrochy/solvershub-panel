@@ -12,6 +12,7 @@ import {
   motivoDeSender,
   numeroLegible,
   puedeEscribirTwilio,
+  resultadoDePrueba,
   rutaTwilioDeBackend,
   totalDeMoneda,
   webhookPrevio,
@@ -175,5 +176,45 @@ describe("WhatsApp vía Twilio: Sandbox (HU-CONN-20)", () => {
     expect(mensajeErrorTwilio("no_aplica_sandbox", "x")).toContain("preaprobadas");
     // El 422 de participante sin unir trae el código exacto en el texto de la API: se muestra tal cual.
     expect(mensajeErrorTwilio("participante_no_unido", "Envía «join abc»")).toBe("Envía «join abc»");
+  });
+});
+
+describe("resultado del mensaje de prueba", () => {
+  const SID = `SM${"a".repeat(32)}`;
+
+  it("ruta del resultado, solo GET con id UUID y SID de mensaje", () => {
+    expect(rutaTwilioDeBackend("GET", [ID, "test-message", SID])).toBe(
+      `/admin/connections/twilio/${ID}/test-message/${SID}`,
+    );
+    expect(rutaTwilioDeBackend("POST", [ID, "test-message", SID])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "test-message", "SM123"])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "costs", SID])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", ["no-es-uuid", "test-message", SID])).toBeNull();
+    expect(rutaTwilioDeBackend("GET", [ID, "test-message", `${SID}/..`])).toBeNull();
+  });
+
+  it("estados: espera, entrega, lectura y rechazo con su motivo", () => {
+    expect(resultadoDePrueba(null, false)).toMatchObject({ label: "Enviando", final: false });
+    expect(resultadoDePrueba({ estado: "sent", motivo: null }, false)).toMatchObject({ label: "Enviado", final: false });
+    expect(resultadoDePrueba({ estado: "delivered", motivo: null }, false)).toMatchObject({
+      label: "Entregado",
+      tono: "success",
+      final: false,
+    });
+    expect(resultadoDePrueba({ estado: "delivered", motivo: null }, true)).toMatchObject({ label: "Entregado", final: true });
+    expect(resultadoDePrueba({ estado: "read", motivo: null }, false)).toMatchObject({ label: "Leído", final: true });
+    const motivo = "Ese número debe enviar «join cloud-forgotten» al +1 415 523 8886 (la unión vence a los 3 días).";
+    expect(resultadoDePrueba({ estado: "failed", motivo }, false)).toEqual({
+      label: "No llegó",
+      tono: "danger",
+      detalle: motivo,
+      final: true,
+    });
+  });
+
+  it("sin confirmación al vencer el tiempo nunca dice entregado", () => {
+    for (const r of [null, { estado: "queued", motivo: null }, { estado: "sent", motivo: null }]) {
+      expect(resultadoDePrueba(r, true)).toMatchObject({ label: "Sin confirmar", tono: "warning", final: true });
+    }
   });
 });

@@ -11,6 +11,7 @@ export type DescubrirTwilio = components["schemas"]["TwilioDescubrirOut"];
 export type SenderTwilio = components["schemas"]["TwilioSenderOut"];
 export type CostosTwilio = components["schemas"]["TwilioCostosOut"];
 export type CapacidadesTwilio = components["schemas"]["TwilioCapacidadesOut"];
+export type ResultadoPruebaTwilio = components["schemas"]["TwilioPruebaEstadoOut"];
 
 type Tono = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -26,6 +27,7 @@ export function puedeEscribirTwilio(me: Pick<Me, "role" | "tenant" | "permission
 }
 
 const SID_DE_CUENTA = /^AC[0-9a-f]{32}$/i;
+const SID_DE_MENSAJE = /^(SM|MM)[0-9a-f]{32}$/;
 
 /** Lo que se revisa antes de llamar a Twilio: el SID tiene forma `AC…` de 34 caracteres y hay token. */
 export function erroresDeCredenciales(accountSid: string, authToken: string): { account_sid?: string; auth_token?: string } {
@@ -206,6 +208,14 @@ export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[]
     if (m === "GET" && UUID.test(primero)) return `${BASE_BACKEND}/${primero}`;
     return null;
   }
+  if (segmentos.length === 3) {
+    const sid = segmentos[2];
+    // Resultado de la última prueba: `GET {id}/test-message/{SM…}`.
+    if (m === "GET" && UUID.test(primero) && segundo === "test-message" && SID_DE_MENSAJE.test(sid)) {
+      return `${BASE_BACKEND}/${primero}/test-message/${sid}`;
+    }
+    return null;
+  }
   if (segmentos.length !== 2 || !UUID.test(primero)) return null;
   if (m === "POST" && POST_DE_CONEXION.has(segundo)) return `${BASE_BACKEND}/${primero}/${segundo}`;
   if (m === "PUT" && segundo === "credentials") return `${BASE_BACKEND}/${primero}/credentials`;
@@ -216,4 +226,35 @@ export function rutaTwilioDeBackend(metodo: string, segmentos: readonly string[]
     return `${BASE_BACKEND}/${primero}/costs?dias=${acotado}`;
   }
   return null;
+}
+
+/**
+ * Lo que se ve tras mandar la prueba. Twilio acepta el envío y el rechazo (63015 del Sandbox, 63016 fuera de la
+ * ventana…) llega después: la ficha consulta el resultado unos segundos. `final` corta la consulta; si se acaba el
+ * tiempo (`vencido`) sin saber si llegó, se dice así, nunca «entregado».
+ */
+export function resultadoDePrueba(
+  r: Pick<ResultadoPruebaTwilio, "estado" | "motivo"> | null,
+  vencido: boolean,
+): { label: string; tono: Tono; detalle: string; final: boolean } {
+  switch (r?.estado) {
+    case "read":
+      return { label: "Leído", tono: "success", detalle: "El mensaje llegó y lo abrieron en ese WhatsApp.", final: true };
+    case "failed":
+      return { label: "No llegó", tono: "danger", detalle: r.motivo || "WhatsApp no entregó el mensaje.", final: true };
+    case "delivered":
+      return { label: "Entregado", tono: "success", detalle: "El mensaje llegó al WhatsApp de ese número.", final: vencido };
+  }
+  if (vencido) {
+    return {
+      label: "Sin confirmar",
+      tono: "warning",
+      detalle: "Twilio aún no confirma la entrega. Si no llega en un minuto, revisa el número y vuelve a probar.",
+      final: true,
+    };
+  }
+  if (r?.estado === "sent") {
+    return { label: "Enviado", tono: "info", detalle: "WhatsApp lo recibió; esperando que llegue al teléfono…", final: false };
+  }
+  return { label: "Enviando", tono: "info", detalle: "Twilio aceptó la prueba; esperando a WhatsApp…", final: false };
 }
