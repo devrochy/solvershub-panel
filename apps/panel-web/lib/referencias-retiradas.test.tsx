@@ -310,13 +310,12 @@ describe("editor de agentes con referencias retiradas", () => {
   it("abre con el aviso arriba y señala el superpoder retirado del borrador (no el de otra versión)", () => {
     editor(DEL_BORRADOR);
     expect(screen.getByText("Bloquea publicar")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /Paso 3/ }));
+    // Superpoderes y Acciones van juntos en «Habilidades» (HU-AOS-78).
+    fireEvent.click(screen.getAllByRole("button", { name: /^Habilidades/ })[0]);
     const bloque = screen.getByRole("list", { name: "Superpoderes que no corresponden a este agente" });
     expect(within(bloque).getByText("Informar plan")).toBeTruthy();
     expect(within(bloque).getByText("«Informar plan» ya no existe: quítalo para publicar.")).toBeTruthy();
-    // La acción retirada ya no se lista en Superpoderes (solo en el aviso de arriba): va junto a su fila en Acciones.
-    expect(screen.getAllByText("La acción «Informar plan» ya no existe.")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: /Paso 4/ }));
+    // La acción retirada no se repite en Superpoderes: va en el aviso de arriba y junto a su fila en Acciones.
     expect(screen.getAllByText("La acción «Informar plan» ya no existe.")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Quitar del agente" })).toBeTruthy();
     // El aviso de la versión publicada vive solo arriba, no pegado a un superpoder del borrador.
@@ -336,7 +335,7 @@ describe("editor de agentes con referencias retiradas", () => {
       ),
     );
     editor(null);
-    fireEvent.click(screen.getByRole("button", { name: /Paso 8/ }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Publicar$/ })[0]);
     fireEvent.click(screen.getByRole("button", { name: "Publicar versión" }));
     // Lleva al paso Acciones y pinta el texto junto a la acción.
     const alerta = await waitFor(() => {
@@ -358,7 +357,7 @@ describe("editor de agentes con referencias retiradas", () => {
     });
     editor(DEL_BORRADOR);
     fireEvent.change(screen.getByLabelText(/Nombre/), { target: { value: "Ventas 2" } });
-    fireEvent.click(screen.getByRole("button", { name: "Guardar y seguir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
     await waitFor(() => expect(screen.queryByText("Bloquea publicar")).toBeNull());
     expect(fetchMock.mock.calls.some(([u]) => String(u) === `/api/agent-editor/${AGENTE_ID}/retired-references`)).toBe(true);
   });

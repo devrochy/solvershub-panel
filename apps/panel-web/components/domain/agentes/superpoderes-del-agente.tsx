@@ -66,7 +66,7 @@ export function SuperpoderesDelAgente({
   const pendiente = JSON.stringify(estado) !== JSON.stringify(guardado);
 
   async function guardar(nuevo: EstadoDelEditor) {
-    const propios = erroresDelPaso("superpoderes", nuevo, catalogo, { minFrases });
+    const propios = erroresDelPaso("habilidades", nuevo, catalogo, { minFrases });
     setErrores(propios);
     if (Object.keys(propios).length > 0) return;
     await guardarAccion.run(async () => {

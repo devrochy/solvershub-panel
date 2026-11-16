@@ -2,7 +2,7 @@
  * Editor de agentes desde plantillas (HU-AOS-24): lógica pura del formulario por pasos.
  *
  * El borrador es un AgentSpec v3 (`agentspec/3`). El editor solo toca lo que el dueño ve
- * (persona, modelo, superpoderes y sus frases, memoria) y conserva intacto el resto del
+ * (persona, superpoderes y sus frases, memoria) y conserva intacto el resto del
  * contenido (guardrails, declarativas, tools y playbooks ajenos...). Las reglas que se repiten aquí
  * las vuelve a exigir la API al publicar (`POST /admin/agents/{id}/publish`); este módulo solo
  * adelanta los mismos errores junto a cada campo.
@@ -10,19 +10,65 @@
 import { accionesDesdeContenido, aplicarAcciones, type AccionEnEditor } from "@/lib/acciones-del-agente";
 import type { AgentAction, Superpower } from "@/lib/api/types";
 import { aplicarConocimiento, conocimientoDesdeContenido, type ConocimientoEnEditor } from "@/lib/conocimiento";
+import type { IdentitySettings } from "@/lib/api/types";
+import { EMOJIS, LARGOS, MOTIVOS_DE_ESCALAR, TONOS, estadoDesdeIdentidad, resumenDeHorario } from "@/lib/onboarding";
+import type { VozDeVistaPrevia } from "@/lib/vista-previa";
 
-export type PasoId = "identidad" | "modelo" | "superpoderes" | "acciones" | "datos" | "flujo" | "memoria" | "publicar";
+/**
+ * Los ocho pasos del recorrido común del agente (SPEC-47, D-75): los mismos de Nuevo agente y de la
+ * bienvenida. «Proveedor y modelo» ya no es un paso: el agente usa el modelo del negocio (HU-AOS-79).
+ */
+export type PasoId = "identidad" | "voz" | "reglas" | "habilidades" | "flujo" | "conocimiento" | "probar" | "publicar";
 
-export const PASOS: { id: PasoId; titulo: string; descripcion: string }[] = [
-  { id: "identidad", titulo: "Identidad", descripcion: "Nombre y cómo habla tu agente." },
-  { id: "modelo", titulo: "Proveedor y modelo", descripcion: "La IA que usa y lo que cuesta." },
-  { id: "superpoderes", titulo: "Superpoderes", descripcion: "Qué sabe hacer y con qué frases lo reconoce." },
-  { id: "acciones", titulo: "Acciones", descripcion: "Qué puede hacer, cuántas veces y si pide confirmación." },
-  { id: "datos", titulo: "Datos del cliente", descripcion: "Qué datos pide este agente en cada operación." },
-  { id: "flujo", titulo: "Flujo de atención", descripcion: "Los pasos con los que atiende y las acciones de cada uno." },
-  { id: "memoria", titulo: "Memoria y conocimiento", descripcion: "Cuánto recuerda y si responde con tus documentos." },
-  { id: "publicar", titulo: "Publicar", descripcion: "Dónde atiende y su nueva versión." },
+export const PASOS: { id: PasoId; titulo: string; corto?: string; descripcion: string; pregunta: string }[] = [
+  { id: "identidad", titulo: "Identidad", descripcion: "Nombre y para qué sirve.", pregunta: "¿Cómo se llama tu agente y para qué sirve?" },
+  { id: "voz", titulo: "Cómo habla", descripcion: "Su voz y lo que nunca dice.", pregunta: "¿Cómo quieres que hable {nombre}?" },
+  {
+    id: "reglas",
+    titulo: "Horario y reglas",
+    corto: "Horario",
+    descripcion: "Cuándo atiende tu equipo y cuándo pasa a una persona.",
+    pregunta: "¿Cuándo atiende tu equipo?",
+  },
+  {
+    id: "habilidades",
+    titulo: "Habilidades",
+    descripcion: "Qué sabe hacer, qué acciones usa y qué datos pide.",
+    pregunta: "¿Qué sabe hacer {nombre}?",
+  },
+  { id: "flujo", titulo: "Flujo de atención", corto: "Flujo", descripcion: "Las etapas con las que atiende.", pregunta: "¿Con qué pasos atiende {nombre}?" },
+  {
+    id: "conocimiento",
+    titulo: "Conocimiento y datos",
+    corto: "Conocimiento",
+    descripcion: "Cuánto recuerda y si responde con tus documentos.",
+    pregunta: "¿Qué recuerda y qué conoce {nombre}?",
+  },
+  { id: "probar", titulo: "Pruébalo", descripcion: "Escríbele como un cliente.", pregunta: "Pruébalo antes de publicar" },
+  { id: "publicar", titulo: "Publicar", descripcion: "Dónde atiende y su nueva versión.", pregunta: "¿Dónde atiende {nombre}?" },
 ];
+
+/** La pregunta del paso con el nombre del agente (sin nombre, «tu agente»). */
+export function preguntaDelPaso(id: PasoId, nombre: string): string {
+  const paso = PASOS.find((p) => p.id === id) ?? PASOS[0];
+  return paso.pregunta.replace("{nombre}", nombre.trim() || "tu agente");
+}
+
+/** Ids de los pasos del editor anterior (`?paso=`), para que los enlaces viejos sigan abriendo algo. */
+const PASOS_DE_ANTES: Record<string, PasoId> = {
+  modelo: "publicar",
+  superpoderes: "habilidades",
+  acciones: "habilidades",
+  datos: "habilidades",
+  memoria: "conocimiento",
+};
+
+/** El paso de `?paso=`: uno de los ocho, uno de antes traducido, o ninguno. */
+export function pasoDesdeParametro(valor: string | undefined): PasoId | undefined {
+  if (!valor) return undefined;
+  if (PASOS.some((p) => p.id === valor)) return valor as PasoId;
+  return PASOS_DE_ANTES[valor];
+}
 
 export const MIN_FRASES_POR_DEFECTO = 3;
 export const MAX_FRASES_PROPIAS = 50;
@@ -253,8 +299,7 @@ export function erroresDelPaso(
 ): Errores {
   const errores: Errores = {};
   if (paso === "identidad" && !estado.nombre.trim()) errores.name = "Ponle un nombre a tu agente.";
-  if (paso === "modelo" && !estado.modelo) errores["model.primary"] = "Elige un modelo.";
-  if (paso === "superpoderes") {
+  if (paso === "habilidades") {
     const activos = catalogo.filter((p) => estado.superpoderes[p.id]?.activo);
     if (activos.length === 0) errores.procedures = "Marca al menos un superpoder para este agente.";
     activos.forEach((poder, i) => {
@@ -265,7 +310,7 @@ export function erroresDelPaso(
       }
     });
   }
-  if (paso === "memoria" && estado.alcances.length === 0) errores["memory.readScopes"] = "Elige al menos qué puede recordar.";
+  if (paso === "conocimiento" && estado.alcances.length === 0) errores["memory.readScopes"] = "Elige al menos qué puede recordar.";
   if (paso === "flujo") {
     const ids = new Set<string>();
     estado.flujo.sections.forEach((seccion, i) => {
@@ -282,14 +327,40 @@ export function erroresDelPaso(
 
 /** El paso al que pertenece un campo con error de la API. */
 export function pasoDelCampo(campo: string): PasoId {
-  if (campo === "name" || campo === "description" || campo.startsWith("persona")) return "identidad";
-  if (campo.startsWith("model")) return "modelo";
-  if (campo.startsWith("tools")) return "acciones";
-  if (campo.startsWith("datos")) return "datos";
-  if (campo.startsWith("procedures") || campo.startsWith("playbooks")) return "superpoderes";
+  if (campo === "name" || campo === "description") return "identidad";
+  if (campo.startsWith("persona")) return "voz";
+  // El modelo ya no tiene paso (HU-AOS-79): si la API lo nombra, se ve en Publicar.
+  if (campo.startsWith("model")) return "publicar";
+  if (campo.startsWith("tools") || campo.startsWith("datos")) return "habilidades";
+  if (campo.startsWith("procedures") || campo.startsWith("playbooks")) return "habilidades";
   if (campo.startsWith("flow")) return "flujo";
-  if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "memoria";
+  if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "conocimiento";
   return "publicar";
+}
+
+const igual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Los pasos con cambios sin guardar (la marca «con cambios» de la barra). */
+export function pasosConCambios(estado: EstadoDelEditor, guardado: EstadoDelEditor): Set<PasoId> {
+  const pasos = new Set<PasoId>();
+  if (estado.nombre !== guardado.nombre || estado.descripcion !== guardado.descripcion) pasos.add("identidad");
+  if (
+    estado.heredarVoz !== guardado.heredarVoz ||
+    estado.largoMaximo !== guardado.largoMaximo ||
+    !igual(estado.frasesProhibidas, guardado.frasesProhibidas)
+  ) {
+    pasos.add("voz");
+  }
+  if (!igual(estado.superpoderes, guardado.superpoderes) || !igual(estado.acciones, guardado.acciones)) pasos.add("habilidades");
+  if (!igual(estado.flujo, guardado.flujo)) pasos.add("flujo");
+  if (
+    estado.turnosDeMemoria !== guardado.turnosDeMemoria ||
+    !igual(estado.alcances, guardado.alcances) ||
+    !igual(estado.conocimiento, guardado.conocimiento)
+  ) {
+    pasos.add("conocimiento");
+  }
+  return pasos;
 }
 
 /**
@@ -307,12 +378,6 @@ export function erroresPorSuperpoder(errores: Errores, contenido: Contenido): Re
   return salida;
 }
 
-/** Costo estimado por 1.000 turnos en texto; sin estimado, lo dice. */
-export function textoDeCosto(estimado: number | null | undefined): string {
-  if (estimado === null || estimado === undefined) return "Sin estimado: aún no hay conversaciones para calcularlo.";
-  return `≈ US$${estimado.toLocaleString("es-CO", { maximumFractionDigits: 4 })} por cada 1.000 respuestas`;
-}
-
 /** Resultado de publicar en una conexión, en palabras del dueño. */
 export function textoDeConexionPublicada(c: {
   instance: string;
@@ -326,4 +391,34 @@ export function textoDeConexionPublicada(c: {
     ? `la conexión tiene lista su configuración n.º ${c.release_number}, sin activar`
     : `la configuración n.º ${c.release_number} de la conexión ya estaba lista`;
   return `${instalado}; ${version}.`;
+}
+
+// ------------------------------------------------------------------ lo que el editor muestra del negocio
+
+/** Lo que el editor muestra del negocio y no edita: su voz, su horario y cuándo pasa a una persona. */
+export type NegocioDelEditor = {
+  nombre: string;
+  /** La voz de Configuración para la vista previa; null si no se pudo leer. */
+  voz: VozDeVistaPrevia | null;
+  /** «Cercano · calidez 4 · pocos emojis». */
+  resumenDeVoz: string | null;
+  horario: string | null;
+  motivos: string[] | null;
+};
+
+/** Voz, horario y reglas del negocio desde su identidad (`GET /admin/settings`); sin ella, todo null. */
+export function negocioDesdeIdentidad(nombre: string, identidad: IdentitySettings | null): NegocioDelEditor {
+  if (!identidad) return { nombre, voz: null, resumenDeVoz: null, horario: null, motivos: null };
+  const e = estadoDesdeIdentidad(identidad);
+  const voz: VozDeVistaPrevia = { tono: e.tono, calidez: e.calidez, emojis: e.emojis, largo: e.largo };
+  const tono = TONOS.find((x) => x.id === e.tono)?.titulo ?? e.tono;
+  const emojis = (EMOJIS.find((x) => x.id === e.emojis)?.titulo ?? "").toLocaleLowerCase("es-CO");
+  const largo = (LARGOS.find((x) => x.id === e.largo)?.titulo ?? "").toLocaleLowerCase("es-CO");
+  return {
+    nombre,
+    voz,
+    resumenDeVoz: `${tono} · calidez ${e.calidez} · emojis: ${emojis} · respuestas ${largo}.`,
+    horario: e.horario ? resumenDeHorario(e.horario) : "",
+    motivos: MOTIVOS_DE_ESCALAR.filter((m) => e.motivos.includes(m.id)).map((m) => m.titulo),
+  };
 }

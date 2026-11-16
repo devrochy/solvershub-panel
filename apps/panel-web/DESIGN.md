@@ -383,6 +383,7 @@ sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro d
 | `lib/vista-previa.ts` | Las conversaciones salen de textos fijos por voz, superpoder y etapa: sin modelo ni créditos, y sin cifras que el dueño no cargó. Un superpoder apagado responde que pasa a una persona. Solo «Pruébalo» habla con el agente |
 | `components/ui/elegibles.tsx` y `components/domain/agentes/paso-datos.tsx`, `paso-lo-cargado.tsx` | Compartidos por los tres flujos; ningún recorrido tiene su copia |
 | Pie | `bg-surface` sólido, sin `backdrop-blur` |
+| Editar (`/agentes/[id]/editar`, HU-AOS-78) | Dentro del shell: el `PageHeader` conserva el único `h1` y la pregunta va en `h2` (`nivelDePregunta="h2"`); el pie usa `dentroDelPanel` para cubrir el relleno del `main`. Modo libre: cambiar de paso no guarda, «Guardar cambios» guarda todo (datos del cliente, nombre, borrador y flujo) sin publicar y «Publicar versión» valida los ocho pasos. Sin permiso de escritura, los pasos van en un `fieldset disabled` y no hay ni guardar ni publicar. Habilidades junta Superpoderes, Acciones y Datos del cliente; Horario y reglas solo se lee (es del negocio) |
 
 ## Copy
 

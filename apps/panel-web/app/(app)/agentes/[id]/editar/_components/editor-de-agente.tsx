@@ -1,25 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import {
   PasoFlujo,
   PasoIdentidad,
   PasoMemoria,
-  PasoModelo,
   PasoPublicar,
+  PasoReglas,
   PasoSuperpoderes,
+  PasoVoz,
 } from "@/app/(app)/agentes/[id]/editar/_components/pasos";
 import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agente";
 import { DatosDelAgente } from "@/components/domain/agentes/datos-del-agente";
 import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
+import { RecorridoDelAgente, type VistaPreviaDelPaso } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
-import { Stepper, type StepItem } from "@/components/ui/stepper";
+import type { PasoDeLaBarra } from "@/components/ui/barra-de-pasos";
 import {
   PASOS,
+  pasosConCambios,
+  preguntaDelPaso,
   contenidoDesdeEstado,
   erroresDelPaso,
   erroresPorSuperpoder,
@@ -31,6 +36,7 @@ import {
   type Errores,
   type EstadoDelEditor,
   type FlujoDelAgente,
+  type NegocioDelEditor,
   type PasoId,
 } from "@/lib/agentes-editor";
 import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
@@ -60,6 +66,7 @@ import { habilidadLabel } from "@/lib/labels";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
+import { conversacionDeFlujo, conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
@@ -73,9 +80,11 @@ type Respuesta = {
 };
 
 /**
- * Editor por pasos de un agente especialista (HU-AOS-24): identidad, proveedor y modelo,
- * superpoderes, acciones (fase 5a, ADR-0190), memoria y publicar. Avanzar guarda el borrador; publicar valida todo, publica en
- * las conexiones elegidas (D-35) y deja la versión lista para activar, sin activarla.
+ * Editor de un agente especialista con el recorrido común (HU-AOS-78, SPEC-47): los ocho pasos de
+ * Nuevo agente y de la bienvenida, libres, con el teléfono de la vista previa. Cambiar de paso no
+ * guarda: «Guardar cambios» guarda todo lo cambiado sin publicar, y «Publicar versión» valida los
+ * ocho pasos, publica en las conexiones elegidas (D-35) y deja la versión lista para activar.
+ * «Proveedor y modelo» ya no es un paso: el agente usa el modelo del negocio (HU-AOS-79).
  */
 export function EditorDeAgente({
   agente,
@@ -95,6 +104,9 @@ export function EditorDeAgente({
   flujoInicial = { sections: [] },
   flujoSeeded = false,
   accionesDelFlujo = [],
+  negocio = { nombre: "", voz: null, resumenDeVoz: null, horario: null, motivos: null },
+  modeloEfectivo = null,
+  puedeEditar = true,
 }: {
   agente: AgentDetail;
   superpoderes: Superpower[];
@@ -121,6 +133,11 @@ export function EditorDeAgente({
   flujoInicial?: FlujoDelAgente;
   flujoSeeded?: boolean;
   accionesDelFlujo?: AccionDelFlujo[];
+  negocio?: NegocioDelEditor;
+  /** El modelo con el que atenderá (HU-AOS-79), solo para mostrarlo en Publicar. */
+  modeloEfectivo?: { nombre: string; origen: "negocio" | "agente" } | null;
+  /** Sin permiso de escritura: se ve todo, sin guardar ni publicar. */
+  puedeEditar?: boolean;
 }) {
   const confirm = useConfirm();
   const guardarAccion = useAction({ refresh: false });
@@ -133,7 +150,7 @@ export function EditorDeAgente({
   const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes, flujoInicial));
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
   const [paso, setPaso] = useState<PasoId>(pasoInicial);
-  const [visitados, setVisitados] = useState<Set<PasoId>>(new Set(["identidad", pasoInicial]));
+  const [frasePrueba, setFrasePrueba] = useState<string | null>(null);
   // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
   const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   const [errores, setErrores] = useState<Errores>({});
@@ -164,6 +181,7 @@ export function EditorDeAgente({
     herramientas !== herramientasGuardado ||
     JSON.stringify(metodos) !== JSON.stringify(metodosGuardado);
   useAvisarCambios("datos-cliente-agente", datosSinGuardar);
+  useAvisarCambios("editor-de-agente", cambios);
   const contenido = useMemo(() => contenidoDesdeEstado(base, estado, superpoderes), [base, estado, superpoderes]);
   // Lo retirado que está en el borrador se señala junto al superpoder (los índices `procedures[i]` son los del
   // contenido guardado, igual que los errores de la API); lo de versiones publicadas va solo en el aviso.
@@ -354,19 +372,22 @@ export function EditorDeAgente({
 
   function irA(id: PasoId) {
     setPaso(id);
-    setVisitados((v) => new Set([...v, id]));
   }
 
-  async function siguiente() {
+  /** Cambiar de paso no guarda: lo cambiado queda marcado hasta «Guardar cambios». */
+  function mover(delta: 1 | -1) {
+    const i = PASOS.findIndex((p) => p.id === paso);
+    const destino = PASOS[i + delta];
+    if (destino) irA(destino.id);
+  }
+
+  /** Guarda todo lo cambiado sin publicar. Las reglas de publicación (frases mínimas) no frenan un borrador. */
+  async function guardarCambios() {
     const completo = plegarPendientes();
     if (!completo) return;
-    const propios = validar(paso, completo);
-    setErrores(propios);
-    if (Object.keys(propios).length > 0) return;
+    setErrores({});
     if (!(await guardarDatos())) return;
-    if ((await guardar(completo)) === null) return;
-    const i = PASOS.findIndex((p) => p.id === paso);
-    if (i < PASOS.length - 1) irA(PASOS[i + 1].id);
+    await guardar(completo);
   }
 
   async function publicar() {
@@ -443,63 +464,82 @@ export function EditorDeAgente({
   );
 
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
-    identidad: (
-      <PasoIdentidad
+    identidad: <PasoIdentidad estado={estado} cambiar={cambiar} errores={errores} />,
+    voz: (
+      <PasoVoz
         estado={estado}
         cambiar={cambiar}
         errores={avisos[ID_PROHIBIDAS] ? { ...errores, "persona.forbiddenPhrases": avisos[ID_PROHIBIDAS] } : errores}
         registrarPendiente={pendientes.registrar}
+        vozDelNegocio={negocio.resumenDeVoz}
       />
     ),
-    modelo: <PasoModelo estado={estado} cambiar={cambiar} errores={errores} catalogo={modelos} />,
-    superpoderes: (
-      <PasoSuperpoderes
-        estado={estado}
-        cambiar={cambiar}
-        // Las acciones retiradas del borrador no tienen un control propio: se listan en este paso, junto a los
-        // errores de la API de esos mismos campos.
-        errores={sinAcciones({ ...avisosDeBorrador, ...errores })}
-        erroresPorPoder={{ ...porPoder, ...avisosPorPoder }}
-        registrarPendiente={pendientes.registrar}
-        catalogo={superpoderes}
-        minFrases={minFrases}
-        requisitos={requisitos}
-        nombreDeHabilidad={(skill) => nombresDeHabilidades[skill] ?? habilidadLabel(skill)}
-      />
-    ),
-    acciones: (
-      <AccionesDelAgente
-        acciones={estado.acciones}
-        cambiar={(acciones) => cambiar({ acciones })}
-        erroresPorAccion={porAccion}
-        errores={erroresDeLasAcciones}
-        conConocimiento={estado.conocimiento.activo}
-        gruposDeLaApi={gruposDeAcciones}
-      />
-    ),
-    datos: datosCliente ? (
-      <DatosDelAgente
-        politica={datosCliente}
-        estado={datos}
-        guardado={datosGuardado}
-        herramientas={herramientas}
-        metodos={metodos}
-        puedeEditar={puedeEditarDatos}
-        guardando={datosAccion.pending}
-        sinGuardar={datosSinGuardar}
-        onNivel={cambiarNivel}
-        onRestablecer={restablecerAccion}
-        onHerramientas={cambiarHerramientas}
-        onMetodo={cambiarMetodo}
-        onGuardar={() => void guardarDatos()}
-      />
-    ) : (
-      <Card>
-        <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-          No se pudieron cargar los datos del cliente{datosClienteError ? `: ${datosClienteError}` : "."} Recarga la
-          página para intentarlo de nuevo.
-        </CardContent>
-      </Card>
+    reglas: <PasoReglas horario={negocio.horario} motivos={negocio.motivos} />,
+    habilidades: (
+      <div className="flex flex-col gap-10">
+        <section aria-labelledby="habilidades-superpoderes" className="flex flex-col gap-4">
+          <h3 id="habilidades-superpoderes" className="font-display text-sh-block text-headline">
+            Superpoderes
+          </h3>
+          <PasoSuperpoderes
+            estado={estado}
+            cambiar={cambiar}
+            // Las acciones retiradas del borrador no tienen un control propio: se listan aquí, junto a los
+            // errores de la API de esos mismos campos.
+            errores={sinAcciones({ ...avisosDeBorrador, ...errores })}
+            erroresPorPoder={{ ...porPoder, ...avisosPorPoder }}
+            registrarPendiente={pendientes.registrar}
+            catalogo={superpoderes}
+            minFrases={minFrases}
+            requisitos={requisitos}
+            nombreDeHabilidad={(skill) => nombresDeHabilidades[skill] ?? habilidadLabel(skill)}
+            interruptor
+            soloLectura={!puedeEditar}
+          />
+        </section>
+        <section aria-labelledby="habilidades-acciones" className="flex flex-col gap-4">
+          <h3 id="habilidades-acciones" className="font-display text-sh-block text-headline">
+            Acciones
+          </h3>
+          <AccionesDelAgente
+            acciones={estado.acciones}
+            cambiar={(acciones) => cambiar({ acciones })}
+            erroresPorAccion={porAccion}
+            errores={erroresDeLasAcciones}
+            conConocimiento={estado.conocimiento.activo}
+            gruposDeLaApi={gruposDeAcciones}
+          />
+        </section>
+        <section aria-labelledby="habilidades-datos" className="flex flex-col gap-4">
+          <h3 id="habilidades-datos" className="font-display text-sh-block text-headline">
+            Datos del cliente
+          </h3>
+          {datosCliente ? (
+            <DatosDelAgente
+              politica={datosCliente}
+              estado={datos}
+              guardado={datosGuardado}
+              herramientas={herramientas}
+              metodos={metodos}
+              puedeEditar={puedeEditarDatos && puedeEditar}
+              guardando={datosAccion.pending}
+              sinGuardar={datosSinGuardar}
+              onNivel={cambiarNivel}
+              onRestablecer={restablecerAccion}
+              onHerramientas={cambiarHerramientas}
+              onMetodo={cambiarMetodo}
+              onGuardar={() => void guardarDatos()}
+            />
+          ) : (
+            <Card>
+              <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
+                No se pudieron cargar los datos del cliente{datosClienteError ? `: ${datosClienteError}` : "."} Recarga la
+                página para intentarlo de nuevo.
+              </CardContent>
+            </Card>
+          )}
+        </section>
+      </div>
     ),
     flujo: (
       <PasoFlujo
@@ -510,7 +550,21 @@ export function EditorDeAgente({
         semilla={flujoSeeded && JSON.stringify(estado.flujo) === JSON.stringify(flujoInicial)}
       />
     ),
-    memoria: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
+    conocimiento: <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />,
+    probar: (
+      <div className="flex max-w-xl flex-col gap-4">
+        <p className="text-sm text-body">
+          El chat de prueba responde con la versión <strong className="text-headline">activa</strong> de una conexión
+          donde está el agente, igual que con un cliente. Lo que cambiaste aquí se prueba después de publicar y activar la
+          versión nueva.
+        </p>
+        <div>
+          <Button asChild variant="outline">
+            <Link href={`/agentes/${agente.id}?tab=probar`}>Abrir el chat de prueba</Link>
+          </Button>
+        </div>
+      </div>
+    ),
     publicar: (
       <PasoPublicar
         destinos={destinos}
@@ -521,62 +575,105 @@ export function EditorDeAgente({
         errores={errores}
         notas={notas}
         setNotas={setNotas}
+        modelo={modeloEfectivo}
       />
     ),
   };
 
-  const steps: StepItem[] = PASOS.map((p, i) => {
-    const conError = Object.keys(errores).some((campo) => pasoDelCampo(campo) === p.id);
-    const actual = p.id === paso;
-    const ultimo = i === PASOS.length - 1;
-    return {
-      id: p.id,
-      title: p.titulo,
-      description: p.descripcion,
-      state: actual ? "current" : conError ? "error" : visitados.has(p.id) ? "complete" : "upcoming",
-      stateLabel: conError ? "Revisar" : visitados.has(p.id) ? "Visto" : undefined,
-      content: actual ? (
-        <div className="flex flex-col gap-6">
-          {contenidoDelPaso[p.id]}
-          {ultimo && limite && <AvisoLimiteDePlan mensaje={limite} />}
-          <div className="flex flex-wrap gap-3">
-            {ultimo ? (
-              <Button
-                variant="accent"
-                onClick={publicar}
-                loading={publicarAccion.pending}
-                disabled={publicarAccion.pending || guardarAccion.pending || destinos.length === 0}
-              >
-                Publicar versión
-              </Button>
-            ) : (
-              <Button variant="accent" onClick={siguiente} loading={guardarAccion.pending} disabled={guardarAccion.pending}>
-                Guardar y seguir
-              </Button>
-            )}
-            {cambios && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const completo = plegarPendientes();
-                  if (completo) void guardar(completo);
-                }}
-                disabled={guardarAccion.pending}
-              >
-                Guardar borrador
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : undefined,
-    };
-  });
+  // La vista previa de cada paso: textos fijos de `lib/vista-previa.ts`, sin modelo ni créditos.
+  const nombreDelAgente = estado.nombre.trim() || "Tu agente";
+  const activos = superpoderes.filter((p) => estado.superpoderes[p.id]?.activo);
+  const probado = superpoderes.find((p) => p.phrases[0] === frasePrueba) ?? activos[0] ?? superpoderes[0];
+  const mensajesDelPaso =
+    paso === "habilidades" && probado
+      ? conversacionDeHabilidad(
+          { id: probado.id, titulo: probado.title, activa: Boolean(estado.superpoderes[probado.id]?.activo), frases: probado.phrases },
+          frasePrueba ?? undefined,
+        )
+      : paso === "flujo"
+        ? conversacionDeFlujo(estado.flujo.sections.map((s) => ({ nombre: s.label, proposito: s.purpose })))
+        : negocio.voz
+          ? conversacionDeVoz(negocio.voz, nombreDelAgente, negocio.nombre)
+          : [];
+  const vistaPrevia: VistaPreviaDelPaso | undefined =
+    paso === "probar" || paso === "publicar"
+      ? undefined
+      : {
+          negocio: negocio.nombre,
+          agente: nombreDelAgente,
+          subtitulo: `${nombreDelAgente} · borrador sin publicar`,
+          mensajes: mensajesDelPaso,
+          sugerencias:
+            paso === "habilidades"
+              ? superpoderes
+                  .filter((p) => p.phrases[0])
+                  .slice(0, 4)
+                  .map((p) => ({
+                    id: p.id,
+                    texto: p.phrases[0],
+                    activa: probado?.id === p.id,
+                    onUsar: () => setFrasePrueba(p.phrases[0]),
+                  }))
+              : undefined,
+        };
+
+  const conCambios = pasosConCambios(estado, guardado);
+  if (datosSinGuardar) conCambios.add("habilidades");
+  const conError = new Set(Object.keys(errores).map(pasoDelCampo));
+  const pasos: PasoDeLaBarra[] = PASOS.map((p) => ({
+    id: p.id,
+    titulo: p.titulo,
+    corto: p.corto,
+    marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
+  }));
+  const indice = PASOS.findIndex((p) => p.id === paso);
+  const ultimo = indice === PASOS.length - 1;
+  const hayCambios = cambios || datosSinGuardar;
 
   return (
     <div className="flex flex-col gap-6">
       <AvisoDeReferenciasRetiradas aviso={retiradas} />
 
-      <Stepper steps={steps} onSelect={(id) => irA(id as PasoId)} label="Pasos del editor de agentes" />
+      <RecorridoDelAgente
+        pasos={pasos}
+        actual={paso}
+        modo="libre"
+        onIr={(id) => irA(id as PasoId)}
+        etiquetaDePasos="Pasos del editor de agentes"
+        pregunta={preguntaDelPaso(paso, estado.nombre)}
+        nivelDePregunta="h2"
+        dentroDelPanel
+        vistaPrevia={vistaPrevia}
+        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: indice === 0 }}
+        guardar={
+          puedeEditar
+            ? {
+                texto: "Guardar cambios",
+                onClick: () => void guardarCambios(),
+                cargando: guardarAccion.pending,
+                deshabilitado: !hayCambios || publicarAccion.pending,
+              }
+            : undefined
+        }
+        principal={
+          ultimo
+            ? puedeEditar
+              ? {
+                  texto: "Publicar versión",
+                  onClick: () => void publicar(),
+                  cargando: publicarAccion.pending,
+                  deshabilitado: publicarAccion.pending || guardarAccion.pending || destinos.length === 0,
+                }
+              : undefined
+            : { texto: "Siguiente", onClick: () => mover(1) }
+        }
+      >
+        <fieldset disabled={!puedeEditar} className="flex min-w-0 flex-col gap-6">
+          <legend className="sr-only">{PASOS[indice]?.titulo}</legend>
+          {contenidoDelPaso[paso]}
+          {ultimo && limite && <AvisoLimiteDePlan mensaje={limite} />}
+        </fieldset>
+      </RecorridoDelAgente>
 
       {publicado && (
         <section aria-labelledby="publicado-titulo" className="flex flex-col gap-3 rounded-md border border-border-soft p-5">
