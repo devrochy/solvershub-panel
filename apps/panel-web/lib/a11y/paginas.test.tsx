@@ -53,6 +53,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>, Record<string, stri
   ["Colaboradores", () => import("@/app/(app)/colaboradores/page")],
   ["Habilidades", () => import("@/app/(app)/habilidades/page")],
   ["Conexiones", () => import("@/app/(app)/conexiones/page")],
+  ["Conexiones · Cuadrícula", () => import("@/app/(app)/conexiones/page"), { vista: "cuadricula" }],
   ["Plan", () => import("@/app/(app)/plan/page")],
   ["Negocios", () => import("@/app/(app)/tenants/page")],
   ["Configuración", () => import("@/app/(app)/configuracion/page")],

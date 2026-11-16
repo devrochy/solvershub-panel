@@ -17,4 +17,14 @@ describe("vista recordada (lista o vitrina)", () => {
     expect(vistaEnEnlace("productos", "lista", "vitrina")).toBe("lista");
     expect(cookieDeVista("pedidos", "etapas")).toMatch(/^panel_vista_pedidos=etapas; path=\//);
   });
+
+  it("Conexiones abre en lista y recuerda la cuadrícula", () => {
+    expect(vistaElegida("conexiones", undefined, undefined)).toBe("lista");
+    expect(vistaElegida("conexiones", "cuadricula", undefined)).toBe("cuadricula");
+    expect(vistaElegida("conexiones", "inventada", undefined)).toBe("lista");
+    expect(vistaEnEnlace("conexiones", "lista", undefined)).toBe("");
+    expect(vistaEnEnlace("conexiones", "cuadricula", undefined)).toBe("cuadricula");
+    expect(vistaEnEnlace("conexiones", "lista", "cuadricula")).toBe("lista");
+    expect(cookieDeVista("conexiones", "cuadricula")).toMatch(/^panel_vista_conexiones=cuadricula; path=\//);
+  });
 });
