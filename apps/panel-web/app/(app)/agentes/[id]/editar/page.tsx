@@ -10,6 +10,7 @@ import { nombresDeHabilidades } from "@/lib/agentes-ficha";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
 import type { AgenteDatos } from "@/lib/datos-cliente";
 import { apiFetch } from "@/lib/api/server";
+import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
 import type {
   AgentActionPage,
   AgentDetail,
@@ -108,43 +109,46 @@ export default async function EditarAgentePage({
     ? { nombre: modelos.data.effective_model, origen: modelos.data.effective_source === "agente" ? ("agente" as const) : ("negocio" as const) }
     : null;
 
+  // HU-AOS-78: con cambios sin guardar, salir del editor (o cerrar la pestaña) pide confirmar.
   return (
-    <div className="flex flex-col gap-6">
-      {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
-      <PageHeader
-        title={titulo}
-        description={
-          creando
-            ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
-            : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
-        }
-        breadcrumbs={migas}
-        tabs={false}
-        actions={volver}
-      />
-      <EditorDeAgente
-        agente={agente.data}
-        superpoderes={superpoderes.data.items}
-        modelos={modelos.data}
-        destinos={destinos.ok ? destinos.data.items : []}
-        destinosError={destinos.ok ? null : destinos.error}
-        puedeActivar={puedeActivar}
-        requisitos={requisitos.ok ? requisitos.data.items : []}
-        pasoInicial={pasoInicial}
-        avisosRetirados={retiradas.ok ? retiradas.data : null}
-        nombresDeHabilidades={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
-        gruposDeAcciones={acciones.ok ? Object.fromEntries(acciones.data.items.map((a) => [a.tool, a.group])) : {}}
-        datosCliente={datosCliente.ok ? datosCliente.data : null}
-        datosClienteError={datosCliente.ok ? undefined : datosCliente.error}
-        puedeEditarDatos={puedeEditarDatos}
-        flujoInicial={flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] }}
-        flujoSeeded={flujo.ok ? flujo.data.seeded : false}
-        accionesDelFlujo={opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : []}
-        negocio={negocio}
-        modeloEfectivo={efectivo}
-        puedeEditar={puedeEditarDatos}
-        modo={creando ? "crear" : "editar"}
-      />
-    </div>
+    <AvisoAlSalir>
+      <div className="flex flex-col gap-6">
+        {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
+        <PageHeader
+          title={titulo}
+          description={
+            creando
+              ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
+              : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
+          }
+          breadcrumbs={migas}
+          tabs={false}
+          actions={volver}
+        />
+        <EditorDeAgente
+          agente={agente.data}
+          superpoderes={superpoderes.data.items}
+          modelos={modelos.data}
+          destinos={destinos.ok ? destinos.data.items : []}
+          destinosError={destinos.ok ? null : destinos.error}
+          puedeActivar={puedeActivar}
+          requisitos={requisitos.ok ? requisitos.data.items : []}
+          pasoInicial={pasoInicial}
+          avisosRetirados={retiradas.ok ? retiradas.data : null}
+          nombresDeHabilidades={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
+          gruposDeAcciones={acciones.ok ? Object.fromEntries(acciones.data.items.map((a) => [a.tool, a.group])) : {}}
+          datosCliente={datosCliente.ok ? datosCliente.data : null}
+          datosClienteError={datosCliente.ok ? undefined : datosCliente.error}
+          puedeEditarDatos={puedeEditarDatos}
+          flujoInicial={flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] }}
+          flujoSeeded={flujo.ok ? flujo.data.seeded : false}
+          accionesDelFlujo={opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : []}
+          negocio={negocio}
+          modeloEfectivo={efectivo}
+          puedeEditar={puedeEditarDatos}
+          modo={creando ? "crear" : "editar"}
+        />
+      </div>
+    </AvisoAlSalir>
   );
 }
