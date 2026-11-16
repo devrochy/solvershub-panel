@@ -289,15 +289,37 @@ describe("redirecciones", () => {
     expect(await destino(import("@/app/(app)/conexiones/meta/page"), { params: Promise.resolve({}) })).toBe("/conexiones");
   });
 
-  it("Producción y Plantillas globales: a la ficha si hay un solo WhatsApp oficial, si no a la lista", async () => {
+  it("Producción global: a la ficha si hay un solo WhatsApp oficial, si no a la lista", async () => {
     preparar();
     expect(await destino(import("@/app/(app)/conexiones/produccion/page"), { params: Promise.resolve({}) })).toBe("/conexiones");
-    expect(await destino(import("@/app/(app)/plantillas/page"), { params: Promise.resolve({}) })).toBe("/conexiones");
     preparar({ "/admin/connections/console": { ...CONSOLA, items: [ITEMS[0], ITEMS[2]] } });
     expect(await destino(import("@/app/(app)/conexiones/produccion/page"), { params: Promise.resolve({}) })).toBe(
       `/conexiones/${WA}/produccion`,
     );
-    expect(await destino(import("@/app/(app)/plantillas/page"), { params: Promise.resolve({}) })).toBe(`/conexiones/${WA}/plantillas`);
+  });
+
+  it("Plantillas global (HU-CONN-21): la matriz plantilla × conexión con su copia y el aviso que falta", async () => {
+    const meta = { clave: `meta:${META}`, proveedor: "meta" as const, id: META, etiqueta: "Cuenta Meta", activa: true, motivo_pausa: null, sandbox: false, destinable: true };
+    const twilio = { clave: `twilio:${WA2}`, proveedor: "twilio" as const, id: WA2, etiqueta: "Twilio principal", activa: true, motivo_pausa: null, sandbox: false, destinable: true };
+    const celda = (estado: string, extra = {}) => ({ estado, distinta: false, plantilla_id: null, motivo: "", ...extra });
+    preparar({
+      "/admin/whatsapp-templates": {
+        conexiones: [meta, twilio],
+        filas: [
+          { nombre: "recordatorio_cita", idioma: "es", categoria: "UTILITY", cuerpo: "Hola {{1}}", celdas: { [meta.clave]: celda("aprobada"), [twilio.clave]: celda("falta") } },
+          { nombre: "bienvenida", idioma: "es", categoria: "UTILITY", cuerpo: "Hola", celdas: { [meta.clave]: celda("aprobada"), [twilio.clave]: celda("aprobada", { distinta: true }) } },
+        ],
+        avisos_faltantes: [{ evento: "appointment.reminder", nombre: "recordatorio_cita", idioma: "es", conexion: twilio.clave, estado: "falta" }],
+      },
+    });
+    const arbol = await pagina(import("@/app/(app)/plantillas/page"), { params: Promise.resolve({}) });
+    render(<FeedbackProviders>{arbol}</FeedbackProviders>);
+    expect(screen.getByRole("heading", { level: 1, name: "Plantillas de WhatsApp" })).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("Twilio principal");
+    expect(screen.getAllByText("Con otro texto").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Copiar recordatorio_cita a otras conexiones" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Copiar bienvenida a otras conexiones" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Copiar todas a/ })).toBeTruthy();
   });
 
   it("WhatsApp Web y chat web: a la ficha si la conexión existe; si no, el alta", async () => {
