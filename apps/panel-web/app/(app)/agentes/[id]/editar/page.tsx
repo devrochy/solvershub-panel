@@ -6,6 +6,7 @@ import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { pasoDesdeParametro } from "@/lib/agentes-editor";
+import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
 import { cargarEditorDeAgente } from "@/lib/editor-de-agente-datos";
 
 export const metadata = { title: "Editar agente" };
@@ -58,21 +59,24 @@ export default async function EditarAgentePage({
     );
   }
 
+  // HU-AOS-78: con cambios sin guardar, salir del editor (o cerrar la pestaña) pide confirmar.
   return (
-    <div className="flex flex-col gap-6">
-      {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
-      <PageHeader
-        title={titulo}
-        description={
-          creando
-            ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
-            : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
-        }
-        breadcrumbs={migas}
-        tabs={false}
-        actions={volver}
-      />
-      <EditorDeAgente {...carga.datos} pasoInicial={pasoInicial} modo={creando ? "crear" : "editar"} />
-    </div>
+    <AvisoAlSalir>
+      <div className="flex flex-col gap-6">
+        {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
+        <PageHeader
+          title={titulo}
+          description={
+            creando
+              ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
+              : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
+          }
+          breadcrumbs={migas}
+          tabs={false}
+          actions={volver}
+        />
+        <EditorDeAgente {...carga.datos} pasoInicial={pasoInicial} modo={creando ? "crear" : "editar"} />
+      </div>
+    </AvisoAlSalir>
   );
 }

@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { PasoSuperpoderes } from "@/components/domain/agentes/recorrido/pasos";
 import { FeedbackProviders } from "@/components/ui/providers";
+import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
 import type { AgentDetail, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
 
 import {
@@ -25,8 +26,9 @@ import {
   superpoderesFueraDelEnfoque,
 } from "./agentes-editor";
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push }),
 }));
 
 const PEDIDO: Superpower = {
@@ -401,6 +403,104 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.queryByRole("button", { name: "Publicar versión" })).toBeNull();
     fireEvent.click(segmento(/^Identidad$/));
     expect(screen.getByLabelText(/Nombre/).matches(":disabled")).toBe(true);
+  });
+});
+
+describe("salir del editor con cambios sin guardar (HU-AOS-78)", () => {
+  const fetchMock = vi.fn();
+  // Lo que llega al documento sin frenar (sin aviso): se frena aquí para que jsdom no navegue.
+  const sinAviso = vi.fn((evento: MouseEvent) => evento.preventDefault());
+  beforeEach(() => {
+    fetchMock.mockReset();
+    push.mockReset();
+    sinAviso.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+    document.addEventListener("click", sinAviso);
+  });
+  afterEach(() => {
+    document.removeEventListener("click", sinAviso);
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  const agente = {
+    id: "11111111-1111-4111-8111-111111111111",
+    key: "ventas",
+    kind: "specialist",
+    contract: "agentspec/3",
+    name: "Ventas",
+    description: "",
+    status: "active",
+    latest_version: null,
+    created_at: "2026-10-18T00:00:00Z",
+    draft: { content: BASE, lock_version: 1, base_version_id: null, updated_at: "2026-10-18T00:00:00Z" },
+    versions: [],
+  } as unknown as AgentDetail;
+  const modelos = { items: [], min_phrases: 3, business_model: "deepseek-flash" } as unknown as LlmModelCatalog;
+
+  function abrir() {
+    return render(
+      <FeedbackProviders>
+        <AvisoAlSalir>
+          <a href={`/agentes/${agente.id}`}>Volver a Ventas</a>
+          <EditorDeAgente
+            agente={agente}
+            superpoderes={[PEDIDO]}
+            modelos={modelos}
+            destinos={[]}
+            destinosError={null}
+            puedeActivar
+          />
+        </AvisoAlSalir>
+      </FeedbackProviders>,
+    );
+  }
+  const volver = () => screen.getByRole("link", { name: "Volver a Ventas" });
+  const cambiarNombre = () => fireEvent.change(screen.getByLabelText(/Nombre/), { target: { value: "Ventas Centro" } });
+  const cerrarPestana = () => {
+    const evento = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(evento);
+    return evento.defaultPrevented;
+  };
+
+  it("sin cambios se sale sin preguntar y la pestaña se cierra sin aviso", () => {
+    abrir();
+    fireEvent.click(volver());
+    expect(screen.queryByText("Tienes cambios sin guardar")).toBeNull();
+    expect(sinAviso).toHaveBeenCalled();
+    expect(cerrarPestana()).toBe(false);
+  });
+
+  it("con cambios, «Volver» pide confirmar: «Seguir editando» se queda", async () => {
+    abrir();
+    cambiarNombre();
+    fireEvent.click(volver());
+    expect(sinAviso).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Seguir editando" }));
+    await waitFor(() => expect(screen.queryByText("Tienes cambios sin guardar")).toBeNull());
+    expect(push).not.toHaveBeenCalled();
+    expect((screen.getByLabelText(/Nombre/) as HTMLInputElement).value).toBe("Ventas Centro");
+  });
+
+  it("con cambios, «Descartar cambios» sale a la ficha", async () => {
+    abrir();
+    cambiarNombre();
+    fireEvent.click(volver());
+    fireEvent.click(await screen.findByRole("button", { name: "Descartar cambios" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+  });
+
+  it("con cambios avisa al cerrar la pestaña; tras guardar ya no", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
+    abrir();
+    cambiarNombre();
+    expect(cerrarPestana()).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Guardar cambios" }) as HTMLButtonElement).disabled).toBe(true));
+    expect(cerrarPestana()).toBe(false);
+    fireEvent.click(volver());
+    expect(screen.queryByText("Tienes cambios sin guardar")).toBeNull();
+    expect(push).not.toHaveBeenCalled();
   });
 });
 

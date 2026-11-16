@@ -1,6 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+
+import { useConfirm } from "@/components/ui/confirm";
 
 /**
  * Aviso de «cambios sin guardar» de Configuración. Cada formulario declara si tiene cambios con
@@ -49,6 +52,52 @@ export function useRegistroDeCambios(): Registro {
   }, []);
 
   return useMemo(() => ({ marcar, hayCambios }), [marcar, hayCambios]);
+}
+
+/**
+ * Una página entera que avisa al salir con cambios sin guardar (Editar agente, HU-AOS-78): lo de dentro
+ * declara sus cambios con `useAvisarCambios`; un enlace interno a otra página (la salida de la cabecera,
+ * las migas, el menú) pide confirmar antes de irse, y cerrar o recargar la pestaña lo avisa el navegador.
+ */
+export function AvisoAlSalir({
+  children,
+  descripcion = "Si sales ahora, se pierde lo que cambiaste y no guardaste.",
+}: {
+  children: ReactNode;
+  descripcion?: string;
+}) {
+  const registro = useRegistroDeCambios();
+  const confirm = useConfirm();
+  const router = useRouter();
+
+  useEffect(() => {
+    // En captura y en el documento: corre antes que el `onClick` de `next/link` y frena su navegación.
+    const alPulsar = (evento: MouseEvent) => {
+      if (!registro.hayCambios() || evento.defaultPrevented) return;
+      if (evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+      const enlace = evento.target instanceof Element ? evento.target.closest("a[href]") : null;
+      if (!(enlace instanceof HTMLAnchorElement) || enlace.hasAttribute("download")) return;
+      if (enlace.target && enlace.target !== "_self") return;
+      const destino = new URL(enlace.href, window.location.href);
+      // Fuera del panel avisa el navegador; dentro de la misma página (`?paso=`) no se pierde nada.
+      if (destino.origin !== window.location.origin || destino.pathname === window.location.pathname) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      void confirm({
+        title: "Tienes cambios sin guardar",
+        description: descripcion,
+        confirmLabel: "Descartar cambios",
+        cancelLabel: "Seguir editando",
+        destructive: true,
+      }).then((salir) => {
+        if (salir) router.push(`${destino.pathname}${destino.search}${destino.hash}`);
+      });
+    };
+    document.addEventListener("click", alPulsar, true);
+    return () => document.removeEventListener("click", alPulsar, true);
+  }, [registro, confirm, router, descripcion]);
+
+  return <CambiosSinGuardarProvider registro={registro}>{children}</CambiosSinGuardarProvider>;
 }
 
 /** Un formulario avisa si tiene cambios sin guardar; al desmontarse deja de avisar. */
