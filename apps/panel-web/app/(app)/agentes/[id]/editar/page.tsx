@@ -35,10 +35,12 @@ export default async function EditarAgentePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paso?: string }>;
+  searchParams: Promise<{ paso?: string; modo?: string }>;
 }) {
   const { id } = await params;
-  const { paso } = await searchParams;
+  const { paso, modo } = await searchParams;
+  // `?modo=crear` (HU-AOS-77): la continuación de Nuevo agente, con los pasos en orden.
+  const creando = modo === "crear";
   // `?paso=` abre en ese paso (el asistente de HU-AOS-54 deja al dueño en «Publicar»); los ids del
   // editor anterior se traducen al paso que los contiene.
   const pasoInicial = pasoDesdeParametro(paso);
@@ -76,15 +78,13 @@ export default async function EditarAgentePage({
       </div>
     );
   }
-  const titulo = `Editar ${agente.data.name}`;
-  const migas = [
-    { label: "Agentes", href: "/agentes" },
-    { label: agente.data.name, href: `/agentes/${id}` },
-    { label: "Editar" },
-  ];
+  const titulo = creando ? `Nuevo agente: ${agente.data.name}` : `Editar ${agente.data.name}`;
+  const migas = creando
+    ? [{ label: "Agentes", href: "/agentes" }, { label: "Nuevo agente" }]
+    : [{ label: "Agentes", href: "/agentes" }, { label: agente.data.name, href: `/agentes/${id}` }, { label: "Editar" }];
   const volver = (
     <Button asChild variant="outline">
-      <Link href={`/agentes/${id}`}>Volver a {agente.data.name}</Link>
+      <Link href={`/agentes/${id}`}>{creando ? "Terminar después" : `Volver a ${agente.data.name}`}</Link>
     </Button>
   );
   if (agente.data.kind !== "specialist") {
@@ -113,7 +113,11 @@ export default async function EditarAgentePage({
       {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
       <PageHeader
         title={titulo}
-        description="Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
+        description={
+          creando
+            ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
+            : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
+        }
         breadcrumbs={migas}
         tabs={false}
         actions={volver}
@@ -139,6 +143,7 @@ export default async function EditarAgentePage({
         negocio={negocio}
         modeloEfectivo={efectivo}
         puedeEditar={puedeEditarDatos}
+        modo={creando ? "crear" : "editar"}
       />
     </div>
   );
