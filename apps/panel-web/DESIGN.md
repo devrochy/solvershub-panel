@@ -364,11 +364,25 @@ SPEC-12, no de este recorrido.
 |---|---|
 | `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú). 6 pasos; cada uno guarda al avanzar y se retoma donde quedó. El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir` (negocio nuevo, sin tocar, dueño). «Completo» lo decide el servidor al terminar |
 | `components/domain/aviso-de-onboarding.tsx` | Aviso permanente (`role="status"`, tonos `status-warning-*`) bajo la barra superior mientras el recorrido está empezado o saltado. No se puede cerrar; solo desaparece con «completo». Lo ven el dueño y el master |
-| `_components/elegibles.tsx` | Tarjetas y fichas de un clic con `input` radio o checkbox nativos (flechas, foco y lector gratis); la selección se ve por anillo cian y marca, no solo por color. Objetivo ≥ 44 px |
+| `components/ui/elegibles.tsx` | Tarjetas y fichas de un clic con `input` radio o checkbox nativos (flechas, foco y lector gratis); la selección se ve por anillo cian y marca, no solo por color. Objetivo ≥ 44 px |
 | `_components/tarjeta-del-agente.tsx` | La idea memorable: «Tu agente, armándose». Lo vacío con línea punteada, lo decidido sólido; la burbuja de voz sale de frases fijas por tono, calidez, emojis y largo (`lib/onboarding.ts`), sin modelo. En móvil se pliega arriba (`details`) |
 | Horario | Es el del equipo del comercio; el agente responde 24/7 (`business_hours_mode = informativo`). Se elige con atajos de días, días a mano y bloque de horas |
 | Logo | Horizontal con icono (`public/marca/horizontal-*`); bajo 240 px de ancho, `horizontal-simple` (manual §4). Nunca se recolorea |
 | Movimiento | Solo transiciones de selección (200 ms) y el giro de «creando»; todo se apaga con `prefers-reduced-motion` |
+
+## Recorrido del agente (HU-UX-22, SPEC-47)
+
+La bienvenida, Nuevo agente y Editar usan el mismo cascarón y los mismos pasos (D-75). La bienvenida
+sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro del shell.
+
+| Pieza | Regla |
+|---|---|
+| `components/ui/barra-de-pasos.tsx` | Avance «Paso X de N · {corto}» y un segmento por paso con su nombre corto; por debajo de `md`, píldoras deslizables. `en-orden` solo deja volver; `libre` deja ir a cualquiera. Las marcas «con cambios» (`status-warning-fg`) y «revisar» (`status-danger-fg`) llevan texto para el lector, no solo color. Reemplaza a `Progress` y a `Stepper` en estos tres flujos; `Stepper` sigue en Pruebas y Pasar a producción |
+| `components/domain/agentes/recorrido/recorrido-del-agente.tsx` | Cascarón: barra, la pregunta del paso como único `h1` (recibe el foco al cambiar de paso, no al montar), contenido y vista previa a la derecha (`lg`). Pie pegado abajo con «Atrás», la acción principal y, al editar, «Guardar cambios». No guarda ni navega: cada flujo decide |
+| `components/domain/agentes/recorrido/vista-previa-whatsapp.tsx` | Teléfono con una conversación de WhatsApp de ejemplo y frases para probar. Reemplaza a la tarjeta viva. Por debajo de `lg`, `HojaDeVistaPrevia`: las dos últimas burbujas sobre el pie y «Ver teléfono» abre el teléfono en un `Sheet` |
+| `lib/vista-previa.ts` | Las conversaciones salen de textos fijos por voz, superpoder y etapa: sin modelo ni créditos, y sin cifras que el dueño no cargó. Un superpoder apagado responde que pasa a una persona. Solo «Pruébalo» habla con el agente |
+| `components/ui/elegibles.tsx` y `components/domain/agentes/paso-datos.tsx`, `paso-lo-cargado.tsx` | Compartidos por los tres flujos; ningún recorrido tiene su copia |
+| Pie | `bg-surface` sólido, sin `backdrop-blur` |
 
 ## Copy
 

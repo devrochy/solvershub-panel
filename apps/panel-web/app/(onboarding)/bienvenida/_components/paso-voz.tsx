@@ -13,7 +13,7 @@ import {
   type Tono,
 } from "@/lib/onboarding";
 
-import { FichaUnica, GrupoDeOpciones, TarjetaElegible } from "./elegibles";
+import { FichaUnica, GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 
 /** Paso 2: cuatro decisiones visuales de voz. La tarjeta del agente reescribe su burbuja al instante. */
 export function PasoVoz({

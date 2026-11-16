@@ -15,7 +15,10 @@ import { CONVERSATION_STATUS, PAYMENT_STATUS, StatusBadge } from "@/components/d
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { TarjetaDelAgente } from "@/app/(onboarding)/bienvenida/_components/tarjeta-del-agente";
 import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
-import { TarjetaElegible } from "@/app/(onboarding)/bienvenida/_components/elegibles";
+import { TarjetaElegible } from "@/components/ui/elegibles";
+import { BarraDePasos } from "@/components/ui/barra-de-pasos";
+import { VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
+import { conversacionDeHabilidad } from "@/lib/vista-previa";
 import { Marca } from "@/components/ui/marca";
 import { ESTADO_INICIAL, HORARIO_INICIAL, type HorarioElegido } from "@/lib/onboarding";
 import { Avatar } from "@/components/ui/avatar";
@@ -227,6 +230,7 @@ const GRUPOS: Grupo[] = [
     piezas: [
       { id: "primer-uso", titulo: "Asistente de primer uso" },
       { id: "creacion-de-agentes", titulo: "Asistente de creación de agentes" },
+      { id: "recorrido-del-agente", titulo: "Recorrido del agente" },
     ],
   },
 ];
@@ -312,6 +316,8 @@ export function Catalogo() {
   const [telefono, setTelefono] = useState("300 123 4567");
   const [frasesDemo, setFrasesDemo] = useState(["quiero hablar con alguien", "precio del plan"]);
   const [temaCelular, setTemaCelular] = useState<"sh-light" | "sh-dark">("sh-dark");
+  const [pasoDemo, setPasoDemo] = useState("voz");
+  const [agendaActiva, setAgendaActiva] = useState(true);
 
   return (
     <TemaEnCelular.Provider value={temaCelular}>
@@ -1001,6 +1007,52 @@ export function Catalogo() {
                 <Button variant="outline">Atrás</Button>
                 <Button variant="accent">Crear mi agente</Button>
               </div>
+            </div>
+          </Seccion>
+          <Seccion
+            id="recorrido-del-agente"
+            titulo="Recorrido del agente"
+            cuando="se crea o se edita un agente (bienvenida, Nuevo agente, Editar): mismos pasos, una pregunta por pantalla y el teléfono con la vista previa."
+            no="formularios de una sola pantalla ni recorridos que no configuran un agente (para eso, Stepper o Progress)."
+            piezas="SPEC-47 · BarraDePasos · VistaPreviaWhatsApp · HojaDeVistaPrevia · RecorridoDelAgente · lib/vista-previa"
+          >
+            <div className="flex flex-col gap-6">
+              <div className="flex min-w-0 flex-col gap-6">
+                <BarraDePasos
+                  etiqueta="Pasos de ejemplo"
+                  modo="libre"
+                  actual={pasoDemo}
+                  onIr={setPasoDemo}
+                  pasos={[
+                    { id: "identidad", titulo: "Identidad" },
+                    { id: "voz", titulo: "Cómo habla", marca: "cambios" },
+                    { id: "reglas", titulo: "Horario y reglas", corto: "Horario" },
+                    { id: "habilidades", titulo: "Habilidades" },
+                    { id: "flujo", titulo: "Flujo de atención", corto: "Flujo", marca: "revisar" },
+                    { id: "datos", titulo: "Conocimiento y datos", corto: "Conocimiento" },
+                    { id: "probar", titulo: "Pruébalo" },
+                    { id: "publicar", titulo: "Publicar" },
+                  ]}
+                />
+                <Checkbox
+                  id="cat-agenda-activa"
+                  label="Superpoder «Agendar citas» activo"
+                  checked={agendaActiva}
+                  onCheckedChange={(v) => setAgendaActiva(v === true)}
+                />
+              </div>
+              <VistaPreviaWhatsApp
+                className="w-full max-w-[21rem]"
+                negocio="Estudio Lumen"
+                agente="Sofía"
+                subtitulo="Sofía · Cercano"
+                mensajes={conversacionDeHabilidad({
+                  id: "agendar",
+                  titulo: "Agendar citas",
+                  activa: agendaActiva,
+                  frases: ["¿Tienen cita el sábado?"],
+                })}
+              />
             </div>
           </Seccion>
         </main>

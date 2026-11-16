@@ -15,7 +15,7 @@ import {
   type MotivoDeEscalar,
 } from "@/lib/onboarding";
 
-import { FichaMultiple, GrupoDeOpciones } from "./elegibles";
+import { FichaMultiple, GrupoDeOpciones } from "@/components/ui/elegibles";
 import { SelectorDeHorario } from "./selector-de-horario";
 
 /** Paso 3: horario del comercio (informativo: el agente responde siempre), cuándo pasar a una persona y qué no decir. */

@@ -6,7 +6,8 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Controles de un clic del asistente de primer uso (HU-UX-21). Son `input` nativos (radio o checkbox)
+ * Controles de un clic del recorrido del agente: bienvenida, nuevo agente y editar (HU-UX-21, HU-UX-22).
+ * Son `input` nativos (radio o checkbox)
  * dentro de una etiqueta: el teclado, las flechas y el lector de pantalla funcionan sin código extra, y la
  * selección se ve por el anillo y la marca, nunca solo por el color.
  */
