@@ -193,8 +193,12 @@ export function subtituloDeFicha(
   // En el Sandbox de Twilio (HU-CONN-20) `external_id` es `sandbox:<AccountSid>`: el número es el compartido de Twilio
   // y no identifica a la conexión, así que se dice que es el Sandbox.
   if (tipo === "whatsapp_twilio" && c.external_id?.startsWith("sandbox:")) return `${tipoLegible(tipo)} · Sandbox`;
-  // En Telegram `external_id` es el id del bot (de `getMe`): no le dice nada al dueño; el @usuario está en Resumen.
-  if (tipo === "telegram") return tipoLegible(tipo);
+  // En Telegram `external_id` es el id del bot (de `getMe`): no le dice nada al dueño. El @usuario llega como
+  // `display_name` (consola de conexiones, ADR-0199).
+  if (tipo === "telegram") {
+    const usuario = c.display_name?.trim();
+    return usuario ? `${tipoLegible(tipo)} · ${usuario}` : tipoLegible(tipo);
+  }
   // En WhatsApp oficial `external_id` es el phone_number_id de Meta: el número es otro campo. En
   // Twilio `external_id` es el número del sender (`sender_e164`).
   const numero =

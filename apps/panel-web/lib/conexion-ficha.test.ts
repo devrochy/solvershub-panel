@@ -98,6 +98,7 @@ describe("pestañas de la ficha por tipo (HU-UX-09)", () => {
     const tg = conexion({ ...sinMeta, type_id: "telegram", channel: "telegram", external_id: "1234567890", display_phone_number: null });
     expect(tipoDeFicha(tg)).toBe("telegram");
     expect(subtituloDeFicha(tg, "telegram")).toBe("Telegram");
+    expect(subtituloDeFicha({ ...tg, display_name: "@mitienda_bot" }, "telegram")).toBe("Telegram · @mitienda_bot");
     expect(iconoDeConexion(tg)).toBe("telegram");
     expect(tienePestana("telegram", "plantillas")).toBe(false);
   });
