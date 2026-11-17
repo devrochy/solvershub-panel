@@ -23,7 +23,7 @@ const CATALOGO: Superpower[] = [
     skill: "pack_commerce",
     title: "Tomar pedidos",
     description: "Arma el pedido con el cliente.",
-    phrases: ["quiero pedir", "me mandas dos", "hacer un pedido"],
+    phrases: ["quiero pedir", "me mandas dos", "hacer un pedido"], group: "ventas", group_label: "Ventas",
   },
   {
     id: "pack_calendar.agendar",
@@ -31,7 +31,7 @@ const CATALOGO: Superpower[] = [
     skill: "pack_calendar",
     title: "Agendar citas",
     description: "",
-    phrases: ["quiero una cita", "agéndame", "tienen turno mañana"],
+    phrases: ["quiero una cita", "agéndame", "tienen turno mañana"], group: "ventas", group_label: "Ventas",
   },
   {
     id: "pack_payments.cobrar",
@@ -39,7 +39,7 @@ const CATALOGO: Superpower[] = [
     skill: "pack_payments",
     title: "Cobrar en línea",
     description: "",
-    phrases: ["cómo pago"],
+    phrases: ["cómo pago"], group: "ventas", group_label: "Ventas",
   },
 ];
 

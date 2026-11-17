@@ -242,7 +242,7 @@ describe("editor de agentes con referencias retiradas", () => {
     skill: "pack_commerce",
     title: "Tomar un pedido",
     description: "",
-    phrases: ["a", "b", "c"].map((x) => `pedido ${x}`),
+    phrases: ["a", "b", "c"].map((x) => `pedido ${x}`), group: "ventas", group_label: "Ventas",
   };
   const BASE = {
     contract: "agentspec/3",

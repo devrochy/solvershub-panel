@@ -6,6 +6,7 @@ import { AgentIcon } from "@/components/domain/agent-icon";
 import type { AgentTemplate } from "@/lib/api/types";
 import { habilidadLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { agruparPorDominio } from "@/lib/superpoderes-por-dominio";
 
 /**
  * Primer paso de «Nuevo agente» (AGT-12): cada plantilla es una tarjeta que dice lo que sabe hacer y
@@ -30,7 +31,8 @@ export function PlantillasEnTarjetas({
       className="grid gap-3 sm:grid-cols-2"
     >
       {plantillas.map((p) => {
-        const sabe = p.superpowers.map((s) => s.title);
+        // SPEC-48, HU-AOS-83: lo que sabe hacer, por dominio («Ventas», «Formas de pago»…).
+        const sabe = agruparPorDominio(p.superpowers);
         const falta = p.requirements.map((r) => r.title);
         return (
           <RadioPrimitive.Item
@@ -52,11 +54,12 @@ export function PlantillasEnTarjetas({
               <span className="text-xs text-text-soft">No está en tu servicio por ahora. Pídela a SolversHub.</span>
             ) : (
               <>
-                {sabe.length > 0 && (
-                  <span className="text-xs text-text-soft">
-                    <span className="font-medium text-headline">Sabe hacer:</span> {sabe.join(", ")}
+                {sabe.map((dominio) => (
+                  <span key={dominio.key} className="text-xs text-text-soft">
+                    <span className="font-medium text-headline">{dominio.label}:</span>{" "}
+                    {dominio.items.map((s) => s.title).join(", ")}
                   </span>
-                )}
+                ))}
                 {p.will_enable.length > 0 && (
                   <span className="text-xs text-text-soft">
                     <span className="font-medium text-headline">El agente viene con:</span> {p.will_enable.map(habilidadLabel).join(", ")}
