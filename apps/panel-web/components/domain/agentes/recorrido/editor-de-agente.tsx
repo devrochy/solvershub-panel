@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -73,6 +74,9 @@ import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
+import { SemaforoListo } from "@/components/domain/agentes/semaforo-listo";
+import { semaforo } from "@/lib/listo-para-responder";
+import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
@@ -80,6 +84,18 @@ import { conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
 const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "flujo", "conocimiento", "probar", "publicar"];
+/**
+ * Creación rápida (SPEC-47, HU-AOS-81, D-SPEC-47-4): Nuevo agente va en 4 pasos. El 1 (tipo y datos
+ * básicos) es `/agentes/nuevo`; aquí van los otros tres, con su nombre de la creación rápida. Lo demás
+ * (voz, horario, flujo, publicar) queda para Personalizar, con los 8 pasos libres.
+ */
+const PASOS_DE_LA_CREACION: PasoId[] = ["habilidades", "conocimiento", "probar"];
+const EN_LA_CREACION: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
+  habilidades: { titulo: "Habilidades y formas de pago", corto: "Habilidades" },
+  conocimiento: { titulo: "Datos para probar", corto: "Datos" },
+  probar: { titulo: "Revisar, probar y publicar", corto: "Revisar" },
+};
+const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo y datos básicos", corto: "Tipo" };
 
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
@@ -195,6 +211,8 @@ export function EditorDeAgente({
   // Crear y la bienvenida van en orden y «Siguiente» guarda; la bienvenida además vive fuera del shell.
   const creando = modo !== "editar";
   const enBienvenida = modo === "bienvenida" && bienvenida !== undefined;
+  // HU-AOS-81: «crear» es la creación rápida de 4 pasos; la edición sigue libre con los 8.
+  const creacionRapida = modo === "crear";
   const [preparando, setPreparando] = useState(false);
   const [errorDeBienvenida, setErrorDeBienvenida] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -207,7 +225,11 @@ export function EditorDeAgente({
   const [lock, setLock] = useState(agente.draft.lock_version);
   const [guardado, setGuardado] = useState(() => estadoDesdeBorrador(agente, agente.draft.content, superpoderes, flujoInicial));
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
-  const [paso, setPaso] = useState<PasoId>(pasoInicial);
+  const router = useRouter();
+  // La creación rápida arranca en su primer paso aunque el enlace traiga otro.
+  const [paso, setPaso] = useState<PasoId>(
+    modo === "crear" && !PASOS_DE_LA_CREACION.includes(pasoInicial) ? PASOS_DE_LA_CREACION[0] : pasoInicial,
+  );
   const [frasePrueba, setFrasePrueba] = useState<string | null>(null);
   // Datos cargados en «Conocimiento y datos» (SPEC-45): null = nada en esta visita.
   const [cargado, setCargado] = useState<Cargado | null>(null);
@@ -439,6 +461,12 @@ export function EditorDeAgente({
 
   /** Cambiar de paso no guarda: lo cambiado queda marcado hasta «Guardar cambios». */
   function mover(delta: 1 | -1) {
+    if (creacionRapida) {
+      const j = PASOS_DE_LA_CREACION.indexOf(paso);
+      const siguiente = PASOS_DE_LA_CREACION[j + delta];
+      if (siguiente) irA(siguiente);
+      return;
+    }
     const i = PASOS.findIndex((p) => p.id === paso);
     const destino = PASOS[i + delta];
     // En la bienvenida, antes de «Habilidades» van los pasos del negocio, que viven en `/bienvenida`.
@@ -464,6 +492,12 @@ export function EditorDeAgente({
   }
 
   /** Al crear, «Siguiente» valida el paso y lo guarda antes de avanzar. */
+  /** Último paso de la creación rápida: guarda lo que falte y sigue en Personalizar (sin publicar). */
+  async function terminarCreacion() {
+    if (!(await guardarCambios())) return;
+    router.push(rutaDePersonalizar(agente.id, { paso: "publicar" }));
+  }
+
   async function siguienteAlCrear() {
     const completo = plegarPendientes();
     if (!completo) return;
@@ -696,7 +730,7 @@ export function EditorDeAgente({
     ),
     conocimiento: (
       <div className="flex flex-col gap-10">
-        <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />
+        {!creacionRapida && <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />}
         <section aria-labelledby="conocimiento-datos" className="flex flex-col gap-4">
           <h3 id="conocimiento-datos" className="font-display text-sh-block text-headline">
             Carga sus datos
@@ -725,7 +759,25 @@ export function EditorDeAgente({
     probar: enBienvenida ? (
       bienvenida.prueba
     ) : creando ? (
-      <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />
+      <div className="flex flex-col gap-6">
+        {creacionRapida && (
+          <SemaforoListo
+            semaforo={semaforo({
+              requisitos,
+              formas,
+              superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
+              conDatos: cargados.length > 0,
+            })}
+          />
+        )}
+        <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />
+        {creacionRapida && (
+          <p className="text-sm text-text-soft">
+            Pruebas el borrador sin publicarlo. Al terminar sigues en Personalizar: ahí ajustas cómo habla, su horario y su flujo, y lo
+            publicas donde atiende.
+          </p>
+        )}
+      </div>
     ) : (
       <div className="flex max-w-xl flex-col gap-4">
         <p className="text-sm text-body">
@@ -807,17 +859,27 @@ export function EditorDeAgente({
   const conCambios = pasosConCambios(estado, guardado);
   if (datosSinGuardar) conCambios.add("habilidades");
   const conError = new Set(Object.keys(errores).map(pasoDelCampo));
-  const pasosDelEditor: PasoDeLaBarra[] = (enBienvenida ? PASOS.filter((p) => PASOS_DE_LA_BIENVENIDA.includes(p.id)) : PASOS).map(
+  const visibles = enBienvenida
+    ? PASOS.filter((p) => PASOS_DE_LA_BIENVENIDA.includes(p.id))
+    : creacionRapida
+      ? PASOS.filter((p) => PASOS_DE_LA_CREACION.includes(p.id))
+      : PASOS;
+  const pasosDelEditor: PasoDeLaBarra[] = visibles.map(
     (p) => ({
       id: p.id,
-      titulo: p.titulo,
-      corto: p.corto,
+      titulo: (creacionRapida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
+      corto: (creacionRapida && EN_LA_CREACION[p.id]?.corto) || p.corto,
       marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
     }),
   );
-  const pasos: PasoDeLaBarra[] = enBienvenida ? [...bienvenida.pasosDelNegocio, ...pasosDelEditor] : pasosDelEditor;
+  const pasos: PasoDeLaBarra[] = enBienvenida
+    ? [...bienvenida.pasosDelNegocio, ...pasosDelEditor]
+    : creacionRapida
+      ? [PASO_UNO_DE_LA_CREACION, ...pasosDelEditor]
+      : pasosDelEditor;
   const indice = PASOS.findIndex((p) => p.id === paso);
-  const ultimo = indice === PASOS.length - 1;
+  const ultimo = creacionRapida ? paso === PASOS_DE_LA_CREACION[PASOS_DE_LA_CREACION.length - 1] : indice === PASOS.length - 1;
+  const primeroDeLaCreacion = creacionRapida && paso === PASOS_DE_LA_CREACION[0];
   const hayCambios = cambios || datosSinGuardar;
 
   return (
@@ -831,14 +893,14 @@ export function EditorDeAgente({
         onIr={(id) => {
           const delNegocio = bienvenida?.pasosDelNegocio.findIndex((p) => p.id === id) ?? -1;
           if (enBienvenida && delNegocio >= 0) bienvenida.volverA(delNegocio + 1);
-          else irA(id as PasoId);
+          else if (id !== PASO_UNO_DE_LA_CREACION.id) irA(id as PasoId);
         }}
         etiquetaDePasos={enBienvenida ? "Pasos del primer uso" : creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
         pregunta={preguntaDelPaso(paso, estado.nombre)}
         nivelDePregunta={enBienvenida ? "h1" : "h2"}
         dentroDelPanel={!enBienvenida}
         vistaPrevia={vistaPrevia}
-        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: indice === 0 && !enBienvenida }}
+        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: (indice === 0 && !enBienvenida) || primeroDeLaCreacion }}
         guardar={
           puedeEditar && !creando
             ? {
@@ -856,6 +918,12 @@ export function EditorDeAgente({
                 onClick: () => void bienvenida.terminar(),
                 cargando: bienvenida.terminando,
                 deshabilitado: !bienvenida.probado || bienvenida.terminando,
+              }
+            : ultimo && creacionRapida
+            ? {
+                texto: "Terminar y personalizar",
+                onClick: () => void terminarCreacion(),
+                cargando: guardarAccion.pending,
               }
             : ultimo
             ? puedeEditar

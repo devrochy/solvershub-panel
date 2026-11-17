@@ -335,17 +335,31 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
   });
 
-  it("al crear (HU-AOS-77) los pasos van en orden y «Siguiente» guarda antes de avanzar", async () => {
+  it("al crear (HU-AOS-81) son los pasos 2 a 4 de 4, en orden, sin «Guardar cambios»", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
+    // Un enlace viejo con `?paso=voz` arranca igual en el primer paso de la creación rápida.
     abrir({ modo: "crear", pasoInicial: "voz" });
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
-    expect(screen.getByText("Paso 2 de 8 · Cómo habla")).toBeTruthy();
-    // En orden: no se puede saltar a un paso futuro desde la barra.
+    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Atrás/ }).hasAttribute("disabled")).toBe(true);
     expect(screen.queryAllByRole("button", { name: /^Publicar$/ })).toHaveLength(0);
-    fireEvent.click(screen.getByRole("switch", { name: /voz de la conexión/ }));
+    cleanup();
+    abrir({ modo: "crear", pasoInicial: "conocimiento" });
+    expect(screen.getByText("Paso 3 de 4 · Datos")).toBeTruthy();
+    // En la creación rápida este paso es solo «Datos para probar»: sin memoria.
+    expect(screen.queryByText(/Lo que sabe del cliente/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-    await waitFor(() => expect(screen.getByText("Paso 3 de 8 · Horario")).toBeTruthy());
-    expect(fetchMock.mock.calls.some(([u]) => String(u) === `/api/agent-editor/${agente.id}/draft`)).toBe(true);
+    await waitFor(() => expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy());
+  });
+
+  it("el último paso de la creación rápida muestra el semáforo y sigue en Personalizar sin publicar", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
+    abrir({ modo: "crear", pasoInicial: "probar" });
+    expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Listo para responder|le falta algo|Todavía no puede responder/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Terminar y personalizar" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}/personalizar?paso=publicar`));
+    expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith("/publish"))).toBe(false);
   });
 
   it("en la bienvenida (HU-UX-23) son los pasos 5 a 9 de 9, vuelve a los del negocio y prepara la prueba", async () => {

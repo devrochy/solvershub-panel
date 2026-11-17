@@ -112,9 +112,9 @@ describe("Nuevo agente en pantalla (HU-AOS-77)", () => {
     );
   }
 
-  it("es el paso «Identidad» de los ocho, con el guion y lo sugerido ya marcado", async () => {
+  it("es el paso 1 de 4 de la creación rápida (HU-AOS-81), con el guion y lo sugerido ya marcado", async () => {
     const { container } = abrir();
-    expect(screen.getByText("Paso 1 de 8 · Identidad")).toBeTruthy();
+    expect(screen.getByText("Paso 1 de 4 · Tipo")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "¿Qué quieres que haga tu agente?" })).toBeTruthy();
     expect(screen.queryByText(/modelo/i)).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: /Ventas/ }));
@@ -122,7 +122,7 @@ describe("Nuevo agente en pantalla (HU-AOS-77)", () => {
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
-  it("crea el borrador con el guion, guarda la descripción y sigue en el editor desde «Cómo habla»", async () => {
+  it("crea el borrador con el guion, guarda la descripción y sigue en «Habilidades y formas de pago»", async () => {
     fetchMock.mockImplementation(async (url: string) =>
       url === "/api/agent-editor/from-script"
         ? new Response(JSON.stringify({ agentId: "a-1" }), { status: 201 })
@@ -133,7 +133,7 @@ describe("Nuevo agente en pantalla (HU-AOS-77)", () => {
     fireEvent.change(screen.getByLabelText(/Nombre del agente/), { target: { value: "Sofía" } });
     fireEvent.change(screen.getByLabelText(/Para qué sirve/), { target: { value: "Vende por WhatsApp." } });
     fireEvent.click(screen.getByRole("button", { name: /Crear borrador y seguir/ }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/personalizar?paso=voz&modo=crear"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/personalizar?paso=habilidades&modo=crear"));
     const [, crear] = fetchMock.mock.calls[0];
     expect(JSON.parse(crear.body)).toEqual({ template_key: "ventas", answers: { que_vendes: "productos", largo_respuesta: "normal" }, name: "Sofía" });
     const [url, patch] = fetchMock.mock.calls[1];

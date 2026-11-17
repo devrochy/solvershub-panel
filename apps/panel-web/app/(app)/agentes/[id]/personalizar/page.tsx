@@ -71,7 +71,7 @@ export default async function PersonalizarAgentePage({
           title={titulo}
           description={
             creando
-              ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final eliges dónde atiende y lo publicas."
+              ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final lo pruebas y sigues en Personalizar para publicarlo."
               : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
           }
           breadcrumbs={migas}
