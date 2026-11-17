@@ -1,7 +1,7 @@
 "use client";
 
 
-import { EditorDeFranjas } from "@/app/(app)/configuracion/_components/editor-de-franjas";
+import { EditorDeFranjas } from "@/components/domain/editor-de-franjas";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";

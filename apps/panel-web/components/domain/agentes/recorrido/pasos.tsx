@@ -176,12 +176,24 @@ export function PasoVoz({
 }
 
 // ------------------------------------------------------------------ 3. horario y reglas
-export function PasoReglas({ horario, motivos }: { horario: string | null; motivos: string[] | null }) {
+export function PasoReglas({
+  horario,
+  motivos,
+  horarioDelAgente,
+}: {
+  horario: string | null;
+  motivos: string[] | null;
+  /** HU-AOS-82: el bloque para que este agente tenga su propio horario. */
+  horarioDelAgente?: React.ReactNode;
+}) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
       <p className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
-        El horario y cuándo pasar a una persona son de todo el negocio: aplican a todos tus agentes.
+        {horarioDelAgente
+          ? "Cuándo pasar a una persona es de todo el negocio. El horario también, salvo que este agente tenga el suyo."
+          : "El horario y cuándo pasar a una persona son de todo el negocio: aplican a todos tus agentes."}
       </p>
+      {horarioDelAgente}
       <dl className="flex flex-col gap-3 rounded-md border border-border-soft bg-surface p-4 text-sm">
         <div className="flex flex-col gap-0.5">
           <dt className="text-text-soft">Atiende tu equipo</dt>

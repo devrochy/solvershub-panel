@@ -72,6 +72,8 @@ import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retira
 import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
+import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
+import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
 import { conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
@@ -140,6 +142,7 @@ export function EditorDeAgente({
   puedeEditarDatos = true,
   formasDePago = null,
   semillaDelFlujo = null,
+  horarioDelAgente = null,
   flujoInicial = { sections: [] },
   flujoSeeded = false,
   accionesDelFlujo = [],
@@ -174,6 +177,8 @@ export function EditorDeAgente({
   formasDePago?: FormasDePago | null;
   /** Semilla del flujo de sus habilidades, para «Restaurar guion sugerido» (HU-COM-25). */
   semillaDelFlujo?: FlujoDelAgente | null;
+  /** Horario propio del agente (HU-AOS-82); `null` si no se pudo leer. */
+  horarioDelAgente?: HorarioDelAgente | null;
   /** Flujo del agente (ADR-0195, HU-AOS-76); si la API no responde, se abre vacío. */
   flujoInicial?: FlujoDelAgente;
   flujoSeeded?: boolean;
@@ -569,7 +574,24 @@ export function EditorDeAgente({
         vozDelNegocio={negocio.resumenDeVoz}
       />
     ),
-    reglas: <PasoReglas horario={negocio.horario} motivos={negocio.motivos} />,
+    reglas: (
+      <PasoReglas
+        horario={negocio.horario}
+        motivos={negocio.motivos}
+        horarioDelAgente={
+          horarioDelAgente ? (
+            <HorarioDelAgenteEditable
+              agenteId={agente.id}
+              inicial={horarioDelAgente}
+              lockVersion={lock}
+              onLockVersion={setLock}
+              puedeEditar={puedeEditar}
+              zonaDelNegocio="America/Bogota"
+            />
+          ) : undefined
+        }
+      />
+    ),
     habilidades: (
       <div className="flex flex-col gap-10">
         <section aria-labelledby="habilidades-superpoderes" className="flex flex-col gap-4">
