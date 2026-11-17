@@ -37,9 +37,9 @@ const PEDIDO: Superpower = {
   skill: "pack_commerce",
   title: "Tomar un pedido",
   description: "",
-  phrases: ["quiero comprar"],
+  phrases: ["quiero comprar"], group: "ventas", group_label: "Ventas",
 };
-const PLAN: Superpower = { ...PEDIDO, id: "pack_commerce.contratar_plan", title: "Contratar un plan", phrases: ["a", "b", "c"].map((x) => `plan ${x}`) };
+const PLAN: Superpower = { ...PEDIDO, id: "pack_commerce.contratar_plan", title: "Contratar un plan", phrases: ["a", "b", "c"].map((x) => `plan ${x}`), group: "ventas", group_label: "Ventas" };
 
 const BASE = {
   contract: "agentspec/3",

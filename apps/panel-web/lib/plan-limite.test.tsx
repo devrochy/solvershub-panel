@@ -126,7 +126,7 @@ describe("409 de tope del plan", () => {
       skill: "pack_commerce",
       title: "Tomar un pedido",
       description: "",
-      phrases: ["a", "b", "c"].map((x) => `pedido ${x}`),
+      phrases: ["a", "b", "c"].map((x) => `pedido ${x}`), group: "ventas", group_label: "Ventas",
     };
     const agente = {
       id: "11111111-1111-4111-8111-111111111111",

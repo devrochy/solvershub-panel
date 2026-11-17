@@ -34,6 +34,7 @@ import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda }
 import type { Pendiente } from "@/lib/frases-pendientes";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 import { nombreDeAccion } from "@/lib/grupos-de-acciones";
+import { agruparPorDominio } from "@/lib/superpoderes-por-dominio";
 import { cn } from "@/lib/utils";
 
 type Cambiar = (cambio: Partial<EstadoDelEditor>) => void;
@@ -268,87 +269,102 @@ export function PasoSuperpoderes({
           ))}
         </ul>
       )}
-      <ul className="flex flex-col gap-3">
-        {catalogo.map((poder) => {
-          const enEditor = estado.superpoderes[poder.id] ?? { activo: false, frases: [] };
-          const error = erroresPorPoder[poder.id];
-          const total = frasesDistintas(poder, enEditor.frases);
-          const idError = `poder-${poder.id}-error`;
-          return (
-            <li key={poder.id} className="rounded-md border border-border-soft p-4">
-              {interruptor ? (
-                <div className="flex items-start gap-3">
-                  <Switch
-                    id={`poder-${poder.id}`}
-                    aria-label={poder.title}
-                    checked={enEditor.activo}
-                    disabled={soloLectura}
-                    onCheckedChange={(activo) => poner(poder.id, { activo })}
-                  />
-                  <p className="text-sm font-medium text-headline">{poder.title}</p>
-                </div>
-              ) : (
-                <Checkbox
-                  id={`poder-${poder.id}`}
-                  label={poder.title}
-                  checked={enEditor.activo}
-                  disabled={soloLectura}
-                  onCheckedChange={(activo) => poner(poder.id, { activo })}
-                />
-              )}
-              {poder.description && <p className={cn("mt-1 text-sm text-text-soft", interruptor ? "pl-12" : "pl-7")}>{poder.description}</p>}
-              <p className={cn("mt-1 text-xs text-text-soft", interruptor ? "pl-12" : "pl-7")}>
-                De la habilidad {nombreDeHabilidad(poder.skill)}
-              </p>
-              {enEditor.activo && soloLectura && (
-                <ul className={cn("mt-3 flex flex-wrap gap-2", interruptor ? "pl-12" : "pl-7")} aria-label={`Frases de ${poder.title}`}>
-                  {[...new Set([...poder.phrases, ...enEditor.frases])].map((frase) => (
-                    <li key={frase} className="rounded-sm border border-border-soft px-2 py-1 text-sm text-body">
-                      {frase}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {enEditor.activo && !soloLectura && (
-                <div className={cn("mt-3 flex flex-col gap-3", interruptor ? "pl-12" : "pl-7")}>
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-sm font-medium text-headline">Frases sugeridas de la habilidad</p>
-                    <ul className="flex flex-wrap gap-2">
-                      {poder.phrases.map((frase) => (
-                        <li key={frase} className="rounded-sm border border-border-soft px-2 py-1 text-sm text-body">
-                          {frase}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor={`poder-${poder.id}-frase`} className="text-sm font-medium text-headline">
-                      Tus frases
-                    </label>
-                    <ListaDeFrases
-                      id={`poder-${poder.id}-frase`}
-                      frases={enEditor.frases}
-                      onChange={(frases) => poner(poder.id, { frases })}
-                      placeholder="Cómo lo pide un cliente tuyo"
-                      agregarLabel="Agregar frase"
-                      max={MAX_FRASES_PROPIAS}
-                      onPendiente={registrarPendiente?.(`poder-${poder.id}-frase`)}
-                      invalido={Boolean(error)}
-                      describedBy={error ? idError : undefined}
-                    />
-                    <div className="flex items-center gap-2">
-                      <Badge variant={total >= minFrases ? "success" : "warning"}>
-                        {total} frases (mínimo {minFrases})
-                      </Badge>
-                    </div>
-                    <ErrorDeCampo id={idError} mensaje={error} />
-                  </div>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {/* SPEC-48, HU-AOS-83: una tarjeta por dominio («Ventas», «Formas de pago»…), no poderes sueltos. */}
+      <div className="flex flex-col gap-5">
+        {agruparPorDominio(catalogo).map((dominio) => (
+          <section
+            key={dominio.key}
+            aria-labelledby={`dominio-${dominio.key}`}
+            className="flex flex-col gap-3 rounded-md border border-border-soft p-4"
+            data-dominio={dominio.key}
+          >
+            <h3 id={`dominio-${dominio.key}`} className="text-sh-block font-display text-headline">
+              {dominio.label}
+            </h3>
+            <ul className="flex flex-col gap-3">
+              {dominio.items.map((poder) => {
+                const enEditor = estado.superpoderes[poder.id] ?? { activo: false, frases: [] };
+                const error = erroresPorPoder[poder.id];
+                const total = frasesDistintas(poder, enEditor.frases);
+                const idError = `poder-${poder.id}-error`;
+                return (
+                  <li key={poder.id} className="rounded-md border border-border-soft p-4">
+                    {interruptor ? (
+                      <div className="flex items-start gap-3">
+                        <Switch
+                          id={`poder-${poder.id}`}
+                          aria-label={poder.title}
+                          checked={enEditor.activo}
+                          disabled={soloLectura}
+                          onCheckedChange={(activo) => poner(poder.id, { activo })}
+                        />
+                        <p className="text-sm font-medium text-headline">{poder.title}</p>
+                      </div>
+                    ) : (
+                      <Checkbox
+                        id={`poder-${poder.id}`}
+                        label={poder.title}
+                        checked={enEditor.activo}
+                        disabled={soloLectura}
+                        onCheckedChange={(activo) => poner(poder.id, { activo })}
+                      />
+                    )}
+                    {poder.description && <p className={cn("mt-1 text-sm text-text-soft", interruptor ? "pl-12" : "pl-7")}>{poder.description}</p>}
+                    <p className={cn("mt-1 text-xs text-text-soft", interruptor ? "pl-12" : "pl-7")}>
+                      De la habilidad {nombreDeHabilidad(poder.skill)}
+                    </p>
+                    {enEditor.activo && soloLectura && (
+                      <ul className={cn("mt-3 flex flex-wrap gap-2", interruptor ? "pl-12" : "pl-7")} aria-label={`Frases de ${poder.title}`}>
+                        {[...new Set([...poder.phrases, ...enEditor.frases])].map((frase) => (
+                          <li key={frase} className="rounded-sm border border-border-soft px-2 py-1 text-sm text-body">
+                            {frase}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {enEditor.activo && !soloLectura && (
+                      <div className={cn("mt-3 flex flex-col gap-3", interruptor ? "pl-12" : "pl-7")}>
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-sm font-medium text-headline">Frases sugeridas de la habilidad</p>
+                          <ul className="flex flex-wrap gap-2">
+                            {poder.phrases.map((frase) => (
+                              <li key={frase} className="rounded-sm border border-border-soft px-2 py-1 text-sm text-body">
+                                {frase}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label htmlFor={`poder-${poder.id}-frase`} className="text-sm font-medium text-headline">
+                            Tus frases
+                          </label>
+                          <ListaDeFrases
+                            id={`poder-${poder.id}-frase`}
+                            frases={enEditor.frases}
+                            onChange={(frases) => poner(poder.id, { frases })}
+                            placeholder="Cómo lo pide un cliente tuyo"
+                            agregarLabel="Agregar frase"
+                            max={MAX_FRASES_PROPIAS}
+                            onPendiente={registrarPendiente?.(`poder-${poder.id}-frase`)}
+                            invalido={Boolean(error)}
+                            describedBy={error ? idError : undefined}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Badge variant={total >= minFrases ? "success" : "warning"}>
+                              {total} frases (mínimo {minFrases})
+                            </Badge>
+                          </div>
+                          <ErrorDeCampo id={idError} mensaje={error} />
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

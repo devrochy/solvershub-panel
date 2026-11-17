@@ -77,7 +77,7 @@ describe("requisitos del agente", () => {
         errores={{}}
         erroresPorPoder={{}}
         catalogo={[
-          { id: "pack_commerce.tomar_pedido", version: "1.0.0", skill: "pack_commerce", title: "Tomar un pedido", description: "", phrases: ["a", "b", "c"] },
+          { id: "pack_commerce.tomar_pedido", version: "1.0.0", skill: "pack_commerce", title: "Tomar un pedido", description: "", phrases: ["a", "b", "c"], group: "ventas", group_label: "Ventas" },
         ]}
         minFrases={3}
         requisitos={[CATALOGO]}

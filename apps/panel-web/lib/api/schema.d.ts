@@ -22225,6 +22225,10 @@ export interface components {
             description: string;
             /** Phrases */
             phrases: string[];
+            /** Group */
+            group: string;
+            /** Group Label */
+            group_label: string;
         };
         /** SuperpowersDiff */
         SuperpowersDiff: {
