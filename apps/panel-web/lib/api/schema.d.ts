@@ -9654,6 +9654,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Schedule
+         * @description Horario del borrador del agente y el del negocio que hereda si no tiene uno propio.
+         */
+        get: operations["get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get"];
+        /**
+         * Save Agent Schedule
+         * @description Guarda el horario propio (o `null` para heredar) con el `lock_version` del borrador. Vale al publicar.
+         */
+        put: operations["save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -24788,6 +24812,42 @@ export interface components {
             payment_status_reason: string | null;
             /** Items */
             items: components["schemas"]["ComprobanteOut"][];
+        };
+        /** AgentScheduleIn */
+        AgentScheduleIn: {
+            /**
+             * Schedule
+             * @description `null` vuelve a heredar el horario del negocio.
+             */
+            schedule: {
+                [key: string]: unknown;
+            } | null;
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentScheduleOut */
+        AgentScheduleOut: {
+            /**
+             * Schedule
+             * @description Horario propio del agente (`{tz, ranges}`); `null` = hereda el del negocio.
+             */
+            schedule: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Business Hours
+             * @description El horario del negocio (lo que hereda).
+             */
+            business_hours: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "agente" | "negocio";
+            /** Lock Version */
+            lock_version: number;
         };
     };
     responses: never;
@@ -45868,6 +45928,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ComprobantesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentScheduleOut"];
                 };
             };
             /** @description Validation Error */
