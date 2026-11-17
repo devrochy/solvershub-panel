@@ -31,4 +31,17 @@ describe("semáforo Listo para responder", () => {
     expect(semaforo({ requisitos: [SIN_CONFIG], formas: null, superpoderesActivos: 1, conDatos: false }).luz).toBe("rojo");
     expect(semaforo({ requisitos: [], formas: null, superpoderesActivos: 0, conDatos: false }).titulo).toBe("Todavía no puede responder");
   });
+
+  it("Pagos en línea sin configurar solo cuenta si la forma «Pago en línea» está encendida (SPEC-48)", () => {
+    const WOMPI: Requirement = { skill: "pack_payments", kind: "habilidad_sin_configurar", title: "Pagos en línea", explanation: "Configura tus llaves de Wompi.", section: "pagos", content: null };
+    const enLinea = (estado: "apagada" | "falta_configurar"): FormasDePago => ({
+      ...formas("activa"),
+      forms: [{ method: "pago_en_linea", label: "Pago en línea", enabled: estado !== "apagada", estado, falta: "", instructions: "", superpoder: null }],
+    });
+    expect(semaforo({ requisitos: [WOMPI], formas: formas("activa"), superpoderesActivos: 1, conDatos: true }).luz).toBe("verde");
+    expect(semaforo({ requisitos: [WOMPI], formas: enLinea("apagada"), superpoderesActivos: 1, conDatos: true }).luz).toBe("verde");
+    expect(semaforo({ requisitos: [WOMPI], formas: enLinea("falta_configurar"), superpoderesActivos: 1, conDatos: true }).luz).toBe("rojo");
+    // Sin formas leídas (agente sin Comercio) se mantiene el requisito.
+    expect(semaforo({ requisitos: [WOMPI], formas: null, superpoderesActivos: 1, conDatos: true }).luz).toBe("rojo");
+  });
 });

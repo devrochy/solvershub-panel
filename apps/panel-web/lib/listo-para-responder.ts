@@ -9,7 +9,17 @@ import type { FormasDePago } from "@/lib/formas-de-pago";
  * - Rojo: falta configurar una habilidad o no tiene ningún superpoder (no podría atender).
  * - Ámbar: le falta contenido (catálogo, servicios o cartera) o una forma de pago quedó a medias.
  * - Verde: puede responder.
+ *
+ * Pagos en línea (Wompi) solo cuenta si la forma «Pago en línea» está encendida (SPEC-48): un agente
+ * que cobra contra entrega o por transferencia atiende sin llaves de Wompi.
  */
+
+const PACK_DE_PAGOS = "pack_payments";
+
+function cobraEnLinea(formas: FormasDePago | null): boolean {
+  if (!formas) return true;
+  return formas.forms.some((f) => f.method === "pago_en_linea" && f.estado !== "apagada");
+}
 
 export type Luz = "verde" | "ambar" | "rojo";
 export type Pendiente = { luz: Exclude<Luz, "verde">; texto: string };
@@ -34,7 +44,9 @@ export function semaforo({
 }): Semaforo {
   const pendientes: Pendiente[] = [];
   if (superpoderesActivos === 0) pendientes.push({ luz: "rojo", texto: "Enciende al menos un superpoder en «Habilidades y formas de pago»." });
+  const enLinea = cobraEnLinea(formas);
   for (const r of requisitos) {
+    if (r.skill === PACK_DE_PAGOS && !enLinea) continue;
     pendientes.push(
       r.kind === "habilidad_sin_configurar"
         ? { luz: "rojo", texto: `${r.title}: ${r.explanation}` }
