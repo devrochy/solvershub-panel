@@ -241,7 +241,7 @@ describe("ficha del agente (HU-UX-09)", () => {
     });
   }
 
-  it("cabecera: cambiar de agente en el título, propósito, «Publicado · vX», Editar y lo que hizo en una frase", async () => {
+  it("cabecera: cambiar de agente en el título, propósito, «Publicado · vX», Personalizar y lo que hizo en una frase", async () => {
     base();
     respuestas["/admin/plan"] = { ...plan, credit: { ...plan.credit, by_agent: [{ agent_id: ID, name: "Ventas", used: 3200 }] } };
     const { container } = await abrir(ID, { tab: "conexiones" });
@@ -249,7 +249,7 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(screen.queryByRole("navigation", { name: "Tus agentes" })).toBeNull();
     expect(screen.getByText("Toma pedidos y resuelve dudas de productos · Atiende en WhatsApp principal")).toBeTruthy();
     expect(screen.getByText("Publicado · v3")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Editar" }).getAttribute("href")).toBe(`/agentes/${ID}/editar`);
+    expect(screen.getByRole("link", { name: "Personalizar" }).getAttribute("href")).toBe(`/agentes/${ID}/personalizar`);
     // 4 escaladas de 40 respuestas del agente: la otra instancia no cuenta. Sin dólares para el dueño.
     expect(fraseDeLaSemana()).toBe(
       "7 conversaciones esta semana · 90 % sin pasar a una persona · 3.200 créditos este mes",
@@ -269,7 +269,7 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(tabla.textContent).toContain("WhatsApp oficial (Meta)");
     expect(tabla.textContent).toContain("Atiende primero");
     expect(tabla.textContent).not.toContain("Google Calendar");
-    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe(`/agentes/${ID}/editar?paso=publicar`);
+    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe(`/agentes/${ID}/personalizar?paso=publicar`);
     expect(screen.queryByLabelText(/Período/i)).toBeNull();
     // Una sola llamada a la consola para todo el negocio, no una por conexión.
     expect(llamadas.filter((r) => r.startsWith("/admin/connections")).length).toBe(1);
@@ -297,7 +297,13 @@ describe("ficha del agente (HU-UX-09)", () => {
       "/admin/plugins": [{ id: "pack_commerce", display_name: "Comercio" }],
     });
     const { container } = await abrir(ID, { tab: "superpoderes" });
-    expect(screen.getByRole("switch", { name: "Tomar pedidos" }).getAttribute("aria-checked")).toBe("true");
+    const interruptor = screen.getByRole("switch", { name: "Tomar pedidos" });
+    expect(interruptor.getAttribute("aria-checked")).toBe("true");
+    // HU-AOS-80: los interruptores siguen editables y hay un enlace a Personalizar.
+    expect(interruptor.hasAttribute("disabled")).toBe(false);
+    expect(screen.getByRole("link", { name: "Personalizar lo que sabe" }).getAttribute("href")).toBe(
+      `/agentes/${ID}/personalizar?paso=habilidades`,
+    );
     expect(screen.getByText("De la habilidad Comercio")).toBeTruthy();
     // Los documentos ya no van sueltos: viven dentro de la tarjeta de Conocimiento.
     expect(screen.getByRole("heading", { name: "Habilidades" })).toBeTruthy();

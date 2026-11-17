@@ -203,7 +203,7 @@ export function HabilidadesDelAgente({
                   </Button>
                 ) : p.id === "responde" && p.sinPublicar && puedeEditar ? (
                   <Button asChild size="sm" variant="accent">
-                    <Link href={`/agentes/${agenteId}/editar?paso=publicar`}>Publicar cambios</Link>
+                    <Link href={`/agentes/${agenteId}/personalizar?paso=publicar`}>Publicar cambios</Link>
                   </Button>
                 ) : null
               }
@@ -230,7 +230,7 @@ export function HabilidadesDelAgente({
                   <p className="text-sm text-text-soft">No pudimos cargar los documentos. Recarga la página.</p>
                 )}
                 {puedeEditar && (
-                  <Link className="text-sm text-link underline underline-offset-2" href={`/agentes/${agenteId}/editar`}>
+                  <Link className="text-sm text-link underline underline-offset-2" href={`/agentes/${agenteId}/personalizar`}>
                     Ajustes avanzados de búsqueda
                   </Link>
                 )}

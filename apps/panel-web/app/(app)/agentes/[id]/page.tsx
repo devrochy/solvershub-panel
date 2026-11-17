@@ -10,6 +10,7 @@ import {
   TareasDelAgente,
 } from "@/app/(app)/agentes/_components/agent-tabs";
 import { ArchivarAgente } from "@/components/domain/agentes/archivar-agente";
+import { BannerPersonalizar, BotonPersonalizar } from "@/components/domain/agentes/personalizar-agente";
 import { PausarAgente } from "@/components/domain/agentes/pausar-agente";
 import { ConexionesDelAgente } from "@/components/domain/agentes/conexiones-del-agente";
 import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agentes/indicadores-del-agente";
@@ -20,7 +21,6 @@ import { SuperpoderesDelAgente } from "@/components/domain/agentes/superpoderes-
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { DetailPage } from "@/components/templates/detail-page";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -79,6 +79,7 @@ import {
   resueltasSinPersona,
 } from "@/lib/agentes-ficha";
 import { creditosPorAgenteId } from "@/lib/consumo";
+import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import { usaConocimiento } from "@/lib/conocimiento";
 
 export const metadata = { title: "Agente" };
@@ -165,7 +166,7 @@ export default async function AgentePage({
   const qs = queryDeApi(filtros);
   const puedeEditar = Boolean(agente.id) && meRes.ok && puedeEditarAgentes(meRes.data);
   const asignarHref =
-    puedeEditar && agente.kind === "specialist" ? `/agentes/${agente.id}/editar?paso=publicar` : null;
+    puedeEditar && agente.id && agente.kind === "specialist" ? rutaDePersonalizar(agente.id, { paso: "publicar" }) : null;
   const delMes = creditosPorAgenteId(planRes.ok ? planRes.data.credit : null);
   const creditosDelMes = delMes.size > 0 && agente.id ? (delMes.get(agente.id) ?? 0) : null;
 
@@ -270,49 +271,60 @@ export default async function AgentePage({
     const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
     const borrador = detalle?.draft?.content as Record<string, unknown> | undefined;
     contenido = (
-      <div className="grid items-start gap-6 xl:grid-cols-2">
-        {/* Los superpoderes traen su propio título («Qué sabe hacer Ventas»). */}
-        {superpoderes && (
-          <div className="flex flex-col gap-3">
-            {!superpoderes.ok ? (
-              <NoCargo que="los superpoderes" res={superpoderes} />
-            ) : !detalle ? (
-              <NoCargo que="los superpoderes" res={detalleRes ?? superpoderes} />
-            ) : (
-              <SuperpoderesDelAgente
-                key={detalle.draft.lock_version}
-                agente={detalle}
-                catalogo={superpoderes.data.items}
-                minFrases={modelos.ok ? modelos.data.min_phrases : MIN_FRASES_POR_DEFECTO}
-                nombreDeHabilidad={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
-                requisitos={requisitos.ok ? requisitos.data.items : []}
-                puedeEditar={puedeEditar}
-                cambiosSinPublicar={hayCambiosSinPublicar(detalle)}
-              />
-            )}
-          </div>
+      <div className="flex flex-col gap-6">
+        {/* HU-AOS-80: los interruptores siguen aquí (decisión del dueño, 2026-11-17); el resto se ajusta en Personalizar. */}
+        {puedeEditar && agente.kind === "specialist" && !estaArchivado(agente) && (
+          <p className="text-sm text-soft">
+            Aquí enciendes o apagas lo que {agente.name} sabe hacer.{" "}
+            <Link className="text-link underline underline-offset-2" href={rutaDePersonalizar(agente.id, { paso: "habilidades" })}>
+              Personalizar lo que sabe
+            </Link>
+          </p>
         )}
-        {habilidades && (
-          <Seccion titulo="Habilidades">
-            {!habilidades.ok ? (
-              <NoCargo que="las habilidades" res={habilidades} />
-            ) : (
-              <HabilidadesDelAgente
-                key={detalle?.draft.lock_version ?? 0}
-                agenteId={agente.id}
-                nombre={agente.name}
-                inicial={habilidades.data.items}
-                cuentas={cuentas?.ok ? cuentas.data : []}
-                puedeEditar={puedeEditar}
-                borrador={detalle && borrador ? { content: borrador, lockVersion: detalle.draft.lock_version } : null}
-                // La API no trae el contenido publicado: si no hay cambios sin publicar, lo publicado es el borrador.
-                usaPublicado={Boolean(detalle && borrador && !hayCambiosSinPublicar(detalle) && usaConocimiento(borrador))}
-                documentos={docs?.ok ? docs.data : null}
-                puedeEscribirDocumentos={meRes.ok && puedeEscribirConocimiento(meRes.data)}
-              />
-            )}
-          </Seccion>
-        )}
+        <div className="grid items-start gap-6 xl:grid-cols-2">
+          {/* Los superpoderes traen su propio título («Qué sabe hacer Ventas»). */}
+          {superpoderes && (
+            <div className="flex flex-col gap-3">
+              {!superpoderes.ok ? (
+                <NoCargo que="los superpoderes" res={superpoderes} />
+              ) : !detalle ? (
+                <NoCargo que="los superpoderes" res={detalleRes ?? superpoderes} />
+              ) : (
+                <SuperpoderesDelAgente
+                  key={detalle.draft.lock_version}
+                  agente={detalle}
+                  catalogo={superpoderes.data.items}
+                  minFrases={modelos.ok ? modelos.data.min_phrases : MIN_FRASES_POR_DEFECTO}
+                  nombreDeHabilidad={Object.fromEntries(superpoderes.data.items.map((p) => [p.skill, nombre(p.skill)]))}
+                  requisitos={requisitos.ok ? requisitos.data.items : []}
+                  puedeEditar={puedeEditar}
+                  cambiosSinPublicar={hayCambiosSinPublicar(detalle)}
+                />
+              )}
+            </div>
+          )}
+          {habilidades && (
+            <Seccion titulo="Habilidades">
+              {!habilidades.ok ? (
+                <NoCargo que="las habilidades" res={habilidades} />
+              ) : (
+                <HabilidadesDelAgente
+                  key={detalle?.draft.lock_version ?? 0}
+                  agenteId={agente.id}
+                  nombre={agente.name}
+                  inicial={habilidades.data.items}
+                  cuentas={cuentas?.ok ? cuentas.data : []}
+                  puedeEditar={puedeEditar}
+                  borrador={detalle && borrador ? { content: borrador, lockVersion: detalle.draft.lock_version } : null}
+                  // La API no trae el contenido publicado: si no hay cambios sin publicar, lo publicado es el borrador.
+                  usaPublicado={Boolean(detalle && borrador && !hayCambiosSinPublicar(detalle) && usaConocimiento(borrador))}
+                  documentos={docs?.ok ? docs.data : null}
+                  puedeEscribirDocumentos={meRes.ok && puedeEscribirConocimiento(meRes.data)}
+                />
+              )}
+            </Seccion>
+          )}
+        </div>
       </div>
     );
   } else {
@@ -377,10 +389,8 @@ export default async function AgentePage({
               />
             )}
             {/* Archivado no se edita (la API responde 409): primero se reactiva. */}
-            {puedeEditar && agente.kind === "specialist" && !archivado && (
-              <Button asChild variant="accent">
-                <Link href={`/agentes/${agente.id}/editar`}>Editar</Link>
-              </Button>
+            {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && (
+              <BotonPersonalizar agenteId={agente.id} usuarioId={meRes.ok ? meRes.data.admin_id : ""} />
             )}
             {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && (
               <PausarAgente agenteId={agente.id} nombre={agente.name} pausado={pausado} />
@@ -408,6 +418,10 @@ export default async function AgentePage({
         ),
       }}
     >
+      {/* HU-AOS-80: aviso de primera visita; se descarta por usuario y agente. */}
+      {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && meRes.ok && (
+        <BannerPersonalizar agenteId={agente.id} usuarioId={meRes.data.admin_id} nombre={agente.name} />
+      )}
       {conFiltros && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           {actual === "actividad" && vistas.length > 1 ? (

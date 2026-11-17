@@ -85,7 +85,7 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
           body: JSON.stringify({ name: nombre, description: descripcion.trim() }),
         }).catch(() => null);
       }
-      router.push(`/agentes/${json.agentId}/editar?paso=voz&modo=crear`);
+      router.push(`/agentes/${json.agentId}/personalizar?paso=voz&modo=crear`);
       return { ok: true, success: "Borrador creado. Sigue con cómo habla tu agente." };
     });
   }
@@ -175,7 +175,7 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
         {existente && (
           <p role="alert" className="text-sm text-body">
             Ya tienes un agente de este tipo.{" "}
-            <Link className="text-link underline" href={`/agentes/${existente}/editar`}>
+            <Link className="text-link underline" href={`/agentes/${existente}/personalizar`}>
               Editarlo
             </Link>
           </p>

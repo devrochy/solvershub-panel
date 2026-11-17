@@ -222,7 +222,7 @@ describe("aviso del dueño", () => {
   it("la lista de agentes cuenta los afectados y enlaza al editor", () => {
     render(<AvisoDeReferenciasEnLista avisos={{ affected_agents: 1, agents: [avisos({ blocks_publish: true })] }} />);
     expect(screen.getByText("1 agente nombra algo que ya no existe.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Revisar en el editor" }).getAttribute("href")).toBe(`/agentes/${AGENTE_ID}/editar`);
+    expect(screen.getByRole("link", { name: "Revisar en el editor" }).getAttribute("href")).toBe(`/agentes/${AGENTE_ID}/personalizar`);
     cleanup();
     expect(render(<AvisoDeReferenciasEnLista avisos={{ affected_agents: 0, agents: [] }} />).container.innerHTML).toBe("");
   });

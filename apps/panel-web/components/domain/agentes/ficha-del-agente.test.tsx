@@ -40,7 +40,7 @@ describe("pestaña Dónde atiende del agente (HU-UX-09, AGT-08)", () => {
         filas={[fila(), fila({ id: "c-2", label: "Chat web", tipo: "Chat web", principal: false, prioridad: 200, estado: { label: "Pausada", tono: "neutral" }, version: null })]}
         nombre="Ventas"
         publicado
-        asignarHref="/agentes/a-1/editar?paso=publicar"
+        asignarHref="/agentes/a-1/personalizar?paso=publicar"
       />,
     );
     const tabla = screen.getByRole("table");
@@ -53,12 +53,12 @@ describe("pestaña Dónde atiende del agente (HU-UX-09, AGT-08)", () => {
     expect(filas[0].textContent).toContain("Atiende primero");
     expect(filas[1].textContent).toContain("Cuando la conversación es de su tema");
     expect(tabla.textContent).not.toMatch(/v3|200/);
-    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a-1/editar?paso=publicar");
+    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a-1/personalizar?paso=publicar");
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
   it("sin conexiones avisa que un agente publicado necesita al menos una (D-35)", async () => {
-    const { container } = render(<ConexionesDelAgente filas={[]} nombre="Ventas" publicado asignarHref="/agentes/a-1/editar?paso=publicar" />);
+    const { container } = render(<ConexionesDelAgente filas={[]} nombre="Ventas" publicado asignarHref="/agentes/a-1/personalizar?paso=publicar" />);
     const aviso = screen.getByRole("status");
     expect(aviso.textContent).toContain("no atiende a nadie");
     expect(aviso.textContent).toContain("necesita al menos una conexión");
@@ -168,8 +168,8 @@ describe("«Probar» del agente (HU-UX-09, AGT-10)", () => {
   });
 
   it("sin conexiones no hay chat: pide asignarlo a una", () => {
-    render(<ProbarAgente nombre="Ventas" conexiones={[]} inicial={null} asignarHref="/agentes/a/editar?paso=publicar" abierto />);
+    render(<ProbarAgente nombre="Ventas" conexiones={[]} inicial={null} asignarHref="/agentes/a/personalizar?paso=publicar" abierto />);
     expect(screen.queryByTestId("chat")).toBeNull();
-    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a/editar?paso=publicar");
+    expect(screen.getByRole("link", { name: "Asignar a una conexión" }).getAttribute("href")).toBe("/agentes/a/personalizar?paso=publicar");
   });
 });
