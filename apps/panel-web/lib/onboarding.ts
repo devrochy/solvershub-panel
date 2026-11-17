@@ -9,29 +9,28 @@ import type { Franja } from "@/lib/horario-atencion";
 export type Recorrido = PrimerosPasos["recorrido"];
 
 /**
- * Los 9 pasos de la bienvenida (SPEC-47, D-75): «Tu negocio» más los 8 del recorrido común de Nuevo agente
- * y Editar. Los cuatro primeros escriben en la identidad del negocio y viven en `/bienvenida`; al salir de
- * «Horario y reglas» se crea el agente y los cinco siguientes son el editor a pantalla completa
- * (`/bienvenida/agente/[id]`).
+ * La bienvenida es la creación rápida de 4 pasos (SPEC-47, HU-AOS-81, D-SPEC-47-4): 1 Tu negocio y tu
+ * agente (vive en `/bienvenida` y escribe en la identidad del negocio; al salir se crea el agente),
+ * 2 Habilidades y formas de pago, 3 Datos para probar y 4 Revisar, probar y publicar (el editor a pantalla
+ * completa, `/bienvenida/agente/[id]`). Cómo habla y el horario quedan con lo sugerido y se ajustan en
+ * Personalizar. Antes fueron 9 (HU-UX-23): el servidor traduce un recorrido guardado con 9 o con 6.
  */
-export const TOTAL_PASOS = 9;
+export const TOTAL_PASOS = 4;
 
 export const PASOS = [
-  { id: "negocio", titulo: "Cuéntanos de tu negocio", corto: "Tu negocio" },
-  { id: "identidad", titulo: "¿Cómo se llama tu agente?", corto: "Identidad" },
-  { id: "voz", titulo: "¿Cómo quieres que hable?", corto: "Cómo habla" },
-  { id: "reglas", titulo: "Horario y reglas", corto: "Horario" },
+  { id: "negocio", titulo: "Cuéntanos de tu negocio y tu agente", corto: "Tu negocio" },
   { id: "habilidades", titulo: "¿Qué sabe hacer tu agente?", corto: "Habilidades" },
-  { id: "flujo", titulo: "¿Con qué pasos atiende?", corto: "Flujo" },
-  { id: "conocimiento", titulo: "¿Qué recuerda y qué conoce?", corto: "Conocimiento" },
-  { id: "probar", titulo: "Pruébalo", corto: "Pruébalo" },
-  { id: "publicar", titulo: "Déjalo listo", corto: "Publicar" },
+  { id: "conocimiento", titulo: "Datos para probar", corto: "Datos" },
+  { id: "probar", titulo: "Revisar, probar y publicar", corto: "Revisar" },
 ] as const;
 
-/** Los pasos que viven en `/bienvenida` (escriben en el negocio); del 5 en adelante va el editor del agente. */
-export const PASOS_DEL_NEGOCIO = 4;
+/** Los pasos que viven en `/bienvenida` (escriben en el negocio); del 2 en adelante va el editor del agente. */
+export const PASOS_DEL_NEGOCIO = 1;
 
-export type IdDePaso = (typeof PASOS)[number]["id"];
+/** Lo que pide el paso 1: los datos del negocio y la identidad del agente (antes, dos pasos). */
+export const PARTES_DEL_PASO_1 = ["negocio", "identidad"] as const;
+
+export type IdDePaso = (typeof PASOS)[number]["id"] | "identidad" | "voz" | "reglas";
 
 // --------------------------------------------------------------------------- tipo de negocio
 

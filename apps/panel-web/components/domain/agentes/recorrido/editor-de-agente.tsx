@@ -83,7 +83,8 @@ import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, m
 import { conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
-const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "flujo", "conocimiento", "probar", "publicar"];
+// HU-AOS-81: la bienvenida también es la creación rápida (sus pasos 2 a 4 de 4).
+const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "conocimiento", "probar"];
 /**
  * Creación rápida (SPEC-47, HU-AOS-81, D-SPEC-47-4): Nuevo agente va en 4 pasos. El 1 (tipo y datos
  * básicos) es `/agentes/nuevo`; aquí van los otros tres, con su nombre de la creación rápida. Lo demás
@@ -213,6 +214,8 @@ export function EditorDeAgente({
   const enBienvenida = modo === "bienvenida" && bienvenida !== undefined;
   // HU-AOS-81: «crear» es la creación rápida de 4 pasos; la edición sigue libre con los 8.
   const creacionRapida = modo === "crear";
+  // Los pasos de la creación rápida (nombres y contenido corto) valen también en la bienvenida.
+  const comoCreacionRapida = creacionRapida || enBienvenida;
   const [preparando, setPreparando] = useState(false);
   const [errorDeBienvenida, setErrorDeBienvenida] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -227,9 +230,13 @@ export function EditorDeAgente({
   const [estado, setEstado] = useState<EstadoDelEditor>(guardado);
   const router = useRouter();
   // La creación rápida arranca en su primer paso aunque el enlace traiga otro.
-  const [paso, setPaso] = useState<PasoId>(
-    modo === "crear" && !PASOS_DE_LA_CREACION.includes(pasoInicial) ? PASOS_DE_LA_CREACION[0] : pasoInicial,
-  );
+  const [paso, setPaso] = useState<PasoId>(() => {
+    // La creación rápida y la bienvenida arrancan en uno de sus pasos aunque el enlace traiga otro
+    // (un enlace viejo a «Publicar» o «Flujo» cae en el más cercano).
+    const subconjunto = modo === "crear" ? PASOS_DE_LA_CREACION : modo === "bienvenida" ? PASOS_DE_LA_BIENVENIDA : null;
+    if (!subconjunto || subconjunto.includes(pasoInicial)) return pasoInicial;
+    return pasoInicial === "publicar" ? "probar" : subconjunto[0];
+  });
   const [frasePrueba, setFrasePrueba] = useState<string | null>(null);
   // Datos cargados en «Conocimiento y datos» (SPEC-45): null = nada en esta visita.
   const [cargado, setCargado] = useState<Cargado | null>(null);
@@ -465,6 +472,14 @@ export function EditorDeAgente({
       const j = PASOS_DE_LA_CREACION.indexOf(paso);
       const siguiente = PASOS_DE_LA_CREACION[j + delta];
       if (siguiente) irA(siguiente);
+      return;
+    }
+    if (enBienvenida) {
+      // Antes de «Habilidades» va el paso del negocio, que vive en `/bienvenida`.
+      const j = PASOS_DE_LA_BIENVENIDA.indexOf(paso);
+      const siguiente = PASOS_DE_LA_BIENVENIDA[j + delta];
+      if (siguiente) irA(siguiente);
+      else if (delta < 0) bienvenida.volverA(bienvenida.pasosDelNegocio.length);
       return;
     }
     const i = PASOS.findIndex((p) => p.id === paso);
@@ -730,7 +745,7 @@ export function EditorDeAgente({
     ),
     conocimiento: (
       <div className="flex flex-col gap-10">
-        {!creacionRapida && <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />}
+        {!comoCreacionRapida && <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />}
         <section aria-labelledby="conocimiento-datos" className="flex flex-col gap-4">
           <h3 id="conocimiento-datos" className="font-display text-sh-block text-headline">
             Carga sus datos
@@ -757,7 +772,26 @@ export function EditorDeAgente({
       </div>
     ),
     probar: enBienvenida ? (
-      bienvenida.prueba
+      <div className="flex flex-col gap-6">
+        <SemaforoListo
+          semaforo={semaforo({
+            requisitos,
+            formas,
+            superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
+            conDatos: cargados.length > 0,
+          })}
+        />
+        {bienvenida.prueba}
+        {!bienvenida.probado && (
+          <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+            Para terminar, escríbele al menos un mensaje a tu agente aquí.
+          </p>
+        )}
+        <p className="text-sm text-text-soft">
+          Tu agente queda listo en tu chat de pruebas, cerrado al público. Cómo habla, su horario y su flujo los ajustas
+          después en Personalizar; cuando conectes tu WhatsApp, lo activas desde Conexiones.
+        </p>
+      </div>
     ) : creando ? (
       <div className="flex flex-col gap-6">
         {creacionRapida && (
@@ -867,8 +901,8 @@ export function EditorDeAgente({
   const pasosDelEditor: PasoDeLaBarra[] = visibles.map(
     (p) => ({
       id: p.id,
-      titulo: (creacionRapida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
-      corto: (creacionRapida && EN_LA_CREACION[p.id]?.corto) || p.corto,
+      titulo: (comoCreacionRapida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
+      corto: (comoCreacionRapida && EN_LA_CREACION[p.id]?.corto) || p.corto,
       marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
     }),
   );
@@ -878,7 +912,11 @@ export function EditorDeAgente({
       ? [PASO_UNO_DE_LA_CREACION, ...pasosDelEditor]
       : pasosDelEditor;
   const indice = PASOS.findIndex((p) => p.id === paso);
-  const ultimo = creacionRapida ? paso === PASOS_DE_LA_CREACION[PASOS_DE_LA_CREACION.length - 1] : indice === PASOS.length - 1;
+  const ultimo = creacionRapida
+    ? paso === PASOS_DE_LA_CREACION[PASOS_DE_LA_CREACION.length - 1]
+    : enBienvenida
+      ? paso === PASOS_DE_LA_BIENVENIDA[PASOS_DE_LA_BIENVENIDA.length - 1]
+      : indice === PASOS.length - 1;
   const primeroDeLaCreacion = creacionRapida && paso === PASOS_DE_LA_CREACION[0];
   const hayCambios = cambios || datosSinGuardar;
 

@@ -10,6 +10,7 @@ import { crearYDejarListo } from "@/lib/onboarding-agente";
 import {
   ESTADO_INICIAL,
   PASOS,
+  PARTES_DEL_PASO_1,
   PASOS_DEL_NEGOCIO,
   cambiosDelPaso,
   errorDelPaso,
@@ -23,8 +24,6 @@ import { conversacionDeVoz } from "@/lib/vista-previa";
 import { CabeceraDeBienvenida } from "./cabecera";
 import { PasoIdentidad } from "./paso-identidad";
 import { PasoNegocio } from "./paso-negocio";
-import { PasoReglas } from "./paso-reglas";
-import { PasoVoz } from "./paso-voz";
 
 type Resultado<T> = { ok: true; data: T } | { ok: false; error: string; status: number };
 
@@ -91,9 +90,9 @@ export function RecorridoDeBienvenida(props: Props) {
 }
 
 /**
- * Bienvenida de primer uso (HU-UX-21, HU-UX-23): los cuatro primeros de sus 9 pasos, que escriben en la
- * identidad del negocio. Cada «Siguiente» guarda; al salir de «Horario y reglas» se crea el agente y se deja
- * listo para probar, y la bienvenida sigue con el editor del agente (`/bienvenida/agente/[id]`).
+ * Bienvenida de primer uso (HU-UX-21, HU-AOS-81): el paso 1 de 4, que escribe en la identidad del negocio
+ * (sus datos y la identidad del agente). Al seguir se crea el agente y se deja listo para probar, y la
+ * bienvenida sigue con el editor del agente (`/bienvenida/agente/[id]`).
  */
 function Asistente({
   negocioId,
@@ -157,14 +156,15 @@ function Asistente({
   }
 
   async function siguiente() {
-    const problema = errorDelPaso(pasoActual.id, estado);
+    // HU-AOS-81: el paso 1 junta los datos del negocio y la identidad del agente.
+    const problema = PARTES_DEL_PASO_1.map((id) => errorDelPaso(id, estado)).find(Boolean);
     if (problema) {
       setError(problema);
       return;
     }
     setOcupado(true);
     setError(null);
-    const cambios = cambiosDelPaso(pasoActual.id, estado);
+    const cambios = Object.assign({}, ...PARTES_DEL_PASO_1.map((id) => cambiosDelPaso(id, estado)));
     if (Object.keys(cambios).length > 0) {
       const guardado = await post("/api/onboarding/identidad", { cambios });
       if (!guardado.ok) {
@@ -173,12 +173,7 @@ function Asistente({
         return;
       }
     }
-    if (paso < PASOS_DEL_NEGOCIO) {
-      await irAlPaso(paso + 1);
-      setOcupado(false);
-      return;
-    }
-    // Al salir de «Horario y reglas» nace el agente y queda listo para probar; sigue «Habilidades».
+    // Al salir del paso 1 nace el agente y queda listo para probar; sigue «Habilidades y formas de pago».
     const creado = await crearYDejarListo(estado, recorrido.agente_id ?? null);
     if (!creado.ok) {
       setOcupado(false);
@@ -229,9 +224,7 @@ function Asistente({
               habilitara={habilitara}
             />
           )}
-          {pasoActual.id === "identidad" && <PasoIdentidad estado={estado} onCambiar={cambiar} />}
-          {pasoActual.id === "voz" && <PasoVoz estado={estado} onCambiar={cambiar} />}
-          {pasoActual.id === "reglas" && <PasoReglas estado={estado} onCambiar={cambiar} />}
+          {pasoActual.id === "negocio" && <PasoIdentidad estado={estado} onCambiar={cambiar} />}
           <FormFeedback error={error ?? undefined} className="max-w-xl" />
         </RecorridoDelAgente>
       </main>

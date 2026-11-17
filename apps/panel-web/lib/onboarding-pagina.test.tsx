@@ -19,7 +19,7 @@ import { RecorridoDeBienvenida } from "@/app/(onboarding)/bienvenida/_components
 
 type Recorrido = PrimerosPasos["recorrido"];
 
-const PENDIENTE: Recorrido = { estado: "pendiente", paso: 1, total_pasos: 9, aplica: true, abrir: true, avisar: false };
+const PENDIENTE: Recorrido = { estado: "pendiente", paso: 1, total_pasos: 4, aplica: true, abrir: true, avisar: false };
 const OMITIDO: Recorrido = { ...PENDIENTE, estado: "omitido", paso: 3, abrir: false, avisar: true };
 
 const llamadas: { url: string; cuerpo: unknown }[] = [];
@@ -86,8 +86,8 @@ afterEach(() => {
 describe("asistente de primer uso", () => {
   it("arranca en el paso 1 sin violaciones graves de accesibilidad y marca el recorrido como empezado", async () => {
     const { container } = montar();
-    expect(await screen.findByRole("heading", { level: 1, name: "Cuéntanos de tu negocio" })).toBeTruthy();
-    expect(screen.getByText("Paso 1 de 9 · Tu negocio")).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Cuéntanos de tu negocio y tu agente" })).toBeTruthy();
+    expect(screen.getByText("Paso 1 de 4 · Tu negocio")).toBeTruthy();
     // El logo de siempre (HU-UX-23): las dos variantes por tema, sin recolorear.
     expect(container.querySelectorAll('img[src^="/marca/horizontal-simple-tema-"]').length).toBe(2);
     expect(screen.getByRole("button", { name: "Lo hago después" })).toBeTruthy();
@@ -97,26 +97,16 @@ describe("asistente de primer uso", () => {
 
   it("no deja avanzar sin tipo ni frase del negocio y dice qué falta", async () => {
     montar();
-    fireEvent.click(await screen.findByRole("button", { name: /Siguiente/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Crear mi agente y seguir/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Elige a qué se dedica/);
     expect(llamadas.some((l) => l.url === "/api/onboarding/identidad")).toBe(false);
   });
 
-  it("guarda «Tu negocio» y después el nombre del agente en «Identidad»", async () => {
+  it("el paso 1 (HU-AOS-81) pide el negocio y el nombre del agente en la misma pantalla", async () => {
     montar();
-    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
-    fireEvent.change(screen.getByLabelText(/Cuéntanos en una frase/), { target: { value: "Vendemos ropa deportiva con envíos" } });
-    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-
-    expect(await screen.findByRole("heading", { level: 1, name: "¿Cómo se llama tu agente?" })).toBeTruthy();
-    expect(llamadas.find((l) => l.url === "/api/onboarding/identidad")?.cuerpo).toEqual({
-      cambios: { business_description: "Sport Plus. Vendemos ropa deportiva con envíos" },
-    });
-    expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 2 });
-
-    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-    expect(await screen.findByRole("heading", { level: 1, name: "¿Cómo quieres que hable?" })).toBeTruthy();
-    expect(llamadas.filter((l) => l.url === "/api/onboarding/identidad").pop()?.cuerpo).toEqual({ cambios: { assistant_name: "Sofía" } });
+    expect(await screen.findByLabelText(/Nombre de tu agente/)).toBeTruthy();
+    expect(screen.getByLabelText(/Cuéntanos en una frase/)).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "¿Cómo quieres que hable?" })).toBeNull();
   });
 
   it("elegir un tipo no pide activar nada antes: avisa qué habilidad se activará al terminar", async () => {
@@ -162,40 +152,43 @@ describe("asistente de primer uso", () => {
     expect(llamadas.some((l) => l.url === "/api/onboarding/omitir")).toBe(true);
   });
 
-  it("al salir de «Horario y reglas» crea el agente, lo deja listo y sigue en su editor (SPEC-47)", async () => {
+  it("al salir del paso 1 guarda el negocio y el agente, lo crea, lo deja listo y sigue en su editor (HU-AOS-81)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((url: string, init?: RequestInit) => {
         llamadas.push({ url, cuerpo: init?.body ? JSON.parse(String(init.body)) : null });
         if (url === "/api/agent-editor/from-script") return respuesta({ agentId: "a-1" });
         if (url === "/api/onboarding/dejar-listo") {
-          return respuesta({ conexion_id: "c-1", listo: true, pasos: [], recorrido: { ...PENDIENTE, estado: "en_curso", paso: 5, agente_id: "a-1" } });
+          return respuesta({ conexion_id: "c-1", listo: true, pasos: [], recorrido: { ...PENDIENTE, estado: "en_curso", paso: 2, agente_id: "a-1" } });
         }
         if (url === "/api/onboarding/avanzar") return respuesta({ ...PENDIENTE, estado: "en_curso" });
         return respuesta({ ok: true });
       }),
     );
-    window.localStorage.setItem("sh-onboarding:n-1", JSON.stringify({ tipo: "ventas", negocio: "Sport Plus" }));
-    montar({ ...PENDIENTE, estado: "en_curso", paso: 4 }, { identidad: { ...ajustes.identity, assistant_name: "Sofía", business_description: "Vendemos ropa deportiva", business_ranges: [], escalation_keywords: [], persona_forbidden: [] } });
-    expect(await screen.findByText("Paso 4 de 9 · Horario")).toBeTruthy();
+    montar({ ...PENDIENTE, estado: "en_curso" });
+    fireEvent.click(await screen.findByRole("radio", { name: /^Vendo productos/ }));
+    fireEvent.change(screen.getByLabelText(/Cuéntanos en una frase/), { target: { value: "Vendemos ropa deportiva con envíos" } });
+    fireEvent.change(screen.getByLabelText(/Nombre de tu agente/), { target: { value: "Sofía" } });
     fireEvent.click(screen.getByRole("button", { name: /Crear mi agente y seguir/ }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/bienvenida/agente/a-1"));
+    expect(llamadas.find((l) => l.url === "/api/onboarding/identidad")?.cuerpo).toEqual({
+      cambios: { business_description: "Sport Plus. Vendemos ropa deportiva con envíos", assistant_name: "Sofía" },
+    });
     expect(llamadas.find((l) => l.url === "/api/agent-editor/from-script")?.cuerpo).toMatchObject({ template_key: "ventas", name: "Sofía" });
     expect(llamadas.find((l) => l.url === "/api/onboarding/dejar-listo")?.cuerpo).toEqual({ agent_id: "a-1" });
-    expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 5 });
+    expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 2 });
   });
 
-  it("retoma en el paso donde se quedó", async () => {
+  it("un recorrido que se quedó más adelante sin agente vuelve al paso 1", async () => {
     montar(OMITIDO);
-    expect(await screen.findByRole("heading", { level: 1, name: "¿Cómo quieres que hable?" })).toBeTruthy();
-    expect(screen.getByText("Paso 3 de 9 · Cómo habla")).toBeTruthy();
+    expect(await screen.findByText("Paso 1 de 4 · Tu negocio")).toBeTruthy();
   });
 });
 
 describe("aviso del primer uso", () => {
   it("se ve mientras el recorrido está saltado, con cuántos pasos faltan y cómo retomarlo", () => {
     render(<AvisoDeOnboarding recorrido={OMITIDO} />);
-    expect(screen.getByRole("status").textContent).toContain("Tu agente aún no está listo para probar. Faltan 7 pasos.");
+    expect(screen.getByRole("status").textContent).toContain("Tu agente aún no está listo para probar. Faltan 2 pasos.");
     expect(screen.getByRole("link", { name: "Continuar" }).getAttribute("href")).toBe("/bienvenida");
     expect(screen.queryByRole("button", { name: /Cerrar/ })).toBeNull();
   });
