@@ -11,7 +11,8 @@ import { accionesDesdeContenido, aplicarAcciones, type AccionEnEditor } from "@/
 import type { AgentAction, Superpower } from "@/lib/api/types";
 import { aplicarConocimiento, conocimientoDesdeContenido, type ConocimientoEnEditor } from "@/lib/conocimiento";
 import type { IdentitySettings } from "@/lib/api/types";
-import { EMOJIS, LARGOS, MOTIVOS_DE_ESCALAR, TONOS, estadoDesdeIdentidad, resumenDeHorario } from "@/lib/onboarding";
+import { enPalabras } from "@/lib/horario-del-agente";
+import { EMOJIS, LARGOS, MOTIVOS_DE_ESCALAR, TONOS, estadoDesdeIdentidad } from "@/lib/onboarding";
 import type { VozDeVistaPrevia } from "@/lib/vista-previa";
 
 /**
@@ -418,7 +419,8 @@ export function negocioDesdeIdentidad(nombre: string, identidad: IdentitySetting
     nombre,
     voz,
     resumenDeVoz: `${tono} · calidez ${e.calidez} · emojis: ${emojis} · respuestas ${largo}.`,
-    horario: e.horario ? resumenDeHorario(e.horario) : "",
+    // Lo guardado, no el horario sugerido del asistente: sin franjas, el negocio no tiene horario.
+    horario: enPalabras({ ranges: identidad.business_ranges }),
     motivos: MOTIVOS_DE_ESCALAR.filter((m) => e.motivos.includes(m.id)).map((m) => m.titulo),
   };
 }

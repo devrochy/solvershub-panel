@@ -8,6 +8,7 @@ import type { AgentTemplate, Question } from "@/lib/api/types";
 import { violacionesGraves } from "@/lib/testing/axe";
 
 import { negocioDesdeIdentidad } from "@/lib/agentes-editor";
+import { ajustes } from "@/lib/testing/fixtures";
 
 import { cuerpoDeCreacion, elegirTipo, respuestasPorDefecto, textoDeAvance } from "./agente-asistente";
 
@@ -88,6 +89,20 @@ describe("lógica de Nuevo agente", () => {
 
   it("«Paso X de N»", () => {
     expect(textoDeAvance(0, 8)).toBe("Paso 1 de 8");
+  });
+});
+
+describe("horario del negocio en el editor", () => {
+  it("sin franjas guardadas no muestra el horario sugerido del asistente como si fuera del negocio", () => {
+    expect(negocioDesdeIdentidad("N", { ...ajustes.identity, business_ranges: [] }).horario).toBe("Sin horario definido");
+  });
+
+  it("con franjas guardadas las resume", () => {
+    const negocio = negocioDesdeIdentidad("N", {
+      ...ajustes.identity,
+      business_ranges: [{ day: 0, from: "09:00", to: "17:00" }],
+    });
+    expect(negocio.horario).toMatch(/9:00/);
   });
 });
 
