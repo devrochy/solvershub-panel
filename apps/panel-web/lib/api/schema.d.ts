@@ -9587,6 +9587,31 @@ export interface paths {
         patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
         trace?: never;
     };
+    "/api/v1/pack/commerce/agents/{agent_id}/payment-forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Formas De Pago Del Agente
+         * @description Formas de pago del agente con su estado, sus cuentas de transferencia y el proveedor en línea.
+         */
+        get: operations["formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get"];
+        /**
+         * Guardar Formas De Pago
+         * @description Guarda las formas y las cuentas del agente. Transferencia encendida sin cuenta se guarda y queda
+         *     «Falta configurar» (el agente no la ofrece); tiene que quedar al menos una forma encendida.
+         */
+        put: operations["guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -24530,6 +24555,119 @@ export interface components {
              * Format: date-time
              */
             fecha_hora: string;
+        };
+        /** CuentaDeTransferencia */
+        CuentaDeTransferencia: {
+            /**
+             * Entity
+             * @description Entidad (Bancolombia, Nequi…).
+             */
+            entity: string;
+            /**
+             * Accounttype
+             * @default
+             */
+            accountType: string;
+            /** Accountnumber */
+            accountNumber: string;
+            /**
+             * Holdername
+             * @default
+             */
+            holderName: string;
+            /**
+             * Holderdocument
+             * @default
+             */
+            holderDocument: string;
+        };
+        /** FormaDePagoOut */
+        FormaDePagoOut: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
+            /** Label */
+            label: string;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Estado
+             * @description `falta_configurar`: encendida pero sin lo que necesita (cuenta o proveedor); el agente no la ofrece.
+             * @enum {string}
+             */
+            estado: "activa" | "falta_configurar" | "apagada";
+            /**
+             * Falta
+             * @description Qué falta, en palabras del dueño; vacío si nada.
+             */
+            falta: string;
+            /** Instructions */
+            instructions: string;
+            /**
+             * Superpoder
+             * @description Superpoder del dominio «Formas de pago» que la acompaña; contra entrega no tiene.
+             */
+            superpoder: string | null;
+        };
+        /** FormasDePagoOut */
+        FormasDePagoOut: {
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /**
+             * Configurada
+             * @description `false`: el agente aún no guardó sus formas y se deducen como antes.
+             */
+            configurada: boolean;
+            /** Forms */
+            forms: components["schemas"]["FormaDePagoOut"][];
+            /** Transfer Accounts */
+            transfer_accounts: components["schemas"]["CuentaDeTransferencia"][];
+            /** Transfer Proof Required */
+            transfer_proof_required: boolean;
+            /** Transfer Ocr Enabled */
+            transfer_ocr_enabled: boolean;
+            /**
+             * Pago En Linea Disponible
+             * @description El negocio tiene una cuenta de pagos en línea conectada.
+             */
+            pago_en_linea_disponible: boolean;
+        };
+        /** FormaDePagoIn */
+        FormaDePagoIn: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Instructions
+             * @default
+             */
+            instructions: string;
+        };
+        /** FormasDePagoIn */
+        FormasDePagoIn: {
+            /** Forms */
+            forms: components["schemas"]["FormaDePagoIn"][];
+            /** Transfer Accounts */
+            transfer_accounts?: components["schemas"]["CuentaDeTransferencia"][];
+            /**
+             * Transfer Proof Required
+             * @default true
+             */
+            transfer_proof_required: boolean;
+            /**
+             * Transfer Ocr Enabled
+             * @default true
+             */
+            transfer_ocr_enabled: boolean;
         };
     };
     responses: never;
@@ -45466,6 +45604,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentAccount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormasDePagoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormasDePagoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormasDePagoOut"];
                 };
             };
             /** @description Validation Error */

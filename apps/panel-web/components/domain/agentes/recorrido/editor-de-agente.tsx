@@ -71,6 +71,8 @@ import { esLimiteDePlan } from "@/lib/plan-limite";
 import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
+import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
+import type { FormasDePago } from "@/lib/formas-de-pago";
 import { conversacionDeFlujo, conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
@@ -135,6 +137,7 @@ export function EditorDeAgente({
   datosCliente = null,
   datosClienteError,
   puedeEditarDatos = true,
+  formasDePago = null,
   flujoInicial = { sections: [] },
   flujoSeeded = false,
   accionesDelFlujo = [],
@@ -165,6 +168,8 @@ export function EditorDeAgente({
   datosClienteError?: string;
   /** Quien puede escribir la configuración del negocio (la política de datos la exige). */
   puedeEditarDatos?: boolean;
+  /** Formas de pago del agente (SPEC-48, HU-COM-21); `null` si el agente no tiene Comercio. */
+  formasDePago?: FormasDePago | null;
   /** Flujo del agente (ADR-0195, HU-AOS-76); si la API no responde, se abre vacío. */
   flujoInicial?: FlujoDelAgente;
   flujoSeeded?: boolean;
@@ -579,6 +584,14 @@ export function EditorDeAgente({
             soloLectura={!puedeEditar}
           />
         </section>
+        {formasDePago && (
+          <section aria-labelledby="habilidades-formas-de-pago" className="flex flex-col gap-4">
+            <h3 id="habilidades-formas-de-pago" className="font-display text-sh-block text-headline">
+              Formas de pago
+            </h3>
+            <FormasDePagoDelAgente agenteId={agente.id} inicial={formasDePago} puedeEditar={puedeEditar} />
+          </section>
+        )}
         <section aria-labelledby="habilidades-acciones" className="flex flex-col gap-4">
           <h3 id="habilidades-acciones" className="font-display text-sh-block text-headline">
             Acciones
