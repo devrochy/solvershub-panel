@@ -96,7 +96,7 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
       }
       // HU-AOS-81: la creación rápida sigue en «Habilidades y formas de pago» (paso 2 de 4).
       router.push(rutaDePersonalizar(json.agentId, { paso: "habilidades", modo: "crear" }));
-      return { ok: true, success: "Borrador creado. Sigue con cómo habla tu agente." };
+      return { ok: true, success: "Borrador creado. Sigue con sus habilidades y formas de pago." };
     });
   }
 
