@@ -239,6 +239,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
       // pestañas; siguen como rutas del menú para sus permisos, migas y la paleta.
       entrada("Configuración", Settings, [
         { section: "settings", label: "Configuración", pestana: "General", href: "/configuracion", icon: Settings, ready: true },
+        // Automatizaciones del negocio (ADR-0200): crons de los packs que el negocio puede
+        // encender/apagar y programar. El colaborador lee por defecto; el dueño puede darle write.
+        { section: "automatizaciones", label: "Automatizaciones", href: "/configuracion/automatizaciones", icon: Timer, ready: true },
         { section: "plugins", label: "Habilidades", href: "/habilidades", icon: Workflow, ready: true, oculta: true },
         { section: "settings", label: "Mensajes fallidos", href: "/dlq", icon: AlertTriangle, ready: true, oculta: true },
       ]),

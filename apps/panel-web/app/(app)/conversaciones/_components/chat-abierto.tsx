@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ConversationDetail, ConversationNote } from "@/lib/api/types";
 import { useHiloEnVivo } from "@/lib/conversaciones/en-vivo";
 import { formatearIdentificador } from "@/lib/conversaciones/nombre";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +95,7 @@ function NotasInternasDialog({
   conversationId: string;
   notas: ConversationNote[];
 }) {
+  const { fechaHora } = useFormato();
   const [texto, setTexto] = useState("");
   const guardar = useAction();
 
@@ -133,7 +134,7 @@ function NotasInternasDialog({
                   <p className="whitespace-pre-wrap break-words text-headline">{nota.text}</p>
                   <p className="mt-1 text-xs text-text-soft">
                     {nota.source === "human" ? (nota.author_email ?? "Equipo") : "Agente"}
-                    {nota.created_at ? ` · ${formatDateTime(nota.created_at)}` : ""}
+                    {nota.created_at ? ` · ${fechaHora(nota.created_at)}` : ""}
                   </p>
                 </li>
               ))}

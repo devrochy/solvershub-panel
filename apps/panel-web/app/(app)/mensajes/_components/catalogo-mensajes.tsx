@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Tabs } from "@/components/ui/tabs";
 import type { CatalogoDeMensajes, MensajeDelCatalogo } from "@/lib/api/types";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatDateTime } from "@/lib/format";
 import {
   canalesLabel,
@@ -42,7 +43,8 @@ function Variables({ variables }: { variables: string[] }) {
   );
 }
 
-const COLUMNAS: Column<MensajeDelCatalogo>[] = [
+function columnas(timeZone: string): Column<MensajeDelCatalogo>[] {
+  return [
   {
     key: "mensaje",
     header: "Mensaje",
@@ -84,12 +86,19 @@ const COLUMNAS: Column<MensajeDelCatalogo>[] = [
     key: "actualizado",
     header: "Actualizado",
     info: "En las plantillas de WhatsApp es la última sincronización con Meta: el estado puede haber cambiado desde entonces.",
-    cell: (m) => (m.actualizado_en ? formatDateTime(m.actualizado_en) : "—"),
+    cell: (m) => (m.actualizado_en ? formatDateTime(m.actualizado_en, timeZone) : "—"),
   },
-];
+  ];
+}
 
 /** Lista unificada de mensajes con filtro por tipo. Solo lectura: cada fila enlaza a su editor. */
-export function CatalogoMensajes({ catalogo }: { catalogo: CatalogoDeMensajes }) {
+export function CatalogoMensajes({
+  catalogo,
+  timezone = ZONA_POR_DEFECTO,
+}: {
+  catalogo: CatalogoDeMensajes;
+  timezone?: string;
+}) {
   const [tipo, setTipo] = useState("todos");
   const cuentas = contarPorTipo(catalogo.mensajes);
   const pestanas = [
@@ -123,7 +132,7 @@ export function CatalogoMensajes({ catalogo }: { catalogo: CatalogoDeMensajes })
       <Tabs items={pestanas} value={tipo} onValueChange={setTipo} />
       {tipo !== "todos" && <p className="text-sm text-text-soft">{tipoAyuda(tipo)}</p>}
       <DataTable
-        columns={COLUMNAS}
+        columns={columnas(timezone)}
         rows={filas}
         getRowKey={(m) => m.id}
         caption="Mensajes del negocio"

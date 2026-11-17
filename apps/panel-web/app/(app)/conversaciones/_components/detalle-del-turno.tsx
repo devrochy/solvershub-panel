@@ -8,7 +8,8 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TurnDetail } from "@/lib/api/types";
-import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
+import { formatNumber, formatUsd } from "@/lib/format";
 import {
   estadoDeEnvio,
   huboTraspaso,
@@ -96,12 +97,13 @@ export function DetalleDelTurno({ turnId, onClose }: { turnId: string | null; on
 }
 
 function Contenido({ t }: { t: TurnDetail }) {
+  const { fechaHora } = useFormato();
   return (
     <div className="flex flex-col gap-6 text-sm">
       <Seccion titulo="Decisión">
         <p className="text-body">
           {textoDeDecision(t.decision.outcome)}
-          {t.decision.blocked_by ? ` (${humanizar(t.decision.blocked_by)})` : ""} · {formatDateTime(t.at)}
+          {t.decision.blocked_by ? ` (${humanizar(t.decision.blocked_by)})` : ""} · {fechaHora(t.at)}
         </p>
         {huboTraspaso(t) && (
           <p className="text-body">

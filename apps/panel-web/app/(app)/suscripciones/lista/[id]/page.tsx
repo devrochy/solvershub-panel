@@ -14,7 +14,7 @@ import { DetailPage } from "@/components/templates/detail-page";
 import { Badge } from "@/components/ui/badge";
 import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { AvisoDeCargo, CargoSuscripcion, Me, SubscriptionProviderSettings, SuscripcionDetalle } from "@/lib/api/types";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { diaEnPalabras } from "@/lib/plataforma";
@@ -48,10 +48,11 @@ const noSalio = (a: AvisoDeCargo) => a.estado_evento === "fallido" || Boolean(a.
  */
 export default async function SuscripcionDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [res, me, proveedor] = await Promise.all([
+  const [res, me, proveedor, zona] = await Promise.all([
     apiFetch<SuscripcionDetalle>(`/pack/pack_subscriptions/suscripciones/${encodeURIComponent(id)}`),
     apiFetch<Me>("/admin/me"),
     apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
+    getBusinessTimezone(),
   ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
@@ -257,7 +258,7 @@ export default async function SuscripcionDetallePage({ params }: { params: Promi
           <ol aria-label="Historial de la suscripción" className="border-t border-border-soft">
             {eventos.map((e, i) => (
               <li key={`${e.at}-${i}`} className="flex flex-wrap gap-x-4 gap-y-1 border-b border-border-soft px-4 py-3 text-sm last:border-b-0">
-                <span className="w-40 shrink-0 tabular-nums text-text-soft">{formatDateTime(e.at)}</span>
+                <span className="w-40 shrink-0 tabular-nums text-text-soft">{formatDateTime(e.at, zona)}</span>
                 <span className="min-w-0 flex-1 text-body">{e.texto}</span>
                 {e.quien && <span className="text-text-soft">{e.quien}</span>}
               </li>

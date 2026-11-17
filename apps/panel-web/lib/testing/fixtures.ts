@@ -64,6 +64,7 @@ const SECCIONES = [
   "costs",
   "devices",
   "access_alerts",
+  "automatizaciones",
   "pack_subscriptions:suscripciones",
   "pack_cobranza:resumen",
   "pack_cobranza:carteras",
@@ -86,6 +87,8 @@ export const me: Me = {
   permissions: Object.fromEntries(SECCIONES.map((s) => [s, "write"])),
   invitaciones_pendientes: 0,
   qa_testers_habilitados: false,
+  timezone: "America/Bogota",
+  currency: "COP",
 };
 
 export const dashboard: Dashboard = {
@@ -1360,6 +1363,7 @@ export const cronRenovacion: Cron = {
   critical: false,
   sensitive: true,
   reprogramable: true,
+  ambito: "plataforma",
   record_success: true,
   estado: "failing",
   next_run_at: "2026-11-03T13:00:00Z",

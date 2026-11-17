@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QaEvento } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { describirEvento } from "@/lib/qa/historial";
 
 import { llamarQa } from "./api";
@@ -15,6 +15,7 @@ import { llamarQa } from "./api";
  * tester, el de su ejecución y los cambios del ciclo.
  */
 export function Registro({ slug }: { slug: string }) {
+  const { fechaHora } = useFormato();
   const [eventos, setEventos] = useState<QaEvento[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +42,7 @@ export function Registro({ slug }: { slug: string }) {
         <li key={`${ev.en}-${i}`} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 text-sm">
           <span className="text-headline">{describirEvento(ev)}</span>
           <span className="text-xs text-text-soft">
-            {ev.por || "Sistema"} · <time dateTime={ev.en ?? undefined}>{formatDateTime(ev.en)}</time>
+            {ev.por || "Sistema"} · <time dateTime={ev.en ?? undefined}>{fechaHora(ev.en)}</time>
           </span>
         </li>
       ))}

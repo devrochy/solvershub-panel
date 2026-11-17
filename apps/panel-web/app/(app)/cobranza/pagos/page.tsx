@@ -2,7 +2,7 @@ import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { ListPage } from "@/components/templates/list-page";
 import { type Column } from "@/components/ui/data-table";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import { metodoDePago } from "@/lib/cobranza/presentacion";
 import { formatCop, formatDateTime } from "@/lib/format";
 
@@ -18,7 +18,10 @@ type Payment = {
 };
 
 export default async function CobrosPage() {
-  const res = await apiFetch<Payment[]>("/pack/cobranza/payments");
+  const [res, zona] = await Promise.all([
+    apiFetch<Payment[]>("/pack/cobranza/payments"),
+    getBusinessTimezone(),
+  ]);
   const header = { title: "Pagos de clientes", description: "Últimos pagos registrados por los gestores (hasta 100).", helpSection: "cobranza" };
   if (!res.ok) {
     return (
@@ -30,7 +33,7 @@ export default async function CobrosPage() {
 
   const columns: Column<Payment>[] = [
     { key: "cliente", header: "Cliente", cell: (p) => <span className="font-medium text-headline">{p.cliente}</span> },
-    { key: "fecha", header: "Fecha", cell: (p) => <span className="whitespace-nowrap text-body">{formatDateTime(p.fecha_hora)}</span> },
+    { key: "fecha", header: "Fecha", cell: (p) => <span className="whitespace-nowrap text-body">{formatDateTime(p.fecha_hora, zona)}</span> },
     { key: "metodo", header: "Método", cell: (p) => <span className="text-body">{metodoDePago(p.metodo_pago)}</span> },
     { key: "registrado", header: "Registrado por", cell: (p) => <span className="text-body">{p.registrado_por ?? "—"}</span> },
     { key: "valor", header: "Valor", align: "right", cell: (p) => formatCop(p.valor) },
@@ -47,7 +50,7 @@ export default async function CobrosPage() {
         emptyDescription="Los pagos de la app de campo y del agente aparecerán aquí."
         filaCelular={(p) => ({
           titulo: p.cliente,
-          detalle: `${formatDateTime(p.fecha_hora)} · ${metodoDePago(p.metodo_pago)}`,
+          detalle: `${formatDateTime(p.fecha_hora, zona)} · ${metodoDePago(p.metodo_pago)}`,
           fin: formatCop(p.valor),
         })}
       />

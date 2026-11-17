@@ -3,7 +3,7 @@ import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { StatusBadge, estadoLegible } from "@/components/domain/status-badge";
 import { ListPage } from "@/components/templates/list-page";
 import { type Column } from "@/components/ui/data-table";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import { OPERACION_STATUS, cambiosDeAuditoria, entidadLegible, fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 import { FiltrosAuditoria, type FiltrosDeAuditoria } from "./_components/filtros-auditoria";
 
@@ -37,7 +37,10 @@ export default async function AuditoriaPage({
     const valor = sp[key];
     if (valor) qs.set(key, valor);
   }
-  const res = await apiFetch<AuditLog>(`/pack/cobranza/audit${qs.size ? `?${qs}` : ""}`);
+  const [res, zona] = await Promise.all([
+    apiFetch<AuditLog>(`/pack/cobranza/audit${qs.size ? `?${qs}` : ""}`),
+    getBusinessTimezone(),
+  ]);
   const header = {
     title: "Auditoría",
     description: "Cambios sobre cuotas, abonos, pagos, promesas y préstamos (hasta 200).",
@@ -53,7 +56,7 @@ export default async function AuditoriaPage({
   const { entidades, operaciones, filas } = res.data;
 
   const columns: Column<AuditRow>[] = [
-    { key: "fecha", header: "Fecha", cell: (r) => <span className="whitespace-nowrap text-body">{fechaHoraDeApi(r.fecha)}</span> },
+    { key: "fecha", header: "Fecha", cell: (r) => <span className="whitespace-nowrap text-body">{fechaHoraDeApi(r.fecha, zona)}</span> },
     { key: "entidad", header: "Qué cambió", cell: (r) => <span className="font-medium text-headline">{entidadLegible(r.entidad)}</span> },
     { key: "operacion", header: "Operación", cell: (r) => <StatusBadge value={r.operacion} map={OPERACION_STATUS} /> },
     {
@@ -92,7 +95,7 @@ export default async function AuditoriaPage({
         emptyDescription="Los cambios auditados de la cartera aparecerán aquí."
         filaCelular={(r) => ({
           titulo: `${entidadLegible(r.entidad)} · ${etiquetaDeOperacion(r.operacion)}`,
-          detalle: [cambiosDeAuditoria(r.antes, r.despues).join(" · "), `${estadoLegible(r.actor)}, ${fechaHoraDeApi(r.fecha)}`].filter(Boolean).join(" · "),
+          detalle: [cambiosDeAuditoria(r.antes, r.despues).join(" · "), `${estadoLegible(r.actor)}, ${fechaHoraDeApi(r.fecha, zona)}`].filter(Boolean).join(" · "),
         })}
       />
     </ListPage>

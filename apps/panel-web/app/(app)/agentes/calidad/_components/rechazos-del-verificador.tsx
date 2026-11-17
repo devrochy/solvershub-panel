@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm";
 import type { VerifierRejection } from "@/lib/api/types";
 import { tipoDeRechazo } from "@/lib/calidad";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -26,6 +26,7 @@ export function RechazosDelVerificador({
   puedeMarcar: boolean;
   verConversaciones: boolean;
 }) {
+  const { fechaHora } = useFormato();
   const confirm = useConfirm();
   const { run, pending } = useAction();
   const [turnoAbierto, setTurnoAbierto] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export function RechazosDelVerificador({
         {rechazos.map((r) => (
           <li key={`${r.turn_id}-${r.kind}`} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
             <span className="text-headline">{tipoDeRechazo(r.kind)}</span>
-            <span className="text-text-soft">{formatDateTime(r.created_at)}</span>
+            <span className="text-text-soft">{fechaHora(r.created_at)}</span>
             {verConversaciones && r.conversation_id && (
               <Link href={`/conversaciones?c=${r.conversation_id}`} className="text-link hover:underline">
                 Ver conversación

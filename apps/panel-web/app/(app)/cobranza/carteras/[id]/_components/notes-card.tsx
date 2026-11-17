@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormato } from "@/components/shell/formato";
 import { fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 
 type Nota = { id: string; nota: string; fecha: string; autor: string };
 
 /** Notas de la cartera: agregar y eliminar (con confirmación). */
 export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: Nota[] }) {
+  const { timeZone } = useFormato();
   const router = useRouter();
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
   const [confirmando, setConfirmando] = useState<string>();
@@ -80,7 +82,7 @@ export function NotesCard({ portfolioId, notes }: { portfolioId: string; notes: 
                 <div>
                   <p className="text-sm text-body whitespace-pre-wrap">{n.nota}</p>
                   <p className="text-xs text-text-soft">
-                    {fechaHoraDeApi(n.fecha)} · {n.autor || "—"}
+                    {fechaHoraDeApi(n.fecha, timeZone)} · {n.autor || "—"}
                   </p>
                 </div>
                 {confirmando === n.id ? (

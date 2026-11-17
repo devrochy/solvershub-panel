@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { Pagination } from "@/components/ui/pagination";
-import { apiFetch } from "@/lib/api/server";
-import type { Cron, CronEjecucion, CronEjecucionesPage, Me } from "@/lib/api/types";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
+import type { Cron, CronEjecucion, CronEjecucionesPage, Me, NegocioDeCron } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import {
   DISPARADOR_LABEL,
@@ -54,10 +54,11 @@ export default async function CronDetallePage({
   if (sp.trigger && DISPARADORES.includes(sp.trigger)) qs.set("trigger", sp.trigger);
 
   const ruta = `/admin/platform/crons/${encodeURIComponent(name)}`;
-  const [me, res, ejecuciones] = await Promise.all([
+  const [me, res, ejecuciones, zona] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<Cron>(ruta),
     apiFetch<CronEjecucionesPage>(`${ruta}/runs?${qs.toString()}`),
+    getBusinessTimezone(),
   ]);
   // PLT-04: sin permiso no hay página de error; un cron que no existe es 404.
   if (!me.ok || !puedeOperarCrons(me.data) || (!res.ok && res.status === 403)) redirect("/dashboard");
@@ -67,12 +68,14 @@ export default async function CronDetallePage({
   }
   const tarde = atraso(res.data);
   const c = res.data;
+  // Vista por negocio (ADR-0200): solo tiene sentido en los crons de ámbito `negocio`.
+  const negocios = c.ambito === "negocio" ? await apiFetch<NegocioDeCron[]>(`${ruta}/negocios`) : null;
   const { items, page, has_more, total } = ejecuciones.ok
     ? ejecuciones.data
     : { items: [] as CronEjecucion[], page: 1, has_more: false, total: 0 };
 
   const columns: Column<CronEjecucion>[] = [
-    { key: "inicio", header: "Inicio", cell: (r) => <span className="tabular-nums">{formatDateTime(r.started_at)}</span> },
+    { key: "inicio", header: "Inicio", cell: (r) => <span className="tabular-nums">{formatDateTime(r.started_at, zona)}</span> },
     { key: "estado", header: "Resultado", cell: (r) => <StatusBadge value={r.status} map={CRON_RUN_STATUS} /> },
     { key: "disparo", header: "Disparo", cell: (r) => DISPARADOR_LABEL[r.trigger] },
     {
@@ -104,6 +107,47 @@ export default async function CronDetallePage({
     },
   ];
 
+  const columnasNegocio: Column<NegocioDeCron>[] = [
+    {
+      key: "negocio",
+      header: "Negocio",
+      cell: (n) => <span className="font-medium text-headline">{n.tenant_name || n.tenant_id}</span>,
+    },
+    {
+      key: "estado",
+      header: "Estado",
+      cell: (n) => <Badge variant={n.habilitada ? "success" : "neutral"}>{n.habilitada ? "Encendida" : "Apagada"}</Badge>,
+    },
+    {
+      key: "hora",
+      header: "Hora local",
+      cell: (n) => (n.hora_local !== null ? `${String(n.hora_local).padStart(2, "0")}:00` : "La del sistema"),
+    },
+    {
+      key: "ultima",
+      header: "Última",
+      cell: (n) =>
+        n.last_run_at ? (
+          <span className="flex flex-col">
+            <span className="tabular-nums">{formatDateTime(n.last_run_at, zona)}</span>
+            <span className="text-xs text-text-soft">{n.last_resumen ?? (n.last_status === "failed" ? "Falló" : "—")}</span>
+          </span>
+        ) : (
+          <span className="text-text-soft">Sin ejecuciones</span>
+        ),
+    },
+    {
+      key: "fallos",
+      header: "Fallos en 24 h",
+      align: "right",
+      cell: (n) => (
+        <span className={n.fallos_24h > 0 ? "tabular-nums text-status-danger-fg" : "tabular-nums text-text-soft"}>
+          {n.fallos_24h}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <DetailPage
       header={{
@@ -116,8 +160,8 @@ export default async function CronDetallePage({
           <KpiTile label="Estado" value={<StatusBadge value={c.estado} map={CRON_STATUS} />} hint={c.module} />
           <KpiTile
             label="Horario"
-            value={<span className="block text-base leading-snug">{describirCron(c.schedule, c.interval_s)}</span>}
-            hint={c.overridden ? `Reprogramado. El del código: ${describirCron(c.default_schedule, c.interval_s)}` : (c.schedule ?? undefined)}
+            value={<span className="block text-base leading-snug">{describirCron(c.schedule, c.interval_s, zona)}</span>}
+            hint={c.overridden ? `Reprogramado. El del código: ${describirCron(c.default_schedule, c.interval_s, zona)}` : (c.schedule ?? undefined)}
           />
           <KpiTile
             label="Próxima ejecución"
@@ -125,9 +169,9 @@ export default async function CronDetallePage({
             tone={tarde ? "danger" : "default"}
             hint={
               tarde
-                ? `Debía correr el ${formatDateTime(c.next_run_at)}: revisa que el planificador esté corriendo.`
+                ? `Debía correr el ${formatDateTime(c.next_run_at, zona)}: revisa que el planificador esté corriendo.`
                 : c.next_run_at
-                  ? formatDateTime(c.next_run_at)
+                  ? formatDateTime(c.next_run_at, zona)
                   : undefined
             }
           />
@@ -149,6 +193,21 @@ export default async function CronDetallePage({
           {c.critical ? "No se puede pausar: la plataforma depende de él. " : ""}
           {c.sensitive ? "Este cron cobra o escribe a clientes: cambiarlo o ejecutarlo a mano tiene efectos reales." : ""}
         </p>
+      )}
+      {negocios?.ok && negocios.data.length > 0 && (
+        <section aria-labelledby="por-negocio" className="flex flex-col gap-3">
+          <h2 id="por-negocio" className="text-sh-block font-display text-headline">
+            Por negocio
+          </h2>
+          <DataTable
+            columns={columnasNegocio}
+            rows={negocios.data}
+            getRowKey={(n) => n.tenant_id}
+            emptyTitle="Ningún negocio lo tiene configurado"
+            emptyDescription="Aparecen los negocios que lo encendieron, apagaron o ya lo corrieron."
+            caption={`Configuración de ${c.label} por negocio`}
+          />
+        </section>
       )}
       <section aria-labelledby="historial" className="flex flex-col gap-3">
         <h2 id="historial" className="text-sh-block font-display text-headline">

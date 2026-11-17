@@ -3,7 +3,7 @@ import { ESCALATION_STATUS, StatusBadge } from "@/components/domain/status-badge
 import { ListPage } from "@/components/templates/list-page";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { EscalationPage } from "@/lib/api/types";
 import { nombreDelChat } from "@/lib/conversaciones/nombre";
 import { formatDateTime } from "@/lib/format";
@@ -22,7 +22,10 @@ export default async function EscalationsPage({
   if (sp.reason_code) qs.set("reason_code", sp.reason_code);
   if (sp.estado) qs.set("estado", sp.estado);
   if (sp.page) qs.set("page", sp.page);
-  const res = await apiFetch<EscalationPage>(`/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`);
+  const [res, zona] = await Promise.all([
+    apiFetch<EscalationPage>(`/admin/escalations${qs.size ? `?${qs.toString()}` : ""}`),
+    getBusinessTimezone(),
+  ]);
   const { items, page, has_more, total } = res.ok
     ? res.data
     : { items: [], page: 1, has_more: false, total: 0 };
@@ -57,7 +60,7 @@ export default async function EscalationsPage({
     {
       key: "fecha",
       header: "Fecha",
-      cell: (esc) => <span className="whitespace-nowrap text-body tabular-nums">{formatDateTime(esc.created_at)}</span>,
+      cell: (esc) => <span className="whitespace-nowrap text-body tabular-nums">{formatDateTime(esc.created_at, zona)}</span>,
     },
   ];
 

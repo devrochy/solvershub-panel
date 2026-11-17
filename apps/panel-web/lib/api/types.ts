@@ -368,3 +368,46 @@ export type AgentFlowOut = components["schemas"]["AgentFlowOut"];
 export type AgentFlowOptionsOut = components["schemas"]["AgentFlowOptionsOut"];
 export type AgentActionPage = components["schemas"]["Page_AgentAction_"];
 export type PaymentAccount = components["schemas"]["PaymentAccount"];
+
+// Automatizaciones del negocio (ADR-0200). Se declaran aquí hasta que el OpenAPI de develop
+// las incluya; luego basta con regenerar `schema.d.ts`.
+export type VentanaAutomatizacion = { desde: string; hasta: string; dias: number[] };
+export type AccionAutomatizacion = "enable" | "disable" | "hora" | "ventana";
+export type Automatizacion = {
+  name: string;
+  module: string;
+  label: string;
+  description: string;
+  pack: string | null;
+  sensitive: boolean;
+  configurable: boolean;
+  admite_hora_local: boolean;
+  admite_ventana: boolean;
+  parametros: string[];
+  habilitada: boolean;
+  hora_local: number | null;
+  hora_local_por_defecto: number | null;
+  hora_local_personalizada: boolean;
+  ventana: VentanaAutomatizacion | null;
+  next_run_at: string | null;
+  last_run_at: string | null;
+  last_status: "success" | "failed" | "skipped" | null;
+  last_resumen: string | null;
+  last_acciones: number | null;
+  acciones: AccionAutomatizacion[];
+};
+export type AutomatizacionesResumen = {
+  total: number;
+  habilitadas: number;
+  apagadas: number;
+  con_fallo: number;
+};
+export type AutomatizacionesResponse = {
+  items: Automatizacion[];
+  resumen: AutomatizacionesResumen;
+};
+
+// Historial y vista master de automatizaciones (ADR-0200).
+export type CronNegocioEjecucion = components["schemas"]["CronNegocioRunOut"];
+export type CronNegocioEjecucionesPage = components["schemas"]["Page_CronNegocioRunOut_"];
+export type NegocioDeCron = components["schemas"]["CronNegocioResumenOut"];

@@ -8,7 +8,7 @@ import { ListPage } from "@/components/templates/list-page";
 import { Badge } from "@/components/ui/badge";
 import type { Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { Cron, CronListado, Me } from "@/lib/api/types";
 import {
   SIN_EXITOS,
@@ -34,9 +34,10 @@ export const metadata = { title: "Crons" };
  */
 export default async function CronsPage({ searchParams }: { searchParams: Promise<FiltrosCrons & { vista?: string }> }) {
   const sp = await searchParams;
-  const [me, lista] = await Promise.all([
+  const [me, lista, zona] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<CronListado>(`/admin/platform/crons${consultaCrons(sp)}`),
+    getBusinessTimezone(),
   ]);
   // PLT-04: quien no puede operar crons no ve una página de error.
   if (!me.ok || !puedeOperarCrons(me.data) || (!lista.ok && lista.status === 403)) redirect("/dashboard");
@@ -79,9 +80,9 @@ export default async function CronsPage({ searchParams }: { searchParams: Promis
       header: "Horario",
       cell: (c) => (
         <div className="flex flex-col">
-          <span className="text-body">{describirCron(c.schedule, c.interval_s)}</span>
+          <span className="text-body">{describirCron(c.schedule, c.interval_s, zona)}</span>
           {c.overridden && (
-            <span className="text-xs text-status-warning-fg">Reprogramado · el del código: {describirCron(c.default_schedule, c.interval_s)}</span>
+            <span className="text-xs text-status-warning-fg">Reprogramado · el del código: {describirCron(c.default_schedule, c.interval_s, zona)}</span>
           )}
         </div>
       ),
@@ -153,7 +154,7 @@ export default async function CronsPage({ searchParams }: { searchParams: Promis
               getRowLabel={(c) => `Abrir ${c.label}`}
               filaCelular={(c) => ({
                 titulo: c.label,
-                detalle: atraso(c, ahora) ? `Atrasado ${atraso(c, ahora)}` : describirCron(c.schedule, c.interval_s),
+                detalle: atraso(c, ahora) ? `Atrasado ${atraso(c, ahora)}` : describirCron(c.schedule, c.interval_s, zona),
                 fin: <StatusBadge value={c.estado} map={CRON_STATUS} />,
                 href: hrefDe(c),
               })}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Column } from "@/components/ui/data-table";
+import { getBusinessTimezone } from "@/lib/api/server";
 import { INYECCION_STATUS, fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 import { formatCop, formatDate } from "@/lib/format";
 import { CashDayActions, InjectionDialog, LiquidationDialog } from "../../_components/cash-actions";
@@ -17,7 +18,7 @@ export const metadata = { title: "Caja de la cartera" };
 
 export default async function CarteraCajaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const res = await cargarCartera(id);
+  const [res, zona] = await Promise.all([cargarCartera(id), getBusinessTimezone()]);
   if (!res.ok) {
     if (res.status === 404) notFound();
     return null; // el layout ya muestra el error
@@ -67,7 +68,7 @@ export default async function CarteraCajaPage({ params }: { params: Promise<{ id
             <p className="font-display text-sh-hero tabular-nums text-headline">{formatCop(c.caja.saldo_actual)}</p>
             <p className="text-xs text-text-soft">
               Inicial {formatCop(c.caja.saldo_inicial)}
-              {c.caja.actualizado ? ` · actualizada ${fechaHoraDeApi(c.caja.actualizado)}` : ""}
+              {c.caja.actualizado ? ` · actualizada ${fechaHoraDeApi(c.caja.actualizado, zona)}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

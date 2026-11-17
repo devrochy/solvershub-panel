@@ -24,7 +24,7 @@ import {
   partesLocales,
 } from "@/lib/calendario/formulario";
 import { mensajeAsistencia, puedeMarcarAsistencia } from "@/lib/citas";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { toast } from "@/lib/toast-store";
 
 import { describeNotification, type ClientNotification } from "./notification";
@@ -75,6 +75,7 @@ export function AppointmentPanel({
   /** `message`: qué pasó de verdad (incluido el aviso al cliente) para mostrarlo al cerrar. */
   onSaved: (message?: string) => void;
 }) {
+  const { fechaHora } = useFormato();
   const isNew = !event;
   const [queCrear, setQueCrear] = useState<QueCrear>("cita");
   const isBlock = isNew ? queCrear === "bloqueo" : event?.kind === "block";
@@ -321,7 +322,7 @@ export function AppointmentPanel({
                       <span className="text-body">
                         {ACCION[a.action] ?? a.action} {a.actor === "panel" ? "desde el panel" : "con tu agente"}
                       </span>
-                      <span className="text-text-soft">{formatDateTime(a.created_at)}</span>
+                      <span className="text-text-soft">{fechaHora(a.created_at)}</span>
                     </li>
                   ))}
                 </ul>

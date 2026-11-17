@@ -22,6 +22,10 @@ type Shell = {
   puedeEditarAsistente: boolean;
   /** Plan del negocio activo (HU-BILL-15): banner y campana lo leen sin otra petición. */
   plan: MePlanSummary | null;
+  /** Zona horaria del negocio activo (ADR-0199): todas las fechas se pintan con ella. */
+  timezone: string;
+  /** Moneda del negocio activo (HU-UI-01). */
+  currency: string;
   /** El aviso de plan Free se cerró en la vista actual; reaparece al navegar o recargar. */
   avisoPlanCerrado: boolean;
   cerrarAvisoPlan: () => void;
@@ -46,6 +50,8 @@ export function ShellProvider({
   asistentePausado = false,
   puedeEditarAsistente = false,
   plan = null,
+  timezone = "America/Bogota",
+  currency = "COP",
   children,
 }: Partial<Omit<Shell, "permisos" | "avisoPlanCerrado" | "cerrarAvisoPlan" | "reiniciarAvisoPlan">> & {
   permisos: Permisos;
@@ -65,6 +71,8 @@ export function ShellProvider({
         asistentePausado,
         puedeEditarAsistente,
         plan,
+        timezone,
+        currency,
         avisoPlanCerrado,
         cerrarAvisoPlan,
         reiniciarAvisoPlan,

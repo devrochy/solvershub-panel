@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { Consentimiento } from "@/lib/api/types";
 import { AVISO_BAJA_DEL_CLIENTE, AVISO_SOLO_PROPIETARIO, esBajaDelCliente, mensajeDeErrorAlGuardarConsentimiento } from "@/lib/consentimiento-promos";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 
 const ESTADO: Record<string, { label: string; tone: "success" | "danger" | "neutral" }> = {
@@ -41,6 +41,7 @@ export function ConsentimientoDelCliente({
   /** Propietario o admin de plataforma. Sin esto no se ofrece «Aceptó recibir promociones». */
   esPropietario?: boolean;
 }) {
+  const { fechaHora } = useFormato();
   const [datos, setDatos] = useState<Consentimiento | null>(null);
   const [marcando, setMarcando] = useState(false);
   const [como, setComo] = useState("en_el_local");
@@ -97,7 +98,7 @@ export function ConsentimientoDelCliente({
       </div>
       {ultimo && (
         <p className="text-xs text-text-soft">
-          {ORIGEN[ultimo.origen] ?? ultimo.origen} por {ultimo.quien}, {formatDateTime(ultimo.created_at)}
+          {ORIGEN[ultimo.origen] ?? ultimo.origen} por {ultimo.quien}, {fechaHora(ultimo.created_at)}
           {ultimo.evidencia ? ` · ${ultimo.evidencia}` : ""}
         </p>
       )}

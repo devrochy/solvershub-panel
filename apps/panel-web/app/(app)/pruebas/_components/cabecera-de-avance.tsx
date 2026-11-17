@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { QaCatalogo, QaEjecucion, QaProgreso } from "@/lib/api/types";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { fechaDeCatalogo, fechaEnPalabras, porcentaje, segmentosDeProgreso } from "@/lib/qa/estados";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,11 @@ function Guardado({ guardado }: { guardado: EstadoGuardado }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs text-body" role="status">
         <Check aria-hidden className="h-3.5 w-3.5 text-status-success-fg" /> Guardado{" "}
-        {guardado.en?.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+        {guardado.en?.toLocaleTimeString("es-CO", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: ZONA_POR_DEFECTO,
+        })}
       </span>
     );
   }

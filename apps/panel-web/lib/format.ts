@@ -1,5 +1,12 @@
 /** Formateo puro (es-CO). Responsabilidad única: convertir datos → texto. */
 
+import {
+  ZONA_POR_DEFECTO,
+  formatFecha as formatFechaZona,
+  formatFechaHora,
+  formatFechaLarga as formatFechaLargaZona,
+} from "@/lib/fechas";
+
 const numberFmt = new Intl.NumberFormat("es-CO");
 
 export function formatNumber(value: number): string {
@@ -31,43 +38,43 @@ export function formatCop(value: number): string {
   return formatMoney(value, "COP");
 }
 
-/** «2026-01-10» es un día, no un instante: leído como UTC, en Colombia caería el día anterior. */
-function aFecha(value: string | Date): Date {
-  const soloFecha = typeof value === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
-  if (soloFecha) return new Date(Number(soloFecha[1]), Number(soloFecha[2]) - 1, Number(soloFecha[3]));
-  return new Date(value);
-}
-
-export function formatDate(value: string | Date | null | undefined): string {
+/** `dd/MM/yyyy`. Una fecha-solo no se desplaza; un instante se pinta en `timeZone`. */
+export function formatDate(
+  value: string | Date | null | undefined,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "short" }).format(aFecha(value));
+  return formatFechaZona(value, timeZone);
 }
 
 /** «10 de enero de 2026». */
-export function formatFechaLarga(value: string | Date | null | undefined): string {
+export function formatFechaLarga(
+  value: string | Date | null | undefined,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(aFecha(value));
+  return formatFechaLargaZona(value, timeZone);
 }
 
-export function formatDateTime(value: string | Date | null | undefined): string {
+/** `dd/MM/yyyy HH:mm` (24 h) en la zona del negocio (ADR-0201). */
+export function formatDateTime(
+  value: string | Date | null | undefined,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "short", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  return formatFechaHora(value, timeZone);
 }
 
 /** Hora de un chat en la bandeja: la hora si es de hoy; si no, la fecha (HU-UX-15). */
 export function formatHoraChat(
   value: string | Date | null | undefined,
   ahora: Date = new Date(),
+  timeZone: string = ZONA_POR_DEFECTO,
 ): string {
   if (!value) return "";
-  const fecha = new Date(value);
-  const deHoy = fecha.toDateString() === ahora.toDateString();
-  return new Intl.DateTimeFormat(
-    "es-CO",
-    deHoy ? { timeStyle: "short" } : { dateStyle: "short" },
-  ).format(fecha);
+  const formatoDia = new Intl.DateTimeFormat("es-CO", { dateStyle: "short", timeZone });
+  const deHoy = formatoDia.format(new Date(value)) === formatoDia.format(ahora);
+  return deHoy ? formatFechaHora(value, timeZone).split(" ")[1] ?? "" : formatDate(value, timeZone);
 }
 
 export function formatLatency(ms: number): string {

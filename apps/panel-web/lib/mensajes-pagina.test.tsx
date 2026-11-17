@@ -7,7 +7,10 @@ import { catalogoDeMensajes } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
 const apiFetch = vi.fn();
-vi.mock("@/lib/api/server", () => ({ apiFetch: (...a: unknown[]) => apiFetch(...a) }));
+vi.mock("@/lib/api/server", () => ({
+  apiFetch: (...a: unknown[]) => apiFetch(...a),
+  getBusinessTimezone: async () => "America/Bogota",
+}));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),

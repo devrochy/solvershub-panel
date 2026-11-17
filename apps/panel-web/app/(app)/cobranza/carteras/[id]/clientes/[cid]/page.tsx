@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import {
   MOVIMIENTO_STATUS,
   PRESTAMO_STATUS,
@@ -122,7 +122,10 @@ function TarjetaDePrestamo({ prestamo: p }: { prestamo: Prestamo }) {
 
 export default async function ClienteFichaPage({ params }: { params: Promise<{ id: string; cid: string }> }) {
   const { id, cid } = await params;
-  const res = await apiFetch<ClientDetail>(`/pack/cobranza/clients/${cid}`);
+  const [res, zona] = await Promise.all([
+    apiFetch<ClientDetail>(`/pack/cobranza/clients/${cid}`),
+    getBusinessTimezone(),
+  ]);
   if (!res.ok) {
     if (res.status === 404) notFound();
     return (
@@ -143,7 +146,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
   ];
 
   const movementColumns: Column<Movimiento>[] = [
-    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-body">{fechaHoraDeApi(m.fecha)}</span> },
+    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-body">{fechaHoraDeApi(m.fecha, zona)}</span> },
     { key: "tipo", header: "Tipo", cell: (m) => <StatusBadge value={m.tipo} map={MOVIMIENTO_STATUS} /> },
     { key: "metodo", header: "Método", cell: (m) => <span className="text-body">{metodoDePago(m.metodo)}</span> },
     { key: "valor", header: "Valor", align: "right", cell: (m) => formatCop(m.valor) },
@@ -192,7 +195,7 @@ export default async function ClienteFichaPage({ params }: { params: Promise<{ i
           emptyDescription="Los pagos y abonos registrados aparecerán aquí."
           filaCelular={(m) => ({
             titulo: MOVIMIENTO_STATUS[m.tipo]?.label ?? m.tipo,
-            detalle: `${fechaHoraDeApi(m.fecha)} · ${metodoDePago(m.metodo)}`,
+            detalle: `${fechaHoraDeApi(m.fecha, zona)} · ${metodoDePago(m.metodo)}`,
             fin: formatCop(m.valor),
             accion: m.tipo === "abono" ? <CreditDelete creditId={m.id} /> : undefined,
           })}

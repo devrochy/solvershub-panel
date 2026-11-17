@@ -6,6 +6,7 @@
  */
 
 import { formatearIdentificador } from "@/lib/conversaciones/nombre";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatCop } from "@/lib/format";
 
 export type FiltrosClientes = {
@@ -364,7 +365,9 @@ export function textoDeActividad(iso: string | null | undefined, ahora: Date = n
   const dias = Math.floor(horas / 24);
   if (dias === 1) return "Ayer";
   if (dias < 31) return `Hace ${dias} días`;
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(iso));
+  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeZone: ZONA_POR_DEFECTO }).format(
+    new Date(iso),
+  );
 }
 
 export type PestanaDeEtapa = { value: string; label: string; count: number };

@@ -13,7 +13,7 @@ import {
   puedeRetirarDatos,
   type ConsentimientoDatos,
 } from "@/lib/aviso-datos";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 
 /**
@@ -31,6 +31,7 @@ export function ConsentimientoDatosDelCliente({
   /** Propietario o admin de plataforma. Sin esto no se ofrece «Retirar sus datos». */
   puedeRetirar?: boolean;
 }) {
+  const { fechaHora } = useFormato();
   const [datos, setDatos] = useState<ConsentimientoDatos | null>(null);
   const [retirados, setRetirados] = useState<string[] | null>(null);
   const confirm = useConfirm();
@@ -83,7 +84,7 @@ export function ConsentimientoDatosDelCliente({
       </div>
       {ultimo && (
         <p className="text-xs text-text-soft">
-          {ORIGEN_AVISO[ultimo.origen] ?? ultimo.origen}, por {ultimo.quien}, {formatDateTime(ultimo.created_at)}
+          {ORIGEN_AVISO[ultimo.origen] ?? ultimo.origen}, por {ultimo.quien}, {fechaHora(ultimo.created_at)}
           {ultimo.evidencia ? ` · ${ultimo.evidencia}` : ""}
         </p>
       )}

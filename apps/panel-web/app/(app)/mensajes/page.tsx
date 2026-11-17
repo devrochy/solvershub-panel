@@ -1,7 +1,7 @@
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { CatalogoDeMensajes } from "@/lib/api/types";
 
 import { CatalogoMensajes } from "./_components/catalogo-mensajes";
@@ -13,7 +13,10 @@ const DESCRIPCION =
 
 /** Catálogo unificado de mensajes (ADR-0178, pista D0): solo lectura, enlaza a los editores actuales. */
 export default async function MensajesPage() {
-  const res = await apiFetch<CatalogoDeMensajes>("/mensajes/catalogo");
+  const [res, zona] = await Promise.all([
+    apiFetch<CatalogoDeMensajes>("/mensajes/catalogo"),
+    getBusinessTimezone(),
+  ]);
 
   if (!res.ok) {
     return (
@@ -37,7 +40,7 @@ export default async function MensajesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Mensajes" description={DESCRIPCION} helpSection="connections" />
-      <CatalogoMensajes catalogo={res.data} />
+      <CatalogoMensajes catalogo={res.data} timezone={zona} />
     </div>
   );
 }

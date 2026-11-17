@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import type { OpcionesPlantillaResumen } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { estadoPlantillaOpcionesLabel } from "@/lib/labels";
 
 import { CrearPlantilla } from "./crear-plantilla";
@@ -44,13 +44,14 @@ export function ListaPlantillas({
   /** Alerta de plantillas faltantes (servidor), encima de la tabla. */
   banner?: React.ReactNode;
 }) {
+  const { fechaHora } = useFormato();
   const [banderaApagada, setBanderaApagada] = useState(false);
 
   const columnas: Column<OpcionesPlantillaResumen>[] = [
     { key: "nombre", header: "Plantilla", cell: (p) => <span className="font-medium text-headline">{p.nombre || p.clave}</span> },
     { key: "estado", header: "Estado", cell: (p) => <Estado p={p} /> },
     { key: "version", header: "Versión vigente", cell: (p) => (p.version_vigente === null ? "Sin publicar" : `Versión ${p.version_vigente}`) },
-    { key: "actualizada", header: "Actualizada", cell: (p) => formatDateTime(p.actualizada_en) },
+    { key: "actualizada", header: "Actualizada", cell: (p) => fechaHora(p.actualizada_en) },
   ];
 
   return (

@@ -12,7 +12,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Evaluation, ReleaseDiff, ReleaseSummary } from "@/lib/api/types";
 import { TEXTO_PROBAR } from "@/lib/canary";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 import {
   ETIQUETA_ESTADO,
@@ -174,6 +174,7 @@ function TarjetaVersion({
   onVolverAtras?: () => void;
   numeroAnterior?: number;
 }) {
+  const { fechaHora } = useFormato();
   const confirm = useConfirm();
   const [abierto, setAbierto] = useState(false);
   const [diff, setDiff] = useState<ReleaseDiff | null>(null);
@@ -256,7 +257,7 @@ function TarjetaVersion({
           {deLaPlataforma && <Badge variant="info">De la plataforma</Badge>}
           {v.canary && <Badge variant="info">En prueba con una parte</Badge>}
         </h3>
-        <span className="text-xs text-text-soft">{formatDateTime(v.created_at)}</span>
+        <span className="text-xs text-text-soft">{fechaHora(v.created_at)}</span>
       </div>
 
       {deLaPlataforma && esCandidata && (

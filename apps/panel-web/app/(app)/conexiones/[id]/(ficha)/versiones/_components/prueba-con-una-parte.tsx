@@ -24,7 +24,7 @@ import {
   textoPorcentaje,
   textoSenalDura,
 } from "@/lib/canary";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 import { mensajeDeError } from "@/lib/versiones";
 
@@ -54,6 +54,7 @@ export function PruebaConUnaParte({
   prueba: CanaryState;
   puedeOperar: boolean;
 }) {
+  const { fechaHora } = useFormato();
   const confirm = useConfirm();
   const { run, pending } = useAction();
   const [cambiando, setCambiando] = useState(false);
@@ -112,7 +113,7 @@ export function PruebaConUnaParte({
           Versión {numero} en prueba con el {prueba.percent} % de los clientes
           <Badge variant={TONO_BADGE[estado.tono]}>{estado.titulo}</Badge>
         </h3>
-        <span className="text-xs text-text-soft">Desde {formatDateTime(prueba.started_at)}</span>
+        <span className="text-xs text-text-soft">Desde {fechaHora(prueba.started_at)}</span>
       </div>
 
       <p className="text-sm text-body">{estado.detalle}</p>

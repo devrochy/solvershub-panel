@@ -31,6 +31,7 @@ function cron(parcial: Partial<Cron>): Cron {
     sensitive: false,
     reprogramable: true,
     record_success: true,
+    ambito: "plataforma",
     estado: "ok",
     next_run_at: null,
     last_run: null,

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { NAV_GROUPS } from "@/components/shell/nav";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import type { NotificacionDestino } from "@/lib/api/types";
 import { seccionesDePaleta, type PacksDelNegocio } from "@/lib/shell/paleta";
 import type { EstadoModulo } from "@/lib/shell/modulos";
@@ -185,7 +186,11 @@ export function tiempoRelativo(iso: string, ahora: Date = new Date()): string {
   const dias = Math.floor(horas / 24);
   if (dias === 1) return "ayer";
   if (dias < 7) return `hace ${dias} días`;
-  return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+  return new Date(iso).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "short",
+    timeZone: ZONA_POR_DEFECTO,
+  });
 }
 
 function inicioDelDia(fecha: Date): number {
@@ -197,7 +202,11 @@ export function etiquetaDeDia(iso: string, ahora: Date = new Date()): string {
   const dias = Math.round((inicioDelDia(ahora) - inicioDelDia(new Date(iso))) / 86_400_000);
   if (dias <= 0) return "Hoy";
   if (dias === 1) return "Ayer";
-  return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "long" });
+  return new Date(iso).toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "long",
+    timeZone: ZONA_POR_DEFECTO,
+  });
 }
 
 export type GrupoDeDia<T extends { created_at: string }> = { dia: string; items: T[] };

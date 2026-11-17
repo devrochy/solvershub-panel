@@ -118,16 +118,19 @@ export async function getSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE)?.value ?? null;
 }
 
-/** Zona horaria del negocio activo (HU-CRM-21: las fechas de seguimiento se muestran en su hora). Default Bogotá. */
+/**
+ * Zona horaria del negocio activo (ADR-0201). Sale de `/admin/me`, que ya trae las preferencias
+ * del negocio para cualquier cuenta con acceso (no exige la sección `settings`). Default Bogotá.
+ */
 export async function getBusinessTimezone(): Promise<string> {
-  const res = await apiFetch<{ identity?: { timezone?: string } }>("/admin/settings");
-  if (res.ok && res.data?.identity?.timezone) return res.data.identity.timezone;
+  const res = await apiFetch<{ timezone?: string }>("/admin/me");
+  if (res.ok && res.data?.timezone) return res.data.timezone;
   return "America/Bogota";
 }
 
 /** Moneda del negocio activo (HU-UI-01). Default `COP` si no se puede leer. */
 export async function getBusinessCurrency(): Promise<string> {
-  const res = await apiFetch<{ identity?: { currency?: string } }>("/admin/settings");
-  if (res.ok && res.data?.identity?.currency) return res.data.identity.currency;
+  const res = await apiFetch<{ currency?: string }>("/admin/me");
+  if (res.ok && res.data?.currency) return res.data.currency;
   return "COP";
 }

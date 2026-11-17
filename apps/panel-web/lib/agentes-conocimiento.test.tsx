@@ -18,6 +18,7 @@ const llamadas: string[] = [];
 
 vi.mock("@/lib/api/server", async (original) => ({
   ...(await original<typeof import("@/lib/api/server")>()),
+  getBusinessTimezone: async () => "America/Bogota",
   apiFetch: vi.fn(async (ruta: string) => {
     llamadas.push(ruta);
     const data = respuestas[ruta.split("?")[0]];
