@@ -804,7 +804,7 @@ export function EditorDeAgente({
             })}
           />
         )}
-        <PasoProbarBorrador sugerencias={sugerenciasDePrueba(cargados)} />
+        <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
         {creacionRapida && (
           <p className="text-sm text-text-soft">
             Pruebas el borrador sin publicarlo. Al terminar sigues en Personalizar: ahí ajustas cómo habla, su horario y su flujo, y lo
