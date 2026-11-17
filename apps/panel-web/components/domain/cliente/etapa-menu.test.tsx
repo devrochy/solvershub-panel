@@ -55,7 +55,7 @@ function pintar(actual = "calificado", texto = "Calificado", motivos?: { value: 
     <EtapaMenu
       leadId="c-1"
       nombre="Ana Prueba"
-      pluginId="pack_commerce"
+      pluginId="leads"
       clave="estado_lead"
       actual={actual}
       texto={texto}
@@ -92,7 +92,7 @@ describe("EtapaMenu", () => {
     // El servidor aún no respondió y la etapa ya cambió.
     await waitFor(() => expect(screen.getByRole("button", { name: /Etapa: Contactado/ })).toBeTruthy());
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/leads/c-1/pack/pack_commerce",
+      "/api/leads/c-1/pack/leads",
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ valores: { estado_lead: "contactado" } }) }),
     );
 
@@ -134,7 +134,7 @@ describe("EtapaMenu", () => {
   it("sigue la etapa que trae el servidor cuando la vista se refresca", () => {
     const { rerender } = pintar();
     rerender(
-      <EtapaMenu leadId="c-1" nombre="Ana Prueba" pluginId="pack_commerce" clave="estado_lead" actual="convertido" texto="Convertido" opciones={OPCIONES} />,
+      <EtapaMenu leadId="c-1" nombre="Ana Prueba" pluginId="leads" clave="estado_lead" actual="convertido" texto="Convertido" opciones={OPCIONES} />,
     );
     expect(screen.getByRole("button", { name: /Etapa: Convertido/ })).toBeTruthy();
   });
@@ -174,7 +174,7 @@ describe("EtapaMenu · motivo de pérdida (HU-CRM-23)", () => {
 
     await waitFor(() => expect(refresh).toHaveBeenCalled());
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/leads/c-1/pack/pack_commerce",
+      "/api/leads/c-1/pack/leads",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ valores: { estado_lead: "perdido", motivo_perdida: "precio", nota_perdida: "Dijo que estaba caro" } }),

@@ -49,6 +49,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type Fila = LeadsResponse["items"][number];
+type Columna = LeadsResponse["agents"][number]["columns"][number];
 
 export type FiltrosClientesDeModulo = {
   q?: string;
@@ -92,6 +93,23 @@ export type OperableDeModulo = {
   /** Clave del filtro por tramos del valor estimado (`valor`, HU-CRM-23): habilita sus órdenes y su columna en pesos. */
   valor?: string;
 };
+
+/**
+ * Agentes cuyas columnas se suman a las del módulo: el lead es del core desde ADR-0193 (agente `leads`), pero se
+ * trabaja en Clientes de Ventas, que sigue contando al cliente que solo tiene lead.
+ */
+const COLUMNAS_QUE_SUMA: Record<string, string[]> = { ventas: ["leads"] };
+
+/** Columnas de la lista del módulo: las del agente y las de los que suma, sin repetir clave. */
+export function columnasDeLaLista(agents: LeadsResponse["agents"], agente: string): Columna[] {
+  const salida: Columna[] = [];
+  for (const clave of [agente, ...(COLUMNAS_QUE_SUMA[agente] ?? [])]) {
+    for (const columna of agents.find((a) => a.key === clave)?.columns ?? []) {
+      if (!salida.some((c) => c.key === columna.key)) salida.push(columna);
+    }
+  }
+  return salida;
+}
 
 /** Query de `/admin/leads` para la lista de un módulo: el agente, la búsqueda y la página (y, si es operable, filtros, orden y contadores). */
 export function consultaClientesDeModulo(
@@ -167,7 +185,7 @@ export async function ClientesDeModulo({
   const { items, agents, page, has_more, total, filters, facetas } = res.ok
     ? res.data
     : { items: [] as Fila[], agents: [], page: 1, has_more: false, total: 0, filters: [] as LeadFilter[], facetas: [] };
-  const columnasDelAgente = agents.find((a) => a.key === agente)?.columns ?? [];
+  const columnasDelAgente = columnasDeLaLista(agents, agente);
   const puedeEnviar = me?.ok ? puedeEnviarPlantilla(me.data) : false;
   const puedeCambiarEtapa = Boolean(operable?.pluginDeEtapa) && (me?.ok ? puedeEditarClientes(me.data) : false);
 

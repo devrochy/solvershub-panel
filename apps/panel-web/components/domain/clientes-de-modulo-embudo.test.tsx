@@ -118,7 +118,7 @@ const OPERABLE = {
   etapa: "estado_lead",
   filtros: ["clasificacion", "motivo_perdida"],
   motivoDePerdida: "motivo_perdida",
-  pluginDeEtapa: "pack_commerce",
+  pluginDeEtapa: "leads",
 };
 
 async function pintar(sp: Parameters<typeof ClientesDeModulo>[0]["sp"] = {}) {

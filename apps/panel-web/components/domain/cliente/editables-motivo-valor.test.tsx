@@ -45,7 +45,7 @@ const MOTIVOS = [
 ];
 
 function campos({ etapa = "calificado", motivo = "", nota = "", valor = "" } = {}): LeadEditable[] {
-  const base = { plugin_id: "pack_commerce" };
+  const base = { plugin_id: "leads" };
   return [
     { ...base, key: "estado_lead", label: "Estado del lead", tipo: "opciones", options: ETAPAS, max_length: 32, value: etapa },
     { ...base, key: "motivo_perdida", label: "Motivo de pérdida", tipo: "opciones", options: MOTIVOS, max_length: 32, value: motivo },
@@ -55,7 +55,7 @@ function campos({ etapa = "calificado", motivo = "", nota = "", valor = "" } = {
 }
 
 function pintar(props: Parameters<typeof campos>[0] = {}) {
-  return render(<EditablesDelPack leadId="c-1" pluginId="pack_commerce" campos={campos(props)} />);
+  return render(<EditablesDelPack leadId="c-1" pluginId="leads" campos={campos(props)} />);
 }
 
 const etapa = () => screen.getByLabelText("Estado del lead") as HTMLSelectElement;

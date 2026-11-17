@@ -17,7 +17,7 @@ export default async function ClientesDeVentasPage({ searchParams }: { searchPar
         filtros: ["clasificacion", "motivo_perdida", "valor"],
         motivoDePerdida: "motivo_perdida",
         valor: "valor",
-        pluginDeEtapa: "pack_commerce",
+        pluginDeEtapa: "leads",
         seguimiento: "seguimiento",
       }}
     />

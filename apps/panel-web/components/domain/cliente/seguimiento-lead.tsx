@@ -19,7 +19,8 @@ import { useAction } from "@/lib/use-action";
 
 export const CLAVE_NOTA = "seguimiento_nota";
 export const CLAVE_FECHA = "seguimiento_en";
-const PLUGIN = "pack_commerce";
+// El provider del lead es del core desde ADR-0193 (antes `pack_commerce`, que el backend sigue aceptando como alias).
+const PLUGIN = "leads";
 
 /** ¿Estos campos editables son los del seguimiento? Se muestran en su propia tarjeta, no en el formulario genérico. */
 export function esCampoDeSeguimiento(clave: string): boolean {
