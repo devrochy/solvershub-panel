@@ -133,7 +133,7 @@ describe("Nuevo agente en pantalla (HU-AOS-77)", () => {
     fireEvent.change(screen.getByLabelText(/Nombre del agente/), { target: { value: "Sofía" } });
     fireEvent.change(screen.getByLabelText(/Para qué sirve/), { target: { value: "Vende por WhatsApp." } });
     fireEvent.click(screen.getByRole("button", { name: /Crear borrador y seguir/ }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/editar?paso=voz&modo=crear"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/personalizar?paso=voz&modo=crear"));
     const [, crear] = fetchMock.mock.calls[0];
     expect(JSON.parse(crear.body)).toEqual({ template_key: "ventas", answers: { que_vendes: "productos", largo_respuesta: "normal" }, name: "Sofía" });
     const [url, patch] = fetchMock.mock.calls[1];
@@ -156,7 +156,7 @@ describe("Nuevo agente en pantalla (HU-AOS-77)", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Cobranza/ }));
     fireEvent.click(screen.getByRole("button", { name: /Crear borrador y seguir/ }));
     const enlace = await screen.findByRole("link", { name: "Editarlo" });
-    expect(enlace.getAttribute("href")).toBe("/agentes/a-9/editar");
+    expect(enlace.getAttribute("href")).toBe("/agentes/a-9/personalizar");
     expect(push).not.toHaveBeenCalled();
   });
 });

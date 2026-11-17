@@ -106,7 +106,7 @@ describe("pestaña Superpoderes del agente (HU-UX-09)", () => {
     ]);
     expect(body.content.guardrails).toEqual({ x: 1 });
     const publicar = await screen.findByRole("link", { name: "Publicar cambios" });
-    expect(publicar.getAttribute("href")).toBe(`/agentes/${ID}/editar?paso=publicar`);
+    expect(publicar.getAttribute("href")).toBe(`/agentes/${ID}/personalizar?paso=publicar`);
     expect(screen.getByRole("switch", { name: "Agendar citas" }).getAttribute("aria-checked")).toBe("true");
   });
 

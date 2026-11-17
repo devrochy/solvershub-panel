@@ -56,7 +56,7 @@ export function AvisoDeReferenciasEnLista({ avisos }: { avisos: RetiredReference
           <li key={a.agent_id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-headline">{a.name}</span>
             {a.blocks_publish && <Badge variant="danger">Bloquea publicar</Badge>}
-            <Link className="text-link underline" href={`/agentes/${a.agent_id}/editar`}>
+            <Link className="text-link underline" href={`/agentes/${a.agent_id}/personalizar`}>
               Revisar en el editor
             </Link>
           </li>

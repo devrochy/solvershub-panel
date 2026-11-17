@@ -115,7 +115,7 @@ export function SuperpoderesDelAgente({
           )}
           {puedeEditar && sinPublicar && !pendiente && (
             <Button asChild variant="accent">
-              <Link href={`/agentes/${agente.id}/editar?paso=publicar`}>Publicar cambios</Link>
+              <Link href={`/agentes/${agente.id}/personalizar?paso=publicar`}>Publicar cambios</Link>
             </Button>
           )}
         </div>
