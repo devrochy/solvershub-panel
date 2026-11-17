@@ -118,7 +118,7 @@ export function AtajosProvider({
       const ok = await confirm({
         title: "¿Pausar el asistente?",
         description:
-          "Dejará de responder a los clientes en todos los canales hasta que lo reactives. Los mensajes se siguen guardando en Conversaciones.",
+          "Dejará de responder en todos los canales y no saldrá nada automático a tus clientes (seguimientos, recordatorios, avisos de cobro ni envíos a segmentos) hasta que lo reactives. Lo que no salió no se reenvía. Tú y tu equipo pueden seguir escribiendo, y los mensajes se siguen guardando en Conversaciones.",
         confirmLabel: "Pausar asistente",
       });
       if (!ok) return;
