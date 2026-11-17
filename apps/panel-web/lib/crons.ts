@@ -1,4 +1,5 @@
 import type { Cron, CronEjecucion } from "@/lib/api/types";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import type { ConfirmOptions } from "@/components/ui/confirm";
 
 /**
@@ -150,8 +151,23 @@ export function validarCron(expresion: string): string | null {
 
 const DOS = (n: number) => String(n).padStart(2, "0");
 const HORA = (h: number, m: number) => `${DOS(h)}:${DOS(m)}`;
-/** Colombia no usa horario de verano: siempre UTC−5. */
-const A_COLOMBIA = (h: number, m: number) => HORA((h + 24 - 5) % 24, m);
+
+/** Etiqueta legible de la zona: «Colombia» para la del producto; si no, el nombre IANA. */
+function etiquetaZona(timeZone: string): string {
+  return timeZone === "America/Bogota" ? "Colombia" : timeZone;
+}
+
+/** Hora de pared de `h:m` UTC en la zona del negocio (ADR-0201). Usa la fecha de hoy para el desfase. */
+function horaEnZona(h: number, m: number, timeZone: string): string {
+  const hoy = new Date();
+  const instante = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate(), h, m));
+  return new Intl.DateTimeFormat("es-CO", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(instante);
+}
 
 /** En plural, como se dice en «los lunes»: lunes a viernes no cambian. */
 const DIAS = ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"];
@@ -174,7 +190,11 @@ function textoDeDias(valores: number[]): string {
  * Describe el horario en español y con las horas de Colombia: «Todos los días a las 13:00 UTC (08:00 en
  * Colombia)». Cubre los patrones que usan los crons; el resto se muestra tal cual, como «Personalizado».
  */
-export function describirCron(expresion: string | null | undefined, intervaloSegundos?: number | null): string {
+export function describirCron(
+  expresion: string | null | undefined,
+  intervaloSegundos?: number | null,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
   if (intervaloSegundos) return `Cada ${intervaloSegundos} segundos (intervalo fijo)`;
   if (!expresion) return "—";
   if (validarCron(expresion) !== null) return `Personalizado: ${expresion}`;
@@ -193,8 +213,10 @@ export function describirCron(expresion: string | null | undefined, intervaloSeg
   }
   if (soloDiario && minutos.length === 1 && h !== "*") {
     const minuto = minutos[0];
-    // PLT-10: primero la hora de Colombia, que es la que se lee.
-    const aLas = horas.map((hh) => `${A_COLOMBIA(hh, minuto)} en Colombia (${HORA(hh, minuto)} UTC)`);
+    // PLT-10: primero la hora del negocio, que es la que se lee.
+    const aLas = horas.map(
+      (hh) => `${horaEnZona(hh, minuto, timeZone)} en ${etiquetaZona(timeZone)} (${HORA(hh, minuto)} UTC)`,
+    );
     const prefijo = diaTexto === "todos los días" ? "Todos los días" : `${diaTexto[0].toUpperCase()}${diaTexto.slice(1)}`;
     return horas.length === 1 ? `${prefijo} a las ${aLas[0]}` : `${prefijo} a las ${unir(aLas)}`;
   }

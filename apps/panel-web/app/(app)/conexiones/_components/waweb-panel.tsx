@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WawebState } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { etiquetaPlataforma, nombreVinculado, telefonoVinculado } from "@/lib/waweb";
 
 type State = WawebState;
@@ -18,6 +18,7 @@ const POLL_MS = 3000;
 
 /** Vínculo por QR del canal WhatsApp Web: acepta el aviso y muestra el QR vigente. */
 export function WawebPanel({ initial }: { initial: State }) {
+  const { fechaHora } = useFormato();
   const [state, setState] = useState<State>(initial);
   const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
 
@@ -108,14 +109,14 @@ export function WawebPanel({ initial }: { initial: State }) {
                   {state.linked_at && (
                     <>
                       <dt className="text-text-soft">Vinculado el</dt>
-                      <dd className="text-body">{formatDateTime(state.linked_at)}</dd>
+                      <dd className="text-body">{fechaHora(state.linked_at)}</dd>
                     </>
                   )}
                   {state.last_connected_at &&
                     state.last_connected_at !== state.linked_at && (
                       <>
                         <dt className="text-text-soft">Última conexión</dt>
-                        <dd className="text-body">{formatDateTime(state.last_connected_at)}</dd>
+                        <dd className="text-body">{fechaHora(state.last_connected_at)}</dd>
                       </>
                     )}
                 </dl>

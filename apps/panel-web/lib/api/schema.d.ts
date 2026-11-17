@@ -6345,6 +6345,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/crons/{name}/negocios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Crons Por Negocio
+         * @description Vista por negocio de un cron de ámbito `negocio`: quién lo tiene apagado o fallando.
+         */
+        get: operations["crons_por_negocio_api_v1_admin_platform_crons__name__negocios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/platform/kill-switch": {
         parameters: {
             query?: never;
@@ -6356,6 +6376,64 @@ export interface paths {
         get: operations["obtener_api_v1_admin_platform_kill_switch_get"];
         /** Fijar */
         put: operations["fijar_api_v1_admin_platform_kill_switch_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/automatizaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Automatizaciones */
+        get: operations["listar_automatizaciones_api_v1_admin_automatizaciones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/automatizaciones/{cron_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalle Automatizacion */
+        get: operations["detalle_automatizacion_api_v1_admin_automatizaciones__cron_name__get"];
+        /**
+         * Actualizar Automatizacion
+         * @description Enciende/apaga o cambia hora/ventana. Solo lo que el catálogo admite.
+         */
+        put: operations["actualizar_automatizacion_api_v1_admin_automatizaciones__cron_name__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/automatizaciones/{cron_name}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Ejecuciones
+         * @description Ejecuciones con efecto, fallos y manuales del negocio (ADR-0201).
+         */
+        get: operations["listar_ejecuciones_api_v1_admin_automatizaciones__cron_name__runs_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -11020,6 +11098,23 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** AutomatizacionesOut */
+        AutomatizacionesOut: {
+            /** Items */
+            items: components["schemas"]["CronNegocioOut"][];
+            resumen: components["schemas"]["AutomatizacionesResumen"];
+        };
+        /** AutomatizacionesResumen */
+        AutomatizacionesResumen: {
+            /** Total */
+            total: number;
+            /** Habilitadas */
+            habilitadas: number;
+            /** Apagadas */
+            apagadas: number;
+            /** Con Fallo */
+            con_fallo: number;
+        };
         /** AvanzarIn */
         AvanzarIn: {
             /**
@@ -13477,6 +13572,142 @@ export interface components {
             /** Con Fallo */
             con_fallo: number;
         };
+        /** CronNegocioOut */
+        CronNegocioOut: {
+            /** Name */
+            name: string;
+            /** Module */
+            module: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /**
+             * Pack
+             * @description Pack del que cuelga; enlaza a su configuración.
+             */
+            pack: string | null;
+            /** Sensitive */
+            sensitive: boolean;
+            /** Configurable */
+            configurable: boolean;
+            /** Admite Hora Local */
+            admite_hora_local: boolean;
+            /** Admite Ventana */
+            admite_ventana: boolean;
+            /**
+             * Parametros
+             * @description Campos del pack que la pantalla enlaza.
+             */
+            parametros: string[];
+            /** Habilitada */
+            habilitada: boolean;
+            /**
+             * Hora Local
+             * @description Hora local efectiva (la elegida o la del catálogo).
+             */
+            hora_local: number | null;
+            /**
+             * Hora Local Por Defecto
+             * @description Hora local que se usa si el negocio no elige.
+             */
+            hora_local_por_defecto: number | null;
+            /**
+             * Hora Local Personalizada
+             * @description True si el negocio eligió una hora propia.
+             */
+            hora_local_personalizada: boolean;
+            ventana: components["schemas"]["Ventana"] | null;
+            /** Next Run At */
+            next_run_at: string | null;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Last Status */
+            last_status: ("success" | "failed" | "skipped") | null;
+            /** Last Resumen */
+            last_resumen: string | null;
+            /** Last Acciones */
+            last_acciones: number | null;
+            /**
+             * Acciones
+             * @description Acciones válidas para esta automatización.
+             */
+            acciones: ("enable" | "disable" | "hora" | "ventana")[];
+        };
+        /**
+         * CronNegocioResumenOut
+         * @description Un negocio con fila de configuración para este cron (ADR-0201). Solo metadatos operativos.
+         */
+        CronNegocioResumenOut: {
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /** Habilitada */
+            habilitada: boolean;
+            /** Hora Local */
+            hora_local: number | null;
+            /** Ventana */
+            ventana: {
+                [key: string]: unknown;
+            } | null;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Last Status */
+            last_status: ("running" | "success" | "failed" | "skipped") | null;
+            /** Last Resumen */
+            last_resumen: string | null;
+            /** Last Acciones */
+            last_acciones: number | null;
+            /** Fallos 24H */
+            fallos_24h: number;
+        };
+        /** CronNegocioRunOut */
+        CronNegocioRunOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "failed" | "skipped";
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "scheduled" | "manual";
+            /** Acciones */
+            acciones: number;
+            /** Resumen */
+            resumen: string | null;
+            /** Error Class */
+            error_class: string | null;
+            /** Detail */
+            detail: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Duration Ms */
+            duration_ms: number | null;
+        };
+        /** CronNegocioUpdate */
+        CronNegocioUpdate: {
+            /** Habilitada */
+            habilitada?: boolean | null;
+            /** Hora Local */
+            hora_local?: number | null;
+            ventana?: components["schemas"]["Ventana"] | null;
+        };
         /** CronOut */
         CronOut: {
             /** Name */
@@ -13517,6 +13748,12 @@ export interface components {
              * @description False: no se guarda cada ejecución exitosa.
              */
             record_success: boolean;
+            /**
+             * Ambito
+             * @description `negocio`: también se configura en Configuración / Automatizaciones (ADR-0201).
+             * @enum {string}
+             */
+            ambito: "plataforma" | "negocio";
             /**
              * Estado
              * @enum {string}
@@ -16472,6 +16709,16 @@ export interface components {
              */
             qa_testers_habilitados: boolean;
             plan?: components["schemas"]["MePlanSummary"] | null;
+            /**
+             * Timezone
+             * @default America/Bogota
+             */
+            timezone: string;
+            /**
+             * Currency
+             * @default COP
+             */
+            currency: string;
         };
         /** MeasuredProcedure */
         MeasuredProcedure: {
@@ -18201,6 +18448,19 @@ export interface components {
         Page_ConversationSummary_: {
             /** Items */
             items: components["schemas"]["ConversationSummary"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** Page[CronNegocioRunOut] */
+        Page_CronNegocioRunOut_: {
+            /** Items */
+            items: components["schemas"]["CronNegocioRunOut"][];
             /** Total */
             total: number;
             /** Page */
@@ -23586,6 +23846,24 @@ export interface components {
             documentos_faltantes: string[];
             /** En Revision */
             en_revision: number;
+        };
+        /** Ventana */
+        Ventana: {
+            /**
+             * Desde
+             * @description HH:MM en hora local.
+             */
+            desde: string;
+            /**
+             * Hasta
+             * @description HH:MM en hora local.
+             */
+            hasta: string;
+            /**
+             * Dias
+             * @description 0=lunes … 6=domingo. Vacío = todos los días.
+             */
+            dias?: number[];
         };
         /** VerifierKind */
         VerifierKind: {
@@ -37919,6 +38197,40 @@ export interface operations {
             };
         };
     };
+    crons_por_negocio_api_v1_admin_platform_crons__name__negocios_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronNegocioResumenOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     obtener_api_v1_admin_platform_kill_switch_get: {
         parameters: {
             query?: never;
@@ -37974,6 +38286,148 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["KillSwitchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_automatizaciones_api_v1_admin_automatizaciones_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomatizacionesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detalle_automatizacion_api_v1_admin_automatizaciones__cron_name__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                cron_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronNegocioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    actualizar_automatizacion_api_v1_admin_automatizaciones__cron_name__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                cron_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CronNegocioUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CronNegocioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_ejecuciones_api_v1_admin_automatizaciones__cron_name__runs_get: {
+        parameters: {
+            query?: {
+                status?: ("success" | "failed" | "skipped") | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                cron_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CronNegocioRunOut_"];
                 };
             };
             /** @description Validation Error */

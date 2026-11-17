@@ -21,7 +21,7 @@ import {
   type Fuente,
   type Variable,
 } from "@/lib/envios";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 
 type Paso = "armar" | "vista" | "enviado";
 
@@ -49,6 +49,7 @@ export function EnviarPlantilla({
    */
   icono?: { className?: string };
 }) {
+  const { fechaHora } = useFormato();
   const [open, setOpen] = useState(false);
   const [paso, setPaso] = useState<Paso>("armar");
   const [conexiones, setConexiones] = useState<ConexionDeEnvio[] | null>(null);
@@ -321,7 +322,7 @@ export function EnviarPlantilla({
               {vista.expira && (
                 <>
                   <dt className="text-text-soft">Confirma antes de</dt>
-                  <dd className="text-body">{formatDateTime(vista.expira)}</dd>
+                  <dd className="text-body">{fechaHora(vista.expira)}</dd>
                 </>
               )}
             </dl>

@@ -1,4 +1,5 @@
 import { estadoLegible, type StatusMap } from "@/components/domain/status-badge";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatCop, formatDate, formatDateTime, formatNumber } from "@/lib/format";
 
 /** Una sola fuente para cómo se leen los valores de Cobranza: el backend los manda como enums. */
@@ -97,10 +98,16 @@ export function montoDeResumen(valor: string | undefined): number {
 }
 
 /** Las fechas con hora de la API llegan como «2026-11-08 17:10», en UTC. */
-export function fechaHoraDeApi(valor: string | null | undefined): string {
+export function fechaHoraDeApi(
+  valor: string | null | undefined,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
   if (!valor) return "—";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return formatDate(valor);
-  return formatDateTime(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(valor) ? `${valor.replace(" ", "T")}:00Z` : valor);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return formatDate(valor, timeZone);
+  return formatDateTime(
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(valor) ? `${valor.replace(" ", "T")}:00Z` : valor,
+    timeZone,
+  );
 }
 
 const CAMPOS: Record<string, string> = {

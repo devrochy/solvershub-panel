@@ -8,6 +8,7 @@ import { EstadoDeError } from "@/components/ui/estado-de-error";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import type { AgenteResumen, KpiResumen, ModuloResumen, ResumenPorAgente } from "@/lib/api/types";
 import { tipoDeAgente } from "@/lib/agentes";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatDateTime } from "@/lib/format";
 import { propsDeKpi } from "@/lib/resumen/kpi";
 import { RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";
@@ -122,7 +123,7 @@ function AgenteGeneral({ datos, dias, ocultarEscalaciones }: { datos: ResumenPor
   );
 }
 
-function TarjetaDeAgente({ agente, dias, abierta }: { agente: AgenteResumen; dias: number; abierta: boolean }) {
+function TarjetaDeAgente({ agente, dias, abierta, timezone = ZONA_POR_DEFECTO }: { agente: AgenteResumen; dias: number; abierta: boolean; timezone?: string }) {
   const cifras = cifrasDelTitulo(agente);
   return (
     <TarjetaPlegable abierta={abierta} className="group rounded-lg border border-border-soft bg-surface">
@@ -145,7 +146,7 @@ function TarjetaDeAgente({ agente, dias, abierta }: { agente: AgenteResumen; dia
         </ul>
         <span className="ml-auto text-xs text-text-soft">
           {agente.ultima_actividad
-            ? `Última actividad ${formatDateTime(agente.ultima_actividad)}`
+            ? `Última actividad ${formatDateTime(agente.ultima_actividad, timezone)}`
             : "Sin actividad en el período"}
         </span>
       </summary>
@@ -175,11 +176,14 @@ export function ResumenAgentes({
   datos,
   despuesDelGeneral,
   ocultarEscalaciones = false,
+  timezone = ZONA_POR_DEFECTO,
 }: {
   datos: ResumenPorAgente;
   despuesDelGeneral?: ReactNode;
   /** La columna «Te esperan» ya las muestra con nombre y motivo. */
   ocultarEscalaciones?: boolean;
+  /** Zona del negocio (ADR-0201) para la última actividad de cada agente. */
+  timezone?: string;
 }) {
   const dias = datos.periodo.dias ?? 7;
   const conSerie = datos.agentes.some((a) => (a.serie?.length ?? 0) > 0);
@@ -196,7 +200,7 @@ export function ResumenAgentes({
         <Seccion id="resumen-agentes" titulo="Agentes">
           <div className="flex flex-col gap-3">
             {agentes.map((a, i) => (
-              <TarjetaDeAgente key={a.ref} agente={a} dias={dias} abierta={i === 0} />
+              <TarjetaDeAgente key={a.ref} agente={a} dias={dias} abierta={i === 0} timezone={timezone} />
             ))}
           </div>
         </Seccion>

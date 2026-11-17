@@ -4,6 +4,7 @@
  * Lógica pura: las páginas solo pintan lo que devuelve.
  */
 
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatNumber } from "@/lib/format";
 
 export type TonoVenta = "neutral" | "info" | "success" | "warning" | "danger";
@@ -11,7 +12,11 @@ export type Etiqueta = { label: string; tono: TonoVenta };
 
 // ------------------------------------------------------------------ fechas
 
-const HORA = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit" });
+const HORA = new Intl.DateTimeFormat("es-CO", {
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: ZONA_POR_DEFECTO,
+});
 const MESES = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic."];
 
 const inicioDelDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();

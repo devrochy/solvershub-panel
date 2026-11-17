@@ -103,6 +103,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       asistentePausado={asistentePausado}
       puedeEditarAsistente={puedeEditar}
       plan={me.plan ?? null}
+      timezone={me.timezone ?? "America/Bogota"}
+      currency={me.currency ?? "COP"}
     >
       <FeedbackProviders>
         <AtajosProvider atajosActivosIniciales={atajosActivos}>

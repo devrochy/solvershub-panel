@@ -14,7 +14,7 @@ import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { components } from "@/lib/api/schema";
 import { fichaDePestana } from "@/lib/conexion-ficha-servidor";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -69,9 +69,10 @@ export default async function SaludPage({
   const ficha = await fichaDePestana(id, "salud");
   const metaId = ficha?.conexion.meta_connection_id;
   if (!ficha || !metaId) return null;
-  const [healthRes, pruebaRes] = await Promise.all([
+  const [healthRes, pruebaRes, zona] = await Promise.all([
     apiFetch<{ connections: HealthConnection[] }>("/admin/meta/health"),
     apiFetch<Opciones>(`/admin/meta/connections/${encodeURIComponent(metaId)}/test-message`),
+    getBusinessTimezone(),
   ]);
   const cuenta = healthRes.ok ? healthRes.data.connections.find((c) => c.id === metaId) : undefined;
   if (!cuenta) {
@@ -91,7 +92,7 @@ export default async function SaludPage({
   const titulo =
     checks.length === 0 ? "Salud" : pendientes === 0 ? "Todo funciona" : `${pendientes} ${pendientes === 1 ? "cosa" : "cosas"} por revisar`;
   const entorno = cuenta.environment === "production" ? "En producción" : "En prueba";
-  const revisado = cuenta.last_health_check_at ? `Revisado el ${formatDateTime(cuenta.last_health_check_at)}` : "Sin revisar";
+  const revisado = cuenta.last_health_check_at ? `Revisado el ${formatDateTime(cuenta.last_health_check_at, zona)}` : "Sin revisar";
 
   return (
     <SeccionFicha

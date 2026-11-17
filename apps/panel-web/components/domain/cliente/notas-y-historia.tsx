@@ -10,11 +10,12 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Textarea } from "@/components/ui/textarea";
 import type { LeadNote, TimelineItem, TimelineResponse } from "@/lib/api/types";
 import { enlaceDeEvento, TIPO_DE_EVENTO } from "@/lib/clientes";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { useAction } from "@/lib/use-action";
 
 /** Notas del equipo sobre el cliente (HU-CRM-04): las ve todo el equipo y el agente las tiene en cuenta. */
 export function NotasDelCliente({ leadId, onCambio }: { leadId: string; onCambio?: () => void }) {
+  const { fechaHora } = useFormato();
   const [notas, setNotas] = useState<LeadNote[] | null>(null);
   const [texto, setTexto] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +99,7 @@ export function NotasDelCliente({ leadId, onCambio }: { leadId: string; onCambio
               <p className="whitespace-pre-wrap break-words text-headline">{n.text}</p>
               <div className="mt-1 flex items-center justify-between gap-2 text-xs text-text-soft">
                 <span>
-                  {n.author} · {formatDateTime(n.created_at)}
+                  {n.author} · {fechaHora(n.created_at)}
                 </span>
                 {n.puede_borrar && (
                   <button
@@ -121,6 +122,7 @@ export function NotasDelCliente({ leadId, onCambio }: { leadId: string; onCambio
 
 /** Línea de tiempo del cliente (HU-CRM-04): lo más reciente primero, por páginas. */
 export function HistoriaDelCliente({ leadId }: { leadId: string }) {
+  const { fechaHora } = useFormato();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [parcial, setParcial] = useState(false);
@@ -167,7 +169,7 @@ export function HistoriaDelCliente({ leadId }: { leadId: string }) {
             <li key={`${e.kind}-${e.at}-${i}`} className="text-sm">
               <div className="flex items-center gap-2">
                 <Badge variant="neutral">{TIPO_DE_EVENTO[e.kind] ?? e.kind}</Badge>
-                <span className="text-xs text-text-soft">{formatDateTime(e.at)}</span>
+                <span className="text-xs text-text-soft">{fechaHora(e.at)}</span>
               </div>
               <p className="mt-1 text-headline">
                 {href ? (

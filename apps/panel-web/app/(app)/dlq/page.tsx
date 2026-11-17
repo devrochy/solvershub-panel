@@ -2,7 +2,7 @@ import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import type { Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import { avisoEnPalabras, llegadaDe } from "@/lib/fallidos";
 import { formatDateTime } from "@/lib/format";
 import { RetryButton } from "./_components/retry-button";
@@ -25,9 +25,9 @@ type DomainEventEntry = {
   created_at: string;
 };
 
-const llegada = (e: DlqEntry) => {
+const llegada = (e: DlqEntry, timeZone: string) => {
   const fecha = llegadaDe(e.entry_id);
-  return fecha ? formatDateTime(fecha) : "";
+  return fecha ? formatDateTime(fecha, timeZone) : "";
 };
 
 /**
@@ -35,9 +35,10 @@ const llegada = (e: DlqEntry) => {
  * de WhatsApp ni del negocio a la vista; los avisos del sistema (pagos, pedidos) con su nombre.
  */
 export default async function DlqPage() {
-  const [res, eventsRes] = await Promise.all([
+  const [res, eventsRes, zona] = await Promise.all([
     apiFetch<{ entries: DlqEntry[] }>("/admin/dlq"),
     apiFetch<{ entries: DomainEventEntry[] }>("/admin/domain-events"),
+    getBusinessTimezone(),
   ]);
   const cabecera = (
     <PageHeader
@@ -57,13 +58,13 @@ export default async function DlqPage() {
 
   const columns: Column<DlqEntry>[] = [
     { key: "mensaje", header: "Mensaje", cell: (e) => <span className="text-headline">{e.content ? `«${e.content}»` : "Sin texto (audio, imagen o archivo)"}</span> },
-    { key: "llego", header: "Llegó", cell: (e) => <span className="text-body">{llegada(e)}</span> },
+    { key: "llego", header: "Llegó", cell: (e) => <span className="text-body">{llegada(e, zona)}</span> },
     { key: "acciones", header: <span className="sr-only">Acciones</span>, align: "right", cell: (e) => <RetryButton entryId={e.entry_id} que={`el mensaje «${e.content.slice(0, 40)}»`} /> },
   ];
 
   const eventColumns: Column<DomainEventEntry>[] = [
     { key: "aviso", header: "Aviso", cell: (e) => <span className="text-headline">{avisoEnPalabras(e.topic)}</span> },
-    { key: "cuando", header: "Cuándo", cell: (e) => <span className="text-body">{formatDateTime(e.created_at)}</span> },
+    { key: "cuando", header: "Cuándo", cell: (e) => <span className="text-body">{formatDateTime(e.created_at, zona)}</span> },
     { key: "intentos", header: "Intentos", cell: (e) => <span className="text-body tabular-nums">{e.attempts}</span> },
     { key: "error", header: "Qué pasó", cell: (e) => <span className="text-xs text-text-soft">{e.last_error || "Sin detalle"}</span> },
     { key: "acciones", header: <span className="sr-only">Acciones</span>, align: "right", cell: (e) => <RetryDomainEventButton eventId={e.id} que={`el aviso ${avisoEnPalabras(e.topic)}`} /> },
@@ -82,7 +83,7 @@ export default async function DlqPage() {
         emptyDescription="No hay mensajes de clientes por reintentar."
         filaCelular={(e) => ({
           titulo: e.content ? `«${e.content}»` : "Sin texto (audio, imagen o archivo)",
-          detalle: llegada(e),
+          detalle: llegada(e, zona),
           accion: <RetryButton entryId={e.entry_id} que={`el mensaje «${e.content.slice(0, 40)}»`} />,
         })}
       />
@@ -105,7 +106,7 @@ export default async function DlqPage() {
             emptyDescription="Cuando un aviso agote sus intentos aparecerá aquí."
             filaCelular={(e) => ({
               titulo: avisoEnPalabras(e.topic),
-              detalle: `${formatDateTime(e.created_at)} · ${e.attempts} intentos`,
+              detalle: `${formatDateTime(e.created_at, zona)} · ${e.attempts} intentos`,
               accion: <RetryDomainEventButton eventId={e.id} que={`el aviso ${avisoEnPalabras(e.topic)}`} />,
             })}
           />

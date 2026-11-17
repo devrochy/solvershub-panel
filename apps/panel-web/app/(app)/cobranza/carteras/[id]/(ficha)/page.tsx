@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { KpiTile } from "@/components/ui/kpi-tile";
+import { getBusinessTimezone } from "@/lib/api/server";
 import { fechaHoraDeApi } from "@/lib/cobranza/presentacion";
 import { formatCop, formatNumber } from "@/lib/format";
 import { cargarCartera } from "../_lib/cartera";
@@ -9,7 +10,7 @@ export const metadata = { title: "Detalle de cartera" };
 
 export default async function CarteraResumenPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const res = await cargarCartera(id);
+  const [res, zona] = await Promise.all([cargarCartera(id), getBusinessTimezone()]);
   if (!res.ok) {
     if (res.status === 404) notFound();
     return null; // el layout ya muestra el error
@@ -39,7 +40,7 @@ export default async function CarteraResumenPage({ params }: { params: Promise<{
         <KpiTile
           label="Caja actual"
           value={formatCop(c.caja.saldo_actual)}
-          hint={c.caja.actualizado ? `Actualizada ${fechaHoraDeApi(c.caja.actualizado)}` : undefined}
+          hint={c.caja.actualizado ? `Actualizada ${fechaHoraDeApi(c.caja.actualizado, zona)}` : undefined}
           size="compact"
           href={`${base}/caja`}
         />

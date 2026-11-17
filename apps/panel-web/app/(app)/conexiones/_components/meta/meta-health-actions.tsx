@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Select } from "@/components/ui/select";
+import { useFormato } from "@/components/shell/formato";
 import { formatDateTime } from "@/lib/format";
 
 /** Estado manual del método de pago en Meta: Meta no lo informa por API. */
@@ -27,12 +28,12 @@ type TokenExtend = {
   token_expires_at: string | null;
 };
 
-function describirPermiso(info: TokenInspect): string {
+function describirPermiso(info: TokenInspect, timeZone: string): string {
   const estado = info.is_valid ? "El permiso de acceso funciona" : "El permiso de acceso no funciona";
   const vence = info.never_expires
     ? "no vence"
     : info.token_expires_at
-      ? `vence el ${formatDateTime(info.token_expires_at)}`
+      ? `vence el ${formatDateTime(info.token_expires_at, timeZone)}`
       : "no tiene fecha de vencimiento";
   const permisos = info.has_whatsapp_scopes ? "incluye WhatsApp" : "no incluye WhatsApp";
   return `${estado}, ${vence} y ${permisos}.`;
@@ -81,16 +82,17 @@ export function RevisarAhora({ connectionId }: { connectionId: string }) {
 
 /** Renovar el permiso de acceso a Meta (el token) o ver hasta cuándo sirve. */
 export function PermisoDeAcceso({ connectionId }: { connectionId: string }) {
+  const { timeZone, fechaHora } = useFormato();
   const { status, setStatus, enviar, refrescar } = useAccionDeMeta(connectionId);
   async function renovar() {
     const json = await enviar<TokenExtend>({ action: "extend_token" });
     if (!json) return;
-    setStatus({ success: `Permiso renovado: ahora vence el ${json.token_expires_at ? formatDateTime(json.token_expires_at) : "—"}.` });
+    setStatus({ success: `Permiso renovado: ahora vence el ${json.token_expires_at ? fechaHora(json.token_expires_at) : "—"}.` });
     refrescar();
   }
   async function consultar() {
     const json = await enviar<TokenInspect>({ action: "inspect_token" });
-    if (json) setStatus({ success: describirPermiso(json) });
+    if (json) setStatus({ success: describirPermiso(json, timeZone) });
   }
   return (
     <div className="flex flex-col items-end gap-1">

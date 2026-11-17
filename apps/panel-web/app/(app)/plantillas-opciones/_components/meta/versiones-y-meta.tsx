@@ -15,10 +15,17 @@ import {
   estadoDeVersion,
 } from "@/lib/plantillas-opciones-meta";
 
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
+
 import { EstadoDeMeta } from "./estado-de-meta";
 import { PublicarEnMeta } from "./publicar-en-meta";
 
-const fecha = (iso: string) => new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+const fecha = (iso: string) =>
+  new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: ZONA_POR_DEFECTO,
+  }).format(new Date(iso));
 
 /**
  * Versiones publicadas y su plantilla de Meta (HU-OPC-04 y HU-OPC-06): para cada versión, si ya está en Meta y

@@ -23,7 +23,7 @@ import {
   TIPOS_ACEPTADOS,
 } from "@/lib/conocimiento";
 import { usePolling } from "@/lib/conversaciones/en-vivo";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { toast } from "@/lib/toast-store";
 
@@ -48,6 +48,7 @@ export function ConocimientoDelAgente({
   /** Avisa cuántos documentos hay, para el resumen de la tarjeta de la habilidad. */
   onCantidad?: (n: number) => void;
 }) {
+  const { fechaHora } = useFormato();
   const [documentos, setDocumentos] = useState(iniciales);
   const [subiendo, setSubiendo] = useState(0);
   const [limite, setLimite] = useState<string | null>(null);
@@ -155,7 +156,7 @@ export function ConocimientoDelAgente({
         );
       },
     },
-    { key: "subido", header: "Subido", cell: (d) => formatDateTime(d.created_at) },
+    { key: "subido", header: "Subido", cell: (d) => fechaHora(d.created_at) },
     ...(puedeEscribir
       ? [
           {

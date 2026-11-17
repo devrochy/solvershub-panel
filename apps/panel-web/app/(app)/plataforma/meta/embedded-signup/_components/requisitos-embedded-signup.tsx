@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, CircleAlert, CircleHelp, ExternalLink } from "lucide-react";
 
+import { useFormato } from "@/components/shell/formato";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +16,7 @@ import { useAction } from "@/lib/use-action";
 type Requisitos = components["schemas"]["EmbeddedSignupRequirements"];
 
 export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
+  const { timeZone } = useFormato();
   const [estado, setEstado] = useState(inicial);
   const revision = estado.platform_check;
   const { run, pending } = useAction({ refresh: false });
@@ -61,7 +63,7 @@ export function RequisitosEmbeddedSignup({ inicial }: { inicial: Requisitos }) {
             ) : (
               <CircleHelp className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
             )}
-            <span className="text-body">{resumenRevision(revision)}</span>
+            <span className="text-body">{resumenRevision(revision, timeZone)}</span>
           </div>
           {revision.pending.length > 0 && (
             <ul className="ml-6 list-disc text-xs text-text-soft">

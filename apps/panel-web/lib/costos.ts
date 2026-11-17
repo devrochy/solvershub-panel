@@ -3,6 +3,8 @@
  * las conversaciones por cuándo fueron, no por su id.
  */
 
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
+
 const CATEGORIA: Record<string, string> = {
   marketing: "Marketing",
   utility: "Utilidad (avisos y confirmaciones)",
@@ -38,5 +40,9 @@ export function cuandoFueCosto(valor: string | null | undefined, ahora: Date = n
   if (dias <= 0) return "Conversación de hoy";
   if (dias === 1) return "Conversación de ayer";
   if (dias < 7) return `Hace ${dias} días`;
-  return `Conversación del ${new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(f)}`;
+  return `Conversación del ${new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "short",
+    timeZone: ZONA_POR_DEFECTO,
+  }).format(f)}`;
 }

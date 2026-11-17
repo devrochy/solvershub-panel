@@ -9,7 +9,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { KpiTile } from "@/components/ui/kpi-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { DIAS_POR_DEFECTO, nombreDeProcedimiento, respuestas } from "@/lib/agentes";
-import { apiFetch } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type {
   ConnectionsConsole,
   Me,
@@ -69,7 +69,7 @@ function hrefDeCalidad(f: FiltrosDeCalidad, cambios: Partial<FiltrosDeCalidad>):
 export default async function CalidadPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const filtros = filtrosDeCalidad(await searchParams);
   const qs = queryDeCalidad(filtros);
-  const [res, rechazosRes, a2aRes, corridasRes, meRes, consolaRes] = await Promise.all([
+  const [res, rechazosRes, a2aRes, corridasRes, meRes, consolaRes, zona] = await Promise.all([
     apiFetch<ReliabilityResponse>(`/admin/reliability?${qs}`),
     apiFetch<VerifierRejections>(`/admin/reliability/verifier?${qs}&limit=50`),
     apiFetch<ReliabilityUsage>(`/admin/usage?${qs}&group_by=a2a`),
@@ -79,6 +79,7 @@ export default async function CalidadPage({ searchParams }: { searchParams: Prom
     apiFetch<Me>("/admin/me"),
     // De qué conexión es cada fila de «Por agente» (sin permiso de Conexiones, va solo el agente).
     apiFetch<ConnectionsConsole>("/admin/connections/console?page=1&page_size=100"),
+    getBusinessTimezone(),
   ]);
   const header = (acciones?: React.ReactNode) => (
     <PageHeader title="Calidad" description="Qué tan bien atiende tu asistente." helpSection="agents" actions={acciones} />
@@ -131,7 +132,7 @@ export default async function CalidadPage({ searchParams }: { searchParams: Prom
     { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd ?? 0, 4)}</span> },
   ];
   const corridaColumns: Column<Corrida>[] = [
-    { key: "cuando", header: "Cuándo", cell: (r) => (r.started_at ? <span title={formatDateTime(r.started_at)}>{tiempoRelativo(r.started_at)}</span> : "—") },
+    { key: "cuando", header: "Cuándo", cell: (r) => (r.started_at ? <span title={formatDateTime(r.started_at, zona)}>{tiempoRelativo(r.started_at)}</span> : "—") },
     { key: "origen", header: "Por qué", cell: (r) => origenDeCorrida(r.origin) },
     { key: "escenarios", header: "Casos bien", align: "right", cell: (r) => <span className="tabular-nums">{`${r.passed} de ${r.total}`}</span> },
     { key: "pass_k", header: "Salen bien siempre", align: "right", cell: (r) => <span className="tabular-nums">{porcentaje(r.pass_k_average)}</span> },

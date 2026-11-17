@@ -21,6 +21,7 @@ import {
   tipoDeRegistro,
 } from "@/lib/agentes";
 import { creditos } from "@/lib/consumo";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatDateTime, formatNumber, formatUsd } from "@/lib/format";
 import { canalLabel } from "@/lib/labels";
 import { tiempoRelativo } from "@/lib/notificaciones/tipos";
@@ -50,7 +51,7 @@ const conexionDe = (r: { connection_label: string | null; channel?: string | nul
  * Conversaciones que atendió (AGT-06): la fila abre la conversación. Los dólares solo para el master
  * (`verCosto`); la versión del agente vive en el detalle de la conversación.
  */
-export function ConversacionesDelAgente({ page, nombre, verCosto }: { page: AgentConversationPage; nombre: string; verCosto: boolean }) {
+export function ConversacionesDelAgente({ page, nombre, verCosto, timezone = ZONA_POR_DEFECTO }: { page: AgentConversationPage; nombre: string; verCosto: boolean; timezone?: string }) {
   if (page.total === 0) return <SinDatos que="conversaciones" nombre={nombre} />;
   const columns: Column<ConversationRow>[] = [
     {
@@ -66,7 +67,7 @@ export function ConversacionesDelAgente({ page, nombre, verCosto }: { page: Agen
     { key: "respuestas", header: "Respuestas", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.turns)}</span> },
     { key: "costo", header: "Costo", align: "right", cell: (r) => <span className="tabular-nums">{formatUsd(r.cost_usd ?? 0, 4)}</span> },
     { key: "estado", header: "Estado", cell: (r) => <EstadoDeConversacion status={r.status} /> },
-    { key: "ultimo", header: "Último mensaje", cell: (r) => <span title={formatDateTime(r.last_turn_at)}>{tiempoRelativo(r.last_turn_at)}</span> },
+    { key: "ultimo", header: "Último mensaje", cell: (r) => <span title={formatDateTime(r.last_turn_at, timezone)}>{tiempoRelativo(r.last_turn_at)}</span> },
   ];
   const conCosto = verCosto && page.items.some((r) => r.cost_usd !== null);
   return (
@@ -90,7 +91,7 @@ export function ConversacionesDelAgente({ page, nombre, verCosto }: { page: Agen
 }
 
 /** Tareas (AGT-06, AGT-07): la etapa en palabras y, si falló o pasó a una persona, por qué. */
-export function TareasDelAgente({ page, nombre }: { page: AgentTaskPage; nombre: string }) {
+export function TareasDelAgente({ page, nombre, timezone = ZONA_POR_DEFECTO }: { page: AgentTaskPage; nombre: string; timezone?: string }) {
   if (page.total === 0) return <SinDatos que="tareas" nombre={nombre} />;
   const enlace = (r: TaskRow) => (r.conversation_id ? `/conversaciones/${r.conversation_id}` : undefined);
   const columns: Column<TaskRow>[] = [
@@ -114,11 +115,11 @@ export function TareasDelAgente({ page, nombre }: { page: AgentTaskPage; nombre:
         </span>
       ),
     },
-    { key: "inicio", header: "Empezó", cell: (r) => <span title={formatDateTime(r.created_at)}>{tiempoRelativo(r.created_at)}</span> },
+    { key: "inicio", header: "Empezó", cell: (r) => <span title={formatDateTime(r.created_at, timezone)}>{tiempoRelativo(r.created_at)}</span> },
     {
       key: "cambio",
       header: "Último cambio",
-      cell: (r) => <span title={formatDateTime(r.completed_at ?? r.updated_at)}>{tiempoRelativo(r.completed_at ?? r.updated_at)}</span>,
+      cell: (r) => <span title={formatDateTime(r.completed_at ?? r.updated_at, timezone)}>{tiempoRelativo(r.completed_at ?? r.updated_at)}</span>,
     },
   ];
   // La fila abre la conversación de la tarea; sin conversación (una tarea interna), no abre nada.
@@ -148,13 +149,13 @@ export function TareasDelAgente({ page, nombre }: { page: AgentTaskPage; nombre:
 }
 
 /** Pedidos, citas, leads y promesas que creó; la fila abre la conversación donde lo creó. */
-export function RegistrosDelAgente({ records, nombre }: { records: AgentRecordPage; nombre: string }) {
+export function RegistrosDelAgente({ records, nombre, timezone = ZONA_POR_DEFECTO }: { records: AgentRecordPage; nombre: string; timezone?: string }) {
   if (records.total === 0) return <SinDatos que="registros" nombre={nombre} />;
   const columns: Column<RecordRow>[] = [
     { key: "tipo", header: "Tipo", cell: (r) => <Badge variant="neutral">{tipoDeRegistro(r.kind)}</Badge> },
     { key: "ref", header: "Qué creó", cell: (r) => <span className="font-medium text-headline">{r.label ?? tipoDeRegistro(r.kind)}</span> },
     { key: "conexion", header: "Conexión", cell: (r) => r.connection_label ?? "—" },
-    { key: "fecha", header: "Cuándo", cell: (r) => <span title={formatDateTime(r.created_at)}>{tiempoRelativo(r.created_at)}</span> },
+    { key: "fecha", header: "Cuándo", cell: (r) => <span title={formatDateTime(r.created_at, timezone)}>{tiempoRelativo(r.created_at)}</span> },
   ];
   const conEnlace = records.items.every((r) => r.conversation_id);
   return (
@@ -184,13 +185,13 @@ export function RegistrosDelAgente({ records, nombre }: { records: AgentRecordPa
 }
 
 /** Clientes que atendió. */
-export function ClientesDelAgente({ customers, nombre }: { customers: AgentCustomerPage; nombre: string }) {
+export function ClientesDelAgente({ customers, nombre, timezone = ZONA_POR_DEFECTO }: { customers: AgentCustomerPage; nombre: string; timezone?: string }) {
   if (customers.total === 0) return <SinDatos que="clientes" nombre={nombre} />;
   const columns: Column<CustomerRow>[] = [
     { key: "nombre", header: "Cliente", cell: (r) => <span className="font-medium text-headline">{r.name ?? "Cliente sin nombre"}</span> },
     { key: "canal", header: "Canal", cell: (r) => canalLabel(r.channel) },
     { key: "convs", header: "Conversaciones", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.conversations)}</span> },
-    { key: "ultimo", header: "Último mensaje", cell: (r) => <span title={formatDateTime(r.last_turn_at)}>{tiempoRelativo(r.last_turn_at)}</span> },
+    { key: "ultimo", header: "Último mensaje", cell: (r) => <span title={formatDateTime(r.last_turn_at, timezone)}>{tiempoRelativo(r.last_turn_at)}</span> },
   ];
   return (
     <TablaResponsiva

@@ -7,7 +7,7 @@ import { ExternalLink, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { QaEscenario, QaEscenarioCreado, QaEscenarioResultado, QaEscenarios } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { anclaDe, rutaDeAbrir, textoDelBoton } from "@/lib/qa/escenarios";
 import { toast } from "@/lib/toast-store";
 
@@ -159,10 +159,11 @@ function TarjetaDeEscenario({
 }
 
 function UltimoCaso({ ultimo }: { ultimo: QaEscenarioCreado }) {
+  const { fechaHora } = useFormato();
   return (
     <div className="flex flex-col gap-1.5 rounded-md border border-border-soft bg-surface-2 p-3" role="status">
       <p className="text-xs text-text-soft">
-        Último caso{ultimo.creado_en ? ` · ${formatDateTime(ultimo.creado_en)}` : ""} ·{" "}
+        Último caso{ultimo.creado_en ? ` · ${fechaHora(ultimo.creado_en)}` : ""} ·{" "}
         <span className="font-mono">{ultimo.sufijo}</span>
       </p>
       <ul className="list-disc space-y-0.5 pl-4 text-sm text-body">

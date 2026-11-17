@@ -51,6 +51,8 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   // HU-ACC-04 (ADR-0174): Dispositivos y Alertas de acceso salen de Cobranza y son del negocio. Rediseño B (SEG):
   // una sola página `/seguridad` con los equipos; el historial de alertas queda en su ruta, con su propia clave.
   ["/seguridad", "devices", false], ["/seguridad/alertas", "access_alerts", false],
+  // ADR-0200: automatizaciones del negocio (crons de los packs habilitados).
+  ["/configuracion/automatizaciones", "automatizaciones", false],
 ];
 
 describe("menú v2 (HU-UX-02)", () => {

@@ -19,7 +19,7 @@ import {
   resumenCorrida,
   type EstadoCorrida,
 } from "@/lib/checklist-produccion";
-import { formatDateTime } from "@/lib/format";
+import { useFormato } from "@/components/shell/formato";
 import { comoArreglar } from "@/lib/plataforma";
 
 export type Corrida = {
@@ -48,6 +48,7 @@ export function ChecklistProduccion({
   connectionId?: string;
   plataforma?: boolean;
 }) {
+  const { fechaHora } = useFormato();
   const [corrida, setCorrida] = useState<Corrida>(initial);
   const [error, setError] = useState<string>();
   const [pidiendo, setPidiendo] = useState(false);
@@ -98,9 +99,9 @@ export function ChecklistProduccion({
         <Badge variant={resumen.variant}>{resumen.label}</Badge>
         <span className="text-xs text-text-soft">
           {corrida.finished_at
-            ? `Última revisión: ${formatDateTime(corrida.finished_at)}`
+            ? `Última revisión: ${fechaHora(corrida.finished_at)}`
             : corrida.requested_at
-              ? `Pedida: ${formatDateTime(corrida.requested_at)}`
+              ? `Pedida: ${fechaHora(corrida.requested_at)}`
               : "Todavía no se ha revisado."}
         </span>
         <Button className="ml-auto" disabled={pidiendo || corriendo} onClick={() => void revisar()} variant="outline">

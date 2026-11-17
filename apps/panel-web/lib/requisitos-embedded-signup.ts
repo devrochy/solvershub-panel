@@ -5,12 +5,16 @@
  * 30 días: el backend dice si venció (`expired`) y cuándo vence (`expires_at`).
  */
 import type { components } from "@/lib/api/schema";
+import { ZONA_POR_DEFECTO } from "@/lib/fechas";
 import { formatDateTime } from "@/lib/format";
 
 export type RevisionPlataforma = components["schemas"]["EsPlatformCheck"];
 
-export function resumenRevision(revision: RevisionPlataforma): string {
-  const fecha = revision.finished_at ? ` (${formatDateTime(revision.finished_at)})` : "";
+export function resumenRevision(
+  revision: RevisionPlataforma,
+  timeZone: string = ZONA_POR_DEFECTO,
+): string {
+  const fecha = revision.finished_at ? ` (${formatDateTime(revision.finished_at, timeZone)})` : "";
   switch (revision.status) {
     case "never":
       return "Todavía no se ha revisado la app de Meta de la plataforma.";

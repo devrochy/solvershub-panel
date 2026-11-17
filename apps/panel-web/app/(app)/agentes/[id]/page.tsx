@@ -25,7 +25,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TabLinks } from "@/components/ui/tab-links";
-import { apiFetch, type ApiResult } from "@/lib/api/server";
+import { apiFetch, getBusinessTimezone, type ApiResult } from "@/lib/api/server";
 import type {
   AgentConversationPage,
   AgentCustomerPage,
@@ -134,11 +134,12 @@ export default async function AgentePage({
   const ubicacion = ubicacionDe(sp);
   const filtros = filtrosDe(sp);
 
-  const [overviewRes, meRes, planRes] = await Promise.all([
+  const [overviewRes, meRes, planRes, zona] = await Promise.all([
     apiFetch<AgentsOverview>("/admin/agents/overview"),
     apiFetch<Me>("/admin/me"),
     // Créditos del mes de este agente (AGT-03): si no responde, la frase va sin ellos.
     apiFetch<PlanResponse>("/admin/plan"),
+    getBusinessTimezone(),
   ]);
   if (!overviewRes.ok) {
     return (
@@ -199,7 +200,7 @@ export default async function AgentePage({
   if (actual === "actividad" && ver === "conversaciones") {
     const res = await apiFetch<AgentConversationPage>(`${base}/conversations?${qs}`);
     if (res.ok) {
-      contenido = <ConversacionesDelAgente page={res.data} nombre={agente.name} verCosto={esMaster} />;
+      contenido = <ConversacionesDelAgente page={res.data} nombre={agente.name} verCosto={esMaster} timezone={zona} />;
       paginada = res.data;
       etiqueta = "conversaciones";
     } else contenido = <NoCargo que="las conversaciones" res={res} />;
@@ -218,7 +219,7 @@ export default async function AgentePage({
               { value: "closed", label: "Cerradas", href: hrefDeAgente(ref, vigente, { estado: "closed" }) },
             ]}
           />
-          <TareasDelAgente page={res.data} nombre={agente.name} />
+          <TareasDelAgente page={res.data} nombre={agente.name} timezone={zona} />
         </div>
       );
       paginada = res.data;
@@ -227,14 +228,14 @@ export default async function AgentePage({
   } else if (actual === "actividad" && ver === "clientes") {
     const res = await apiFetch<AgentCustomerPage>(`${base}/customers?${qs}`);
     if (res.ok) {
-      contenido = <ClientesDelAgente customers={res.data} nombre={agente.name} />;
+      contenido = <ClientesDelAgente customers={res.data} nombre={agente.name} timezone={zona} />;
       paginada = res.data;
       etiqueta = "clientes";
     } else contenido = <NoCargo que="los clientes" res={res} />;
   } else if (actual === "actividad") {
     const res = await apiFetch<AgentRecordPage>(`${base}/records?${qs}`);
     if (res.ok) {
-      contenido = <RegistrosDelAgente records={res.data} nombre={agente.name} />;
+      contenido = <RegistrosDelAgente records={res.data} nombre={agente.name} timezone={zona} />;
       paginada = res.data;
       etiqueta = "registros";
     } else contenido = <NoCargo que="los registros" res={res} />;
