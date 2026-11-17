@@ -52,6 +52,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   // HU-CRM-20: el cajón enlaza a la ficha del cliente solo si la sesión ve Clientes.
   const puedeAbrirFicha = me.ok && puedeVerClientes(me.data);
+  // SPEC-48, HU-COM-22: confirmar o rechazar un comprobante es escribir en Ventas.
+  const puedeRevisarPagos = me.ok && (me.data.role === "master" || me.data.permissions?.pack_commerce === "write");
   const total = res.total ?? res.data.length;
   const hayMas = (page - 1) * PEDIDOS_POR_PAGINA + res.data.length < total;
   const hayFiltros = Boolean(filtros.estado || filtros.pago || filtros.q || filtros.cliente);
@@ -138,6 +140,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           moneda={moneda}
           hrefFicha={puedeAbrirFicha ? hrefFicha(abierto.customer_id, { agente: "ventas" }) : null}
           alCerrar={hrefPedidos({ ...filtros, pedido: "" }, page)}
+          puedeRevisarPagos={puedeRevisarPagos}
         />
       )}
     </div>

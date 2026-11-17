@@ -14,6 +14,7 @@ export const ESTADOS_DE_PEDIDO: Record<string, string> = {
 
 export const ESTADOS_DE_PAGO: Record<string, string> = {
   pendiente: "Pendiente",
+  en_revision: "En revisión",
   pagado: "Pagado",
   rechazado: "Rechazado",
 };
@@ -30,7 +31,7 @@ export const PEDIDOS_POR_PAGINA = 25;
 
 export type FiltrosPedidos = {
   estado?: string;
-  /** Estado del pago (`pagado`, `pendiente`, `rechazado`). */
+  /** Estado del pago (`pagado`, `pendiente`, `en_revision`, `rechazado`). */
   pago?: string;
   q?: string;
   /** Id del cliente (viene de «Ver sus pedidos» en su ficha). */

@@ -283,6 +283,7 @@ El Resumen se lee de arriba abajo, en secciones, y se organiza por agente:
 - Un pedido se abre en un cajón (`?pedido=`) con un solo botón para el paso siguiente; los demás cambios de estado van en «Más acciones» y cancelar pide confirmación. Pedidos tiene un solo filtro (control segmentado) y una búsqueda que filtra mientras se escribe.
 - Dos formas de ver: Productos y Categorías en lista o vitrina (tarjetas con foto; en la vitrina de productos, la promoción vigente), Pedidos en lista o por etapa. La vista viaja en `?vista=` y se recuerda en este navegador (`lib/vista-guardada.ts`); los enlaces solo la escriben cuando difiere de la guardada.
 - Productos, promociones, categorías y aliados se editan en un cajón o diálogo que vive en la URL. Las acciones de fila van en «Más acciones», nunca como íconos sueltos; borrar dice qué pasa con lo que depende de eso.
+- Un pedido por transferencia lleva el bloque «Comprobante» (HU-COM-22, SPEC-48): la foto (enlace a la imagen firmada), lo que leyó la visión en palabras (`lib/comprobantes.ts`, la cuenta solo «terminada en 1234»), el resultado y por qué no se confirmó solo. En revisión: «Confirmar pago» y «Rechazar» (pide el motivo); sin comprobante, «Marcar pagado» con confirmación. Carga con esqueleto y error con «Reintentar». «Pago en revisión» es un estado de pago con su palabra.
 - Aliados es pestaña solo con el módulo encendido: `comercio/layout.tsx` lo consulta y las pestañas `oculta` con `mostrarCon` salen con `PestanasOpcionales`.
 
 ## Consumo y plan (SPEC-29)

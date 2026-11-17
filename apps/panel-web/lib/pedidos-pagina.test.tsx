@@ -105,13 +105,19 @@ describe("/comercio/pedidos", () => {
     respuestas["/pack/commerce/orders"] = { data: [PEDIDO], total: 1 };
     respuestas["/admin/me"] = { data: sesionDueno };
     const fetchOriginal = globalThis.fetch;
-    const envio = vi.fn(async () => new Response(null, { status: 204 }));
+    // El cajón de un pedido por transferencia también pide su comprobante (HU-COM-22): se responde aparte.
+    const envio = vi.fn(async (url: string) =>
+      url.endsWith("/payment-proofs")
+        ? new Response(JSON.stringify({ order_id: "ped-1", payment_status: "pendiente", payment_method: "transferencia", payment_status_changed_at: null, payment_status_reason: null, items: [] }), { status: 200 })
+        : new Response(null, { status: 204 }),
+    );
     globalThis.fetch = envio as unknown as typeof fetch;
     try {
       await pintar(await pedidos(), { pedido: "ped-1" });
       fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Marcar como entregado" }));
-      await waitFor(() => expect(envio).toHaveBeenCalled());
-      const [url, init] = envio.mock.calls[0] as unknown as [string, RequestInit];
+      const aEstado = () => envio.mock.calls.filter(([u]) => String(u).endsWith("/status"));
+      await waitFor(() => expect(aEstado().length).toBe(1));
+      const [url, init] = aEstado()[0] as unknown as [string, RequestInit];
       expect(url).toBe("/api/pack/commerce/orders/ped-1/status");
       expect(JSON.parse(String(init.body))).toEqual({ status: "entregado" });
     } finally {
