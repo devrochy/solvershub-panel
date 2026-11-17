@@ -15,7 +15,16 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { NOMBRE_MAX, cuerpoDeCreacion, elegirTipo, ESTADO_INICIAL, type EstadoDelAsistente } from "@/lib/agente-asistente";
-import { PASOS, type NegocioDelEditor } from "@/lib/agentes-editor";
+import { type NegocioDelEditor } from "@/lib/agentes-editor";
+import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
+
+/** Los 4 pasos de la creación rápida (SPEC-47, HU-AOS-81): aquí va el 1; los otros, en el editor. */
+const PASOS_DE_LA_CREACION_RAPIDA = [
+  { id: "identidad", titulo: "Tipo y datos básicos", corto: "Tipo" },
+  { id: "habilidades", titulo: "Habilidades y formas de pago", corto: "Habilidades" },
+  { id: "conocimiento", titulo: "Datos para probar", corto: "Datos" },
+  { id: "probar", titulo: "Revisar, probar y publicar", corto: "Revisar" },
+];
 import type { AgentTemplate } from "@/lib/api/types";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { useAction } from "@/lib/use-action";
@@ -85,14 +94,15 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
           body: JSON.stringify({ name: nombre, description: descripcion.trim() }),
         }).catch(() => null);
       }
-      router.push(`/agentes/${json.agentId}/personalizar?paso=voz&modo=crear`);
+      // HU-AOS-81: la creación rápida sigue en «Habilidades y formas de pago» (paso 2 de 4).
+      router.push(rutaDePersonalizar(json.agentId, { paso: "habilidades", modo: "crear" }));
       return { ok: true, success: "Borrador creado. Sigue con cómo habla tu agente." };
     });
   }
 
   return (
     <RecorridoDelAgente
-      pasos={PASOS.map((p) => ({ id: p.id, titulo: p.titulo, corto: p.corto }))}
+      pasos={PASOS_DE_LA_CREACION_RAPIDA}
       actual="identidad"
       modo="en-orden"
       etiquetaDePasos="Pasos para crear el agente"
