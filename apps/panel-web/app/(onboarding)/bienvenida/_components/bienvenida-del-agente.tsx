@@ -76,8 +76,9 @@ export function BienvenidaDelAgente({
       toast.error(faltan && faltan.length > 0 ? faltan.join(" ") : r.error);
       return;
     }
+    // Sin `router.refresh()`: con el recorrido completo la página redirige al Resumen y la pantalla
+    // final no llegaba a verse. Sus enlaces navegan y el layout se vuelve a leer ahí.
     setTerminado(true);
-    router.refresh();
   }
 
   if (terminado) return <PantallaFinal nombreDelAgente={datos.agente.name} />;
