@@ -2117,6 +2117,47 @@ export interface paths {
         patch: operations["patch_agent_api_v1_admin_agents__agent_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Agent
+         * @description Pausa un especialista (HU-ARCH-38): deja de atender en segundos, sin publicar; atiende el agente por
+         *     defecto y A2A no le pasa conversaciones.
+         */
+        post: operations["pause_agent_api_v1_admin_agents__agent_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Agent
+         * @description Reanuda un especialista pausado (HU-ARCH-38): vuelve a atender sus conversaciones.
+         */
+        post: operations["resume_agent_api_v1_admin_agents__agent_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agents/{agent_id}/draft": {
         parameters: {
             query?: never;
@@ -6324,6 +6365,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/platform/kill-switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obtener */
+        get: operations["obtener_api_v1_admin_platform_kill_switch_get"];
+        /** Fijar */
+        put: operations["fijar_api_v1_admin_platform_kill_switch_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/automatizaciones": {
         parameters: {
             query?: never;
@@ -6371,7 +6430,7 @@ export interface paths {
         };
         /**
          * Listar Ejecuciones
-         * @description Ejecuciones con efecto, fallos y manuales del negocio (ADR-0200).
+         * @description Ejecuciones con efecto, fallos y manuales del negocio (ADR-0201).
          */
         get: operations["listar_ejecuciones_api_v1_admin_automatizaciones__cron_name__runs_get"];
         put?: never;
@@ -10228,6 +10287,15 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Paused
+             * @default false
+             */
+            paused: boolean;
+            /** Paused At */
+            paused_at?: string | null;
+            /** Paused Reason */
+            paused_reason?: string | null;
             draft: components["schemas"]["AgentDraft"];
             /** Versions */
             versions: components["schemas"]["AgentVersionSummary"][];
@@ -10336,6 +10404,11 @@ export interface components {
             description?: string | null;
             /** Status */
             status?: ("active" | "archived") | null;
+        };
+        /** AgentPauseIn */
+        AgentPauseIn: {
+            /** Reason */
+            reason?: string | null;
         };
         /** AgentRecordItem */
         AgentRecordItem: {
@@ -10468,6 +10541,15 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /**
+             * Paused
+             * @default false
+             */
+            paused: boolean;
+            /** Paused At */
+            paused_at?: string | null;
+            /** Paused Reason */
+            paused_reason?: string | null;
         };
         /** AgentTask */
         AgentTask: {
@@ -13554,7 +13636,7 @@ export interface components {
         };
         /**
          * CronNegocioResumenOut
-         * @description Un negocio con fila de configuración para este cron (ADR-0200). Solo metadatos operativos.
+         * @description Un negocio con fila de configuración para este cron (ADR-0201). Solo metadatos operativos.
          */
         CronNegocioResumenOut: {
             /**
@@ -13668,7 +13750,7 @@ export interface components {
             record_success: boolean;
             /**
              * Ambito
-             * @description `negocio`: también se configura en Configuración / Automatizaciones (ADR-0200).
+             * @description `negocio`: también se configura en Configuración / Automatizaciones (ADR-0201).
              * @enum {string}
              */
             ambito: "plataforma" | "negocio";
@@ -15695,6 +15777,50 @@ export interface components {
             extra?: {
                 [key: string]: unknown;
             };
+        };
+        /** KillSwitchEventOut */
+        KillSwitchEventOut: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "activated" | "deactivated" | "denied";
+            /** Reason */
+            reason: string | null;
+            /** Actor Label */
+            actor_label: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "api" | "cli";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** KillSwitchIn */
+        KillSwitchIn: {
+            /** Active */
+            active: boolean;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** KillSwitchOut */
+        KillSwitchOut: {
+            /** Active */
+            active: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Changed By Label */
+            changed_by_label: string | null;
+            /** Source */
+            source: ("api" | "cli") | null;
+            /** Changed At */
+            changed_at: string | null;
+            /** History */
+            history: components["schemas"]["KillSwitchEventOut"][];
         };
         /** KpiOut */
         KpiOut: {
@@ -28925,6 +29051,78 @@ export interface operations {
             };
         };
     };
+    pause_agent_api_v1_admin_agents__agent_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentPauseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_agent_api_v1_admin_agents__agent_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_draft_api_v1_admin_agents__agent_id__draft_get: {
         parameters: {
             query?: never;
@@ -38020,6 +38218,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CronNegocioResumenOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    obtener_api_v1_admin_platform_kill_switch_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KillSwitchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fijar_api_v1_admin_platform_kill_switch_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KillSwitchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KillSwitchOut"];
                 };
             };
             /** @description Validation Error */

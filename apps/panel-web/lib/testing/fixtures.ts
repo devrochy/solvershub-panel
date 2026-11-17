@@ -1106,7 +1106,7 @@ const AGENDA = "00000000-0000-4000-8000-0000000000a2";
 function agente(id: string, key: string, name: string, kind: AgentSummary["kind"] = "specialist"): AgentSummary {
   return {
     id, key, name, kind, contract: kind === "core" ? "kernelspec/1" : "agentspec/3", description: "",
-    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z",
+    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z", paused: false,
   };
 }
 
