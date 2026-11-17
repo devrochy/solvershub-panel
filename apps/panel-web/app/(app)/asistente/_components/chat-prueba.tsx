@@ -44,7 +44,8 @@ const TONO_AVISO: Record<AvisoDeToque["tono"], string> = {
  * Chat de prueba del asistente: responde igual que con un cliente, sin enviar nada por el canal.
  *
  * Con `conexionId` la prueba corre por esa conexión (HU-AOS-57): así se prueba la versión activa del
- * agente publicado ahí, como en el asistente de primer uso. `sugerencias` son frases para empezar con un
+ * agente publicado ahí, como en el asistente de primer uso. Con `agenteId` se prueba el BORRADOR de ese agente
+ * sin publicarlo (HU-AOS-72): simulado, sin versión, release ni instancia; gana sobre `conexionId`. `sugerencias` son frases para empezar con un
  * toque y `alRecibirRespuesta` avisa cuando el agente contestó.
  *
  * Con `probarOpciones` suma «Probar plantilla con opciones» (SPEC-40, pista B2): envía una plantilla publicada a la
@@ -53,11 +54,14 @@ const TONO_AVISO: Record<AvisoDeToque["tono"], string> = {
  */
 export function ChatPrueba({
   conexionId,
+  agenteId,
   sugerencias,
   alRecibirRespuesta,
   probarOpciones,
 }: {
   conexionId?: string;
+  /** Borrador del agente que se prueba sin publicarlo (HU-AOS-72). */
+  agenteId?: string;
   sugerencias?: string[];
   alRecibirRespuesta?: () => void;
   /** Muestra el selector de plantillas con opciones; `plantillaInicial` es la clave que viene del editor. */
@@ -69,18 +73,21 @@ export function ChatPrueba({
   const [aviso, setAviso] = useState<AvisoDeToque | null>(null);
   const [tocados, setTocados] = useState<ReadonlySet<string>>(new Set());
   const fin = useRef<HTMLDivElement>(null);
+  // A quién se le habla: el borrador del agente o la versión activa de una conexión.
+  const destino: Record<string, string> = agenteId ? { agent_id: agenteId } : conexionId ? { connection_id: conexionId } : {};
+  const consulta = new URLSearchParams(destino).toString();
 
   useEffect(() => {
     let activo = true;
     void (async () => {
-      const res = await fetch(`/api/playground${conexionId ? `?connection_id=${conexionId}` : ""}`);
+      const res = await fetch(`/api/playground${consulta ? `?${consulta}` : ""}`);
       const json = (await res.json().catch(() => ({}))) as { turns?: Turno[] };
       if (activo) setTurnos(json.turns ?? []);
     })();
     return () => {
       activo = false;
     };
-  }, [conexionId]);
+  }, [consulta]);
 
   // HU-ARCH-14: al salir de la prueba se cierra y se purga en el backend. `keepalive` cubre
   // el cierre de pestaña; el backend lo trata como idempotente.
@@ -89,11 +96,11 @@ export function ChatPrueba({
       void fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "close", ...(conexionId ? { connection_id: conexionId } : {}) }),
+        body: JSON.stringify({ action: "close", ...Object.fromEntries(new URLSearchParams(consulta)) }),
         keepalive: true,
       }).catch(() => undefined);
     };
-  }, [conexionId]);
+  }, [consulta]);
 
   // Baja solo la caja de mensajes: con `scrollIntoView` la página saltaba hasta el chat al abrir la
   // pestaña Probar de la ficha del agente y la cabecera y las pestañas quedaban fuera de la vista.
@@ -111,7 +118,7 @@ export function ChatPrueba({
     const res = await fetch("/api/playground", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "message", text: limpio, ...(conexionId ? { connection_id: conexionId } : {}) }),
+      body: JSON.stringify({ action: "message", text: limpio, ...destino }),
     });
     const json = (await res.json().catch(() => ({}))) as {
       text?: string;
@@ -179,7 +186,7 @@ export function ChatPrueba({
     const res = await fetch("/api/playground", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reset", ...(conexionId ? { connection_id: conexionId } : {}) }),
+      body: JSON.stringify({ action: "reset", ...destino }),
     });
     setStatus({ loading: false });
     if (!res.ok) {

@@ -1,27 +1,20 @@
 "use client";
 
+import { ChatPrueba } from "@/app/(app)/asistente/_components/chat-prueba";
+
 /**
- * «Pruébalo» del asistente de Agentes (SPEC-45, HU-AOS-72): probar el borrador recién creado sin publicarlo, con las
- * acciones simuladas. Mientras el backend no permite fijar el playground a un borrador, el paso explica cómo
- * probarlo después de publicar y deja a mano las frases armadas con lo cargado.
+ * «Pruébalo» de la creación de agentes (SPEC-45, HU-AOS-72): conversa con el borrador recién creado sin
+ * publicarlo. El turno va directo a ese agente, con las acciones simuladas y sin versión, release ni
+ * instancia (adenda HU-AOS-72 de ADR-0191). Las frases salen de lo cargado en «Datos».
  */
-export function PasoProbarBorrador({ sugerencias }: { sugerencias: string[] }) {
+export function PasoProbarBorrador({ agenteId, sugerencias }: { agenteId: string; sugerencias: string[] }) {
   return (
-    <div className="flex max-w-xl flex-col gap-4">
+    <div className="flex max-w-xl flex-col gap-3">
       <p className="text-body">
-        Muy pronto podrás conversar aquí con tu agente antes de publicarlo. Por ahora, publícalo en una conexión y pruébalo
-        desde su ficha con «Probar»: los clientes no lo ven hasta que lo actives.
+        Escríbele como si fueras un cliente. Le hablas al borrador: no se publica, no se envía nada y los pedidos o cobros
+        que haga son simulados.
       </p>
-      {sugerencias.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-headline">Para probarlo, pregúntale por ejemplo:</p>
-          <ul className="list-disc pl-5 text-sm text-body">
-            {sugerencias.map((f) => (
-              <li key={f}>«{f}»</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ChatPrueba agenteId={agenteId} sugerencias={sugerencias} />
     </div>
   );
 }
