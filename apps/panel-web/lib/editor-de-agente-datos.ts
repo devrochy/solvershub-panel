@@ -99,6 +99,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       flujoInicial: flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] },
       flujoSeeded: flujo.ok ? flujo.data.seeded : false,
       accionesDelFlujo: opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : [],
+      semillaDelFlujo: opcionesDeFlujo.ok ? flujoDesdeApi(opcionesDeFlujo.data.seed) : null,
       negocio: negocioDesdeIdentidad(me.ok ? (me.data.tenant?.name ?? "") : "", ajustes.ok ? ajustes.data.identity : null),
       modeloEfectivo: efectivo,
       puedeEditar,

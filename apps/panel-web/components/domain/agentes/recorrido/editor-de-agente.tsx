@@ -73,7 +73,8 @@ import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
-import { conversacionDeFlujo, conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
+import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
+import { conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
 const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "flujo", "conocimiento", "probar", "publicar"];
@@ -138,6 +139,7 @@ export function EditorDeAgente({
   datosClienteError,
   puedeEditarDatos = true,
   formasDePago = null,
+  semillaDelFlujo = null,
   flujoInicial = { sections: [] },
   flujoSeeded = false,
   accionesDelFlujo = [],
@@ -170,6 +172,8 @@ export function EditorDeAgente({
   puedeEditarDatos?: boolean;
   /** Formas de pago del agente (SPEC-48, HU-COM-21); `null` si el agente no tiene Comercio. */
   formasDePago?: FormasDePago | null;
+  /** Semilla del flujo de sus habilidades, para «Restaurar guion sugerido» (HU-COM-25). */
+  semillaDelFlujo?: FlujoDelAgente | null;
   /** Flujo del agente (ADR-0195, HU-AOS-76); si la API no responde, se abre vacío. */
   flujoInicial?: FlujoDelAgente;
   flujoSeeded?: boolean;
@@ -205,6 +209,8 @@ export function EditorDeAgente({
   const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
   // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
   const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
+  // SPEC-48, HU-COM-25: las formas de pago vigentes deciden los bloques de pago del guion.
+  const [formas, setFormas] = useState(formasDePago);
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(
@@ -550,6 +556,8 @@ export function EditorDeAgente({
     }),
   );
 
+  const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
+  const sugerido = guionSugerido(semillaDelFlujo ?? flujoInicial, bloquesDelGuion, accionesDelFlujo);
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
     identidad: <PasoIdentidad estado={estado} cambiar={cambiar} errores={errores} />,
     voz: (
@@ -589,7 +597,17 @@ export function EditorDeAgente({
             <h3 id="habilidades-formas-de-pago" className="font-display text-sh-block text-headline">
               Formas de pago
             </h3>
-            <FormasDePagoDelAgente agenteId={agente.id} inicial={formasDePago} puedeEditar={puedeEditar} />
+            <FormasDePagoDelAgente
+              agenteId={agente.id}
+              inicial={formasDePago}
+              puedeEditar={puedeEditar}
+              onGuardado={(nuevas) => {
+                setFormas(nuevas);
+                // HU-COM-25: el guion se recompone con las formas guardadas; queda «con cambios» hasta guardar.
+                const recompuesto = componerGuion(estado.flujo, estadosDeBloques(nuevas, estado.flujo), accionesDelFlujo);
+                if (!mismoGuion(recompuesto, estado.flujo)) cambiar({ flujo: recompuesto });
+              }}
+            />
           </section>
         )}
         <section aria-labelledby="habilidades-acciones" className="flex flex-col gap-4">
@@ -643,6 +661,15 @@ export function EditorDeAgente({
         cambiar={(flujo) => cambiar({ flujo })}
         errores={errores}
         semilla={flujoSeeded && JSON.stringify(estado.flujo) === JSON.stringify(flujoInicial)}
+        guion={
+          formas
+            ? {
+                bloques: bloquesDelGuion,
+                restaurado: mismoGuion(sugerido, estado.flujo),
+                onRestaurar: () => cambiar({ flujo: sugerido }),
+              }
+            : undefined
+        }
       />
     ),
     conocimiento: (
@@ -729,7 +756,7 @@ export function EditorDeAgente({
           frasePrueba ?? undefined,
         )
       : paso === "flujo"
-        ? conversacionDeFlujo(estado.flujo.sections.map((s) => ({ nombre: s.label, proposito: s.purpose })))
+        ? conversacionDelGuion(estado.flujo)
         : negocio.voz
           ? conversacionDeVoz(negocio.voz, nombreDelAgente, negocio.nombre)
           : [];
