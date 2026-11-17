@@ -10,6 +10,7 @@ import {
   TareasDelAgente,
 } from "@/app/(app)/agentes/_components/agent-tabs";
 import { ArchivarAgente } from "@/components/domain/agentes/archivar-agente";
+import { PausarAgente } from "@/components/domain/agentes/pausar-agente";
 import { ConexionesDelAgente } from "@/components/domain/agentes/conexiones-del-agente";
 import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agentes/indicadores-del-agente";
 import { HabilidadesDelAgente } from "@/components/domain/agentes/habilidades-del-agente";
@@ -334,6 +335,8 @@ export default async function AgentePage({
     .join(" · ");
   const publicacion = estadoDePublicacion(agente.published, detalle?.latest_version);
   const archivado = estaArchivado(agente);
+  // HU-ARCH-38: pausa por agente (estado vivo, sin publicar).
+  const pausado = Boolean(detalle?.paused);
   const conFiltros = !PESTANAS_SIN_FILTROS.has(actual);
 
   return (
@@ -348,6 +351,7 @@ export default async function AgentePage({
               agentes={overviewRes.data.items.map((a) => ({ ref: a.ref, key: a.key, name: a.name, published: a.published }))}
               actual={ref}
             />
+            {pausado && !archivado && <Badge variant="warning">En pausa</Badge>}
             {archivado ? (
               <Badge variant="neutral">Archivado</Badge>
             ) : (
@@ -376,6 +380,9 @@ export default async function AgentePage({
               <Button asChild variant="accent">
                 <Link href={`/agentes/${agente.id}/editar`}>Editar</Link>
               </Button>
+            )}
+            {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && (
+              <PausarAgente agenteId={agente.id} nombre={agente.name} pausado={pausado} />
             )}
             {puedeEditar && agente.id && puedeArchivar(agente) && (
               <ArchivarAgente agenteId={agente.id} nombre={agente.name} archivado={archivado} />
