@@ -9612,6 +9612,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/commerce/orders/{order_id}/payment-proofs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Comprobantes Del Pedido
+         * @description Comprobantes del pedido (los 20 más recientes) con su imagen firmada y el resultado.
+         */
+        get: operations["comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/orders/{order_id}/payment-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cambiar Estado De Pago
+         * @description Revisión manual del pago. Queda quién, cuándo y la nota. Un pedido pagado no se vuelve a
+         *     rechazar desde aquí (un reembolso no es un rechazo); rechazar un comprobante deja el pedido
+         *     `rechazado` y el agente deja de presentarlo como pagado.
+         */
+        post: operations["cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -24668,6 +24710,84 @@ export interface components {
              * @default true
              */
             transfer_ocr_enabled: boolean;
+        };
+        /** EstadoDePagoIn */
+        EstadoDePagoIn: {
+            /**
+             * Accion
+             * @description `confirmar`: el comprobante en revisión es válido. `rechazar`: no lo es. `marcar_pagado`: el pago se verificó por fuera (sin comprobante).
+             * @enum {string}
+             */
+            accion: "confirmar" | "rechazar" | "marcar_pagado";
+            /**
+             * Proof Id
+             * @description Comprobante que se confirma o rechaza.
+             */
+            proof_id?: string | null;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
+        /** ComprobanteOut */
+        ComprobanteOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pagado" | "en_revision" | "rechazado";
+            /**
+             * Image Url
+             * @description URL firmada de vida corta; `null` si la imagen no está.
+             */
+            image_url: string | null;
+            /**
+             * Extracted
+             * @description Lo que leyó la visión: monto, fecha, estado, banco, cuenta (últimos 4)…
+             */
+            extracted: {
+                [key: string]: unknown;
+            };
+            /**
+             * Match
+             * @description Resultado de la comparación con el pedido y sus motivos.
+             */
+            match: {
+                [key: string]: unknown;
+            };
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Review Note */
+            review_note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ComprobantesOut */
+        ComprobantesOut: {
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** Payment Status */
+            payment_status: string;
+            /** Payment Method */
+            payment_method: string;
+            /** Payment Status Changed At */
+            payment_status_changed_at: string | null;
+            /** Payment Status Reason */
+            payment_status_reason: string | null;
+            /** Items */
+            items: components["schemas"]["ComprobanteOut"][];
         };
     };
     responses: never;
@@ -42447,7 +42567,7 @@ export interface operations {
             query?: {
                 /** @description Estado del pedido. */
                 estado?: string | null;
-                /** @description Estado del pago: pendiente, pagado o rechazado. */
+                /** @description Estado del pago: pendiente, en_revision, pagado o rechazado. */
                 pago?: string | null;
                 /** @description Número de pedido o nombre del cliente. */
                 q?: string | null;
@@ -45676,6 +45796,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FormasDePagoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComprobantesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstadoDePagoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComprobantesOut"];
                 };
             };
             /** @description Validation Error */

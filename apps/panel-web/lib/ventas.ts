@@ -69,6 +69,8 @@ export function pagoDePedido(estado: string | null | undefined): Etiqueta {
       return { label: "Pagado", tono: "success" };
     case "pendiente":
       return { label: "Pago pendiente", tono: "warning" };
+    case "en_revision":
+      return { label: "Pago en revisión", tono: "info" };
     case "rechazado":
       return { label: "Pago rechazado", tono: "danger" };
     default:

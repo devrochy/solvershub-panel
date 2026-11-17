@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { BotonSiguientePaso, MasAccionesDePedido } from "@/app/(app)/comercio/pedidos/_components/cambiar-estado";
+import { ComprobanteDelPedido } from "@/app/(app)/comercio/pedidos/_components/comprobante-del-pedido";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Order } from "@/lib/api/types";
@@ -28,12 +29,15 @@ export function PedidoAbierto({
   moneda,
   hrefFicha,
   alCerrar,
+  puedeRevisarPagos = false,
 }: {
   pedido: Order;
   moneda: string;
   /** Ficha del cliente en Clientes; `null` si la sesión no ve Clientes (HU-CRM-20). */
   hrefFicha: string | null;
   alCerrar: string;
+  /** Confirmar o rechazar comprobantes (SPEC-48, HU-COM-22). */
+  puedeRevisarPagos?: boolean;
 }) {
   const router = useRouter();
   const nombre = pedido.customer_name ?? pedido.delivery_full_name ?? "Cliente sin nombre";
@@ -102,6 +106,12 @@ export function PedidoAbierto({
               {metodoDePago(pedido.payment_method)} · {pago.label.toLowerCase()}
             </p>
           </Bloque>
+
+          {pedido.payment_method === "transferencia" && (
+            <Bloque titulo="Comprobante">
+              <ComprobanteDelPedido pedidoId={pedido.id} moneda={moneda} puedeEditar={puedeRevisarPagos} />
+            </Bloque>
+          )}
 
           {hrefFicha && (
             <Link href={hrefFicha} className="self-start text-sm text-link hover:underline">
