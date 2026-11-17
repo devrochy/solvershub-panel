@@ -1904,6 +1904,19 @@ createServer(async (req, res) => {
     res.end(JSON.stringify(respuestas["/me/notifications/preferences"]));
     return;
   }
+  // HU-ARCH-38: pausar o reanudar un agente cambia su detalle (estado vivo, sin publicar).
+  const pausa = req.method === "POST" && ruta.match(/^\/admin\/agents\/([^/]+)\/(pause|resume)$/);
+  if (pausa && respuestas[`/admin/agents/${pausa[1]}`]) {
+    const pausado = pausa[2] === "pause";
+    respuestas[`/admin/agents/${pausa[1]}`] = {
+      ...respuestas[`/admin/agents/${pausa[1]}`],
+      paused: pausado,
+      paused_at: pausado ? new Date().toISOString() : null,
+      paused_reason: null,
+    };
+    res.end(JSON.stringify(respuestas[`/admin/agents/${pausa[1]}`]));
+    return;
+  }
   const cuerpo =
     req.method === "POST" && ruta === "/admin/onboarding/dejar-listo" && respuestas[ruta]
       ? respuestas[ruta]
