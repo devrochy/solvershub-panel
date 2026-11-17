@@ -20,6 +20,7 @@ import type {
 } from "@/lib/api/types";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
 import type { AgenteDatos } from "@/lib/datos-cliente";
+import type { FormasDePago } from "@/lib/formas-de-pago";
 
 type PropsDelEditor = ComponentProps<typeof EditorDeAgente>;
 
@@ -37,7 +38,7 @@ export type CargaDelEditor =
  * bienvenida (HU-UX-23). Solo agente, superpoderes y modelos son obligatorias; lo demás abre vacío si no responde.
  */
 export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> {
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes] =
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas] =
     await Promise.all([
       apiFetch<AgentDetail>(`/admin/agents/${id}`),
       apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
@@ -59,6 +60,8 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       apiFetch<AgentFlowOptionsOut>(`/admin/agents/${id}/flow/options`),
       // Voz, horario y reglas del negocio: se muestran en «Cómo habla» y «Horario y reglas».
       apiFetch<SettingsResponse>("/admin/settings"),
+      // Formas de pago (SPEC-48, HU-COM-21): 404 si el agente no tiene Comercio; entonces no se muestran.
+      apiFetch<FormasDePago>(`/pack/commerce/agents/${id}/payment-forms`),
     ]);
   if (!agente.ok && agente.status === 404) return { estado: "no_existe" };
   if (!agente.ok || !superpoderes.ok || !modelos.ok) {
@@ -92,6 +95,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       datosCliente: datosCliente.ok ? datosCliente.data : null,
       datosClienteError: datosCliente.ok ? undefined : datosCliente.error,
       puedeEditarDatos: puedeEditar,
+      formasDePago: formas.ok ? formas.data : null,
       flujoInicial: flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] },
       flujoSeeded: flujo.ok ? flujo.data.seeded : false,
       accionesDelFlujo: opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : [],
