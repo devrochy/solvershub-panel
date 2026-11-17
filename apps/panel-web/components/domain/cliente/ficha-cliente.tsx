@@ -59,12 +59,15 @@ const CLAVE_DE_ETAPA = "estado_lead";
 const CAMPOS_DE_PERDIDA = ["motivo_perdida", "nota_perdida"];
 
 const TITULO_DEL_PACK: Record<string, string> = {
+  // El lead es del core desde ADR-0193 (`leads`); `pack_commerce` queda para un backend sin desplegar.
+  leads: "Lead de venta",
   pack_commerce: "Lead de venta",
   pack_cobranza: "Datos de cobranza",
 };
 
 const ENLACE_DEL_AGENTE: Record<string, string> = {
   ventas: "/comercio/pedidos",
+  leads: "/comercio/clientes",
   cobranza: "/cobranza/clientes",
   agenda: "/calendario",
 };
@@ -466,6 +469,9 @@ function AgenteTab({
             {agente.key === "ventas" ? (
               // HU-CRM-20: los pedidos de ESTE cliente, no la lista general.
               <Link href={`${ENLACE_DEL_AGENTE.ventas}?cliente=${encodeURIComponent(leadId)}`}>Ver sus pedidos</Link>
+            ) : agente.key === "leads" ? (
+              // El lead (ADR-0193) se trabaja en Clientes de Ventas, con su embudo y su seguimiento.
+              <Link href={ENLACE_DEL_AGENTE.leads}>Ver en Clientes de Ventas</Link>
             ) : (
               <Link href={ENLACE_DEL_AGENTE[agente.key]}>Abrir en {agente.name}</Link>
             )}

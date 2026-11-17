@@ -32,8 +32,8 @@ const respuesta = (status: number, cuerpo: unknown) =>
 
 function editables(nota = "", fecha = ""): LeadEditable[] {
   return [
-    { plugin_id: "pack_commerce", key: "seguimiento_nota", label: "Próxima acción", tipo: "texto", max_length: 200, value: nota },
-    { plugin_id: "pack_commerce", key: "seguimiento_en", label: "Fecha de seguimiento", tipo: "fecha", max_length: 32, value: fecha },
+    { plugin_id: "leads", key: "seguimiento_nota", label: "Próxima acción", tipo: "texto", max_length: 200, value: nota },
+    { plugin_id: "leads", key: "seguimiento_en", label: "Fecha de seguimiento", tipo: "fecha", max_length: 32, value: fecha },
   ];
 }
 
@@ -70,7 +70,7 @@ describe("SeguimientoDelLead", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("/api/leads/c-1/pack/pack_commerce");
+    expect(url).toBe("/api/leads/c-1/pack/leads");
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(String(init.body))).toEqual({
       valores: { seguimiento_nota: "Enviar cotización", seguimiento_en: "2031-05-04T09:00" },

@@ -83,7 +83,7 @@ function pintar(opts: { puedeMover?: boolean; cols?: ColumnaDeEmbudo[]; motivos?
     <TableroEmbudo
       titulo="Clientes de Ventas"
       columnas={opts.cols ?? columnas()}
-      pluginId="pack_commerce"
+      pluginId="leads"
       clave="estado_lead"
       motivos={opts.motivos ?? MOTIVOS}
       puedeMover={opts.puedeMover ?? true}
@@ -130,7 +130,7 @@ describe("TableroEmbudo", () => {
     expect(within(columnaDe("Calificado")).getByText("2")).toBeTruthy();
     expect(within(columnaDe("Calificado")).getByText(/350\.000/)).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/leads/a/pack/pack_commerce",
+      "/api/leads/a/pack/leads",
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ valores: { estado_lead: "calificado" } }) }),
     );
 
@@ -158,7 +158,7 @@ describe("TableroEmbudo", () => {
 
     await waitFor(() => expect(within(columnaDe("Calificado")).getByRole("link", { name: "Beto Prueba" })).toBeTruthy());
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/leads/b/pack/pack_commerce",
+      "/api/leads/b/pack/leads",
       expect.objectContaining({ body: JSON.stringify({ valores: { estado_lead: "calificado" } }) }),
     );
   });
@@ -204,7 +204,7 @@ describe("TableroEmbudo", () => {
 
     await waitFor(() => expect(within(columnaDe("Perdido")).getByRole("link", { name: "Ana Prueba", hidden: true })).toBeTruthy());
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/leads/a/pack/pack_commerce",
+      "/api/leads/a/pack/leads",
       expect.objectContaining({
         body: JSON.stringify({ valores: { estado_lead: "perdido", motivo_perdida: "precio", nota_perdida: "Muy caro" } }),
       }),

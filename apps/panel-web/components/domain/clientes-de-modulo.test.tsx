@@ -2,7 +2,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
-import { ClientesDeModulo, consultaClientesDeModulo } from "@/components/domain/clientes-de-modulo";
+import { ClientesDeModulo, columnasDeLaLista, consultaClientesDeModulo } from "@/components/domain/clientes-de-modulo";
 import { FeedbackProviders } from "@/components/ui/providers";
 import type { LeadsResponse, Me } from "@/lib/api/types";
 import { leads, me } from "@/lib/testing/fixtures";
@@ -60,11 +60,10 @@ const AGENTES: LeadsResponse["agents"] = [
     key: "ventas",
     name: "Ventas",
     icon: "shopping-cart",
-    columns: [
-      { key: "estado_lead", label: "Estado del lead" },
-      { key: "pedidos", label: "Pedidos" },
-    ],
+    columns: [{ key: "pedidos", label: "Pedidos" }],
   },
+  // El lead es del core desde ADR-0193: sus columnas llegan en el agente `leads` y la lista de Ventas las suma.
+  { key: "leads", name: "Lead", icon: "user-plus", columns: [{ key: "estado_lead", label: "Estado del lead" }] },
 ];
 const FACETAS: NonNullable<LeadsResponse["facetas"]> = [
   { key: "estado_lead", counts: { nuevo: 4, calificado: 2, contactado: 0, convertido: 1, perdido: 0 }, sin_valor: 3, total: 10 },
@@ -129,6 +128,19 @@ describe("consultaClientesDeModulo", () => {
   it("descarta un orden desconocido y no manda el orden por defecto", () => {
     expect(consultaClientesDeModulo("ventas", { orden: "por-el-color" }, OPERABLE).has("orden")).toBe(false);
     expect(consultaClientesDeModulo("ventas", { orden: "alta" }, OPERABLE).has("orden")).toBe(false);
+  });
+});
+
+describe("columnasDeLaLista", () => {
+  it("Ventas suma las columnas del lead (ADR-0193) sin repetir clave; otro módulo solo las suyas", () => {
+    const agentes: LeadsResponse["agents"] = [
+      ...AGENTES,
+      { key: "agenda", name: "Agenda", icon: "calendar", columns: [{ key: "proxima_cita", label: "Próxima cita" }] },
+    ];
+    agentes[1] = { ...agentes[1], columns: [...agentes[1].columns, { key: "estado_lead", label: "Repetida" }] };
+    expect(columnasDeLaLista(agentes, "ventas").map((c) => c.key)).toEqual(["pedidos", "estado_lead"]);
+    expect(columnasDeLaLista(agentes, "agenda").map((c) => c.key)).toEqual(["proxima_cita"]);
+    expect(columnasDeLaLista([], "ventas")).toEqual([]);
   });
 });
 
@@ -319,7 +331,7 @@ describe("estados, CSV y móvil", () => {
 });
 
 describe("cambio de etapa (HU-CRM-19)", () => {
-  const CAMBIABLE = { ...OPERABLE, pluginDeEtapa: "pack_commerce" };
+  const CAMBIABLE = { ...OPERABLE, pluginDeEtapa: "leads" };
 
   it("el propietario cambia la etapa desde la fila; quien no tiene lead sigue sin menú", async () => {
     responder();
@@ -361,7 +373,7 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
   ];
   const CON_VALOR = {
     ...OPERABLE,
-    pluginDeEtapa: "pack_commerce",
+    pluginDeEtapa: "leads",
     filtros: ["clasificacion", "motivo_perdida", "valor"],
     motivoDePerdida: "motivo_perdida",
     valor: "valor",
@@ -402,7 +414,8 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
       filters: FILTROS_DE_VENTAS,
       agents: [
         AGENTES[0],
-        { ...AGENTES[1], columns: [...AGENTES[1].columns, { key: "valor_estimado", label: "Valor estimado" }] },
+        AGENTES[1],
+        { ...AGENTES[2], columns: [...AGENTES[2].columns, { key: "valor_estimado", label: "Valor estimado" }] },
       ],
       items: [
         { ...ANA, extras: { ...ANA.extras, valor_estimado: 250000 } },
