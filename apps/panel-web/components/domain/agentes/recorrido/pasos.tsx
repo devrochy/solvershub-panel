@@ -34,6 +34,7 @@ import { MAX_FRAGMENTOS, MODOS, type ConocimientoEnEditor, type ModoDeBusqueda }
 import type { Pendiente } from "@/lib/frases-pendientes";
 import { canalLabel, habilidadLabel } from "@/lib/labels";
 import { nombreDeAccion } from "@/lib/grupos-de-acciones";
+import { ETIQUETA_DE_BLOQUE, type BloqueConEstado } from "@/lib/guion-reglas";
 import { agruparPorDominio } from "@/lib/superpoderes-por-dominio";
 import { cn } from "@/lib/utils";
 
@@ -625,6 +626,7 @@ export function PasoFlujo({
   cambiar,
   errores,
   semilla,
+  guion,
 }: {
   flujo: FlujoDelAgente;
   acciones: AccionDelFlujo[];
@@ -632,6 +634,8 @@ export function PasoFlujo({
   errores: Errores;
   /** true cuando el flujo que se muestra es la semilla del pack y aún no se guardó. */
   semilla: boolean;
+  /** Guion por formas de pago (SPEC-48, HU-COM-25): los bloques de pago y cómo restaurar lo sugerido. */
+  guion?: { bloques: BloqueConEstado[]; onRestaurar: () => void; restaurado: boolean };
 }) {
   const disponibles = acciones.filter((a) => a.enabled || a.by_superpower);
 
@@ -675,6 +679,48 @@ export function PasoFlujo({
         <p className="rounded-md bg-status-info-bg px-3 py-2 text-sm text-status-info-fg">
           Partimos del flujo sugerido de su habilidad. Puedes cambiarlo: este agente es independiente de los demás.
         </p>
+      )}
+      {guion && (
+        <section aria-labelledby="guion-formas" className="flex flex-col gap-3 rounded-md border border-border-soft p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="guion-formas" className="text-sm font-medium text-headline">
+              Bloques por formas de pago
+            </h3>
+            <Button type="button" variant="outline" size="sm" className="min-h-11" disabled={guion.restaurado} onClick={guion.onRestaurar}>
+              Restaurar guion sugerido
+            </Button>
+          </div>
+          <ol className="flex flex-col gap-2">
+            {guion.bloques.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-start gap-2 text-sm" data-bloque={b.id}>
+                {b.estado === "activo" ? (
+                  <Badge variant="success">{ETIQUETA_DE_BLOQUE.activo}</Badge>
+                ) : b.estado === "opcional" ? (
+                  <Badge variant="warning">{ETIQUETA_DE_BLOQUE.opcional}</Badge>
+                ) : (
+                  <Badge variant="neutral">{ETIQUETA_DE_BLOQUE.oculto}</Badge>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium text-headline">{b.label}</span>
+                  <span className="text-text-soft">
+                    {" · "}
+                    {b.estado === "activo"
+                      ? b.enElGuion
+                        ? "va en el guion."
+                        : "falta en el guion: pulsa «Restaurar guion sugerido»."
+                      : b.estado === "opcional"
+                        ? b.metodo === "transferencia"
+                          ? "termina de configurar la transferencia (cuenta y pedir comprobante) para usarlo."
+                          : "conecta los pagos en línea para usarlo."
+                        : b.metodo === "transferencia"
+                          ? "aparece si activas la transferencia."
+                          : "aparece si activas el pago en línea."}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
       {flujo.sections.length === 0 && <p className="text-sm text-text-soft">Todavía no hay secciones. Agrega la primera.</p>}
       {flujo.sections.map((seccion, i) => {

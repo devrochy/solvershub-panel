@@ -44,10 +44,13 @@ export function FormasDePagoDelAgente({
   agenteId,
   inicial,
   puedeEditar,
+  onGuardado,
 }: {
   agenteId: string;
   inicial: FormasDePago;
   puedeEditar: boolean;
+  /** Las formas quedaron guardadas (HU-COM-25: el guion se recompone con ellas). */
+  onGuardado?: (datos: FormasDePago) => void;
 }) {
   const [datos, setDatos] = useState(inicial);
   const [borrador, setBorrador] = useState<Borrador>(() => borradorDesde(inicial));
@@ -91,6 +94,7 @@ export function FormasDePagoDelAgente({
       }
       setDatos(cuerpo as FormasDePago);
       setBorrador(borradorDesde(cuerpo as FormasDePago));
+      onGuardado?.(cuerpo as FormasDePago);
       toast.success("Formas de pago guardadas.");
     } catch {
       setError("No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
