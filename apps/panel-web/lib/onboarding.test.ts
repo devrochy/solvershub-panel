@@ -26,7 +26,7 @@ import {
   type Recorrido,
 } from "./onboarding";
 
-const RECORRIDO: Recorrido = { estado: "omitido", paso: 3, total_pasos: 9, aplica: true, abrir: false, avisar: true };
+const RECORRIDO: Recorrido = { estado: "omitido", paso: 2, total_pasos: 4, aplica: true, abrir: false, avisar: true };
 const listo: EstadoDelAsistente = {
   ...ESTADO_INICIAL,
   tipo: "ventas",
@@ -44,12 +44,10 @@ describe("pasos del asistente", () => {
     expect(errorDelPaso("identidad", listo)).toBeUndefined();
   });
 
-  it("nueve pasos: los cuatro del negocio y los cinco del recorrido del agente (SPEC-47)", () => {
-    expect(PASOS.map((p) => p.id)).toEqual([
-      "negocio", "identidad", "voz", "reglas", "habilidades", "flujo", "conocimiento", "probar", "publicar",
-    ]);
-    expect(TOTAL_PASOS).toBe(9);
-    expect(PASOS_DEL_NEGOCIO).toBe(4);
+  it("cuatro pasos (HU-AOS-81): el del negocio y los tres de la creación rápida", () => {
+    expect(PASOS.map((p) => p.id)).toEqual(["negocio", "habilidades", "conocimiento", "probar"]);
+    expect(TOTAL_PASOS).toBe(4);
+    expect(PASOS_DEL_NEGOCIO).toBe(1);
     expect(cambiosDelPaso("negocio", listo)).not.toHaveProperty("assistant_name");
     expect(cambiosDelPaso("identidad", listo)).toEqual({ assistant_name: listo.nombreDelAgente.trim() });
   });
@@ -182,9 +180,9 @@ describe("retomar", () => {
 
 describe("aviso", () => {
   it("cuenta los pasos que faltan y cambia el verbo del botón", () => {
-    expect(pasosQueFaltan(RECORRIDO)).toBe(7);
-    expect(textoDelAviso(RECORRIDO)).toBe("Tu agente aún no está listo para probar. Faltan 7 pasos.");
-    expect(textoDelAviso({ ...RECORRIDO, paso: 9 })).toMatch(/Falta 1 paso\./);
+    expect(pasosQueFaltan(RECORRIDO)).toBe(3);
+    expect(textoDelAviso(RECORRIDO)).toBe("Tu agente aún no está listo para probar. Faltan 3 pasos.");
+    expect(textoDelAviso({ ...RECORRIDO, paso: 4 })).toMatch(/Falta 1 paso\./);
     expect(accionDelAviso(RECORRIDO)).toBe("Continuar");
     expect(accionDelAviso({ ...RECORRIDO, paso: 1, estado: "omitido" })).toBe("Empezar");
     expect(pasosQueFaltan({ ...RECORRIDO, estado: "completo" })).toBe(0);

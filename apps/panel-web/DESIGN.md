@@ -363,7 +363,7 @@ SPEC-12, no de este recorrido.
 
 | Pieza | Regla |
 |---|---|
-| `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú). 9 pasos (SPEC-47, HU-UX-23): los 4 del negocio (Tu negocio, Identidad, Cómo habla, Horario y reglas) en `/bienvenida`, sobre `RecorridoDelAgente`; al salir de Horario y reglas se crea el agente y se deja listo, y los pasos 5 a 9 son el editor del agente en modo `bienvenida` en `/bienvenida/agente/[id]`. Antes de «Pruébalo» y al terminar se deja listo otra vez. Cada paso guarda al avanzar y se retoma donde quedó (`pasos: 9` al servidor). El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir`. «Completo» lo decide el servidor al terminar |
+| `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú). Creación rápida de 4 pasos (HU-AOS-81, D-SPEC-47-4): 1 «Tu negocio» y la identidad del agente en una sola pantalla en `/bienvenida`; al seguir se crea el agente y se deja listo, y los pasos 2 a 4 (Habilidades y formas de pago, Datos para probar, Revisar, probar y publicar con el semáforo «Listo para responder») son el editor del agente en modo `bienvenida` en `/bienvenida/agente/[id]`. Cómo habla y el horario quedan con lo sugerido y se ajustan en Personalizar. Cada paso guarda al avanzar y se retoma donde quedó (`pasos: 4` al servidor, que traduce lo guardado con 9 o 6). El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir`. «Completo» lo decide el servidor al terminar |
 | `components/domain/aviso-de-onboarding.tsx` | Aviso permanente (`role="status"`, tonos `status-warning-*`) bajo la barra superior mientras el recorrido está empezado o saltado. No se puede cerrar; solo desaparece con «completo». Lo ven el dueño y el master |
 | `components/ui/elegibles.tsx` | Tarjetas y fichas de un clic con `input` radio o checkbox nativos (flechas, foco y lector gratis); la selección se ve por anillo cian y marca, no solo por color. Objetivo ≥ 44 px |
 | Vista previa | El teléfono con WhatsApp del kit (`VistaPreviaWhatsApp`) reemplaza a la tarjeta viva: la voz sale de frases fijas por tono, calidez, emojis y largo (`lib/onboarding.ts`), sin modelo. En móvil, la hoja inferior |
@@ -373,7 +373,7 @@ SPEC-12, no de este recorrido.
 
 ## Recorrido del agente (HU-UX-22, SPEC-47)
 
-La bienvenida, Nuevo agente y Editar usan el mismo cascarón y los mismos pasos (D-75). La bienvenida
+La bienvenida, Nuevo agente y Editar usan el mismo cascarón (D-75); la bienvenida y Nuevo agente recorren los 4 pasos de la creación rápida y Personalizar los 8 libres (D-SPEC-47-4). La bienvenida
 sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro del shell.
 
 | Pieza | Regla |

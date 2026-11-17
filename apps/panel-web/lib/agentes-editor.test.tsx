@@ -362,14 +362,14 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith("/publish"))).toBe(false);
   });
 
-  it("en la bienvenida (HU-UX-23) son los pasos 5 a 9 de 9, vuelve a los del negocio y prepara la prueba", async () => {
+  it("en la bienvenida (HU-AOS-81) son los pasos 2 a 4 de 4, vuelve al del negocio y prepara la prueba", async () => {
     fetchMock.mockImplementation(async () => new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
     const volverA = vi.fn();
     const avanzar = vi.fn();
     const prepararPrueba = vi.fn(async () => null);
     const terminar = vi.fn(async () => {});
     const bienvenida = {
-      pasosDelNegocio: ["Tu negocio", "Identidad", "Cómo habla", "Horario"].map((t, i) => ({ id: `negocio-${i}`, titulo: t })),
+      pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
       volverA,
       avanzar,
       prepararPrueba,
@@ -379,19 +379,21 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       terminando: false,
     };
     abrir({ modo: "bienvenida", pasoInicial: "habilidades", bienvenida });
-    expect(screen.getByText("Paso 5 de 9 · Habilidades")).toBeTruthy();
+    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Atrás/ }));
-    expect(volverA).toHaveBeenCalledWith(4);
+    expect(volverA).toHaveBeenCalledWith(1);
 
     cleanup();
     abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida });
+    expect(screen.getByText("Paso 3 de 4 · Datos")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-    await waitFor(() => expect(screen.getByText("Paso 8 de 9 · Pruébalo")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy());
     expect(prepararPrueba).toHaveBeenCalled();
-    expect(avanzar).toHaveBeenCalledWith(8);
+    expect(avanzar).toHaveBeenCalledWith(4);
     expect(screen.getByText("Chat de prueba")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Terminar" })).toBeTruthy();
   });
 
   it("en la bienvenida «Terminar» espera a que le escriba a su agente", () => {
@@ -406,7 +408,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       terminar,
       terminando: false,
     };
-    abrir({ modo: "bienvenida", pasoInicial: "publicar", bienvenida });
+    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida });
     expect((screen.getByRole("button", { name: /Terminar/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/escríbele al menos un mensaje/)).toBeTruthy();
   });
