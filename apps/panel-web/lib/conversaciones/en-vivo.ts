@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import type { ConversationPage, MessageItem, MessagesSince } from "@/lib/api/types";
 
@@ -83,7 +83,9 @@ export function useHiloEnVivo(conversationId: string, iniciales: MessageItem[]) 
     setDelServidor(iniciales);
     setMensajes((actuales) => unirMensajes(actuales, iniciales));
   }
-  useEffect(() => {
+  // Espejo para el cursor del polling. En el commit (no en un efecto pasivo): una respuesta que
+  // llega justo después de pintar mensajes nuevos ya los ve.
+  useLayoutEffect(() => {
     mensajesRef.current = mensajes;
   }, [mensajes]);
 
@@ -98,9 +100,8 @@ export function useHiloEnVivo(conversationId: string, iniciales: MessageItem[]) 
       if (!res.ok) return;
       const data = (await res.json()) as MessagesSince;
       if (senal.aborted) return;
-      const unidos = unirMensajes(mensajesRef.current, data.items);
-      mensajesRef.current = unidos;
-      setMensajes(unidos);
+      // Sobre el estado vigente, no sobre el espejo: no pisa lo que sumó la vista del servidor.
+      setMensajes((actuales) => unirMensajes(actuales, data.items));
     },
     [conversationId],
   );
