@@ -110,6 +110,29 @@ describe("campana de notificaciones", () => {
     expect(llamadas.find((l) => l.url === "/api/notificaciones/read")?.cuerpo).toEqual({ ids: ["a"] });
   });
 
+  it("marca leída aunque el clic llegue apenas se pinta la fila (antes de los efectos pasivos)", async () => {
+    // El MutationObserver corre como microtarea tras el commit, antes de los efectos pasivos:
+    // es el orden que en CI, con la máquina cargada, dejaba la fila sin marcar.
+    montar();
+    let clicada = false;
+    const observador = new MutationObserver(() => {
+      const enlace = document.querySelector('[role="dialog"] a');
+      if (enlace && !clicada) {
+        clicada = true;
+        fireEvent.click(enlace);
+      }
+    });
+    observador.observe(document.body, { childList: true, subtree: true });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));
+      await waitFor(() => expect(clicada).toBe(true));
+    } finally {
+      observador.disconnect();
+    }
+    await waitFor(() => expect(llamadas.some((l) => l.url === "/api/notificaciones/read" && l.metodo === "POST")).toBe(true));
+    expect(await screen.findByRole("button", { name: "Notificaciones" })).toBeTruthy();
+  });
+
   it("archiva con rollback invisible al usuario: la fila sale de la lista", async () => {
     montar();
     fireEvent.click(screen.getByRole("button", { name: /Notificaciones/ }));

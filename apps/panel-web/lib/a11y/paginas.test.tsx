@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -89,6 +89,22 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   };
+  // Lo que el cliente pide al BFF de packs (`/api/pack/<...>` → `/pack/<...>`, p. ej. la grilla de la
+  // Agenda) sale de los mismos fixtures; sin esto, la URL relativa reventaba en undici con
+  // «Failed to parse URL» en stderr. El resto sigue fallando como en un fetch sin red.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (entrada: RequestInfo | URL) => {
+      const url = String(entrada instanceof Request ? entrada.url : entrada);
+      const data = url.startsWith("/api/pack/") ? RESPUESTAS[url.slice("/api".length).split("?")[0]] : undefined;
+      if (data === undefined) throw new TypeError(`Sin fixture para ${url}`);
+      return Response.json(data);
+    }),
+  );
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
 });
 
 afterEach(cleanup);

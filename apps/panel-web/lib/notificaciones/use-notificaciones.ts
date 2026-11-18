@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import type { NotificacionItem, NotificacionPagina, NotificacionPreferencias } from "@/lib/api/types";
 import { usePolling } from "@/lib/conversaciones/en-vivo";
@@ -50,8 +50,10 @@ export function useNotificaciones({ abierto }: { abierto: boolean }) {
   useEffect(() => {
     filtroRef.current = { pestana, categoria };
   }, [pestana, categoria]);
+  // Espejo de `items` para `marcarLeida`. En el commit (no en un efecto pasivo): un clic que llega
+  // justo después de pintar la fila, antes de que corran los efectos pasivos, ya la encuentra.
   const itemsRef = useRef(items);
-  useEffect(() => {
+  useLayoutEffect(() => {
     itemsRef.current = items;
   }, [items]);
 
