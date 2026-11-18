@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 
 import type { MessageItem } from "@/lib/api/types";
 import {
@@ -131,6 +132,49 @@ describe("useHiloEnVivo", () => {
     act(() => cambiarVisibilidad("hidden"));
     await act(() => vi.advanceTimersByTimeAsync(INTERVALO_HILO_MS * 5));
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("no pierde los mensajes del servidor si el polling responde justo después de pintarlos", async () => {
+    // Orden que deja el espejo viejo: llegan mensajes del servidor (p. ej. tras tomar el chat), se
+    // pintan, y la respuesta del polling en vuelo se procesa antes de que corran los efectos
+    // pasivos. Con temporizadores reales: el MutationObserver (microtarea tras el commit) suelta
+    // la respuesta; la de `json` es una promesa ya resuelta, así que todo queda en microtareas.
+    vi.useRealTimers();
+    const m1 = mensaje("m1", "2026-10-09T15:00:00Z", "Hola");
+    const m2 = mensaje("m2", "2026-10-09T15:00:02Z", "Del servidor");
+    const m3 = mensaje("m3", "2026-10-09T15:00:04Z", "Del polling");
+    let soltar: (r: Response) => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => (soltar = r))));
+
+    let cambiarIniciales: (m: MessageItem[]) => void = () => undefined;
+    function Hilo() {
+      const [iniciales, setIniciales] = useState([m1]);
+      cambiarIniciales = setIniciales;
+      const mensajes = useHiloEnVivo("conv-1", iniciales);
+      return (
+        <ul>
+          {mensajes.map((m) => (
+            <li key={m.id}>{m.content}</li>
+          ))}
+        </ul>
+      );
+    }
+    render(<Hilo />);
+    // Polling en vuelo (al volver a la pestaña consulta enseguida).
+    act(() => cambiarVisibilidad("visible"));
+
+    const observador = new MutationObserver(() => {
+      if (document.body.textContent?.includes("Del servidor")) {
+        observador.disconnect();
+        soltar({ ok: true, json: () => Promise.resolve({ items: [m3], has_more: false }) } as Response);
+      }
+    });
+    observador.observe(document.body, { childList: true, subtree: true, characterData: true });
+    // Fuera de `act`, como una actualización real: React difiere sus efectos pasivos.
+    setTimeout(() => cambiarIniciales([m1, m2]), 0);
+
+    await waitFor(() => expect(screen.queryByText("Del polling")).not.toBeNull());
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Hola", "Del servidor", "Del polling"]);
   });
 
   it("un error del servidor deja el hilo como estaba", async () => {
