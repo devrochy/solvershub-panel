@@ -14,6 +14,14 @@ import { MenuDeFila } from "@/components/domain/menu-de-fila";
 import { CONVERSATION_STATUS, PAYMENT_STATUS, StatusBadge } from "@/components/domain/status-badge";
 import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
+import {
+  DemoChatSimulado,
+  DemoEscenario,
+  DemoNombreSugerido,
+  DemoOpcionesRecomendadas,
+  DemoRecorridoEnRuta,
+  DemoRutaDeEstaciones,
+} from "@/app/(dev)/catalogo/_components/ruta-de-lanzamiento";
 import { TarjetaElegible } from "@/components/ui/elegibles";
 import { BarraDePasos } from "@/components/ui/barra-de-pasos";
 import { VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
@@ -133,6 +141,7 @@ function Seccion({
   cuando,
   no,
   piezas,
+  apilada = false,
   children,
 }: {
   id: string;
@@ -140,6 +149,8 @@ function Seccion({
   cuando: string;
   no?: string;
   piezas: string;
+  /** Claro y oscuro uno debajo del otro, a todo el ancho (piezas que necesitan espacio). */
+  apilada?: boolean;
   children: ReactNode;
 }) {
   const temaCelular = useContext(TemaEnCelular);
@@ -155,7 +166,7 @@ function Seccion({
         {no && <p className="max-w-3xl text-sm text-text-soft">No lo uses para {no}</p>}
         <p className="font-mono text-sh-caption text-text-soft">{piezas}</p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={cn("grid gap-4", !apilada && "lg:grid-cols-2")}>
         {(["sh-light", "sh-dark"] as const).map((tema) => (
           <div
             key={tema}
@@ -230,6 +241,18 @@ const GRUPOS: Grupo[] = [
       { id: "primer-uso", titulo: "Asistente de primer uso" },
       { id: "creacion-de-agentes", titulo: "Asistente de creación de agentes" },
       { id: "recorrido-del-agente", titulo: "Recorrido del agente" },
+    ],
+  },
+  {
+    id: "ruta",
+    titulo: "Ruta de lanzamiento",
+    piezas: [
+      { id: "ruta-estaciones", titulo: "Ruta de estaciones" },
+      { id: "ruta-opciones", titulo: "Opción con ícono y Recomendado" },
+      { id: "ruta-nombre", titulo: "Nombre sugerido" },
+      { id: "ruta-escenario", titulo: "Escenario" },
+      { id: "ruta-chat", titulo: "Chat simulado por estación" },
+      { id: "ruta-cascaron", titulo: "Recorrido en disposición ruta" },
     ],
   },
 ];
@@ -1050,6 +1073,60 @@ export function Catalogo() {
                 })}
               />
             </div>
+          </Seccion>
+          <TituloDeGrupo grupo={GRUPOS[5]} />
+          <Seccion
+            id="ruta-estaciones"
+            titulo="Ruta de estaciones"
+            cuando="la bienvenida o Nuevo agente avanzan por sus 5 estaciones: ✓ y «hecho» en las anteriores, la actual con aria-current y el número en las que siguen; en el celular, puntos con el actual alargado."
+            no="Personalizar ni recorridos libres (para eso, la forma de segmentos)."
+            piezas="SPEC-49 · BarraDePasos forma=estaciones · lib/ruta-de-lanzamiento"
+          >
+            <DemoRutaDeEstaciones />
+          </Seccion>
+          <Seccion
+            id="ruta-opciones"
+            titulo="Opción con ícono y Recomendado"
+            cuando="una estación llega preelegida con lo recomendado: tarjetas con baldosa de ícono, la etiqueta «Recomendado» como texto, la nota de la opción que no se puede elegir y «Usar lo recomendado» cuando hay cambios."
+            no="el nivel «recomendado» de Datos del cliente: ese lleva su propio ícono."
+            piezas="SPEC-49 · TarjetaElegible baldosa/etiqueta/razon/nota · GrupoDeOpciones unica · BarraRecomendado · cambiosFrenteARecomendado"
+          >
+            <DemoOpcionesRecomendadas />
+          </Seccion>
+          <Seccion
+            id="ruta-nombre"
+            titulo="Nombre sugerido"
+            cuando="el agente llega con nombre («Laura» en la bienvenida, el primero del tipo en Nuevo agente) y el dueño puede cambiarlo o tocar una idea. Sin nombre no se avanza."
+            piezas="SPEC-49 · NombreSugerido · FichaUnica inicial · ideasDeNombre · errorDelNombre"
+          >
+            <DemoNombreSugerido />
+          </Seccion>
+          <Seccion
+            id="ruta-escenario"
+            titulo="Escenario"
+            cuando="la estación muestra lo que gana el agente: a pantalla completa en la bienvenida (con el logo), en tarjeta dentro del panel y como franja en el celular. Siempre oscuro y con tarjetas sólidas."
+            no="pantallas fuera de la ruta de lanzamiento."
+            piezas="SPEC-49 · EscenarioPantallaCompleta · EscenarioTarjeta · FranjaDelEscenario · TarjetaDelEscenario · AnilloDeListo · tokens escena-*"
+          >
+            <DemoEscenario />
+          </Seccion>
+          <Seccion
+            id="ruta-chat"
+            titulo="Chat simulado por estación"
+            cuando="el dueño quiere probar en cada estación: mensajes de prueba por estación y tipo, «escribiendo…» y una respuesta fija, sin modelo ni red. Sin cifras en las estaciones 1 a 3; desde la 4, solo lo cargado."
+            no="la prueba real de la estación 5 (esa habla con el agente)."
+            piezas="SPEC-49 · ChatDeVistaPrevia · sugerenciasPorEstacion · respuestaDePrueba · rotuloDePruebas"
+          >
+            <DemoChatSimulado />
+          </Seccion>
+          <Seccion
+            id="ruta-cascaron"
+            titulo="Recorrido en disposición ruta"
+            cuando="una pantalla de la ruta: eyebrow «Paso N de 5», título de 36 px desde md, bajada, «qué sigue» junto a la acción principal y el escenario en tarjeta a la derecha."
+            piezas="SPEC-49 · RecorridoDelAgente disposicion=ruta · text-sh-ruta"
+            apilada
+          >
+            <DemoRecorridoEnRuta />
           </Seccion>
         </main>
       </div>
