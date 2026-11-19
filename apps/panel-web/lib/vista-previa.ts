@@ -281,7 +281,7 @@ export function respuestaDePrueba(
     case "otro-dia":
       return [di("Claro. Dime qué día prefieres y te muestro los horarios libres de ese día.")];
     case "pagar":
-      return [di("Te envío el link de pago con el valor de tu saldo.")];
+      return [di(`Te envío los datos para pagar tu saldo con las formas de pago que tiene activas ${neg}.`)];
     case "plazo":
       return [di("Entiendo. ¿Qué fecha te sirve para pagar? La dejo anotada como promesa de pago.")];
     case "ya-pague":
@@ -291,9 +291,9 @@ export function respuestaDePrueba(
     case "planes":
       return visibles.length > 0 ? catalogo() : [di("Te cuento los planes que tenemos y qué incluye cada uno. ¿Buscas algo en especial?")];
     case "cambiar-plan":
-      return [di("Claro. ¿A qué plan quieres pasar? Hago el cambio desde tu próximo cobro.")];
+      return [di("Claro. ¿A qué plan quieres pasar? Te cuento qué cambia antes de hacerlo.")];
     case "persona":
-      return [di("Te paso con alguien del equipo. Te escribe en unos minutos.")];
+      return [di(`Te paso con alguien del equipo de ${neg} para que siga contigo por aquí.`)];
     default:
       return [di(RESPUESTA_SIN_HABILIDAD)];
   }

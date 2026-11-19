@@ -107,7 +107,7 @@ export function TarjetaElegible({
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className={cn("font-display text-[0.95rem] font-semibold", conNota ? "text-body" : "text-headline")}>{titulo}</span>
+        <span className={cn("font-display text-[0.95rem] font-semibold", conNota ? "text-body" : "text-headline", accion && "pr-28")}>{titulo}</span>
         {ayuda && !conNota && <span className="text-sm text-body">{ayuda}</span>}
         {conNota && (
           <span id={idNota} className="text-sm text-body">

@@ -195,7 +195,7 @@ function Conversacion({
         <Cabecera negocio={negocio} agente={agente} escribiendo={escribiendo} />
         <Burbujas mensajes={mensajes} className="flex-1 overflow-y-auto p-4" />
         <div className="flex flex-col gap-1.5 border-t border-border-soft px-3 py-2.5">
-          <p className="text-[0.7rem] text-text-soft">{rotuloDePruebas(estacion)}</p>
+          <p className="text-xs text-text-soft">{rotuloDePruebas(estacion)}</p>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={rotuloDePruebas(estacion)}>
             {sugerencias.map((s) => (
               <button
