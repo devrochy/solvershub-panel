@@ -1047,6 +1047,7 @@ export function Catalogo() {
                     { id: "voz", titulo: "Cómo habla", marca: "cambios" },
                     { id: "reglas", titulo: "Horario y reglas", corto: "Horario" },
                     { id: "habilidades", titulo: "Habilidades" },
+                    { id: "datos-cliente", titulo: "Datos del cliente" },
                     { id: "flujo", titulo: "Flujo de atención", corto: "Flujo", marca: "revisar" },
                     { id: "datos", titulo: "Conocimiento y datos", corto: "Conocimiento" },
                     { id: "probar", titulo: "Pruébalo" },

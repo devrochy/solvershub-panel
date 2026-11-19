@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { PasoSuperpoderes } from "@/components/domain/agentes/recorrido/pasos";
 import { FeedbackProviders } from "@/components/ui/providers";
 import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
 import type { AgentDetail, LlmModelCatalog, PublishTarget, Superpower } from "@/lib/api/types";
+import type { AgenteDatos } from "@/lib/datos-cliente";
+import { violacionesGraves } from "@/lib/testing/axe";
 
 import {
   contenidoDesdeEstado,
@@ -100,10 +102,30 @@ describe("validación del editor", () => {
     expect(erroresDelPaso("habilidades", sin, [PEDIDO], { minFrases: 3 })).toHaveProperty("procedures");
     expect(erroresDelPaso("identidad", sin, [PEDIDO], { minFrases: 3 })).toHaveProperty("name");
     expect(erroresDelPaso("publicar", sin, [PEDIDO], { minFrases: 3, conexiones: [] })).toHaveProperty("connection_ids");
+    // Sin ningún tipo de pedido no puede cerrar pedidos; si el paso no conoce los métodos, no se mira.
+    expect(erroresDelPaso("datos-cliente", sin, [PEDIDO], { minFrases: 3, metodosDeEntrega: [] })).toHaveProperty(
+      "datos.metodos_entrega",
+    );
+    expect(erroresDelPaso("datos-cliente", sin, [PEDIDO], { minFrases: 3, metodosDeEntrega: ["domicilio"] })).toEqual({});
+    expect(erroresDelPaso("datos-cliente", sin, [PEDIDO], { minFrases: 3 })).toEqual({});
   });
 
-  it("ocho pasos comunes, sin «Proveedor y modelo», y los ids de antes siguen abriendo algo", () => {
-    expect(PASOS.map((p) => p.id)).toEqual(["identidad", "voz", "reglas", "habilidades", "flujo", "conocimiento", "probar", "publicar"]);
+  it("nueve pasos, con «Datos del cliente» entre Habilidades y Flujo, y los ids de antes siguen abriendo algo", () => {
+    expect(PASOS.map((p) => p.id)).toEqual([
+      "identidad",
+      "voz",
+      "reglas",
+      "habilidades",
+      "datos-cliente",
+      "flujo",
+      "conocimiento",
+      "probar",
+      "publicar",
+    ]);
+    // HU-AOS-85: el paso propio, con su pregunta y abierto desde `?paso=`.
+    expect(preguntaDelPaso("datos-cliente", "Laura")).toBe("¿Qué datos pide Laura?");
+    expect(pasoDesdeParametro("datos-cliente")).toBe("datos-cliente");
+    expect(pasoDesdeParametro("datos")).toBe("datos-cliente");
     expect(PASOS.some((p) => p.titulo.includes("modelo"))).toBe(false);
     expect(pasoDesdeParametro("publicar")).toBe("publicar");
     expect(pasoDesdeParametro("modelo")).toBe("publicar");
@@ -120,13 +142,16 @@ describe("validación del editor", () => {
     expect([...pasosConCambios(cambiado, estado)].sort()).toEqual(["conocimiento", "identidad", "voz"]);
     // El modelo no tiene paso: cambiarlo no marca ninguno.
     expect(pasosConCambios({ ...estado, modelo: "otro" }, estado).size).toBe(0);
+    // Los datos del cliente marcan su paso, no Habilidades (HU-AOS-85).
+    expect([...pasosConCambios(estado, estado, { datosCliente: true })]).toEqual(["datos-cliente"]);
   });
 
   it("cada error de la API va a su paso y a su superpoder", () => {
     expect(pasoDelCampo("model.primary")).toBe("publicar");
     expect(pasoDelCampo("procedures[1].overrides.examples")).toBe("habilidades");
     expect(pasoDelCampo("tools[2].tool")).toBe("habilidades");
-    expect(pasoDelCampo("datos.crear_pedido")).toBe("habilidades");
+    expect(pasoDelCampo("datos.crear_pedido")).toBe("datos-cliente");
+    expect(pasoDelCampo("datos.metodos_entrega")).toBe("datos-cliente");
     expect(pasoDelCampo("memory.readScopes")).toBe("conocimiento");
     expect(pasoDelCampo("flow.sections[0].label")).toBe("flujo");
     expect(pasoDelCampo("connection_ids[0]")).toBe("publicar");
@@ -329,10 +354,10 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(JSON.parse(init.body)).toMatchObject({ name: "Ventas Centro" });
   });
 
-  it("los ids de antes abren el paso que los contiene", () => {
+  it("Habilidades ya no trae la sección de datos del cliente (HU-AOS-85)", () => {
     abrir({ pasoInicial: "habilidades" });
     expect(screen.getByRole("heading", { level: 2, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Datos del cliente" })).toBeNull();
   });
 
   it("al crear (HU-AOS-81) son los pasos 2 a 4 de 4, en orden, sin «Guardar cambios»", async () => {
@@ -419,6 +444,197 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.queryByRole("button", { name: "Publicar versión" })).toBeNull();
     fireEvent.click(segmento(/^Identidad$/));
     expect(screen.getByLabelText(/Nombre/).matches(":disabled")).toBe(true);
+  });
+});
+
+describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  const agente = {
+    id: "11111111-1111-4111-8111-111111111111",
+    key: "ventas",
+    kind: "specialist",
+    contract: "agentspec/3",
+    name: "Laura",
+    description: "",
+    status: "active",
+    latest_version: null,
+    created_at: "2026-10-18T00:00:00Z",
+    draft: { content: BASE, lock_version: 1, base_version_id: null, updated_at: "2026-10-18T00:00:00Z" },
+    versions: [{ version: 1 }],
+  } as unknown as AgentDetail;
+  const modelos = { items: [], min_phrases: 3, business_model: "deepseek-flash" } as unknown as LlmModelCatalog;
+  const politica: AgenteDatos = {
+    agente_id: agente.id,
+    niveles: ["requerido", "recomendado", "no_pedir"],
+    herramientas_del_agente: false,
+    metodos_entrega: ["domicilio", "recoger_en_tienda"],
+    procedimientos: [],
+    acciones: [
+      {
+        id: "ventas.crear_pedido",
+        modulo: "ventas",
+        etiqueta: "Crear un pedido",
+        campos: [
+          { clave: "telefono", etiqueta: "Teléfono", nivel: "requerido", por_defecto: "requerido", ajustable: false, ajustado: false },
+          { clave: "nombre", etiqueta: "Nombre", nivel: "requerido", por_defecto: "requerido", ajustable: true, ajustado: false },
+          { clave: "correo", etiqueta: "Correo", nivel: "recomendado", por_defecto: "recomendado", ajustable: true, ajustado: false },
+          { clave: "notas", etiqueta: "Notas del pedido", nivel: "no_pedir", por_defecto: "no_pedir", ajustable: true, ajustado: false },
+        ],
+      },
+    ],
+  };
+  /** El texto del paso en la barra de escritorio, con su marca («, con cambios») si la tiene. */
+  const enLaBarra = (titulo: string) =>
+    within(within(screen.getByRole("navigation", { name: "Pasos del editor de agentes" })).getAllByRole("list")[0])
+      .getAllByRole("listitem")
+      .map((li) => li.textContent ?? "")
+      .find((t) => t.startsWith(titulo)) ?? "";
+  const nivelDe = (dato: string) =>
+    (within(screen.getByRole("radiogroup", { name: `${dato} (Crear un pedido)` })).getAllByRole("radio") as HTMLInputElement[]).find(
+      (r) => r.checked,
+    )?.value;
+
+  function abrir(props: Partial<Parameters<typeof EditorDeAgente>[0]> = {}) {
+    return render(
+      <FeedbackProviders>
+        <EditorDeAgente
+          agente={agente}
+          superpoderes={[PEDIDO]}
+          modelos={modelos}
+          destinos={[]}
+          destinosError={null}
+          puedeActivar
+          datosCliente={politica}
+          {...props}
+        />
+      </FeedbackProviders>,
+    );
+  }
+
+  it("9 pasos con «Datos del cliente» entre Habilidades y Flujo; la pregunta es el título y no hay botón propio", async () => {
+    const { container } = abrir({ pasoInicial: "datos-cliente" });
+    const barra = screen.getByRole("navigation", { name: "Pasos del editor de agentes" });
+    // La barra de escritorio (la primera lista; la segunda es la del celular).
+    const nombres = within(within(barra).getAllByRole("list")[0])
+      .getAllByRole("listitem")
+      .map((li) => li.textContent ?? "");
+    expect(nombres).toHaveLength(9);
+    const i = nombres.findIndex((n) => n.includes("Datos del cliente"));
+    expect(nombres[i - 1]).toContain("Habilidades");
+    expect(nombres[i + 1]).toContain("Flujo");
+    expect(screen.getByRole("heading", { level: 2, name: "¿Qué datos pide Laura?" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Guardar datos del cliente" })).toBeNull();
+    // Jerarquía: pregunta (h2) → módulo y bloques (h3) → operación (h4); nunca un h2 dentro de un h3.
+    expect(screen.getByRole("heading", { level: 3, name: "Ventas" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Tipos de pedido" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: /Crear un pedido/ })).toBeTruthy();
+    expect(container.querySelectorAll("h3 h2, h3 h1").length).toBe(0);
+    expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("apagar «A domicilio» marca el paso (no Habilidades) y «Guardar cambios» guarda política, herramientas y métodos", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    abrir({ pasoInicial: "datos-cliente" });
+    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    fireEvent.click(screen.getByRole("switch", { name: /consulte los datos/ }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(enLaBarra("Datos del cliente")).toContain("con cambios");
+    expect(enLaBarra("Habilidades")).not.toContain("con cambios");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`/api/agent-editor/${agente.id}/datos-cliente`);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({
+      politica: { "ventas.crear_pedido": {} },
+      herramientas_del_agente: true,
+      metodos_entrega: ["recoger_en_tienda"],
+    });
+    await waitFor(() => expect(enLaBarra("Datos del cliente")).not.toContain("con cambios"));
+    expect((screen.getByRole("switch", { name: "Ofrecer a domicilio" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe(
+      "false",
+    );
+  });
+
+  it("mientras se guardan los datos del cliente, «Guardar cambios» no manda otro PUT", async () => {
+    let soltar: (r: Response) => void = () => {};
+    fetchMock.mockReturnValue(new Promise<Response>((r) => (soltar = r)));
+    abrir({ pasoInicial: "datos-cliente" });
+    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    const boton = screen.getByRole("button", { name: "Guardar cambios" });
+    fireEvent.click(boton);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect((boton as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.click(boton);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    soltar(new Response(JSON.stringify({}), { status: 200 }));
+    await waitFor(() => expect(enLaBarra("Datos del cliente")).not.toContain("con cambios"));
+  });
+
+  it("al recargar, «A domicilio» sigue apagado si el servidor lo guardó así", () => {
+    abrir({ pasoInicial: "datos-cliente", datosCliente: { ...politica, metodos_entrega: ["recoger_en_tienda"] } });
+    expect(screen.getByRole("switch", { name: "Ofrecer a domicilio" }).getAttribute("aria-checked")).toBe("false");
+    // El único encendido no se puede apagar.
+    expect((screen.getByRole("switch", { name: "Ofrecer recoger en tienda" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("«Lo justo» viene elegido con «Recomendado»; «Completo» sube los ajustables y «Usar lo recomendado» los devuelve", () => {
+    abrir({ pasoInicial: "datos-cliente" });
+    const cuanto = screen.getByRole("radiogroup", { name: "Cuánto pregunta" });
+    const justo = within(cuanto).getByRole("radio", { name: /Lo justo/ }) as HTMLInputElement;
+    expect(justo.checked).toBe(true);
+    expect(justo.closest("label")?.textContent).toContain("Recomendado");
+    expect(nivelDe("Correo")).toBe("recomendado");
+    expect(nivelDe("Notas del pedido")).toBe("no_pedir");
+
+    fireEvent.click(within(cuanto).getByRole("radio", { name: /Completo/ }));
+    expect(nivelDe("Nombre")).toBe("requerido");
+    expect(nivelDe("Correo")).toBe("requerido");
+    expect(nivelDe("Notas del pedido")).toBe("requerido");
+    expect(screen.getByText(/2 cambios/)).toBeTruthy();
+    expect(enLaBarra("Datos del cliente")).toContain("con cambios");
+
+    fireEvent.click(screen.getByRole("button", { name: /Usar lo recomendado/ }));
+    expect(nivelDe("Correo")).toBe("recomendado");
+    expect(nivelDe("Notas del pedido")).toBe("no_pedir");
+    expect(justo.checked).toBe(true);
+    expect(screen.queryByRole("button", { name: /Usar lo recomendado/ })).toBeNull();
+  });
+
+  it("los pisos técnicos no bajan con «Lo mínimo» y dicen para qué se necesitan", () => {
+    abrir({ pasoInicial: "datos-cliente" });
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Cuánto pregunta" })).getByRole("radio", { name: /Lo mínimo/ }));
+    expect(nivelDe("Teléfono")).toBe("requerido");
+    expect(nivelDe("Correo")).toBe("no_pedir");
+    const grupo = screen.getByRole("radiogroup", { name: "Teléfono (Crear un pedido)" });
+    for (const radio of within(grupo).getAllByRole("radio")) expect((radio as HTMLInputElement).disabled).toBe(true);
+    expect(document.getElementById(grupo.getAttribute("aria-describedby") ?? "")?.textContent).toBe(
+      "Necesario para crear un pedido.",
+    );
+  });
+
+  it("el chat de vista previa del paso es el simulado de «Datos del cliente», sin modelo", () => {
+    abrir({ pasoInicial: "datos-cliente", negocio: { nombre: "La Espiga", voz: null, resumenDeVoz: null, horario: null, motivos: null } });
+    fireEvent.click(screen.getAllByRole("button", { name: "«Quiero un domicilio»" })[0]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getAllByText(/Hola, soy Laura, de La Espiga/).length).toBeGreaterThan(0);
+  });
+
+  it("en la creación rápida sigue como sección de Habilidades, con su botón (hasta HU-AOS-86)", () => {
+    abrir({ modo: "crear", pasoInicial: "habilidades" });
+    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: "Ventas" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Guardar datos del cliente" })).toBeTruthy();
   });
 });
 

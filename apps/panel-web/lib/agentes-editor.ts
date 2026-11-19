@@ -16,10 +16,20 @@ import { EMOJIS, LARGOS, MOTIVOS_DE_ESCALAR, TONOS, estadoDesdeIdentidad } from 
 import type { VozDeVistaPrevia } from "@/lib/vista-previa";
 
 /**
- * Los ocho pasos del recorrido común del agente (SPEC-47, D-75): los mismos de Nuevo agente y de la
- * bienvenida. «Proveedor y modelo» ya no es un paso: el agente usa el modelo del negocio (HU-AOS-79).
+ * Los nueve pasos de Personalizar (SPEC-47, D-75; SPEC-49, HU-AOS-85). «Proveedor y modelo» ya no es
+ * un paso: el agente usa el modelo del negocio (HU-AOS-79). «Datos del cliente» dejó de ser una
+ * sección de Habilidades y va entre Habilidades y Flujo de atención (D-SPEC-49-1).
  */
-export type PasoId = "identidad" | "voz" | "reglas" | "habilidades" | "flujo" | "conocimiento" | "probar" | "publicar";
+export type PasoId =
+  | "identidad"
+  | "voz"
+  | "reglas"
+  | "habilidades"
+  | "datos-cliente"
+  | "flujo"
+  | "conocimiento"
+  | "probar"
+  | "publicar";
 
 export const PASOS: { id: PasoId; titulo: string; corto?: string; descripcion: string; pregunta: string }[] = [
   { id: "identidad", titulo: "Identidad", descripcion: "Nombre y para qué sirve.", pregunta: "¿Cómo se llama tu agente y para qué sirve?" },
@@ -34,8 +44,14 @@ export const PASOS: { id: PasoId; titulo: string; corto?: string; descripcion: s
   {
     id: "habilidades",
     titulo: "Habilidades",
-    descripcion: "Qué sabe hacer, qué acciones usa y qué datos pide.",
+    descripcion: "Qué sabe hacer y qué acciones usa.",
     pregunta: "¿Qué sabe hacer {nombre}?",
+  },
+  {
+    id: "datos-cliente",
+    titulo: "Datos del cliente",
+    descripcion: "Qué le pide a cada cliente y qué tipos de pedido ofrece.",
+    pregunta: "¿Qué datos pide {nombre}?",
   },
   { id: "flujo", titulo: "Flujo de atención", corto: "Flujo", descripcion: "Las etapas con las que atiende.", pregunta: "¿Con qué pasos atiende {nombre}?" },
   {
@@ -60,11 +76,11 @@ const PASOS_DE_ANTES: Record<string, PasoId> = {
   modelo: "publicar",
   superpoderes: "habilidades",
   acciones: "habilidades",
-  datos: "habilidades",
+  datos: "datos-cliente",
   memoria: "conocimiento",
 };
 
-/** El paso de `?paso=`: uno de los ocho, uno de antes traducido, o ninguno. */
+/** El paso de `?paso=`: uno de los nueve, uno de antes traducido, o ninguno. */
 export function pasoDesdeParametro(valor: string | undefined): PasoId | undefined {
   if (!valor) return undefined;
   if (PASOS.some((p) => p.id === valor)) return valor as PasoId;
@@ -296,7 +312,9 @@ export function erroresDelPaso(
   paso: PasoId,
   estado: EstadoDelEditor,
   catalogo: Superpower[],
-  opciones: { minFrases: number; conexiones?: string[] } = { minFrases: MIN_FRASES_POR_DEFECTO },
+  opciones: { minFrases: number; conexiones?: string[]; metodosDeEntrega?: readonly string[] } = {
+    minFrases: MIN_FRASES_POR_DEFECTO,
+  },
 ): Errores {
   const errores: Errores = {};
   if (paso === "identidad" && !estado.nombre.trim()) errores.name = "Ponle un nombre a tu agente.";
@@ -310,6 +328,11 @@ export function erroresDelPaso(
           `«${poder.title}» necesita al menos ${opciones.minFrases} frases distintas de clientes: agrega ${opciones.minFrases - total} más.`;
       }
     });
+  }
+  // Un agente de Ventas sin ningún tipo de pedido no puede cerrar pedidos (el backend responde 422
+  // `metodos_entrega_vacios`). Solo se mira si el paso conoce los métodos del agente.
+  if (paso === "datos-cliente" && opciones.metodosDeEntrega && opciones.metodosDeEntrega.length === 0) {
+    errores["datos.metodos_entrega"] = "Deja al menos un tipo de pedido para que pueda cerrar pedidos.";
   }
   if (paso === "conocimiento" && estado.alcances.length === 0) errores["memory.readScopes"] = "Elige al menos qué puede recordar.";
   if (paso === "flujo") {
@@ -332,7 +355,8 @@ export function pasoDelCampo(campo: string): PasoId {
   if (campo.startsWith("persona")) return "voz";
   // El modelo ya no tiene paso (HU-AOS-79): si la API lo nombra, se ve en Publicar.
   if (campo.startsWith("model")) return "publicar";
-  if (campo.startsWith("tools") || campo.startsWith("datos")) return "habilidades";
+  if (campo.startsWith("datos")) return "datos-cliente";
+  if (campo.startsWith("tools")) return "habilidades";
   if (campo.startsWith("procedures") || campo.startsWith("playbooks")) return "habilidades";
   if (campo.startsWith("flow")) return "flujo";
   if (campo.startsWith("memory") || campo.startsWith("knowledge")) return "conocimiento";
@@ -341,8 +365,15 @@ export function pasoDelCampo(campo: string): PasoId {
 
 const igual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-/** Los pasos con cambios sin guardar (la marca «con cambios» de la barra). */
-export function pasosConCambios(estado: EstadoDelEditor, guardado: EstadoDelEditor): Set<PasoId> {
+/**
+ * Los pasos con cambios sin guardar (la marca «con cambios» de la barra). Los datos del cliente viven
+ * fuera del borrador (`/datos-cliente`): quien los edita dice si tienen cambios con `datosCliente`.
+ */
+export function pasosConCambios(
+  estado: EstadoDelEditor,
+  guardado: EstadoDelEditor,
+  otros: { datosCliente?: boolean } = {},
+): Set<PasoId> {
   const pasos = new Set<PasoId>();
   if (estado.nombre !== guardado.nombre || estado.descripcion !== guardado.descripcion) pasos.add("identidad");
   if (
@@ -353,6 +384,7 @@ export function pasosConCambios(estado: EstadoDelEditor, guardado: EstadoDelEdit
     pasos.add("voz");
   }
   if (!igual(estado.superpoderes, guardado.superpoderes) || !igual(estado.acciones, guardado.acciones)) pasos.add("habilidades");
+  if (otros.datosCliente) pasos.add("datos-cliente");
   if (!igual(estado.flujo, guardado.flujo)) pasos.add("flujo");
   if (
     estado.turnosDeMemoria !== guardado.turnosDeMemoria ||

@@ -1,18 +1,29 @@
 "use client";
 
-import { Check, Lock } from "lucide-react";
+import type { ReactNode } from "react";
+import { Ban, Check, CircleAlert, ClipboardList, Hand, Lock, MessageSquareText, UserRound } from "lucide-react";
 
+import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Switch } from "@/components/ui/switch";
 import {
   agruparPorModulo,
   cambiosDeAccion,
+  cambiosFrenteAPorDefecto,
+  CUANTO_PREGUNTA,
+  CUANTO_PREGUNTA_RECOMENDADO,
+  cuantoPreguntaActual,
   estaAjustada,
   METODOS_ENTREGA,
   NIVELES,
+  opcionesDeCuantoPregunta,
+  pistaDePiso,
   pistaDePorDefecto,
+  resumenDeCuantoPregunta,
+  type CuantoPregunta,
   type MetodoEntrega,
   type AgenteDatos,
   type AccionPolitica,
@@ -22,10 +33,31 @@ import {
 } from "@/lib/datos-cliente";
 import { cn } from "@/lib/utils";
 
+const ICONO_DE_CUANTO: Record<CuantoPregunta, ReactNode> = {
+  minimo: <UserRound className="h-5 w-5" />,
+  justo: <ClipboardList className="h-5 w-5" />,
+  completo: <MessageSquareText className="h-5 w-5" />,
+};
+
 /**
- * Paso «Datos del cliente» del editor de un agente especialista (HU-CRM-28): qué datos pide ESE
- * agente en cada operación que puede ejecutar. El estado y el guardado viven en el editor; este
- * componente solo lo presenta.
+ * Ícono de cada nivel de un dato (HU-AOS-85). El nivel «Recomendado» lleva su ícono; la etiqueta
+ * «Recomendado» de «Cuánto pregunta» es otra cosa (el valor por defecto) y va como insignia.
+ */
+const ICONO_DE_NIVEL: Record<NivelDato, ReactNode> = {
+  requerido: <CircleAlert aria-hidden className="h-3.5 w-3.5" />,
+  recomendado: <Hand aria-hidden className="h-3.5 w-3.5" />,
+  no_pedir: <Ban aria-hidden className="h-3.5 w-3.5" />,
+};
+
+/**
+ * «Datos del cliente» de un agente especialista (HU-CRM-28): qué datos pide ESE agente en cada
+ * operación que puede ejecutar. El estado y el guardado viven en el editor; este componente solo lo
+ * presenta.
+ *
+ * Con `comoPaso` (HU-AOS-85) es el paso propio de Personalizar: la pregunta del paso es el título,
+ * no hay botón propio (guarda «Guardar cambios» del editor) y los títulos empiezan en `h3`. Sin
+ * `comoPaso` es una sección dentro de otro paso (la creación rápida y la bienvenida, hasta HU-AOS-86 y
+ * HU-UX-25): conserva su botón y sus títulos empiezan en `h4`, bajo el `h3` de la sección.
  */
 export function DatosDelAgente({
   politica,
@@ -41,6 +73,10 @@ export function DatosDelAgente({
   onHerramientas,
   onMetodo,
   onGuardar,
+  onCuantoPregunta,
+  onUsarRecomendado,
+  comoPaso = false,
+  errorDeMetodos,
 }: {
   politica: AgenteDatos;
   estado: EstadoDatos;
@@ -54,21 +90,60 @@ export function DatosDelAgente({
   onRestablecer: (accionId: string) => void;
   onHerramientas: (activo: boolean) => void;
   onMetodo: (metodo: MetodoEntrega, activo: boolean) => void;
-  onGuardar: () => void;
+  onGuardar?: () => void;
+  /** Elige «Lo mínimo», «Lo justo» o «Completo» para todas las operaciones. */
+  onCuantoPregunta?: (nivel: CuantoPregunta) => void;
+  /** «Usar lo recomendado»: todos los datos a su valor por defecto. */
+  onUsarRecomendado?: () => void;
+  comoPaso?: boolean;
+  /** Error de «Tipos de pedido» (por ejemplo, ninguno encendido). */
+  errorDeMetodos?: string;
 }) {
   const grupos = agruparPorModulo(politica.acciones);
   const procedimientos = politica.procedimientos ?? [];
   const conVentas = grupos.some((grupo) => grupo.modulo === "ventas");
   const bloqueado = !puedeEditar || guardando;
+  const opciones = opcionesDeCuantoPregunta(politica);
+  const cuanto = cuantoPreguntaActual(politica, estado);
+  const cambiosFrenteAlRecomendado = cambiosFrenteAPorDefecto(politica, estado);
+  // Títulos: el paso trae su pregunta (h2); como sección, la sección ya tiene su h3.
+  const Modulo = comoPaso ? "h3" : "h4";
+  const Bloque = comoPaso ? "h3" : "h4";
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-display text-base font-semibold text-headline">¿Qué datos pide este agente?</h2>
-        <p className="mt-1 max-w-2xl text-sm text-text-soft">
-          Elige, para cada operación de este agente, qué datos son imprescindibles, cuáles conviene pedir y cuáles no
-          hace falta pedir. Se aplica a las próximas conversaciones de este agente, sin publicar una versión nueva.
-        </p>
-      </div>
+      <p className="max-w-2xl text-sm text-text-soft">
+        Elige, para cada operación de este agente, qué datos son imprescindibles, cuáles conviene pedir y cuáles no
+        hace falta pedir. Se aplica a las próximas conversaciones de este agente, sin publicar una versión nueva.
+      </p>
+
+      {grupos.length > 0 && puedeEditar && onUsarRecomendado && (
+        <BarraRecomendado cambios={cambiosFrenteAlRecomendado} onUsar={onUsarRecomendado} />
+      )}
+
+      {opciones.length > 1 && onCuantoPregunta && (
+        <GrupoDeOpciones
+          unica
+          titulo="Cuánto pregunta"
+          ayuda="«Lo justo» es lo que trae cada operación por defecto. Puedes ajustar dato por dato más abajo."
+          className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+        >
+          {CUANTO_PREGUNTA.filter((n) => opciones.includes(n.id)).map((nivel) => (
+            <TarjetaElegible
+              key={nivel.id}
+              nombre="cuanto-pregunta"
+              valor={nivel.id}
+              elegida={cuanto === nivel.id}
+              onElegir={(valor) => onCuantoPregunta(valor as CuantoPregunta)}
+              titulo={nivel.titulo}
+              ayuda={resumenDeCuantoPregunta(politica, nivel.id)}
+              icono={ICONO_DE_CUANTO[nivel.id]}
+              baldosa
+              etiqueta={nivel.id === CUANTO_PREGUNTA_RECOMENDADO ? "Recomendado" : undefined}
+              deshabilitada={bloqueado}
+            />
+          ))}
+        </GrupoDeOpciones>
+      )}
 
       <Card>
         <CardContent className="flex items-start justify-between gap-4 pt-5">
@@ -93,7 +168,9 @@ export function DatosDelAgente({
       {conVentas && (
       <Card>
         <CardContent className="pt-5">
-          <p className="text-sm font-medium text-headline">Métodos de entrega que puede ofrecer</p>
+          <Bloque className="text-sm font-semibold text-headline">
+            {comoPaso ? "Tipos de pedido" : "Métodos de entrega que puede ofrecer"}
+          </Bloque>
           <p className="mt-1 max-w-xl text-sm text-text-soft">
             El agente solo ofrecerá los métodos encendidos. Deja al menos uno para que pueda cerrar pedidos.
           </p>
@@ -120,6 +197,11 @@ export function DatosDelAgente({
               );
             })}
           </ul>
+          {errorDeMetodos && (
+            <p role="alert" className="mt-3 text-sm text-status-danger-fg">
+              {errorDeMetodos}
+            </p>
+          )}
         </CardContent>
       </Card>
       )}
@@ -142,9 +224,9 @@ export function DatosDelAgente({
           )}
           {grupos.map((grupo) => (
             <section key={grupo.modulo} aria-labelledby={`modulo-${grupo.modulo}`} className="flex flex-col gap-3">
-              <h3 id={`modulo-${grupo.modulo}`} className="text-sm font-semibold text-headline">
+              <Modulo id={`modulo-${grupo.modulo}`} className="text-sm font-semibold text-headline">
                 {grupo.nombre}
-              </h3>
+              </Modulo>
               {grupo.acciones.map((accion) => (
                 <TarjetaDeAccion
                   key={accion.id}
@@ -153,6 +235,7 @@ export function DatosDelAgente({
                   puedeEditar={puedeEditar}
                   deshabilitado={guardando}
                   ajustada={estaAjustada(politica, estado, accion.id)}
+                  nivelDeTitulo={comoPaso ? "h4" : "h5"}
                   cambios={cambiosDeAccion(politica, estado, accion.id, guardado)}
                   onNivel={(clave, nivel) => onNivel(accion.id, clave, nivel)}
                   onRestablecer={() => onRestablecer(accion.id)}
@@ -160,7 +243,7 @@ export function DatosDelAgente({
               ))}
             </section>
           ))}
-          {puedeEditar && (
+          {puedeEditar && !comoPaso && onGuardar && (
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" variant="accent" disabled={guardando || !sinGuardar} onClick={onGuardar}>
                 {guardando ? "Guardando…" : "Guardar datos del cliente"}
@@ -174,7 +257,7 @@ export function DatosDelAgente({
       {procedimientos.length > 0 && (
         <Card>
           <CardContent className="pt-5">
-            <h3 className="text-sm font-semibold text-headline">Datos que exige cada superpoder</h3>
+            <Bloque className="text-sm font-semibold text-headline">Datos que exige cada superpoder</Bloque>
             <p className="mt-1 max-w-2xl text-sm text-text-soft">
               Estos datos los define el recorrido del superpoder. No se cambian desde esta pantalla: si un superpoder
               los necesita, el agente los pide aunque aquí no aparezcan.
@@ -212,9 +295,11 @@ function TarjetaDeAccion({
   deshabilitado,
   ajustada,
   cambios,
+  nivelDeTitulo,
   onNivel,
   onRestablecer,
 }: {
+  nivelDeTitulo: "h4" | "h5";
   accion: AccionPolitica;
   estado: Record<string, NivelDato>;
   puedeEditar: boolean;
@@ -225,14 +310,15 @@ function TarjetaDeAccion({
   onRestablecer: () => void;
 }) {
   const titulo = `accion-${accion.id}`;
+  const Titulo = nivelDeTitulo;
   return (
     <Card>
       <CardContent className="pt-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h4 id={titulo} className="text-sm font-medium text-headline">
+          <Titulo id={titulo} className="text-sm font-medium text-headline">
             {accion.etiqueta}
             {cambios > 0 && <span className="ml-2 text-xs font-normal text-text-soft">· cambios sin guardar</span>}
-          </h4>
+          </Titulo>
           {puedeEditar && (
             <Button
               type="button"
@@ -250,8 +336,7 @@ function TarjetaDeAccion({
           {accion.campos.map((campo) => (
             <FilaDeDato
               key={campo.clave}
-              accionId={accion.id}
-              accionEtiqueta={accion.etiqueta}
+              accion={accion}
               campo={campo}
               nivel={estado[campo.clave] ?? campo.nivel}
               bloqueado={!puedeEditar || deshabilitado || !campo.ajustable}
@@ -265,21 +350,19 @@ function TarjetaDeAccion({
 }
 
 function FilaDeDato({
-  accionId,
-  accionEtiqueta,
+  accion,
   campo,
   nivel,
   bloqueado,
   onNivel,
 }: {
-  accionId: string;
-  accionEtiqueta: string;
+  accion: AccionPolitica;
   campo: CampoPolitica;
   nivel: NivelDato;
   bloqueado: boolean;
   onNivel: (nivel: NivelDato) => void;
 }) {
-  const nombre = `${accionId}__${campo.clave}`;
+  const nombre = `${accion.id}__${campo.clave}`;
   const pista = campo.ajustable ? pistaDePorDefecto(campo, nivel) : null;
   const idNota = `${nombre}-nota`;
   return (
@@ -289,7 +372,7 @@ function FilaDeDato({
         {!campo.ajustable && (
           <p id={idNota} className="flex items-center gap-1 text-xs text-text-soft">
             <Lock aria-hidden className="h-3 w-3" />
-            Lo exige el sistema, no se puede cambiar.
+            {pistaDePiso(accion)}
           </p>
         )}
         {pista && (
@@ -300,7 +383,7 @@ function FilaDeDato({
       </div>
       <div
         role="radiogroup"
-        aria-label={`${campo.etiqueta} (${accionEtiqueta})`}
+        aria-label={`${campo.etiqueta} (${accion.etiqueta})`}
         aria-describedby={!campo.ajustable || pista ? idNota : undefined}
         className="inline-flex shrink-0 overflow-hidden rounded-md border border-control-border"
       >
@@ -326,7 +409,7 @@ function FilaDeDato({
                 onChange={() => onNivel(opcion.id)}
                 className="sr-only"
               />
-              {marcado && <Check aria-hidden className="h-3.5 w-3.5" />}
+              {marcado ? <Check aria-hidden className="h-3.5 w-3.5" /> : ICONO_DE_NIVEL[opcion.id]}
               {opcion.etiqueta}
             </label>
           );

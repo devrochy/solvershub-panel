@@ -6,6 +6,7 @@
  * arma el estado editable, el cuerpo del PUT y los textos legibles.
  */
 import type { components } from "@/lib/api/schema";
+import type { TipoDeNegocio } from "@/lib/onboarding";
 
 export type MetodoEntrega = "domicilio" | "recoger_en_tienda";
 export type AgenteDatos = components["schemas"]["AgenteDatosOut"];
@@ -170,6 +171,135 @@ export function puedeEditarDatosCliente(
 ): boolean {
   if (!me) return false;
   return me.role === "master" || me.permissions?.settings === "write";
+}
+
+// ------------------------------------------------------------------ «Cuánto pregunta» (HU-AOS-85)
+
+/**
+ * Los tres niveles de «Cuánto pregunta» (SPEC-49, estación 3). «Lo justo» es exactamente el
+ * `por_defecto` de cada dato: es lo que se marca «Recomendado» (la etiqueta, que no es el nivel
+ * `recomendado` de un dato). «Lo mínimo» deja solo lo que exige el sistema y lo requerido por defecto;
+ * «Completo» pide como requerido todo lo ajustable. Los datos con piso técnico (`ajustable=false`)
+ * no cambian en ninguno.
+ */
+export type CuantoPregunta = "minimo" | "justo" | "completo";
+
+export const CUANTO_PREGUNTA: { id: CuantoPregunta; titulo: string }[] = [
+  { id: "minimo", titulo: "Lo mínimo" },
+  { id: "justo", titulo: "Lo justo" },
+  { id: "completo", titulo: "Completo" },
+];
+
+/** El nivel de «Cuánto pregunta» que se recomienda (el `por_defecto`). */
+export const CUANTO_PREGUNTA_RECOMENDADO: CuantoPregunta = "justo";
+
+function nivelEnPreset(campo: CampoPolitica, preset: CuantoPregunta, actual: NivelDato): NivelDato {
+  if (!campo.ajustable) return actual;
+  if (preset === "justo") return campo.por_defecto;
+  if (preset === "completo") return "requerido";
+  return campo.por_defecto === "requerido" ? "requerido" : "no_pedir";
+}
+
+/** El estado con todos los datos en el nivel de «Cuánto pregunta»; los pisos técnicos quedan como están. */
+export function conCuantoPregunta(politica: PoliticaDatos, estado: EstadoDatos, preset: CuantoPregunta): EstadoDatos {
+  const salida: EstadoDatos = { ...estado };
+  for (const accion of politica.acciones) {
+    const actual = estado[accion.id] ?? {};
+    salida[accion.id] = Object.fromEntries(
+      accion.campos.map((c) => [c.clave, nivelEnPreset(c, preset, actual[c.clave] ?? c.nivel)]),
+    );
+  }
+  return salida;
+}
+
+/** «Usar lo recomendado»: todos los datos ajustables vuelven a su `por_defecto`. */
+export function alPorDefecto(politica: PoliticaDatos, estado: EstadoDatos): EstadoDatos {
+  return conCuantoPregunta(politica, estado, "justo");
+}
+
+function mismoEstado(politica: PoliticaDatos, a: EstadoDatos, b: EstadoDatos): boolean {
+  return politica.acciones.every((accion) =>
+    accion.campos.every((c) => (a[accion.id]?.[c.clave] ?? c.nivel) === (b[accion.id]?.[c.clave] ?? c.nivel)),
+  );
+}
+
+/**
+ * Los niveles que se ofrecen: si un nivel deja todo igual que «Lo justo» (un agente sin datos que
+ * los separen), no se muestra. «Lo justo» siempre está.
+ */
+export function opcionesDeCuantoPregunta(politica: PoliticaDatos): CuantoPregunta[] {
+  const base = estadoInicial(politica);
+  const justo = conCuantoPregunta(politica, base, "justo");
+  return CUANTO_PREGUNTA.map((p) => p.id).filter(
+    (id) => id === "justo" || !mismoEstado(politica, conCuantoPregunta(politica, base, id), justo),
+  );
+}
+
+/** El nivel de «Cuánto pregunta» que coincide dato por dato con el estado, o `null` si es a medida. */
+export function cuantoPreguntaActual(politica: PoliticaDatos, estado: EstadoDatos): CuantoPregunta | null {
+  // «Lo justo» primero: si dos niveles coinciden, gana el recomendado.
+  const orden: CuantoPregunta[] = ["justo", "minimo", "completo"];
+  const ofrecidos = new Set(opcionesDeCuantoPregunta(politica));
+  return (
+    orden.find((id) => ofrecidos.has(id) && mismoEstado(politica, estado, conCuantoPregunta(politica, estado, id))) ?? null
+  );
+}
+
+/** Cuántos datos ajustables están distintos de su `por_defecto` (la barra «N cambios»). */
+export function cambiosFrenteAPorDefecto(politica: PoliticaDatos, estado: EstadoDatos): number {
+  return politica.acciones.reduce(
+    (total, accion) =>
+      total + accion.campos.filter((c) => c.ajustable && (estado[accion.id]?.[c.clave] ?? c.nivel) !== c.por_defecto).length,
+    0,
+  );
+}
+
+/**
+ * Qué pide en ese nivel, en palabras: «Pide nombre y teléfono». Los datos se nombran una vez aunque
+ * estén en varias operaciones; con más de tres, «y N más».
+ */
+export function resumenDeCuantoPregunta(politica: PoliticaDatos, preset: CuantoPregunta): string {
+  const estado = conCuantoPregunta(politica, estadoInicial(politica), preset);
+  const etiquetas: string[] = [];
+  for (const accion of politica.acciones) {
+    for (const campo of accion.campos) {
+      if ((estado[accion.id]?.[campo.clave] ?? campo.nivel) === "no_pedir") continue;
+      const etiqueta = campo.etiqueta.trim();
+      if (etiqueta && !etiquetas.some((e) => e.toLocaleLowerCase("es-CO") === etiqueta.toLocaleLowerCase("es-CO"))) {
+        etiquetas.push(etiqueta);
+      }
+    }
+  }
+  if (etiquetas.length === 0) return "No pide datos.";
+  const nombres = etiquetas.slice(0, 3).map(enMinuscula);
+  const resto = etiquetas.length - nombres.length;
+  if (resto > 0) return `Pide ${nombres.join(", ")} y ${resto} más.`;
+  if (nombres.length === 1) return `Pide ${nombres[0]}.`;
+  return `Pide ${nombres.slice(0, -1).join(", ")} y ${nombres[nombres.length - 1]}.`;
+}
+
+function enMinuscula(texto: string): string {
+  return texto.charAt(0).toLocaleLowerCase("es-CO") + texto.slice(1);
+}
+
+/** La pista de un dato que el sistema exige: «Necesario para agendar una cita». */
+export function pistaDePiso(accion: Pick<AccionPolitica, "etiqueta">): string {
+  const etiqueta = accion.etiqueta.trim();
+  if (!etiqueta) return "Necesario para esta operación.";
+  return `Necesario para ${enMinuscula(etiqueta)}.`;
+}
+
+const TIPOS: readonly TipoDeNegocio[] = ["ventas", "agenda", "cobranza", "suscripciones"];
+
+/**
+ * El tipo de agente para el chat simulado del paso (D-SPEC-49-4): su `key` si es un tipo conocido; si
+ * no, el módulo de su primera operación. `null` si no hay cómo saberlo (sin chat de pruebas).
+ */
+export function tipoDelAgente(key: string | null | undefined, politica: PoliticaDatos | null): TipoDeNegocio | null {
+  const porKey = TIPOS.find((t) => t === key);
+  if (porKey) return porKey;
+  const modulo = politica?.acciones.map((a) => a.modulo).find((m) => (TIPOS as readonly string[]).includes(m));
+  return (modulo as TipoDeNegocio | undefined) ?? null;
 }
 
 /** Mensaje claro para un error del backend al guardar. */

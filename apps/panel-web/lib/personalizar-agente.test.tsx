@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { BannerPersonalizar, BotonPersonalizar } from "@/components/domain/agentes/personalizar-agente";
 import { claveDeNovedad, novedadVista } from "@/lib/novedad";
+import { pasoDesdeParametro } from "@/lib/agentes-editor";
 import { queryParaRedirigir, rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import { violacionesGraves } from "@/lib/testing/axe";
 
@@ -26,6 +27,14 @@ describe("rutas de Personalizar", () => {
   it("la ruta canónica conserva el paso y el modo", () => {
     expect(rutaDePersonalizar("a")).toBe("/agentes/a/personalizar");
     expect(rutaDePersonalizar("a", { paso: "publicar", modo: undefined })).toBe("/agentes/a/personalizar?paso=publicar");
+  });
+
+  it("`?paso=datos-cliente` abre el paso propio de Datos del cliente (HU-AOS-85)", () => {
+    const ruta = rutaDePersonalizar("a", { paso: "datos-cliente" });
+    expect(ruta).toBe("/agentes/a/personalizar?paso=datos-cliente");
+    expect(pasoDesdeParametro(new URL(ruta, "http://panel.test").searchParams.get("paso") ?? undefined)).toBe("datos-cliente");
+    // El id del editor de antes también llega al paso nuevo, no a Habilidades.
+    expect(pasoDesdeParametro("datos")).toBe("datos-cliente");
   });
 
   it("/editar redirige a /personalizar con la misma query", async () => {
