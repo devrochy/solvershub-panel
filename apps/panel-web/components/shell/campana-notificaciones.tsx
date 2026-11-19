@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useNotificaciones } from "@/lib/notificaciones/use-notificaciones";
 import { avisoDePlanFree } from "@/lib/plan-limite";
 import { cn } from "@/lib/utils";
+import { fondoModal } from "@/components/ui/capa-modal";
 
 /** Debajo de `md` (768 px) el centro es una hoja a pantalla casi completa; desde ahí, un popover. */
 function useEsPantallaChica() {
@@ -88,8 +89,8 @@ export function CampanaNotificaciones({ className }: { className?: string }) {
       <DialogPrimitive.Root open={abierto} onOpenChange={setAbierto}>
         <DialogPrimitive.Trigger asChild>{boton}</DialogPrimitive.Trigger>
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="sh-notif-overlay fixed inset-0 z-50 bg-overlay" />
-          <DialogPrimitive.Content className="sh-notif-hoja fixed inset-x-0 bottom-0 top-12 z-50 flex flex-col rounded-t-lg border border-border bg-surface shadow-elev-3 focus:outline-none">
+          <DialogPrimitive.Overlay className={cn("sh-notif-overlay", fondoModal)} />
+          <DialogPrimitive.Content className="sh-notif-hoja fixed inset-x-0 bottom-0 top-[calc(4rem+0.5rem)] z-50 flex flex-col rounded-t-lg border border-border bg-surface shadow-elev-3 focus:outline-none">
             <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border-soft px-4 py-3">
               <DialogPrimitive.Title className="font-display text-sh-block text-headline">Notificaciones</DialogPrimitive.Title>
               <DialogPrimitive.Description className="sr-only">

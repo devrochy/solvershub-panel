@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 import { useFocoDevuelto } from "@/lib/foco";
 import { cn } from "@/lib/utils";
+import { fondoModal, posicionDialogo } from "@/components/ui/capa-modal";
 
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
@@ -29,12 +30,13 @@ export function DialogContent({
   const foco = useFocoDevuelto(undefined, onCloseAutoFocus);
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+      <DialogPrimitive.Overlay className={fondoModal} />
       <DialogPrimitive.Content
         onOpenAutoFocus={foco.onOpenAutoFocus}
         onCloseAutoFocus={foco.onCloseAutoFocus}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
+          posicionDialogo,
+          "max-w-lg",
           "rounded-lg border border-border bg-surface p-6 shadow-lg focus:outline-none",
           className,
         )}

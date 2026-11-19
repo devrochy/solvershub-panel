@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 import { useFocoDevuelto } from "@/lib/foco";
 import { cn } from "@/lib/utils";
+import { fondoModal, posicionPanelLateral } from "@/components/ui/capa-modal";
 
 export const Sheet = DialogPrimitive.Root;
 export const SheetTrigger = DialogPrimitive.Trigger;
@@ -46,12 +47,13 @@ export function SheetContent({
   const foco = useFocoDevuelto(onOpenAutoFocus, onCloseAutoFocus);
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+      <DialogPrimitive.Overlay className={fondoModal} />
       <DialogPrimitive.Content
         onOpenAutoFocus={foco.onOpenAutoFocus}
         onCloseAutoFocus={foco.onCloseAutoFocus}
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-surface shadow-elev-3 focus:outline-none sm:max-w-md",
+          posicionPanelLateral,
+          "flex w-full flex-col border-l border-border bg-surface shadow-elev-3 focus:outline-none sm:max-w-md",
           className,
         )}
       >
