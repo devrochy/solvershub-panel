@@ -556,6 +556,7 @@ export function PasoPublicar({
   setNotas,
   requisitos = [],
   modelo = null,
+  alCrear = false,
 }: {
   destinos: PublishTarget[];
   destinosError: string | null;
@@ -567,6 +568,8 @@ export function PasoPublicar({
   requisitos?: Requirement[];
   /** Modelo con el que atenderá y de dónde sale (HU-AOS-79). Solo se muestra: el dueño no lo elige aquí. */
   modelo?: { nombre: string; origen: "negocio" | "agente" } | null;
+  /** Estación 5 de Nuevo agente (HU-AOS-86): publicar también activa, así que los textos lo dicen. */
+  alCrear?: boolean;
 }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
@@ -584,8 +587,9 @@ export function PasoPublicar({
         titulo="Puedes publicar, pero tu agente no funcionará del todo hasta que configures:"
       />
       <p className="text-sm text-body">
-        Un agente siempre se publica en al menos una conexión. Al publicar se prepara una versión nueva de cada conexión
-        elegida; tus clientes no la ven hasta que la actives.
+        {alCrear
+          ? "Elige al menos una conexión. Al publicar, tu agente queda activo ahí y tus clientes ya hablan con él."
+          : "Un agente siempre se publica en al menos una conexión. Al publicar se prepara una versión nueva de cada conexión elegida; tus clientes no la ven hasta que la actives."}
       </p>
       {destinosError ? (
         <FormFeedback error={<>No se pudieron cargar las conexiones: {destinosError}</>} />
@@ -595,7 +599,7 @@ export function PasoPublicar({
         </p>
       ) : (
         <fieldset className="flex flex-col gap-2" aria-describedby={errores.connection_ids ? "conexiones-error" : undefined}>
-          <legend className="mb-1 text-sm font-medium text-headline">Conexiones donde atiende</legend>
+          <legend className="mb-1 text-sm font-medium text-headline">{alCrear ? "Dónde atiende" : "Conexiones donde atiende"}</legend>
           {destinos.map((d, i) => {
             const error = errores[`connection_ids[${elegidas.indexOf(d.connection_id)}]`];
             return (
@@ -622,7 +626,11 @@ export function PasoPublicar({
           <ErrorDeCampo id="conexiones-error" mensaje={errores.connection_ids} />
         </fieldset>
       )}
-      <Field label="Qué cambió (opcional)" htmlFor="publicar-notas" help="Queda en el historial de versiones.">
+      <Field
+        label={alCrear ? "Nota de versión (opcional)" : "Qué cambió (opcional)"}
+        htmlFor="publicar-notas"
+        help="Queda en el historial de versiones."
+      >
         <Textarea id="publicar-notas" value={notas} maxLength={2000} rows={2} onChange={(e) => setNotas(e.target.value)} />
       </Field>
     </div>

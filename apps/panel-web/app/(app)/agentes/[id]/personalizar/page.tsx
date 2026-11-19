@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { pasoDesdeParametro } from "@/lib/agentes-editor";
@@ -63,22 +64,30 @@ export default async function PersonalizarAgentePage({
   }
 
   // HU-AOS-78: con cambios sin guardar, salir del editor (o cerrar la pestaña) pide confirmar.
+  if (creando) {
+    // HU-AOS-86: Nuevo agente en la ruta de lanzamiento. Arriba solo las migas; el `h1` es la pregunta de la
+    // estación y «Terminar después» va junto a la ruta (lo pone el editor).
+    return (
+      <AvisoAlSalir>
+        <div className="flex flex-col gap-4">
+          <Breadcrumbs items={migas} />
+          <EditorDeAgente {...carga.datos} pasoInicial={pasoInicial} modo="crear" />
+        </div>
+      </AvisoAlSalir>
+    );
+  }
   return (
     <AvisoAlSalir>
       <div className="flex flex-col gap-6">
         {/* AGT-11: una tarea enfocada, sin las pestañas de la sección y con una salida a la ficha. */}
         <PageHeader
           title={titulo}
-          description={
-            creando
-              ? "El borrador ya existe: cada «Siguiente» guarda el paso. Al final lo pruebas y sigues en Personalizar para publicarlo."
-              : "Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
-          }
+          description="Ve a cualquier paso, guarda cuando quieras y publica la versión nueva al final."
           breadcrumbs={migas}
           tabs={false}
           actions={volver}
         />
-        <EditorDeAgente {...carga.datos} pasoInicial={pasoInicial} modo={creando ? "crear" : "editar"} />
+        <EditorDeAgente {...carga.datos} pasoInicial={pasoInicial} modo="editar" />
       </div>
     </AvisoAlSalir>
   );

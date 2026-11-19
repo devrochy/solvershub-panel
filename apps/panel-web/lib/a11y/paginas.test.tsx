@@ -8,12 +8,45 @@ import { violacionesGraves } from "@/lib/testing/axe";
 import { CATALOGO_DE_PRUEBA } from "@/lib/testing/asistente-config";
 import { RESPUESTAS as RESPUESTAS_BASE } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
+import type { AgentTemplate } from "@/lib/api/types";
+
+const LARGO = {
+  id: "largo_respuesta",
+  text: "¿Qué tan largas quieres sus respuestas?",
+  help: "",
+  type: "option",
+  default: "normal",
+  options: [
+    { id: "cortas", text: "Cortas", help: "Van al grano." },
+    { id: "normal", text: "Normales", help: "" },
+  ],
+} as AgentTemplate["questions"][number];
+const PLANTILLAS_DE_PRUEBA: AgentTemplate[] = (["ventas", "agenda"] as const).map((key) => ({
+  key,
+  name: key === "ventas" ? "Ventas" : "Agenda",
+  description: key === "ventas" ? "Vende y toma pedidos" : "Agenda citas y entregas",
+  section: key,
+  tools: [],
+  questions: [LARGO],
+  skills: [],
+  optional_skills: [],
+  available: true,
+  missing_skills: [],
+  will_enable: [],
+  superpowers: [],
+  requirements: [],
+}));
 
 // Accesibilidad de las páginas principales (HU-UI-04): se renderiza cada página con
 // respuestas de prueba del backend y axe no debe encontrar violaciones graves.
 
 // El catálogo de opciones con el guion del asistente (HU-CFG-11) para ejercitar las secciones de Configuración.
-const RESPUESTAS: Record<string, unknown> = { ...RESPUESTAS_BASE, "/admin/settings/catalog": CATALOGO_DE_PRUEBA };
+const RESPUESTAS: Record<string, unknown> = {
+  ...RESPUESTAS_BASE,
+  "/admin/settings/catalog": CATALOGO_DE_PRUEBA,
+  // Nuevo agente (HU-AOS-86): dos tipos, uno de ellos ocupado por un agente del negocio.
+  "/admin/agent-templates": { items: PLANTILLAS_DE_PRUEBA, total: PLANTILLAS_DE_PRUEBA.length, page: 1, page_size: 100, has_more: false },
+};
 
 vi.mock("@/lib/api/server", async (original) => ({
   ...(await original<typeof import("@/lib/api/server")>()),
@@ -47,6 +80,7 @@ const PAGINAS: [string, () => Promise<{ default: unknown }>, Record<string, stri
   ["Resumen", () => import("@/app/(app)/dashboard/page")],
   ["Agentes", () => import("@/app/(app)/agentes/page")],
   ["Agentes · Colaboración", () => import("@/app/(app)/agentes/colaboracion/page")],
+  ["Agentes · Nuevo agente", () => import("@/app/(app)/agentes/nuevo/page")],
   ["Conversaciones", () => import("@/app/(app)/conversaciones/page")],
   ["Escalaciones", () => import("@/app/(app)/escalaciones/page")],
   ["Leads", () => import("@/app/(app)/leads/page")],
