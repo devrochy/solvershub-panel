@@ -12,6 +12,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { focoParaDevolver } from "@/lib/foco";
 import { cn } from "@/lib/utils";
+import { fondoModal, posicionDialogo } from "@/components/ui/capa-modal";
 
 export interface ConfirmOptions {
   title: string;
@@ -66,10 +67,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       <DialogPrimitive.Root open={pending !== null} onOpenChange={(open) => !open && cerrar(false)}>
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+          <DialogPrimitive.Overlay className={fondoModal} />
           <DialogPrimitive.Content
             className={cn(
-              "fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
+              posicionDialogo,
+              "max-w-md",
               "rounded-lg border border-border bg-surface p-6 shadow-lg focus:outline-none",
               "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
             )}

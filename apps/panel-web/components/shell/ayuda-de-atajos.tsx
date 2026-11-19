@@ -9,6 +9,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { Switch } from "@/components/ui/switch";
 import { ATAJOS_IR } from "@/lib/shell/paleta";
 import { cn } from "@/lib/utils";
+import { fondoModal, posicionDialogo } from "@/components/ui/capa-modal";
 
 /**
  * Ayuda de atajos (`?`, HU-DS-05). Incluye el interruptor de los atajos de una tecla
@@ -43,7 +44,7 @@ export function AyudaDeAtajos({
   return (
     <DialogPrimitive.Root open={abierta} onOpenChange={onAbiertaChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+        <DialogPrimitive.Overlay className={fondoModal} />
         <DialogPrimitive.Content
           onOpenAutoFocus={() => {
             const activo = document.activeElement;
@@ -56,7 +57,8 @@ export function AyudaDeAtajos({
             }
           }}
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2",
+            posicionDialogo,
+            "max-w-lg",
             "overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-elev-3 focus:outline-none",
           )}
         >
