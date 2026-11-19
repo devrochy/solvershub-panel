@@ -38,6 +38,9 @@
 //   CARGA_DE_DATOS=1 (con AGENTES=1, SPEC-45): el asistente crea el borrador y sigue con «Datos»: generar datos de prueba,
 //   CSV con mapeo de la IA (Valor con IVA → precio), fotos con cotización (la tercera foto se queda sin crédito) y «Lo cargado».
 //   CARGA_DE_DATOS=prod: como en producción (sin generar ni la API de registros).
+//   NUEVO_AGENTE=activo|archivado (con AGENTES=1 y RETIRADAS=limpio, HU-AOS-86): Nuevo agente en 5 estaciones con
+//   Ventas ocupada por «Laura» (activa o archivada); «Crear» abre el borrador de Agenda «Tomás», con Datos del
+//   cliente, WhatsApp y Chat web en «Dónde atiende», y publicar/activar responden bien.
 //   PLATAFORMA=403|404|corte|corte-al-guardar (la ruta `/admin/platform/tenants/{id}/opciones-directas` falla así; `corte` = 502)
 //
 // Luego, en otra terminal:
@@ -49,7 +52,7 @@
 
 import { createServer } from "node:http";
 
-const { RESPUESTAS, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
+const { RESPUESTAS, politicaDatosCliente, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
 
 const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts");
@@ -1054,6 +1057,54 @@ if (process.env.AGENTES === "1") {
   ], total: 3, page: 1, page_size: 100, has_more: false };
 }
 
+// NUEVO_AGENTE (HU-AOS-86): Ventas ocupada por Laura y el borrador de Agenda «Tomás» que crea Nuevo agente.
+const NUEVO = process.env.NUEVO_AGENTE;
+const NUEVO_ID = "7a0a5000-0000-4000-8000-000000000086";
+if (NUEVO && process.env.AGENTES === "1") {
+  const overview = respuestas["/admin/agents/overview"];
+  const base = overview.items.find((a) => a.key === "ventas") ?? overview.items[0];
+  respuestas["/admin/agents/overview"] = {
+    ...overview,
+    items: [{ ...base, id: VENTAS_ID, ref: VENTAS_ID, key: "ventas", name: "Laura", virtual: false, status: NUEVO === "archivado" ? "archived" : "active" }],
+    cuota_agentes: { used: 1, limit: 5, allowed: true },
+  };
+  const plantillas = respuestas["/admin/agent-templates"].items;
+  const largo = {
+    id: "largo_respuesta", text: "¿Qué tan largas son sus respuestas?", help: "", type: "option", default: "normal",
+    options: [{ id: "cortas", text: "Cortas", help: "Van al grano." }, { id: "normal", text: "Normales", help: "Lo justo para resolver." }, { id: "detalladas", text: "Detalladas", help: "Explican con calma." }],
+  };
+  respuestas["/admin/agent-templates"] = { ...respuestas["/admin/agent-templates"], items: [
+    { ...plantillas.find((p) => p.key === "ventas"), name: "Ventas", description: "Vende y toma pedidos", questions: [largo] },
+    { ...plantillas.find((p) => p.key === "agenda"), name: "Agenda", description: "Agenda citas y entregas", questions: [largo] },
+    { ...plantillas.find((p) => p.key === "cobranza"), name: "Cobranza", description: "Recuerda pagos pendientes", available: true, questions: [largo] },
+    { ...plantillas.find((p) => p.key === "cobranza"), key: "suscripciones", name: "Suscripciones", description: "Contrata y renueva planes", available: false, questions: [largo] },
+  ] };
+  // El borrador nuevo copia las respuestas del editor de Ventas, como agente de Agenda llamado Tomás.
+  for (const [ruta, valor] of Object.entries(respuestas)) {
+    if (ruta.startsWith(`/admin/agents/${VENTAS_ID}/`)) respuestas[ruta.replace(VENTAS_ID, NUEVO_ID)] = valor;
+  }
+  respuestas[`/admin/agents/${NUEVO_ID}`] = { ...respuestas[`/admin/agents/${VENTAS_ID}`], id: NUEVO_ID, key: "agenda", name: "Tomás", latest_version: null, versions: [] };
+  respuestas[`/admin/agents/${NUEVO_ID}/datos-cliente`] = { ...politicaDatosCliente, agente_id: NUEVO_ID, metodos_entrega: ["domicilio", "recoger_en_tienda"] };
+  respuestas[`/admin/agents/${NUEVO_ID}/publish-targets`] = { items: [
+    { connection_id: "00000000-0000-4000-8000-0000000000c2", label: "WhatsApp", channel: "whatsapp", installed: false, covers_skills: true, missing_skills: [], active_release_id: null },
+    { connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: false, covers_skills: true, missing_skills: [], active_release_id: null },
+  ], total: 2, page: 1, page_size: 100, has_more: false };
+}
+function nuevoAgente(metodo, ruta) {
+  if (!NUEVO) return undefined;
+  if (metodo === "POST" && ruta === "/admin/agents/from-script") {
+    return [201, { agent: { id: NUEVO_ID, key: "agenda", name: "Tomás" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
+  }
+  if (metodo === "PUT" && ruta === `/admin/agents/${NUEVO_ID}/draft`) return [200, { lock_version: 2, content: respuestas[`/admin/agents/${NUEVO_ID}`].draft.content }];
+  if (metodo === "POST" && ruta === `/admin/agents/${NUEVO_ID}/publish`) {
+    return [200, {
+      version: { id: "v-1", version: 1, created_at: new Date().toISOString(), notes: null }, warnings: [],
+      connections: [{ connection_id: "00000000-0000-4000-8000-0000000000c2", instance: "created", release_id: "00000000-0000-4000-8000-0000000000e1", release_number: 1, release_created: true, error: null }],
+    }];
+  }
+  return undefined;
+}
+
 // Carga de datos al crear un agente (SPEC-45): estado en memoria del borrador que crea el asistente.
 const CARGA = process.env.CARGA_DE_DATOS;
 const BORRADOR_ID = "5e45a000-0000-4000-8000-000000000045";
@@ -1915,6 +1966,12 @@ createServer(async (req, res) => {
       paused_reason: null,
     };
     res.end(JSON.stringify(respuestas[`/admin/agents/${pausa[1]}`]));
+    return;
+  }
+  const delNuevo = nuevoAgente(req.method ?? "GET", ruta);
+  if (delNuevo) {
+    res.statusCode = delNuevo[0];
+    res.end(JSON.stringify(delNuevo[1]));
     return;
   }
   const cuerpo =

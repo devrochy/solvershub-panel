@@ -81,6 +81,7 @@ import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
 import { SemaforoListo } from "@/components/domain/agentes/semaforo-listo";
+import { agentMeta } from "@/components/domain/agent-icon";
 import { AnilloDeListo, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
 import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
 import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
@@ -285,9 +286,13 @@ export function EditorDeAgente({
   const [formas, setFormas] = useState(formasDePago);
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
-  const [elegidas, setElegidas] = useState<string[]>(
-    destinos.filter((d) => d.covers_skills && (d.installed || destinos.length === 1)).map((d) => d.connection_id),
-  );
+  const [elegidas, setElegidas] = useState<string[]>(() => {
+    const propias = destinos.filter((d) => d.covers_skills && (d.installed || destinos.length === 1)).map((d) => d.connection_id);
+    // Al crear (HU-AOS-86) «Dónde atiende» llega con lo recomendado: si nada viene marcado, la primera que sirve.
+    if (modo !== "crear" || propias.length > 0) return propias;
+    const primera = destinos.find((d) => d.covers_skills);
+    return primera ? [primera.connection_id] : [];
+  });
   const [notas, setNotas] = useState("");
   const [publicado, setPublicado] = useState<EditorPublishOut | null>(null);
   const [activadas, setActivadas] = useState<Set<string>>(new Set());
@@ -1110,7 +1115,7 @@ export function EditorDeAgente({
   const estacionDelChat = ESTACION_DEL_PASO[paso];
   const hechasDeLaRuta = 1 + Math.max(0, PASOS_DE_LA_CREACION.indexOf(paso));
   const escenario = creacionRapida ? (
-    <EscenarioTarjeta agente={nombreVisible} estado={`Borrador · ${agente.name}`} leyenda="Vista previa: no envía mensajes">
+    <EscenarioTarjeta agente={nombreVisible} estado={`Borrador · ${agentMeta(agente.key, agente.name).label}`} leyenda="Vista previa: no envía mensajes">
       {paso === "probar" ? (
         <div className="flex items-center gap-4">
           <AnilloDeListo hechas={hechasDeLaRuta} total={PASOS_DE_LA_CREACION.length + 1} />

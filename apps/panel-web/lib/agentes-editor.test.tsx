@@ -437,7 +437,9 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       }
       return new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 });
     });
-    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear], modelos: { ...modelos, min_phrases: 1 } });
+    // Dos conexiones sin instalar: «Dónde atiende» llega con la primera marcada (lo recomendado).
+    const web: PublishTarget = { ...conexionDeCrear, connection_id: "44444444-4444-4444-8444-444444444444", label: "Chat web", channel: "web" };
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear, web], modelos: { ...modelos, min_phrases: 1 } });
     fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
     await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
     const publicar = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/publish"));

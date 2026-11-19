@@ -173,7 +173,7 @@ export function NuevoAgente({
         return { ok: false, status: res.status, error: json.error || "No se pudo desarchivar el agente." };
       }
       router.push(`/agentes/${ocupado.id}`);
-      return { ok: true, success: `${ocupado.nombre} está activo otra vez.` };
+      return { ok: true, success: `Desarchivaste a ${ocupado.nombre}.` };
     });
   }
 
