@@ -45,12 +45,16 @@ import {
 } from "@/lib/agentes-editor";
 import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
 import {
+  alPorDefecto,
+  conCuantoPregunta,
   conNivel,
   cuerpoParaGuardar,
   estadoInicial,
   METODOS_ENTREGA,
   restablecida,
+  tipoDelAgente,
   type AgenteDatos,
+  type CuantoPregunta,
   type EstadoDatos,
   type MetodoEntrega,
   type NivelDato,
@@ -80,7 +84,13 @@ import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
-import { conversacionDeHabilidad, conversacionDeVoz } from "@/lib/vista-previa";
+import {
+  conversacionDeHabilidad,
+  conversacionDeVoz,
+  respuestaDePrueba,
+  saludoDePrueba,
+  sugerenciasPorEstacion,
+} from "@/lib/vista-previa";
 
 /** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
 // HU-AOS-81: la bienvenida también es la creación rápida (sus pasos 2 a 4 de 4).
@@ -238,6 +248,7 @@ export function EditorDeAgente({
     return pasoInicial === "publicar" ? "probar" : subconjunto[0];
   });
   const [frasePrueba, setFrasePrueba] = useState<string | null>(null);
+  const [pruebaDeDatosId, setPruebaDeDatosId] = useState<string | null>(null);
   // Datos cargados en «Conocimiento y datos» (SPEC-45): null = nada en esta visita.
   const [cargado, setCargado] = useState<Cargado | null>(null);
   const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
@@ -333,11 +344,9 @@ export function EditorDeAgente({
     return ok;
   }
 
+  /** Como los niveles y los métodos, queda «con cambios» hasta guardar (HU-AOS-85: un solo guardado). */
   function cambiarHerramientas(activo: boolean) {
     setHerramientas(activo);
-    void guardarDatos(activo).then((ok) => {
-      if (!ok) setHerramientas(!activo);
-    });
   }
 
   function cambiarMetodo(metodo: MetodoEntrega, activo: boolean) {
@@ -357,8 +366,22 @@ export function EditorDeAgente({
     setDatos((actual) => restablecida(datosCliente, actual, accionId));
   }
 
+  function elegirCuantoPregunta(nivel: CuantoPregunta) {
+    if (!datosCliente) return;
+    setDatos((actual) => conCuantoPregunta(datosCliente, actual, nivel));
+  }
+
+  function usarDatosRecomendados() {
+    if (!datosCliente) return;
+    setDatos((actual) => alPorDefecto(datosCliente, actual));
+  }
+
   function validar(id: PasoId, actual: EstadoDelEditor = estado): Errores {
-    return erroresDelPaso(id, actual, superpoderes, { minFrases, conexiones: elegidas });
+    return erroresDelPaso(id, actual, superpoderes, {
+      minFrases,
+      conexiones: elegidas,
+      ...(datosCliente ? { metodosDeEntrega: metodos } : {}),
+    });
   }
 
   /**
@@ -610,6 +633,38 @@ export function EditorDeAgente({
     }),
   );
 
+  // «Datos del cliente»: paso propio en Personalizar (HU-AOS-85); en la creación rápida y la bienvenida
+  // sigue como sección de Habilidades hasta que sus rutas cambien (HU-AOS-86 y HU-UX-25).
+  const datosComoPaso = !creando;
+  const datosDelCliente = datosCliente ? (
+    <DatosDelAgente
+      politica={datosCliente}
+      estado={datos}
+      guardado={datosGuardado}
+      herramientas={herramientas}
+      metodos={metodos}
+      puedeEditar={puedeEditarDatos && puedeEditar}
+      guardando={datosAccion.pending}
+      sinGuardar={datosSinGuardar}
+      onNivel={cambiarNivel}
+      onRestablecer={restablecerAccion}
+      onHerramientas={cambiarHerramientas}
+      onMetodo={cambiarMetodo}
+      onGuardar={datosComoPaso ? undefined : () => void guardarDatos()}
+      onCuantoPregunta={elegirCuantoPregunta}
+      onUsarRecomendado={usarDatosRecomendados}
+      comoPaso={datosComoPaso}
+      errorDeMetodos={errores["datos.metodos_entrega"]}
+    />
+  ) : (
+    <Card>
+      <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
+        No se pudieron cargar los datos del cliente{datosClienteError ? `: ${datosClienteError}` : "."} Recarga la página
+        para intentarlo de nuevo.
+      </CardContent>
+    </Card>
+  );
+
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
   const sugerido = guionSugerido(semillaDelFlujo ?? flujoInicial, bloquesDelGuion, accionesDelFlujo);
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
@@ -694,37 +749,17 @@ export function EditorDeAgente({
             gruposDeLaApi={gruposDeAcciones}
           />
         </section>
-        <section aria-labelledby="habilidades-datos" className="flex flex-col gap-4">
-          <h3 id="habilidades-datos" className="font-display text-sh-block text-headline">
-            Datos del cliente
-          </h3>
-          {datosCliente ? (
-            <DatosDelAgente
-              politica={datosCliente}
-              estado={datos}
-              guardado={datosGuardado}
-              herramientas={herramientas}
-              metodos={metodos}
-              puedeEditar={puedeEditarDatos && puedeEditar}
-              guardando={datosAccion.pending}
-              sinGuardar={datosSinGuardar}
-              onNivel={cambiarNivel}
-              onRestablecer={restablecerAccion}
-              onHerramientas={cambiarHerramientas}
-              onMetodo={cambiarMetodo}
-              onGuardar={() => void guardarDatos()}
-            />
-          ) : (
-            <Card>
-              <CardContent role="alert" className="pt-5 text-sm text-status-danger-fg">
-                No se pudieron cargar los datos del cliente{datosClienteError ? `: ${datosClienteError}` : "."} Recarga la
-                página para intentarlo de nuevo.
-              </CardContent>
-            </Card>
-          )}
-        </section>
+        {!datosComoPaso && (
+          <section aria-labelledby="habilidades-datos" className="flex flex-col gap-4">
+            <h3 id="habilidades-datos" className="font-display text-sh-block text-headline">
+              Datos del cliente
+            </h3>
+            {datosDelCliente}
+          </section>
+        )}
       </div>
     ),
+    "datos-cliente": datosDelCliente,
     flujo: (
       <PasoFlujo
         flujo={estado.flujo}
@@ -857,8 +892,25 @@ export function EditorDeAgente({
   const nombreDelAgente = estado.nombre.trim() || "Tu agente";
   const activos = superpoderes.filter((p) => estado.superpoderes[p.id]?.activo);
   const probado = superpoderes.find((p) => p.phrases[0] === frasePrueba) ?? activos[0] ?? superpoderes[0];
+  // «Datos del cliente»: el chat simulado de la estación 3 (D-SPEC-49-4), sin modelo ni precios.
+  const tipoDelChat = tipoDelAgente(agente.key, datosCliente);
+  const pruebaDeDatos = paso === "datos-cliente" && tipoDelChat ? sugerenciasPorEstacion(tipoDelChat, "datos-cliente") : [];
+  const pruebaElegida = pruebaDeDatos.find((s) => s.id === pruebaDeDatosId);
   const mensajesDelPaso =
-    paso === "habilidades" && probado
+    paso === "datos-cliente" && tipoDelChat
+      ? [
+          saludoDePrueba(tipoDelChat, nombreDelAgente, negocio.nombre),
+          ...(pruebaElegida
+            ? [
+                { tipo: "cliente" as const, texto: pruebaElegida.texto },
+                ...respuestaDePrueba(tipoDelChat, "datos-cliente", pruebaElegida.id, {
+                  agente: nombreDelAgente,
+                  negocio: negocio.nombre,
+                }),
+              ]
+            : []),
+        ]
+      : paso === "habilidades" && probado
       ? conversacionDeHabilidad(
           { id: probado.id, titulo: probado.title, activa: Boolean(estado.superpoderes[probado.id]?.activo), frases: probado.phrases },
           frasePrueba ?? undefined,
@@ -877,7 +929,14 @@ export function EditorDeAgente({
           subtitulo: `${nombreDelAgente} · borrador sin publicar`,
           mensajes: mensajesDelPaso,
           sugerencias:
-            paso === "habilidades"
+            paso === "datos-cliente"
+              ? pruebaDeDatos.map((s) => ({
+                  id: s.id,
+                  texto: s.texto,
+                  activa: s.id === pruebaDeDatosId,
+                  onUsar: () => setPruebaDeDatosId(s.id),
+                }))
+              : paso === "habilidades"
               ? superpoderes
                   .filter((p) => p.phrases[0])
                   .slice(0, 4)
@@ -890,8 +949,9 @@ export function EditorDeAgente({
               : undefined,
         };
 
-  const conCambios = pasosConCambios(estado, guardado);
-  if (datosSinGuardar) conCambios.add("habilidades");
+  // Los datos del cliente marcan su propio paso; donde todavía son sección de Habilidades, marcan ese.
+  const conCambios = pasosConCambios(estado, guardado, { datosCliente: datosSinGuardar && datosComoPaso });
+  if (datosSinGuardar && !datosComoPaso) conCambios.add("habilidades");
   const conError = new Set(Object.keys(errores).map(pasoDelCampo));
   const visibles = enBienvenida
     ? PASOS.filter((p) => PASOS_DE_LA_BIENVENIDA.includes(p.id))
