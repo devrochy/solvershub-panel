@@ -167,7 +167,31 @@ describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
     expect(llamadas.some((l) => l.url === "/api/onboarding/omitir")).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Terminar después" }));
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/dashboard"));
-    expect(llamadas.some((l) => l.url === "/api/onboarding/omitir")).toBe(true);
+    // Lo que lleva queda guardado en el negocio (no solo en este navegador) antes de dejarlo para después.
+    const urls = llamadas.map((l) => l.url);
+    expect(urls.indexOf("/api/onboarding/identidad")).toBeGreaterThanOrEqual(0);
+    expect(urls.indexOf("/api/onboarding/identidad")).toBeLessThan(urls.indexOf("/api/onboarding/omitir"));
+    expect(llamadas.find((l) => l.url === "/api/onboarding/identidad")?.cuerpo).toEqual({
+      cambios: { business_description: `Sport Plus. ${fraseDelTipo("ventas")}`, assistant_name: "Laura" },
+    });
+  });
+
+  it("«Seguir después» con algo que falta no guarda en el negocio, pero igual deja para después", async () => {
+    montar();
+    fireEvent.change(await screen.findByLabelText(/Nombre de tu agente/), { target: { value: "" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Seguir después" })[0]);
+    fireEvent.click(await screen.findByRole("button", { name: "Terminar después" }));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/dashboard"));
+    expect(llamadas.some((l) => l.url === "/api/onboarding/identidad")).toBe(false);
+  });
+
+  it("al volver a «Tu negocio» tras omitir en una estación posterior no retrocede el recorrido y el tipo es el del agente", async () => {
+    montar({ ...OMITIDO, paso: 4, agente_id: "a-9" }, { tipoDelAgente: "agenda" });
+    expect(((await screen.findByRole("radio", { name: /Agendo citas/ })) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("radio", { name: /Vendo productos/ }) as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByText("Tu agente ya está creado como «Agendo citas».")).toBeTruthy();
+    expect((screen.getByLabelText(/Cuéntanos en una frase/) as HTMLTextAreaElement).value).toBe(fraseDelTipo("agenda"));
+    await waitFor(() => expect(llamadas.find((l) => l.url === "/api/onboarding/avanzar")?.cuerpo).toEqual({ paso: 4 }));
   });
 
   it("al salir de «Tu negocio» guarda el negocio y el agente, lo crea, lo deja listo y sigue en Habilidades", async () => {
@@ -206,7 +230,9 @@ describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
     );
     montar({ ...PENDIENTE, estado: "en_curso", paso: 3, agente_id: "a-9" });
     fireEvent.change(await screen.findByLabelText(/Nombre de tu agente/), { target: { value: "Vera" } });
-    fireEvent.click(screen.getByRole("button", { name: /Crear a Vera y seguir/ }));
+    // No se crea otro agente: el botón guarda y el pie dice a qué estación vuelve.
+    expect(screen.getByText("Sigue: Datos del cliente.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar y seguir" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/bienvenida/agente/a-9"));
     expect(llamadas.some((l) => l.url === "/api/agent-editor/from-script")).toBe(false);
     expect(llamadas.find((l) => l.url === "/api/agent-editor/a-9")?.cuerpo).toEqual({ name: "Vera" });

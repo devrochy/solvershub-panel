@@ -29,6 +29,7 @@ export function PasoNegocio({
   onCambiar,
   onTipo,
   disponibles,
+  tipoFijo = null,
   habilitara,
 }: {
   estado: EstadoDelAsistente;
@@ -36,6 +37,8 @@ export function PasoNegocio({
   onTipo: (tipo: TipoDeNegocio) => void;
   /** Tipos que este servicio puede ofrecer; si no se conoce, todos. */
   disponibles: ReadonlySet<TipoDeNegocio> | null;
+  /** El tipo del agente ya creado: los demás no se eligen (un agente no cambia de tipo). */
+  tipoFijo?: TipoDeNegocio | null;
   /** Habilidades que se activarán al crear el agente de cada tipo. */
   habilitara: Partial<Record<TipoDeNegocio, string[]>>;
 }) {
@@ -52,7 +55,8 @@ export function PasoNegocio({
         className="grid gap-3 pt-2 sm:grid-cols-2"
       >
         {TIPOS_DE_NEGOCIO.map((t) => {
-          const lista = !disponibles || disponibles.has(t.id);
+          const otroTipo = tipoFijo !== null && t.id !== tipoFijo;
+          const lista = !otroTipo && (!disponibles || disponibles.has(t.id));
           const Icono = t.icono;
           return (
             <TarjetaElegible
@@ -61,7 +65,7 @@ export function PasoNegocio({
               valor={t.id}
               elegida={estado.tipo === t.id}
               deshabilitada={!lista}
-              nota={lista ? undefined : "No está en tu servicio por ahora."}
+              nota={lista ? undefined : otroTipo ? "Tu agente ya está creado con otro tipo." : "No está en tu servicio por ahora."}
               onElegir={() => onTipo(t.id)}
               titulo={t.titulo}
               ayuda={t.ayuda}
@@ -75,9 +79,11 @@ export function PasoNegocio({
       </GrupoDeOpciones>
       <div className="-mt-5 flex flex-col gap-1 text-sm text-text-soft" aria-live="polite">
         <p>
-          {estado.tipo === TIPO_RECOMENDADO
-            ? "Recomendado para negocios que venden productos."
-            : `Lo recomendado es «${recomendado?.titulo}», para negocios que venden productos.`}
+          {tipoFijo
+            ? `Tu agente ya está creado como «${TIPOS_DE_NEGOCIO.find((t) => t.id === tipoFijo)?.titulo}».`
+            : estado.tipo === TIPO_RECOMENDADO
+              ? "Recomendado para negocios que venden productos."
+              : `Lo recomendado es «${recomendado?.titulo}», para negocios que venden productos.`}
         </p>
         {porActivar.length > 0 && (
           <p className="text-body">

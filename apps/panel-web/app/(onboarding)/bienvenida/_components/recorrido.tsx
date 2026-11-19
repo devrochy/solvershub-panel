@@ -16,6 +16,7 @@ import {
   ESTADO_INICIAL,
   NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
   PARTES_DEL_PASO_1,
+  PASOS,
   PASOS_DEL_NEGOCIO,
   TIPO_RECOMENDADO,
   TIPOS_DE_NEGOCIO,
@@ -90,6 +91,8 @@ type Props = {
   disponibles: TipoDeNegocio[] | null;
   /** Habilidades que se activarán al crear el agente de cada tipo (las que el negocio aún no tiene). */
   habilitara: Partial<Record<TipoDeNegocio, string[]>>;
+  /** El tipo del agente ya creado (volvió a «Tu negocio»): manda sobre el borrador y no se cambia. */
+  tipoDelAgente?: TipoDeNegocio | null;
 };
 
 const nunca = () => () => {};
@@ -137,13 +140,16 @@ function Asistente({
   identidad,
   disponibles,
   habilitara,
+  tipoDelAgente = null,
   borrador,
 }: Props & { borrador: Borrador }) {
   const router = useRouter();
   const [recorrido, setRecorrido] = useState<Recorrido>(recorridoInicial);
   // Lo recomendado por SolversHub, con el primer tipo que el servicio trae si el recomendado no está.
+  // Con el agente ya creado manda su tipo (no cambia después de crearlo); lo recomendado es lo de ese tipo.
   const tipoInicial: TipoDeNegocio =
-    !disponibles || disponibles.includes(TIPO_RECOMENDADO) ? TIPO_RECOMENDADO : (disponibles[0] ?? TIPO_RECOMENDADO);
+    tipoDelAgente ??
+    (!disponibles || disponibles.includes(TIPO_RECOMENDADO) ? TIPO_RECOMENDADO : (disponibles[0] ?? TIPO_RECOMENDADO));
   const recomendado = useMemo(
     () => conLoRecomendado({ ...ESTADO_INICIAL, negocio: nombreDelNegocio }, tipoInicial),
     [nombreDelNegocio, tipoInicial],
@@ -157,7 +163,8 @@ function Asistente({
     const descripcion = base.descripcion.startsWith(`${nombreDelNegocio.trim()}. `)
       ? base.descripcion.slice(nombreDelNegocio.trim().length + 2)
       : base.descripcion;
-    const tipo = borrador.tipo && (!disponibles || disponibles.includes(borrador.tipo)) ? borrador.tipo : base.tipo;
+    const tipo =
+      tipoDelAgente ?? (borrador.tipo && (!disponibles || disponibles.includes(borrador.tipo)) ? borrador.tipo : base.tipo);
     return {
       ...base,
       tipo,
@@ -172,7 +179,9 @@ function Asistente({
   // Marca el recorrido como empezado (o retomado, si estaba saltado).
   useEffect(() => {
     if (recorridoInicial.estado !== "en_curso") {
-      void post<Recorrido>("/api/onboarding/avanzar", { paso: PASOS_DEL_NEGOCIO }).then((r) => {
+      // Sin retroceder: quien omitió en una estación posterior y vuelve por «Cambiar nombre» conserva dónde iba.
+      const paso = Math.max(PASOS_DEL_NEGOCIO, pasoDeCinco(recorridoInicial));
+      void post<Recorrido>("/api/onboarding/avanzar", { paso }).then((r) => {
         if (r.ok) setRecorrido(r.data);
       });
     }
@@ -205,6 +214,19 @@ function Asistente({
     cambiar({ tipo: recomendado.tipo, nombreDelAgente: recomendado.nombreDelAgente, descripcion: recomendado.descripcion });
   }
 
+  /**
+   * «Seguir después» en esta estación: si lo escrito ya es válido, se guarda en la identidad del negocio (lo que
+   * lleva queda guardado también fuera de este navegador); si no, queda solo en el borrador local.
+   */
+  async function guardarAlSalir(): Promise<boolean> {
+    if (PARTES_DEL_PASO_1.some((id) => errorDelPaso(id, estado))) return true;
+    const cambios = Object.assign({}, ...PARTES_DEL_PASO_1.map((id) => cambiosDelPaso(id, estado)));
+    if (Object.keys(cambios).length === 0) return true;
+    const guardado = await post("/api/onboarding/identidad", { cambios });
+    if (!guardado.ok) setError(guardado.error);
+    return guardado.ok;
+  }
+
   async function siguiente() {
     // HU-AOS-81: el paso 1 junta los datos del negocio y la identidad del agente.
     const problema = PARTES_DEL_PASO_1.map((id) => errorDelPaso(id, estado)).find(Boolean);
@@ -231,10 +253,12 @@ function Asistente({
       return;
     }
     // Sigue en «Habilidades», o donde iba si volvió desde una estación posterior («Cambiar nombre», «Editar»).
-    await post<Recorrido>("/api/onboarding/avanzar", { paso: Math.max(PASOS_DEL_NEGOCIO + 1, pasoDeCinco(recorrido)) });
+    await post<Recorrido>("/api/onboarding/avanzar", { paso: destino });
     router.push(`/bienvenida/agente/${creado.agenteId}`);
   }
 
+  // La estación a la que se sigue: «Habilidades», o donde iba si volvió desde una posterior.
+  const destino = Math.max(PASOS_DEL_NEGOCIO + 1, pasoDeCinco(recorrido));
   const nombre = estado.nombreDelAgente.trim();
   const quien = nombre || "Tu agente";
   const negocio = estado.negocio.trim();
@@ -252,7 +276,7 @@ function Asistente({
   ].filter((x): x is string => Boolean(x));
   const completo = faltan.length === 0;
   const seguirDespues = (enEscenario: boolean) => (
-    <SeguirDespues nombreDelAgente={quien} ocupado={ocupado} enEscenario={enEscenario} />
+    <SeguirDespues nombreDelAgente={quien} guardar={guardarAlSalir} ocupado={ocupado} enEscenario={enEscenario} />
   );
 
   return (
@@ -302,10 +326,11 @@ function Asistente({
         etiquetaDePasos="Estaciones de la bienvenida"
         pregunta="Cuéntanos de tu negocio"
         bajada={`Con esto ${quien} sabe quién es y cómo presentarse en su primera conversación.`}
-        queSigue={error ? "Completa lo que falta arriba para seguir." : "Sigue: Habilidades."}
+        queSigue={error ? "Completa lo que falta arriba para seguir." : `Sigue: ${PASOS[destino - 1].corto}.`}
         extremo={<div className="hidden lg:block">{seguirDespues(false)}</div>}
         principal={{
-          texto: nombre ? `Crear a ${nombre} y seguir` : "Crear mi agente y seguir",
+          // Con el agente ya creado no se crea otro: se guarda y se retoma donde iba.
+          texto: recorrido.agente_id ? "Guardar y seguir" : nombre ? `Crear a ${nombre} y seguir` : "Crear mi agente y seguir",
           onClick: () => void siguiente(),
           cargando: ocupado,
         }}
@@ -319,6 +344,7 @@ function Asistente({
           onCambiar={cambiar}
           onTipo={elegirTipo}
           disponibles={disponibles ? new Set(disponibles) : null}
+          tipoFijo={tipoDelAgente}
           habilitara={habilitara}
         />
         <FormFeedback error={error ?? undefined} className="max-w-xl" />

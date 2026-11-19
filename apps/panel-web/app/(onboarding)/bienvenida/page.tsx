@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { apiFetch } from "@/lib/api/server";
-import type { AgentTemplatePage, Me, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
+import type { AgentDetail, AgentTemplatePage, Me, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
 import { PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, pasoDeCinco, type TipoDeNegocio } from "@/lib/onboarding";
 
 import { RecorridoDeBienvenida } from "./_components/recorrido";
@@ -44,6 +44,10 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
       )
     : {};
 
+  // Con el agente ya creado (volvió a «Tu negocio»), su tipo manda: un agente no cambia de tipo.
+  const agente = recorrido.agente_id ? await apiFetch<AgentDetail>(`/admin/agents/${recorrido.agente_id}`) : null;
+  const tipoDelAgente = (agente?.ok && TIPOS_DE_NEGOCIO.find((t) => t.id === agente.data.key)?.id) || null;
+
   return (
     <RecorridoDeBienvenida
       negocioId={me.data.tenant.id}
@@ -52,6 +56,7 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
       identidad={ajustes.data.identity}
       disponibles={disponibles}
       habilitara={habilitara}
+      tipoDelAgente={tipoDelAgente}
     />
   );
 }
