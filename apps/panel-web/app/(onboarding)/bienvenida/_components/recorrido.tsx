@@ -25,6 +25,7 @@ import {
   errorDelPaso,
   estadoDesdeIdentidad,
   fraseDelTipo,
+  pasoDeCinco,
   type EstadoDelAsistente,
   type Recorrido,
   type TipoDeNegocio,
@@ -229,7 +230,8 @@ function Asistente({
       setError(creado.error);
       return;
     }
-    await post<Recorrido>("/api/onboarding/avanzar", { paso: PASOS_DEL_NEGOCIO + 1 });
+    // Sigue en «Habilidades», o donde iba si volvió desde una estación posterior («Cambiar nombre», «Editar»).
+    await post<Recorrido>("/api/onboarding/avanzar", { paso: Math.max(PASOS_DEL_NEGOCIO + 1, pasoDeCinco(recorrido)) });
     router.push(`/bienvenida/agente/${creado.agenteId}`);
   }
 

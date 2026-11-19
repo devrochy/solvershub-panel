@@ -195,7 +195,7 @@ describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
     expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 2 });
   });
 
-  it("al volver a «Tu negocio» con el agente ya creado no crea otro: lo renombra y lo deja listo", async () => {
+  it("al volver a «Tu negocio» con el agente ya creado no crea otro: lo renombra, lo deja listo y retoma donde iba", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((url: string, init?: RequestInit) => {
@@ -210,6 +210,8 @@ describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/bienvenida/agente/a-9"));
     expect(llamadas.some((l) => l.url === "/api/agent-editor/from-script")).toBe(false);
     expect(llamadas.find((l) => l.url === "/api/agent-editor/a-9")?.cuerpo).toEqual({ name: "Vera" });
+    // Vuelve a donde iba (estación 3), no a «Habilidades».
+    expect(llamadas.filter((l) => l.url === "/api/onboarding/avanzar").pop()?.cuerpo).toEqual({ paso: 3 });
   });
 
   it("al retomar recuerda lo que el dueño escribió en esta estación", async () => {
