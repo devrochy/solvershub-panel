@@ -448,6 +448,36 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(JSON.parse(activar?.[1].body)).toEqual({ connection_id: conexionDeCrear.connection_id, release_id: "r-1" });
   });
 
+  it("si la conexión no quedó lista al publicar, no intenta activar y va a la ficha igual", async () => {
+    push.mockReset();
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith("/publish")) {
+        return new Response(
+          JSON.stringify({
+            version: { version: 1 },
+            warnings: [],
+            connections: [
+              {
+                connection_id: conexionDeCrear.connection_id,
+                instance: "created",
+                release_id: null,
+                release_number: null,
+                release_created: false,
+                error: "La conexión no está lista.",
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 });
+    });
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear], modelos: { ...modelos, min_phrases: 1 } });
+    fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+    expect(fetchMock.mock.calls.some(([u]) => u === "/api/agent-editor/activate")).toBe(false);
+  });
+
   it("sin conexiones, «Publicar» no se puede usar y queda «Guardar como borrador»", () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
     abrir({ modo: "crear", pasoInicial: "probar" });

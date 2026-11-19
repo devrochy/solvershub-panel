@@ -290,4 +290,15 @@ describe("Nuevo agente en pantalla (HU-AOS-86)", () => {
     expect(push).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("si la carrera la gana la restricción única (409 `key_taken` sin id), dice el mismo texto sin enlace y no sigue", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "Ya tienes un agente «Agenda».", code: "key_taken" }), { status: 409 }),
+    );
+    abrir();
+    fireEvent.click(screen.getByRole("button", { name: /Crear a Tomás y seguir/ }));
+    expect((await screen.findAllByText(/Ya tienes un agente «Agenda»: edítalo en vez de crear otro\./)).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: "Editar a Agenda" })).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
 });

@@ -136,6 +136,11 @@ const EN_LA_CREACION: Partial<Record<PasoId, { titulo: string; corto: string }>>
 };
 const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo", corto: "Tipo" };
 
+/** «1 encendida», «3 encendidas»: las habilidades encendidas en el escenario de la ruta. */
+function encendidasTexto(n: number): string {
+  return `${n} ${n === 1 ? "encendida" : "encendidas"}`;
+}
+
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
 
@@ -653,9 +658,8 @@ export function EditorDeAgente({
   async function activarAlCrear(hecho: EditorPublishOut): Promise<string> {
     const nombre = estado.nombre.trim() || "Tu agente";
     const listas = hecho.connections.filter((c) => c.release_id && !c.error);
-    if (!puedeActivar || listas.length === 0) {
-      return `${nombre} quedó publicado. Lo activa el propietario del negocio desde su ficha.`;
-    }
+    if (!puedeActivar) return `${nombre} quedó publicado. Lo activa el propietario del negocio desde su ficha.`;
+    if (listas.length === 0) return `${nombre} quedó publicado, pero ninguna conexión quedó lista para activarlo: revísalo desde su ficha.`;
     const fallidas: string[] = [];
     for (const c of listas) {
       const res = await fetch("/api/agent-editor/activate", {
@@ -1127,7 +1131,7 @@ export function EditorDeAgente({
         <div className="grid grid-cols-2 gap-3">
           <TarjetaDelEscenario
             etiqueta="Habilidades"
-            valor={`${superpoderes.filter((p) => estado.superpoderes[p.id]?.activo).length} encendidas`}
+            valor={encendidasTexto(superpoderes.filter((p) => estado.superpoderes[p.id]?.activo).length)}
             hecha={PASOS_DE_LA_CREACION.indexOf(paso) >= 0}
           />
           <TarjetaDelEscenario

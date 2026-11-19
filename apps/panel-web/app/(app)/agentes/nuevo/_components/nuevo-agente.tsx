@@ -74,7 +74,7 @@ export function NuevoAgente({
   const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState<string | null>(null);
   // El 409 `key_taken` de una carrera: el tipo que ya existe y su agente.
-  const [existente, setExistente] = useState<{ texto: string; ocupado: Ocupado } | null>(null);
+  const [existente, setExistente] = useState<{ texto: string; ocupado: Ocupado | null } | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
 
   const plantilla = plantillas.find((p) => p.key === estado.plantilla) ?? null;
@@ -122,17 +122,19 @@ export function NuevoAgente({
         fields?: Record<string, string>;
       };
       if (!res.ok || !json.agentId) {
-        if (json.code === "key_taken" && json.fields?.agent_id) {
-          // Red de seguridad: el mismo aviso de la tarjeta, con el agente que ya ocupa el tipo.
-          const delNegocio = agentes.find((a) => a.id === json.fields?.agent_id);
-          const ocupado: Ocupado = {
-            id: json.fields.agent_id,
-            nombre: delNegocio?.name || plantilla.name,
-            archivado: delNegocio?.status === "archived",
-          };
-          setExistente({ texto: textoDeOcupado(plantilla.name, ocupado.archivado), ocupado });
+        if (json.code === "key_taken") {
+          // Red de seguridad: el mismo aviso de la tarjeta, con el agente que ya ocupa el tipo. Si la carrera
+          // la gana la restricción única de la base, la API no trae el id: va el texto sin enlace.
+          const agenteId = json.fields?.agent_id;
+          const delNegocio = agenteId ? agentes.find((a) => a.id === agenteId) : undefined;
+          const ocupado: Ocupado | null = agenteId
+            ? { id: agenteId, nombre: delNegocio?.name || plantilla.name, archivado: delNegocio?.status === "archived" }
+            : null;
+          const texto = textoDeOcupado(plantilla.name, ocupado?.archivado ?? false);
+          setExistente({ texto, ocupado });
           setError(null);
-          return { ok: false, status: res.status, error: textoDeOcupado(plantilla.name, ocupado.archivado) };
+          setLimite(null);
+          return { ok: false, status: res.status, error: texto };
         }
         setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de agentes de tu plan.") : null);
         const mensaje = Object.entries(json.fields ?? {}).find(([k]) => k !== "agent_id")?.[1];
@@ -305,7 +307,7 @@ export function NuevoAgente({
         <FormFeedback error={error ?? undefined} />
         {existente && (
           <p role="alert" className="flex flex-wrap items-center gap-x-2 text-sm text-body">
-            {existente.texto} {accionDeOcupado(existente.ocupado)}
+            {existente.texto} {existente.ocupado && accionDeOcupado(existente.ocupado)}
           </p>
         )}
         {limite && <AvisoLimiteDePlan mensaje={limite} />}
