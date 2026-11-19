@@ -55,4 +55,52 @@ describe("BFF de datos del cliente por agente", () => {
     expect(res.status).toBe(422);
     expect(((await res.json()) as { error: string }).error).toContain("no se puede ajustar");
   });
+
+  // HU-AOS-85: antes el BFF descartaba los métodos de entrega y «A domicilio» volvía a encenderse.
+  it("reenvía metodos_entrega junto con la política y las herramientas", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ agente_id: AGENTE, niveles: [], acciones: [] }), { status: 200 }));
+    const res = await PUT(
+      cuerpo({ politica: {}, herramientas_del_agente: true, metodos_entrega: ["recoger_en_tienda"] }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({
+      politica: {},
+      herramientas_del_agente: true,
+      metodos_entrega: ["recoger_en_tienda"],
+    });
+  });
+
+  it("un cuerpo solo con metodos_entrega también es válido", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ agente_id: AGENTE, niveles: [], acciones: [] }), { status: 200 }));
+    const res = await PUT(cuerpo({ metodos_entrega: ["domicilio", "recoger_en_tienda"] }), ctx);
+    expect(res.status).toBe(200);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ metodos_entrega: ["domicilio", "recoger_en_tienda"] });
+  });
+
+  it("rechaza métodos desconocidos o mal formados sin llamar a la API", async () => {
+    expect((await PUT(cuerpo({ metodos_entrega: ["a_domicilio"] }), ctx)).status).toBe(400);
+    expect((await PUT(cuerpo({ metodos_entrega: "domicilio" }), ctx)).status).toBe(400);
+    expect((await PUT(cuerpo({ metodos_entrega: [1] }), ctx)).status).toBe(400);
+    expect((await PUT(cuerpo({ metodos_entrega: null }), ctx)).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("una lista vacía llega al backend y su 422 metodos_entrega_vacios pasa tal cual", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { code: "metodos_entrega_vacios", message: "Deja al menos un método de entrega." } }),
+        { status: 422 },
+      ),
+    );
+    const res = await PUT(cuerpo({ metodos_entrega: [] }), ctx);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ metodos_entrega: [] });
+    expect(res.status).toBe(422);
+    const json = (await res.json()) as { error: string; code?: string };
+    expect(json.code).toBe("metodos_entrega_vacios");
+    expect(json.error).toContain("al menos un método");
+  });
 });
