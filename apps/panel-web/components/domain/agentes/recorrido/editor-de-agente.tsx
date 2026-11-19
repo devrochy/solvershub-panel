@@ -98,7 +98,7 @@ const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "conocimiento", "probar
 /**
  * Creación rápida (SPEC-47, HU-AOS-81, D-SPEC-47-4): Nuevo agente va en 4 pasos. El 1 (tipo y datos
  * básicos) es `/agentes/nuevo`; aquí van los otros tres, con su nombre de la creación rápida. Lo demás
- * (voz, horario, flujo, publicar) queda para Personalizar, con los 8 pasos libres.
+ * (voz, horario, flujo, publicar) queda para Personalizar, con los 9 pasos libres.
  */
 const PASOS_DE_LA_CREACION: PasoId[] = ["habilidades", "conocimiento", "probar"];
 const EN_LA_CREACION: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
@@ -143,10 +143,10 @@ export type BienvenidaDelEditor = {
 };
 
 /**
- * Editor de un agente especialista con el recorrido común (HU-AOS-78, SPEC-47): los ocho pasos de
- * Nuevo agente y de la bienvenida, libres, con el teléfono de la vista previa. Cambiar de paso no
- * guarda: «Guardar cambios» guarda todo lo cambiado sin publicar, y «Publicar versión» valida los
- * ocho pasos, publica en las conexiones elegidas (D-35) y deja la versión lista para activar.
+ * Editor de un agente especialista con el recorrido común (HU-AOS-78, SPEC-47): los nueve pasos de
+ * Personalizar (con «Datos del cliente», HU-AOS-85), libres, con el teléfono de la vista previa. Cambiar
+ * de paso no guarda: «Guardar cambios» guarda todo lo cambiado sin publicar (también los datos del
+ * cliente), y «Publicar versión» valida los nueve pasos, publica en las conexiones elegidas (D-35) y deja la versión lista para activar.
  * «Proveedor y modelo» ya no es un paso: el agente usa el modelo del negocio (HU-AOS-79).
  *
  * Con `modo="crear"` (HU-AOS-77) es la continuación de Nuevo agente: los pasos van en orden y
@@ -1004,8 +1004,9 @@ export function EditorDeAgente({
             ? {
                 texto: "Guardar cambios",
                 onClick: () => void guardarCambios(),
-                cargando: guardarAccion.pending,
-                deshabilitado: !hayCambios || publicarAccion.pending,
+                // Con solo datos del cliente cambiados, el PUT es el de `datosAccion`: también cuenta.
+                cargando: guardarAccion.pending || datosAccion.pending,
+                deshabilitado: !hayCambios || publicarAccion.pending || datosAccion.pending,
               }
             : undefined
         }
@@ -1029,7 +1030,8 @@ export function EditorDeAgente({
                   texto: creando ? "Publicar" : "Publicar versión",
                   onClick: () => void publicar(),
                   cargando: publicarAccion.pending,
-                  deshabilitado: publicarAccion.pending || guardarAccion.pending || destinos.length === 0,
+                  deshabilitado:
+                    publicarAccion.pending || guardarAccion.pending || datosAccion.pending || destinos.length === 0,
                 }
               : undefined
             : creando

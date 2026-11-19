@@ -565,6 +565,21 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
     );
   });
 
+  it("mientras se guardan los datos del cliente, «Guardar cambios» no manda otro PUT", async () => {
+    let soltar: (r: Response) => void = () => {};
+    fetchMock.mockReturnValue(new Promise<Response>((r) => (soltar = r)));
+    abrir({ pasoInicial: "datos-cliente" });
+    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    const boton = screen.getByRole("button", { name: "Guardar cambios" });
+    fireEvent.click(boton);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect((boton as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.click(boton);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    soltar(new Response(JSON.stringify({}), { status: 200 }));
+    await waitFor(() => expect(enLaBarra("Datos del cliente")).not.toContain("con cambios"));
+  });
+
   it("al recargar, «A domicilio» sigue apagado si el servidor lo guardó así", () => {
     abrir({ pasoInicial: "datos-cliente", datosCliente: { ...politica, metodos_entrega: ["recoger_en_tienda"] } });
     expect(screen.getByRole("switch", { name: "Ofrecer a domicilio" }).getAttribute("aria-checked")).toBe("false");
