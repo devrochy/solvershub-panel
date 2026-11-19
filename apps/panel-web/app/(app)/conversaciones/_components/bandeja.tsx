@@ -94,11 +94,11 @@ export function Bandeja({
   }, [detalle, actividadAbierta, marcar]);
 
   return (
-    <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden rounded-lg border border-border-soft bg-surface shadow-elev-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
       <nav
         aria-label="Lista de conversaciones"
         className={cn(
-          "flex min-h-0 flex-col border-border-soft lg:border-r",
+          "flex min-h-0 min-w-0 flex-col border-border-soft lg:border-r",
           panelAbierto && "hidden lg:flex",
         )}
       >
@@ -129,7 +129,7 @@ export function Bandeja({
       <section
         aria-label="Conversación"
         className={cn(
-          "min-h-0",
+          "min-h-0 min-w-0",
           seleccion ? "flex flex-col" : panelAbierto ? "flex items-center justify-center" : "hidden lg:flex lg:items-center lg:justify-center",
         )}
       >
