@@ -67,7 +67,8 @@ export function TarjetaElegible({
         "relative flex min-h-[4.5rem] cursor-pointer items-start gap-3 rounded-lg border bg-surface p-4 transition-[border-color,background-color,box-shadow] duration-200 motion-reduce:transition-none",
         baldosa && "items-center",
         elegida
-          ? "border-focus bg-focus/10 shadow-[0_0_0_1px_var(--sh-focus)]"
+          ? // En claro, el tinte es sólido y más suave: con `bg-focus/10` el texto de la tarjeta quedaba bajo 4.5:1 (HU-AOS-86).
+            "border-focus bg-focus/10 shadow-[0_0_0_1px_var(--sh-focus)] [[data-theme=sh-light]_&]:bg-[color-mix(in_srgb,var(--sh-focus)_6%,var(--sh-surface))]"
           : "border-control-border hover:border-focus/50 hover:bg-focus/5",
         deshabilitada && (conNota ? "cursor-not-allowed border-dashed hover:border-control-border hover:bg-surface" : "cursor-not-allowed opacity-50"),
         etiqueta && "mt-2.5",

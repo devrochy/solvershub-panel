@@ -6,6 +6,7 @@ import { Camera, FileSpreadsheet, Sparkles } from "lucide-react";
 
 import { ImportarCatalogo } from "@/components/domain/importar-catalogo";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import type {
   EstadoDatosDePrueba,
@@ -28,7 +29,19 @@ export type Cargado = { registros: RegistroDePrueba[]; resumen: string };
  * HU-QA-16), importa su catálogo desde un CSV cualquiera (HU-COM-19) o desde fotos (HU-COM-20), u omite. Cada
  * opción aparece solo si la API la ofrece para este agente y este entorno.
  */
-export function PasoDatos({ agenteId, onCargado }: { agenteId: string; onCargado: (c: Cargado) => void }) {
+export function PasoDatos({
+  agenteId,
+  onCargado,
+  onSeguirSinDatos,
+}: {
+  agenteId: string;
+  onCargado: (c: Cargado) => void;
+  /**
+   * Nuevo agente (HU-AOS-86): sin ninguna forma de carga (fuera de test, todo tipo salvo Ventas), el paso
+   * muestra un estado vacío con «Seguir sin datos», que pasa a la estación siguiente.
+   */
+  onSeguirSinDatos?: () => void;
+}) {
   const [prueba, setPrueba] = useState<EstadoDatosDePrueba | null>(null);
   const [importacion, setImportacion] = useState<EstadoImportacion | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -103,6 +116,21 @@ export function PasoDatos({ agenteId, onCargado }: { agenteId: string; onCargado
       texto: "Una foto por producto: la IA propone nombre, categoría y precio si se ve. Cuesta créditos y te decimos cuántos antes.",
       icono: <Camera aria-hidden />,
     });
+  }
+
+  if (opciones.length === 0 && onSeguirSinDatos) {
+    return (
+      <EmptyState
+        className="rounded-lg border border-dashed border-border-soft"
+        title="Por ahora no hay datos que cargar para este tipo"
+        description="Puedes probarlo igual en la estación siguiente y cargarle datos después, cuando esté disponible."
+        action={
+          <Button variant="outline" onClick={onSeguirSinDatos}>
+            Seguir sin datos
+          </Button>
+        }
+      />
+    );
   }
 
   return (

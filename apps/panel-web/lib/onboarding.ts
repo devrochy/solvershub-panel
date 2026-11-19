@@ -56,7 +56,7 @@ export const TIPOS_DE_NEGOCIO: {
     titulo: "Agendo citas",
     ayuda: "Ofrece horarios y reserva la cita.",
     contenido: "servicios",
-    nombres: ["Luna", "Agenda", "Dani"],
+    nombres: ["Tomás", "Luna", "Dani"],
   },
   {
     id: "cobranza",

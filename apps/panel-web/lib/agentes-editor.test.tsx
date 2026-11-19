@@ -310,6 +310,15 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     business_model: "deepseek-flash",
   } as LlmModelCatalog;
   const segmento = (nombre: RegExp) => screen.getAllByRole("button", { name: nombre })[0];
+  const conexionDeCrear: PublishTarget = {
+    connection_id: "33333333-3333-4333-8333-333333333333",
+    label: "WhatsApp",
+    channel: "whatsapp",
+    installed: false,
+    covers_skills: true,
+    missing_skills: [],
+    active_release_id: null,
+  };
 
   function abrir(props: Partial<Parameters<typeof EditorDeAgente>[0]> = {}) {
     return render(
@@ -360,31 +369,120 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.queryByRole("heading", { name: "Datos del cliente" })).toBeNull();
   });
 
-  it("al crear (HU-AOS-81) son los pasos 2 a 4 de 4, en orden, sin «Guardar cambios»", async () => {
+  it("al crear (HU-AOS-86) son las estaciones 2 a 5 de 5, en orden, con «Guardar y seguir» y sin «Guardar cambios»", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
-    // Un enlace viejo con `?paso=voz` arranca igual en el primer paso de la creación rápida.
+    // Un enlace viejo con `?paso=voz` arranca igual en la primera estación del editor.
     abrir({ modo: "crear", pasoInicial: "voz" });
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
-    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
+    expect(screen.getAllByText("Paso 2 de 5 · Habilidades").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Atrás/ }).hasAttribute("disabled")).toBe(true);
-    expect(screen.queryAllByRole("button", { name: /^Publicar$/ })).toHaveLength(0);
+    expect(screen.getByRole("link", { name: "Terminar después" }).getAttribute("href")).toBe(`/agentes/${agente.id}`);
+    // «Datos del cliente» ya no es sección de Habilidades: es la estación 3.
+    expect(screen.queryByRole("heading", { level: 3, name: "Datos del cliente" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Guardar y seguir: Datos del cliente/ })).toBeTruthy();
     cleanup();
     abrir({ modo: "crear", pasoInicial: "conocimiento" });
-    expect(screen.getByText("Paso 3 de 4 · Datos")).toBeTruthy();
-    // En la creación rápida este paso es solo «Datos para probar»: sin memoria.
+    expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
+    // En la creación este paso es solo «Datos para probar»: sin memoria.
     expect(screen.queryByText(/Lo que sabe del cliente/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-    await waitFor(() => expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Revisar y publicar/ }));
+    await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
   });
 
-  it("el último paso de la creación rápida muestra el semáforo y sigue en Personalizar sin publicar", async () => {
+  it("la estación 5 resume lo hecho con «Editar», ofrece «Dónde atiende» y «Guardar como borrador» no publica", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
-    abrir({ modo: "crear", pasoInicial: "probar" });
-    expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy();
+    push.mockReset();
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear] });
+    expect(screen.getByRole("heading", { level: 1, name: "Revisa y publica a Ventas" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: /Listo para responder|le falta algo|Todavía no puede responder/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Terminar y personalizar" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}/personalizar?paso=publicar`));
+    const resumen = screen.getByRole("list", { name: "Lo que ya está listo" });
+    expect(within(resumen).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      expect.stringContaining("Habilidades"),
+      expect.stringContaining("Datos del cliente"),
+      expect.stringContaining("Datos para probar"),
+    ]);
+    expect(screen.getByRole("group", { name: "Dónde atiende" })).toBeTruthy();
+    expect(screen.getByLabelText(/Nota de versión/)).toBeTruthy();
+    fireEvent.click(within(resumen).getByRole("button", { name: "Editar Datos del cliente" }));
+    expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
+    cleanup();
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear] });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar como borrador" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
     expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith("/publish"))).toBe(false);
+  });
+
+  it("«Publicar a {nombre}» publica la versión 1, la activa en la conexión elegida y va a la ficha", async () => {
+    push.mockReset();
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith("/publish")) {
+        return new Response(
+          JSON.stringify({
+            version: { version: 1 },
+            warnings: [],
+            connections: [
+              {
+                connection_id: conexionDeCrear.connection_id,
+                instance: "created",
+                release_id: "r-1",
+                release_number: 1,
+                release_created: true,
+                error: null,
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 });
+    });
+    // Dos conexiones sin instalar: «Dónde atiende» llega con la primera marcada (lo recomendado).
+    const web: PublishTarget = { ...conexionDeCrear, connection_id: "44444444-4444-4444-8444-444444444444", label: "Chat web", channel: "web" };
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear, web], modelos: { ...modelos, min_phrases: 1 } });
+    fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+    const publicar = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/publish"));
+    expect(JSON.parse(publicar?.[1].body)).toMatchObject({ connection_ids: [conexionDeCrear.connection_id] });
+    const activar = fetchMock.mock.calls.find(([u]) => u === "/api/agent-editor/activate");
+    expect(JSON.parse(activar?.[1].body)).toEqual({ connection_id: conexionDeCrear.connection_id, release_id: "r-1" });
+  });
+
+  it("si la conexión no quedó lista al publicar, no intenta activar y va a la ficha igual", async () => {
+    push.mockReset();
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith("/publish")) {
+        return new Response(
+          JSON.stringify({
+            version: { version: 1 },
+            warnings: [],
+            connections: [
+              {
+                connection_id: conexionDeCrear.connection_id,
+                instance: "created",
+                release_id: null,
+                release_number: null,
+                release_created: false,
+                error: "La conexión no está lista.",
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 });
+    });
+    abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear], modelos: { ...modelos, min_phrases: 1 } });
+    fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+    expect(fetchMock.mock.calls.some(([u]) => u === "/api/agent-editor/activate")).toBe(false);
+  });
+
+  it("sin conexiones, «Publicar» no se puede usar y queda «Guardar como borrador»", () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    abrir({ modo: "crear", pasoInicial: "probar" });
+    expect((screen.getByRole("button", { name: "Publicar a Ventas" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Guardar como borrador" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("en la bienvenida (HU-AOS-81) son los pasos 2 a 4 de 4, vuelve al del negocio y prepara la prueba", async () => {
@@ -629,12 +727,21 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
     expect(screen.getAllByText(/Hola, soy Laura, de La Espiga/).length).toBeGreaterThan(0);
   });
 
-  it("en la creación rápida sigue como sección de Habilidades, con su botón (hasta HU-AOS-86)", () => {
-    abrir({ modo: "crear", pasoInicial: "habilidades" });
-    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 3, name: "Datos del cliente" })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 4, name: "Ventas" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Guardar datos del cliente" })).toBeTruthy();
+  it("al crear (HU-AOS-86) es la estación 3: «Guardar y seguir: Datos para probar» guarda política, herramientas y métodos", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    abrir({ modo: "crear", pasoInicial: "datos-cliente" });
+    expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Guardar datos del cliente" })).toBeNull();
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Cuánto pregunta" })).getByRole("radio", { name: /Completo/ }));
+    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Datos para probar/ }));
+    await waitFor(() => expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0));
+    const put = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/datos-cliente"));
+    expect(put?.[1].method).toBe("PUT");
+    const cuerpo = JSON.parse(put?.[1].body);
+    expect(cuerpo).toHaveProperty("politica");
+    expect(cuerpo).toHaveProperty("herramientas_del_agente");
+    expect(cuerpo.metodos_entrega).toEqual(["recoger_en_tienda"]);
   });
 });
 

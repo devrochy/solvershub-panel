@@ -48,6 +48,8 @@ import {
   alPorDefecto,
   conCuantoPregunta,
   conNivel,
+  CUANTO_PREGUNTA,
+  cuantoPreguntaActual,
   cuerpoParaGuardar,
   estadoInicial,
   METODOS_ENTREGA,
@@ -79,6 +81,12 @@ import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
 import { SemaforoListo } from "@/components/domain/agentes/semaforo-listo";
+import { agentMeta } from "@/components/domain/agent-icon";
+import { AnilloDeListo, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
+import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
+import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
+import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
+import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
 import { semaforo } from "@/lib/listo-para-responder";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
@@ -96,17 +104,42 @@ import {
 // HU-AOS-81: la bienvenida también es la creación rápida (sus pasos 2 a 4 de 4).
 const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "conocimiento", "probar"];
 /**
- * Creación rápida (SPEC-47, HU-AOS-81, D-SPEC-47-4): Nuevo agente va en 4 pasos. El 1 (tipo y datos
- * básicos) es `/agentes/nuevo`; aquí van los otros tres, con su nombre de la creación rápida. Lo demás
- * (voz, horario, flujo, publicar) queda para Personalizar, con los 9 pasos libres.
+ * Nuevo agente en 5 estaciones (SPEC-49, HU-AOS-86, D-SPEC-49-1): la 1 (Tipo) es `/agentes/nuevo`; aquí
+ * van Habilidades, Datos del cliente, Datos para probar y Revisar y publicar. La 5 publica (D-SPEC-49-9).
+ * Lo demás (voz, horario, flujo) queda para Personalizar, con sus pasos libres.
  */
-const PASOS_DE_LA_CREACION: PasoId[] = ["habilidades", "conocimiento", "probar"];
+const PASOS_DE_LA_CREACION: PasoId[] = ["habilidades", "datos-cliente", "conocimiento", "probar"];
+/** Los nombres de las estaciones de la ruta de lanzamiento (`ESTACIONES_DE_NUEVO_AGENTE`). */
+const EN_LA_RUTA: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
+  habilidades: { titulo: "Habilidades", corto: "Habilidades" },
+  "datos-cliente": { titulo: "Datos del cliente", corto: "Datos del cliente" },
+  conocimiento: { titulo: "Datos para probar", corto: "Datos para probar" },
+  probar: { titulo: "Revisar y publicar", corto: "Revisar y publicar" },
+};
+/** La estación de la ruta de cada paso de la creación (para el chat simulado del escenario). */
+const ESTACION_DEL_PASO: Partial<Record<PasoId, EstacionDeLaRuta>> = {
+  habilidades: "habilidades",
+  "datos-cliente": "datos-cliente",
+  conocimiento: "datos-probar",
+  probar: "revisar",
+};
+/** La pregunta de cada estación en la ruta (las demás, la de `PASOS`). */
+const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
+  conocimiento: "¿Con qué datos probamos a {nombre}?",
+  probar: "Revisa y publica a {nombre}",
+};
+/** La bienvenida (HU-AOS-81) sigue en 4 pasos con estos nombres hasta HU-UX-25. */
 const EN_LA_CREACION: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
   habilidades: { titulo: "Habilidades y formas de pago", corto: "Habilidades" },
   conocimiento: { titulo: "Datos para probar", corto: "Datos" },
   probar: { titulo: "Revisar, probar y publicar", corto: "Revisar" },
 };
-const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo y datos básicos", corto: "Tipo" };
+const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo", corto: "Tipo" };
+
+/** «1 encendida», «3 encendidas»: las habilidades encendidas en el escenario de la ruta. */
+function encendidasTexto(n: number): string {
+  return `${n} ${n === 1 ? "encendida" : "encendidas"}`;
+}
 
 /** Id de la lista de frases prohibidas (la del paso Identidad), el mismo que usa `pasos.tsx`. */
 const ID_PROHIBIDAS = "agente-prohibidas";
@@ -258,9 +291,13 @@ export function EditorDeAgente({
   const [formas, setFormas] = useState(formasDePago);
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
-  const [elegidas, setElegidas] = useState<string[]>(
-    destinos.filter((d) => d.covers_skills && (d.installed || destinos.length === 1)).map((d) => d.connection_id),
-  );
+  const [elegidas, setElegidas] = useState<string[]>(() => {
+    const propias = destinos.filter((d) => d.covers_skills && (d.installed || destinos.length === 1)).map((d) => d.connection_id);
+    // Al crear (HU-AOS-86) «Dónde atiende» llega con lo recomendado: si nada viene marcado, la primera que sirve.
+    if (modo !== "crear" || propias.length > 0) return propias;
+    const primera = destinos.find((d) => d.covers_skills);
+    return primera ? [primera.connection_id] : [];
+  });
   const [notas, setNotas] = useState("");
   const [publicado, setPublicado] = useState<EditorPublishOut | null>(null);
   const [activadas, setActivadas] = useState<Set<string>>(new Set());
@@ -482,7 +519,10 @@ export function EditorDeAgente({
   function mostrarErrores(campos: Errores) {
     setErrores(campos);
     const primero = Object.keys(campos)[0];
-    if (primero) irA(pasoDelCampo(primero));
+    if (!primero) return;
+    const destino = pasoDelCampo(primero);
+    // Al crear solo se ven las 4 estaciones del editor: lo de otro paso se avisa en «Revisar y publicar».
+    irA(creacionRapida && !PASOS_DE_LA_CREACION.includes(destino) ? "probar" : destino);
   }
 
   function irA(id: PasoId) {
@@ -529,11 +569,10 @@ export function EditorDeAgente({
     return (await guardar(completo)) !== null;
   }
 
-  /** Al crear, «Siguiente» valida el paso y lo guarda antes de avanzar. */
-  /** Último paso de la creación rápida: guarda lo que falte y sigue en Personalizar (sin publicar). */
-  async function terminarCreacion() {
+  /** «Guardar como borrador» (estación 5): guarda lo que falte, sin publicar, y va a la ficha del agente. */
+  async function guardarComoBorrador() {
     if (!(await guardarCambios())) return;
-    router.push(rutaDePersonalizar(agente.id, { paso: "publicar" }));
+    router.push(`/agentes/${agente.id}`);
   }
 
   async function siguienteAlCrear() {
@@ -560,17 +599,18 @@ export function EditorDeAgente({
     mover(1);
   }
 
-  async function publicar() {
+  async function publicar(): Promise<EditorPublishOut | null> {
     const completo = plegarPendientes();
-    if (!completo) return;
+    if (!completo) return null;
     const todos = PASOS.reduce<Errores>((acc, p) => ({ ...acc, ...validar(p.id, completo) }), {});
     if (Object.keys(todos).length > 0) {
       mostrarErrores(todos);
-      return;
+      return null;
     }
-    if (!(await guardarDatos())) return;
+    if (!(await guardarDatos())) return null;
     const vigente = await guardar(completo);
-    if (vigente === null) return;
+    if (vigente === null) return null;
+    let resultado: EditorPublishOut | null = null;
     await publicarAccion.run(async () => {
       const res = await fetch(`/api/agent-editor/${agente.id}/publish`, {
         method: "POST",
@@ -599,10 +639,48 @@ export function EditorDeAgente({
       }
       setErrores({});
       setLimite(null);
-      setPublicado(json as EditorPublishOut);
+      resultado = json as EditorPublishOut;
+      if (creacionRapida) {
+        // Al crear, «Publicar» ya es la decisión del dueño: se activa enseguida donde atiende (D-SPEC-49-9).
+        return { ok: true, success: await activarAlCrear(resultado) };
+      }
+      setPublicado(resultado);
       void recargarAvisos();
       return { ok: true, success: `Versión ${json.version?.version} publicada. Actívala cuando quieras que tus clientes la vean.` };
     });
+    return resultado;
+  }
+
+  /**
+   * Estación 5 de Nuevo agente (HU-AOS-86): activa la versión recién publicada en las conexiones de
+   * «Dónde atiende» (si el usuario puede activar) y dice cómo quedó. Un fallo no deshace la publicación.
+   */
+  async function activarAlCrear(hecho: EditorPublishOut): Promise<string> {
+    const nombre = estado.nombre.trim() || "Tu agente";
+    const listas = hecho.connections.filter((c) => c.release_id && !c.error);
+    if (!puedeActivar) return `${nombre} quedó publicado. Lo activa el propietario del negocio desde su ficha.`;
+    if (listas.length === 0) return `${nombre} quedó publicado, pero ninguna conexión quedó lista para activarlo: revísalo desde su ficha.`;
+    const fallidas: string[] = [];
+    for (const c of listas) {
+      const res = await fetch("/api/agent-editor/activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connection_id: c.connection_id, release_id: c.release_id }),
+      }).catch(() => null);
+      if (!res?.ok) {
+        const destino = destinos.find((d) => d.connection_id === c.connection_id);
+        fallidas.push(destino?.label || destino?.channel || "una conexión");
+      }
+    }
+    if (fallidas.length > 0) {
+      return `${nombre} quedó publicado, pero no se activó en ${fallidas.join(", ")}: actívalo desde su ficha.`;
+    }
+    return `${nombre} quedó publicado y ya atiende.`;
+  }
+
+  /** «Publicar a {nombre}» (estación 5): publica la versión 1, la activa y va a la ficha del agente. */
+  async function publicarAlCrear() {
+    if (await publicar()) router.push(`/agentes/${agente.id}`);
   }
 
   async function activar(connectionId: string, releaseId: string, nombre: string) {
@@ -633,9 +711,9 @@ export function EditorDeAgente({
     }),
   );
 
-  // «Datos del cliente»: paso propio en Personalizar (HU-AOS-85); en la creación rápida y la bienvenida
-  // sigue como sección de Habilidades hasta que sus rutas cambien (HU-AOS-86 y HU-UX-25).
-  const datosComoPaso = !creando;
+  // «Datos del cliente»: paso propio en Personalizar (HU-AOS-85) y estación 3 de Nuevo agente (HU-AOS-86);
+  // en la bienvenida sigue como sección de Habilidades hasta HU-UX-25.
+  const datosComoPaso = modo !== "bienvenida";
   const datosDelCliente = datosCliente ? (
     <DatosDelAgente
       politica={datosCliente}
@@ -664,6 +742,27 @@ export function EditorDeAgente({
       </CardContent>
     </Card>
   );
+
+  /** Lo que quedó en cada estación, para «Revisar y publicar» (HU-AOS-86). */
+  function resumenDeEstacion(id: PasoId): string {
+    if (id === "habilidades") {
+      const encendidas = superpoderes.filter((p) => estado.superpoderes[p.id]?.activo).length;
+      return `${encendidas} de ${superpoderes.length} encendidas`;
+    }
+    if (id === "datos-cliente") {
+      if (!datosCliente) return "Sin cargar";
+      const preset = cuantoPreguntaActual(datosCliente, datos);
+      return preset ? `«${CUANTO_PREGUNTA.find((c) => c.id === preset)?.titulo ?? preset}»` : "A tu medida";
+    }
+    if (id === "conocimiento") {
+      return cargados.length > 0 ? `${cargados.length} ${cargados.length === 1 ? "registro cargado" : "registros cargados"}` : "Sin datos de prueba";
+    }
+    return "";
+  }
+  // Errores de pasos que la ruta no muestra (voz, flujo…): se avisan en la estación 5 con un enlace.
+  const fueraDeLaRuta = creacionRapida
+    ? [...new Set(Object.keys(errores).map(pasoDelCampo))].filter((p) => p !== "publicar" && !PASOS_DE_LA_CREACION.includes(p))
+    : [];
 
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
   const sugerido = guionSugerido(semillaDelFlujo ?? flujoInicial, bloquesDelGuion, accionesDelFlujo);
@@ -801,6 +900,8 @@ export function EditorDeAgente({
                 setCargado(c);
                 setCargados(c.registros);
               }}
+              // Fuera de test Agenda, Cobranza y Suscripciones no tienen carga: «Seguir sin datos» pasa a la 5.
+              onSeguirSinDatos={creacionRapida ? () => void siguienteAlCrear() : undefined}
             />
           )}
         </section>
@@ -827,25 +928,56 @@ export function EditorDeAgente({
           después en Personalizar; cuando conectes tu WhatsApp, lo activas desde Conexiones.
         </p>
       </div>
-    ) : creando ? (
-      <div className="flex flex-col gap-6">
-        {creacionRapida && (
-          <SemaforoListo
-            semaforo={semaforo({
-              requisitos,
-              formas,
-              superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
-              conDatos: cargados.length > 0,
-            })}
-          />
-        )}
-        <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
-        {creacionRapida && (
-          <p className="text-sm text-text-soft">
-            Pruebas el borrador sin publicarlo. Al terminar sigues en Personalizar: ahí ajustas cómo habla, su horario y su flujo, y lo
-            publicas donde atiende.
+    ) : creacionRapida ? (
+      <div className="flex flex-col gap-8">
+        <SemaforoListo
+          semaforo={semaforo({
+            requisitos,
+            formas,
+            superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
+            conDatos: cargados.length > 0,
+          })}
+        />
+        <ResumenDeEstaciones
+          estaciones={PASOS_DE_LA_CREACION.filter((p) => p !== "probar").map((p) => ({
+            id: p,
+            titulo: EN_LA_RUTA[p]?.titulo ?? p,
+            resumen: resumenDeEstacion(p),
+          }))}
+          onEditar={irA}
+        />
+        {fueraDeLaRuta.length > 0 && (
+          <p role="alert" className="max-w-xl rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+            Hay algo por revisar en {fueraDeLaRuta.map((p) => `«${PASOS.find((x) => x.id === p)?.titulo ?? p}»`).join(", ")}.{" "}
+            <Link className="underline" href={rutaDePersonalizar(agente.id, { paso: fueraDeLaRuta[0] })}>
+              Ábrelo en Personalizar
+            </Link>
+            .
           </p>
         )}
+        <section aria-labelledby="ultima-prueba" className="flex flex-col gap-3">
+          <h3 id="ultima-prueba" className="font-display text-sh-block text-headline">
+            Última prueba
+          </h3>
+          <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
+        </section>
+        <PasoPublicar
+          destinos={destinos}
+          destinosError={destinosError}
+          requisitos={requisitos}
+          elegidas={elegidas}
+          alternar={(id, activo) => setElegidas((e) => (activo ? [...new Set([...e, id])] : e.filter((x) => x !== id)))}
+          errores={errores}
+          notas={notas}
+          setNotas={setNotas}
+          modelo={modeloEfectivo}
+          alCrear
+        />
+        <p className="text-sm text-text-soft">Si prefieres seguir después, guárdalo como borrador: no atiende hasta que lo publiques.</p>
+      </div>
+    ) : creando ? (
+      <div className="flex flex-col gap-6">
+        <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
       </div>
     ) : (
       <div className="flex max-w-xl flex-col gap-4">
@@ -961,8 +1093,8 @@ export function EditorDeAgente({
   const pasosDelEditor: PasoDeLaBarra[] = visibles.map(
     (p) => ({
       id: p.id,
-      titulo: (comoCreacionRapida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
-      corto: (comoCreacionRapida && EN_LA_CREACION[p.id]?.corto) || p.corto,
+      titulo: (creacionRapida ? EN_LA_RUTA[p.id]?.titulo : enBienvenida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
+      corto: (creacionRapida ? EN_LA_RUTA[p.id]?.corto : enBienvenida && EN_LA_CREACION[p.id]?.corto) || p.corto,
       marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
     }),
   );
@@ -980,6 +1112,48 @@ export function EditorDeAgente({
   const primeroDeLaCreacion = creacionRapida && paso === PASOS_DE_LA_CREACION[0];
   const hayCambios = cambios || datosSinGuardar;
 
+  // Ruta de lanzamiento (HU-AOS-86): la estación siguiente, la pregunta y el escenario en tarjeta.
+  const siguienteDeLaRuta = creacionRapida ? PASOS_DE_LA_CREACION[PASOS_DE_LA_CREACION.indexOf(paso) + 1] : undefined;
+  const tituloSiguiente = siguienteDeLaRuta ? (EN_LA_RUTA[siguienteDeLaRuta]?.titulo ?? "") : "";
+  const nombreVisible = estado.nombre.trim();
+  const estacionDelChat = ESTACION_DEL_PASO[paso];
+  const hechasDeLaRuta = 1 + Math.max(0, PASOS_DE_LA_CREACION.indexOf(paso));
+  const escenario = creacionRapida ? (
+    <EscenarioTarjeta agente={nombreVisible} estado={`Borrador · ${agentMeta(agente.key, agente.name).label}`} leyenda="Vista previa: no envía mensajes">
+      {paso === "probar" ? (
+        <div className="flex items-center gap-4">
+          <AnilloDeListo hechas={hechasDeLaRuta} total={PASOS_DE_LA_CREACION.length + 1} />
+          <p className="text-sm text-escena-texto">
+            {destinos.length > 0 ? "Ya se puede publicar. Te sugerimos una última prueba antes." : "Falta una conexión donde atienda."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <TarjetaDelEscenario
+            etiqueta="Habilidades"
+            valor={encendidasTexto(superpoderes.filter((p) => estado.superpoderes[p.id]?.activo).length)}
+            hecha={PASOS_DE_LA_CREACION.indexOf(paso) >= 0}
+          />
+          <TarjetaDelEscenario
+            etiqueta="Datos del cliente"
+            valor={paso === "habilidades" ? "En la estación 3" : resumenDeEstacion("datos-cliente")}
+            hecha={PASOS_DE_LA_CREACION.indexOf(paso) >= 1}
+          />
+        </div>
+      )}
+      {tipoDelChat && estacionDelChat && (
+        <ChatDeVistaPrevia
+          key={`${nombreVisible}:${cargados.length}`}
+          tipo={tipoDelChat}
+          estacion={estacionDelChat}
+          agente={nombreVisible || "tu agente"}
+          negocio={negocio.nombre}
+          cargados={cargados}
+        />
+      )}
+    </EscenarioTarjeta>
+  ) : undefined;
+
   return (
     <div className="flex flex-col gap-6">
       <AvisoDeReferenciasRetiradas aviso={retiradas} />
@@ -994,13 +1168,30 @@ export function EditorDeAgente({
           else if (id !== PASO_UNO_DE_LA_CREACION.id) irA(id as PasoId);
         }}
         etiquetaDePasos={enBienvenida ? "Pasos del primer uso" : creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
-        pregunta={preguntaDelPaso(paso, estado.nombre)}
-        nivelDePregunta={enBienvenida ? "h1" : "h2"}
+        pregunta={creacionRapida && PREGUNTA_EN_LA_RUTA[paso] ? PREGUNTA_EN_LA_RUTA[paso].replace("{nombre}", nombreVisible || "tu agente") : preguntaDelPaso(paso, estado.nombre)}
+        nivelDePregunta={enBienvenida || creacionRapida ? "h1" : "h2"}
+        disposicion={creacionRapida ? "ruta" : "pasos"}
+        lateral={escenario}
+        queSigue={creacionRapida ? (tituloSiguiente ? `Sigue: ${tituloSiguiente}.` : undefined) : undefined}
+        extremo={
+          creacionRapida ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/agentes/${agente.id}`}>Terminar después</Link>
+            </Button>
+          ) : undefined
+        }
         dentroDelPanel={!enBienvenida}
         vistaPrevia={vistaPrevia}
         atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: (indice === 0 && !enBienvenida) || primeroDeLaCreacion }}
         guardar={
-          puedeEditar && !creando
+          ultimo && creacionRapida && puedeEditar
+            ? {
+                texto: "Guardar como borrador",
+                onClick: () => void guardarComoBorrador(),
+                cargando: guardarAccion.pending,
+                deshabilitado: publicarAccion.pending || datosAccion.pending,
+              }
+            : puedeEditar && !creando
             ? {
                 texto: "Guardar cambios",
                 onClick: () => void guardarCambios(),
@@ -1019,11 +1210,15 @@ export function EditorDeAgente({
                 deshabilitado: !bienvenida.probado || bienvenida.terminando,
               }
             : ultimo && creacionRapida
-            ? {
-                texto: "Terminar y personalizar",
-                onClick: () => void terminarCreacion(),
-                cargando: guardarAccion.pending,
-              }
+            ? puedeEditar
+              ? {
+                  texto: `Publicar a ${nombreVisible || "tu agente"}`,
+                  onClick: () => void publicarAlCrear(),
+                  cargando: publicarAccion.pending,
+                  deshabilitado:
+                    publicarAccion.pending || guardarAccion.pending || datosAccion.pending || destinos.length === 0,
+                }
+              : undefined
             : ultimo
             ? puedeEditar
               ? {
@@ -1034,6 +1229,12 @@ export function EditorDeAgente({
                     publicarAccion.pending || guardarAccion.pending || datosAccion.pending || destinos.length === 0,
                 }
               : undefined
+            : creacionRapida
+              ? {
+                  texto: `Guardar y seguir: ${tituloSiguiente}`,
+                  onClick: () => void siguienteAlCrear(),
+                  cargando: guardarAccion.pending || datosAccion.pending,
+                }
             : creando
               ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }
               : { texto: "Siguiente", onClick: () => mover(1) }

@@ -1,62 +1,104 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { PlantillasEnTarjetas } from "@/app/(app)/agentes/nuevo/_components/plantillas-en-tarjetas";
+import { agentMeta } from "@/components/domain/agent-icon";
+import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
+import { TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
+import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
+import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
+import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
-import { Badge } from "@/components/ui/badge";
+import { useConfirm } from "@/components/ui/confirm";
+import { GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
-import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { NOMBRE_MAX, cuerpoDeCreacion, elegirTipo, ESTADO_INICIAL, type EstadoDelAsistente } from "@/lib/agente-asistente";
+import {
+  cuerpoDeCreacion,
+  elegirTipo,
+  estadoRecomendado,
+  nombreSugeridoDe,
+  ocupadoDe,
+  sePuedeElegir,
+  textoDeOcupado,
+  tipoDeLaPlantilla,
+  type AgenteDelNegocio,
+  type EstadoDelAsistente,
+  type Ocupado,
+} from "@/lib/agente-asistente";
 import { type NegocioDelEditor } from "@/lib/agentes-editor";
-import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
-
-/** Los 4 pasos de la creación rápida (SPEC-47, HU-AOS-81): aquí va el 1; los otros, en el editor. */
-const PASOS_DE_LA_CREACION_RAPIDA = [
-  { id: "identidad", titulo: "Tipo y datos básicos", corto: "Tipo" },
-  { id: "habilidades", titulo: "Habilidades y formas de pago", corto: "Habilidades" },
-  { id: "conocimiento", titulo: "Datos para probar", corto: "Datos" },
-  { id: "probar", titulo: "Revisar, probar y publicar", corto: "Revisar" },
-];
 import type { AgentTemplate } from "@/lib/api/types";
 import { esLimiteDePlan } from "@/lib/plan-limite";
+import { ESTACIONES_DE_NUEVO_AGENTE, cambiosFrenteARecomendado, errorDelNombre, ideasDeNombre } from "@/lib/ruta-de-lanzamiento";
+import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import { useAction } from "@/lib/use-action";
-import { conversacionDeVoz } from "@/lib/vista-previa";
 
 /** Ids de pasos del guion que no son preguntas de opción (los toma el propio recorrido). */
 const PROPIOS = new Set(["tipo", "nombre", "contenido", "revisar", "datos", "cargado", "probar"]);
 
+/** Lo que se compara con lo recomendado en la estación 1: el tipo y cada respuesta del guion. */
+function valoresDe(estado: EstadoDelAsistente): Record<string, string | null> {
+  return { tipo: estado.plantilla, ...estado.respuestas };
+}
+
 /**
- * Nuevo agente con el recorrido común (HU-AOS-77, SPEC-47): es el paso «Identidad» de los ocho. Se elige
- * la plantilla, se contesta su guion (con el valor sugerido ya marcado) y se le pone nombre; «Crear
- * borrador y seguir» crea el borrador con `from-script` y lleva al editor en modo crear desde «Cómo
- * habla». El borrador nace aquí (y no al salir de «Horario y reglas») porque la voz y lo demás se
- * guardan en él.
+ * Nuevo agente, estación 1 de la ruta de lanzamiento (HU-AOS-86, SPEC-49): Tipo. Todo llega con lo
+ * recomendado: el primer tipo libre, el guion con su `Question.default` y el nombre sugerido del tipo
+ * («Tomás» en Agenda). Los tipos que el negocio ya tiene se avisan en la tarjeta antes de crear: con
+ * un agente activo, «Editar a {nombre}»; con uno archivado, «Desarchívalo». «Crear a {nombre} y seguir»
+ * crea el borrador con `from-script` y sigue en Habilidades (estación 2, en el editor en modo crear).
+ * El 409 `key_taken` queda como red de seguridad por si otro usuario creó el tipo mientras tanto.
  */
-export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate[]; negocio: NegocioDelEditor }) {
+export function NuevoAgente({
+  plantillas,
+  negocio,
+  agentes = [],
+}: {
+  plantillas: AgentTemplate[];
+  negocio: NegocioDelEditor;
+  /** Los agentes del negocio (`/admin/agents/overview`), para saber qué tipos están ocupados. */
+  agentes?: readonly AgenteDelNegocio[];
+}) {
+  const id = useId();
   const router = useRouter();
+  const confirm = useConfirm();
   const { run, pending } = useAction({ refresh: false });
-  const [estado, setEstado] = useState<EstadoDelAsistente>(ESTADO_INICIAL);
+  const desarchivar = useAction({ refresh: false });
+  const [recomendado] = useState<EstadoDelAsistente>(() => estadoRecomendado(plantillas, agentes));
+  const [estado, setEstado] = useState<EstadoDelAsistente>(recomendado);
   const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [existente, setExistente] = useState<string | null>(null);
+  // El 409 `key_taken` de una carrera: el tipo que ya existe y su agente.
+  const [existente, setExistente] = useState<{ texto: string; ocupado: Ocupado | null } | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
 
   const plantilla = plantillas.find((p) => p.key === estado.plantilla) ?? null;
   const preguntas = (plantilla?.questions ?? []).filter((q) => q.type === "option" && !PROPIOS.has(q.id));
-  const nombre = estado.nombre.trim() || plantilla?.name || "";
+  const tipo = tipoDeLaPlantilla(plantilla?.key);
+  const nombre = estado.nombre.trim();
+  const sugerido = plantilla ? nombreSugeridoDe(plantilla) : "";
+  const cambios = cambiosFrenteARecomendado(valoresDe(estado), valoresDe(recomendado)).length;
+
+  function elegir(key: string) {
+    const elegida = plantillas.find((p) => p.key === key);
+    if (!elegida || !sePuedeElegir(elegida, agentes)) return;
+    // El nombre sigue al tipo mientras el dueño no lo haya cambiado (vacío o el sugerido del tipo anterior).
+    const tocado = nombre !== "" && nombre !== sugerido;
+    setEstado({ ...elegirTipo(elegida), nombre: tocado ? estado.nombre : nombreSugeridoDe(elegida) });
+    setError(null);
+    setExistente(null);
+  }
 
   function validar(): string | null {
     if (!plantilla) return "Elige qué quieres que haga tu agente.";
     if (!plantilla.available) return "Este tipo de agente no está disponible en tu servicio por ahora.";
-    if (estado.nombre.trim().length > NOMBRE_MAX) return `El nombre admite hasta ${NOMBRE_MAX} caracteres.`;
+    const delNombre = errorDelNombre(estado.nombre);
+    if (delNombre) return delNombre;
     const sinRespuesta = preguntas.find((q) => !q.options.some((o) => o.id === estado.respuestas[q.id]));
     return sinRespuesta ? `Elige una opción en «${sinRespuesta.text}».` : null;
   }
@@ -80,101 +122,182 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
         fields?: Record<string, string>;
       };
       if (!res.ok || !json.agentId) {
-        if (json.code === "key_taken" && json.fields?.agent_id) setExistente(json.fields.agent_id);
+        if (json.code === "key_taken") {
+          // Red de seguridad: el mismo aviso de la tarjeta, con el agente que ya ocupa el tipo. Si la carrera
+          // la gana la restricción única de la base, la API no trae el id: va el texto sin enlace.
+          const agenteId = json.fields?.agent_id;
+          const delNegocio = agenteId ? agentes.find((a) => a.id === agenteId) : undefined;
+          const ocupado: Ocupado | null = agenteId
+            ? { id: agenteId, nombre: delNegocio?.name || plantilla.name, archivado: delNegocio?.status === "archived" }
+            : null;
+          const texto = textoDeOcupado(plantilla.name, ocupado?.archivado ?? false);
+          setExistente({ texto, ocupado });
+          setError(null);
+          setLimite(null);
+          return { ok: false, status: res.status, error: texto };
+        }
         setLimite(esLimiteDePlan(json.code) ? (json.error ?? "Llegaste al tope de agentes de tu plan.") : null);
         const mensaje = Object.entries(json.fields ?? {}).find(([k]) => k !== "agent_id")?.[1];
         setError(mensaje ?? null);
         return { ok: false, status: res.status, error: json.error ?? "No se pudo crear el agente." };
       }
       if (descripcion.trim()) {
-        // `from-script` no recibe la descripción: va aparte. Si falla, el borrador ya existe y se edita en Identidad.
+        // `from-script` no recibe la descripción: va aparte. Si falla, el borrador ya existe y se edita en Personalizar.
         await fetch(`/api/agent-editor/${json.agentId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: nombre, description: descripcion.trim() }),
         }).catch(() => null);
       }
-      // HU-AOS-81: la creación rápida sigue en «Habilidades y formas de pago» (paso 2 de 4).
+      // Estación 2 de 5: Habilidades, en el editor en modo crear.
       router.push(rutaDePersonalizar(json.agentId, { paso: "habilidades", modo: "crear" }));
-      return { ok: true, success: "Borrador creado. Sigue con sus habilidades y formas de pago." };
+      return { ok: true, success: `Borrador de ${nombre} creado. Sigue con sus habilidades.` };
     });
   }
 
+  /** «Desarchívalo»: el mismo PATCH que «Reactivar» de la ficha; si sale bien, va a la ficha del agente. */
+  async function desarchivarAgente(ocupado: Ocupado) {
+    const ok = await confirm({
+      title: `¿Desarchivar a ${ocupado.nombre}?`,
+      description: "Vuelve a poder editarse y publicarse. Para que atienda, agrégalo a una conexión.",
+      confirmLabel: "Desarchivar",
+      destructive: false,
+    });
+    if (!ok) return;
+    await desarchivar.run(async () => {
+      const res = await fetch(`/api/agent-editor/${ocupado.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" }),
+      });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        return { ok: false, status: res.status, error: json.error || "No se pudo desarchivar el agente." };
+      }
+      router.push(`/agentes/${ocupado.id}`);
+      return { ok: true, success: `Desarchivaste a ${ocupado.nombre}.` };
+    });
+  }
+
+  function accionDeOcupado(ocupado: Ocupado) {
+    return ocupado.archivado ? (
+      <button
+        type="button"
+        className="font-medium text-link underline underline-offset-2 disabled:opacity-50"
+        onClick={() => void desarchivarAgente(ocupado)}
+        disabled={desarchivar.pending}
+      >
+        Desarchívalo
+      </button>
+    ) : (
+      <Link className="font-medium text-link underline underline-offset-2" href={`/agentes/${ocupado.id}/personalizar`}>
+        Editar a {ocupado.nombre}
+      </Link>
+    );
+  }
+
+  const quien = nombre || "tu agente";
   return (
     <RecorridoDelAgente
-      pasos={PASOS_DE_LA_CREACION_RAPIDA}
-      actual="identidad"
+      disposicion="ruta"
+      pasos={ESTACIONES_DE_NUEVO_AGENTE}
+      actual="tipo"
       modo="en-orden"
       etiquetaDePasos="Pasos para crear el agente"
       pregunta="¿Qué quieres que haga tu agente?"
-      nivelDePregunta="h2"
+      nivelDePregunta="h1"
+      bajada="Viene con lo recomendado por SolversHub: revisa y sigue, o cambia lo que quieras."
+      queSigue="Sigue: Habilidades."
       dentroDelPanel
-      vistaPrevia={
-        negocio.voz
-          ? {
-              negocio: negocio.nombre,
-              agente: nombre || "Tu agente",
-              subtitulo: `${nombre || "Tu agente"} · borrador sin crear`,
-              mensajes: conversacionDeVoz(negocio.voz, nombre || "Tu agente", negocio.nombre),
-            }
-          : undefined
+      principal={{
+        texto: nombre ? `Crear a ${nombre} y seguir` : "Crear y seguir",
+        onClick: () => void crear(),
+        cargando: pending,
+        deshabilitado: pending,
+      }}
+      lateral={
+        <EscenarioTarjeta agente={nombre} estado="Borrador" leyenda="Vista previa: no envía mensajes">
+          <div className="grid grid-cols-2 gap-3">
+            <TarjetaDelEscenario etiqueta="Se dedica a" valor={plantilla?.name ?? "Elige un tipo"} hecha={Boolean(plantilla)} />
+            <TarjetaDelEscenario etiqueta="Se llama" valor={nombre || "Sin nombre"} hecha={Boolean(nombre)} />
+          </div>
+          {tipo && <ChatDeVistaPrevia key={`${tipo}:${nombre}`} tipo={tipo} estacion="tipo" agente={quien} negocio={negocio.nombre} />}
+        </EscenarioTarjeta>
       }
-      principal={{ texto: "Crear borrador y seguir", onClick: () => void crear(), cargando: pending, deshabilitado: pending }}
     >
       <div className="flex flex-col gap-8">
-        <PlantillasEnTarjetas
-          plantillas={plantillas}
-          value={estado.plantilla ?? undefined}
-          onValueChange={(key) => {
-            const elegida = plantillas.find((p) => p.key === key);
-            if (!elegida) return;
-            setEstado({ ...elegirTipo(elegida), nombre: estado.nombre });
-            setError(null);
-            setExistente(null);
-          }}
-        />
-        {plantilla && !plantilla.available && (
-          <div>
-            <Badge variant="warning">No disponible en tu servicio</Badge>
+        <BarraRecomendado cambios={cambios} onUsar={() => setEstado(recomendado)} />
+        <GrupoDeOpciones titulo="Tipo de agente" unica className="grid gap-3 sm:grid-cols-2">
+          {plantillas.map((p) => {
+            const ocupado = ocupadoDe(p.key, agentes);
+            const Icono = agentMeta(p.key, p.name).icon;
+            const nota = ocupado
+              ? textoDeOcupado(p.name, ocupado.archivado)
+              : !p.available
+                ? "No está en tu servicio por ahora. Pídelo a SolversHub."
+                : undefined;
+            return (
+              <TarjetaElegible
+                key={p.key}
+                nombre={`${id}-tipo`}
+                valor={p.key}
+                elegida={estado.plantilla === p.key}
+                onElegir={elegir}
+                titulo={p.name}
+                ayuda={p.description}
+                icono={<Icono className="h-5 w-5" />}
+                baldosa
+                etiqueta={p.key === recomendado.plantilla ? "Recomendado" : undefined}
+                deshabilitada={Boolean(nota)}
+                nota={nota}
+                accion={ocupado ? accionDeOcupado(ocupado) : undefined}
+              />
+            );
+          })}
+        </GrupoDeOpciones>
+        {preguntas.length > 0 && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {preguntas.map((q) => (
+              <GrupoDeOpciones key={q.id} titulo={q.text} unica className="flex-col">
+                {q.options.map((o) => (
+                  <TarjetaElegible
+                    key={o.id}
+                    nombre={`${id}-pregunta-${q.id}`}
+                    valor={o.id}
+                    elegida={estado.respuestas[q.id] === o.id}
+                    onElegir={(valor) => setEstado({ ...estado, respuestas: { ...estado.respuestas, [q.id]: valor } })}
+                    titulo={o.text}
+                    razon={o.help || undefined}
+                    etiqueta={o.id === q.default ? "Recomendado" : undefined}
+                    className="w-full"
+                  />
+                ))}
+              </GrupoDeOpciones>
+            ))}
           </div>
         )}
-        {preguntas.map((q) => (
-          <RadioGroup
-            key={q.id}
-            label={q.text}
-            name={`pregunta-${q.id}`}
-            value={estado.respuestas[q.id]}
-            onValueChange={(valor) => setEstado({ ...estado, respuestas: { ...estado.respuestas, [q.id]: valor } })}
-            options={q.options.map((o) => ({
-              value: o.id,
-              label: o.id === q.default ? `${o.text} · sugerido` : o.text,
-              description: o.help || undefined,
-            }))}
-          />
-        ))}
         {plantilla && (
           <div className="flex max-w-xl flex-col gap-4">
-            <Field
-              label="Nombre del agente (opcional)"
-              htmlFor="nombre-agente"
-              help={`Si lo dejas vacío, se llama «${plantilla.name}». Lo puedes cambiar después.`}
-            >
-              <Input
-                id="nombre-agente"
-                value={estado.nombre}
-                maxLength={NOMBRE_MAX}
-                onChange={(e) => setEstado({ ...estado, nombre: e.target.value })}
-              />
-            </Field>
-            <Field label="Para qué sirve (opcional)" htmlFor="descripcion-agente" help="Una frase para tu equipo. Los clientes no la ven.">
-              <Textarea
-                id="descripcion-agente"
-                value={descripcion}
-                maxLength={1000}
-                rows={2}
-                onChange={(e) => setDescripcion(e.target.value)}
-              />
-            </Field>
+            <NombreSugerido
+              valor={estado.nombre}
+              onCambiar={(n) => setEstado({ ...estado, nombre: n })}
+              ideas={ideasDeNombre(sugerido, tipo, 3)}
+              etiqueta="Nombre del agente"
+            />
+            <details className="group">
+              <summary className="cursor-pointer text-sm font-medium text-link">Para qué sirve (opcional)</summary>
+              <div className="pt-3">
+                <Field label="Para qué sirve" htmlFor={`${id}-descripcion`} help="Una frase para tu equipo. Los clientes no la ven.">
+                  <Textarea
+                    id={`${id}-descripcion`}
+                    value={descripcion}
+                    maxLength={1000}
+                    rows={2}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                  />
+                </Field>
+              </div>
+            </details>
             <AvisoDeRequisitos
               requisitos={plantilla.requirements}
               titulo="Puedes crearlo, pero tu agente no funcionará del todo hasta que configures:"
@@ -183,11 +306,8 @@ export function NuevoAgente({ plantillas, negocio }: { plantillas: AgentTemplate
         )}
         <FormFeedback error={error ?? undefined} />
         {existente && (
-          <p role="alert" className="text-sm text-body">
-            Ya tienes un agente de este tipo.{" "}
-            <Link className="text-link underline" href={`/agentes/${existente}/personalizar`}>
-              Editarlo
-            </Link>
+          <p role="alert" className="flex flex-wrap items-center gap-x-2 text-sm text-body">
+            {existente.texto} {existente.ocupado && accionDeOcupado(existente.ocupado)}
           </p>
         )}
         {limite && <AvisoLimiteDePlan mensaje={limite} />}

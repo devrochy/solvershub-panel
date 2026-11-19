@@ -208,6 +208,45 @@ describe("paso «Datos»", () => {
   });
 });
 
+describe("paso «Datos» sin formas de carga (HU-AOS-86)", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("fuera de test, sin importación para el tipo: estado vacío con «Seguir sin datos»", async () => {
+    // Agenda en producción: ni generar (solo test) ni importar (solo productos).
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => respuesta({ error: "No existe." }, 404)),
+    );
+    const seguir = vi.fn();
+    const { container } = render(
+      <FeedbackProviders>
+        <PasoDatos agenteId="a-1" onCargado={vi.fn()} onSeguirSinDatos={seguir} />
+      </FeedbackProviders>,
+    );
+    expect(await screen.findByText("Por ahora no hay datos que cargar para este tipo")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Seguir sin datos" }));
+    expect(seguir).toHaveBeenCalledTimes(1);
+    expect((await violacionesGraves(container)).join("\n")).toBe("");
+  });
+
+  it("sin `onSeguirSinDatos` (Personalizar) conserva el texto de antes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => respuesta({ error: "No existe." }, 404)),
+    );
+    render(
+      <FeedbackProviders>
+        <PasoDatos agenteId="a-1" onCargado={vi.fn()} />
+      </FeedbackProviders>,
+    );
+    expect(await screen.findByText("Este agente no tiene datos para cargar desde aquí.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Seguir sin datos" })).toBeNull();
+  });
+});
+
 describe("paso «Lo cargado»", () => {
   afterEach(() => {
     cleanup();
