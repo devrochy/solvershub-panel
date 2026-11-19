@@ -20,7 +20,23 @@ export type PiezaDeMarca =
   | "horizontal"
   | "horizontal-simple";
 
-export function Marca({ pieza, className }: { pieza: PiezaDeMarca; className?: string }) {
+export function Marca({
+  pieza,
+  sobreOscuro = false,
+  className,
+}: {
+  pieza: PiezaDeMarca;
+  /**
+   * Para superficies que son oscuras en los dos temas (el escenario de la ruta de lanzamiento): solo la
+   * tinta blanca, sin la clase que la oculta en el tema claro.
+   */
+  sobreOscuro?: boolean;
+  className?: string;
+}) {
+  if (sobreOscuro) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={`/marca/${pieza}-tema-oscuro.svg`} alt="SolversHub" className={className} />;
+  }
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
