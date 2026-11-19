@@ -5,8 +5,9 @@ import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FRASES_DE_PRUEBA, type EstadoDelAsistente } from "@/lib/onboarding";
 
 /**
- * Paso 6: el dueño le escribe a su agente nuevo. La prueba corre por la conexión de pruebas donde quedó
- * publicado (HU-AOS-57), con frases para empezar con un toque. «Terminar» se habilita con la primera respuesta.
+ * «Última prueba» (estación 5 de la bienvenida, HU-UX-25): el dueño le escribe a su agente nuevo. La prueba corre
+ * por la conexión de pruebas donde quedó publicado (HU-AOS-57), con la frase recomendada primero (lo cargado en
+ * «Datos para probar», si hay) y otras para tocar. «Publicar a {nombre}» se habilita con la primera respuesta.
  */
 export function PasoProbar({
   estado,
@@ -27,16 +28,21 @@ export function PasoProbar({
       </p>
     );
   }
+  const sugerencias = sugerenciasDe(cargados, estado.tipo ? FRASES_DE_PRUEBA[estado.tipo] : undefined);
   return (
     <div className="flex max-w-2xl flex-col gap-4">
       <p className="text-body">
-        Escríbele como si fueras un cliente. Esta prueba no envía nada por WhatsApp, no cuenta en tus conversaciones y no crea pedidos, clientes ni citas.
+        {sugerencias?.[0] ? (
+          <>
+            Recomendada: <strong className="text-headline">«{sugerencias[0]}»</strong>. Tócala abajo para enviarla, o escribe la
+            tuya como si fueras un cliente.{" "}
+          </>
+        ) : (
+          "Escríbele como si fueras un cliente. "
+        )}
+        Esta prueba no envía nada por WhatsApp, no cuenta en tus conversaciones y no crea pedidos, clientes ni citas.
       </p>
-      <ChatPrueba
-        conexionId={conexionId}
-        sugerencias={sugerenciasDe(cargados, estado.tipo ? FRASES_DE_PRUEBA[estado.tipo] : undefined)}
-        alRecibirRespuesta={onRespuesta}
-      />
+      <ChatPrueba conexionId={conexionId} sugerencias={sugerencias} alRecibirRespuesta={onRespuesta} />
     </div>
   );
 }

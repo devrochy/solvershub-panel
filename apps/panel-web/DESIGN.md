@@ -360,21 +360,21 @@ Un elemento que quiera aparecer en el recorrido lleva `data-tour="<id>"` (los en
 menú ya llevan su `href`). Los modales de ayuda por sección y las guías por habilidad son de
 SPEC-12, no de este recorrido.
 
-## Asistente de primer uso (HU-UX-21, SPEC-41; HU-UX-23, SPEC-47)
+## Asistente de primer uso (HU-UX-21, SPEC-41; HU-UX-25, SPEC-49)
 
 | Pieza | Regla |
 |---|---|
-| `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú). Creación rápida de 4 pasos (HU-AOS-81, D-SPEC-47-4): 1 «Tu negocio» y la identidad del agente en una sola pantalla en `/bienvenida`; al seguir se crea el agente y se deja listo, y los pasos 2 a 4 (Habilidades y formas de pago, Datos para probar, Revisar, probar y publicar con el semáforo «Listo para responder») son el editor del agente en modo `bienvenida` en `/bienvenida/agente/[id]`. Cómo habla y el horario quedan con lo sugerido y se ajustan en Personalizar. Cada paso guarda al avanzar y se retoma donde quedó (`pasos: 4` al servidor, que traduce lo guardado con 9 o 6). El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir`. «Completo» lo decide el servidor al terminar |
-| `components/domain/aviso-de-onboarding.tsx` | Aviso permanente (`role="status"`, tonos `status-warning-*`) bajo la barra superior mientras el recorrido está empezado o saltado. No se puede cerrar; solo desaparece con «completo». Lo ven el dueño y el master |
+| `app/(onboarding)/bienvenida` | Pantalla completa fuera del shell (sin menú), con el escenario de 500 px a la izquierda (`MarcoDeBienvenida`; en el celular, la franja de arriba). Ruta de 5 estaciones (HU-UX-25, D-77): 1 «Tu negocio» en `/bienvenida`, que llega con lo recomendado (Vendo productos, «Laura» con ideas y la frase genérica del tipo, que sigue al tipo mientras no se edite) y no pide producto; al seguir se crea el agente y se deja listo, y las estaciones 2 a 5 (Habilidades, Datos del cliente, Datos para probar y Revisar y publicar) son el editor del agente en modo `bienvenida` en `/bienvenida/agente/[id]`. El chat de las estaciones 1 a 4 es simulado; la prueba de la 5 va por la conexión de `dejar-listo` y es la que deja «Publicar a {nombre}» (`dejar-listo` + `finalizar`). Cómo habla y el horario quedan con lo sugerido y se ajustan en Personalizar. Cada estación guarda al avanzar y se retoma donde quedó (`pasos: 5` al servidor, que traduce lo guardado con 4, 9 o 6). «Seguir después» confirma con «{nombre} no atiende hasta que termines.» y deja el aviso. El layout `(app)` redirige aquí cuando el servidor dice `recorrido.abrir`. «Completo» lo decide el servidor al terminar |
+| `components/domain/aviso-de-onboarding.tsx` | Aviso permanente (`role="status"`, tonos `status-warning-*`) bajo la barra superior mientras el recorrido está empezado o saltado, con las estaciones que faltan de 5. No se puede cerrar; solo desaparece con «completo». Lo ven el dueño y el master |
 | `components/ui/elegibles.tsx` | Tarjetas y fichas de un clic con `input` radio o checkbox nativos (flechas, foco y lector gratis); la selección se ve por anillo cian y marca, no solo por color. Objetivo ≥ 44 px |
-| Vista previa | El teléfono con WhatsApp del kit (`VistaPreviaWhatsApp`) reemplaza a la tarjeta viva: la voz sale de frases fijas por tono, calidez, emojis y largo (`lib/onboarding.ts`), sin modelo. En móvil, la hoja inferior |
+| Vista previa | El chat simulado del kit (`ChatDeVistaPrevia`) va en el escenario, con las pruebas de cada estación y respuestas fijas, sin modelo |
 | Horario | Es el del equipo del comercio; el agente responde 24/7 (`business_hours_mode = informativo`). Se elige con atajos de días, días a mano y bloque de horas |
-| Logo | Horizontal con icono (`public/marca/horizontal-*`); bajo 240 px de ancho, `horizontal-simple` (manual §4). Nunca se recolorea |
+| Logo | En el escenario (siempre oscuro), el horizontal con icono en tinta blanca (`Marca sobreOscuro`); en la franja del celular, `horizontal-simple` (manual §4). Nunca se recolorea |
 | Movimiento | Solo transiciones de selección (150–200 ms); todo se apaga con `prefers-reduced-motion` |
 
 ## Recorrido del agente (HU-UX-22, SPEC-47)
 
-La bienvenida, Nuevo agente y Editar usan el mismo cascarón (D-75); la bienvenida recorre los 4 pasos de la creación rápida (D-SPEC-47-4, hasta HU-UX-25), Nuevo agente las 5 estaciones de la ruta de lanzamiento (D-77, HU-AOS-86) y Personalizar sus pasos libres. La bienvenida
+La bienvenida, Nuevo agente y Editar usan el mismo cascarón (D-75); la bienvenida y Nuevo agente recorren las 5 estaciones de la ruta de lanzamiento (D-77, HU-AOS-86) y Personalizar sus pasos libres. La bienvenida
 sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro del shell.
 
 | Pieza | Regla |
@@ -414,7 +414,7 @@ pantallas pasan al kit en HU-AOS-85, HU-AOS-86 y HU-UX-25; hasta entonces las pi
 
 1. **Titular de Nuevo agente.** Regla desde HU-AOS-86 (diseño aprobado de SPEC-49, tableros `rn1`–`rn5`): en `/agentes/nuevo` y en `/agentes/[id]/personalizar?modo=crear` el titular grande es la pregunta de la estación y arriba solo van las migas («Agentes / Nuevo agente»), sin `PageHeader`. Es la única excepción a «una sola `PageHeader`, único `h1`»: el `h1` es la pregunta (`RecorridoDelAgente` con `nivelDePregunta="h1"`). Los avisos de esas rutas (sin permiso, tope del plan, error) conservan su `PageHeader`.
 2. **Tokens del escenario.** `escena-fondo` (navy-950), `escena-tarjeta` (navy-800, el `#11224d` de los tableros), `escena-borde` y `escena-acento` (cyan-400), `escena-borde-pendiente` (steel), `escena-texto` (white) y `escena-texto-suave` (fog), más el fondo `bg-escena`. Son alias en `app/globals.css` de primitivos que ya existen en `brand/tokens`; no hay hex nuevo. Si se aprueban, pasan a `tokens.json` como rol semántico.
-3. **Tablas de 5 estaciones.** «Asistente de primer uso» y «Recorrido del agente» pasan a describir las 5 estaciones, con Datos del cliente como estación propia y fuera de Habilidades, cuando entren HU-AOS-85, HU-AOS-86 y HU-UX-25. Hasta entonces esas tablas describen lo que está en producción.
+3. **Tablas de 5 estaciones.** Hecho con HU-UX-25: «Asistente de primer uso» y «Recorrido del agente» describen las 5 estaciones, con Datos del cliente como estación propia y fuera de Habilidades.
 
 ## Copy
 

@@ -6,7 +6,7 @@
  * Las estaciones son nuevas constantes: la bienvenida y Nuevo agente las adoptan en HU-UX-25 y HU-AOS-86.
  */
 
-import { NOMBRE_AGENTE_MAX, TIPOS_DE_NEGOCIO, type TipoDeNegocio } from "@/lib/onboarding";
+import { NOMBRE_AGENTE_MAX, NOMBRE_SUGERIDO_DE_LA_BIENVENIDA, TIPOS_DE_NEGOCIO, type TipoDeNegocio } from "@/lib/onboarding";
 
 /** Las estaciones de las dos rutas. «tipo» (Nuevo agente) y «negocio» (bienvenida) son la estación 1. */
 export type EstacionDeLaRuta = "negocio" | "tipo" | "habilidades" | "datos-cliente" | "datos-probar" | "revisar";
@@ -70,8 +70,8 @@ export function textoDeCambios(cuantos: number): string {
 
 // --------------------------------------------------------------------------------- nombre
 
-/** El nombre sugerido en la bienvenida (D-SPEC-49-6). En Nuevo agente es el primero del tipo. */
-export const NOMBRE_SUGERIDO_DE_LA_BIENVENIDA = "Laura";
+/** El nombre sugerido en la bienvenida (D-SPEC-49-6), que vive en `lib/onboarding`. En Nuevo agente es el primero del tipo. */
+export { NOMBRE_SUGERIDO_DE_LA_BIENVENIDA };
 
 /** Nombres por tipo para Nuevo agente: el primero es el sugerido («Tomás» en Agenda, como en `rn1`). */
 const NOMBRES_DE_NUEVO_AGENTE: Record<TipoDeNegocio, readonly string[]> = {

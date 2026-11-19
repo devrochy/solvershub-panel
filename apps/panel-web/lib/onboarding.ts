@@ -3,25 +3,29 @@
  * lo que guarda la API. El estado del recorrido y que esté «completo» los decide el servidor
  * (`/admin/onboarding`); aquí solo se arma lo que el dueño elige con clics.
  */
+import { CalendarCheck, HandCoins, Repeat, ShoppingBag, type LucideIcon } from "lucide-react";
+
 import type { IdentitySettings, PrimerosPasos } from "@/lib/api/types";
 import type { Franja } from "@/lib/horario-atencion";
 
 export type Recorrido = PrimerosPasos["recorrido"];
 
 /**
- * La bienvenida es la creación rápida de 4 pasos (SPEC-47, HU-AOS-81, D-SPEC-47-4): 1 Tu negocio y tu
- * agente (vive en `/bienvenida` y escribe en la identidad del negocio; al salir se crea el agente),
- * 2 Habilidades y formas de pago, 3 Datos para probar y 4 Revisar, probar y publicar (el editor a pantalla
- * completa, `/bienvenida/agente/[id]`). Cómo habla y el horario quedan con lo sugerido y se ajustan en
- * Personalizar. Antes fueron 9 (HU-UX-23): el servidor traduce un recorrido guardado con 9 o con 6.
+ * La bienvenida es la ruta de lanzamiento de 5 estaciones (SPEC-49, HU-UX-25, D-77): 1 Tu negocio (vive en
+ * `/bienvenida` y escribe en la identidad del negocio; al salir se crea el agente), 2 Habilidades, 3 Datos del
+ * cliente, 4 Datos para probar y 5 Revisar y publicar (el editor a pantalla completa, `/bienvenida/agente/[id]`).
+ * Cómo habla y el horario quedan con lo sugerido y se ajustan en Personalizar. Antes fueron 4 (HU-AOS-81), 9
+ * (HU-UX-23) y 6 (la APK): el servidor traduce lo guardado al leerlo (HU-AOS-84) y `pasoDeCinco` repite esa
+ * traducción por si llega un recorrido con otra escala.
  */
-export const TOTAL_PASOS = 4;
+export const TOTAL_PASOS = 5;
 
 export const PASOS = [
-  { id: "negocio", titulo: "Cuéntanos de tu negocio y tu agente", corto: "Tu negocio" },
+  { id: "negocio", titulo: "Cuéntanos de tu negocio", corto: "Tu negocio" },
   { id: "habilidades", titulo: "¿Qué sabe hacer tu agente?", corto: "Habilidades" },
-  { id: "conocimiento", titulo: "Datos para probar", corto: "Datos" },
-  { id: "probar", titulo: "Revisar, probar y publicar", corto: "Revisar" },
+  { id: "datos-cliente", titulo: "¿Qué datos pide tu agente?", corto: "Datos del cliente" },
+  { id: "conocimiento", titulo: "Datos para probar", corto: "Datos para probar" },
+  { id: "probar", titulo: "Revisar y publicar", corto: "Revisar y publicar" },
 ] as const;
 
 /** Los pasos que viven en `/bienvenida` (escriben en el negocio); del 2 en adelante va el editor del agente. */
@@ -32,14 +36,52 @@ export const PARTES_DEL_PASO_1 = ["negocio", "identidad"] as const;
 
 export type IdDePaso = (typeof PASOS)[number]["id"] | "identidad" | "voz" | "reglas";
 
+/** Los pasos del editor del agente en la bienvenida (estaciones 2 a 5). */
+export type PasoDelEditorEnLaBienvenida = Exclude<(typeof PASOS)[number]["id"], "negocio">;
+
+/** Cómo se traduce un paso guardado con 4 (HU-AOS-81) a la escala de 5: «Datos para probar» era el 3. */
+export const PASO_DE_4_A_5: Readonly<Record<number, number>> = { 1: 1, 2: 2, 3: 4, 4: 5 };
+/** De 9 (HU-UX-23) a 4; de ahí, a 5 con `PASO_DE_4_A_5`. */
+const PASO_DE_9_A_4: Readonly<Record<number, number>> = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 4, 9: 4 };
+
+/**
+ * El paso del recorrido en la escala de 5 (1 a 5). El servidor ya lo traduce (HU-AOS-84) y manda
+ * `total_pasos: 5`; si llega uno guardado con 4 o con 9, se traduce igual que allá.
+ */
+export function pasoDeCinco(recorrido: Pick<Recorrido, "paso" | "total_pasos">): number {
+  const paso = Math.max(Math.trunc(recorrido.paso) || 1, 1);
+  if (recorrido.total_pasos === 4) return PASO_DE_4_A_5[Math.min(paso, 4)];
+  if (recorrido.total_pasos === 9) return PASO_DE_4_A_5[PASO_DE_9_A_4[Math.min(paso, 9)]];
+  return Math.min(paso, TOTAL_PASOS);
+}
+
+/** La estación del editor con la que se retoma: antes de la 2 se empieza por «Habilidades». */
+export function pasoDelEditorEnLaBienvenida(recorrido: Pick<Recorrido, "paso" | "total_pasos">): PasoDelEditorEnLaBienvenida {
+  const paso = Math.max(pasoDeCinco(recorrido), PASOS_DEL_NEGOCIO + 1);
+  return PASOS[paso - 1].id as PasoDelEditorEnLaBienvenida;
+}
+
 // --------------------------------------------------------------------------- tipo de negocio
 
 export type TipoDeNegocio = "ventas" | "agenda" | "cobranza" | "suscripciones";
 
+/** El tipo que viene elegido en la bienvenida, con la etiqueta «Recomendado» (D-SPEC-49-5). */
+export const TIPO_RECOMENDADO: TipoDeNegocio = "ventas";
+
+/** El nombre sugerido de la bienvenida para cualquier tipo (D-SPEC-49-6); las ideas salen de la lista del tipo. */
+export const NOMBRE_SUGERIDO_DE_LA_BIENVENIDA = "Laura";
+
 export const TIPOS_DE_NEGOCIO: {
   id: TipoDeNegocio;
   titulo: string;
+  /** Ayuda corta, de una línea, bajo el título de la tarjeta. */
   ayuda: string;
+  icono: LucideIcon;
+  /**
+   * Frase sugerida para «Cuéntanos en una frase a qué se dedica». Es genérica: nunca un dato inventado del
+   * negocio (zona, productos o precios). Se reemplaza al cambiar de tipo solo si el dueño no la editó.
+   */
+  frase: string;
   /** Tipo de contenido del paso «Qué sabe» (`CONTENIDO` de primeros-pasos). */
   contenido: "catalogo" | "servicios" | "cartera" | null;
   nombres: string[];
@@ -47,32 +89,66 @@ export const TIPOS_DE_NEGOCIO: {
   {
     id: "ventas",
     titulo: "Vendo productos",
-    ayuda: "Responde dudas, cotiza y toma el pedido.",
+    ayuda: "Cotiza y toma el pedido.",
+    icono: ShoppingBag,
+    frase: "Vendemos nuestros productos por WhatsApp y tomamos pedidos para recoger o a domicilio.",
     contenido: "catalogo",
     nombres: ["Sofía", "Vera", "Mateo"],
   },
   {
     id: "agenda",
     titulo: "Agendo citas",
-    ayuda: "Ofrece horarios y reserva la cita.",
+    ayuda: "Ofrece horarios y reserva.",
+    icono: CalendarCheck,
+    frase: "Atendemos con cita previa y agendamos, cambiamos o cancelamos citas por WhatsApp.",
     contenido: "servicios",
     nombres: ["Tomás", "Luna", "Dani"],
   },
   {
     id: "cobranza",
     titulo: "Cobro cartera",
-    ayuda: "Recuerda pagos y acuerda promesas.",
+    ayuda: "Recuerda pagos y promesas.",
+    icono: HandCoins,
+    frase: "Damos crédito a nuestros clientes y les recordamos sus pagos por WhatsApp.",
     contenido: "cartera",
     nombres: ["Clara", "Cobros", "Nico"],
   },
   {
     id: "suscripciones",
     titulo: "Vendo y gestiono planes",
-    ayuda: "Contrata planes y atiende a quien ya está suscrito.",
+    ayuda: "Contrata planes y atiende.",
+    icono: Repeat,
+    frase: "Ofrecemos planes con pago periódico y atendemos a nuestros suscriptores por WhatsApp.",
     contenido: null,
     nombres: ["Alma", "Planes", "Leo"],
   },
 ];
+
+/** Ideas de nombre de la bienvenida: «Laura» primero y luego las del tipo, sin nombres de función. */
+export function ideasDeLaBienvenida(tipo: TipoDeNegocio | null, cuantas = 4): string[] {
+  const funciones = new Set(["Agenda", "Cobros", "Planes"]);
+  const delTipo = TIPOS_DE_NEGOCIO.find((t) => t.id === tipo)?.nombres ?? [];
+  return [...new Set([NOMBRE_SUGERIDO_DE_LA_BIENVENIDA, ...delTipo])].filter((n) => !funciones.has(n)).slice(0, cuantas);
+}
+
+/** La frase sugerida del tipo (vacía si no hay tipo). */
+export function fraseDelTipo(tipo: TipoDeNegocio | null): string {
+  return TIPOS_DE_NEGOCIO.find((t) => t.id === tipo)?.frase ?? "";
+}
+
+/**
+ * Elige un tipo de negocio. La frase sigue al tipo mientras el dueño no la haya editado (vacía o igual a la
+ * sugerida del tipo anterior); lo escrito por él se respeta.
+ */
+export function conTipo(estado: EstadoDelAsistente, tipo: TipoDeNegocio): EstadoDelAsistente {
+  const sinEditar = estado.descripcion.trim() === "" || estado.descripcion === fraseDelTipo(estado.tipo);
+  return { ...estado, tipo, descripcion: sinEditar ? fraseDelTipo(tipo) : estado.descripcion };
+}
+
+/** El estado con lo recomendado por SolversHub en la estación 1 (tipo, nombre y frase), sin tocar el negocio. */
+export function conLoRecomendado(estado: EstadoDelAsistente, tipo: TipoDeNegocio = TIPO_RECOMENDADO): EstadoDelAsistente {
+  return { ...estado, tipo, nombreDelAgente: NOMBRE_SUGERIDO_DE_LA_BIENVENIDA, descripcion: fraseDelTipo(tipo) };
+}
 
 // --------------------------------------------------------------------------------------- voz
 
@@ -272,11 +348,12 @@ export type EstadoDelAsistente = {
   prohibidas: string[];
 };
 
+/** Llega con lo recomendado por SolversHub (HU-UX-25): «Vendo productos», «Laura» y la frase del tipo. */
 export const ESTADO_INICIAL: EstadoDelAsistente = {
-  tipo: null,
+  tipo: TIPO_RECOMENDADO,
   negocio: "",
-  descripcion: "",
-  nombreDelAgente: "",
+  descripcion: TIPOS_DE_NEGOCIO.find((t) => t.id === TIPO_RECOMENDADO)?.frase ?? "",
+  nombreDelAgente: NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
   tono: "cercano",
   calidez: 4,
   emojis: "sparse",
@@ -294,6 +371,7 @@ export const NOMBRE_AGENTE_MAX = 60;
 export function errorDelPaso(id: IdDePaso, estado: EstadoDelAsistente): string | undefined {
   if (id === "negocio") {
     if (!estado.tipo) return "Elige a qué se dedica tu negocio.";
+    if (!estado.negocio.trim()) return "Escribe cómo se llama tu negocio.";
     if (estado.descripcion.trim().length < DESCRIPCION_MIN) {
       return "Cuéntanos en una frase a qué se dedica tu negocio.";
     }
@@ -395,21 +473,30 @@ export function estadoDesdeIdentidad(identidad: IdentitySettings, base: EstadoDe
 
 // ------------------------------------------------------------------------ aviso y progreso
 
-/** Pasos que faltan para terminar, para el texto del aviso. */
+/** Estaciones que faltan para terminar (de 5), para el texto del aviso. */
 export function pasosQueFaltan(recorrido: Recorrido): number {
   if (recorrido.estado === "completo" || !recorrido.aplica) return 0;
-  return Math.max(TOTAL_PASOS - Math.max(recorrido.paso - 1, 0), 1);
+  return Math.max(TOTAL_PASOS - Math.max(pasoDeCinco(recorrido) - 1, 0), 1);
 }
 
+/** El aviso persistente cuenta las estaciones que faltan de 5. */
 export function textoDelAviso(recorrido: Recorrido): string {
   const faltan = pasosQueFaltan(recorrido);
   return faltan === 1
-    ? "Tu agente aún no está listo para probar. Falta 1 paso."
-    : `Tu agente aún no está listo para probar. Faltan ${faltan} pasos.`;
+    ? `Tu agente aún no está listo para responder. Falta 1 de ${TOTAL_PASOS} pasos.`
+    : `Tu agente aún no está listo para responder. Faltan ${faltan} de ${TOTAL_PASOS} pasos.`;
 }
 
 export function textoDeAvance(paso: number): string {
   return `Paso ${paso} de ${TOTAL_PASOS}`;
+}
+
+/** «Seguir después» (HU-UX-25): la confirmación dice qué pasa y que lo hecho no se pierde. */
+export function textosDeSeguirDespues(nombreDelAgente: string): { titulo: string; detalle: string } {
+  return {
+    titulo: `${nombreDelAgente.trim() || "Tu agente"} no atiende hasta que termines.`,
+    detalle: "Lo que llevas queda guardado y retomas aquí desde Inicio.",
+  };
 }
 
 /** Texto del botón del aviso: retomar si ya había empezado, empezar si no. */

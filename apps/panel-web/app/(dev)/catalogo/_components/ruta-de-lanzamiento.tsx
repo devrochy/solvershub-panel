@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { CalendarCheck, Clock, HandCoins, Layers, Repeat, ShoppingBag, Timer } from "lucide-react";
 
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
+import { escenarioDeLaBienvenida, type EstacionDelEditor } from "@/components/domain/agentes/recorrido/escenario-de-la-bienvenida";
 import { EscenarioPantallaCompleta, FranjaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-pantalla-completa";
 import { AnilloDeListo, PildoraDelAgente, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
 import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
@@ -210,6 +211,57 @@ export function DemoEscenario() {
       <div className="max-w-[390px] overflow-hidden rounded-lg">
         <FranjaDelEscenario agente="Tomás" titulo="Tomás · Borrador" cerrar={() => {}} rotulo="Nuevo agente · 1 de 5" />
       </div>
+    </div>
+  );
+}
+
+const ESTACIONES_DEL_EDITOR: { valor: EstacionDelEditor; texto: string }[] = [
+  { valor: "habilidades", texto: "2 · Habilidades" },
+  { valor: "datos-cliente", texto: "3 · Datos del cliente" },
+  { valor: "conocimiento", texto: "4 · Datos para probar" },
+  { valor: "probar", texto: "5 · Revisar y publicar" },
+];
+
+/**
+ * Escenario de las estaciones 2 a 5 de la bienvenida (HU-UX-25): lo que gana Laura en cada una, como lo arma
+ * `escenarioDeLaBienvenida`. En la bienvenida va dentro de `MarcoDeBienvenida` (pantalla completa).
+ */
+export function DemoEscenarioDeLaBienvenida() {
+  const id = useId();
+  const [estacion, setEstacion] = useState<EstacionDelEditor>("datos-cliente");
+  const escenario = escenarioDeLaBienvenida({
+    estacion,
+    nombre: NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
+    negocio: NEGOCIO,
+    tipo: "ventas",
+    encendidas: ["Tomar un pedido", "Hacer cotizaciones", "Aplicar promociones", "Recomendar productos"],
+    cuantoPregunta: "«Lo justo»",
+    tiposDePedido: ["A domicilio", "Recoger en tienda"],
+    consultaHistorial: true,
+    cargados: estacion === "conocimiento" ? [{ tipo: "producto", nombre: "Torta de zanahoria", detalle: "$ 45.000" }] : [],
+    probado: false,
+    onCambiarNombre: () => {},
+  });
+  return (
+    <div className="flex flex-col gap-4">
+      <Field label="Estación" htmlFor={`${id}-estacion`}>
+        <Select id={`${id}-estacion`} value={estacion} onChange={(e) => setEstacion(e.target.value as EstacionDelEditor)} className="max-w-xs">
+          {ESTACIONES_DEL_EDITOR.map((e) => (
+            <option key={e.valor} value={e.valor}>
+              {e.texto}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <EscenarioPantallaCompleta
+        className="min-h-[44rem] rounded-lg"
+        titulo={escenario.titulo}
+        bajada={escenario.bajada}
+        destacado={escenario.destacado}
+        leyenda={escenario.leyenda}
+      >
+        {escenario.children}
+      </EscenarioPantallaCompleta>
     </div>
   );
 }

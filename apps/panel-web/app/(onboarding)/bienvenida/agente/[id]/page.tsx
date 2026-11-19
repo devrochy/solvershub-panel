@@ -3,9 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
 import type { Me, PrimerosPasos } from "@/lib/api/types";
-import type { PasoId } from "@/lib/agentes-editor";
 import { cargarEditorDeAgente } from "@/lib/editor-de-agente-datos";
-import { PASOS, PASOS_DEL_NEGOCIO } from "@/lib/onboarding";
+import { pasoDelEditorEnLaBienvenida } from "@/lib/onboarding";
 
 import { BienvenidaDelAgente } from "../../_components/bienvenida-del-agente";
 
@@ -14,7 +13,7 @@ export const metadata = { title: "Primeros pasos" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Pasos 5 a 9 de la bienvenida (HU-UX-23): el agente que creó el recorrido, con el editor a pantalla completa.
+ * Estaciones 2 a 5 de la bienvenida (HU-UX-25): el agente que creó el recorrido, con el editor a pantalla completa.
  * Las mismas reglas de entrada que `/bienvenida`; un agente que no es el del recorrido vuelve a empezar allí.
  */
 export default async function BienvenidaDelAgentePage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,8 +36,8 @@ export default async function BienvenidaDelAgentePage({ params }: { params: Prom
       </main>
     );
   }
-  // El paso del recorrido (5 a 9) es el del editor; antes de 5 se empieza por «Habilidades».
-  const id9 = PASOS[Math.min(Math.max(recorrido.paso, PASOS_DEL_NEGOCIO + 1), PASOS.length) - 1].id;
-  const pasoInicial = id9 as PasoId;
+  // La estación del recorrido (2 a 5) es la del editor; antes de la 2 se empieza por «Habilidades». Un recorrido
+  // guardado con 4 pasos se retoma traducido: su paso 3 («Datos para probar») es el 4 de 5.
+  const pasoInicial = pasoDelEditorEnLaBienvenida(recorrido);
   return <BienvenidaDelAgente datos={carga.datos} pasoInicial={pasoInicial} recorridoInicial={recorrido} />;
 }

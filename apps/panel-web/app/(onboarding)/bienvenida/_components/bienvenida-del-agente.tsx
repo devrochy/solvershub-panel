@@ -10,9 +10,9 @@ import { dejarListo, textoDeErrorAlDejarListo } from "@/lib/onboarding-agente";
 import { ESTADO_INICIAL, PASOS, PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, type Recorrido } from "@/lib/onboarding";
 import { toast } from "@/lib/toast-store";
 
-import { CabeceraDeBienvenida } from "./cabecera";
 import { PantallaFinal } from "./pantalla-final";
 import { PasoProbar } from "./paso-probar";
+import { SeguirDespues } from "./seguir-despues";
 
 const FALTA: Record<string, string> = {
   datos_negocio: "Falta contar de tu negocio.",
@@ -33,9 +33,10 @@ async function post<T>(url: string, cuerpo?: unknown): Promise<{ ok: true; data:
 }
 
 /**
- * Pasos 5 a 9 de la bienvenida (HU-UX-23): el editor del agente en modo bienvenida, a pantalla completa y
- * con la cabecera de siempre. Antes de «Pruébalo» y al terminar se deja el agente listo otra vez, para que la
- * prueba y lo publicado sean lo último que el dueño configuró.
+ * Estaciones 2 a 5 de la bienvenida (HU-UX-25): el editor del agente en modo bienvenida, a pantalla completa
+ * con el escenario a la izquierda. Antes de «Revisar y publicar» y al publicar se deja el agente listo otra vez
+ * (`dejar-listo`), para que la prueba y lo publicado sean lo último que el dueño configuró. La prueba de la
+ * estación 5 va por esa conexión: es la única que deja terminar (`finalizar`).
  */
 export function BienvenidaDelAgente({
   datos,
@@ -87,21 +88,22 @@ export function BienvenidaDelAgente({
     pasosDelNegocio: PASOS.slice(0, PASOS_DEL_NEGOCIO).map((p) => ({ id: `negocio-${p.id}`, titulo: p.corto, corto: p.corto })),
     volverA: (numero) => router.push(`/bienvenida?paso=${numero}`),
     avanzar: (numero) => void post("/api/onboarding/avanzar", { paso: numero }),
+    seguirDespues: ({ nombre, guardar, enEscenario }) => (
+      <SeguirDespues nombreDelAgente={nombre} guardar={guardar} ocupado={terminando} enEscenario={enEscenario} />
+    ),
     prepararPrueba,
-    prueba: (
-      <PasoProbar estado={{ ...ESTADO_INICIAL, tipo }} conexionId={conexionId} onRespuesta={() => setProbado(true)} />
+    prueba: (cargados) => (
+      <PasoProbar
+        estado={{ ...ESTADO_INICIAL, tipo }}
+        conexionId={conexionId}
+        onRespuesta={() => setProbado(true)}
+        cargados={[...cargados]}
+      />
     ),
     probado,
     terminar,
     terminando,
   };
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <CabeceraDeBienvenida ocupado={terminando} />
-      <main id="contenido" className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col px-4 md:px-6">
-        <EditorDeAgente {...datos} modo="bienvenida" pasoInicial={pasoInicial} bienvenida={bienvenida} />
-      </main>
-    </div>
-  );
+  return <EditorDeAgente {...datos} modo="bienvenida" pasoInicial={pasoInicial} bienvenida={bienvenida} />;
 }

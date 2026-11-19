@@ -1,29 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
+import { AnilloDeListo, PildoraDelAgente, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
+import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
+import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import type { IdentitySettings } from "@/lib/api/types";
 import { crearYDejarListo } from "@/lib/onboarding-agente";
 import {
+  DESCRIPCION_MIN,
   ESTADO_INICIAL,
-  PASOS,
+  NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
   PARTES_DEL_PASO_1,
+  PASOS,
   PASOS_DEL_NEGOCIO,
+  TIPO_RECOMENDADO,
+  TIPOS_DE_NEGOCIO,
   cambiosDelPaso,
+  conLoRecomendado,
+  conTipo,
   errorDelPaso,
   estadoDesdeIdentidad,
+  fraseDelTipo,
+  pasoDeCinco,
   type EstadoDelAsistente,
   type Recorrido,
   type TipoDeNegocio,
 } from "@/lib/onboarding";
-import { conversacionDeVoz } from "@/lib/vista-previa";
+import { ESTACIONES_DE_LA_BIENVENIDA, cambiosFrenteARecomendado } from "@/lib/ruta-de-lanzamiento";
 
-import { CabeceraDeBienvenida } from "./cabecera";
-import { PasoIdentidad } from "./paso-identidad";
 import { PasoNegocio } from "./paso-negocio";
+import { SeguirDespues } from "./seguir-despues";
 
 type Resultado<T> = { ok: true; data: T } | { ok: false; error: string; status: number };
 
@@ -46,7 +57,8 @@ async function post<T>(url: string, cuerpo?: unknown): Promise<Resultado<T>> {
 
 const BORRADOR = (negocioId: string) => `sh-onboarding:${negocioId}`;
 
-type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "negocio">>;
+/** Lo de la estación 1 que todavía no está en el servidor (el tipo vive solo aquí hasta crear el agente). */
+type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "negocio" | "descripcion" | "nombreDelAgente">>;
 
 function leerBorrador(negocioId: string): Borrador {
   try {
@@ -59,9 +71,15 @@ function leerBorrador(negocioId: string): Borrador {
 
 function guardarBorrador(negocioId: string, estado: EstadoDelAsistente) {
   try {
-    window.localStorage.setItem(BORRADOR(negocioId), JSON.stringify({ tipo: estado.tipo, negocio: estado.negocio }));
+    const borrador: Borrador = {
+      tipo: estado.tipo,
+      negocio: estado.negocio,
+      descripcion: estado.descripcion,
+      nombreDelAgente: estado.nombreDelAgente,
+    };
+    window.localStorage.setItem(BORRADOR(negocioId), JSON.stringify(borrador));
   } catch {
-    // Sin almacenamiento el recorrido sigue: solo no recuerda el tipo si se recarga.
+    // Sin almacenamiento el recorrido sigue: solo no recuerda lo de esta estación si se recarga.
   }
 }
 
@@ -73,8 +91,8 @@ type Props = {
   disponibles: TipoDeNegocio[] | null;
   /** Habilidades que se activarán al crear el agente de cada tipo (las que el negocio aún no tiene). */
   habilitara: Partial<Record<TipoDeNegocio, string[]>>;
-  /** `?paso=` al volver desde el editor del agente (pasos 1 a 4). */
-  pasoPedido?: number;
+  /** El tipo del agente ya creado (volvió a «Tu negocio»): manda sobre el borrador y no se cambia. */
+  tipoDelAgente?: TipoDeNegocio | null;
 };
 
 const nunca = () => () => {};
@@ -90,9 +108,30 @@ export function RecorridoDeBienvenida(props: Props) {
 }
 
 /**
- * Bienvenida de primer uso (HU-UX-21, HU-AOS-81): el paso 1 de 4, que escribe en la identidad del negocio
- * (sus datos y la identidad del agente). Al seguir se crea el agente y se deja listo para probar, y la
- * bienvenida sigue con el editor del agente (`/bienvenida/agente/[id]`).
+ * Lo que se compara con lo recomendado en la estación 1 (el tablero `rb1`): el tipo, el nombre y la frase. La
+ * frase cuenta como recomendada mientras sea la sugerida de su tipo: cambiar el tipo es un cambio, no dos.
+ */
+function valoresDe(estado: EstadoDelAsistente) {
+  const sugerida = estado.descripcion === fraseDelTipo(estado.tipo);
+  return { tipo: estado.tipo, nombre: estado.nombreDelAgente.trim(), frase: sugerida ? "sugerida" : estado.descripcion };
+}
+
+/** «a», «a y b», «a, b y c». */
+function enLista(partes: string[]): string {
+  return partes.length < 2 ? partes.join("") : `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
+}
+
+/** La frase recortada para la tarjeta del escenario. */
+function corta(frase: string): string {
+  const limpia = frase.trim();
+  return limpia.length > 44 ? `${limpia.slice(0, 42).trim()}…` : limpia;
+}
+
+/**
+ * Bienvenida de primer uso, estación 1 de 5: «Tu negocio» (HU-UX-25, SPEC-49, tablero `rb1`). Pantalla completa
+ * con el escenario a la izquierda; llega con lo recomendado (Vendo productos, «Laura» y la frase del tipo) y
+ * escribe en la identidad del negocio. Al seguir se crea el agente y se deja listo para probar, y la bienvenida
+ * sigue con el editor del agente (`/bienvenida/agente/[id]`, estaciones 2 a 5).
  */
 function Asistente({
   negocioId,
@@ -101,22 +140,36 @@ function Asistente({
   identidad,
   disponibles,
   habilitara,
-  pasoPedido,
+  tipoDelAgente = null,
   borrador,
 }: Props & { borrador: Borrador }) {
   const router = useRouter();
   const [recorrido, setRecorrido] = useState<Recorrido>(recorridoInicial);
-  const [paso, setPaso] = useState(() =>
-    Math.min(Math.max(pasoPedido ?? recorridoInicial.paso, 1), PASOS_DEL_NEGOCIO),
+  // Lo recomendado por SolversHub, con el primer tipo que el servicio trae si el recomendado no está.
+  // Con el agente ya creado manda su tipo (no cambia después de crearlo); lo recomendado es lo de ese tipo.
+  const tipoInicial: TipoDeNegocio =
+    tipoDelAgente ??
+    (!disponibles || disponibles.includes(TIPO_RECOMENDADO) ? TIPO_RECOMENDADO : (disponibles[0] ?? TIPO_RECOMENDADO));
+  const recomendado = useMemo(
+    () => conLoRecomendado({ ...ESTADO_INICIAL, negocio: nombreDelNegocio }, tipoInicial),
+    [nombreDelNegocio, tipoInicial],
   );
   const [estado, setEstado] = useState<EstadoDelAsistente>(() => {
-    const base = estadoDesdeIdentidad(identidad, ESTADO_INICIAL);
-    // El alta pone el nombre del negocio como nombre del asistente: no es una elección, se vuelve a pedir.
-    const nombreElegido = base.nombreDelAgente.trim() === nombreDelNegocio.trim() ? "" : base.nombreDelAgente;
+    const base = estadoDesdeIdentidad(identidad, recomendado);
+    // El alta pone el nombre del negocio como nombre del asistente: no es una elección, va el sugerido.
+    const nombreElegido =
+      base.nombreDelAgente.trim() === nombreDelNegocio.trim() ? recomendado.nombreDelAgente : base.nombreDelAgente;
+    // La identidad guarda «negocio. frase»; al retomar se muestra la frase sola.
+    const descripcion = base.descripcion.startsWith(`${nombreDelNegocio.trim()}. `)
+      ? base.descripcion.slice(nombreDelNegocio.trim().length + 2)
+      : base.descripcion;
+    const tipo =
+      tipoDelAgente ?? (borrador.tipo && (!disponibles || disponibles.includes(borrador.tipo)) ? borrador.tipo : base.tipo);
     return {
       ...base,
-      nombreDelAgente: nombreElegido,
-      tipo: borrador.tipo ?? base.tipo,
+      tipo,
+      nombreDelAgente: borrador.nombreDelAgente ?? nombreElegido,
+      descripcion: borrador.descripcion ?? (tipo !== base.tipo && descripcion === fraseDelTipo(base.tipo) ? fraseDelTipo(tipo) : descripcion),
       negocio: borrador.negocio ?? nombreDelNegocio,
     };
   });
@@ -126,7 +179,9 @@ function Asistente({
   // Marca el recorrido como empezado (o retomado, si estaba saltado).
   useEffect(() => {
     if (recorridoInicial.estado !== "en_curso") {
-      void post<Recorrido>("/api/onboarding/avanzar", { paso: Math.max(Math.min(recorridoInicial.paso, PASOS_DEL_NEGOCIO), 1) }).then((r) => {
+      // Sin retroceder: quien omitió en una estación posterior y vuelve por «Cambiar nombre» conserva dónde iba.
+      const paso = Math.max(PASOS_DEL_NEGOCIO, pasoDeCinco(recorridoInicial));
+      void post<Recorrido>("/api/onboarding/avanzar", { paso }).then((r) => {
         if (r.ok) setRecorrido(r.data);
       });
     }
@@ -146,13 +201,30 @@ function Asistente({
     [negocioId],
   );
 
-  const pasoActual = PASOS[paso - 1];
-
-  async function irAlPaso(destino: number) {
+  function elegirTipo(tipo: TipoDeNegocio) {
     setError(null);
-    setPaso(destino);
-    const r = await post<Recorrido>("/api/onboarding/avanzar", { paso: destino });
-    if (r.ok) setRecorrido(r.data);
+    setEstado((e) => {
+      const nuevo = conTipo(e, tipo);
+      guardarBorrador(negocioId, nuevo);
+      return nuevo;
+    });
+  }
+
+  function usarLoRecomendado() {
+    cambiar({ tipo: recomendado.tipo, nombreDelAgente: recomendado.nombreDelAgente, descripcion: recomendado.descripcion });
+  }
+
+  /**
+   * «Seguir después» en esta estación: si lo escrito ya es válido, se guarda en la identidad del negocio (lo que
+   * lleva queda guardado también fuera de este navegador); si no, queda solo en el borrador local.
+   */
+  async function guardarAlSalir(): Promise<boolean> {
+    if (PARTES_DEL_PASO_1.some((id) => errorDelPaso(id, estado))) return true;
+    const cambios = Object.assign({}, ...PARTES_DEL_PASO_1.map((id) => cambiosDelPaso(id, estado)));
+    if (Object.keys(cambios).length === 0) return true;
+    const guardado = await post("/api/onboarding/identidad", { cambios });
+    if (!guardado.ok) setError(guardado.error);
+    return guardado.ok;
   }
 
   async function siguiente() {
@@ -173,61 +245,110 @@ function Asistente({
         return;
       }
     }
-    // Al salir del paso 1 nace el agente y queda listo para probar; sigue «Habilidades y formas de pago».
+    // Al salir de la estación 1 nace el agente y queda listo para probar; sigue «Habilidades».
     const creado = await crearYDejarListo(estado, recorrido.agente_id ?? null);
     if (!creado.ok) {
       setOcupado(false);
       setError(creado.error);
       return;
     }
-    await post<Recorrido>("/api/onboarding/avanzar", { paso: PASOS_DEL_NEGOCIO + 1 });
+    // Sigue en «Habilidades», o donde iba si volvió desde una estación posterior («Cambiar nombre», «Editar»).
+    await post<Recorrido>("/api/onboarding/avanzar", { paso: destino });
     router.push(`/bienvenida/agente/${creado.agenteId}`);
   }
 
-  const nombre = estado.nombreDelAgente.trim() || "Tu agente";
+  // La estación a la que se sigue: «Habilidades», o donde iba si volvió desde una posterior.
+  const destino = Math.max(PASOS_DEL_NEGOCIO + 1, pasoDeCinco(recorrido));
+  const nombre = estado.nombreDelAgente.trim();
+  const quien = nombre || "Tu agente";
+  const negocio = estado.negocio.trim();
+  const tipo = TIPOS_DE_NEGOCIO.find((t) => t.id === estado.tipo);
+  const cambios = cambiosFrenteARecomendado(valoresDe(estado), valoresDe(recomendado));
+  const tieneFrase = estado.descripcion.trim().length >= DESCRIPCION_MIN;
+
+  // El escenario: lo que el agente ya sabe del negocio (n/4) y su chat simulado (D-SPEC-49-4).
+  const sabe = [Boolean(nombre), Boolean(negocio), Boolean(tipo), tieneFrase].filter(Boolean).length;
+  const faltan = [
+    !nombre && "su nombre",
+    !negocio && "el nombre del negocio",
+    !tipo && "a qué se dedica",
+    !tieneFrase && "cómo presentarse",
+  ].filter((x): x is string => Boolean(x));
+  const completo = faltan.length === 0;
+  const seguirDespues = (enEscenario: boolean) => (
+    <SeguirDespues nombreDelAgente={quien} guardar={guardarAlSalir} ocupado={ocupado} enEscenario={enEscenario} />
+  );
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <CabeceraDeBienvenida ocupado={ocupado} />
-      <main id="contenido" className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col px-4 md:px-6">
-        <RecorridoDelAgente
-          pasos={PASOS.map((p) => ({ id: p.id, titulo: p.corto, corto: p.corto }))}
-          actual={pasoActual.id}
-          modo="en-orden"
-          onIr={(id) => {
-            const destino = PASOS.findIndex((p) => p.id === id) + 1;
-            if (destino >= 1 && destino < paso) void irAlPaso(destino);
-          }}
-          etiquetaDePasos="Pasos del primer uso"
-          pregunta={pasoActual.titulo}
-          vistaPrevia={{
-            negocio: estado.negocio || nombreDelNegocio,
-            agente: nombre,
-            subtitulo: `${nombre} · vista previa`,
-            mensajes: conversacionDeVoz(
-              { tono: estado.tono, calidez: estado.calidez, emojis: estado.emojis, largo: estado.largo },
-              nombre,
-              estado.negocio || nombreDelNegocio,
-            ),
-          }}
-          atras={{ texto: "Atrás", onClick: () => void irAlPaso(paso - 1), deshabilitado: paso === 1 || ocupado }}
-          principal={{
-            texto: paso === PASOS_DEL_NEGOCIO ? "Crear mi agente y seguir" : "Siguiente",
-            onClick: () => void siguiente(),
-            cargando: ocupado,
-          }}
-        >
-          {pasoActual.id === "negocio" && (
-            <PasoNegocio
-              estado={estado}
-              onCambiar={cambiar}
-              disponibles={disponibles ? new Set(disponibles) : null}
-              habilitara={habilitara}
+    <MarcoDeBienvenida
+      extremo={seguirDespues(true)}
+      escenario={{
+        agente: quien,
+        titulo: completo ? `${quien} ya puede saludar` : `${quien} ya sabe ${sabe} de 4 cosas`,
+        bajada: completo
+          ? cambios.length === 0
+            ? "Con lo recomendado por SolversHub."
+            : "Sabe quién es, a qué se dedica y cómo presentarse."
+          : `Falta ${enLista(faltan)}.`,
+        bajadaCorta: completo ? "Sabe quién es y cómo presentarse." : `Falta ${enLista(faltan)}.`,
+        destacado: <AnilloDeListo hechas={sabe} total={4} />,
+        children: (
+          <>
+            <PildoraDelAgente
+              nombre={nombre || "Sin nombre"}
+              etiqueta={nombre === NOMBRE_SUGERIDO_DE_LA_BIENVENIDA ? "Sugerido" : undefined}
+              className="self-start"
             />
-          )}
-          {pasoActual.id === "negocio" && <PasoIdentidad estado={estado} onCambiar={cambiar} />}
-          <FormFeedback error={error ?? undefined} className="max-w-xl" />
-        </RecorridoDelAgente>
-      </main>
-    </div>
+            <div className="grid grid-cols-3 gap-2">
+              <TarjetaDelEscenario etiqueta="Negocio" valor={negocio || "Falta el nombre"} hecha={Boolean(negocio)} />
+              <TarjetaDelEscenario etiqueta="Se dedica a" valor={tipo?.titulo ?? "Elige un tipo"} hecha={Boolean(tipo)} />
+              <TarjetaDelEscenario etiqueta="Se presenta así" valor={tieneFrase ? corta(estado.descripcion) : "Falta la frase"} hecha={tieneFrase} />
+            </div>
+            {tipo && (
+              <ChatDeVistaPrevia
+                key={`${tipo.id}:${quien}:${negocio}`}
+                tipo={tipo.id}
+                estacion="negocio"
+                agente={quien}
+                negocio={negocio || nombreDelNegocio}
+                className="min-h-0 flex-1"
+              />
+            )}
+          </>
+        ),
+      }}
+    >
+      <RecorridoDelAgente
+        disposicion="ruta"
+        pasos={ESTACIONES_DE_LA_BIENVENIDA}
+        actual="negocio"
+        modo="en-orden"
+        etiquetaDePasos="Estaciones de la bienvenida"
+        pregunta="Cuéntanos de tu negocio"
+        bajada={`Con esto ${quien} sabe quién es y cómo presentarse en su primera conversación.`}
+        queSigue={error ? "Completa lo que falta arriba para seguir." : `Sigue: ${PASOS[destino - 1].corto}.`}
+        extremo={<div className="hidden lg:block">{seguirDespues(false)}</div>}
+        principal={{
+          // Con el agente ya creado no se crea otro: se guarda y se retoma donde iba.
+          texto: recorrido.agente_id ? "Guardar y seguir" : nombre ? `Crear a ${nombre} y seguir` : "Crear mi agente y seguir",
+          onClick: () => void siguiente(),
+          cargando: ocupado,
+        }}
+      >
+        <BarraRecomendado
+          cambios={cambios.length}
+          onUsar={usarLoRecomendado}
+        />
+        <PasoNegocio
+          estado={estado}
+          onCambiar={cambiar}
+          onTipo={elegirTipo}
+          disponibles={disponibles ? new Set(disponibles) : null}
+          tipoFijo={tipoDelAgente}
+          habilitara={habilitara}
+        />
+        <FormFeedback error={error ?? undefined} className="max-w-xl" />
+      </RecorridoDelAgente>
+    </MarcoDeBienvenida>
   );
 }
