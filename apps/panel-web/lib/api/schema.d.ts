@@ -11237,7 +11237,7 @@ export interface components {
             paso: number;
             /**
              * Pasos
-             * @description Total de pasos con que el cliente numera `paso` (4 desde HU-AOS-81; 9 un panel anterior). Sin él, el paso es del asistente de 6 (la APK) y se guarda traducido a su equivalente de 4.
+             * @description Total de pasos con que el cliente numera `paso`: 5 desde HU-AOS-84; 4 la creación rápida de HU-AOS-81 y 9 un panel anterior, que se traducen a su equivalente de 5. Sin él, el paso es del asistente de 6 (la APK) y se guarda traducido. Otro total responde 422.
              */
             pasos?: number | null;
         };
