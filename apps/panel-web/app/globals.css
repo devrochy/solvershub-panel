@@ -68,6 +68,16 @@
   --color-data-grid: var(--sh-data-grid);
   --color-data-axis: var(--sh-data-axis);
 
+  /* escenario de la ruta de lanzamiento (HU-UX-24): siempre oscuro, en los dos temas. Alias de los
+     primitivos de marca; nunca hex sueltos. Tarjetas sólidas (sin transparencia detrás de texto). */
+  --color-escena-fondo: var(--sh-navy-950);
+  --color-escena-tarjeta: var(--sh-navy-800);
+  --color-escena-borde: var(--sh-cyan-400);
+  --color-escena-borde-pendiente: var(--sh-steel);
+  --color-escena-texto: var(--sh-white);
+  --color-escena-texto-suave: var(--sh-fog);
+  --color-escena-acento: var(--sh-cyan-400);
+
   /* elevación: shadow-elev-0…3 */
   --shadow-elev-0: var(--sh-elev-0);
   --shadow-elev-1: var(--sh-elev-1);
@@ -103,6 +113,11 @@
   --text-sh-caption: var(--sh-type-caption-font-size);
   --text-sh-caption--line-height: var(--sh-type-caption-line-height);
   --text-sh-caption--font-weight: var(--sh-type-caption-font-weight);
+  /* Título de la ruta de lanzamiento (HU-UX-24, D-SPEC-49-8): 36/44/700, solo en la bienvenida y Nuevo
+     agente, desde `md`. Por debajo, `text-sh-h1`. */
+  --text-sh-ruta: 2.25rem;
+  --text-sh-ruta--line-height: 2.75rem;
+  --text-sh-ruta--font-weight: 700;
   --text-sh-mono: var(--sh-type-mono-font-size);
   --text-sh-mono--line-height: var(--sh-type-mono-line-height);
   --text-sh-mono--font-weight: var(--sh-type-mono-font-weight);
@@ -121,6 +136,12 @@
    El degradado de marca (blue → cyan) queda para acentos sin texto. */
 @utility bg-cta {
   background-image: var(--sh-gradient-cta);
+}
+
+/* Fondo del escenario de la ruta de lanzamiento: navy con un halo, igual en claro y oscuro. */
+@utility bg-escena {
+  background-color: var(--sh-navy-950);
+  background-image: radial-gradient(120% 80% at 30% 10%, var(--sh-navy-800) 0%, var(--sh-navy-950) 70%);
 }
 
 /* El tema vive en <html data-theme="sh-dark|sh-light"> (lo fija el servidor). */

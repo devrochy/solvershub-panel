@@ -32,6 +32,13 @@ export type VistaPreviaDelPaso = {
  * El pie queda pegado abajo: «Atrás», la acción principal y, al editar, «Guardar cambios».
  *
  * No guarda ni navega por su cuenta: cada flujo decide qué hace cada botón.
+ *
+ * `disposicion="ruta"` es la ruta de lanzamiento (HU-UX-24, SPEC-49): la barra pasa a estaciones
+ * (con `extremo` a su derecha, por ejemplo «Seguir después»), la pregunta lleva encima el eyebrow
+ * «Paso N de M · {estación}» y debajo su `bajada`, con el título de 36 px desde `md` (`text-sh-ruta`),
+ * y el pie suma la línea `queSigue`. A la derecha va `lateral` (el escenario en tarjeta) en lugar del
+ * teléfono, cuando el propio recorrido mide al menos 56 rem (consulta de contenedor: dentro del shell
+ * cuenta el ancho que deja el menú, no el de la ventana). El escenario a pantalla completa de la bienvenida lo compone la página, fuera del cascarón.
  */
 export function RecorridoDelAgente({
   pasos,
@@ -46,6 +53,11 @@ export function RecorridoDelAgente({
   guardar,
   principal,
   dentroDelPanel = false,
+  disposicion = "pasos",
+  bajada,
+  queSigue,
+  extremo,
+  lateral,
   children,
   className,
 }: {
@@ -67,9 +79,27 @@ export function RecorridoDelAgente({
    * pegado se estira hasta el borde para no dejar ver el contenido por debajo.
    */
   dentroDelPanel?: boolean;
+  /** `ruta`: estaciones, eyebrow, título grande, bajada y «qué sigue» (HU-UX-24). */
+  disposicion?: "pasos" | "ruta";
+  /** Debajo de la pregunta (solo en `ruta`). */
+  bajada?: string;
+  /** Al lado de la acción principal, por ejemplo «Sigue: Habilidades.» (solo en `ruta`). */
+  queSigue?: string;
+  /** A la derecha de la ruta de estaciones (solo en `ruta`). */
+  extremo?: ReactNode;
+  /** Columna derecha de 340 px en lugar del teléfono (solo en `ruta`), por ejemplo `EscenarioTarjeta`. */
+  lateral?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
+  const ruta = disposicion === "ruta";
+  const indice = Math.max(
+    0,
+    pasos.findIndex((p) => p.id === actual),
+  );
+  const pasoActual = pasos[indice];
+  const eyebrow = pasoActual ? `Paso ${indice + 1} de ${pasos.length} · ${pasoActual.corto ?? pasoActual.titulo}` : "";
+  const conLateral = ruta && Boolean(lateral);
   const titulo = useRef<HTMLHeadingElement>(null);
   const Pregunta = nivelDePregunta;
   const primero = useRef(true);
@@ -83,17 +113,55 @@ export function RecorridoDelAgente({
   }, [actual]);
 
   return (
-    <div className={cn("flex min-h-full flex-col", className)}>
+    <div className={cn("flex min-h-full flex-col", ruta && "@container", className)}>
       <div className="flex flex-1 flex-col gap-6">
-        <BarraDePasos pasos={pasos} actual={actual} modo={modo} onIr={onIr} etiqueta={etiquetaDePasos} />
-        <div className={cn("grid flex-1 gap-10", vistaPrevia && "lg:grid-cols-[minmax(0,1fr)_21rem]")}>
-          <div className="flex min-w-0 flex-col gap-8 pb-6">
-            <Pregunta ref={titulo} tabIndex={-1} className="font-display text-sh-h1 text-headline outline-none">
-              {pregunta}
-            </Pregunta>
+        {ruta ? (
+          <div className="flex items-start justify-between gap-4">
+            <BarraDePasos
+              pasos={pasos}
+              actual={actual}
+              modo={modo}
+              onIr={onIr}
+              etiqueta={etiquetaDePasos}
+              forma="estaciones"
+              className="min-w-0 flex-1"
+            />
+            {extremo && <div className="shrink-0">{extremo}</div>}
+          </div>
+        ) : (
+          <BarraDePasos pasos={pasos} actual={actual} modo={modo} onIr={onIr} etiqueta={etiquetaDePasos} />
+        )}
+        <div
+          className={cn(
+            "grid flex-1 gap-10",
+            conLateral ? "@4xl:grid-cols-[minmax(0,1fr)_21.25rem]" : vistaPrevia && "lg:grid-cols-[minmax(0,1fr)_21rem]",
+          )}
+        >
+          <div className={cn("flex min-w-0 flex-col pb-6", ruta ? "gap-6" : "gap-8")}>
+            {ruta ? (
+              <div className="flex flex-col gap-2">
+                <p className="hidden text-sm font-semibold text-link md:block">{eyebrow}</p>
+                <Pregunta
+                  ref={titulo}
+                  tabIndex={-1}
+                  className="font-display text-sh-h1 text-headline outline-none md:text-sh-ruta"
+                >
+                  {pregunta}
+                </Pregunta>
+                {bajada && <p className="max-w-2xl text-base text-body md:text-lg">{bajada}</p>}
+              </div>
+            ) : (
+              <Pregunta ref={titulo} tabIndex={-1} className="font-display text-sh-h1 text-headline outline-none">
+                {pregunta}
+              </Pregunta>
+            )}
             {children}
           </div>
-          {vistaPrevia && <VistaPreviaWhatsApp {...vistaPrevia} className="sticky top-6 hidden self-start lg:flex" />}
+          {conLateral ? (
+            <div className="sticky top-6 hidden self-start @4xl:flex">{lateral}</div>
+          ) : (
+            vistaPrevia && <VistaPreviaWhatsApp {...vistaPrevia} className="sticky top-6 hidden self-start lg:flex" />
+          )}
         </div>
       </div>
       <div
@@ -143,6 +211,7 @@ export function RecorridoDelAgente({
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Button>
             )}
+            {ruta && queSigue && <p className="hidden text-sm text-text-soft md:block">{queSigue}</p>}
           </div>
         </footer>
       </div>

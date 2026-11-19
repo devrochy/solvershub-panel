@@ -117,6 +117,7 @@ Escala por token (`text-sh-*`; la familia va aparte con `font-display` o `font-s
 |---|---|---|---|
 | Cifra héroe (KPI) | `text-sh-hero` | 30/36/700 | Montserrat · `tabular-nums` |
 | Título de página (`h1`) | `text-sh-h1` | 24/32/600 | Montserrat |
+| Título de la ruta de lanzamiento (solo bienvenida y Nuevo agente, desde `md`; ver «Ruta de lanzamiento») | `text-sh-ruta` | 36/44/700 | Montserrat |
 | Título de bloque | `text-sh-block` | 17/24/600 | Montserrat |
 | Cuerpo | `text-sh-body` | 15/24/400 | Inter |
 | Cuerpo denso (tablas compactas) | `text-sh-dense` | 14/20/400 | Inter |
@@ -391,6 +392,29 @@ sigue a pantalla completa con su logo; crear y editar viven en Agentes, dentro d
 | Formas de pago (HU-COM-21, SPEC-48) | Sección de Habilidades, solo en agentes con Comercio: una fila por forma (contra entrega, transferencia, pago en línea) con interruptor, estado en palabras (Activa, Falta configurar, Apagada; nunca solo color) y qué falta. Transferencia abre sus cuentas y la comprobación; pago en línea sin Wompi enlaza a Conexiones › Pagos. Se guarda con su propio «Guardar formas de pago» (`lib/formas-de-pago.ts`); la entrega y los datos del cliente siguen en «Datos del cliente» |
 | Guion por formas de pago (HU-COM-25, SPEC-48) | En el paso Flujo, «Bloques por formas de pago» dice el estado de cada bloque en palabras (Activo, Opcional, Oculto) y por qué: «Comprobar comprobante» con transferencia y comprobante, «Verificar pago» con pago en línea; lo que falta configurar lo deja Opcional. Al guardar las formas, el guion se recompone solo (queda «con cambios» y se guarda con «Guardar cambios», sin publicar); «Restaurar guion sugerido» vuelve a la semilla con los bloques activos. Las reglas viven en `lib/guion-reglas.ts`; el teléfono muestra el diálogo de cada bloque con textos fijos |
 | Conocimiento y datos | En los dos modos suma «Carga sus datos» (`PasoDatos`, `PasoLoCargado`, SPEC-45) bajo la memoria y los documentos |
+
+## Ruta de lanzamiento (HU-UX-24, SPEC-49)
+
+Kit para crear un agente en 5 estaciones (D-77): la bienvenida (1 Tu negocio · 2 Habilidades · 3 Datos del
+cliente · 4 Datos para probar · 5 Revisar y publicar) y Nuevo agente (1 Tipo y las mismas cuatro). Las
+pantallas pasan al kit en HU-AOS-85, HU-AOS-86 y HU-UX-25; hasta entonces las piezas viven en `/catalogo`.
+
+| Pieza | Regla |
+|---|---|
+| Título de la ruta (**aprobado por el dueño, D-SPEC-49-8**) | La pregunta de cada estación va en Montserrat 700 de 36/44 px desde `md` (`text-sh-ruta`, dentro del rango aprobado de 34–38 px), por encima del `h1` de 24/32/600 del sistema. Solo en la bienvenida y Nuevo agente; por debajo de `md`, `text-sh-h1`. Encima, el eyebrow «Paso N de 5 · {estación}» (`text-link`, 14/600) y debajo una bajada de 17–18 px (`text-body`) |
+| `components/ui/barra-de-pasos.tsx` · `forma="estaciones"` | Nodos de 28 px unidos por tramos de 2 px. Hecha: relleno `bg-focus` con ✓ y «hecho» para el lector. Actual: anillo de 2 px y `aria-current="step"`. Pendiente: borde `control-border` y su número. Por debajo de `md`, 5 puntos con el actual alargado y «Paso N de 5 · {estación}». Conserva `modo` y `onIr`; los segmentos siguen siendo la forma por defecto (Personalizar) |
+| `components/ui/elegibles.tsx` | `TarjetaElegible` suma `baldosa` (ícono en baldosa de 44 px), `etiqueta` («Recomendado», texto sobre el borde), `razon` (por qué; se lee con la opción) y, con `deshabilitada`, `nota` (por qué no se puede elegir, borde punteado, leída por `aria-describedby`) y `accion` (enlace fuera del radio, por ejemplo «Editar a Laura»). `FichaUnica` suma `inicial` (círculo con la letra, ✓ al elegirla). `GrupoDeOpciones unica` se anuncia como `radiogroup`. Sin las props nuevas, todo se ve como antes |
+| «Recomendado» | Sale del guion (`Question.default`), de los procedimientos de la plantilla y del `por_defecto` de Datos del cliente (D-SPEC-49-5). Es texto, nunca solo color, y no se usa para el nivel `recomendado` de Datos del cliente, que lleva su propio ícono. `BarraRecomendado` dice «Todo viene con lo recomendado por SolversHub» y, con cambios, «· N cambios» y «Usar lo recomendado»; los cuenta `cambiosFrenteARecomendado` (`lib/ruta-de-lanzamiento.ts`, las listas como conjuntos) |
+| `NombreSugerido` | Campo con el nombre sugerido («Laura» en la bienvenida, el primero del tipo en Nuevo agente: «Tomás» en Agenda), la marca «Sugerido» mientras no cambie e ideas en fichas con inicial. Vacío dice «Ponle un nombre para seguir» y `errorDelNombre` no deja avanzar |
+| Escenario (`escenario-pantalla-completa.tsx`, `escenario-tarjeta.tsx`, `escenario-piezas.tsx`) | Cuenta lo que gana el agente en la estación. En la bienvenida, columna de 500 px a la izquierda con el logo horizontal en tinta blanca (`Marca sobreOscuro`); en Nuevo agente, tarjeta de 340 px a la derecha (`lateral` de `RecorridoDelAgente`); en el celular, `FranjaDelEscenario` arriba (logo, o ✕ «Cerrar» con «Nuevo agente · N de 5»). Siempre oscuro en los dos temas (`data-theme="sh-dark"` en el contenedor). Tarjetas sólidas `bg-escena-tarjeta` con borde `escena-borde/40` (hecha, con ✓) o punteado `escena-borde-pendiente` (pendiente); nunca transparencia detrás de texto. Las órbitas son SVG `aria-hidden` |
+| Chat simulado (`ChatDeVistaPrevia`, `lib/vista-previa.ts`) | Teléfono con mensajes de prueba por estación y tipo (`sugerenciasPorEstacion`) bajo «Pruebas de «{estación}» · toca una». Al tocar uno: «escribiendo…» y una respuesta fija (`respuestaDePrueba`), sin modelo, sin red y sin créditos, con la leyenda «Es una vista previa: no le escribe a nadie». En las estaciones 1 a 3 ninguna respuesta lleva cifras ni productos; desde la 4 solo aparecen los nombres y el detalle (precio incluido) que el dueño cargó. La única prueba real sigue en la estación 5 |
+| `RecorridoDelAgente disposicion="ruta"` | La barra en estaciones con `extremo` a la derecha («Seguir después»), eyebrow, título grande, `bajada`, el contenido, `lateral` a la derecha cuando el recorrido mide 56 rem o más (consulta de contenedor) y la línea `queSigue` («Sigue: Habilidades.») junto a la acción principal, que dice lo que pasa («Guardar y seguir: Datos del cliente», «Publicar a Laura»). Conserva el pie pegado, el foco en la pregunta y `dentroDelPanel` |
+
+**Propuestas de esta HU (pendientes de aprobación del dueño; no son regla todavía):**
+
+1. **Titular de `/agentes/nuevo`.** El titular grande es la pregunta de la estación y el `PageHeader` pasa a migas («Agentes / Nuevo agente»). Cambia la regla «una sola `PageHeader`, único `h1`» solo en esa ruta: el `h1` es la pregunta (`RecorridoDelAgente` con `nivelDePregunta="h1"`).
+2. **Tokens del escenario.** `escena-fondo` (navy-950), `escena-tarjeta` (navy-800, el `#11224d` de los tableros), `escena-borde` y `escena-acento` (cyan-400), `escena-borde-pendiente` (steel), `escena-texto` (white) y `escena-texto-suave` (fog), más el fondo `bg-escena`. Son alias en `app/globals.css` de primitivos que ya existen en `brand/tokens`; no hay hex nuevo. Si se aprueban, pasan a `tokens.json` como rol semántico.
+3. **Tablas de 5 estaciones.** «Asistente de primer uso» y «Recorrido del agente» pasan a describir las 5 estaciones, con Datos del cliente como estación propia y fuera de Habilidades, cuando entren HU-AOS-85, HU-AOS-86 y HU-UX-25. Hasta entonces esas tablas describen lo que está en producción.
 
 ## Copy
 
