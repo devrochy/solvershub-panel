@@ -87,6 +87,9 @@ import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenari
 import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
 import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
+import { TIPOS_DE_NEGOCIO } from "@/lib/onboarding";
+import { escenarioDeLaBienvenida } from "@/components/domain/agentes/recorrido/escenario-de-la-bienvenida";
+import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
 import { semaforo } from "@/lib/listo-para-responder";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
@@ -100,9 +103,11 @@ import {
   sugerenciasPorEstacion,
 } from "@/lib/vista-previa";
 
-/** Pasos del editor que hace la bienvenida (5 a 9 de sus 9): lo anterior es del negocio. */
-// HU-AOS-81: la bienvenida también es la creación rápida (sus pasos 2 a 4 de 4).
-const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "conocimiento", "probar"];
+/**
+ * Las estaciones 2 a 5 de la bienvenida (SPEC-49, HU-UX-25): la 1 («Tu negocio») vive en `/bienvenida` y escribe
+ * en el negocio. Son las mismas de Nuevo agente; la 5 deja listo y termina el recorrido (`bienvenida.terminar`).
+ */
+const PASOS_DE_LA_BIENVENIDA: PasoId[] = ["habilidades", "datos-cliente", "conocimiento", "probar"];
 /**
  * Nuevo agente en 5 estaciones (SPEC-49, HU-AOS-86, D-SPEC-49-1): la 1 (Tipo) es `/agentes/nuevo`; aquí
  * van Habilidades, Datos del cliente, Datos para probar y Revisar y publicar. La 5 publica (D-SPEC-49-9).
@@ -128,11 +133,22 @@ const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
   conocimiento: "¿Con qué datos probamos a {nombre}?",
   probar: "Revisa y publica a {nombre}",
 };
-/** La bienvenida (HU-AOS-81) sigue en 4 pasos con estos nombres hasta HU-UX-25. */
-const EN_LA_CREACION: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
-  habilidades: { titulo: "Habilidades y formas de pago", corto: "Habilidades" },
-  conocimiento: { titulo: "Datos para probar", corto: "Datos" },
-  probar: { titulo: "Revisar, probar y publicar", corto: "Revisar" },
+/** La pregunta de cada estación en la bienvenida (tableros `rb2`–`rb5`); «Datos para probar» va por tipo. */
+const PREGUNTA_EN_LA_BIENVENIDA: Partial<Record<PasoId, string>> = {
+  habilidades: "¿Qué sabe hacer {nombre}?",
+  "datos-cliente": "¿Qué datos pide {nombre}?",
+  probar: "La última vuelta antes de atender",
+};
+const DATOS_PARA_PROBAR: Partial<Record<string, string>> = {
+  ventas: "Dale a {nombre} algo que vender",
+  agenda: "¿Qué citas agenda {nombre}?",
+};
+/** Debajo de la pregunta, en la bienvenida. */
+const BAJADA_EN_LA_BIENVENIDA: Partial<Record<PasoId, string>> = {
+  habilidades: "Viene con lo recomendado para tu tipo de negocio. Cambia lo que quieras.",
+  "datos-cliente": "Lo que le pregunta a cada cliente para atenderlo. Viene con lo justo.",
+  conocimiento: "Datos de ejemplo para probar cómo responde en el chat. Puedes seguir sin cargar nada.",
+  probar: "Revisa lo que configuraste y escríbele una vez como cliente.",
 };
 const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo", corto: "Tipo" };
 
@@ -153,21 +169,26 @@ type Respuesta = {
 };
 
 /**
- * La bienvenida (HU-UX-23) usa el editor para sus pasos 5 a 9. Los cuatro primeros (Tu negocio, Identidad,
- * Cómo habla y Horario y reglas) escriben en el negocio y viven en `/bienvenida`: aquí se ven hechos en la
- * barra y volver a uno de ellos lo decide `volverA`.
+ * La bienvenida (HU-UX-25) usa el editor para sus estaciones 2 a 5, a pantalla completa con el escenario a la
+ * izquierda. La 1 («Tu negocio») escribe en el negocio y vive en `/bienvenida`: aquí se ve hecha en la ruta y
+ * volver a ella lo decide `volverA`.
  */
 export type BienvenidaDelEditor = {
-  /** Los cuatro pasos del negocio, para la barra de 9 (ids propios, distintos de los del editor). */
+  /** La estación del negocio, para la ruta de 5 (id propio, distinto de los del editor). */
   pasosDelNegocio: PasoDeLaBarra[];
-  /** Vuelve a uno de los pasos del negocio (1 a 4). */
+  /** Vuelve a la estación del negocio (1). */
   volverA: (numero: number) => void;
-  /** Guarda en el recorrido el paso (1 a 9) al que se llega. */
+  /** Guarda en el recorrido la estación (1 a 5) a la que se llega. */
   avanzar: (numero: number) => void;
+  /**
+   * «Seguir después», con el nombre del agente y cómo guardar lo de la estación antes de salir. `enEscenario`:
+   * va en la franja oscura del celular.
+   */
+  seguirDespues: (opciones: { nombre: string; guardar: () => Promise<boolean>; enEscenario: boolean }) => ReactNode;
   /** Vuelve a dejar el agente listo antes de «Pruébalo», con lo último configurado. Devuelve el error, si hubo. */
   prepararPrueba: () => Promise<string | null>;
-  /** El chat de prueba de la bienvenida. */
-  prueba: ReactNode;
+  /** El chat de prueba de la bienvenida, por la conexión de pruebas; lo cargado en la estación 4 va primero en las frases. */
+  prueba: (cargados: readonly RegistroDePrueba[]) => ReactNode;
   /** Ya le escribió a su agente: se puede terminar. */
   probado: boolean;
   /** Deja el agente listo con lo último y da por terminado el recorrido. */
@@ -248,7 +269,7 @@ export function EditorDeAgente({
   modeloEfectivo?: { nombre: string; origen: "negocio" | "agente" } | null;
   /** Sin permiso de escritura: se ve todo, sin guardar ni publicar. */
   puedeEditar?: boolean;
-  /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). `bienvenida`: pasos 5 a 9 del primer uso. */
+  /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). `bienvenida`: estaciones 2 a 5 del primer uso. */
   modo?: "crear" | "editar" | "bienvenida";
   bienvenida?: BienvenidaDelEditor;
 }) {
@@ -257,8 +278,9 @@ export function EditorDeAgente({
   const enBienvenida = modo === "bienvenida" && bienvenida !== undefined;
   // HU-AOS-81: «crear» es la creación rápida de 4 pasos; la edición sigue libre con los 8.
   const creacionRapida = modo === "crear";
-  // Los pasos de la creación rápida (nombres y contenido corto) valen también en la bienvenida.
+  // Las estaciones de la ruta de lanzamiento: Nuevo agente y la bienvenida (SPEC-49) tienen las mismas cuatro.
   const comoCreacionRapida = creacionRapida || enBienvenida;
+  const deLaRuta: PasoId[] = creacionRapida ? PASOS_DE_LA_CREACION : PASOS_DE_LA_BIENVENIDA;
   const [preparando, setPreparando] = useState(false);
   const [errorDeBienvenida, setErrorDeBienvenida] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -521,8 +543,8 @@ export function EditorDeAgente({
     const primero = Object.keys(campos)[0];
     if (!primero) return;
     const destino = pasoDelCampo(primero);
-    // Al crear solo se ven las 4 estaciones del editor: lo de otro paso se avisa en «Revisar y publicar».
-    irA(creacionRapida && !PASOS_DE_LA_CREACION.includes(destino) ? "probar" : destino);
+    // En la ruta solo se ven 4 estaciones del editor: lo de otro paso se avisa en «Revisar y publicar».
+    irA(comoCreacionRapida && !deLaRuta.includes(destino) ? "probar" : destino);
   }
 
   function irA(id: PasoId) {
@@ -711,9 +733,8 @@ export function EditorDeAgente({
     }),
   );
 
-  // «Datos del cliente»: paso propio en Personalizar (HU-AOS-85) y estación 3 de Nuevo agente (HU-AOS-86);
-  // en la bienvenida sigue como sección de Habilidades hasta HU-UX-25.
-  const datosComoPaso = modo !== "bienvenida";
+  // «Datos del cliente»: paso propio en Personalizar (HU-AOS-85) y estación 3 de Nuevo agente (HU-AOS-86) y de
+  // la bienvenida (HU-UX-25). Se guarda con «Guardar y seguir» o «Guardar cambios», no con un botón propio.
   const datosDelCliente = datosCliente ? (
     <DatosDelAgente
       politica={datosCliente}
@@ -728,10 +749,9 @@ export function EditorDeAgente({
       onRestablecer={restablecerAccion}
       onHerramientas={cambiarHerramientas}
       onMetodo={cambiarMetodo}
-      onGuardar={datosComoPaso ? undefined : () => void guardarDatos()}
       onCuantoPregunta={elegirCuantoPregunta}
       onUsarRecomendado={usarDatosRecomendados}
-      comoPaso={datosComoPaso}
+      comoPaso
       errorDeMetodos={errores["datos.metodos_entrega"]}
     />
   ) : (
@@ -759,9 +779,18 @@ export function EditorDeAgente({
     }
     return "";
   }
+  /** «Tu negocio» en la estación 5 de la bienvenida: el negocio, el tipo y cómo atiende. */
+  const tipoDelNegocio = TIPOS_DE_NEGOCIO.find((t) => t.id === agente.key);
+  const resumenDelNegocio = [
+    negocio.nombre.trim(),
+    tipoDelNegocio?.titulo,
+    estado.nombre.trim() ? `Atiende como ${estado.nombre.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   // Errores de pasos que la ruta no muestra (voz, flujo…): se avisan en la estación 5 con un enlace.
-  const fueraDeLaRuta = creacionRapida
-    ? [...new Set(Object.keys(errores).map(pasoDelCampo))].filter((p) => p !== "publicar" && !PASOS_DE_LA_CREACION.includes(p))
+  const fueraDeLaRuta = comoCreacionRapida
+    ? [...new Set(Object.keys(errores).map(pasoDelCampo))].filter((p) => p !== "publicar" && !deLaRuta.includes(p))
     : [];
 
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
@@ -848,14 +877,6 @@ export function EditorDeAgente({
             gruposDeLaApi={gruposDeAcciones}
           />
         </section>
-        {!datosComoPaso && (
-          <section aria-labelledby="habilidades-datos" className="flex flex-col gap-4">
-            <h3 id="habilidades-datos" className="font-display text-sh-block text-headline">
-              Datos del cliente
-            </h3>
-            {datosDelCliente}
-          </section>
-        )}
       </div>
     ),
     "datos-cliente": datosDelCliente,
@@ -901,31 +922,45 @@ export function EditorDeAgente({
                 setCargados(c.registros);
               }}
               // Fuera de test Agenda, Cobranza y Suscripciones no tienen carga: «Seguir sin datos» pasa a la 5.
-              onSeguirSinDatos={creacionRapida ? () => void siguienteAlCrear() : undefined}
+              onSeguirSinDatos={comoCreacionRapida ? () => void siguienteAlCrear() : undefined}
             />
           )}
         </section>
       </div>
     ),
     probar: enBienvenida ? (
-      <div className="flex flex-col gap-6">
-        <SemaforoListo
-          semaforo={semaforo({
-            requisitos,
-            formas,
-            superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
-            conDatos: cargados.length > 0,
-          })}
+      <div className="flex flex-col gap-8">
+        <ResumenDeEstaciones<PasoId | "negocio">
+          estaciones={[
+            { id: "negocio", titulo: "Tu negocio", resumen: resumenDelNegocio },
+            ...PASOS_DE_LA_BIENVENIDA.filter((p) => p !== "probar").map((p) => ({
+              id: p,
+              titulo: EN_LA_RUTA[p]?.titulo ?? p,
+              resumen: resumenDeEstacion(p),
+            })),
+          ]}
+          onEditar={(id) => (id === "negocio" ? bienvenida.volverA(1) : irA(id))}
         />
-        {bienvenida.prueba}
-        {!bienvenida.probado && (
-          <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
-            Para terminar, escríbele al menos un mensaje a tu agente aquí.
+        {fueraDeLaRuta.length > 0 && (
+          <p role="alert" className="max-w-xl rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+            Hay algo por revisar en {fueraDeLaRuta.map((p) => `«${PASOS.find((x) => x.id === p)?.titulo ?? p}»`).join(", ")}.
+            Lo ajustas después en Personalizar.
           </p>
         )}
+        <section aria-labelledby="ultima-prueba" className="flex flex-col gap-3">
+          <h2 id="ultima-prueba" className="font-display text-sh-block text-headline">
+            Última prueba: qué le escribes
+          </h2>
+          {bienvenida.prueba(cargados)}
+          {!bienvenida.probado && (
+            <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+              Para publicar a {estado.nombre.trim() || "tu agente"}, envíale al menos una frase aquí.
+            </p>
+          )}
+        </section>
         <p className="text-sm text-text-soft">
-          Tu agente queda listo en tu chat de pruebas, cerrado al público. Cómo habla, su horario y su flujo los ajustas
-          después en Personalizar; cuando conectes tu WhatsApp, lo activas desde Conexiones.
+          Queda listo en tu chat de pruebas, cerrado al público. Cómo habla, su horario y su flujo los ajustas después en
+          Personalizar; cuando conectes tu WhatsApp, lo activas desde Conexiones.
         </p>
       </div>
     ) : creacionRapida ? (
@@ -1081,9 +1116,8 @@ export function EditorDeAgente({
               : undefined,
         };
 
-  // Los datos del cliente marcan su propio paso; donde todavía son sección de Habilidades, marcan ese.
-  const conCambios = pasosConCambios(estado, guardado, { datosCliente: datosSinGuardar && datosComoPaso });
-  if (datosSinGuardar && !datosComoPaso) conCambios.add("habilidades");
+  // Los datos del cliente marcan su propio paso.
+  const conCambios = pasosConCambios(estado, guardado, { datosCliente: datosSinGuardar });
   const conError = new Set(Object.keys(errores).map(pasoDelCampo));
   const visibles = enBienvenida
     ? PASOS.filter((p) => PASOS_DE_LA_BIENVENIDA.includes(p.id))
@@ -1093,8 +1127,8 @@ export function EditorDeAgente({
   const pasosDelEditor: PasoDeLaBarra[] = visibles.map(
     (p) => ({
       id: p.id,
-      titulo: (creacionRapida ? EN_LA_RUTA[p.id]?.titulo : enBienvenida && EN_LA_CREACION[p.id]?.titulo) || p.titulo,
-      corto: (creacionRapida ? EN_LA_RUTA[p.id]?.corto : enBienvenida && EN_LA_CREACION[p.id]?.corto) || p.corto,
+      titulo: (comoCreacionRapida && EN_LA_RUTA[p.id]?.titulo) || p.titulo,
+      corto: (comoCreacionRapida && EN_LA_RUTA[p.id]?.corto) || p.corto,
       marca: conError.has(p.id) ? "revisar" : conCambios.has(p.id) ? "cambios" : undefined,
     }),
   );
@@ -1113,7 +1147,7 @@ export function EditorDeAgente({
   const hayCambios = cambios || datosSinGuardar;
 
   // Ruta de lanzamiento (HU-AOS-86): la estación siguiente, la pregunta y el escenario en tarjeta.
-  const siguienteDeLaRuta = creacionRapida ? PASOS_DE_LA_CREACION[PASOS_DE_LA_CREACION.indexOf(paso) + 1] : undefined;
+  const siguienteDeLaRuta = comoCreacionRapida ? deLaRuta[deLaRuta.indexOf(paso) + 1] : undefined;
   const tituloSiguiente = siguienteDeLaRuta ? (EN_LA_RUTA[siguienteDeLaRuta]?.titulo ?? "") : "";
   const nombreVisible = estado.nombre.trim();
   const estacionDelChat = ESTACION_DEL_PASO[paso];
@@ -1154,8 +1188,24 @@ export function EditorDeAgente({
     </EscenarioTarjeta>
   ) : undefined;
 
-  return (
-    <div className="flex flex-col gap-6">
+  // La pregunta de la estación: en la bienvenida, la de sus tableros; al crear, la de la ruta; si no, la del paso.
+  const preguntaDeLaRuta = enBienvenida
+    ? paso === "conocimiento"
+      ? (DATOS_PARA_PROBAR[agente.key ?? ""] ?? PREGUNTA_EN_LA_RUTA.conocimiento)
+      : PREGUNTA_EN_LA_BIENVENIDA[paso]
+    : creacionRapida
+      ? PREGUNTA_EN_LA_RUTA[paso]
+      : undefined;
+  const pregunta = preguntaDeLaRuta
+    ? preguntaDeLaRuta.replace("{nombre}", nombreVisible || "tu agente")
+    : preguntaDelPaso(paso, estado.nombre);
+
+  // «Seguir después» guarda lo de la estación (sin las reglas de publicar) antes de salir.
+  const seguirDespues = (enEscenario: boolean) =>
+    enBienvenida ? bienvenida.seguirDespues({ nombre: nombreVisible || "Tu agente", guardar: guardarCambios, enEscenario }) : null;
+
+  const editor = (
+    <div className={enBienvenida ? "flex flex-1 flex-col gap-6" : "flex flex-col gap-6"}>
       <AvisoDeReferenciasRetiradas aviso={retiradas} />
 
       <RecorridoDelAgente
@@ -1168,20 +1218,33 @@ export function EditorDeAgente({
           else if (id !== PASO_UNO_DE_LA_CREACION.id) irA(id as PasoId);
         }}
         etiquetaDePasos={enBienvenida ? "Pasos del primer uso" : creando ? "Pasos para crear el agente" : "Pasos del editor de agentes"}
-        pregunta={creacionRapida && PREGUNTA_EN_LA_RUTA[paso] ? PREGUNTA_EN_LA_RUTA[paso].replace("{nombre}", nombreVisible || "tu agente") : preguntaDelPaso(paso, estado.nombre)}
+        pregunta={pregunta}
         nivelDePregunta={enBienvenida || creacionRapida ? "h1" : "h2"}
-        disposicion={creacionRapida ? "ruta" : "pasos"}
+        disposicion={comoCreacionRapida ? "ruta" : "pasos"}
+        bajada={enBienvenida ? BAJADA_EN_LA_BIENVENIDA[paso] : undefined}
         lateral={escenario}
-        queSigue={creacionRapida ? (tituloSiguiente ? `Sigue: ${tituloSiguiente}.` : undefined) : undefined}
+        queSigue={
+          comoCreacionRapida
+            ? tituloSiguiente
+              ? `Sigue: ${tituloSiguiente}.`
+              : enBienvenida
+                ? "Sigue: queda atendiendo en tu chat de pruebas."
+                : undefined
+            : undefined
+        }
         extremo={
           creacionRapida ? (
             <Button asChild variant="outline" size="sm">
               <Link href={`/agentes/${agente.id}`}>Terminar después</Link>
             </Button>
+          ) : enBienvenida ? (
+            <div className="hidden lg:block">{seguirDespues(false)}</div>
           ) : undefined
         }
         dentroDelPanel={!enBienvenida}
-        vistaPrevia={vistaPrevia}
+        className={enBienvenida ? "flex-1" : undefined}
+        // En la bienvenida el chat simulado va en el escenario de la izquierda, no en el teléfono.
+        vistaPrevia={enBienvenida ? undefined : vistaPrevia}
         atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: (indice === 0 && !enBienvenida) || primeroDeLaCreacion }}
         guardar={
           ultimo && creacionRapida && puedeEditar
@@ -1204,7 +1267,8 @@ export function EditorDeAgente({
         principal={
           ultimo && enBienvenida
             ? {
-                texto: "Terminar",
+                // La prueba por la conexión de pruebas es lo que deja terminar (`finalizar`).
+                texto: `Publicar a ${nombreVisible || "tu agente"}`,
                 onClick: () => void bienvenida.terminar(),
                 cargando: bienvenida.terminando,
                 deshabilitado: !bienvenida.probado || bienvenida.terminando,
@@ -1229,11 +1293,11 @@ export function EditorDeAgente({
                     publicarAccion.pending || guardarAccion.pending || datosAccion.pending || destinos.length === 0,
                 }
               : undefined
-            : creacionRapida
+            : comoCreacionRapida
               ? {
                   texto: `Guardar y seguir: ${tituloSiguiente}`,
                   onClick: () => void siguienteAlCrear(),
-                  cargando: guardarAccion.pending || datosAccion.pending,
+                  cargando: guardarAccion.pending || datosAccion.pending || preparando,
                 }
             : creando
               ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }
@@ -1302,5 +1366,27 @@ export function EditorDeAgente({
         </section>
       )}
     </div>
+  );
+
+  if (!enBienvenida) return editor;
+  // La bienvenida va a pantalla completa: el escenario de la estación a la izquierda (HU-UX-25).
+  const presetDeDatos = datosCliente ? cuantoPreguntaActual(datosCliente, datos) : null;
+  const escenarioDeLaEstacion = escenarioDeLaBienvenida({
+    estacion: paso as "habilidades" | "datos-cliente" | "conocimiento" | "probar",
+    nombre: nombreVisible,
+    negocio: negocio.nombre,
+    tipo: tipoDelChat,
+    encendidas: activos.map((p) => p.title),
+    cuantoPregunta: presetDeDatos ? `«${CUANTO_PREGUNTA.find((c) => c.id === presetDeDatos)?.titulo ?? presetDeDatos}»` : null,
+    tiposDePedido: METODOS_ENTREGA.filter((m) => metodos.includes(m.id)).map((m) => m.etiqueta),
+    consultaHistorial: herramientas,
+    cargados,
+    probado: bienvenida.probado,
+    onCambiarNombre: () => bienvenida.volverA(1),
+  });
+  return (
+    <MarcoDeBienvenida escenario={escenarioDeLaEstacion} extremo={seguirDespues(true)}>
+      {editor}
+    </MarcoDeBienvenida>
   );
 }

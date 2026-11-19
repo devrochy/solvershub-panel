@@ -2,17 +2,17 @@ import { redirect } from "next/navigation";
 
 import { apiFetch } from "@/lib/api/server";
 import type { AgentTemplatePage, Me, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
-import { PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, type TipoDeNegocio } from "@/lib/onboarding";
+import { PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, pasoDeCinco, type TipoDeNegocio } from "@/lib/onboarding";
 
 import { RecorridoDeBienvenida } from "./_components/recorrido";
 
 export const metadata = { title: "Primeros pasos" };
 
 /**
- * Asistente de primer uso (HU-UX-21, HU-UX-23). Solo entra quien puede terminarlo (el dueño; el master
+ * Bienvenida de primer uso (HU-UX-21, HU-UX-25). Solo entra quien puede terminarla (el dueño; el master
  * también) y solo si el recorrido es del negocio y no está completo; en cualquier otro caso se vuelve al
- * Resumen. Aquí van los pasos 1 a 4; si el recorrido ya va del 5 en adelante y tiene agente, sigue en el
- * editor del agente (`/bienvenida/agente/[id]`). `?paso=` vuelve a uno de los cuatro primeros.
+ * Resumen. Aquí va la estación 1 de 5 («Tu negocio»); si el recorrido ya va de la 2 en adelante y tiene
+ * agente, sigue en el editor del agente (`/bienvenida/agente/[id]`). `?paso=1` vuelve a «Tu negocio».
  */
 export default async function BienvenidaPage({ searchParams }: { searchParams: Promise<{ paso?: string }> }) {
   const { paso } = await searchParams;
@@ -29,7 +29,7 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
   const puede = me.data.tenant.role === "owner" || me.data.role === "master";
   if (!recorrido.aplica || recorrido.estado === "completo" || !puede) redirect("/dashboard");
   const pidioUnPasoDelNegocio = pasoPedido >= 1 && pasoPedido <= PASOS_DEL_NEGOCIO;
-  if (!pidioUnPasoDelNegocio && recorrido.paso > PASOS_DEL_NEGOCIO && recorrido.agente_id) {
+  if (!pidioUnPasoDelNegocio && pasoDeCinco(recorrido) > PASOS_DEL_NEGOCIO && recorrido.agente_id) {
     redirect(`/bienvenida/agente/${recorrido.agente_id}`);
   }
 
@@ -50,7 +50,6 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
       nombreDelNegocio={me.data.tenant.name}
       recorridoInicial={recorrido}
       identidad={ajustes.data.identity}
-      pasoPedido={pidioUnPasoDelNegocio ? pasoPedido : undefined}
       disponibles={disponibles}
       habilitara={habilitara}
     />

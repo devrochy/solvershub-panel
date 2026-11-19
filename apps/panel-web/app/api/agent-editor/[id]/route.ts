@@ -19,10 +19,15 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     const res = await apiFetch(`/admin/agents/${id}`, { method: "PATCH", body: { status: body.status } });
     return responder(res, () => ({ ok: true }));
   }
-  if (typeof body?.name !== "string" || typeof body.description !== "string") return invalido();
+  if (typeof body?.name !== "string") return invalido();
+  // Sin descripción solo se renombra (la bienvenida, HU-UX-25): no se pisa la que ya tenga.
+  if (body.description !== undefined && typeof body.description !== "string") return invalido();
   const res = await apiFetch(`/admin/agents/${id}`, {
     method: "PATCH",
-    body: { name: body.name.trim().slice(0, 120), description: body.description.slice(0, 1000) },
+    body:
+      typeof body.description === "string"
+        ? { name: body.name.trim().slice(0, 120), description: body.description.slice(0, 1000) }
+        : { name: body.name.trim().slice(0, 120) },
   });
   return responder(res, () => ({ ok: true }));
 }

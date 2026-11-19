@@ -41,7 +41,18 @@ export async function crearYDejarListo(
   agenteId: string | null,
 ): Promise<{ ok: true; agenteId: string; listo: DejarListo } | { ok: false; error: string }> {
   let agente = agenteId;
-  if (!agente) {
+  if (agente) {
+    // Volvió a «Tu negocio» con el agente ya creado: el nombre lo manda esta estación (HU-UX-25).
+    const nombre = estado.nombreDelAgente.trim();
+    if (nombre) {
+      const renombrado = await fetch(`/api/agent-editor/${agente}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nombre }),
+      }).catch(() => null);
+      if (!renombrado?.ok) return { ok: false, error: "No se pudo cambiar el nombre de tu agente. Inténtalo de nuevo." };
+    }
+  } else {
     if (!estado.tipo) return { ok: false, error: "Elige a qué se dedica tu negocio." };
     const creado = await enviar<{ agentId: string }>("/api/agent-editor/from-script", {
       template_key: plantillaDe(estado.tipo),

@@ -485,7 +485,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect((screen.getByRole("button", { name: "Guardar como borrador" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it("en la bienvenida (HU-AOS-81) son los pasos 2 a 4 de 4, vuelve al del negocio y prepara la prueba", async () => {
+  it("en la bienvenida (HU-UX-25) son las estaciones 2 a 5 de 5, vuelve a «Tu negocio» y prepara la prueba", async () => {
     fetchMock.mockImplementation(async () => new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
     const volverA = vi.fn();
     const avanzar = vi.fn();
@@ -495,45 +495,92 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
       volverA,
       avanzar,
+      seguirDespues: ({ enEscenario }: { enEscenario: boolean }) => (enEscenario ? null : <button type="button">Seguir después</button>),
       prepararPrueba,
-      prueba: <p>Chat de prueba</p>,
+      prueba: () => <p>Chat de prueba</p>,
       probado: false,
       terminar,
       terminando: false,
     };
     abrir({ modo: "bienvenida", pasoInicial: "habilidades", bienvenida });
-    expect(screen.getByText("Paso 2 de 4 · Habilidades")).toBeTruthy();
+    expect(screen.getAllByText("Paso 2 de 5 · Habilidades").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { level: 1, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Seguir después" })).toBeTruthy();
+    // El escenario a pantalla completa, con el logo actual y «Cambiar nombre» que lleva a «Tu negocio».
+    expect(screen.getByRole("complementary", { name: "Lo que gana tu agente" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Atrás/ }));
     expect(volverA).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar nombre" }));
+    expect(volverA).toHaveBeenCalledTimes(2);
 
     cleanup();
     abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida });
-    expect(screen.getByText("Paso 3 de 4 · Datos")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
-    await waitFor(() => expect(screen.getByText("Paso 4 de 4 · Revisar")).toBeTruthy());
+    expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Revisar y publicar/ }));
+    await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
     expect(prepararPrueba).toHaveBeenCalled();
-    expect(avanzar).toHaveBeenCalledWith(4);
+    expect(avanzar).toHaveBeenCalledWith(5);
     expect(screen.getByText("Chat de prueba")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Terminar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Publicar a Ventas" })).toBeTruthy();
   });
 
-  it("en la bienvenida «Terminar» espera a que le escriba a su agente", () => {
+  it("en la bienvenida, un negocio de Agenda fuera de test ve «Seguir sin datos» en la estación 4 y pasa a la 5", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      /datos-de-prueba|importar-datos/.test(String(url))
+        ? new Response(JSON.stringify({ error: "No existe aquí." }), { status: 404 })
+        : new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }),
+    );
+    const avanzar = vi.fn();
+    const prepararPrueba = vi.fn(async () => null);
+    const bienvenida = {
+      pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
+      volverA: vi.fn(),
+      avanzar,
+      seguirDespues: () => null,
+      prepararPrueba,
+      prueba: () => null,
+      probado: false,
+      terminar: vi.fn(async () => {}),
+      terminando: false,
+    };
+    abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida, agente: { ...agente, key: "agenda", name: "Tomás" } });
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué citas agenda Tomás?" })).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Seguir sin datos" }));
+    await waitFor(() => expect(avanzar).toHaveBeenCalledWith(5));
+    expect(prepararPrueba).toHaveBeenCalled();
+    expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0);
+  });
+
+  it("en la bienvenida «Publicar a {nombre}» espera la prueba por la conexión y «Editar» vuelve a cada estación", () => {
     const terminar = vi.fn(async () => {});
+    const volverA = vi.fn();
     const bienvenida = {
       pasosDelNegocio: [{ id: "negocio-0", titulo: "Tu negocio" }],
-      volverA: vi.fn(),
+      volverA,
       avanzar: vi.fn(),
+      seguirDespues: () => null,
       prepararPrueba: vi.fn(async () => null),
-      prueba: null,
+      prueba: () => null,
       probado: false,
       terminar,
       terminando: false,
     };
     abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida });
-    expect((screen.getByRole("button", { name: /Terminar/ }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/escríbele al menos un mensaje/)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Publicar a Ventas" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/envíale al menos una frase aquí/)).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "La última vuelta antes de atender" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Editar Tu negocio" }));
+    expect(volverA).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByRole("button", { name: "Editar Datos del cliente" }));
+    expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
+
+    cleanup();
+    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida: { ...bienvenida, probado: true } });
+    const publicar = screen.getByRole("button", { name: "Publicar a Ventas" }) as HTMLButtonElement;
+    expect(publicar.disabled).toBe(false);
+    fireEvent.click(publicar);
+    expect(terminar).toHaveBeenCalled();
   });
 
   it("sin permiso de escritura se ve todo, sin guardar ni publicar", () => {
@@ -742,6 +789,40 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
     expect(cuerpo).toHaveProperty("politica");
     expect(cuerpo).toHaveProperty("herramientas_del_agente");
     expect(cuerpo.metodos_entrega).toEqual(["recoger_en_tienda"]);
+  });
+
+  it("en la bienvenida (HU-UX-25) es la estación 3: guarda política, herramientas y métodos y deja el recorrido en el paso 4 de 5", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const avanzar = vi.fn();
+    const bienvenida = {
+      pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
+      volverA: vi.fn(),
+      avanzar,
+      seguirDespues: () => null,
+      prepararPrueba: vi.fn(async () => null),
+      prueba: () => null,
+      probado: false,
+      terminar: vi.fn(async () => {}),
+      terminando: false,
+    };
+    const { container } = abrir({ modo: "bienvenida", pasoInicial: "datos-cliente", bienvenida });
+    expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué datos pide Laura?" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Guardar datos del cliente" })).toBeNull();
+    // El chat de la estación es el simulado del escenario: no llama al modelo.
+    expect(screen.getByText("Pruebas de «Datos del cliente» · toca una")).toBeTruthy();
+    expect(await violacionesGraves(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Datos para probar/ }));
+    await waitFor(() => expect(avanzar).toHaveBeenCalledWith(4));
+    const put = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/datos-cliente"));
+    expect(put?.[1].method).toBe("PUT");
+    expect(JSON.parse(put?.[1].body)).toEqual({
+      politica: { "ventas.crear_pedido": {} },
+      herramientas_del_agente: false,
+      metodos_entrega: ["recoger_en_tienda"],
+    });
+    expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
   });
 });
 

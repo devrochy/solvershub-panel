@@ -57,4 +57,12 @@ describe("BFF PATCH del agente", () => {
       description: "Vende",
     });
   });
+
+  it("solo el nombre renombra sin pisar la descripción (la bienvenida, HU-UX-25)", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    await PATCH(pedido({ name: " Laura " }), ctx(AGENTE));
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ name: "Laura" });
+    expect((await PATCH(pedido({ name: "Laura", description: 3 }), ctx(AGENTE))).status).toBe(400);
+    expect((await PATCH(pedido({ description: "sin nombre" }), ctx(AGENTE))).status).toBe(400);
+  });
 });
