@@ -20,7 +20,11 @@
 //   TWILIO_SANDBOX=1 (HU-CONN-20: «Agregar conexión» ofrece «Usar el Sandbox» y hay un sandbox de Twilio sin confirmar;
 //   TWILIO_SANDBOX=confirmado lo muestra ya funcionando)
 //   SESION_REAL=1 (sin cookie de sesión, `/admin/me` responde 401: deja ver el login)
-//   BIENVENIDA=1 (asistente de primer uso en curso; con AGENTES=1, las plantillas de agente)
+//   BIENVENIDA=1 (bienvenida en curso, estación 1 de 5; con AGENTES=1, las plantillas de agente)
+//   BIENVENIDA=agente (con AGENTES=1 y RETIRADAS=limpio, HU-UX-25): ya creó a «Laura» (Ventas) y va por la estación
+//   BIENVENIDA_PASO (2 a 5, por defecto 2), con Datos del cliente, Formas de pago y el chat de pruebas por la conexión;
+//   avanzar, omitir, dejar listo y finalizar cambian el recorrido en memoria. BIENVENIDA=viejo: igual, pero guardado
+//   con 4 pasos en el paso 3 (retoma en «Datos para probar», 4 de 5).
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
 //   MASTER=1 (quien mira es el admin de plataforma: Tenants con el interruptor de plantillas con opciones)
 //   El playground (SPEC-40, pista B2) simula `/admin/playground/{options,tap}` con las plantillas publicadas: cada botón
@@ -754,14 +758,23 @@ let seguridad = null;
   };
 }
 
-// BIENVENIDA=1: el asistente de primer uso a medio camino (con AGENTES=1 trae las plantillas de agente).
-// BIENVENIDA=agente (con AGENTES=1): ya creó el agente Ventas y va por «Habilidades», el paso 5 de 9 (SPEC-47).
-if (process.env.BIENVENIDA === "1" || process.env.BIENVENIDA === "agente") {
+// BIENVENIDA=1: la bienvenida a medio camino, en la estación 1 de 5 (con AGENTES=1 trae las plantillas de agente).
+// BIENVENIDA=agente|viejo (con AGENTES=1): ya creó el agente Ventas; ver la cabecera (HU-UX-25).
+const BIENVENIDA = process.env.BIENVENIDA;
+if (BIENVENIDA === "1" || BIENVENIDA === "agente" || BIENVENIDA === "viejo") {
   const pp = respuestas["/admin/onboarding"];
-  const conAgente = process.env.BIENVENIDA === "agente"
-    ? { paso: 5, agente_id: "00000000-0000-4000-8000-000000000002", conexion_id: "00000000-0000-4000-8000-0000000000c1" }
-    : { paso: 1 };
-  respuestas["/admin/onboarding"] = { ...pp, recorrido: { ...pp.recorrido, estado: "en_curso", total_pasos: 9, aplica: true, abrir: true, avisar: true, ...conAgente } };
+  const conAgente = { agente_id: "00000000-0000-4000-8000-000000000002", conexion_id: "00000000-0000-4000-8000-0000000000c1" };
+  const escala = BIENVENIDA === "viejo"
+    ? { paso: 3, total_pasos: 4, ...conAgente }
+    : BIENVENIDA === "agente"
+      ? { paso: Number(process.env.BIENVENIDA_PASO ?? 2), total_pasos: 5, ...conAgente }
+      : { paso: 1, total_pasos: 5 };
+  respuestas["/admin/onboarding"] = { ...pp, recorrido: { ...pp.recorrido, estado: "en_curso", aplica: true, abrir: true, avisar: true, ...escala } };
+  if (BIENVENIDA === "1" && respuestas["/admin/settings"]) {
+    // Un negocio recién creado: el alta pone su nombre como nombre del asistente y no hay frase todavía.
+    const identidad = respuestas["/admin/settings"].identity;
+    respuestas["/admin/settings"] = { ...respuestas["/admin/settings"], identity: { ...identidad, assistant_name: me.tenant?.name ?? identidad.assistant_name, business_description: "" } };
+  }
   // «Dejar listo» publica en el chat de pruebas y devuelve la conexión con la que se prueba.
   respuestas["/admin/onboarding/dejar-listo"] = {
     conexion_id: "00000000-0000-4000-8000-0000000000c1",
@@ -769,6 +782,41 @@ if (process.env.BIENVENIDA === "1" || process.env.BIENVENIDA === "agente") {
     pasos: [],
     recorrido: respuestas["/admin/onboarding"].recorrido,
   };
+}
+
+/** El recorrido de la bienvenida en memoria (HU-UX-25): lo que el panel le pide al servidor. */
+function bienvenidaEnMemoria(metodo, ruta, cuerpo) {
+  if (!BIENVENIDA || metodo !== "POST") return undefined;
+  const pp = respuestas["/admin/onboarding"];
+  const fijar = (cambios) => {
+    pp.recorrido = { ...pp.recorrido, ...cambios };
+    return pp.recorrido;
+  };
+  if (ruta === "/admin/onboarding/avanzar") {
+    // El servidor guarda la escala con que llega (`pasos`) y la traduce al leer; aquí ya llega en la de 5.
+    return [200, fijar({ estado: "en_curso", paso: Number(cuerpo.paso ?? 1), total_pasos: Number(cuerpo.pasos ?? 5), avisar: true })];
+  }
+  if (ruta === "/admin/onboarding/omitir") return [200, fijar({ estado: "omitido", abrir: false, avisar: true })];
+  if (ruta === "/admin/onboarding/finalizar") {
+    if (!pp.recorrido.probado_en) {
+      return [409, { error: { code: "faltan_pasos", message: "Faltan pasos.", details: { faltan: ["prueba"] } } }];
+    }
+    return [200, fijar({ estado: "completo", paso: 5, total_pasos: 5, abrir: false, avisar: false })];
+  }
+  if (ruta === "/admin/onboarding/dejar-listo") {
+    // Deja la estación en «Habilidades» sin retroceder un recorrido que va más adelante.
+    const recorrido = fijar({ agente_id: cuerpo.agent_id, conexion_id: "00000000-0000-4000-8000-0000000000c1", paso: Math.max(pp.recorrido.paso, 2), total_pasos: 5 });
+    return [200, { conexion_id: recorrido.conexion_id, listo: true, pasos: [], recorrido }];
+  }
+  if (ruta === "/admin/playground/message" && cuerpo.connection_id) {
+    // La prueba por la conexión de pruebas es la que deja terminar.
+    fijar({ probado_en: new Date().toISOString() });
+    return [200, { text: "¡Hola! Soy Laura. Te cuento lo que tenemos y te ayudo con tu pedido.", image_url: null, escalated: false }];
+  }
+  if (ruta === "/admin/agents/from-script" && !process.env.CARGA_DE_DATOS && !process.env.NUEVO_AGENTE) {
+    return [201, { agent: { id: "00000000-0000-4000-8000-000000000002", key: cuerpo.template_key ?? "ventas", name: cuerpo.name ?? "Laura" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
+  }
+  return undefined;
 }
 
 // SOLO_LECTURA=1: quien mira no es el propietario (plantillas con opciones en solo lectura).
@@ -1090,6 +1138,28 @@ if (NUEVO && process.env.AGENTES === "1") {
     { connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: false, covers_skills: true, missing_skills: [], active_release_id: null },
   ], total: 2, page: 1, page_size: 100, has_more: false };
 }
+// La bienvenida (HU-UX-25) usa a Ventas como «Laura»: datos del cliente y formas de pago para sus estaciones 2 y 3.
+if (BIENVENIDA && BIENVENIDA !== "1" && respuestas[`/admin/agents/${VENTAS_ID}`]) {
+  respuestas[`/admin/agents/${VENTAS_ID}`] = { ...respuestas[`/admin/agents/${VENTAS_ID}`], name: "Laura", key: "ventas" };
+  respuestas[`/admin/agents/${VENTAS_ID}/datos-cliente`] ??= { ...politicaDatosCliente, agente_id: VENTAS_ID, metodos_entrega: ["domicilio", "recoger_en_tienda"] };
+  const forma = (method, label, enabled, superpoder) => ({ method, label, enabled, estado: enabled ? "activa" : "apagada", falta: "", instructions: "", superpoder });
+  respuestas[`/pack/commerce/agents/${VENTAS_ID}/payment-forms`] ??= {
+    agent_id: VENTAS_ID,
+    configurada: false,
+    forms: [
+      forma("efectivo_contraentrega", "Contra entrega", true, null),
+      forma("transferencia", "Transferencia", false, "pack_commerce.comprobar_transferencia"),
+      forma("pago_en_linea", "Pago en línea", false, "pack_commerce.pago_en_linea"),
+    ],
+    transfer_accounts: [],
+    transfer_proof_required: true,
+    transfer_ocr_enabled: true,
+    pago_en_linea_disponible: false,
+  };
+  if (respuestas["/admin/settings"]) {
+    respuestas["/admin/settings"] = { ...respuestas["/admin/settings"], identity: { ...respuestas["/admin/settings"].identity, assistant_name: "Laura" } };
+  }
+}
 function nuevoAgente(metodo, ruta) {
   if (!NUEVO) return undefined;
   if (metodo === "POST" && ruta === "/admin/agents/from-script") {
@@ -1395,7 +1465,11 @@ function playground(metodo, ruta, cuerpo) {
   const sub = ruta.replace(/^\/admin\/playground/, "");
   if (sub === "" && metodo === "GET") return [200, { turns: [] }];
   if (sub === "/reset") return [204, null];
-  if (sub === "/message") return [200, { text: "Hola, soy el asistente de prueba.", image_url: null, escalated: false }];
+  if (sub === "/message") {
+    // Bienvenida (HU-UX-25): la prueba por la conexión de pruebas es la que deja terminar.
+    const deLaBienvenida = BIENVENIDA && cuerpo.connection_id ? bienvenidaEnMemoria("POST", "/admin/playground/message", cuerpo) : undefined;
+    return deLaBienvenida ?? [200, { text: "Hola, soy el asistente de prueba.", image_url: null, escalated: false }];
+  }
   if (sub !== "/options" && sub !== "/tap") return undefined;
   if (!bandera()) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");
   const mensaje = (content, interactive = null) => ({ id: crypto.randomUUID(), direction: "outbound", content, interactive, created_at: new Date().toISOString() });
@@ -1967,6 +2041,22 @@ createServer(async (req, res) => {
     };
     res.end(JSON.stringify(respuestas[`/admin/agents/${pausa[1]}`]));
     return;
+  }
+  if (BIENVENIDA && req.method === "POST" && (ruta.startsWith("/admin/onboarding/") || ruta === "/admin/agents/from-script")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    let cuerpoB = {};
+    try {
+      cuerpoB = texto ? JSON.parse(texto) : {};
+    } catch {
+      cuerpoB = {};
+    }
+    const r = bienvenidaEnMemoria("POST", ruta, cuerpoB);
+    if (r) {
+      res.statusCode = r[0];
+      res.end(JSON.stringify(r[1]));
+      return;
+    }
   }
   const delNuevo = nuevoAgente(req.method ?? "GET", ruta);
   if (delNuevo) {

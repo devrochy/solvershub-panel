@@ -17,6 +17,7 @@ import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/sel
 import {
   DemoChatSimulado,
   DemoEscenario,
+  DemoEscenarioDeLaBienvenida,
   DemoNombreSugerido,
   DemoOpcionesRecomendadas,
   DemoRecorridoEnRuta,
@@ -1110,6 +1111,15 @@ export function Catalogo() {
             piezas="SPEC-49 · EscenarioPantallaCompleta · EscenarioTarjeta · FranjaDelEscenario · TarjetaDelEscenario · AnilloDeListo · tokens escena-*"
           >
             <DemoEscenario />
+          </Seccion>
+          <Seccion
+            id="ruta-escenario-bienvenida"
+            titulo="Escenario de la bienvenida por estación"
+            cuando="las estaciones 2 a 5 de la bienvenida: lo que gana el agente en cada una, con «Cambiar nombre» que vuelve a Tu negocio. En la 5 no hay chat simulado: la prueba real va por la conexión."
+            no="Nuevo agente (usa la tarjeta de 340 px)."
+            piezas="HU-UX-25 · escenarioDeLaBienvenida · MarcoDeBienvenida"
+          >
+            <DemoEscenarioDeLaBienvenida />
           </Seccion>
           <Seccion
             id="ruta-chat"
