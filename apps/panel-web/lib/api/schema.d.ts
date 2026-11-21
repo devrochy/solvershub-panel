@@ -21286,12 +21286,12 @@ export interface components {
             aplica: boolean;
             /**
              * Abrir
-             * @description El panel debe abrir el asistente solo: nunca se tocó, el negocio no tiene agente creado y quien consulta es propietario del negocio.
+             * @description El panel debe abrir el asistente solo: nunca se tocó, el negocio no tiene un agente propio ajeno a la bienvenida y quien consulta es propietario del negocio.
              */
             abrir: boolean;
             /**
              * Avisar
-             * @description Aviso persistente: empezó o saltó el recorrido, no lo terminó y el negocio no tiene agente creado.
+             * @description Aviso persistente: empezó o saltó el recorrido, no lo terminó y el negocio no tiene un agente propio ajeno a la bienvenida (el agente que creó la bienvenida no lo apaga).
              */
             avisar: boolean;
             /** Omitido En */
