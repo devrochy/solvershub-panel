@@ -47,7 +47,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   // HU-AOS-29: tablero de fiabilidad.
   ["/agentes/calidad", "agents", false],
   // HU-CRM-12: lista de clientes de Ventas y de Agenda; exigen la sección `leads`, como Clientes.
-  ["/comercio/clientes", "leads", false], ["/calendario/clientes", "leads", false],
+  ["/comercio/clientes", "leads", false], ["/leads/captados", "leads", false], ["/calendario/clientes", "leads", false],
   // HU-ACC-04 (ADR-0174): Dispositivos y Alertas de acceso salen de Cobranza y son del negocio. Rediseño B (SEG):
   // una sola página `/seguridad` con los equipos; el historial de alertas queda en su ruta, con su propia clave.
   ["/seguridad", "devices", false], ["/seguridad/alertas", "access_alerts", false],

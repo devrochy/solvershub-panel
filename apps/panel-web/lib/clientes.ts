@@ -444,3 +444,13 @@ export function puedeEditarClientes(
   if (!me) return false;
   return me.role === "master" || me.role === "tester" || me.tenant?.role === "owner" || me.permissions?.leads === "write";
 }
+
+/**
+ * A dónde lleva «Ver en…» del lead del core (HU-AOS-70, ADR-0193): a Clientes de Ventas si el negocio tiene el agente
+ * Ventas (ahí suma pedidos y cotizaciones) y, sin comercio, a Clientes › Leads.
+ */
+export function enlaceDelLead(conVentas: boolean): { href: string; etiqueta: string } {
+  return conVentas
+    ? { href: "/comercio/clientes", etiqueta: "Ver en Clientes de Ventas" }
+    : { href: "/leads/captados", etiqueta: "Ver en Leads" };
+}

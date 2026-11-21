@@ -142,6 +142,26 @@ describe("columnasDeLaLista", () => {
     expect(columnasDeLaLista(agentes, "agenda").map((c) => c.key)).toEqual(["proxima_cita"]);
     expect(columnasDeLaLista([], "ventas")).toEqual([]);
   });
+
+  it("Leads en un negocio sin comercio (HU-AOS-70): las del lead del core, sin pedidos ni cotizaciones", () => {
+    const sinComercio: LeadsResponse["agents"] = [
+      {
+        key: "leads",
+        name: "Leads",
+        icon: "target",
+        columns: [
+          { key: "estado_lead", label: "Estado del lead" },
+          { key: "seguimiento_nota", label: "Próxima acción" },
+          { key: "origen", label: "Origen" },
+          { key: "negocio", label: "Negocio" },
+        ],
+      },
+      { key: "suscripciones", name: "Suscripciones", icon: "repeat", columns: [{ key: "plan", label: "Plan" }] },
+    ];
+    const claves = columnasDeLaLista(sinComercio, "leads").map((c) => c.key);
+    expect(claves).toEqual(["estado_lead", "seguimiento_nota", "origen", "negocio"]);
+    expect(claves.some((k) => /pedido|cotiz/.test(k))).toBe(false);
+  });
 });
 
 describe("Ventas › Clientes operable", () => {
