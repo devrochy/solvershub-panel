@@ -24,6 +24,7 @@ import type {
   LeadPerfil,
 } from "@/lib/api/types";
 import {
+  enlaceDelLead,
   columnasDeSoloLectura,
   datosFueraDelPerfil,
   ETAPA_PERDIDA,
@@ -60,14 +61,14 @@ const CAMPOS_DE_PERDIDA = ["motivo_perdida", "nota_perdida"];
 
 const TITULO_DEL_PACK: Record<string, string> = {
   // El lead es del core desde ADR-0193 (`leads`); `pack_commerce` queda para un backend sin desplegar.
-  leads: "Lead de venta",
+  leads: "Lead",
   pack_commerce: "Lead de venta",
   pack_cobranza: "Datos de cobranza",
 };
 
 const ENLACE_DEL_AGENTE: Record<string, string> = {
   ventas: "/comercio/pedidos",
-  leads: "/comercio/clientes",
+  leads: "/leads/captados",
   cobranza: "/cobranza/clientes",
   agenda: "/calendario",
 };
@@ -304,7 +305,13 @@ export function FichaCliente({
             <HistoriaDelCliente key={versionHistoria} leadId={detalle.id} />
           </div>
         ) : agente ? (
-          <AgenteTab leadId={detalle.id} agente={agente} extras={detalle.extras} puedeEditar={puedeEditar} />
+          <AgenteTab
+            leadId={detalle.id}
+            agente={agente}
+            extras={detalle.extras}
+            puedeEditar={puedeEditar}
+            conVentas={detalle.agentes.some((a) => a.key === "ventas")}
+          />
         ) : null}
       </SheetContent>
     </Sheet>
@@ -440,11 +447,14 @@ function AgenteTab({
   agente,
   extras,
   puedeEditar,
+  conVentas,
 }: {
   leadId: string;
   agente: LeadAgentData;
   extras: Record<string, unknown>;
   puedeEditar: boolean;
+  /** El negocio tiene el agente Ventas (comercio): el lead se trabaja en sus Clientes. */
+  conVentas: boolean;
 }) {
   const soloLectura = columnasDeSoloLectura(agente.columns, agente.editables);
   // El seguimiento (HU-CRM-21) tiene su propia tarjeta: no se repite en el formulario del pack.
@@ -470,8 +480,9 @@ function AgenteTab({
               // HU-CRM-20: los pedidos de ESTE cliente, no la lista general.
               <Link href={`${ENLACE_DEL_AGENTE.ventas}?cliente=${encodeURIComponent(leadId)}`}>Ver sus pedidos</Link>
             ) : agente.key === "leads" ? (
-              // El lead (ADR-0193) se trabaja en Clientes de Ventas, con su embudo y su seguimiento.
-              <Link href={ENLACE_DEL_AGENTE.leads}>Ver en Clientes de Ventas</Link>
+              // El lead (ADR-0193) se trabaja con su embudo y su seguimiento: en Clientes de Ventas si el negocio vende,
+              // y si no, en Clientes › Leads (HU-AOS-70).
+              <Link href={enlaceDelLead(conVentas).href}>{enlaceDelLead(conVentas).etiqueta}</Link>
             ) : (
               <Link href={ENLACE_DEL_AGENTE[agente.key]}>Abrir en {agente.name}</Link>
             )}

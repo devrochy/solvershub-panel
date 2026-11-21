@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  enlaceDelLead,
   columnasDeSoloLectura,
   consultaClientes,
   datosDelPerfil,
@@ -334,5 +335,12 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
     expect(textoDeValor(null)).toBe("—");
     expect(textoDeValor(undefined)).toBe("—");
     expect(textoDeValor("250000")).toBe("—");
+  });
+});
+
+describe("enlaceDelLead (HU-AOS-70)", () => {
+  it("con Ventas lleva a Clientes de Ventas; sin comercio, a Clientes › Leads", () => {
+    expect(enlaceDelLead(true)).toEqual({ href: "/comercio/clientes", etiqueta: "Ver en Clientes de Ventas" });
+    expect(enlaceDelLead(false)).toEqual({ href: "/leads/captados", etiqueta: "Ver en Leads" });
   });
 });

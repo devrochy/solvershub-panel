@@ -1,3 +1,4 @@
+import { CaptarLeadsCard } from "@/app/(app)/habilidades/_components/captar-leads-card";
 import { PluginCard } from "@/app/(app)/habilidades/_components/plugin-card";
 import { SubscriptionProviderCard } from "@/app/(app)/habilidades/_components/subscription-provider-card";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
@@ -36,6 +37,8 @@ export default async function PluginsPage() {
       {proveedorRes.ok && proveedorRes.data.estado !== "sin_proveedor" && (
         <SubscriptionProviderCard settings={proveedorRes.data} />
       )}
+
+      <CaptarLeadsCard />
 
       {res.data.length === 0 ? (
         <EmptyState
