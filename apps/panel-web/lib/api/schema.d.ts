@@ -9778,6 +9778,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/plan/recargas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Comprar Recarga
+         * @description Link de pago de un paquete de recarga de créditos (ADR-0209 §4, HU-BILL-23). Mismo permiso que
+         *     `POST /subscribe`. El precio lo arma el servidor con el descuento del plan vigente.
+         *
+         *     400 `unknown_package`: paquete desconocido.
+         *     409 `recarga_no_disponible`: sin suscripción activa o en Free.
+         *     409 `recarga_bajo_minimo`: el precio queda bajo el mínimo de Wompi del ambiente (sandbox: 150.000 COP).
+         */
+        post: operations["comprar_recarga_api_v1_admin_plan_recargas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -19263,6 +19288,11 @@ export interface components {
              * @default false
              */
             plan_por_el_asistente: boolean;
+            /**
+             * Recargas
+             * @default []
+             */
+            recargas: components["schemas"]["TopUpPackage"][];
         };
         /** PlantillaDeEnvio */
         PlantillaDeEnvio: {
@@ -24725,6 +24755,13 @@ export interface components {
             checkout_url: string | null;
             /** Periodo */
             periodo?: string | null;
+            /**
+             * Concepto
+             * @default plan
+             */
+            concepto: string;
+            /** Creditos */
+            creditos?: number | null;
         };
         /** Kpi */
         pack_cobranza__admin_api__Kpi: {
@@ -25042,6 +25079,28 @@ export interface components {
              * @default 0
              */
             over_balance: number;
+        };
+        /**
+         * TopUpPackage
+         * @description Paquete de recarga de créditos con el precio del plan vigente (ADR-0209 §4, D-79): el de lista
+         *     menos `features.descuento_recarga` del plan, en pesos enteros.
+         */
+        TopUpPackage: {
+            /** Id */
+            id: string;
+            /** Creditos */
+            creditos: number;
+            /** Precio Lista Cop */
+            precio_lista_cop: number;
+            /** Descuento Pct */
+            descuento_pct: number;
+            /** Precio Cop */
+            precio_cop: number;
+        };
+        /** TopUpRequest */
+        TopUpRequest: {
+            /** Paquete */
+            paquete: string;
         };
     };
     responses: never;
@@ -46536,6 +46595,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    comprar_recarga_api_v1_admin_plan_recargas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopUpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscribeResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
