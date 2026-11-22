@@ -21,13 +21,6 @@ import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 import { Tabs } from "@/components/ui/tabs";
 import { TabLinks } from "./tab-links";
 
-// El catálogo muestra `ErrorDeCarga`, cuyo «Reintentar» usa el router.
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
-  usePathname: () => "/catalogo",
-  useSearchParams: () => new URLSearchParams(),
-}));
-
 afterEach(cleanup);
 
 describe("Badge (HU-DS-03)", () => {
@@ -337,10 +330,5 @@ describe("catálogo", () => {
     expect(catalogoHabilitado({ PANEL_CATALOGO: "true" })).toBe(false);
   });
 
-  // axe sobre el catálogo completo es lento en el runner con cobertura: tiempo propio.
-  it("no tiene violaciones graves de accesibilidad", async () => {
-    const { Catalogo } = await import("@/app/(dev)/catalogo/_components/catalogo");
-    const { container } = render(<Catalogo />);
-    expect(await violacionesGraves(container)).toEqual([]);
-  }, 30_000);
+  // La accesibilidad del catálogo completo está en catalogo-a11y.test.tsx, partida por grupo.
 });

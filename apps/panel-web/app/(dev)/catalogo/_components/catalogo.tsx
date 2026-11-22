@@ -186,10 +186,10 @@ function Seccion({
   );
 }
 
-type Grupo = { id: string; titulo: string; piezas: { id: string; titulo: string }[] };
+export type Grupo = { id: string; titulo: string; piezas: { id: string; titulo: string }[] };
 
-/** El índice: las piezas agrupadas por lo que hace quien usa el panel. */
-const GRUPOS: Grupo[] = [
+/** El índice: las piezas agrupadas por lo que hace quien usa el panel. El test de accesibilidad corre axe por grupo. */
+export const GRUPOS: Grupo[] = [
   {
     id: "mostrar",
     titulo: "Mostrar",
