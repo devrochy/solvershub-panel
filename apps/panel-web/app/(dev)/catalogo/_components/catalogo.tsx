@@ -667,7 +667,7 @@ export function Catalogo() {
               onValueChange={setPlan}
               options={[
                 { value: "free", label: "Free", description: "Para probar." },
-                { value: "basico", label: "Básico", description: "Hasta 500 conversaciones al mes." },
+                { value: "basico", label: "Básico", description: "12.000 créditos al mes." },
               ]}
             />
           </Seccion>

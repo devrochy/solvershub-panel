@@ -10,11 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { RegistroPinForm } from "@/components/domain/registro-pin-form";
 
 import { EmbeddedSignup } from "./embedded-signup";
@@ -30,16 +30,16 @@ async function enviar(action: string, payload: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload }),
   });
-  const json = (await res.json().catch(() => ({}))) as { error?: string };
+  const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
   return res.ok
     ? { ok: true as const, data: json as unknown }
-    : { ok: false as const, error: json.error ?? "No se pudo completar." };
+    : { ok: false as const, error: json.error ?? "No se pudo completar.", code: json.code };
 }
 
 /** Alta de WhatsApp (CON-16): con Facebook primero; con tu app de Meta y a mano, plegados debajo. */
 export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Sesion | null }) {
   const router = useRouter();
-  const [status, setStatus] = useState<{ loading?: string; error?: string; success?: string }>({});
+  const [status, setStatus] = useState<{ loading?: string; error?: string; code?: string; success?: string }>({});
   const [entorno, setEntorno] = useState<"sandbox" | "production">("sandbox");
   // Alta BYOK que quedó esperando el registro del número con su PIN (HU-CONN-06).
   const [porRegistrar, setPorRegistrar] = useState<AltaByok | null>(null);
@@ -48,7 +48,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
     setStatus({ loading: action });
     const res = await enviar(action, payload);
     if (!res.ok) {
-      setStatus({ error: res.error });
+      setStatus({ error: res.error, code: res.code });
       return;
     }
     setStatus({ success: ok });
@@ -70,7 +70,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
       environment: entorno,
     });
     if (!res.ok) {
-      setStatus({ error: res.error });
+      setStatus({ error: res.error, code: res.code });
       return;
     }
     const alta = res.data as AltaByok;
@@ -116,7 +116,7 @@ export function WhatsappWizard({ estado, sesion }: { estado: Estado; sesion: Ses
         </CardContent>
       </Card>
 
-      <FormFeedback error={status.error} success={status.success} />
+      <ResultadoConPlan error={status.error} code={status.code} success={status.success} />
 
       <details className="group rounded-lg border border-border-soft bg-surface">
         <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-3">

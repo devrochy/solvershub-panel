@@ -39,7 +39,7 @@ export async function dejarListo(agenteId: string): Promise<Respuesta<DejarListo
 export async function crearYDejarListo(
   estado: EstadoDelAsistente,
   agenteId: string | null,
-): Promise<{ ok: true; agenteId: string; listo: DejarListo } | { ok: false; error: string }> {
+): Promise<{ ok: true; agenteId: string; listo: DejarListo } | { ok: false; error: string; code?: string }> {
   let agente = agenteId;
   if (agente) {
     // Volvió a «Tu negocio» con el agente ya creado: el nombre lo manda esta estación (HU-UX-25).
@@ -59,7 +59,8 @@ export async function crearYDejarListo(
       answers: respuestasDeCreacion(estado),
       name: estado.nombreDelAgente.trim(),
     });
-    if (!creado.ok) return { ok: false, error: creado.error };
+    // `code` viaja para reconocer el 409 del plan (`plan_plugin_not_included`, `plan_limit_agentes`).
+    if (!creado.ok) return { ok: false, error: creado.error, code: creado.code };
     agente = creado.data.agentId;
   }
   const listo = await dejarListo(agente);

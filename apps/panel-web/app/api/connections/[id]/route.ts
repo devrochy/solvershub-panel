@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
+import { responder } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
 const CHANNEL_ACTIONS = new Set(["activate", "deactivate", "primary", "delete"]);
 const META_ACTIONS = new Set(["activate", "deactivate", "delete"]);
 
-/** BFF: estado de una conexión (canal manual o conexión de Meta). */
+/** BFF: estado de una conexión (canal manual o conexión de Meta). Activar puede chocar con el tope del plan. */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as
@@ -24,8 +25,5 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     method: "POST",
     body: { action, ...(body?.password ? { password: body.password } : {}) },
   });
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
-  }
-  return NextResponse.json({ ok: true });
+  return responder(res, () => ({ ok: true }));
 }

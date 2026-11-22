@@ -87,8 +87,9 @@ export function ConnectionActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, kind }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    return { ok: res.ok, error: json.error };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    // Activar puede chocar con el tope de conexiones del plan (HU-BILL-19): el toast ofrece mejorarlo.
+    return { ok: res.ok, error: json.error, code: json.code };
   }
 
   async function runAccion(action: "activate" | "deactivate" | "primary") {

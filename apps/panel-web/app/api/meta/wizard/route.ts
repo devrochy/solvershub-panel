@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { responder } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
 /**
@@ -12,12 +13,9 @@ export async function GET(request: Request) {
   if (url.searchParams.get("session") === "1") {
     const env = url.searchParams.get("environment") === "sandbox" ? "sandbox" : "production";
     const res = await apiFetch(`/admin/meta/wizard/session?environment=${env}`);
-    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-    return NextResponse.json(res.data ?? null);
+    return responder(res, (data) => data ?? null);
   }
-  const res = await apiFetch("/admin/meta/wizard");
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res.data);
+  return responder(await apiFetch("/admin/meta/wizard"));
 }
 
 const RUTAS: Record<string, { path: string; campos: string[]; status: number }> = {
@@ -54,6 +52,7 @@ export async function POST(request: Request) {
     if (valor !== undefined && valor !== null) payload[campo] = valor;
   }
   const res = await apiFetch(destino.path, { method: "POST", body: payload });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+  // En error reenvía `code` y `details` (409 del plan: `plan_limit_conexiones`, HU-BILL-19).
+  if (!res.ok) return responder(res);
   return NextResponse.json(res.data ?? { ok: true }, { status: destino.status });
 }

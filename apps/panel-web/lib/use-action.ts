@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { esLimiteDePlan, RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";
 import { toast } from "@/lib/toast-store";
 
 export interface ActionResult {
@@ -11,6 +12,8 @@ export interface ActionResult {
   success?: string;
   /** Estado HTTP del BFF, si se conoce: con 401 la sesión ya no vale y se vuelve a /login. */
   status?: number;
+  /** `code` del error del BFF: si es del plan (`esLimiteDePlan`), el toast ofrece «Mejorar mi plan». */
+  code?: string;
 }
 
 export interface UseActionOptions {
@@ -48,7 +51,10 @@ export function useAction({ refresh = true, rollback }: UseActionOptions = {}) {
           // `error` llega de un JSON: si no es texto (p. ej. `{code, message}`), renderizarlo
           // tumbaría la página (React #31).
           const error: unknown = result.error;
-          toast.error(typeof error === "string" && error ? error : "Algo salió mal. Inténtalo de nuevo.");
+          toast.error(
+            typeof error === "string" && error ? error : "Algo salió mal. Inténtalo de nuevo.",
+            esLimiteDePlan(result.code) ? { href: RUTA_MEJORAR_PLAN, label: TEXTO_MEJORAR_PLAN } : undefined,
+          );
           return false;
         }
         toast.success(result.success ?? "Listo.");

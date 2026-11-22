@@ -44,12 +44,16 @@ describe("el crédito en palabras (CYP-02)", () => {
     expect(c.titulo).toBe("Te quedan 9.588 créditos");
     expect(c.aviso?.titulo).toBe("Vas al 84 % y faltan 9 días");
     // 50.412 en 21 días son 2.400 al día: los 9.588 alcanzan para 4 días, hasta el 14.
-    expect(c.aviso?.texto).toBe("A este ritmo alcanza hasta el 14 de nov., y se renueva el 19 de nov. Tu asistente sigue respondiendo, pero conviene mejorar el plan.");
+    expect(c.aviso?.texto).toBe("A este ritmo alcanza hasta el 14 de nov., y se renueva el 19 de nov. Si se acaba, las conversaciones pasan a tu equipo: conviene mejorar el plan.");
     expect(creditoEnPalabras(credito(48500, 81, -27, 3), AHORA)!.aviso?.texto).toMatch(/^A este ritmo te alcanza/);
   });
 
   it("agotado o sin medición", () => {
-    expect(creditoEnPalabras(credito(61000, 101.6), AHORA)).toMatchObject({ titulo: "Usaste todo el crédito del mes", tono: "danger" });
+    const agotado = creditoEnPalabras(credito(61000, 101.6), AHORA)!;
+    expect(agotado).toMatchObject({ titulo: "Usaste todo el crédito del mes", tono: "danger" });
+    // HU-BILL-20: sin saldo el turno corta y pasa a una persona; ya no «sigue respondiendo».
+    expect(agotado.aviso?.texto).toMatch(/^Las conversaciones nuevas pasan a una persona de tu equipo; las que estaban en curso siguen con una reserva pequeña\./);
+    expect(agotado.aviso?.texto).not.toMatch(/sigue respondiendo/);
     expect(creditoEnPalabras(credito(null, null), AHORA)?.detalle).toMatch(/La medición del consumo llega pronto/);
     expect(creditoEnPalabras(null, AHORA)).toBeNull();
   });
@@ -69,10 +73,34 @@ describe("los topes dicen qué pasa (CYP-04)", () => {
 
   it("al tope, cerca y sin límite", () => {
     expect(topeEnPalabras(uso("agentes", 3, 3))).toMatchObject({ uso: "3 de 3", nota: "No puedes publicar otro agente", tono: "danger", mejorar: true });
-    expect(topeEnPalabras(uso("conversaciones_audio", 96, 100))).toMatchObject({ titulo: "Notas de voz del mes", nota: "Quedan 4 notas de voz este mes", tono: "warning" });
     expect(topeEnPalabras(uso("colaboradores", 4, 10)).nota).toBe("Puedes invitar a 6 más");
     expect(topeEnPalabras(uso("clientes", 1240, null))).toMatchObject({ uso: "1.240, sin límite", porcentaje: null, mejorar: false });
-    expect(topesEnPalabras([uso("clientes", 1, null), uso("colaboradores", 4, 10), uso("agentes", 3, 3)]).map((t) => t.clave)).toEqual(["agentes", "colaboradores", "clientes"]);
+  });
+
+  it("conexiones y correos (HU-BILL-19) con «X de Y» y qué pasa al llegar", () => {
+    expect(topeEnPalabras(uso("conexiones", 1, 2))).toMatchObject({ titulo: "Conexiones de canales", uso: "1 de 2", nota: "Queda 1 conexión", tono: "info", mejorar: false });
+    expect(topeEnPalabras(uso("conexiones", 6, 6))).toMatchObject({ uso: "6 de 6", nota: "No puedes agregar otra conexión", tono: "danger", mejorar: true });
+    expect(topeEnPalabras(uso("correos", 1, 3))).toMatchObject({ titulo: "Correos conectados", uso: "1 de 3", nota: "Quedan 2 correos" });
+    expect(topeEnPalabras(uso("correos", 1, 1)).nota).toBe("No puedes conectar otro correo");
+  });
+
+  it("un tope en cero es algo que el plan no incluye, no un tope lleno", () => {
+    // Free trae `correos: 0` y el backend lo manda con `percent: 100`.
+    expect(topeEnPalabras(uso("correos", 0, 0, 100))).toMatchObject({ uso: "No incluido", porcentaje: null, nota: "Tu plan no incluye correos", tono: "neutral", mejorar: true });
+  });
+
+  it("solo los topes estructurales, en orden fijo, sin las métricas de volumen de v1", () => {
+    const usage = [
+      uso("correos", 0, 1),
+      uso("conversaciones", 812, 1500),
+      uso("clientes", 1, null),
+      uso("conexiones", 1, 2),
+      uso("mensajes", 10, 100),
+      uso("colaboradores", 4, 10),
+      uso("conversaciones_audio", 96, 100),
+      uso("agentes", 3, 3),
+    ];
+    expect(topesEnPalabras(usage).map((t) => t.clave)).toEqual(["agentes", "colaboradores", "clientes", "conexiones", "correos"]);
   });
 });
 
@@ -95,10 +123,53 @@ describe("el plan y los pagos en palabras (CYP-01, 05, 06)", () => {
     expect(accionDePlan(plan("free", "Gratis", 0), pro).tipo).toBe("gratis");
     expect(precioDelPlan(pro)).toMatch(/249\.000 al mes$/);
     expect(precioDelPlan({ is_free: true, price_cop: 0 })).toBe("Sin costo");
-    expect(limiteEnPalabras("conversaciones", 1500)).toBe("1.500 conversaciones al mes");
     expect(limiteEnPalabras("agentes", 1)).toBe("1 agente");
     expect(limiteEnPalabras("colaboradores", null)).toBe("Personas sin límite");
-    expect(funcionesEnPalabras({ soporte: "Soporte prioritario", reportes: true, multi_negocio: true, apagada: false })).toEqual(["Soporte prioritario", "Reportes", "Varios negocios"]);
+    expect(limiteEnPalabras("conexiones", 6)).toBe("6 conexiones");
+    expect(limiteEnPalabras("conexiones", 1)).toBe("1 conexión");
+    expect(limiteEnPalabras("correos", 0)).toBe("Sin correos");
+    expect(limiteEnPalabras("conocimiento_mb", 500)).toBe("500 MB para documentos");
+    // Claves que no son del catálogo v3: el texto si lo traen, o el nombre de la clave.
+    expect(funcionesEnPalabras({ soporte: "Soporte por WhatsApp", reportes: true, multi_negocio: true, apagada: false })).toEqual(["Soporte por WhatsApp", "Reportes", "Varios negocios"]);
+  });
+
+  it("los beneficios del catálogo v3 en palabras simples (HU-BILL-18)", () => {
+    const free = { canales: ["whatsapp", "web"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: null, marca_propia: false, historial_dias: 30, campanas: "ninguna", soporte: "comunidad" };
+    expect(funcionesEnPalabras(free)).toEqual(["Atiende por WhatsApp y chat web", "Historial de 30 días", "Soporte en la comunidad"]);
+    const basic = { ...free, canales: ["whatsapp", "web", "telegram"], descuento_recarga: 0, historial_dias: 90, campanas: "recordatorios", soporte: "email" };
+    expect(funcionesEnPalabras(basic)).toEqual([
+      "Atiende por WhatsApp, chat web y Telegram",
+      "Historial de 90 días",
+      "Recordatorios a tus clientes",
+      "Soporte por correo",
+    ]);
+    const premium = {
+      canales: ["whatsapp", "web", "telegram", "instagram", "messenger"],
+      nivel_ia: "avanzado",
+      byok: false,
+      acumulable_meses: 1,
+      descuento_recarga: 15,
+      marca_propia: true,
+      historial_dias: 365,
+      campanas: "completas",
+      soporte: "prioritario",
+    };
+    expect(funcionesEnPalabras(premium)).toEqual([
+      "Atiende por WhatsApp, chat web, Telegram, Instagram y Messenger",
+      "IA Avanzada para tus agentes",
+      "El crédito que no uses pasa al mes siguiente",
+      "15 % de descuento al comprar créditos",
+      "Tu marca, sin la de SolversHub",
+      "Historial de 1 año",
+      "Campañas a tus clientes",
+      "Soporte prioritario",
+    ]);
+    const empresarial = { ...premium, byok: true, acumulable_meses: 2, descuento_recarga: 25, historial_dias: null, soporte: "dedicado" };
+    expect(funcionesEnPalabras(empresarial)).toEqual(
+      expect.arrayContaining(["El crédito que no uses se guarda hasta 2 meses", "25 % de descuento al comprar créditos", "Historial sin límite", "Conecta tu propia cuenta de IA", "Soporte dedicado"]),
+    );
+    // Nada de «Byok», «Ninguna» ni claves crudas.
+    expect(funcionesEnPalabras(empresarial).join(" ")).not.toMatch(/byok|ninguna|_/i);
   });
 
   it("los pagos por mes, con su canal y qué hacer si no pasó", () => {

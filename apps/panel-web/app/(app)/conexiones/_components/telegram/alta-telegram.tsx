@@ -4,9 +4,9 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { rutaDeFicha } from "@/lib/conexion-ficha";
@@ -33,6 +33,8 @@ export function AltaTelegram({ onVolver, onConectada }: { onVolver: () => void; 
   const [nombre, setNombre] = useState("");
   const [errorToken, setErrorToken] = useState<string>();
   const [error, setError] = useState<string | null>(null);
+  // `code` del último error: el 409 del plan (`plan_limit_conexiones`, `plan_channel_not_included`) sale con «Mejorar mi plan».
+  const [codigo, setCodigo] = useState<string | undefined>();
   const [ajeno, setAjeno] = useState<string | null>(null);
   const [confirma, setConfirma] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -81,6 +83,7 @@ export function AltaTelegram({ onVolver, onConectada }: { onVolver: () => void; 
       return;
     }
     setError(mensajeErrorTelegram(data.code, data.error ?? "No se pudo conectar el bot."));
+    setCodigo(data.code);
   }
 
   return (
@@ -117,7 +120,7 @@ export function AltaTelegram({ onVolver, onConectada }: { onVolver: () => void; 
       {ajeno !== null && (
         <AvisoWebhookAjeno id="telegram_alta_confirma" url={ajeno} confirma={confirma} onConfirma={setConfirma} />
       )}
-      <FormFeedback error={error} />
+      <ResultadoConPlan error={error ?? undefined} code={codigo} />
       <div className="flex flex-wrap justify-between gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onVolver}>
           <ChevronLeft className="h-4 w-4" aria-hidden />

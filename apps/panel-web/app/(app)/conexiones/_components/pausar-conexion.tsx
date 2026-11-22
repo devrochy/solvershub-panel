@@ -39,10 +39,12 @@ function usePausar({ id, tipo, pausada, textoConfirmacion }: Pausa) {
           ...(tipo === "meta_connection" ? { kind: "meta_connection" } : {}),
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
       return {
         ok: res.ok,
         error: json.error,
+        // Reanudar cuenta como alta: con el tope del plan lleno, el toast ofrece mejorarlo (HU-BILL-19).
+        code: json.code,
         status: res.status,
         success: pausada ? "Conexión reanudada." : "Conexión pausada.",
       };

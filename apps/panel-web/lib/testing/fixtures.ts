@@ -581,22 +581,46 @@ export const negociosDePlataforma: PlatformTenantPage = {
   total: 2,
 };
 
+/** Catálogo v3 por créditos (D-79, HU-BILL-18), tal cual `core/billing/plans.py` de develop. */
+export const planesV3: PlanResponse["plans"] = [
+  {
+    id: "free", name: "Free", price_cop: 0, is_free: true, current: false, monthly_credits: 1500,
+    limits: { clientes: 100, agentes: 1, colaboradores: 2, conexiones: 1, correos: 0, documentos: 3, conocimiento_mb: 10 },
+    features: { canales: ["whatsapp", "web"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: null, marca_propia: false, historial_dias: 30, campanas: "ninguna", soporte: "comunidad" },
+  },
+  {
+    id: "basic", name: "Basic", price_cop: 129000, is_free: false, current: false, monthly_credits: 12000,
+    limits: { clientes: 1000, agentes: 2, colaboradores: 5, conexiones: 2, correos: 1, documentos: 20, conocimiento_mb: 100 },
+    features: { canales: ["whatsapp", "web", "telegram"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: 0, marca_propia: false, historial_dias: 90, campanas: "recordatorios", soporte: "email" },
+  },
+  {
+    id: "premium", name: "Premium", price_cop: 299000, is_free: false, current: false, monthly_credits: 40000,
+    limits: { clientes: 5000, agentes: 5, colaboradores: 15, conexiones: 6, correos: 3, documentos: 100, conocimiento_mb: 500 },
+    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: false, acumulable_meses: 1, descuento_recarga: 15, marca_propia: true, historial_dias: 365, campanas: "completas", soporte: "prioritario" },
+  },
+  {
+    id: "empresarial", name: "Empresarial", price_cop: 799000, is_free: false, current: false, monthly_credits: 120000,
+    limits: { clientes: null, agentes: null, colaboradores: 50, conexiones: 20, correos: 10, documentos: 500, conocimiento_mb: 2000 },
+    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: true, acumulable_meses: 2, descuento_recarga: 25, marca_propia: true, historial_dias: null, campanas: "completas", soporte: "dedicado" },
+  },
+];
+
+/** Un negocio Basic del catálogo v3: solo topes estructurales en `usage` (HU-BILL-18/19). */
 export const plan: PlanResponse = {
-  overview: { plan_id: "basic", plan_name: "Básico", status: "active", operational: true, days_left: 11, has_plan: true },
+  overview: { plan_id: "basic", plan_name: "Basic", status: "active", operational: true, days_left: 11, has_plan: true },
   usage: [
-    { key: "conversations", label: "Conversaciones", unit: "conv", scope: "month", used: 120, limit: 500, percent: 24, exceeded: false },
+    { key: "clientes", label: "Clientes", unit: "clientes", scope: "lifetime", used: 140, limit: 1000, percent: 14, exceeded: false },
     { key: "agentes", label: "Agentes publicados", unit: "agentes", scope: "lifetime", used: 2, limit: 2, percent: 100, exceeded: false },
     { key: "colaboradores", label: "Colaboradores", unit: "colaboradores", scope: "lifetime", used: 1, limit: 5, percent: 20, exceeded: false },
+    { key: "conexiones", label: "Conexiones", unit: "conexiones", scope: "lifetime", used: 1, limit: 2, percent: 50, exceeded: false },
+    { key: "correos", label: "Correos conectados", unit: "correos", scope: "lifetime", used: 0, limit: 1, percent: 0, exceeded: false },
   ],
   payments: [],
-  plans: [
-    { id: "free", name: "Free", price_cop: 0, is_free: true, current: false, limits: { colaboradores: 2, agentes: 1 }, features: {}, monthly_credits: 2500 },
-    { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: true, limits: { colaboradores: 5, agentes: 2 }, features: {}, monthly_credits: 20000 },
-  ],
+  plans: planesV3.map((p) => ({ ...p, current: p.id === "basic" })),
   credit: {
-    limit: 20000,
+    limit: 12000,
     used: 1234.5,
-    percent: 6.2,
+    percent: 10.3,
     period_start: "2026-10-05T12:00:00Z",
     period_end: "2026-11-05T12:00:00Z",
     by_concept: { llm_turn: 1100, stt: 4.5, vision: 0, template_sent: 130 },

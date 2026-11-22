@@ -57,6 +57,8 @@ export const ESCALACION: Record<string, string> = {
   envio_fallido: "No se pudo enviar el mensaje",
   sin_resolver: "Varios turnos sin resolver",
   limite_iteraciones: "El asistente no llegó a una respuesta",
+  // HU-BILL-20: sin crédito ni colchón, el turno corta y la conversación pasa a una persona.
+  creditos_agotados: "Se agotó el crédito del plan",
   otro: "Otro",
 };
 
@@ -70,6 +72,7 @@ const ESCALACION_CRUDO: Record<string, string> = {
   turns_unresolved: "sin_resolver",
   max_iterations: "limite_iteraciones",
   guardrail: "verificacion",
+  creditos_agotados: "creditos_agotados",
 };
 
 /** Motivos que el modelo puede elegir en `escalate_to_human`. */

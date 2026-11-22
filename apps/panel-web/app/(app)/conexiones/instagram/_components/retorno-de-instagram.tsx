@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
+import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { nombreDeCuenta } from "@/lib/instagram-alta";
+import { esLimiteDePlan } from "@/lib/plan-limite";
 
 type Resultado =
   | { fase: "conectando" }
   | { fase: "listo"; usuario: string | null; id: string; suscrita: boolean }
-  | { fase: "error"; mensaje: string };
+  | { fase: "error"; mensaje: string; delPlan: boolean };
 
 /**
  * Retorno de Instagram Login: canjea el `code` (con su `state`) en el servidor y muestra el resultado. Lo primero que hace
@@ -35,12 +37,13 @@ export function RetornoDeInstagram({ code, state }: { code: string; state: strin
       });
       const json = (await res.json().catch(() => ({}))) as {
         error?: string;
+        code?: string;
         ig_user_id?: string;
         username?: string | null;
         subscribed?: boolean;
       };
       if (!res.ok || !json.ig_user_id) {
-        setResultado({ fase: "error", mensaje: json.error ?? "No se pudo conectar la cuenta." });
+        setResultado({ fase: "error", mensaje: json.error ?? "No se pudo conectar la cuenta.", delPlan: esLimiteDePlan(json.code) });
         return;
       }
       setResultado({ fase: "listo", usuario: json.username ?? null, id: json.ig_user_id, suscrita: json.subscribed === true });
@@ -58,10 +61,15 @@ export function RetornoDeInstagram({ code, state }: { code: string; state: strin
   if (resultado.fase === "error") {
     return (
       <div className="flex flex-col gap-4">
-        <div role="alert" className="flex items-start gap-2 rounded-lg border border-status-danger-border bg-status-danger-bg p-4 text-sm">
-          <AlertTriangle className="mt-0.5 h-4 w-4 text-status-danger-fg" aria-hidden />
-          <p className="text-body">{resultado.mensaje}</p>
-        </div>
+        {resultado.delPlan ? (
+          // El plan no incluye Instagram o ya no tiene conexiones libres (HU-BILL-19).
+          <AvisoLimiteDePlan mensaje={resultado.mensaje} />
+        ) : (
+          <div role="alert" className="flex items-start gap-2 rounded-lg border border-status-danger-border bg-status-danger-bg p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-status-danger-fg" aria-hidden />
+            <p className="text-body">{resultado.mensaje}</p>
+          </div>
+        )}
         <div>
           <Button asChild variant="accent">
             <Link href="/conexiones/instagram">Volver a intentar</Link>

@@ -24,6 +24,8 @@ const TONO: Record<string, Tono> = {
   rechazo_ia: "danger",
   envio_fallido: "danger",
   limite_iteraciones: "danger",
+  // Se resuelve mejorando el plan, no es una falla del asistente.
+  creditos_agotados: "warning",
 };
 
 /** Código y etiqueta de un motivo: los de la API, o el respaldo de `lib/labels`. */

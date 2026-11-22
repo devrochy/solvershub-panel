@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ChevronLeft } from "lucide-react";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,6 +63,8 @@ export function AltaTwilio({ onVolver, onConectada }: { onVolver: () => void; on
   const [previo, setPrevio] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // `code` del último error: el 409 del plan (`plan_limit_conexiones`, HU-BILL-19) sale con «Mejorar mi plan».
+  const [codigo, setCodigo] = useState<string | undefined>();
   const [cargando, setCargando] = useState(false);
   const [capacidades, setCapacidades] = useState<CapacidadesTwilio | null>(null);
   const [modo, setModo] = useState<Modo>("sender");
@@ -101,6 +104,7 @@ export function AltaTwilio({ onVolver, onConectada }: { onVolver: () => void; on
     if (!ok || !("senders" in data)) {
       const fallo = data as { error?: string; code?: string };
       setError(mensajeErrorTwilio(fallo.code, fallo.error ?? "No se pudo consultar Twilio."));
+      setCodigo(fallo.code);
       return;
     }
     setDescubierto(data);
@@ -136,6 +140,7 @@ export function AltaTwilio({ onVolver, onConectada }: { onVolver: () => void; on
     }
     const fallo = data as { error?: string; code?: string };
     setError(mensajeErrorTwilio(fallo.code, fallo.error ?? "No se pudo conectar el Sandbox."));
+    setCodigo(fallo.code);
   }
 
   function elegirSender(sid: string) {
@@ -178,6 +183,7 @@ export function AltaTwilio({ onVolver, onConectada }: { onVolver: () => void; on
       setPaso(1);
     }
     setError(mensajeErrorTwilio(fallo.code, fallo.error ?? "No se pudo conectar el número."));
+    setCodigo(fallo.code);
   }
 
   return (
@@ -191,7 +197,7 @@ export function AltaTwilio({ onVolver, onConectada }: { onVolver: () => void; on
         </p>
       )}
 
-      {error && <FormFeedback error={error} />}
+      {error && <ResultadoConPlan error={error} code={codigo} />}
 
       {paso === 0 && conSandbox && (
         <RadioGroup

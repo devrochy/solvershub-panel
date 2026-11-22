@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Link from "next/link";
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -53,7 +54,17 @@ function ToastCard({ item }: { item: ToastItem }) {
       ) : (
         <CircleCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-status-success-fg" />
       )}
-      <p className="flex-1 text-sm leading-5">{item.message}</p>
+      <p className="flex-1 text-sm leading-5">
+        {item.message}
+        {item.enlace && (
+          <>
+            {" "}
+            <Link href={item.enlace.href} className="font-medium text-link underline underline-offset-2" onClick={() => dismiss(item.id)}>
+              {item.enlace.label}
+            </Link>
+          </>
+        )}
+      </p>
       <button
         aria-label="Cerrar aviso"
         className="rounded-md p-1 text-text-soft transition-colors hover:bg-hover hover:text-headline"

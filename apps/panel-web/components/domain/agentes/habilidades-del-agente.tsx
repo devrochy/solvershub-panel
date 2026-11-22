@@ -26,6 +26,7 @@ import {
   type PasoDeHabilidad,
 } from "@/lib/habilidades-del-agente";
 import { cn } from "@/lib/utils";
+import { esLimiteDePlan, RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";
 import { toast } from "@/lib/toast-store";
 
 const ESTADO: Record<ReturnType<typeof estadoDeHabilidad>, { texto: string; tono: "neutral" | "success" | "warning" }> = {
@@ -87,9 +88,14 @@ export function HabilidadesDelAgente({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ installed, ...(config ? { config } : {}) }),
     });
-    const data = (await res.json().catch(() => null)) as AgentSkill | { error?: string } | null;
+    const data = (await res.json().catch(() => null)) as AgentSkill | { error?: string; code?: string } | null;
     if (!res.ok || !data || "error" in data) {
-      toast.error((data && "error" in data && data.error) || "No se pudo guardar la habilidad.");
+      const fallo = data && "error" in data ? data : null;
+      // El plan puede no incluir la habilidad (`plan_plugin_not_included`, HU-BILL-19): el toast ofrece mejorarlo.
+      toast.error(
+        fallo?.error || "No se pudo guardar la habilidad.",
+        esLimiteDePlan(fallo?.code) ? { href: RUTA_MEJORAR_PLAN, label: TEXTO_MEJORAR_PLAN } : undefined,
+      );
       return false;
     }
     setHabilidades((todas) => todas.map((h) => (h.pack_id === packId ? (data as AgentSkill) : h)));

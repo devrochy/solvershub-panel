@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
+import { responder } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
-/** BFF: estado del vínculo WhatsApp Web (QR) y sus acciones. */
+/**
+ * BFF: estado del vínculo WhatsApp Web (QR) y sus acciones. En error reenvía `code` y `details`: aceptar el
+ * riesgo crea la conexión y puede responder el 409 del plan (`plan_limit_conexiones`, HU-BILL-19).
+ */
 export async function GET() {
-  const res = await apiFetch("/admin/meta/waweb");
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
-  }
-  return NextResponse.json(res.data);
+  return responder(await apiFetch("/admin/meta/waweb"));
 }
 
 export async function POST(request: Request) {
@@ -19,8 +19,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Acción inválida." }, { status: 400 });
   }
   const res = await apiFetch(path, { method: "POST" });
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
-  }
-  return NextResponse.json({ ok: true });
+  return responder(res, () => ({ ok: true }));
 }

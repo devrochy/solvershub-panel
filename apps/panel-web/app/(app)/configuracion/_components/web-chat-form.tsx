@@ -63,8 +63,9 @@ export function WebChatForm({
           rotate_key: rotateKey,
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string };
-      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el chat web." };
+      const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string; code?: string };
+      // Prender el chat web es un alta de conexión: con el tope del plan lleno, el toast ofrece mejorarlo (HU-BILL-19).
+      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el chat web.", code: json.code };
       setGuardado({ enabled, originsText });
       setSnippet(json.snippet ?? "");
       setRotateKey(false);

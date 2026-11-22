@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, LogIn } from "lucide-react";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { useFacebookSdk } from "@/lib/facebook-sdk";
 import {
   bloqueoDelAlta,
@@ -26,7 +26,7 @@ import type { components } from "@/lib/api/schema";
 type Intento = components["schemas"]["AttemptOut"];
 type Descubrimiento = components["schemas"]["DiscoverOut"];
 
-type Respuesta<T> = { ok: true; data: T } | { ok: false; error: string };
+type Respuesta<T> = { ok: true; data: T } | { ok: false; error: string; code?: string };
 
 async function messenger<T>(action: string, payload: Record<string, unknown> = {}): Promise<Respuesta<T>> {
   const res = await fetch("/api/meta/messenger", {
@@ -34,10 +34,10 @@ async function messenger<T>(action: string, payload: Record<string, unknown> = {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload }),
   });
-  const json = (await res.json().catch(() => ({}))) as { error?: string };
+  const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
   return res.ok
     ? { ok: true, data: json as T }
-    : { ok: false, error: json.error ?? "No se pudo completar." };
+    : { ok: false, error: json.error ?? "No se pudo completar.", code: json.code };
 }
 
 type Fase = "inicio" | "descubriendo" | "elegir" | "conectando" | "resultado";
@@ -53,7 +53,8 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
   const bloqueo = bloqueoDelAlta(estado);
   const [fase, setFase] = useState<Fase>("inicio");
   const [intento, setIntento] = useState<string | null>(null);
-  const [error, setError] = useState<string>();
+  // El error con su `code`: si es del plan (HU-BILL-19), se muestra con «Mejorar mi plan».
+  const [error, setError] = useState<{ error: string; code?: string }>();
   const [aviso, setAviso] = useState<string>();
   const [descubierto, setDescubierto] = useState<Descubrimiento | null>(null);
   const [elegidas, setElegidas] = useState<string[]>([]);
@@ -68,7 +69,7 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
     const res = await messenger<Intento>("attempt");
     setPreparando(false);
     if (!res.ok) {
-      setError(res.error);
+      setError(res);
       return;
     }
     intentoRef.current = res.data.attempt;
@@ -93,7 +94,7 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
     setFase("descubriendo");
     const res = await messenger<Descubrimiento>("discover", { code, attempt: usado });
     if (!res.ok) {
-      setError(res.error);
+      setError(res);
       setFase("inicio");
       // El intento se consumió: uno nuevo para reintentar.
       void preparar();
@@ -139,7 +140,7 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
       page_ids: elegidas,
     });
     if (!res.ok) {
-      setError(res.error);
+      setError(res);
       setFase("elegir");
       return;
     }
@@ -184,7 +185,7 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
     const ocupado = fase === "conectando";
     return (
       <div className="flex flex-col gap-4">
-        <FormFeedback error={error} success={aviso} />
+        <ResultadoConPlan error={error?.error} code={error?.code} success={aviso} />
         {descubierto.pages.length > 0 && (
           <>
             <p className="text-sm text-body">
@@ -224,7 +225,7 @@ export function MessengerAlta({ estado }: { estado: EstadoMessenger }) {
   const ocupado = fase === "descubriendo";
   return (
     <div className="flex flex-col gap-4">
-      <FormFeedback error={error} success={aviso} />
+      <ResultadoConPlan error={error?.error} code={error?.code} success={aviso} />
       <p className="max-w-prose text-sm text-body">
         Se abrirá una ventana de Facebook. Inicia sesión con la cuenta que administra la Página y autoriza a SolversHub a
         leer y responder sus mensajes. Después eliges qué Páginas conectar.

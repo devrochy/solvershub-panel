@@ -3,6 +3,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
@@ -133,6 +134,8 @@ export function JsonSchemaForm({
   const router = useRouter();
   const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [error, setError] = useState<string | null>(null);
+  // `code` del error del BFF: un 409 del plan (alta de una conexión, HU-BILL-19) sale con «Mejorar mi plan».
+  const [codigo, setCodigo] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -200,6 +203,7 @@ export function JsonSchemaForm({
     });
     const json = (await res.json().catch(() => ({}))) as {
       error?: { message?: string; fields?: Record<string, string> } | string;
+      code?: string;
     };
     setLoading(false);
     if (!res.ok) {
@@ -208,6 +212,7 @@ export function JsonSchemaForm({
       }
       const msg = typeof json.error === "string" ? json.error : json.error?.message;
       setError(msg ?? "No se pudo guardar la configuración.");
+      setCodigo(json.code);
       return;
     }
     setSuccess("Configuración guardada.");
@@ -388,7 +393,7 @@ export function JsonSchemaForm({
         </fieldset>
       ))}
 
-      <FormFeedback error={error} success={success} />
+      <ResultadoConPlan error={error ?? undefined} code={codigo} success={success} />
 
       <div>
         <Button type="submit" variant="accent" disabled={loading}>

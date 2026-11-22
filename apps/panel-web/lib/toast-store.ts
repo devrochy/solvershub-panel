@@ -7,10 +7,17 @@
 
 export type ToastKind = "success" | "error";
 
+/** Un enlace dentro del toast (p. ej. «Mejorar mi plan» con un 409 del plan, HU-BILL-27). */
+export interface ToastEnlace {
+  href: string;
+  label: string;
+}
+
 export interface ToastItem {
   id: number;
   kind: ToastKind;
   message: string;
+  enlace?: ToastEnlace;
 }
 
 const AUTO_MS = 5000;
@@ -61,9 +68,9 @@ export function resumeAutoDismiss(id: number, kind: ToastKind): void {
   timers.set(id, timer);
 }
 
-export function push(kind: ToastKind, message: string): number {
+export function push(kind: ToastKind, message: string, enlace?: ToastEnlace): number {
   const id = nextId++;
-  toasts = [...toasts, { id, kind, message }];
+  toasts = [...toasts, { id, kind, message, ...(enlace ? { enlace } : {}) }];
   schedule(id, kind);
   emit();
   return id;
@@ -73,8 +80,8 @@ export const toast = {
   success(message: string): number {
     return push("success", message);
   },
-  error(message: string): number {
-    return push("error", message);
+  error(message: string, enlace?: ToastEnlace): number {
+    return push("error", message, enlace);
   },
 };
 
