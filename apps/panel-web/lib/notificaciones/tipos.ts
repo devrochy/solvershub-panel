@@ -155,9 +155,24 @@ export function candidatasDeDestino(destino: NotificacionDestino): { href: strin
       return [ruta("/dlq")];
     case "cobranza":
       return [ruta("/cobranza")];
+    case "plan":
+      return [ruta("/plan")];
     default:
       return [];
   }
+}
+
+/**
+ * Avisos de consumo del crédito (HU-BILL-20): llegan con `section: "plan"` pero sin `target`, así que el
+ * destino se deduce del `event_key` y lleva a Consumo y plan.
+ */
+export const EVENTOS_DE_CREDITO: ReadonlySet<string> = new Set(["core.credit_80", "core.credit_100", "core.credit_buffer"]);
+
+/** El destino de una notificación: el `target` de la API o, si no lo trae, el que se deduce de su `event_key`. */
+export function destinoDeNotificacion(item: { event_key: string; target?: NotificacionDestino | null }): NotificacionDestino | null {
+  if (item.target) return item.target;
+  if (EVENTOS_DE_CREDITO.has(item.event_key)) return { entity: "plan", id: null, section: "plan" };
+  return null;
 }
 
 /** Ruta a la que lleva una notificación para este usuario, o `null` si no tiene a dónde. */

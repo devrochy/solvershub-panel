@@ -17,6 +17,7 @@ import {
   OPCIONES_SILENCIO,
   agruparPorDia,
   categoriasDisponibles,
+  destinoDeNotificacion,
   minutosHastaManana,
   rutaDeNotificacion,
   type Categoria,
@@ -173,7 +174,7 @@ export function CentroDeNotificaciones({ n, onCerrar }: { n: Estado; onCerrar: (
                       item={item}
                       ahora={ahora}
                       nueva={!n.conocidas.has(item.id)}
-                      href={rutaDeNotificacion(item.target, shell?.permisos, shell?.packs, shell?.esMaster)}
+                      href={rutaDeNotificacion(destinoDeNotificacion(item), shell?.permisos, shell?.packs, shell?.esMaster)}
                       onAbrir={alAbrir}
                       onArchivar={(i) => void n.archivar(i.id)}
                     />
