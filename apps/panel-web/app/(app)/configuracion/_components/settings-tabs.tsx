@@ -5,14 +5,13 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { AccesibilidadPanel } from "@/app/(app)/configuracion/_components/accesibilidad-panel";
-import { AdvancedPanel } from "@/app/(app)/configuracion/_components/advanced-panel";
+import { AdvancedPanel, type Advanced } from "@/app/(app)/configuracion/_components/advanced-panel";
 import { BajasCard } from "@/app/(app)/configuracion/_components/bajas-card";
 import { AvisoDatosCard } from "@/app/(app)/configuracion/_components/aviso-datos-card";
 import { BrainForm } from "@/app/(app)/configuracion/_components/brain-form";
 import { IdentityForm } from "@/app/(app)/configuracion/_components/identity-form";
 import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
 import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia-form";
-import { SkillsForm } from "@/app/(app)/configuracion/_components/skills-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
 import { Badge } from "@/components/ui/badge";
@@ -39,15 +38,6 @@ import type {
   WawebPolitica,
   WebChatSettings,
 } from "@/lib/api/types";
-
-type Advanced = {
-  versions: { id: string; version: string; is_active: boolean; created_at: string | null }[];
-  llm: { llm_provider: string; llm_model: string; has_api_key: boolean };
-  guardrails_text: string;
-  flow: { source: string; sections: { label: string; purpose: string | null; tools: string[] }[]; unknown_tools: string[] };
-  eval_runs: { id: string; status: string; score: number | null; created_at: string | null }[];
-  spec: Record<string, unknown>;
-};
 
 /** Sin la consulta de la sección: la URL vuelve al resumen. */
 function urlSinSeccion(consulta: string): string {
@@ -156,12 +146,6 @@ export function SettingsTabs({
         return memoriaEnPalabras(settings.memory);
       case "cerebro":
         return `${settings.brain.model_primary} · respuestas ${temperaturaEnPalabras(settings.brain.model_temperature).toLowerCase()}`;
-      case "herramientas": {
-        const total = settings.skills.length;
-        if (total === 0) return "Ninguna: llegan con las habilidades";
-        const encendidas = settings.skills.filter((s) => s.enabled).length;
-        return `${encendidas} de ${total} encendidas`;
-      }
       case "chat-web": {
         const sitios = webChat.allowed_origins.length;
         return webChat.enabled ? `Activo en ${sitios === 1 ? "1 sitio" : `${sitios} sitios`}` : "Apagado";
@@ -171,8 +155,9 @@ export function SettingsTabs({
       case "whatsapp-web":
         return "Política del equipo de SolversHub";
       case "agentspec": {
-        const activa = advanced.versions.find((v) => v.is_active);
-        return activa ? `Versión ${activa.version} activa` : "Sin versión activa";
+        const { llm_provider, llm_model, has_api_key } = advanced.llm;
+        if (!llm_provider) return "IA de SolversHub";
+        return [llm_provider, llm_model].filter(Boolean).join(" · ") + (has_api_key ? " · llave propia" : "");
       }
       case "accesibilidad":
         return "Atajos de teclado, solo en este navegador";
@@ -271,7 +256,6 @@ export function SettingsTabs({
               {abierta === "whatsapp-web" && waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
               {abierta === "cerebro" && <BrainForm brain={settings.brain} catalogo={catalogo} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
               {abierta === "memoria" && <MemoryForm memory={settings.memory} catalogo={catalogo} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
-              {abierta === "herramientas" && <SkillsForm skills={settings.skills} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
               {abierta === "datos-cliente" && (
                 <>
                   <p className="text-sm text-text-soft">
