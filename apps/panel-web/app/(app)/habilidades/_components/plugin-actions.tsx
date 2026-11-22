@@ -1,118 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { mensajeDeHabilitacion } from "@/lib/habilidades";
 import { useAction } from "@/lib/use-action";
 
 /**
- * Habilita/deshabilita una habilidad, o reintenta su salud si falló. El interruptor se mueve
- * en optimista y vuelve al estado real si la API no acepta el cambio (por ejemplo, al tope
- * de habilidades del plan), con el motivo en un aviso.
+ * Acciones de una habilidad en el negocio. Desde ADR-0206 (HU-AOS-91) no hay interruptor a
+ * nivel negocio: la habilidad es del negocio cuando algún agente activo la tiene instalada.
+ * Aquí solo se reintenta su salud si falló; si no está habilitada, se explica dónde instalarla.
  */
 export function PluginActions({
   pluginId,
   enabled,
   hasError,
-  nombre,
 }: {
   pluginId: string;
   enabled: boolean;
   hasError: boolean;
-  /** Nombre visible de la habilidad, para los nombres accesibles. */
-  nombre?: string;
 }) {
-  // Estado optimista mientras la API responde; `null` = lo que dice el servidor.
-  const [optimista, setOptimista] = useState<boolean | null>(null);
-  // Cuando el servidor trae un valor nuevo (tras refrescar), el optimista ya no manda.
-  const [enabledVisto, setEnabledVisto] = useState(enabled);
-  if (enabledVisto !== enabled) {
-    setEnabledVisto(enabled);
-    setOptimista(null);
-  }
-  const isEnabled = optimista ?? enabled;
-  const [confirming, setConfirming] = useState(false);
-  const { run, pending } = useAction({ rollback: () => setOptimista(null) });
+  const { run, pending } = useAction();
 
-  async function accion(action: "activate" | "deactivate" | "retry", success: string) {
+  async function reintentar() {
     const res = await fetch(`/api/plugins/${encodeURIComponent(pluginId)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action: "retry" }),
     });
     const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status,
-        error: action === "activate" ? mensajeDeHabilitacion(json.error, res.status) : json.error,
-      };
-    }
-    return { ok: true, success };
+    if (!res.ok) return { ok: false, status: res.status, error: json.error };
+    return { ok: true, success: "Salud reiniciada. Si vuelve a fallar, revisa su configuración." };
   }
 
-  function onToggle(checked: boolean) {
-    if (checked) {
-      setOptimista(true);
-      void run(() => accion("activate", "Habilidad habilitada."));
-      return;
-    }
-    setConfirming(true);
-  }
-
-  function confirmDeactivate() {
-    setConfirming(false);
-    setOptimista(false);
-    void run(() => accion("deactivate", "Habilidad deshabilitada."));
-  }
+  if (enabled && !hasError) return null;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        <Switch
-          checked={isEnabled}
-          onCheckedChange={onToggle}
+    <div className="flex items-start gap-3">
+      {!enabled && (
+        <p className="text-sm text-body">
+          Se instala en el agente que la usa, por ejemplo al crear un agente desde una plantilla.{" "}
+          <Link className="text-link underline underline-offset-2" href="/agentes">
+            Ir a Agentes
+          </Link>
+        </p>
+      )}
+      {hasError && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0"
+          onClick={() => void run(reintentar)}
           disabled={pending}
-          aria-label={isEnabled ? `Apagar ${nombre ?? pluginId}` : `Encender ${nombre ?? pluginId}`}
-        />
-        <span className="text-sm text-body">{isEnabled ? "Encendida" : "Apagada"}</span>
-        {hasError && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="ml-auto"
-            onClick={() => void run(() => accion("retry", "Salud reiniciada. Si vuelve a fallar, revisa su configuración."))}
-            disabled={pending}
-          >
-            Reintentar
-          </Button>
-        )}
-      </div>
-
-      <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent
-          title="Deshabilitar habilidad"
-          description="El agente dejará de usarla en este negocio."
         >
-          <p className="text-sm text-body">
-            Volver a habilitarla depende del límite de habilidades de tu plan: si ya estás en el
-            tope, puede que necesites mejorar el plan para reactivarla.
-          </p>
-          <div className="mt-6 flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button type="button" aria-label="Cancelar" size="icon" title="Cancelar" variant="outline"><X className="h-4 w-4" aria-hidden /></Button>
-            </DialogClose>
-            <Button type="button" variant="danger" onClick={confirmDeactivate}>
-              Deshabilitar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          Reintentar
+        </Button>
+      )}
     </div>
   );
 }

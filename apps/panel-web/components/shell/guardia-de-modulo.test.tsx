@@ -17,7 +17,7 @@ afterEach(() => {
   ruta = "/comercio/pedidos";
 });
 
-const PACKS = { pack_commerce: { enabled: true, hasConfig: false } };
+const PACKS = { pack_commerce: { enabled: true } };
 
 function montar(modulos: Record<string, "habilitado" | "plan" | "pack">, packs = PACKS) {
   return render(
@@ -44,11 +44,12 @@ describe("GuardiaDeModulo", () => {
     expect(screen.getByRole("link", { name: "Volver al Resumen" }).getAttribute("href")).toBe("/dashboard");
   });
 
-  it("con el pack apagado bloquea y ofrece activarlo", () => {
+  it("con la habilidad sin instalar bloquea y lleva a Agentes, sin botón de activar", () => {
     montar({ pack_commerce: "pack" });
     expect(screen.queryByText("Contenido del módulo")).toBeNull();
     expect(screen.getByRole("heading", { name: "Ventas está apagado" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Habilitar Ventas" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Ir a Agentes" }).getAttribute("href")).toBe("/agentes");
+    expect(screen.queryByRole("button", { name: /Habilitar/ })).toBeNull();
   });
 
   it("una ruta sin pack (Resumen) no se bloquea", () => {
@@ -58,7 +59,7 @@ describe("GuardiaDeModulo", () => {
   });
 
   it("sin estado de agentes cae al estado del pack", () => {
-    montar({}, { pack_commerce: { enabled: true, hasConfig: false } });
+    montar({}, { pack_commerce: { enabled: true } });
     expect(screen.getByText("Contenido del módulo")).toBeTruthy();
   });
 });
