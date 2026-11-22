@@ -1636,12 +1636,10 @@ export interface paths {
         put?: never;
         /**
          * Plugin Action
-         * @description Habilita/deshabilita el pack para el tenant, o limpia su salud de error.
+         * @description Limpia la salud de error del pack para el tenant (`retry`, ADR-0024).
          *
-         *     Habilitar aplica la cuota del plan (409 `plan_limit_plugins` con `used`/`limit` y
-         *     `enabled: false`: nada cambia y `GET /admin/plugins` la sigue mostrando deshabilitada);
-         *     deshabilitar no toca a otros tenants; y `retry` reinicia la salud (ADR-0024). Reusa el
-         *     servicio del panel SSR.
+         *     `activate` y `deactivate` responden 410 `business_activation_retired`: ya no hay interruptor del negocio, la
+         *     habilidad se instala o se quita en el agente que la usa (`/admin/agents/{id}/skills`).
          */
         post: operations["plugin_action_api_v1_admin_plugins__plugin_id__action_post"];
         delete?: never;
@@ -7064,8 +7062,9 @@ export interface paths {
         /**
          * Asistente Aplicar
          * @description Escribe lo que mostró la vista previa. Todo o nada: la configuración del negocio y la persona
-         *     del agente se guardan en una sola transacción, y si lo que se escribiría ya no es lo que se vio
-         *     (la configuración cambió en medio) responde 409 sin escribir.
+         *     de los valores por defecto de los agentes (`agent_defaults`) van en la misma fila de `app_settings` y
+         *     en una sola transacción, y si lo que se escribiría ya no es lo que se vio (la configuración cambió en
+         *     medio) responde 409 sin escribir.
          */
         post: operations["asistente_aplicar_api_v1_admin_settings_asistente__seccion__aplicar_post"];
         delete?: never;
@@ -7150,7 +7149,11 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Save Brain */
+        /**
+         * Save Brain
+         * @description Modelo y políticas de los valores por defecto de los agentes (`agent_defaults`, ADR-0206 §6): sin versión
+         *     del spec. Solo cambia lo que vino; un modelo principal vacío no cambia.
+         */
         put: operations["save_brain_api_v1_admin_settings_brain_put"];
         post?: never;
         delete?: never;
@@ -7198,7 +7201,7 @@ export interface paths {
         get?: never;
         /**
          * Save Memory Settings
-         * @description Memoria del agente: turnos de contexto y recall RAG.
+         * @description Memoria de los valores por defecto de los agentes (`agent_defaults`): turnos de contexto y recall RAG.
          */
         put: operations["save_memory_settings_api_v1_admin_settings_memory_put"];
         post?: never;
@@ -22905,11 +22908,6 @@ export interface components {
              */
             tone: string;
             /**
-             * Packs
-             * @default []
-             */
-            packs: string[];
-            /**
              * Escalation Triggers
              * @default []
              */
@@ -28279,8 +28277,8 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description El plan no permite habilitar más habilidades: `error.code = plan_limit_plugins`, `error.details = {metric, used, limit, enabled: false}`; la habilidad queda deshabilitada. */
-            409: {
+            /** @description `activate`/`deactivate` retirados (ADR-0206, HU-AOS-91): `error.code = business_activation_retired`. Una habilidad es del negocio si algún agente activo la tiene instalada; se instala en el agente. */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28357,13 +28355,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PluginConfigResponse"];
                 };
-            };
-            /** @description El plan no permite habilitar más habilidades: `error.code = plan_limit_plugins`, `error.details = {metric, used, limit, enabled: false}`; la habilidad queda deshabilitada. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {

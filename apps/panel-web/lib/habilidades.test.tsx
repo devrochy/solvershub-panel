@@ -6,25 +6,13 @@ import { PluginActions } from "@/app/(app)/habilidades/_components/plugin-action
 import { FeedbackProviders } from "@/components/ui/providers";
 import { getToasts, resetToasts } from "@/lib/toast-store";
 
-import { mensajeDeHabilitacion } from "./habilidades";
-
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, replace: vi.fn(), push: vi.fn() }),
 }));
 
-describe("mensaje del tope del plan", () => {
-  it("dice cuántas habilidades permite el plan", () => {
-    expect(mensajeDeHabilitacion("Tu plan no permite habilitar más habilidades (2/2).", 403)).toBe(
-      "Tu plan permite 2 habilidades y ya las usas todas. Deshabilita una o mejora el plan para habilitar otra.",
-    );
-    expect(mensajeDeHabilitacion("Tu plan no permite habilitar más habilidades (1/1).", 403)).toMatch(/permite 1 habilidad y/);
-    expect(mensajeDeHabilitacion("Falta configurarla.", 400)).toBe("Falta configurarla.");
-    expect(mensajeDeHabilitacion(undefined, 403)).toMatch(/Tu plan no permite/);
-  });
-});
-
-describe("interruptor de habilidad", () => {
+/** ADR-0206 (HU-AOS-91): sin interruptor a nivel negocio; solo reintentar y explicar dónde se instala. */
+describe("acciones de una habilidad", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
@@ -39,37 +27,37 @@ describe("interruptor de habilidad", () => {
     vi.unstubAllGlobals();
   });
 
-  function montar() {
-    render(
+  function montar(enabled: boolean, hasError: boolean) {
+    return render(
       <FeedbackProviders>
-        <PluginActions pluginId="pack_calendar" nombre="Agenda" enabled={false} hasError={false} />
+        <PluginActions pluginId="pack_calendar" enabled={enabled} hasError={hasError} />
       </FeedbackProviders>,
     );
-    return screen.getByRole("switch", { name: "Encender Agenda" });
   }
 
-  it("al tope del plan vuelve a apagado y explica el límite", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ error: "Tu plan no permite habilitar más habilidades (2/2)." }), { status: 403 }),
-    );
-    const interruptor = montar();
-    fireEvent.click(interruptor);
-    await waitFor(() =>
-      expect(getToasts()).toContainEqual(
-        expect.objectContaining({ kind: "error", message: expect.stringMatching(/Tu plan permite 2 habilidades/) }),
-      ),
-    );
-    await waitFor(() => expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe("false"));
-    expect(screen.getByText("Apagada")).toBeTruthy();
-    expect(refresh).not.toHaveBeenCalled();
+  it("no ofrece encender ni apagar la habilidad", () => {
+    montar(false, false);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("si la API acepta, queda encendido, avisa y refresca", async () => {
+  it("sin habilitar explica que se instala en el agente y enlaza a Agentes", () => {
+    montar(false, false);
+    expect(screen.getByText(/Se instala en el agente que la usa/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Ir a Agentes" }).getAttribute("href")).toBe("/agentes");
+  });
+
+  it("habilitada y sana no muestra nada", () => {
+    const { container } = montar(true, false);
+    expect(container.textContent).toBe("");
+  });
+
+  it("con error de salud reintenta con la acción retry", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
-    fireEvent.click(montar());
+    montar(true, true);
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
-    expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe("true");
-    expect(getToasts()).toContainEqual(expect.objectContaining({ kind: "success", message: "Habilidad habilitada." }));
-    expect(JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body))).toEqual({ action: "activate" });
+    expect(JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body))).toEqual({ action: "retry" });
+    expect(getToasts()).toContainEqual(expect.objectContaining({ kind: "success" }));
   });
 });
