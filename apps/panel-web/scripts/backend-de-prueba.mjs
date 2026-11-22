@@ -9,7 +9,8 @@
 //   PUERTO=8800 BOT_PAUSADO=1 node scripts/backend-de-prueba.mjs
 //   COBRANZA=1 (negocio con Cobranza en marcha: carteras, ruta, préstamos, promesas y auditoría)
 //   COMERCIO=1 (Ventas con catálogo, variantes, categorías, promociones, pedidos en todos los estados y dos aliados)
-//   CONSUMO=1 (Consumo y plan: crédito al 84 %, un período por pagar, pagos, cuatro planes y costos del mes con Meta)
+//   CONSUMO=1 (Consumo y plan, catálogo v3: Premium con el crédito al 84 %, conexiones al tope, un período por pagar,
+//   pagos, los cuatro planes y costos del mes con Meta) · CONSUMO=free (Free con el correo no incluido)
 //   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
 //   PLATAFORMA=1 (con MASTER=1: App de Meta, requisitos de Embedded Signup y alta automática con documentos y altas en revisión)
 //   SUSCRIPCIONES=1 (Suscripciones con datos: todos los estados, cuatro planes, cobros, mora, avisos y métricas)
@@ -56,7 +57,7 @@
 
 import { createServer } from "node:http";
 
-const { RESPUESTAS, politicaDatosCliente, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
+const { RESPUESTAS, politicaDatosCliente, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, planesV3, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
 
 const { CATALOGO_DE_PRUEBA } = await import("../lib/testing/asistente-config.ts");
@@ -633,46 +634,46 @@ respuestas["/admin/plugins/pack_commerce/config"] = {
   configured_secrets: ["wompi_private_key"],
 };
 
-// CONSUMO=1 (Consumo y plan): plan Pro con el crédito al 84 %, un período por pagar, pagos de varios canales, tres
-// planes y costos del mes por agente, modelo y conversación, con datos de Meta y una diferencia por revisar.
-if (process.env.CONSUMO === "1") {
+// CONSUMO=1 (Consumo y plan, planes v3 de D-79): Premium con el crédito al 84 %, las conexiones al tope, un período
+// por pagar, pagos de varios canales, los cuatro planes del catálogo y costos del mes por agente, modelo y conversación,
+// con datos de Meta y una diferencia por revisar. CONSUMO=free: el mismo negocio en Free, con el correo no incluido.
+if (process.env.CONSUMO === "1" || process.env.CONSUMO === "free") {
+  const enFree = process.env.CONSUMO === "free";
   const hoy = new Date();
   const dia = (n) => new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + n, 12).toISOString();
+  const actual = enFree ? "free" : "premium";
+  const topes = planesV3.find((p) => p.id === actual).limits;
+  const tope = (key, label, used) => {
+    const limit = topes[key];
+    return { key, label, unit: key, scope: "lifetime", used, limit, percent: limit == null ? null : limit === 0 ? 100 : Math.min(100, Math.round((used * 1000) / limit) / 10), exceeded: limit != null && used > limit };
+  };
   respuestas["/admin/plan"] = {
-    overview: { plan_id: "pro", plan_name: "Pro", status: "active", operational: true, days_left: 9, has_plan: true },
-    usage: [
-      { key: "agentes", label: "Agentes publicados", unit: "agentes", scope: "lifetime", used: 3, limit: 3, percent: 100, exceeded: false },
-      { key: "colaboradores", label: "Colaboradores", unit: "colaboradores", scope: "lifetime", used: 4, limit: 10, percent: 40, exceeded: false },
-      { key: "conversaciones", label: "Conversaciones", unit: "conv", scope: "month", used: 812, limit: 1500, percent: 54.1, exceeded: false },
-      { key: "conversaciones_audio", label: "Audios", unit: "audios", scope: "month", used: 96, limit: 100, percent: 96, exceeded: false },
-      { key: "clientes", label: "Clientes", unit: "clientes", scope: "lifetime", used: 1240, limit: null, percent: null, exceeded: false },
-    ],
+    overview: { plan_id: actual, plan_name: enFree ? "Free" : "Premium", status: enFree ? "trialing" : "active", operational: true, days_left: 9, has_plan: true },
+    usage: enFree
+      ? [tope("clientes", "Clientes", 38), tope("agentes", "Agentes publicados", 1), tope("colaboradores", "Colaboradores", 1), tope("conexiones", "Conexiones", 1), tope("correos", "Correos conectados", 0)]
+      : [tope("clientes", "Clientes", 1240), tope("agentes", "Agentes publicados", 3), tope("colaboradores", "Colaboradores", 4), tope("conexiones", "Conexiones", 6), tope("correos", "Correos conectados", 1)],
     payments: [
-      { plan_id: "pro", amount_cop: 249000, status: "pending", provider: "wompi", created_at: dia(-1), paid_at: null, checkout_url: "https://checkout.wompi.co/l/prueba123", periodo: "2026-11" },
-      { plan_id: "pro", amount_cop: 249000, status: "approved", provider: "asistente", created_at: dia(-31), paid_at: dia(-31), checkout_url: null, periodo: "2026-10" },
-      { plan_id: "basic", amount_cop: 99000, status: "approved", provider: "wompi", created_at: dia(-62), paid_at: dia(-62), checkout_url: null, periodo: "2026-09" },
-      { plan_id: "basic", amount_cop: 99000, status: "declined", provider: "plataforma", created_at: dia(-63), paid_at: null, checkout_url: null, periodo: "2026-09" },
+      { plan_id: "premium", amount_cop: 299000, status: "pending", provider: "wompi", created_at: dia(-1), paid_at: null, checkout_url: "https://checkout.wompi.co/l/prueba123", periodo: "2026-11" },
+      { plan_id: "premium", amount_cop: 299000, status: "approved", provider: "asistente", created_at: dia(-31), paid_at: dia(-31), checkout_url: null, periodo: "2026-10" },
+      { plan_id: "basic", amount_cop: 129000, status: "approved", provider: "wompi", created_at: dia(-62), paid_at: dia(-62), checkout_url: null, periodo: "2026-09" },
+      { plan_id: "basic", amount_cop: 129000, status: "declined", provider: "plataforma", created_at: dia(-63), paid_at: null, checkout_url: null, periodo: "2026-09" },
     ],
-    plans: [
-      { id: "free", name: "Gratis", price_cop: 0, is_free: true, current: false, limits: { agentes: 1, colaboradores: 2, conversaciones: 100 }, features: {}, monthly_credits: 2500 },
-      { id: "basic", name: "Básico", price_cop: 99000, is_free: false, current: false, limits: { agentes: 2, colaboradores: 5, conversaciones: 500 }, features: { soporte: "Soporte por WhatsApp" }, monthly_credits: 20000 },
-      { id: "pro", name: "Pro", price_cop: 249000, is_free: false, current: true, limits: { agentes: 3, colaboradores: 10, conversaciones: 1500, conversaciones_audio: 100 }, features: { soporte: "Soporte prioritario", reportes: true }, monthly_credits: 60000 },
-      { id: "empresa", name: "Empresa", price_cop: 590000, is_free: false, current: false, limits: { agentes: 8, colaboradores: null, conversaciones: null }, features: { soporte: "Soporte prioritario", reportes: true, multi_negocio: true }, monthly_credits: 150000 },
-    ],
-    cobro: { referencia: "PLAN-PRO-2026-11", inicio: dia(-21), fin: dia(9), plan_id: "pro", monto_cop: 249000, estado: "pendiente", pagado_por: null, disponible_desde: null },
+    plans: planesV3.map((p) => ({ ...p, current: p.id === actual })),
+    cobro: enFree ? null : { referencia: "PLAN-PREMIUM-2026-11", inicio: dia(-21), fin: dia(9), plan_id: "premium", monto_cop: 299000, estado: "pendiente", pagado_por: null, disponible_desde: null },
     credit: {
-      limit: 60000,
-      used: 50412.5,
-      percent: 84.0,
+      limit: enFree ? 1500 : 40000,
+      used: enFree ? 420 : 33600,
+      percent: enFree ? 28 : 84.0,
       period_start: dia(-21),
       period_end: dia(9),
-      by_concept: { llm_turn: 41200, stt: 3912.5, vision: 1800, template_sent: 3500 },
+      // El reparto de antes (sobre 50.412,5) escalado al crédito usado de cada caso.
+      by_concept: Object.fromEntries(Object.entries({ llm_turn: 41200, stt: 3912.5, vision: 1800, template_sent: 3500 }).map(([k, v]) => [k, Math.round((v * (enFree ? 420 : 33600)) / 5041.25) / 10])),
       by_agent: [
         { agent_id: "00000000-0000-4000-8000-0000000000a1", name: "Ventas", used: 28900 },
         { agent_id: "00000000-0000-4000-8000-0000000000a2", name: "Cobranza", used: 15200 },
         { agent_id: "00000000-0000-4000-8000-0000000000a3", name: "Agenda", used: 4800 },
         { agent_id: null, name: null, used: 1512.5 },
-      ],
+      ].map((a) => ({ ...a, used: Math.round((a.used * (enFree ? 420 : 33600)) / 5041.25) / 10 })),
       by_agent_truncated: false,
     },
     plan_por_el_asistente: false,
@@ -1094,7 +1095,7 @@ if (process.env.AGENTES === "1") {
     { id: VENTAS_ID, key: "ventas", name: "Ventas", kind: "specialist", contract: "agentspec/3", description: "Toma pedidos, resuelve dudas de productos y agenda entregas", status: "active", latest_version: 3, created_at: hace(1500) },
   ];
   const plan = RESPUESTAS["/admin/plan"];
-  if (process.env.CONSUMO !== "1") respuestas["/admin/plan"] = {
+  if (process.env.CONSUMO !== "1" && process.env.CONSUMO !== "free") respuestas["/admin/plan"] = {
     ...plan,
     credit: { ...plan.credit, used: 4900, by_agent: [{ agent_id: VENTAS_ID, name: "Ventas", used: 3200 }, { agent_id: GENERAL_ID, name: "General", used: 1400 }, { agent_id: null, name: null, used: 300 }] },
   };

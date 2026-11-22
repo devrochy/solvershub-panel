@@ -9,7 +9,15 @@ import type { AgentDetail, LlmModelCatalog, PlanResponse, PublishTarget, Superpo
 import { plan as planDePrueba } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
-import { avisoDePlanFree, avisoDeTopeDeAgentes, esLimiteDePlan, esPlanFree, limitesOrdenados, RUTA_MEJORAR_PLAN } from "./plan-limite";
+import {
+  avisoDePlanFree,
+  avisoDeTopeDeAgentes,
+  esLimiteDePlan,
+  esPlanFree,
+  limitesOrdenados,
+  mensajeDeLimiteDePlan,
+  RUTA_MEJORAR_PLAN,
+} from "./plan-limite";
 
 // HU-BILL-05 (D-35): barras de agentes, colaboradores y crédito en Plan y consumo, y el 409 de tope
 // del plan en el editor de agentes (al publicar) y en Colaboradores (al invitar).
@@ -38,12 +46,31 @@ describe("reglas del plan por agentes (lógica pura)", () => {
     expect(esLimiteDePlan(undefined)).toBe(false);
   });
 
-  it("topes del catálogo con las dimensiones del plan primero", () => {
-    expect(limitesOrdenados({ mensajes: 10, colaboradores: 5, agentes: 2 }).map(([k]) => k)).toEqual([
-      "agentes",
-      "colaboradores",
-      "mensajes",
-    ]);
+  it("reconoce los 409 del plan v3: topes nuevos y lo que el plan no incluye (HU-BILL-19)", () => {
+    for (const code of ["plan_limit_conexiones", "plan_limit_correos", "plan_channel_not_included", "plan_plugin_not_included", "plan_feature_not_included"]) {
+      expect(esLimiteDePlan(code)).toBe(true);
+    }
+    // Otros 409 de Conexiones no se confunden con el plan.
+    for (const code of ["cuenta_en_otro_negocio", "conexion_pausada", "sender_ya_conectado", "plan_not_found", "plan_channel", ""]) {
+      expect(esLimiteDePlan(code)).toBe(false);
+    }
+    expect(esLimiteDePlan(null)).toBe(false);
+  });
+
+  it("el mensaje del aviso es el de la API, solo si el error es del plan", () => {
+    const canal = { error: "Tu plan Basic no incluye Instagram. Mejora tu plan para conectarlo.", code: "plan_channel_not_included", details: { channel: "instagram", plan: "basic" } };
+    expect(mensajeDeLimiteDePlan(canal)).toBe(canal.error);
+    expect(mensajeDeLimiteDePlan({ code: "plan_feature_not_included" })).toBe("Tu plan no incluye esto.");
+    expect(mensajeDeLimiteDePlan({ code: "plan_limit_conexiones", error: "" }, "Llegaste al tope de conexiones.")).toBe("Llegaste al tope de conexiones.");
+    expect(mensajeDeLimiteDePlan({ code: "conexion_pausada", error: "La conexión está pausada." })).toBeNull();
+    expect(mensajeDeLimiteDePlan({ error: "Sin code" })).toBeNull();
+    expect(mensajeDeLimiteDePlan(null)).toBeNull();
+  });
+
+  it("topes del catálogo en el orden del plan v3, sin las métricas de volumen", () => {
+    expect(
+      limitesOrdenados({ mensajes: 10, conocimiento_mb: 100, correos: 1, conversaciones: 500, colaboradores: 5, conexiones: 2, agentes: 2, documentos: 20, clientes: 1000 }).map(([k]) => k),
+    ).toEqual(["agentes", "colaboradores", "clientes", "conexiones", "correos", "documentos", "conocimiento_mb"]);
   });
 
   it("avisa del tope de agentes solo cuando no queda cupo", () => {
@@ -61,7 +88,7 @@ describe("Consumo y plan (rediseño B)", () => {
     const { default: PlanPage } = await import("@/app/(app)/plan/page");
     render(<FeedbackProviders>{await resolverServidor(await PlanPage({ searchParams: Promise.resolve({}) }))}</FeedbackProviders>);
     // Crédito medido (HU-BILL-04/06): lo que queda, sin aviso por debajo del 80 %.
-    expect(screen.getByRole("heading", { name: "Te quedan 18.766 créditos" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Te quedan 10.766 créditos" })).toBeTruthy();
     expect(screen.queryByRole("status")).toBeNull();
     const reparto = screen.getByRole("region", { name: "En qué se usó el crédito" });
     expect(within(reparto).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
@@ -70,13 +97,18 @@ describe("Consumo y plan (rediseño B)", () => {
       "Notas de voz5 · 0 %",
     ]);
     expect(screen.getByRole("link", { name: "Ventas" }).getAttribute("href")).toBe("/agentes/00000000-0000-4000-8000-0000000000a1");
-    // Los topes, con los que piden atención primero y lo que pasa al llegar.
+    // Los topes estructurales del plan v3 («X de Y»), sin barras de conversaciones, audios, imágenes ni mensajes.
     const incluye = screen.getByRole("region", { name: "Lo que incluye tu plan" });
     expect(within(incluye).getAllByRole("progressbar").map((b) => b.getAttribute("aria-label"))).toEqual([
       "Agentes publicados",
-      "Conversaciones del mes",
       "Personas del equipo",
+      "Clientes",
+      "Conexiones de canales",
+      "Correos conectados",
     ]);
+    expect(within(incluye).getByText("1 de 2")).toBeTruthy();
+    expect(within(incluye).getByText("0 de 1")).toBeTruthy();
+    expect(screen.queryByText(/conversaciones del mes|notas de voz del mes|imágenes del mes|mensajes del mes|USD/i)).toBeNull();
     expect(within(incluye).getByText(/No puedes publicar otro agente/)).toBeTruthy();
     expect(within(incluye).getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe(`${RUTA_MEJORAR_PLAN}?ver=planes`);
   });

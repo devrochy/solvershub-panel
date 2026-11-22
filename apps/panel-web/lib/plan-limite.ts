@@ -1,8 +1,8 @@
 import type { AgentsOverview, MePlanSummary, PlanResponse } from "@/lib/api/types";
 
 /**
- * Planes por agentes (D-35, HU-BILL-05, ADR-0142 del backend). Lógica pura del panel: cómo
- * reconocer el 409 de tope del plan, el orden de los topes y el enlace para terminar un pago.
+ * Planes por agentes (D-35, HU-BILL-05, ADR-0142 del backend) y por créditos (D-79, HU-BILL-27).
+ * Lógica pura del panel: cómo reconocer el 409 de tope o de alcance del plan, el orden de los topes y el enlace para terminar un pago.
  * Lo que se muestra en Consumo y plan, en palabras, vive en `lib/consumo.ts`.
  */
 
@@ -10,9 +10,31 @@ import type { AgentsOverview, MePlanSummary, PlanResponse } from "@/lib/api/type
 export const RUTA_MEJORAR_PLAN = "/plan";
 export const TEXTO_MEJORAR_PLAN = "Mejorar mi plan";
 
-/** ¿Es el 409 de tope del plan (`plan_limit_agentes`, `plan_limit_colaboradores`, …)? */
+/**
+ * Los 409 de alcance del plan v3 (HU-BILL-19, ADR-0208): lo pedido no viene en el plan actual (un canal,
+ * una habilidad o una función). Se muestran como los topes: el mensaje de la API y «Mejorar mi plan».
+ */
+export const FUERA_DEL_PLAN = ["plan_channel_not_included", "plan_plugin_not_included", "plan_feature_not_included"] as const;
+
+/**
+ * ¿Es un 409 del plan que se resuelve mejorándolo? Los topes (`plan_limit_agentes`,
+ * `plan_limit_conexiones`, `plan_limit_correos`, …) y lo que el plan no incluye (`FUERA_DEL_PLAN`).
+ */
 export function esLimiteDePlan(code: string | null | undefined): boolean {
-  return typeof code === "string" && code.startsWith("plan_limit_");
+  if (typeof code !== "string") return false;
+  return code.startsWith("plan_limit_") || (FUERA_DEL_PLAN as readonly string[]).includes(code);
+}
+
+/**
+ * El mensaje que se muestra con «Mejorar mi plan» si la respuesta de error del BFF es del plan; `null` si no.
+ * La API ya explica el caso («Tu plan Basic no incluye Instagram…»); `respaldo` cubre un error sin texto.
+ */
+export function mensajeDeLimiteDePlan(
+  error: { code?: string | null; error?: string | null } | null | undefined,
+  respaldo = "Tu plan no incluye esto.",
+): string | null {
+  if (!error || !esLimiteDePlan(error.code)) return null;
+  return error.error || respaldo;
 }
 
 type CuotaDeAgentes = AgentsOverview["cuota_agentes"];
@@ -27,17 +49,20 @@ export function avisoDeTopeDeAgentes(cuota: CuotaDeAgentes): string | null {
   return `Tu plan permite ${permitidos} y ya tienes ${cuota.used}. Mejora tu plan para crear otro agente.`;
 }
 
-/** Las dimensiones que vende el plan (D-35), en este orden; el crédito va aparte. */
-export const METRICAS_DEL_PLAN = ["agentes", "colaboradores"] as const;
+/**
+ * Los topes estructurales del plan v3 (D-79, SPEC-51), en este orden: solo bloquean un alta. El consumo
+ * (conversaciones, notas de voz, imágenes, mensajes) sale del crédito y ya no tiene tope propio.
+ */
+export const METRICAS_DEL_PLAN = ["agentes", "colaboradores", "clientes", "conexiones", "correos"] as const;
 
-/** Topes del catálogo con las dimensiones del plan primero. */
+/** Lo que se lista de un plan del catálogo: los topes estructurales y los del pack de conocimiento (ADR-0145). */
+const TOPES_DEL_CATALOGO: readonly string[] = [...METRICAS_DEL_PLAN, "documentos", "conocimiento_mb"];
+
+/** Topes del catálogo en el orden de arriba, sin las claves que el plan v3 ya no vende (conversaciones, mensajes…). */
 export function limitesOrdenados(limits: Record<string, number | null>): [string, number | null][] {
-  const entradas = Object.entries(limits);
-  const primero = (k: string) => {
-    const i = (METRICAS_DEL_PLAN as readonly string[]).indexOf(k);
-    return i === -1 ? METRICAS_DEL_PLAN.length : i;
-  };
-  return entradas.sort(([a], [b]) => primero(a) - primero(b));
+  return Object.entries(limits)
+    .filter(([clave]) => TOPES_DEL_CATALOGO.includes(clave))
+    .sort(([a], [b]) => TOPES_DEL_CATALOGO.indexOf(a) - TOPES_DEL_CATALOGO.indexOf(b));
 }
 
 type Pago = Pick<PlanResponse["payments"][number], "status" | "checkout_url">;

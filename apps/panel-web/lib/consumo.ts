@@ -1,12 +1,12 @@
 /**
- * Consumo y plan en palabras (rediseño B): el crédito como «te quedan 9.588 para 9 días», los topes
- * con lo que pasa al llegar, los planes comparables y los pagos por mes. Lógica pura: la página solo
+ * Consumo y plan en palabras (rediseño B, planes v3 de D-79): el crédito como «te quedan 9.588 para
+ * 9 días», los topes estructurales con lo que pasa al llegar, los planes comparables y los pagos por mes. Lógica pura: la página solo
  * pinta lo que devuelve.
  */
 
 import type { PlanResponse } from "@/lib/api/types";
 import { formatCop, formatNumber } from "@/lib/format";
-import { CONCEPTOS_DE_CREDITO } from "@/lib/plan-limite";
+import { CONCEPTOS_DE_CREDITO, METRICAS_DEL_PLAN } from "@/lib/plan-limite";
 
 export type TonoConsumo = "neutral" | "info" | "success" | "warning" | "danger";
 export type Etiqueta = { label: string; tono: TonoConsumo };
@@ -83,7 +83,11 @@ export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Dat
       detalle: `${entero(credit.used)} de ${entero(credit.limit)} créditos`,
       porcentaje,
       tono: "danger",
-      aviso: { titulo: "El crédito se acabó", texto: `Por ahora tu asistente sigue respondiendo. Mejora tu plan para tener más cada mes.${renueva}`, tono: "danger" },
+      aviso: {
+        titulo: "El crédito se acabó",
+        texto: `Las conversaciones nuevas pasan a una persona de tu equipo; las que estaban en curso siguen con una reserva pequeña. Mejora tu plan para tener más cada mes.${renueva}`,
+        tono: "danger",
+      },
     };
   }
   let aviso: CreditoEnPalabras["aviso"] = null;
@@ -100,7 +104,7 @@ export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Dat
       titulo: `Vas al ${Math.floor(credit.percent)} %${dias !== null ? ` y faltan ${dias === 1 ? "1 día" : `${dias} días`}` : ""}`,
       texto: alcanza
         ? `A este ritmo te alcanza.${renueva}`
-        : `${conPunto(`A este ritmo alcanza hasta el ${fecha}${hasta}`)} Tu asistente sigue respondiendo, pero conviene mejorar el plan.`,
+        : `${conPunto(`A este ritmo alcanza hasta el ${fecha}${hasta}`)} Si se acaba, las conversaciones pasan a tu equipo: conviene mejorar el plan.`,
       tono: "warning",
     };
   }
@@ -150,16 +154,17 @@ export function creditoPorAgente(credit: Credito | null | undefined): (Parte & {
     .map((e) => ({ ...e, porcentaje: Math.round((e.usado / total) * 100) }));
 }
 
-/** Cómo se llama cada tope, en plural, para leerlo como frase («96 de 100 audios»). */
-const NOMBRE_DE_TOPE: Record<string, { titulo: string; plural: string; singular: string; mensual?: boolean }> = {
+
+/** Cómo se llama cada tope, para leerlo como frase («2 de 6 conexiones»). */
+const NOMBRE_DE_TOPE: Record<string, { titulo: string; plural: string; singular: string }> = {
   agentes: { titulo: "Agentes publicados", plural: "agentes", singular: "agente" },
   colaboradores: { titulo: "Personas del equipo", plural: "personas", singular: "persona" },
   clientes: { titulo: "Clientes", plural: "clientes", singular: "cliente" },
-  conversaciones: { titulo: "Conversaciones del mes", plural: "conversaciones", singular: "conversación", mensual: true },
-  conversations: { titulo: "Conversaciones del mes", plural: "conversaciones", singular: "conversación", mensual: true },
-  conversaciones_audio: { titulo: "Notas de voz del mes", plural: "notas de voz", singular: "nota de voz", mensual: true },
-  conversaciones_ocr: { titulo: "Imágenes del mes", plural: "imágenes", singular: "imagen", mensual: true },
-  mensajes: { titulo: "Mensajes del mes", plural: "mensajes", singular: "mensaje", mensual: true },
+  conexiones: { titulo: "Conexiones de canales", plural: "conexiones", singular: "conexión" },
+  correos: { titulo: "Correos conectados", plural: "correos", singular: "correo" },
+  // Topes del pack de conocimiento (ADR-0145): salen en el catálogo, no en el consumo.
+  documentos: { titulo: "Documentos", plural: "documentos", singular: "documento" },
+  conocimiento_mb: { titulo: "Espacio para documentos", plural: "MB para documentos", singular: "MB para documentos" },
 };
 
 /** Al llegar a este porcentaje, el tope avisa. */
@@ -168,7 +173,7 @@ export const AVISO_DE_TOPE = 90;
 export type TopeEnPalabras = {
   clave: string;
   titulo: string;
-  /** «96 de 100», o «1.240, sin límite». */
+  /** «2 de 6», «1.240, sin límite» o «No incluido». */
   uso: string;
   porcentaje: number | null;
   /** Lo que pasa: «No puedes publicar otro agente», «Quedan 4». */
@@ -183,6 +188,8 @@ const AL_TOPE: Record<string, string> = {
   agentes: "No puedes publicar otro agente",
   colaboradores: "No puedes invitar a nadie más",
   clientes: "No entran clientes nuevos",
+  conexiones: "No puedes agregar otra conexión",
+  correos: "No puedes conectar otro correo",
 };
 
 /** Un tope del plan en palabras: cuánto lleva, cuánto queda y qué pasa al llegar (CYP-04). */
@@ -191,12 +198,18 @@ export function topeEnPalabras(uso: Uso): TopeEnPalabras {
   if (uso.limit === null) {
     return { clave: uso.key, titulo: n.titulo, uso: `${entero(uso.used)}, sin límite`, porcentaje: null, nota: "Tu plan no tiene tope.", tono: "neutral", mejorar: false };
   }
+  if (uso.limit === 0 && uso.used === 0) {
+    // El plan no lo trae (Free no incluye correos): no es un tope lleno, es algo que se gana al mejorar.
+    return { clave: uso.key, titulo: n.titulo, uso: "No incluido", porcentaje: null, nota: `Tu plan no incluye ${n.plural}`, tono: "neutral", mejorar: true };
+  }
   const quedan = Math.max(0, uso.limit - uso.used);
   const porcentaje = uso.percent ?? (uso.limit > 0 ? (uso.used / uso.limit) * 100 : 100);
   const lleno = uso.exceeded || quedan === 0;
   const nota = lleno
-    ? (AL_TOPE[uso.key] ?? (n.mensual ? `Llegaste al tope del mes` : "Llegaste al tope de tu plan"))
-    : `${uso.key === "colaboradores" ? `Puedes invitar a ${entero(quedan)} más` : `Quedan ${entero(quedan)} ${quedan === 1 ? n.singular : n.plural}`}${n.mensual ? " este mes" : ""}`;
+    ? (AL_TOPE[uso.key] ?? "Llegaste al tope de tu plan")
+    : uso.key === "colaboradores"
+      ? `Puedes invitar a ${entero(quedan)} más`
+      : `${quedan === 1 ? "Queda" : "Quedan"} ${entero(quedan)} ${quedan === 1 ? n.singular : n.plural}`;
   return {
     clave: uso.key,
     titulo: n.titulo,
@@ -208,10 +221,16 @@ export function topeEnPalabras(uso: Uso): TopeEnPalabras {
   };
 }
 
-/** Los topes, con los que piden atención primero y los sin límite al final. */
+/**
+ * «Lo que incluye tu plan»: los topes estructurales en el orden de `METRICAS_DEL_PLAN`. Cualquier otra
+ * métrica que llegue (las de volumen de v1, si una API vieja las manda) no se pinta.
+ */
 export function topesEnPalabras(usage: readonly Uso[]): TopeEnPalabras[] {
-  const peso = (t: TopeEnPalabras) => (t.porcentaje === null ? -1 : t.porcentaje);
-  return usage.map(topeEnPalabras).sort((a, b) => peso(b) - peso(a));
+  const orden = METRICAS_DEL_PLAN as readonly string[];
+  return usage
+    .filter((u) => orden.includes(u.key))
+    .sort((a, b) => orden.indexOf(a.key) - orden.indexOf(b.key))
+    .map(topeEnPalabras);
 }
 
 /** Estado del plan en palabras (CYP-01), con el pago pendiente por encima de todo. */
@@ -234,27 +253,110 @@ export function estadoDelPlan(resumen: Resumen | null | undefined, pagoPendiente
   }
 }
 
-/** Un tope del catálogo, como se lee en un plan: «3 agentes», «Personas sin límite». */
+/** Un tope del catálogo, como se lee en un plan: «3 agentes», «Personas sin límite», «Sin correos». */
 export function limiteEnPalabras(clave: string, valor: number | null): string {
   const n = NOMBRE_DE_TOPE[clave];
   const plural = n?.plural ?? clave.replace(/_/g, " ");
   if (valor === null) return `${plural.charAt(0).toUpperCase()}${plural.slice(1)} sin límite`;
-  return `${formatNumber(valor)} ${valor === 1 ? (n?.singular ?? plural) : plural}${n?.mensual ? " al mes" : ""}`;
+  if (valor === 0) return `Sin ${plural}`;
+  return `${formatNumber(valor)} ${valor === 1 ? (n?.singular ?? plural) : plural}`;
 }
+
+/** El plan que se destaca en el cajón (D-79: Premium es el aspiracional). */
+export const PLAN_MAS_ELEGIDO = "premium";
+
+const CANAL_EN_PALABRAS: Record<string, string> = {
+  whatsapp: "WhatsApp",
+  web: "chat web",
+  telegram: "Telegram",
+  instagram: "Instagram",
+  messenger: "Messenger",
+  email: "correo",
+};
+
+/** «WhatsApp, chat web y Telegram». */
+function lista(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+}
+
+const SOPORTE: Record<string, string> = {
+  comunidad: "Soporte en la comunidad",
+  email: "Soporte por correo",
+  prioritario: "Soporte prioritario",
+  dedicado: "Soporte dedicado",
+};
+
+const CAMPANAS: Record<string, string> = {
+  recordatorios: "Recordatorios a tus clientes",
+  completas: "Campañas a tus clientes",
+};
+
+function historial(dias: unknown): string | null {
+  if (dias === null) return "Historial sin límite";
+  if (typeof dias !== "number" || dias <= 0) return null;
+  if (dias % 365 === 0) return dias === 365 ? "Historial de 1 año" : `Historial de ${dias / 365} años`;
+  return `Historial de ${formatNumber(dias)} días`;
+}
+
+/**
+ * Un beneficio del plan v3 (`features`, ADR-0208 §9) en palabras simples, o `null` si no suma nada
+ * (`0`, `false`, `"ninguna"`, el nivel de IA estándar). `undefined` si la clave no es del catálogo v3.
+ */
+function beneficio(clave: string, valor: unknown): string | null | undefined {
+  switch (clave) {
+    case "canales": {
+      const canales = Array.isArray(valor) ? valor.map((c) => CANAL_EN_PALABRAS[String(c)] ?? String(c)) : [];
+      return canales.length ? `Atiende por ${lista(canales)}` : null;
+    }
+    case "nivel_ia":
+      return valor === "avanzado" ? "IA Avanzada para tus agentes" : null;
+    case "byok":
+      return valor === true ? "Conecta tu propia cuenta de IA" : null;
+    case "acumulable_meses":
+      if (typeof valor !== "number" || valor <= 0) return null;
+      return valor === 1 ? "El crédito que no uses pasa al mes siguiente" : `El crédito que no uses se guarda hasta ${valor} meses`;
+    case "descuento_recarga":
+      // `null`: el plan no compra recargas; `0`: compra sin descuento.
+      if (typeof valor !== "number") return null;
+      return valor > 0 ? `${valor} % de descuento al comprar créditos` : "Puedes comprar créditos extra";
+    case "marca_propia":
+      return valor === true ? "Tu marca, sin la de SolversHub" : null;
+    case "historial_dias":
+      return historial(valor);
+    case "campanas":
+      return typeof valor === "string" ? (CAMPANAS[valor] ?? null) : null;
+    case "soporte":
+      return typeof valor === "string" ? (SOPORTE[valor] ?? valor) : null;
+    default:
+      return undefined;
+  }
+}
+
+/** Orden de los beneficios en la tarjeta del plan. */
+const ORDEN_DE_BENEFICIOS = ["canales", "nivel_ia", "acumulable_meses", "descuento_recarga", "marca_propia", "historial_dias", "campanas", "byok", "soporte"];
 
 const FUNCION: Record<string, string> = {
   reportes: "Reportes",
   multi_negocio: "Varios negocios",
-  soporte: "Soporte",
   api: "Acceso por API",
   marca_blanca: "Sin la marca SolversHub",
 };
 
-/** Las funciones de un plan en palabras: el texto si lo trae, si no el nombre de la clave. */
+/**
+ * Los beneficios de un plan en palabras: los del catálogo v3 con su regla por valor y, para una clave
+ * que no conoce, el texto si lo trae o el nombre de la clave.
+ */
 export function funcionesEnPalabras(features: Record<string, unknown>): string[] {
+  const peso = (k: string) => (ORDEN_DE_BENEFICIOS.includes(k) ? ORDEN_DE_BENEFICIOS.indexOf(k) : ORDEN_DE_BENEFICIOS.length);
   return Object.entries(features)
-    .filter(([, v]) => Boolean(v))
-    .map(([clave, v]) => (typeof v === "string" ? v : (FUNCION[clave] ?? `${clave.charAt(0).toUpperCase()}${clave.slice(1).replace(/_/g, " ")}`)));
+    .sort(([a], [b]) => peso(a) - peso(b))
+    .flatMap(([clave, v]) => {
+      const conocido = beneficio(clave, v);
+      if (conocido !== undefined) return conocido ? [conocido] : [];
+      if (!v) return [];
+      return [typeof v === "string" ? v : (FUNCION[clave] ?? `${clave.charAt(0).toUpperCase()}${clave.slice(1).replace(/_/g, " ")}`)];
+    });
 }
 
 export type AccionDePlan = { tipo: "actual" | "mejorar" | "cambiar" | "gratis"; label: string };
@@ -314,7 +416,7 @@ export function nombreDelPlan(planId: string | null | undefined, planes: readonl
   return planes.find((p) => p.id === planId)?.name ?? `${planId.charAt(0).toUpperCase()}${planId.slice(1)}`;
 }
 
-/** «$ 249.000 al mes» (los planes de pago); «Sin costo» los demás (el plan ya se suele llamar «Gratis»). */
+/** «$ 129.000 al mes» (los planes de pago); «Sin costo» los demás (el plan ya se suele llamar «Gratis»). */
 export function precioDelPlan(plan: Pick<Plan, "is_free" | "price_cop">): string {
   return plan.is_free ? "Sin costo" : `${formatCop(plan.price_cop)} al mes`;
 }
