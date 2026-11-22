@@ -13,11 +13,11 @@ import { InputPassword } from "@/components/ui/input-password";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import type { CollaboratorItem } from "@/lib/api/types";
-import { esDueno, perfilDePack, puedeEliminar, rolDeCuenta } from "@/lib/colaboradores";
+import { esDueno, perfilDePack, puedeEliminar, rolDeCuenta, type PerfilDePack } from "@/lib/colaboradores";
 import { rolLabel } from "@/lib/labels";
 import { useAction } from "@/lib/use-action";
 
-type Accion = "toggle" | "password" | "link" | "unlink" | "delete" | "reactivate";
+type Accion = "toggle" | "password" | "link" | "unlink" | "delete" | "reactivate" | "quitar_rol_de_pack";
 
 /** POST al BFF de una cuenta, con el formato que espera `useAction`. */
 async function enviar(id: string, action: Accion, payload: Record<string, unknown>, success: string) {
@@ -174,6 +174,30 @@ export function AccesoDePersona({
     });
     if (!aceptado) return;
     await run(() => enviar(persona.id, "unlink", { tenant: link.slug }, `Desvinculada de ${link.name}.`));
+  }
+
+  /**
+   * Quitar el perfil de pack (agent-core#870): p. ej. un colaborador que quedó como gestor de
+   * cobranza por error vuelve a la política de Colaborador. Sus registros y carteras se conservan.
+   */
+  async function quitarPerfil(perfil: PerfilDePack) {
+    const carteras = perfil.detalle?.carteras.length ?? 0;
+    const aceptado = await confirm({
+      title: `Quitar el perfil de ${perfil.etiqueta.toLowerCase()} a ${nombre}`,
+      description: [
+        "Deja de usar la app de campo y vuelve a entrar como colaborador, con los permisos de su rol.",
+        carteras > 0
+          ? `Tiene ${carteras === 1 ? "1 cartera asignada" : `${carteras} carteras asignadas`}: siguen a su nombre hasta que las reasignes.`
+          : "",
+        "Sus pagos y visitas se conservan. Puedes volver a darle el perfil después.",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      confirmLabel: "Quitar el perfil",
+      destructive: true,
+    });
+    if (!aceptado) return;
+    await run(() => enviar(persona.id, "quitar_rol_de_pack", { value: perfil.rol }, "Perfil quitado. Ahora es colaborador."));
   }
 
   function vincular() {
@@ -336,6 +360,18 @@ export function AccesoDePersona({
                     />
                   )}
                 </span>
+              )}
+              {puedeActuar && !persona.is_self && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 self-start"
+                  onClick={() => void quitarPerfil(perfil)}
+                  disabled={pending}
+                >
+                  Quitar el perfil de {perfil.etiqueta.toLowerCase()}
+                </Button>
               )}
             </div>
           ))}

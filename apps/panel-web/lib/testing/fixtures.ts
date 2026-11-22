@@ -375,7 +375,7 @@ export const colaboradores: CollaboratorItem[] = [
   },
 ];
 
-export const rolesDePack = [{ value: "gestor", label: "Gestor de cobranza" }];
+export const rolesDePack = [{ value: "pack_cobranza:gestor", label: "Gestor de cobranza" }];
 
 export const habilidades: PluginSummary[] = [
   {

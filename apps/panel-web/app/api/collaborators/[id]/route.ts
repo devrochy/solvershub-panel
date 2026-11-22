@@ -18,9 +18,12 @@ const PATHS: Record<string, string> = {
   delete: "delete",
   // Reactiva la MISMA cuenta eliminada: `{tenant?}`. Solo master o el dueño que la dio de baja.
   reactivate: "reactivate",
+  // Quitar un rol de pack en el negocio activo (agent-core#870): `{value: "pack_cobranza:gestor"}`.
+  // La cuenta vuelve a la política de Colaborador; el pack conserva sus registros y carteras.
+  quitar_rol_de_pack: "pack-roles/revoke",
 };
 
-/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, baja/reactivación, activar). */
+/** BFF: acciones sobre una cuenta (contraseña, permisos, vínculo, baja/reactivación, activar, rol de pack). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = (await request.json().catch(() => null)) as

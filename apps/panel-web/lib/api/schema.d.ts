@@ -5096,7 +5096,8 @@ export interface paths {
         };
         /**
          * List Pack Roles
-         * @description Roles de colaborador que aportan los packs habilitados (ADR-0066).
+         * @description Roles de colaborador que aportan los packs ACTIVOS en el negocio activo (ADR-0066, #870): pack
+         *     encendido y con un especialista publicado, la misma regla con la que el panel habilita el módulo.
          */
         get: operations["list_pack_roles_api_v1_admin_collaborators_pack_roles_get"];
         put?: never;
@@ -5225,6 +5226,28 @@ export interface paths {
         put?: never;
         /** Revoke Collaborator Permission */
         post: operations["revoke_collaborator_permission_api_v1_admin_collaborators__admin_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/collaborators/{admin_id}/pack-roles/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Collaborator Pack Role
+         * @description Quita un rol de pack de la cuenta en el negocio activo (#870), p. ej. el perfil de Gestor de
+         *     Cobranza: vuelve a la política de Colaborador. El pack da de baja su perfil sin tocar registros
+         *     ni carteras. Vale aunque el pack ya no esté activo en el negocio.
+         */
+        post: operations["revoke_collaborator_pack_role_api_v1_admin_collaborators__admin_id__pack_roles_revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20409,6 +20432,11 @@ export interface components {
             release_number: number | null;
             /** Release Created */
             release_created: boolean | null;
+            /**
+             * Release Activated
+             * @default false
+             */
+            release_activated: boolean;
             /** Error */
             error: string | null;
         };
@@ -21969,6 +21997,11 @@ export interface components {
              * @default true
              */
             supresion_en_modulos_pendiente: boolean;
+        };
+        /** RevokePackRoleRequest */
+        RevokePackRoleRequest: {
+            /** Value */
+            value: string;
         };
         /** RevokeRequest */
         RevokeRequest: {
@@ -36189,6 +36222,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RevokeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_collaborator_pack_role_api_v1_admin_collaborators__admin_id__pack_roles_revoke_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                admin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokePackRoleRequest"];
             };
         };
         responses: {

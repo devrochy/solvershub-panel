@@ -21,8 +21,8 @@ const QUE_HACE: Record<string, { titulo: string; descripcion: string }> = {
 
 /**
  * Selector de rol de «Invitar a alguien»: tarjetas que dicen qué va a hacer la persona. Combina
- * los roles base (Colaborador, Master) con los roles de pack habilitados (p. ej. Gestor de
- * cobranza), que al elegirlos se guardan como `role: colaborador` + el rol de pack.
+ * los roles base (Colaborador, Master) con los roles de los packs activos en el negocio (p. ej. Gestor
+ * de cobranza, solo si Cobranza tiene su agente publicado; agent-core#870), que al elegirlos se guardan como `role: colaborador` + el rol de pack.
  */
 export function SelectorDeRol({
   packRoles,
@@ -43,13 +43,17 @@ export function SelectorDeRol({
       icono: User,
       seleccion: { role: "colaborador", pack_roles: [] },
     },
-    ...packRoles.map((p) => ({
-      key: p.value,
-      label: QUE_HACE[p.value]?.titulo ?? p.label,
-      descripcion: QUE_HACE[p.value] ? `${p.label}. ${QUE_HACE[p.value].descripcion}` : `${p.label}, además de lo de un colaborador.`,
-      icono: UserCog,
-      seleccion: { role: "colaborador", pack_roles: [p.value] },
-    })),
+    ...packRoles.map((p) => {
+      // El servidor manda `pack:rol` (p. ej. `pack_cobranza:gestor`); el texto se elige por el rol.
+      const queHace = QUE_HACE[p.value.split(":").pop() ?? p.value];
+      return {
+        key: p.value,
+        label: queHace?.titulo ?? p.label,
+        descripcion: queHace ? `${p.label}. ${queHace.descripcion}` : `${p.label}, además de lo de un colaborador.`,
+        icono: UserCog,
+        seleccion: { role: "colaborador", pack_roles: [p.value] },
+      };
+    }),
     ...(esMaster
       ? [
           {
