@@ -117,24 +117,44 @@ export function textoDeCotizacion(c: CotizacionFotos): string {
   return `${que}${llave}. Te quedan ${creditos(disponible)} este mes.`;
 }
 
-/** «Listo: 3 productos importados; 1 ya existía.» */
-export function resumenDeImportacionDelCatalogo(h: Pick<ImportacionHecha, "creadas" | "existentes">): string {
-  const partes = [`Listo: ${h.creadas} ${h.creadas === 1 ? "producto importado" : "productos importados"}`];
+/** Cómo se nombra lo importado con cada plantilla (singular, plural). */
+const LO_IMPORTADO: Record<string, [string, string]> = {
+  productos: ["producto importado", "productos importados"],
+  tipos_de_cita: ["tipo de cita importado", "tipos de cita importados"],
+  clientes_y_prestamos: ["cliente importado", "clientes importados"],
+  planes: ["plan importado", "planes importados"],
+};
+
+/** «Listo: 3 productos importados; 1 ya existía.» (o clientes, tipos de cita o planes, según la plantilla). */
+export function resumenDeImportacionDelCatalogo(
+  h: Pick<ImportacionHecha, "creadas" | "existentes"> & { plantilla?: string },
+): string {
+  const [uno, varios] = LO_IMPORTADO[h.plantilla ?? "productos"] ?? ["registro importado", "registros importados"];
+  const partes = [`Listo: ${h.creadas} ${h.creadas === 1 ? uno : varios}`];
   if (h.existentes > 0) partes.push(`${h.existentes} ya ${h.existentes === 1 ? "existía" : "existían"}`);
   return `${partes.join("; ")}.`;
 }
 
 /** Lo cargado en producción (sin la API de registros, que es solo de test): la lista sale de las filas confirmadas. */
-export function registrosDesdeFilas(filas: FilaEditable[]): RegistroDePrueba[] {
+export function registrosDesdeFilas(filas: FilaEditable[], plantilla = "productos"): RegistroDePrueba[] {
+  const { tipo, detalle } = LO_CARGADO[plantilla] ?? { tipo: "registro", detalle: [] };
   return filas
     .filter((f) => (f.valores.nombre ?? "").trim())
     .map((f) => ({
-      tipo: "producto",
-      nombre: f.valores.nombre.trim(),
-      detalle: [f.valores.precio, f.valores.categoria].filter((x) => x && x.trim()).join(" · ") || null,
+      tipo,
+      nombre: [f.valores.nombre, f.valores.apellido].filter((x) => x && x.trim()).join(" ").trim(),
+      detalle: detalle.map((c) => f.valores[c]).filter((x) => x && x.trim()).join(" · ") || null,
       origen: "importacion",
     }));
 }
+
+/** El `tipo` de cada fila importada y las columnas que van en su detalle, por plantilla. */
+const LO_CARGADO: Record<string, { tipo: string; detalle: string[] }> = {
+  productos: { tipo: "producto", detalle: ["precio", "categoria"] },
+  tipos_de_cita: { tipo: "tipo", detalle: ["duracion_minutos"] },
+  clientes_y_prestamos: { tipo: "cliente", detalle: ["cartera"] },
+  planes: { tipo: "plan", detalle: ["precio"] },
+};
 
 /** Frases para probar el agente con lo que se cargó (como mucho 4, sin repetir). */
 export function sugerenciasDePrueba(registros: Pick<RegistroDePrueba, "tipo" | "nombre">[]): string[] {

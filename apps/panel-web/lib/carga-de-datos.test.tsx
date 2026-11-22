@@ -18,6 +18,7 @@ import {
   filaDesdeFoto,
   filasDesdeMapeo,
   registrosDesdeFilas,
+  resumenDeImportacionDelCatalogo,
   sugerenciasDePrueba,
   textoDeCotizacion,
 } from "./carga-de-datos";
@@ -111,6 +112,20 @@ describe("lógica de la precarga", () => {
     expect(registros[0].detalle).toBe("35000");
     expect(sugerenciasDePrueba(registros)).toEqual(["¿Tienen Camiseta?", "¿Cuánto cuesta Gorra?"]);
     expect(sugerenciasDePrueba([{ tipo: "tipo", nombre: "Corte" }])).toEqual(["Quiero agendar Corte para mañana"]);
+  });
+
+  it("nombra lo importado según la plantilla (clientes de cobranza, no productos)", () => {
+    expect(resumenDeImportacionDelCatalogo({ creadas: 45, existentes: 1, plantilla: "clientes_y_prestamos" })).toBe(
+      "Listo: 45 clientes importados; 1 ya existía.",
+    );
+    expect(resumenDeImportacionDelCatalogo({ creadas: 1, existentes: 0, plantilla: "tipos_de_cita" })).toBe(
+      "Listo: 1 tipo de cita importado.",
+    );
+    expect(resumenDeImportacionDelCatalogo({ creadas: 2, existentes: 0 })).toBe("Listo: 2 productos importados.");
+    const fila = { valores: { nombre: "Juana", apellido: "Pérez", cartera: "Cartera Centro" } };
+    const [cliente] = registrosDesdeFilas([fila as never], "clientes_y_prestamos");
+    expect(cliente).toMatchObject({ tipo: "cliente", nombre: "Juana Pérez", detalle: "Cartera Centro" });
+    expect(sugerenciasDePrueba([cliente])).toEqual(["Hola, soy Juana Pérez. ¿Cuánto debo?"]);
   });
 });
 

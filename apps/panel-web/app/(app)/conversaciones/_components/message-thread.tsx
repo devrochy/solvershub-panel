@@ -82,7 +82,7 @@ function MediaDelMensaje({ message, inbound }: { message: MessageItem; inbound: 
           ) : (
             <details className="text-xs opacity-80">
               <summary className="cursor-pointer select-none">Ver transcripción</summary>
-              <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed">
+              <p className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed">
                 {message.media_transcription}
               </p>
             </details>
@@ -245,7 +245,7 @@ function MensajeDelHilo({
       )}
       <div
         className={cn(
-          "whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm shadow-elev-0",
+          "whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-2.5 text-sm shadow-elev-0",
           inbound && "rounded-bl-md bg-surface-2 text-headline",
           esAgente && "rounded-tr-md bg-surface-raised text-headline ring-1 ring-inset ring-border",
           !inbound && !esAgente && "rounded-tr-md bg-action text-white",

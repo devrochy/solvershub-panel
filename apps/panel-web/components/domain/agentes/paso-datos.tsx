@@ -87,7 +87,7 @@ export function PasoDatos({
   function importado(hecha: ImportacionHecha, confirmadas: FilaEditable[]) {
     const resumen = resumenDeImportacionDelCatalogo(hecha);
     toast.success(resumen);
-    onCargado({ registros: registrosDesdeFilas(confirmadas), resumen });
+    onCargado({ registros: registrosDesdeFilas(confirmadas, hecha.plantilla), resumen });
   }
 
   if (cargando) return <p className="text-sm text-text-soft">Revisando qué puedes cargar…</p>;
