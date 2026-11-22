@@ -3,17 +3,17 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 
 /** Alta de un número telefónico en una conexión Meta. */
 export function AddNumberDialog({ connectionId }: { connectionId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string; code?: string }>({});
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,9 +28,9 @@ export function AddNumberDialog({ connectionId }: { connectionId: string }) {
         verified_name: String(data.get("verified_name") ?? ""),
       }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
     if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo agregar el número." });
+      setStatus({ error: json.error ?? "No se pudo agregar el número.", code: json.code });
       return;
     }
     setStatus({});
@@ -60,7 +60,7 @@ export function AddNumberDialog({ connectionId }: { connectionId: string }) {
             <Input id="vname" name="verified_name" required />
           </Field>
 
-          <FormFeedback error={status.error} />
+          <ResultadoConPlan error={status.error} code={status.code} />
 
           <div className="mt-2 flex justify-end gap-2">
             <DialogClose asChild>

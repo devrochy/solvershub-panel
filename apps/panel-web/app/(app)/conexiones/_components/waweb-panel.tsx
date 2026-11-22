@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WawebState } from "@/lib/api/types";
 import { useFormato } from "@/components/shell/formato";
@@ -20,7 +20,7 @@ const POLL_MS = 3000;
 export function WawebPanel({ initial }: { initial: State }) {
   const { fechaHora } = useFormato();
   const [state, setState] = useState<State>(initial);
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string; success?: string }>({});
+  const [status, setStatus] = useState<{ loading?: boolean; error?: string; code?: string; success?: string }>({});
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/meta/waweb");
@@ -41,9 +41,10 @@ export function WawebPanel({ initial }: { initial: State }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
     if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo completar la acción." });
+      // Aceptar el aviso crea la conexión (HU-BILL-19): puede chocar con el tope de conexiones del plan.
+      setStatus({ error: json.error ?? "No se pudo completar la acción.", code: json.code });
       return;
     }
     setStatus({ success: action === "reset" ? "Vínculo reiniciado." : "Aviso aceptado." });
@@ -153,7 +154,7 @@ export function WawebPanel({ initial }: { initial: State }) {
           </div>
         )}
 
-        <FormFeedback error={status.error} success={status.success} />
+        <ResultadoConPlan error={status.error} code={status.code} success={status.success} />
       </CardContent>
     </Card>
   );

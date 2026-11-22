@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
-import { FormFeedback } from "@/components/ui/form-feedback";
 
 /**
  * «Conectar con Instagram» (Instagram Login, HU-CHAN-04 ruta b): no hace falta una Página de Facebook. El backend da la
@@ -13,7 +13,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
  */
 export function InstagramLogin() {
   const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<{ error: string; code?: string }>();
 
   async function empezar() {
     setCargando(true);
@@ -23,9 +23,10 @@ export function InstagramLogin() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "login_start" }),
     });
-    const json = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
+    const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string; url?: string };
     if (!res.ok || !json.url) {
-      setError(json.error ?? "No se pudo empezar la conexión con Instagram.");
+      // El plan puede no incluir Instagram (`plan_channel_not_included`): sale con «Mejorar mi plan».
+      setError({ error: json.error ?? "No se pudo empezar la conexión con Instagram.", code: json.code });
       setCargando(false);
       return;
     }
@@ -39,7 +40,7 @@ export function InstagramLogin() {
         Inicia sesión con la propia cuenta de Instagram del negocio y autoriza a SolversHub a leer y responder sus mensajes
         directos. No necesitas una Página de Facebook. La cuenta debe ser profesional (empresa o creador).
       </p>
-      <FormFeedback error={error} />
+      <ResultadoConPlan error={error?.error} code={error?.code} />
       <div>
         <Button variant="accent" disabled={cargando} onClick={() => void empezar()}>
           <ExternalLink className="h-4 w-4" aria-hidden />

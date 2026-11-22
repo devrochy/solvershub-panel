@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { responder } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
 const TABS = new Set(["identity", "bajas", "whatsapp-web", "brain", "memory", "web-chat", "message-templates", "subscription-provider"]);
@@ -15,12 +16,7 @@ export async function PUT(request: Request, ctx: { params: Promise<{ tab: string
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
   const res = await apiFetch(`/admin/settings/${tab}`, { method: "PUT", body });
-  if (!res.ok) {
-    // `fields`: errores por campo (422) para marcarlos junto a cada control.
-    return NextResponse.json(
-      { error: res.error, ...(res.fields ? { fields: res.fields } : {}) },
-      { status: res.status },
-    );
-  }
-  return NextResponse.json(res.data);
+  // En error: `fields` (422) para marcarlos junto a cada control y `code`/`details` para el 409 del plan
+  // (el chat web o WhatsApp Web pueden ser una conexión que el plan no incluye, HU-BILL-19).
+  return responder(res);
 }

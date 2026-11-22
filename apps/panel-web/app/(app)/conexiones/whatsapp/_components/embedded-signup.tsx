@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, CircleDot, LogIn } from "lucide-react";
 
 import { META_CONNECTION_STATUS, StatusBadge } from "@/components/domain/status-badge";
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import { InputPassword } from "@/components/ui/input-password";
 import type { components } from "@/lib/api/schema";
 import {
@@ -32,10 +32,10 @@ async function wizard(action: string, payload: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload }),
   });
-  const json = (await res.json().catch(() => ({}))) as { error?: string } & Partial<Sesion>;
+  const json = (await res.json().catch(() => ({}))) as { error?: string; code?: string } & Partial<Sesion>;
   return res.ok
     ? { ok: true as const, data: json as Sesion }
-    : { ok: false as const, status: res.status, error: json.error ?? "No se pudo completar." };
+    : { ok: false as const, status: res.status, error: json.error ?? "No se pudo completar.", code: json.code };
 }
 
 function Progreso({ step }: { step: string }) {
@@ -71,7 +71,8 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
   const router = useRouter();
   const [sesion, setSesion] = useState<Sesion | null>(inicial);
   const [cargando, setCargando] = useState<string | null>(null);
-  const [error, setError] = useState<string>();
+  // El error con su `code`: si es del plan (HU-BILL-19), se muestra con «Mejorar mi plan».
+  const [error, setError] = useState<{ error: string; code?: string }>();
   const [aviso, setAviso] = useState<string>();
   const [pinError, setPinError] = useState<string>();
   const [pin, setPin] = useState("");
@@ -99,7 +100,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
       const res = await wizard("session", { environment: "production", restart });
       setCargando(null);
       if (!res.ok) {
-        setError(res.error);
+        setError(res);
         return;
       }
       actualizar(res.data);
@@ -155,7 +156,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
       setPin("");
       setCargando(null);
       if (!res.ok) {
-        setError(res.error);
+        setError(res);
         // El intento se consumió o el código venció: uno nuevo para reintentar.
         void preparar(false, true);
         return;
@@ -231,7 +232,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
     setCargando(null);
     form.reset();
     if (!res.ok) {
-      setError(res.error);
+      setError(res);
       return;
     }
     actualizar(res.data);
@@ -245,7 +246,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
     const res = await wizard("resume", { wizard_id: actual.wizard_id });
     setCargando(null);
     if (!res.ok) {
-      setError(res.error);
+      setError(res);
       return;
     }
     actualizar(res.data);
@@ -282,7 +283,7 @@ export function EmbeddedSignup({ estado, inicial }: { estado: Estado; inicial: S
   return (
     <div className="flex flex-col gap-4">
       {sesion && !sesion.done && <Progreso step={sesion.step} />}
-      <FormFeedback error={error} success={aviso} />
+      <ResultadoConPlan error={error?.error} code={error?.code} success={aviso} />
 
       {(!sesion || sesion.done || sesion.expired) && (
         <div className="flex flex-col gap-3">

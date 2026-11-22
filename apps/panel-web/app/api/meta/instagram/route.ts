@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { responder } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
 /**
@@ -8,9 +9,7 @@ import { apiFetch } from "@/lib/api/server";
  * tokens nunca llegan al navegador. Cada acción reenvía solo sus campos.
  */
 export async function GET() {
-  const res = await apiFetch("/admin/meta/instagram");
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res.data);
+  return responder(await apiFetch("/admin/meta/instagram"));
 }
 
 const RUTAS: Record<string, { path: string; campos: string[] }> = {
@@ -33,6 +32,6 @@ export async function POST(request: Request) {
     if (valor !== undefined && valor !== null) payload[campo] = valor;
   }
   const res = await apiFetch(destino.path, { method: "POST", body: destino.campos.length ? payload : undefined });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res.data ?? { ok: true });
+  // En error reenvía `code` y `details`: el plan puede no incluir Instagram (`plan_channel_not_included`).
+  return responder(res, (data) => data ?? { ok: true });
 }
