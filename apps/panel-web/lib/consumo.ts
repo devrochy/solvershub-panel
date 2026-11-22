@@ -59,17 +59,26 @@ export type CreditoEnPalabras = {
  * El crédito del mes en palabras (CYP-02): lo que queda en créditos y en pesos, para cuánto tiempo y,
  * desde el 80 %, a qué ritmo se acaba. Sin medición, lo dice en vez de inventar.
  */
-export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Date = new Date()): CreditoEnPalabras | null {
-  if (!credit) return null;
-  if (credit.used == null || credit.percent == null) {
+export function creditoEnPalabras(credito: Credito | null | undefined, ahora: Date = new Date()): CreditoEnPalabras | null {
+  if (!credito) return null;
+  if (credito.used == null || credito.percent == null) {
     return {
-      titulo: `${entero(credit.limit)} créditos al mes`,
+      titulo: `${entero(credito.limit)} créditos al mes`,
       detalle: "La medición del consumo llega pronto. 1 crédito = $ 10.",
       porcentaje: 0,
       tono: "neutral",
       aviso: null,
     };
   }
+  // Con el saldo desglosado (HU-BILL-22) la cuenta es sobre el saldo total del ciclo (mes + acumulado +
+  // recargas) y `balance_percent`; sin él, sobre el crédito mensual como siempre.
+  const saldo = credito.balance;
+  const credit = {
+    ...credito,
+    used: credito.used,
+    limit: saldo ? saldo.total : credito.limit,
+    percent: saldo ? (credito.balance_percent ?? (saldo.total > 0 ? (credito.used * 100) / saldo.total : 100)) : credito.percent,
+  };
   const quedan = Math.max(0, credit.limit - credit.used);
   const dias = diasHasta(credit.period_end, ahora);
   const porcentaje = Math.min(100, Math.max(0, credit.percent));
@@ -79,7 +88,7 @@ export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Dat
 
   if (credit.percent >= 100) {
     return {
-      titulo: "Usaste todo el crédito del mes",
+      titulo: saldo ? "Usaste todo tu saldo de créditos" : "Usaste todo el crédito del mes",
       detalle: `${entero(credit.used)} de ${entero(credit.limit)} créditos`,
       porcentaje,
       tono: "danger",
@@ -109,6 +118,74 @@ export function creditoEnPalabras(credit: Credito | null | undefined, ahora: Dat
     };
   }
   return { titulo: `Te quedan ${entero(quedan)} créditos`, detalle, porcentaje, tono: credit.percent >= 80 ? "warning" : "info", aviso };
+}
+
+type Saldo = NonNullable<Credito["balance"]>;
+
+export type ParteDelSaldo = {
+  clave: "mes" | "acumulado" | "recargas";
+  nombre: string;
+  /** «usaste 3.000 de 12.000». */
+  uso: string;
+  /** «vence el 19 de dic.» (solo el acumulado). */
+  nota: string | null;
+};
+
+/**
+ * El saldo del ciclo desglosado (HU-BILL-22): el total con su equivalente en pesos y, por parte, lo
+ * usado. El crédito del mes siempre va; el acumulado y las recargas solo si hay algo.
+ */
+export function desgloseDelSaldo(
+  saldo: Saldo | null | undefined,
+  ahora: Date = new Date(),
+): { total: string; partes: ParteDelSaldo[] } | null {
+  if (!saldo) return null;
+  const uso = (usado: number, total: number) => `usaste ${entero(usado)} de ${entero(total)}`;
+  const partes: ParteDelSaldo[] = [{ clave: "mes", nombre: "Del mes", uso: uso(saldo.used_month ?? 0, saldo.month), nota: null }];
+  const acumulado = saldo.accumulated ?? 0;
+  if (acumulado > 0 || (saldo.used_accumulated ?? 0) > 0) {
+    const vence = diaCorto(saldo.accumulated_expires_at, ahora);
+    partes.push({ clave: "acumulado", nombre: "Acumulado", uso: uso(saldo.used_accumulated ?? 0, acumulado), nota: vence ? `vence el ${vence}` : null });
+  }
+  const recargas = saldo.top_ups ?? 0;
+  if (recargas > 0 || (saldo.used_top_ups ?? 0) > 0) {
+    partes.push({ clave: "recargas", nombre: "Recargas", uso: uso(saldo.used_top_ups ?? 0, recargas), nota: null });
+  }
+  return { total: `Saldo total: ${creditos(saldo.total)} · ${formatCop(Math.round(saldo.total) * PESOS_POR_CREDITO)}`, partes };
+}
+
+type Recarga = PlanResponse["recargas"][number];
+
+/** Un paquete de recarga en palabras: créditos, precio final y, si hay descuento, el de lista y «−15 %». */
+export function recargaEnPalabras(paquete: Recarga): { creditos: string; precio: string; lista: string | null; descuento: string | null } {
+  const conDescuento = paquete.descuento_pct > 0 && paquete.precio_lista_cop > paquete.precio_cop;
+  return {
+    creditos: creditos(paquete.creditos),
+    precio: formatCop(paquete.precio_cop),
+    lista: conDescuento ? formatCop(paquete.precio_lista_cop) : null,
+    descuento: conDescuento ? `−${paquete.descuento_pct} %` : null,
+  };
+}
+
+/** Comprar créditos escribe en la sección `plan` (mismo permiso que `POST /admin/plan/subscribe`). */
+export function puedeComprarCreditos(me: { role?: string | null; permissions?: Record<string, string | null | undefined> | null } | null | undefined): boolean {
+  if (!me) return false;
+  return me.role === "master" || me.permissions?.plan === "write";
+}
+
+const ERROR_DE_RECARGA: Record<string, string> = {
+  recarga_no_disponible: "Las recargas son para negocios con un plan pago activo. Elige o paga un plan para poder recargar.",
+  unknown_package: "Ese paquete ya no está disponible. Cierra y vuelve a abrir la lista de paquetes.",
+  checkout_failed: "No pudimos abrir el pago. Intenta de nuevo en unos minutos.",
+};
+
+/**
+ * El error al comprar créditos: el de «bajo el mínimo» trae el precio y el mínimo de la pasarela y se
+ * muestra tal cual; los demás, en un texto propio.
+ */
+export function errorDeRecarga(code: string | null | undefined, mensaje: string | null | undefined): string {
+  if (code === "recarga_bajo_minimo" && mensaje) return mensaje;
+  return (code && ERROR_DE_RECARGA[code]) || "No pudimos abrir el pago de la recarga. Vuelve a intentarlo.";
 }
 
 /** «3.200 créditos»; «1 crédito». */
@@ -317,10 +394,9 @@ function beneficio(clave: string, valor: unknown): string | null | undefined {
       if (typeof valor !== "number" || valor <= 0) return null;
       return valor === 1 ? "El crédito que no uses pasa al mes siguiente" : `El crédito que no uses se guarda hasta ${valor} meses`;
     case "descuento_recarga":
-      // `null`: el plan no compra recargas; `0`: compra sin descuento. Sin descuento no se anuncia nada
-      // hasta que exista «Comprar créditos» en el panel (HU-BILL-23): sería ofrecer algo que todavía no se puede hacer.
-      if (typeof valor !== "number" || valor <= 0) return null;
-      return `${valor} % de descuento al comprar créditos`;
+      // `null`: el plan no compra recargas; `0`: compra sin descuento («Comprar créditos», HU-BILL-23).
+      if (typeof valor !== "number" || valor < 0) return null;
+      return valor === 0 ? "Puedes comprar créditos extra" : `${valor} % de descuento al comprar créditos`;
     case "marca_propia":
       return valor === true ? "Tu marca, sin la de SolversHub" : null;
     case "exportar":
@@ -411,6 +487,14 @@ export function estadoDelPago(estado: string): Etiqueta & { explicacion?: string
     default:
       return { label: "En revisión", tono: "neutral" };
   }
+}
+
+/** «Noviembre 2026 · Plan Basic» o, si es una recarga, «Noviembre 2026 · Recarga de 5.000 créditos». */
+export function tituloDelPago(pago: Pick<Pago, "periodo" | "created_at" | "plan_id" | "concepto" | "creditos">, planes: readonly Pick<Plan, "id" | "name">[]): string {
+  if (pago.concepto === "recarga") {
+    return `${mesDelPago(pago)} · ${pago.creditos != null ? `Recarga de ${creditos(pago.creditos)}` : "Recarga de créditos"}`;
+  }
+  return `${mesDelPago(pago)} · Plan ${nombreDelPlan(pago.plan_id, planes)}`;
 }
 
 /** Nombre del plan de un pago a partir de su id: «Pro» en vez de «pro». */

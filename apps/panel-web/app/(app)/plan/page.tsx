@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CajonDePagos, CajonDePlanes } from "@/app/(app)/plan/_components/cajones";
+import { CajonDePagos, CajonDePlanes, CajonDeRecargas } from "@/app/(app)/plan/_components/cajones";
 import { SubscribeButton } from "@/app/(app)/plan/_components/subscribe-button";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,11 @@ import {
   creditoEnPalabras,
   creditoPorAgente,
   creditoPorConcepto,
+  desgloseDelSaldo,
   diaCorto,
   estadoDelPlan,
   precioDelPlan,
+  puedeComprarCreditos,
   topesEnPalabras,
   type Parte,
 } from "@/lib/consumo";
@@ -94,12 +96,16 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       </div>
     );
   }
-  const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: porElAsistente } = res.data;
+  const { overview, usage, payments, plans, cobro, credit, plan_por_el_asistente: porElAsistente, recargas = [] } = res.data;
   const esMaster = me.ok && me.data.role === "master";
+  // «Comprar créditos» (HU-BILL-23): solo si el negocio puede comprar (la API manda paquetes) y quien mira
+  // escribe en plan. Si no se supo quién es (falló /admin/me), no se ofrece: el backend lo rechazaría igual.
+  const puedeComprar = recargas.length > 0 && me.ok && puedeComprarCreditos(me.data);
   const pendiente = cobro?.estado === "pendiente";
   const estado = estadoDelPlan(overview, pendiente);
   const actual = plans.find((p) => p.current);
   const credito = creditoEnPalabras(credit);
+  const saldo = credit?.used != null ? desgloseDelSaldo(credit.balance) : null;
   const conceptos = credito && credit?.used != null ? creditoPorConcepto(credit) : [];
   const agentes = credito && credit?.used != null ? creditoPorAgente(credit) : [];
   const topes = topesEnPalabras(usage);
@@ -134,6 +140,29 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               segments={[{ key: "usado", value: credito.porcentaje, label: "Usado", tone: TONO_DE_BARRA[credito.tono] ?? "data" }]}
             />
           )}
+          {saldo && (
+            <div className="flex flex-col gap-2" aria-label="Saldo de créditos">
+              <p className="text-sm font-medium tabular-nums text-headline">{saldo.total}</p>
+              <ul className="flex flex-col gap-1 text-sm">
+                {saldo.partes.map((p) => (
+                  <li key={p.clave} className="flex flex-wrap items-baseline justify-between gap-x-3">
+                    <span className="text-body">
+                      {p.nombre}
+                      {p.nota && <span className="text-text-soft"> · {p.nota}</span>}
+                    </span>
+                    <span className="tabular-nums text-text-soft">{p.uso}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {puedeComprar && (
+            <Button asChild variant="outline" className="self-start">
+              <Link href="/plan?ver=recargas" scroll={false}>
+                Comprar créditos
+              </Link>
+            </Button>
+          )}
           {credito?.aviso && (
             <div
               role="status"
@@ -147,6 +176,14 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               </span>
               <span className="text-body">
                 {credito.aviso.texto}{" "}
+                {puedeComprar && (
+                  <>
+                    <Link href="/plan?ver=recargas" scroll={false} className="text-link hover:underline">
+                      Comprar créditos
+                    </Link>
+                    {" · "}
+                  </>
+                )}
                 <Link href="/plan?ver=planes" scroll={false} className="text-link hover:underline">
                   Ver planes
                 </Link>
@@ -288,6 +325,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
 
       {sp.ver === "planes" && <CajonDePlanes planes={plans} porElAsistente={porElAsistente} />}
       {sp.ver === "pagos" && <CajonDePagos pagos={payments} planes={plans} />}
+      {sp.ver === "recargas" && puedeComprar && <CajonDeRecargas paquetes={recargas} />}
     </div>
   );
 }

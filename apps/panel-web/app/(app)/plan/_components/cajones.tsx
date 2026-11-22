@@ -2,23 +2,26 @@
 
 import { Check, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { SubscribeButton } from "@/app/(app)/plan/_components/subscribe-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { PlanResponse } from "@/lib/api/types";
 import {
   accionDePlan,
   canalDelPago,
+  errorDeRecarga,
   estadoDelPago,
   funcionesEnPalabras,
   limiteEnPalabras,
-  mesDelPago,
-  nombreDelPlan,
   PLAN_MAS_ELEGIDO,
   precioDelPlan,
+  recargaEnPalabras,
+  tituloDelPago,
 } from "@/lib/consumo";
 import { formatCop, formatNumber } from "@/lib/format";
 import { enlaceDePago, limitesOrdenados } from "@/lib/plan-limite";
@@ -26,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 type Plan = PlanResponse["plans"][number];
 type Pago = PlanResponse["payments"][number];
+type Recarga = PlanResponse["recargas"][number];
 
 /**
  * Los planes en un cajón (CYP-05, planes v3 de D-79): cada uno con su precio y sus créditos al mes, sus
@@ -110,16 +114,91 @@ export function CajonDePlanes({ planes, porElAsistente }: { planes: Plan[]; porE
   );
 }
 
-/** Los pagos del plan en un cajón (CYP-06): por mes, con su canal y qué hacer si no pasó. */
+/**
+ * Comprar créditos en un cajón (HU-BILL-27 parte 2b, HU-BILL-23): los paquetes con el precio del plan
+ * vigente (de lista tachado y «−15 %» si hay descuento). Al elegir uno se pide el link de pago y se abre
+ * el checkout. `recarga_bajo_minimo` muestra el mensaje del backend tal cual (trae precio y mínimo).
+ */
+export function CajonDeRecargas({ paquetes }: { paquetes: Recarga[] }) {
+  const router = useRouter();
+  const [estado, setEstado] = useState<{ abriendo?: string; error?: string }>({});
+
+  async function comprar(paquete: string) {
+    setEstado({ abriendo: paquete });
+    const res = await fetch("/api/plan/recargas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paquete }),
+    }).catch(() => null);
+    const json = ((await res?.json().catch(() => ({}))) ?? {}) as { checkout_url?: string; error?: string; code?: string };
+    if (!res?.ok || !json.checkout_url) {
+      setEstado({ error: errorDeRecarga(json.code, json.error) });
+      return;
+    }
+    window.location.assign(json.checkout_url);
+  }
+
+  return (
+    <Sheet open onOpenChange={(abierto) => !abierto && router.replace("/plan", { scroll: false })}>
+      <SheetContent
+        title="Comprar créditos"
+        description="Se suman a tu saldo y se usan después del crédito del mes y lo acumulado. 1 crédito = $ 10."
+        className="sm:max-w-lg"
+      >
+        {paquetes.length === 0 ? (
+          <EmptyState title="Tu plan no permite comprar créditos" description="Las recargas son para negocios con un plan pago activo." />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-3" aria-label="Paquetes de créditos">
+              {paquetes.map((p) => {
+                const r = recargaEnPalabras(p);
+                return (
+                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border-soft bg-surface p-4">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="font-medium tabular-nums text-headline">{r.creditos}</span>
+                      <span className="flex flex-wrap items-baseline gap-2 text-sm tabular-nums">
+                        {r.lista && (
+                          <s className="text-text-soft">
+                            <span className="sr-only">Antes </span>
+                            {r.lista}
+                          </s>
+                        )}
+                        <span className="font-semibold text-headline">{r.precio}</span>
+                        {r.descuento && <Badge variant="accent">{r.descuento}</Badge>}
+                      </span>
+                    </div>
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      onClick={() => void comprar(p.id)}
+                      loading={estado.abriendo === p.id}
+                      disabled={Boolean(estado.abriendo)}
+                      aria-label={`Comprar ${r.creditos} por ${r.precio}`}
+                    >
+                      {estado.abriendo === p.id ? "Abriendo el pago…" : "Comprar"}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+            <FormFeedback error={estado.error} />
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/** Los pagos del plan y las recargas en un cajón (CYP-06): por mes, con su canal y qué hacer si no pasó. */
 export function CajonDePagos({ pagos, planes }: { pagos: Pago[]; planes: Plan[] }) {
   const router = useRouter();
   return (
     <Sheet open onOpenChange={(abierto) => !abierto && router.replace("/plan", { scroll: false })}>
-      <SheetContent title="Pagos" description="Los pagos de tu plan, del más reciente al más antiguo." className="sm:max-w-lg">
+      <SheetContent title="Pagos" description="Los pagos de tu plan y tus recargas, del más reciente al más antiguo." className="sm:max-w-lg">
         {pagos.length === 0 ? (
           <EmptyState title="Aún no hay pagos" description="Cuando pagues tu plan, el pago aparece aquí." />
         ) : (
-          <ul className="flex flex-col" aria-label="Pagos del plan">
+          <ul className="flex flex-col" aria-label="Pagos">
             {pagos.map((p, i) => {
               const estado = estadoDelPago(p.status);
               const enlace = enlaceDePago(p);
@@ -127,9 +206,7 @@ export function CajonDePagos({ pagos, planes }: { pagos: Pago[]; planes: Plan[] 
                 <li key={`${p.periodo ?? p.created_at}-${i}`} className="flex flex-col gap-2 border-b border-border-soft py-3 last:border-b-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col">
-                      <span className="font-medium text-headline">
-                        {mesDelPago(p)} · Plan {nombreDelPlan(p.plan_id, planes)}
-                      </span>
+                      <span className="font-medium text-headline">{tituloDelPago(p, planes)}</span>
                       <span className="text-xs text-text-soft">
                         {canalDelPago(p.provider)}
                         {estado.explicacion ? ` · ${estado.explicacion}` : ""}
