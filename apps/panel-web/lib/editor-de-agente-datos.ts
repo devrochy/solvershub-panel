@@ -75,7 +75,8 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
 
   const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
   const puedeEditar = me.ok && puedeEditarConfiguracion(me.data);
-  const efectivo = modelos.data.effective_model
+  // El modelo solo lo ve el master (ADR-0210 §5); al gestor la API ya lo manda vacío.
+  const efectivo = me.ok && me.data.role === "master" && modelos.data.effective_model
     ? {
         nombre: modelos.data.effective_model,
         origen: modelos.data.effective_source === "agente" ? ("agente" as const) : ("negocio" as const),

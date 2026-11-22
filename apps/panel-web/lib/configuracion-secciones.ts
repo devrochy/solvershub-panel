@@ -109,8 +109,8 @@ export const SECCIONES: Seccion[] = [
   {
     id: "cerebro",
     grupo: "avanzado",
-    titulo: "Cerebro y modelos",
-    descripcion: "Qué modelos de IA usa el asistente y sus límites por turno.",
+    titulo: "Cerebro",
+    descripcion: "Cómo responde el asistente y sus límites por turno.",
   },
   {
     id: "agentspec",

@@ -237,7 +237,8 @@ function Contenido({ t }: { t: TurnDetail }) {
               <li key={`${c.kind}-${c.model}`} className="flex flex-wrap justify-between gap-2 tabular-nums text-body">
                 <span>
                   {tipoDeConsumo(c.kind)}
-                  {c.model ? ` · ${c.model}` : ""}
+                  {/* El modelo, como el costo, solo para quien ve Costos IA (el master, ADR-0210 §5). */}
+                  {t.can_see_costs && c.model ? ` · ${c.model}` : ""}
                 </span>
                 <span>
                   {formatNumber(c.input_tokens + c.output_tokens)} tokens

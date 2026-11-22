@@ -1,10 +1,12 @@
 import { Bandeja } from "@/app/(app)/conversaciones/_components/bandeja";
 import { FichaCliente } from "@/components/domain/cliente/ficha-cliente";
+import { ExportarConversaciones } from "@/components/domain/exportar-conversaciones";
 import { BotonReintentar, EstadoDeError } from "@/components/ui/estado-de-error";
 import { PageHeader } from "@/components/ui/page-header";
 import { apiFetch } from "@/lib/api/server";
-import type { ConversationConnection, ConversationDetail, ConversationPage, LeadDetail, Me } from "@/lib/api/types";
+import type { ConversationConnection, ConversationDetail, ConversationPage, LeadDetail, Me, PlanResponse } from "@/lib/api/types";
 import { esPropietarioOPlataforma } from "@/lib/clientes";
+import { avisoDeHistorial, funcionesDelPlanActual, incluyeExportar } from "@/lib/plan-limite";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Conversaciones" };
@@ -35,7 +37,7 @@ export default async function ConversationsPage({ searchParams }: { searchParams
   if (sp.connection_id) qs.set("connection_id", sp.connection_id);
   if (sp.page) qs.set("page", sp.page);
 
-  const [res, conexiones, detalle, ficha, me] = await Promise.all([
+  const [res, conexiones, detalle, ficha, me, plan] = await Promise.all([
     apiFetch<ConversationPage>(`/admin/conversations${qs.size ? `?${qs.toString()}` : ""}`),
     apiFetch<ConversationConnection[]>("/admin/conversations/connections"),
     sp.c ? apiFetch<ConversationDetail>(`/admin/conversations/${encodeURIComponent(sp.c)}`) : null,
@@ -43,11 +45,14 @@ export default async function ConversationsPage({ searchParams }: { searchParams
     // Para el «La atiendes tú» del aviso y para decidir si la ficha ofrece retirar los datos del
     // cliente; el servidor lo exige igual.
     apiFetch<Me>("/admin/me"),
+    // «Exportar conversaciones» solo con `features.exportar` (HU-BILL-25); sin la sección Plan no se muestra.
+    apiFetch<PlanResponse>("/admin/plan"),
   ]);
+  const exportar = <ExportarConversaciones incluido={incluyeExportar(funcionesDelPlanActual(plan.ok ? plan.data : null))} />;
   if (!res.ok) {
     return (
       <div data-ancho-completo className="flex min-h-0 flex-1 flex-col gap-4">
-        <PageHeader {...CABECERA} className="shrink-0" />
+        <PageHeader {...CABECERA} actions={exportar} className="shrink-0" />
         <div className="flex min-h-0 flex-1 rounded-lg border border-border-soft bg-surface">
           <EstadoDeError
             className="flex-1"
@@ -67,9 +72,13 @@ export default async function ConversationsPage({ searchParams }: { searchParams
   if (sp.c) qsFicha.set("c", sp.c);
   const hrefBase = `/conversaciones${qsFicha.size ? `?${qsFicha.toString()}` : ""}`;
 
+  // HU-BILL-25: una conversación más vieja que el historial del plan responde 409; nada se borró.
+  const fueraDelHistorial = detalle && !detalle.ok ? avisoDeHistorial(detalle) : null;
   const errorDeChat =
     detalle && !detalle.ok
-      ? detalle.status === 404
+      ? fueraDelHistorial
+        ? { ...fueraDelHistorial, mejorarPlan: true }
+        : detalle.status === 404
         ? {
             titulo: "Esa conversación no existe o es de otro negocio.",
             descripcion: "Puede que el enlace sea viejo. Elige otra conversación de la lista.",
@@ -84,7 +93,7 @@ export default async function ConversationsPage({ searchParams }: { searchParams
   return (
     <div data-ancho-completo className="flex min-h-0 flex-1 flex-col gap-4">
       {/* En el celular, con un chat abierto, el chat ocupa la pantalla y trae su «Volver». */}
-      <PageHeader {...CABECERA} className={cn("shrink-0", sp.c && "max-lg:hidden")} />
+      <PageHeader {...CABECERA} actions={exportar} className={cn("shrink-0", sp.c && "max-lg:hidden")} />
 
       <Bandeja
         errorDeChat={errorDeChat}

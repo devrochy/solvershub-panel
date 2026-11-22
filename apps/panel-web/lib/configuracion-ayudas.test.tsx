@@ -88,7 +88,7 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
         opcion("rag_top_k", "memoria", "entero", "Ayuda del catálogo para los fragmentos.", { minimo: 0, maximo: 20 }),
       ]),
     );
-    await irA("Cerebro y modelos", "Cerebro y modelos");
+    await irA("Cerebro", "Cerebro");
     expect(screen.getByText(/Ayuda del catálogo para la temperatura\. Entre 0 y 2\./)).toBeTruthy();
     await irA("Memoria", "Memoria");
     verAvanzado();
@@ -97,7 +97,7 @@ describe("ayudas del catálogo (HU-CFG-09)", () => {
 
   it("sin la opción en el catálogo (un backend anterior) queda el texto de respaldo", async () => {
     montar(catalogo());
-    await irA("Cerebro y modelos", "Cerebro y modelos");
+    await irA("Cerebro", "Cerebro");
     expect(screen.getByText(/cerca de 0 el asistente es más predecible/)).toBeTruthy();
     await irA("Memoria", "Memoria");
     verAvanzado();

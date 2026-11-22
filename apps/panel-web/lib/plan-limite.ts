@@ -14,7 +14,13 @@ export const TEXTO_MEJORAR_PLAN = "Mejorar mi plan";
  * Los 409 de alcance del plan v3 (HU-BILL-19, ADR-0208): lo pedido no viene en el plan actual (un canal,
  * una habilidad o una función). Se muestran como los topes: el mensaje de la API y «Mejorar mi plan».
  */
-export const FUERA_DEL_PLAN = ["plan_channel_not_included", "plan_plugin_not_included", "plan_feature_not_included"] as const;
+export const FUERA_DEL_PLAN = [
+  "plan_channel_not_included",
+  "plan_plugin_not_included",
+  "plan_feature_not_included",
+  // HU-BILL-24: el nivel de IA Avanzado no viene en el plan (`details = {nivel_ia, plan}`).
+  "plan_nivel_ia_not_included",
+] as const;
 
 /**
  * ¿Es un 409 del plan que se resuelve mejorándolo? Los topes (`plan_limit_agentes`,
@@ -133,5 +139,42 @@ export function avisoDePlanFree(plan: MePlanSummary | null | undefined): AvisoDe
     titulo: "Estás en el plan Free",
     texto: `${restante} Con un plan pago tienes más agentes, canales y crédito mensual.`,
     cta: TEXTO_MEJORAR_PLAN,
+  };
+}
+
+/** Las funciones (`features`) del plan actual, o `null` si el plan no se pudo leer. */
+export function funcionesDelPlanActual(plan: PlanResponse | null | undefined): Record<string, unknown> | null {
+  const actual = plan?.plans.find((p) => p.current);
+  return actual ? actual.features : null;
+}
+
+/** ¿El plan actual exporta conversaciones (`features.exportar`, HU-BILL-25)? `null` si no se sabe. */
+export function incluyeExportar(funciones: Record<string, unknown> | null): boolean | null {
+  if (!funciones) return null;
+  return funciones.exportar === true;
+}
+
+/** El aviso de una conversación fuera del historial del plan (409 `plan_feature_not_included`, `feature = historial`). */
+export type AvisoDeHistorial = { titulo: string; descripcion: string };
+
+/**
+ * Si el error de la API es el 409 de historial (HU-BILL-25), el aviso en palabras; si no, `null`.
+ * `historial_dias` sale de `error.details`; sin él, el aviso no cita los días.
+ */
+export function avisoDeHistorial(
+  error: { status?: number; code?: string | null; details?: Record<string, unknown> | null } | null | undefined,
+): AvisoDeHistorial | null {
+  if (!error || error.code !== "plan_feature_not_included" || error.details?.feature !== "historial") return null;
+  const dias = error.details?.historial_dias;
+  if (typeof dias === "number" && dias > 0) {
+    const n = dias === 1 ? "1 día" : `${dias} días`;
+    return {
+      titulo: `Esta conversación es de hace más de ${n}`,
+      descripcion: `Tu plan muestra ${n} de historial. No se borró nada: al mejorar tu plan la vuelves a ver.`,
+    };
+  }
+  return {
+    titulo: "Esta conversación es más antigua que el historial de tu plan",
+    descripcion: "No se borró nada: al mejorar tu plan la vuelves a ver.",
   };
 }

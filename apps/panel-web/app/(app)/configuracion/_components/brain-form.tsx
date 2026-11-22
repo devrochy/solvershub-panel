@@ -16,16 +16,23 @@ import { TEMPERATURAS, cercano } from "@/lib/configuracion-resumen";
 import { igualProfundo } from "@/lib/configuracion-secciones";
 import { useAction } from "@/lib/use-action";
 
-/** Formulario del Cerebro (modelos y límites). Responsabilidad: editar y guardar. */
+/**
+ * Formulario del Cerebro (modelos y límites). Responsabilidad: editar y guardar. Los modelos solo los ve y
+ * cambia el master (ADR-0210 §5): al gestor la API se los manda vacíos e ignora los que mande, así que sus
+ * campos no se muestran (y el primario vacío, obligatorio en `BrainUpdate`, viaja tal cual sin cambiar nada).
+ */
 export function BrainForm({
   brain,
   catalogo = null,
   puedeEditar = true,
+  verModelos = false,
   onGuardado,
 }: {
   brain: BrainSettings;
   catalogo?: CatalogoConfig | null;
   puedeEditar?: boolean;
+  /** Solo el master: modelo primario, de razonamiento y de respaldo. */
+  verModelos?: boolean;
   /** Tras guardar bien: el cajón se cierra. */
   onGuardado?: () => void;
 }) {
@@ -61,37 +68,41 @@ export function BrainForm({
         <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
-              label="Modelo primario"
-              htmlFor="model_primary"
-              help={ayuda("model_primary", "El modelo de IA que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas.")}
-              required
-            >
-              <Input
-                id="model_primary"
-                required
-                value={values.model_primary}
-                onChange={(e) => set("model_primary", e.target.value)}
-              />
-            </Field>
-            <Field
-              label="Modelo de razonamiento"
-              htmlFor="model_router"
-              help={ayuda("model_router", "Para turnos complejos sin herramientas.")}
-            >
-              <Input
-                id="model_router"
-                value={values.model_router ?? ""}
-                onChange={(e) => set("model_router", e.target.value)}
-              />
-            </Field>
-            <Field label="Modelo de respaldo" htmlFor="model_fallback" help={ayuda("model_fallback", "Se usa si el primario falla.")}>
-              <Input
-                id="model_fallback"
-                value={values.model_fallback ?? ""}
-                onChange={(e) => set("model_fallback", e.target.value)}
-              />
-            </Field>
+            {verModelos && (
+              <>
+                <Field
+                  label="Modelo primario"
+                  htmlFor="model_primary"
+                  help={ayuda("model_primary", "El modelo de IA que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas.")}
+                  required
+                >
+                  <Input
+                    id="model_primary"
+                    required
+                    value={values.model_primary}
+                    onChange={(e) => set("model_primary", e.target.value)}
+                  />
+                </Field>
+                <Field
+                  label="Modelo de razonamiento"
+                  htmlFor="model_router"
+                  help={ayuda("model_router", "Para turnos complejos sin herramientas.")}
+                >
+                  <Input
+                    id="model_router"
+                    value={values.model_router ?? ""}
+                    onChange={(e) => set("model_router", e.target.value)}
+                  />
+                </Field>
+                <Field label="Modelo de respaldo" htmlFor="model_fallback" help={ayuda("model_fallback", "Se usa si el primario falla.")}>
+                  <Input
+                    id="model_fallback"
+                    value={values.model_fallback ?? ""}
+                    onChange={(e) => set("model_fallback", e.target.value)}
+                  />
+                </Field>
+              </>
+            )}
             <div className="flex flex-col gap-2 md:col-span-2">
               <span className="text-sh-label font-medium text-body">Cómo salen las respuestas</span>
               <SegmentedControl

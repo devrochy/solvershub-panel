@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessageSquare, MessageSquareX } from "lucide-react";
+import { ArrowLeft, History, MessageSquare, MessageSquareX } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import type {
   ConversationSummary,
 } from "@/lib/api/types";
 import { useBandejaEnVivo } from "@/lib/conversaciones/en-vivo";
+import { RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";
 import { useVistos } from "@/lib/conversaciones/use-vistos";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +47,11 @@ export function Bandeja({
   hayMas: boolean;
   filtros: { q?: string; status?: string; connectionId?: string };
   connections: ConversationConnection[];
-  /** El chat pedido (`?c=`) no se pudo abrir: `detalle` es el error técnico, si lo hay. */
-  errorDeChat?: { titulo: string; descripcion: string; detalle?: string } | null;
+  /**
+   * El chat pedido (`?c=`) no se pudo abrir: `detalle` es el error técnico, si lo hay. `mejorarPlan`: lo
+   * resuelve el plan (la conversación es más vieja que su historial, HU-BILL-25) y se ofrece mejorarlo.
+   */
+  errorDeChat?: { titulo: string; descripcion: string; detalle?: string; mejorarPlan?: boolean } | null;
   miCorreo?: string;
 }) {
   const router = useRouter();
@@ -138,17 +142,26 @@ export function Bandeja({
         ) : errorDeChat ? (
           <EstadoDeError
             tono="neutro"
-            icono={<MessageSquareX aria-hidden className="h-5 w-5" />}
+            icono={
+              errorDeChat.mejorarPlan ? <History aria-hidden className="h-5 w-5" /> : <MessageSquareX aria-hidden className="h-5 w-5" />
+            }
             titulo={errorDeChat.titulo}
             descripcion={errorDeChat.descripcion}
             detalle={errorDeChat.detalle}
             accion={
-              <Button asChild variant="outline" className="lg:hidden">
-                <Link href={hrefVolver} scroll={false}>
-                  <ArrowLeft aria-hidden className="h-4 w-4" />
-                  Volver a la bandeja
-                </Link>
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                {errorDeChat.mejorarPlan && (
+                  <Button asChild variant="accent">
+                    <Link href={RUTA_MEJORAR_PLAN}>{TEXTO_MEJORAR_PLAN}</Link>
+                  </Button>
+                )}
+                <Button asChild variant="outline" className="lg:hidden">
+                  <Link href={hrefVolver} scroll={false}>
+                    <ArrowLeft aria-hidden className="h-4 w-4" />
+                    Volver a la bandeja
+                  </Link>
+                </Button>
+              </div>
             }
           />
         ) : (

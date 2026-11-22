@@ -4,7 +4,7 @@
  * Lógica pura: la pantalla solo pinta lo que devuelve.
  */
 
-import type { CatalogoConfig, OpcionConfig } from "@/lib/api/types";
+import type { BrainSettings, CatalogoConfig, OpcionConfig } from "@/lib/api/types";
 import { etiquetaDeHora } from "@/lib/calendario/formulario";
 import { etiquetaDeValor } from "@/lib/catalogo-config";
 import { DIAS_FRANJA, type Franja } from "@/lib/horario-atencion";
@@ -132,6 +132,16 @@ export const TEMPERATURAS = [
 
 export function temperaturaEnPalabras(t: number): string {
   return cercano(TEMPERATURAS, t, (o) => o.valor).label;
+}
+
+/**
+ * Resumen del Cerebro: «Respuestas precisas». El modelo solo lo ve el master (ADR-0210 §5): al gestor la API
+ * se lo manda vacío y aquí no se pinta, ni vacío ni «null».
+ */
+export function cerebroEnPalabras(brain: Pick<BrainSettings, "model_primary" | "model_temperature">, verModelo: boolean): string {
+  const respuestas = `Respuestas ${temperaturaEnPalabras(brain.model_temperature).toLowerCase()}`;
+  const modelo = verModelo ? brain.model_primary?.trim() : "";
+  return modelo ? `${modelo} · ${respuestas.toLowerCase()}` : respuestas;
 }
 
 /** «2 habilidades activas · Cobranza con un problema». */
