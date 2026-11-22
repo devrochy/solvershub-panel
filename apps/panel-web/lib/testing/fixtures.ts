@@ -616,6 +616,7 @@ export const plan: PlanResponse = {
     { key: "correos", label: "Correos conectados", unit: "correos", scope: "lifetime", used: 0, limit: 1, percent: 0, exceeded: false },
   ],
   payments: [],
+  recargas: [],
   plans: planesV3.map((p) => ({ ...p, current: p.id === "basic" })),
   credit: {
     limit: 12000,
