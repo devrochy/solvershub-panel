@@ -18,9 +18,9 @@ describe("secciones de Configuración", () => {
     for (const seccion of SECCIONES) expect(GRUPOS_MENU.some((g) => g.id === seccion.grupo)).toBe(true);
   });
 
-  it("la pestaña de herramientas ya no se llama «Habilidades» (choca con /habilidades)", () => {
+  it("sin la sección de herramientas del negocio: las tools viven en cada agente (HU-AOS-91)", () => {
     expect(SECCIONES.map((s) => s.titulo)).not.toContain("Habilidades");
-    expect(SECCIONES.find((s) => s.id === "herramientas")?.titulo).toBe("Herramientas del agente");
+    expect(SECCIONES.map((s) => s.titulo)).not.toContain("Herramientas del agente");
   });
 
   it("los grupos del catálogo de Identidad se reparten sin repetirse ni perderse", () => {
@@ -43,8 +43,8 @@ describe("URL → sección", () => {
   it("?tab= acepta los ids de la antigua pantalla y los del panel clásico", () => {
     expect(resolverSeccion({ tab: "identity" })).toBe("identidad");
     expect(resolverSeccion({ tab: "brain" })).toBe("cerebro");
-    expect(resolverSeccion({ tab: "skills" })).toBe("herramientas");
-    expect(resolverSeccion({ tab: "habilidades" })).toBe("herramientas");
+    // Herramientas del negocio se retiró con el v2: el alias viejo cae en la sección inicial.
+    expect(resolverSeccion({ tab: "skills" })).toBe("identidad");
     expect(resolverSeccion({ tab: "advanced" })).toBe("agentspec");
     expect(resolverSeccion({ tab: "avanzado" })).toBe("agentspec");
     expect(resolverSeccion({ tab: "web-chat" })).toBe("chat-web");

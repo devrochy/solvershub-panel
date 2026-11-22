@@ -7221,7 +7221,7 @@ export interface paths {
         get?: never;
         /**
          * Save Skills Settings
-         * @description On/off y límites por herramienta (solo tools de packs habilitados).
+         * @description Retirado: las tools del negocio vivían en el AgentSpec v2 (410 `v2_retirado`).
          */
         put: operations["save_skills_settings_api_v1_admin_settings_skills_put"];
         post?: never;
@@ -7240,7 +7240,8 @@ export interface paths {
         };
         /**
          * Get Advanced
-         * @description Versiones del AgentSpec, LLM, guardrails, flow de atención y evals.
+         * @description LLM propio, flujo de atención y corridas de evals. `versions`, `guardrails_text` y `spec` quedan vacíos: eran
+         *     del AgentSpec v2 (ADR-0206, HU-AOS-91) y se mantienen para no romper la APK instalada.
          */
         get: operations["get_advanced_api_v1_admin_settings_advanced_get"];
         put?: never;
@@ -7262,7 +7263,7 @@ export interface paths {
         put?: never;
         /**
          * Activate Spec Version Endpoint
-         * @description Activa (o revierte a) una versión concreta del AgentSpec (ADR-0051).
+         * @description Retirado con el AgentSpec v2 (410 `v2_retirado`).
          */
         post: operations["activate_spec_version_endpoint_api_v1_admin_settings_advanced_versions__version_id__activate_post"];
         delete?: never;
@@ -7301,7 +7302,7 @@ export interface paths {
         get?: never;
         /**
          * Save Guardrails Settings
-         * @description Guardrails personalizados del tenant (DSL seguro, una regla por línea).
+         * @description Retirado: los guardrails personalizados vivían en el AgentSpec v2 (410 `v2_retirado`).
          */
         put: operations["save_guardrails_settings_api_v1_admin_settings_advanced_guardrails_put"];
         post?: never;
@@ -7320,18 +7321,12 @@ export interface paths {
         };
         /**
          * Get Raw Spec
-         * @description AgentSpec activo (editor crudo de Configuración → Avanzado), con los headers sensibles
-         *     de las tools declarativas enmascarados (HU-AOS-12). El `tenantId` mostrado es el del
-         *     negocio de la sesión, aunque la fila traiga otro.
+         * @description Retirado: el editor crudo del AgentSpec v2 (410 `v2_retirado`).
          */
         get: operations["get_raw_spec_api_v1_admin_settings_advanced_spec_get"];
         /**
          * Save Raw Spec
-         * @description Valida el JSON contra el contrato del AgentSpec y guarda si cambió.
-         *
-         *     `save_spec_if_changed` solo crea versión cuando el contenido difiere, así que
-         *     guardar el mismo spec es un no-op (no ensucia el historial). El `tenantId` es
-         *     siempre el del negocio de la sesión: el del cuerpo se ignora.
+         * @description Retirado: el editor crudo del AgentSpec v2 (410 `v2_retirado`).
          */
         put: operations["save_raw_spec_api_v1_admin_settings_advanced_spec_put"];
         post?: never;
@@ -12826,13 +12821,6 @@ export interface components {
              */
             requiere_accion_manual: boolean;
         };
-        /** ConfiguredSecret */
-        ConfiguredSecret: {
-            /** Name */
-            name: string;
-            /** Domains */
-            domains: string[];
-        };
         /** ConfirmarPagoBody */
         ConfirmarPagoBody: {
             /**
@@ -14043,17 +14031,6 @@ export interface components {
         DatosRetirados: {
             /** Retirados */
             retirados: number;
-        };
-        /** DeclarativeToolsOut */
-        DeclarativeToolsOut: {
-            /** Tools */
-            tools: {
-                [key: string]: unknown;
-            }[];
-            /** Secrets */
-            secrets: components["schemas"]["ConfiguredSecret"][];
-            /** Literals To Migrate */
-            literals_to_migrate: string[];
         };
         /** Definicion */
         Definicion: {
@@ -39903,13 +39880,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
-            200: {
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeclarativeToolsOut"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -39933,28 +39910,15 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Tools declarativas (ADR-0052). Headers sensibles como {"secret": "<nombre>"}. */
-                    tools: {
-                        [key: string]: unknown;
-                    }[];
-                    /** @description Valores de secretos (solo escritura); null quita el secreto. */
-                    secrets?: {
-                        [key: string]: string | null;
-                    };
-                };
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Successful Response */
-            200: {
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeclarativeToolsOut"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -40481,6 +40445,13 @@ export interface operations {
                     "application/json": components["schemas"]["SkillBinding"][];
                 };
             };
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -40546,6 +40517,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SpecVersion"];
                 };
+            };
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -40619,6 +40597,13 @@ export interface operations {
                     "application/json": components["schemas"]["GuardrailsSettings"];
                 };
             };
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -40650,6 +40635,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SpecPayload"];
                 };
+            };
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -40686,6 +40678,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SpecPayload"];
                 };
+            };
+            /** @description Retirado con el AgentSpec v2: `error.code = v2_retirado` (ADR-0206, HU-AOS-91). */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -18,7 +18,6 @@ export type SeccionId =
   | "multimedia"
   | "whatsapp-web"
   | "cerebro"
-  | "herramientas"
   | "agentspec"
   | "accesibilidad";
 
@@ -114,16 +113,10 @@ export const SECCIONES: Seccion[] = [
     descripcion: "Qué modelos de IA usa el asistente y sus límites por turno.",
   },
   {
-    id: "herramientas",
-    grupo: "avanzado",
-    titulo: "Herramientas del agente",
-    descripcion: "Qué acciones puede ejecutar el asistente, con qué límite y si pide confirmación.",
-  },
-  {
     id: "agentspec",
     grupo: "avanzado",
     titulo: "Cuenta y proveedor",
-    descripcion: "Proveedor de IA, llave BYOK y la configuración técnica del negocio. El flujo de cada agente se edita en su ficha.",
+    descripcion: "Proveedor de IA, llave BYOK y las corridas de evals. El flujo, los guardrails y las tools de cada agente se editan en su ficha.",
   },
   {
     id: "accesibilidad",
@@ -150,8 +143,6 @@ export const ALIAS_TABS: Record<string, SeccionId> = {
   cerebro: "cerebro",
   memory: "memoria",
   memoria: "memoria",
-  skills: "herramientas",
-  habilidades: "herramientas",
   advanced: "agentspec",
   avanzado: "agentspec",
   "web-chat": "chat-web",
@@ -184,7 +175,7 @@ export function resolverSeccion(
 
 /**
  * Secciones que se muestran: WhatsApp Web solo existe para el master (el catálogo no la trae al resto) y
- * AgentSpec y proveedor es del equipo técnico (CFG-04): JSON crudo, reglas con sintaxis técnica y evals.
+ * Cuenta y proveedor es del equipo técnico (CFG-04): LLM propio y evals.
  */
 export function seccionesVisibles({ waweb, agentspec = false }: { waweb: boolean; agentspec?: boolean }): Seccion[] {
   return SECCIONES.filter((s) => (s.id !== "whatsapp-web" || waweb) && (s.id !== "agentspec" || agentspec));

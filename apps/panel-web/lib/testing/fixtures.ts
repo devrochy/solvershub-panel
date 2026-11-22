@@ -692,9 +692,12 @@ export const ajustesMultimedia = {
   },
 };
 
-/** `/admin/settings/advanced` no está tipado en el OpenAPI: forma de `SettingsTabs`. */
+/**
+ * `/admin/settings/advanced` no está tipado en el OpenAPI: forma de `SettingsTabs`. Con el v2 retirado
+ * (HU-AOS-91) `versions`, `guardrails_text` y `spec` llegan vacíos.
+ */
 export const ajustesAvanzados = {
-  versions: [{ id: "test-spec-1", version: "1", is_active: true, created_at: "2026-10-01T12:00:00Z" }],
+  versions: [],
   llm: { llm_provider: "deepseek", llm_model: "deepseek-chat", has_api_key: false },
   guardrails_text: "",
   flow: { source: "preset", sections: [{ label: "Saludo", purpose: "Recibir al cliente", tools: [] }], unknown_tools: [] },

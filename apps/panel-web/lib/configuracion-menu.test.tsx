@@ -109,7 +109,20 @@ describe("resumen de Configuración (rediseño B)", () => {
 
   it("el master ve Cuenta y proveedor", () => {
     montar({ esMaster: true });
-    expect(fila("Cuenta y proveedor")).toBeTruthy();
+    expect(fila("Cuenta y proveedor").textContent).toContain("deepseek · deepseek-chat");
+    // Herramientas del negocio se retiró con el v2 (HU-AOS-91): las tools viven en cada agente.
+    expect(screen.queryByRole("button", { name: /^Herramientas del agente/ })).toBeNull();
+  });
+
+  it("Cuenta y proveedor deja solo el LLM propio y las evals: sin spec, versiones ni guardrails (HU-AOS-91)", () => {
+    montar({ defaultSeccion: "agentspec", esMaster: true });
+    const cajon = screen.getByRole("dialog");
+    expect(cajon.textContent).toContain("Proveedor LLM");
+    expect(cajon.textContent).toContain("Últimas corridas de evals");
+    expect(cajon.textContent).toContain("Los guardrails y las tools de cada agente se configuran en el agente.");
+    for (const retirado of ["Editor crudo del AgentSpec", "Versiones del agente", "Guardrails personalizados"]) {
+      expect(cajon.textContent).not.toContain(retirado);
+    }
   });
 
   it("habilidades y mensajes fallidos son filas más, con su estado (CFG-11)", () => {
@@ -136,8 +149,8 @@ describe("resumen de Configuración (rediseño B)", () => {
   });
 
   it("?tab= sigue valiendo, con los ids de la antigua pantalla y los del panel clásico", () => {
-    montar({ defaultTab: "skills" });
-    expect(titulo().textContent).toBe("Herramientas del agente");
+    montar({ defaultTab: "brain" });
+    expect(titulo().textContent).toBe("Cerebro y modelos");
     cleanup();
     montar({ defaultTab: "web-chat" });
     expect(titulo().textContent).toBe("Chat web");
