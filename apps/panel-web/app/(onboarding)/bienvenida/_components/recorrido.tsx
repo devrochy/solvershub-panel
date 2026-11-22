@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
 import { AnilloDeListo, PildoraDelAgente, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
 import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
-import { FormFeedback } from "@/components/ui/form-feedback";
 import type { IdentitySettings } from "@/lib/api/types";
 import { crearYDejarListo } from "@/lib/onboarding-agente";
 import {
@@ -174,7 +174,8 @@ function Asistente({
     };
   });
   const [ocupado, setOcupado] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // El error con su `code`: el 409 del plan al crear el agente (HU-BILL-19) sale con «Mejorar mi plan».
+  const [error, setError] = useState<{ error: string; code?: string } | null>(null);
 
   // Marca el recorrido como empezado (o retomado, si estaba saltado).
   useEffect(() => {
@@ -223,7 +224,7 @@ function Asistente({
     const cambios = Object.assign({}, ...PARTES_DEL_PASO_1.map((id) => cambiosDelPaso(id, estado)));
     if (Object.keys(cambios).length === 0) return true;
     const guardado = await post("/api/onboarding/identidad", { cambios });
-    if (!guardado.ok) setError(guardado.error);
+    if (!guardado.ok) setError({ error: guardado.error });
     return guardado.ok;
   }
 
@@ -231,7 +232,7 @@ function Asistente({
     // HU-AOS-81: el paso 1 junta los datos del negocio y la identidad del agente.
     const problema = PARTES_DEL_PASO_1.map((id) => errorDelPaso(id, estado)).find(Boolean);
     if (problema) {
-      setError(problema);
+      setError({ error: problema });
       return;
     }
     setOcupado(true);
@@ -241,7 +242,7 @@ function Asistente({
       const guardado = await post("/api/onboarding/identidad", { cambios });
       if (!guardado.ok) {
         setOcupado(false);
-        setError(guardado.error);
+        setError({ error: guardado.error });
         return;
       }
     }
@@ -249,7 +250,7 @@ function Asistente({
     const creado = await crearYDejarListo(estado, recorrido.agente_id ?? null);
     if (!creado.ok) {
       setOcupado(false);
-      setError(creado.error);
+      setError(creado);
       return;
     }
     // Sigue en «Habilidades», o donde iba si volvió desde una estación posterior («Cambiar nombre», «Editar»).
@@ -347,7 +348,7 @@ function Asistente({
           tipoFijo={tipoDelAgente}
           habilitara={habilitara}
         />
-        <FormFeedback error={error ?? undefined} className="max-w-xl" />
+        <ResultadoConPlan error={error?.error} code={error?.code} className="max-w-xl" />
       </RecorridoDelAgente>
     </MarcoDeBienvenida>
   );
