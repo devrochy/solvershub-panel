@@ -7,8 +7,10 @@ import axe from "axe-core";
  * `color-contrast` va apagado: jsdom no calcula estilos ni layout, así que axe no puede
  * medirlo. El contraste de los temas lo verifica `brand/tokens/contrast.mjs` en el CI.
  * `region` también va apagado porque se prueban páginas sin el shell (sin landmarks).
+ *
+ * Acepta un contexto de axe (`include`/`exclude`) para revisar una página grande por partes.
  */
-export async function violacionesGraves(contenedor: Element): Promise<string[]> {
+export async function violacionesGraves(contenedor: Element | axe.ElementContext): Promise<string[]> {
   const resultado = await axe.run(contenedor, {
     resultTypes: ["violations"],
     rules: {
