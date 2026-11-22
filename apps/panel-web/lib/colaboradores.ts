@@ -111,6 +111,8 @@ export const KIND_PERMISOS_DE_GESTOR = "cobranza_gestor_permisos";
 export type PerfilDePack = {
   /** Clave estable para la lista (pack + perfil). */
   clave: string;
+  /** Rol de pack que da este perfil (`pack:rol`, como lo pide `POST …/pack-roles/revoke`). */
+  rol: string;
   etiqueta: string;
   /** `null` cuando el servidor recortó el detalle: no tienes acceso a ese pack. */
   detalle: {
@@ -137,9 +139,10 @@ function entero(v: unknown): number | null {
  */
 export function perfilDePack(perfil: PackProfile): PerfilDePack {
   const clave = `${perfil.pack}:${perfil.ref_id}`;
+  const rol = `${perfil.pack}:${perfil.role_id}`;
   const etiqueta = perfil.etiqueta || perfil.role_id;
   const resumen = perfil.resumen ?? null;
-  if (resumen === null) return { clave, etiqueta, detalle: null, edicion: null };
+  if (resumen === null) return { clave, rol, etiqueta, detalle: null, edicion: null };
   const carteras = Array.isArray(resumen.carteras)
     ? resumen.carteras.flatMap((c) => {
         const o = c as { id?: unknown; nombre?: unknown };
@@ -156,6 +159,7 @@ export function perfilDePack(perfil: PackProfile): PerfilDePack {
       : null;
   return {
     clave,
+    rol,
     etiqueta,
     detalle: {
       estatus: texto(resumen.estatus),

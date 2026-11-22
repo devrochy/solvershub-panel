@@ -376,6 +376,7 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
   it("traduce el perfil de gestor: estatus, carteras, permisos y edición conocida", () => {
     expect(perfilDePack(PERFIL_GESTOR)).toEqual({
       clave: "pack_cobranza:g-1",
+      rol: "pack_cobranza:gestor",
       etiqueta: "Gestor",
       detalle: {
         estatus: "activo",
@@ -419,6 +420,33 @@ describe("perfil de pack en la fila (ADR-0176)", () => {
     expect(within(ficha).getByText(/3 de 14 permisos de campo/)).toBeTruthy();
     expect(within(ficha).getByRole("button", { name: "Permisos de campo de gestor@test" })).toBeTruthy();
     expect(within(ficha).getByRole("link", { name: "Asignar carteras" }).getAttribute("href")).toBe("/cobranza/gestores");
+  });
+
+  it("desde la ficha se quita el perfil de gestor, con confirmación que avisa de sus carteras (#870)", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      void input;
+      void init;
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const gestor = cuenta({ id: "g", email: "gestor@test", pack_profiles: [PERFIL_GESTOR] });
+    render(
+      <FeedbackProviders>
+        <TablaDeColaboradores eliminadas={[]} filas={[YO, gestor]} secciones={["conversations"]} esMaster={false} abierta={{ id: "g", pestana: "acceso", contrasena: false }} />
+      </FeedbackProviders>,
+    );
+    const ficha = await screen.findByRole("dialog", { name: "gestor@test" });
+    fireEvent.click(within(ficha).getByRole("button", { name: "Quitar el perfil de gestor" }));
+    const confirmacion = await screen.findByRole("alertdialog");
+    expect(within(confirmacion).getByText(/vuelve a entrar como colaborador/)).toBeTruthy();
+    expect(within(confirmacion).getByText(/2 carteras asignadas/)).toBeTruthy();
+    fireEvent.click(within(confirmacion).getByRole("button", { name: "Quitar el perfil" }));
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(String(post?.[0])).toBe("/api/collaborators/g");
+      expect(JSON.parse(String(post?.[1]?.body))).toEqual({ action: "quitar_rol_de_pack", value: "pack_cobranza:gestor" });
+    });
+    vi.unstubAllGlobals();
   });
 
   it("sin ningún perfil la columna no existe", () => {
@@ -588,7 +616,7 @@ describe("invitar a alguien (EQU-11)", () => {
     fetchPorRuta({ "/existe": { existe: false } });
     render(
       <FeedbackProviders>
-        <NewCollaboratorDialog packRoles={[{ value: "gestor", label: "Gestor de cobranza" }]} />
+        <NewCollaboratorDialog packRoles={[{ value: "pack_cobranza:gestor", label: "Gestor de cobranza" }]} />
       </FeedbackProviders>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Invitar a alguien" }));
