@@ -6,6 +6,8 @@ import {
   creditoEnPalabras,
   creditoPorAgente,
   creditoPorConcepto,
+  desgloseDelSaldo,
+  errorDeRecarga,
   estadoDelPago,
   estadoDelPlan,
   funcionesEnPalabras,
@@ -13,6 +15,9 @@ import {
   mesDelPago,
   nombreDelPlan,
   precioDelPlan,
+  puedeComprarCreditos,
+  recargaEnPalabras,
+  tituloDelPago,
   topeEnPalabras,
   topesEnPalabras,
 } from "@/lib/consumo";
@@ -139,6 +144,8 @@ describe("el plan y los pagos en palabras (CYP-01, 05, 06)", () => {
     const basic = { ...free, canales: ["whatsapp", "web", "telegram"], descuento_recarga: 0, historial_dias: 90, campanas: "recordatorios", soporte: "email" };
     expect(funcionesEnPalabras(basic)).toEqual([
       "Atiende por WhatsApp, chat web y Telegram",
+      // Basic compra créditos sin descuento (HU-BILL-23): ahora que existe «Comprar créditos», se anuncia.
+      "Puedes comprar créditos extra",
       "Historial de 90 días",
       "Recordatorios a tus clientes",
       "Soporte por correo",
@@ -181,5 +188,82 @@ describe("el plan y los pagos en palabras (CYP-01, 05, 06)", () => {
     expect(estadoDelPago("aprobado").label).toBe("Pagado");
     expect(nombreDelPlan("basic", [{ id: "basic", name: "Básico" }])).toBe("Básico");
     expect(nombreDelPlan("pro", [])).toBe("Pro");
+  });
+});
+
+describe("el saldo desglosado y la compra de créditos (HU-BILL-27 parte 2b)", () => {
+  const saldo = {
+    total: 20000,
+    month: 12000,
+    accumulated: 3000,
+    accumulated_expires_at: new Date(2026, 11, 19, 12).toISOString(),
+    top_ups: 5000,
+    used_month: 12000,
+    used_accumulated: 1000,
+    used_top_ups: 0,
+    over_balance: 0,
+  };
+
+  it("con saldo, la cuenta va sobre el total del ciclo y `balance_percent`", () => {
+    const c = creditoEnPalabras({ ...credito(13000, 108.3), limit: 12000, balance: saldo, balance_percent: 65 }, AHORA)!;
+    expect(c.titulo).toBe("Te quedan 7.000 créditos");
+    expect(c.detalle).toMatch(/^unos \$\s70\.000 · para 9 días · usaste 13\.000 de 20\.000$/);
+    expect(c.porcentaje).toBe(65);
+    // `percent` (solo del mes) pasa de 100, pero con saldo no hay aviso: va al 65 %.
+    expect(c.aviso).toBeNull();
+  });
+
+  it("los avisos del 80 y el 100 % usan `balance_percent`", () => {
+    const base = { ...credito(17000, 141), limit: 12000, balance: saldo };
+    expect(creditoEnPalabras({ ...base, balance_percent: 85 }, AHORA)!.aviso?.titulo).toBe("Vas al 85 % y faltan 9 días");
+    const agotado = creditoEnPalabras({ ...base, used: 20000, balance_percent: 100 }, AHORA)!;
+    expect(agotado).toMatchObject({ titulo: "Usaste todo tu saldo de créditos", tono: "danger" });
+    // Sin `balance`, el comportamiento de antes: sobre el crédito mensual.
+    expect(creditoEnPalabras(credito(30000, 50), AHORA)!.detalle).toMatch(/usaste 30\.000 de 60\.000$/);
+  });
+
+  it("desglosa el saldo en mes, acumulado (con vencimiento) y recargas", () => {
+    const d = desgloseDelSaldo(saldo, AHORA)!;
+    expect(d.total).toMatch(/^Saldo total: 20\.000 créditos · \$\s200\.000$/);
+    expect(d.partes).toEqual([
+      { clave: "mes", nombre: "Del mes", uso: "usaste 12.000 de 12.000", nota: null },
+      { clave: "acumulado", nombre: "Acumulado", uso: "usaste 1.000 de 3.000", nota: "vence el 19 de dic." },
+      { clave: "recargas", nombre: "Recargas", uso: "usaste 0 de 5.000", nota: null },
+    ]);
+    // Basic: sin acumulado ni recargas, solo el mes.
+    const basic = desgloseDelSaldo({ ...saldo, total: 12000, accumulated: 0, accumulated_expires_at: null, top_ups: 0, used_accumulated: 0 }, AHORA)!;
+    expect(basic.partes.map((p) => p.clave)).toEqual(["mes"]);
+    expect(desgloseDelSaldo(null)).toBeNull();
+  });
+
+  it("los paquetes con descuento muestran el precio de lista y «−15 %»; sin descuento, solo el precio", () => {
+    expect(recargaEnPalabras({ id: "r5k", creditos: 5000, precio_lista_cop: 50000, descuento_pct: 15, precio_cop: 42500 })).toEqual({
+      creditos: "5.000 créditos",
+      precio: expect.stringMatching(/42\.500$/),
+      lista: expect.stringMatching(/50\.000$/),
+      descuento: "−15 %",
+    });
+    expect(recargaEnPalabras({ id: "r5k", creditos: 5000, precio_lista_cop: 50000, descuento_pct: 0, precio_cop: 50000 })).toMatchObject({ lista: null, descuento: null });
+  });
+
+  it("comprar créditos es de quien escribe en plan (o del master)", () => {
+    expect(puedeComprarCreditos({ role: "owner", permissions: { plan: "write" } })).toBe(true);
+    expect(puedeComprarCreditos({ role: "collaborator", permissions: { plan: "read" } })).toBe(false);
+    expect(puedeComprarCreditos({ role: "master", permissions: {} })).toBe(true);
+    expect(puedeComprarCreditos(null)).toBe(false);
+  });
+
+  it("los errores: «bajo el mínimo» tal cual; los demás, en un texto claro", () => {
+    const minimo = "Esta recarga cuesta $50.000 COP y en este ambiente la pasarela solo acepta pagos desde $150.000 COP, así que no se puede pagar aquí.";
+    expect(errorDeRecarga("recarga_bajo_minimo", minimo)).toBe(minimo);
+    expect(errorDeRecarga("recarga_no_disponible", "x")).toMatch(/plan pago activo/);
+    expect(errorDeRecarga("checkout_failed", "x")).toMatch(/No pudimos abrir el pago/);
+    expect(errorDeRecarga(undefined, "Error 500")).toBe("No pudimos abrir el pago de la recarga. Vuelve a intentarlo.");
+  });
+
+  it("el historial distingue las recargas de los pagos del plan", () => {
+    const base = { periodo: null, created_at: "2026-11-09T12:00:00Z", plan_id: "basic", creditos: null };
+    expect(tituloDelPago({ ...base, concepto: "recarga", creditos: 5000 }, [])).toBe("Noviembre 2026 · Recarga de 5.000 créditos");
+    expect(tituloDelPago({ ...base, concepto: "plan", periodo: "2026-10" }, [{ id: "basic", name: "Basic" }])).toBe("Octubre 2026 · Plan Basic");
   });
 });
