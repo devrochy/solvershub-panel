@@ -317,9 +317,10 @@ function beneficio(clave: string, valor: unknown): string | null | undefined {
       if (typeof valor !== "number" || valor <= 0) return null;
       return valor === 1 ? "El crédito que no uses pasa al mes siguiente" : `El crédito que no uses se guarda hasta ${valor} meses`;
     case "descuento_recarga":
-      // `null`: el plan no compra recargas; `0`: compra sin descuento.
-      if (typeof valor !== "number") return null;
-      return valor > 0 ? `${valor} % de descuento al comprar créditos` : "Puedes comprar créditos extra";
+      // `null`: el plan no compra recargas; `0`: compra sin descuento. Sin descuento no se anuncia nada
+      // hasta que exista «Comprar créditos» en el panel (HU-BILL-23): sería ofrecer algo que todavía no se puede hacer.
+      if (typeof valor !== "number" || valor <= 0) return null;
+      return `${valor} % de descuento al comprar créditos`;
     case "marca_propia":
       return valor === true ? "Tu marca, sin la de SolversHub" : null;
     case "historial_dias":

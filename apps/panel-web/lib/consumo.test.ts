@@ -139,7 +139,6 @@ describe("el plan y los pagos en palabras (CYP-01, 05, 06)", () => {
     const basic = { ...free, canales: ["whatsapp", "web", "telegram"], descuento_recarga: 0, historial_dias: 90, campanas: "recordatorios", soporte: "email" };
     expect(funcionesEnPalabras(basic)).toEqual([
       "Atiende por WhatsApp, chat web y Telegram",
-      "Puedes comprar créditos extra",
       "Historial de 90 días",
       "Recordatorios a tus clientes",
       "Soporte por correo",

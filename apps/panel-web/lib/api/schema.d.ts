@@ -13727,6 +13727,7 @@ export interface components {
              * @default false
              */
             by_agent_truncated: boolean;
+            playground?: components["schemas"]["PlaygroundCredit"] | null;
         };
         /** CronList */
         CronList: {
@@ -24928,6 +24929,22 @@ export interface components {
             source: "agente" | "negocio";
             /** Lock Version */
             lock_version: number;
+        };
+        /**
+         * PlaygroundCredit
+         * @description Consumo del playground del panel en el mes del ciclo (D-79, ADR-0208 §15). Es gratis hasta
+         *     `free_limit` créditos; lo que pasa (`charged`) ya está sumado en `used` del crédito y en
+         *     `by_concept.playground`. El playground lo lee para avisar antes de empezar a descontar.
+         */
+        PlaygroundCredit: {
+            /** Used */
+            used: number;
+            /** Free Limit */
+            free_limit: number;
+            /** Free Remaining */
+            free_remaining: number;
+            /** Charged */
+            charged: number;
         };
     };
     responses: never;
@@ -43952,7 +43969,7 @@ export interface operations {
                     "application/json": components["schemas"]["DocumentoOut"];
                 };
             };
-            /** @description Tope del plan: `error.code = plan_limit_documentos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            /** @description Tope del plan: `error.code = plan_limit_documentos | plan_limit_conocimiento_mb | plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -44031,6 +44048,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DocumentoOut"];
                 };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
