@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 
 import { apiFetch } from "@/lib/api/server";
 
-const ACTIONS = new Set(["activate", "deactivate", "retry"]);
+// ADR-0206 (HU-AOS-91): activar o desactivar a nivel negocio se retiró (la API responde 410);
+// la habilidad se instala en el agente que la usa. Solo queda reintentar su salud.
+const ACTIONS = new Set(["retry"]);
 
-/** BFF: activa/deshabilita/reintenta una habilidad para el tenant activo. */
+/** BFF: reintenta la salud de una habilidad en el tenant activo. */
 export async function POST(request: Request, ctx: { params: Promise<{ pluginId: string }> }) {
   const { pluginId } = await ctx.params;
   const body = (await request.json().catch(() => null)) as { action?: string } | null;

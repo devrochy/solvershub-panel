@@ -35,7 +35,7 @@ function leerAncho(): boolean {
   return typeof window.matchMedia === "function" ? window.matchMedia(ANCHO_EXPANDIDA).matches : true;
 }
 
-export type PackState = { enabled: boolean; hasConfig: boolean };
+export type PackState = { enabled: boolean };
 
 /** Indicador de la página actual: barra de 3 px con el foco del tema + fondo elevado. */
 const ACTIVO =

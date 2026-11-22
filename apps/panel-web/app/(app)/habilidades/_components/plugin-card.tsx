@@ -12,7 +12,7 @@ export function estadoDeHabilidad(plugin: Pick<PluginSummary, "enabled_for_tenan
   return plugin.enabled_for_tenant ? { etiqueta: "Activa", tono: "success" as const } : { etiqueta: "Apagada", tono: "neutral" as const };
 }
 
-/** Tarjeta de habilidad: qué hace, su estado en palabras, encenderla y sus ajustes. */
+/** Tarjeta de habilidad: qué hace, su estado en palabras, dónde se instala y sus ajustes. */
 export function PluginCard({ plugin }: { plugin: PluginSummary }) {
   const hasError = Boolean(plugin.error_message || plugin.tenant_health_error);
   const nombre = plugin.display_name || plugin.name;
@@ -50,7 +50,6 @@ export function PluginCard({ plugin }: { plugin: PluginSummary }) {
 
         <PluginActions
           pluginId={plugin.id}
-          nombre={nombre}
           enabled={plugin.enabled_for_tenant}
           hasError={hasError}
         />

@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Check, LockKeyhole, type LucideIcon } from "lucide-react";
 
 import { useShell } from "@/components/shell/shell-context";
-import { EnablePackButton } from "@/components/shell/enable-pack-button";
 import type { PackState } from "@/components/shell/sidebar";
 import { Button } from "@/components/ui/button";
 import type { EstadoModulo } from "@/lib/shell/modulos";
@@ -28,7 +27,8 @@ function incluyeDe(pack: string, label: string): string[] {
 /**
  * Bloquea la página de un módulo que el negocio no tiene habilitado (regla del dueño,
  * 2026-11-12): sin especialista publicado se pide mejorar el plan; con especialista pero
- * pack apagado se ofrece activarlo. No se renderiza el contenido: no hay datos ni acciones
+ * sin la habilidad instalada se lleva a Agentes (ADR-0206: la habilidad es del negocio solo
+ * si algún agente activo la tiene instalada; no hay interruptor a nivel negocio). No se renderiza el contenido: no hay datos ni acciones
  * que se puedan tocar. A diferencia de `GuardiaDeSeccion` (permisos), esto es del negocio.
  */
 export function GuardiaDeModulo({
@@ -56,19 +56,17 @@ export function GuardiaDeModulo({
     (packs[entrada.pack]?.enabled === false ? "pack" : "habilitado");
   if (estado === "habilitado") return <>{children}</>;
 
-  return <ModuloBloqueado entrada={entrada} pack={entrada.pack} estado={estado} packs={packs} />;
+  return <ModuloBloqueado entrada={entrada} pack={entrada.pack} estado={estado} />;
 }
 
 function ModuloBloqueado({
   entrada,
   pack,
   estado,
-  packs,
 }: {
   entrada: { label: string; icon: LucideIcon };
   pack: string;
   estado: Exclude<EstadoModulo, "habilitado">;
-  packs: Record<string, PackState>;
 }) {
   const Icon = entrada.icon;
   const esPlan = estado === "plan";
@@ -91,12 +89,12 @@ function ModuloBloqueado({
       <p className="text-sm text-body">
         {esPlan
           ? `Tu plan actual no incluye el agente de ${entrada.label}. Mejora tu plan para usarlo desde el panel.`
-          : `El agente de ${entrada.label} ya está en tu negocio, pero el módulo no está encendido. Actívalo para usarlo desde el panel.`}
+          : `Ningún agente activo tiene instalada la habilidad de ${entrada.label}. Se instala en el agente que la usa: al crearlo desde una plantilla o en sus habilidades.`}
       </p>
       <ul className="flex w-full flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 text-left text-sm">
         <li className="flex items-center gap-2 text-body">
           <LockKeyhole className="h-4 w-4 shrink-0 text-text-soft" aria-hidden />
-          {esPlan ? "Disponible al mejorar tu plan" : "Disponible al activar el módulo"}
+          {esPlan ? "Disponible al mejorar tu plan" : "Disponible al instalar la habilidad en un agente"}
         </li>
         {incluyeDe(pack, entrada.label).map((linea) => (
           <li key={linea} className="flex items-center gap-2 text-body">
@@ -111,11 +109,9 @@ function ModuloBloqueado({
             <Link href={`${RUTA_MEJORAR_PLAN}?ver=planes`}>{TEXTO_MEJORAR_PLAN}</Link>
           </Button>
         ) : (
-          <EnablePackButton
-            pluginId={pack}
-            label={entrada.label}
-            hasConfig={packs[pack]?.hasConfig ?? false}
-          />
+          <Button asChild variant="accent">
+            <Link href="/agentes">Ir a Agentes</Link>
+          </Button>
         )}
         <Button asChild variant="outline">
           <Link href="/dashboard">Volver al Resumen</Link>

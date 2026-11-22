@@ -70,7 +70,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const packs = Object.fromEntries(
     (packsRes.ok ? packsRes.data : []).map((p) => [
       p.id,
-      { enabled: p.enabled_for_tenant, hasConfig: p.has_config },
+      { enabled: p.enabled_for_tenant },
     ]),
   );
   // Módulos del negocio: un módulo se habilita con un especialista publicado (regla del

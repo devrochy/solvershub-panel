@@ -13,7 +13,7 @@ import { Sidebar } from "./sidebar";
 let ruta = "/cobranza/carteras";
 vi.mock("next/navigation", () => ({ usePathname: () => ruta, useRouter: () => ({ refresh: vi.fn() }) }));
 
-const PACKS = { pack_cobranza: { enabled: true, hasConfig: false }, pack_calendar: { enabled: true, hasConfig: false } };
+const PACKS = { pack_cobranza: { enabled: true }, pack_calendar: { enabled: true } };
 
 function mediaQuery(coincide: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
