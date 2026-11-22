@@ -586,22 +586,22 @@ export const planesV3: PlanResponse["plans"] = [
   {
     id: "free", name: "Free", price_cop: 0, is_free: true, current: false, monthly_credits: 1500,
     limits: { clientes: 100, agentes: 1, colaboradores: 2, conexiones: 1, correos: 0, documentos: 3, conocimiento_mb: 10 },
-    features: { canales: ["whatsapp", "web"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: null, marca_propia: false, historial_dias: 30, campanas: "ninguna", soporte: "comunidad" },
+    features: { canales: ["whatsapp", "web"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: null, marca_propia: false, historial_dias: 30, exportar: false, campanas: "ninguna", soporte: "comunidad" },
   },
   {
     id: "basic", name: "Basic", price_cop: 129000, is_free: false, current: false, monthly_credits: 12000,
     limits: { clientes: 1000, agentes: 2, colaboradores: 5, conexiones: 2, correos: 1, documentos: 20, conocimiento_mb: 100 },
-    features: { canales: ["whatsapp", "web", "telegram"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: 0, marca_propia: false, historial_dias: 90, campanas: "recordatorios", soporte: "email" },
+    features: { canales: ["whatsapp", "web", "telegram"], nivel_ia: "estandar", byok: false, acumulable_meses: 0, descuento_recarga: 0, marca_propia: false, historial_dias: 90, exportar: false, campanas: "recordatorios", soporte: "email" },
   },
   {
     id: "premium", name: "Premium", price_cop: 299000, is_free: false, current: false, monthly_credits: 40000,
     limits: { clientes: 5000, agentes: 5, colaboradores: 15, conexiones: 6, correos: 3, documentos: 100, conocimiento_mb: 500 },
-    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: false, acumulable_meses: 1, descuento_recarga: 15, marca_propia: true, historial_dias: 365, campanas: "completas", soporte: "prioritario" },
+    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: false, acumulable_meses: 1, descuento_recarga: 15, marca_propia: true, historial_dias: 365, exportar: true, campanas: "completas", soporte: "prioritario" },
   },
   {
     id: "empresarial", name: "Empresarial", price_cop: 799000, is_free: false, current: false, monthly_credits: 120000,
     limits: { clientes: null, agentes: null, colaboradores: 50, conexiones: 20, correos: 10, documentos: 500, conocimiento_mb: 2000 },
-    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: true, acumulable_meses: 2, descuento_recarga: 25, marca_propia: true, historial_dias: null, campanas: "completas", soporte: "dedicado" },
+    features: { canales: ["whatsapp", "web", "telegram", "instagram", "messenger"], nivel_ia: "avanzado", byok: true, acumulable_meses: 2, descuento_recarga: 25, marca_propia: true, historial_dias: null, exportar: true, campanas: "completas", soporte: "dedicado" },
   },
 ];
 
@@ -1133,7 +1133,7 @@ const AGENDA = "00000000-0000-4000-8000-0000000000a2";
 function agente(id: string, key: string, name: string, kind: AgentSummary["kind"] = "specialist"): AgentSummary {
   return {
     id, key, name, kind, contract: kind === "core" ? "kernelspec/1" : "agentspec/3", description: "",
-    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z", paused: false,
+    status: "active", latest_version: 1, created_at: "2026-10-20T12:00:00Z", paused: false, nivel_ia: "estandar",
   };
 }
 

@@ -2,18 +2,25 @@ import { invalido, responder, UUID } from "@/app/api/agent-editor/respuesta";
 import { apiFetch } from "@/lib/api/server";
 
 const ESTADOS = new Set(["active", "archived"]);
+const NIVELES_IA = new Set(["estandar", "avanzado"]);
 
 /**
  * BFF: nombre y descripción del agente (HU-AOS-24), o su estado (archivar / reactivar) por separado.
  * La API no deja archivar el General ni el Coordinador (409 `agent_reserved`) ni un agente que sigue en
- * una conexión (409 `agent_in_use`).
+ * una conexión (409 `agent_in_use`). El nivel de IA (HU-BILL-24) también va solo: 409 `plan_nivel_ia_not_included`
+ * si el plan no lo incluye y `nivel_ia_not_applicable` en el Coordinador, con su `code` y `details`.
  */
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!UUID.test(id)) return invalido();
   const body = (await request.json().catch(() => null)) as
-    | { name?: unknown; description?: unknown; status?: unknown }
+    | { name?: unknown; description?: unknown; status?: unknown; nivel_ia?: unknown }
     | null;
+  if (body && "nivel_ia" in body) {
+    if (typeof body.nivel_ia !== "string" || !NIVELES_IA.has(body.nivel_ia)) return invalido();
+    const res = await apiFetch(`/admin/agents/${id}`, { method: "PATCH", body: { nivel_ia: body.nivel_ia } });
+    return responder(res, () => ({ ok: true }));
+  }
   if (body && "status" in body) {
     if (typeof body.status !== "string" || !ESTADOS.has(body.status)) return invalido();
     const res = await apiFetch(`/admin/agents/${id}`, { method: "PATCH", body: { status: body.status } });

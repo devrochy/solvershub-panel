@@ -328,3 +328,48 @@ describe("ficha del agente (HU-UX-09)", () => {
     expect(fraseDeLaSemana()).toBe("7 conversaciones esta semana");
   });
 });
+
+describe("nivel de IA en la ficha (HU-BILL-24, HU-BILL-27)", () => {
+  const ID = "00000000-0000-4000-8000-000000000001";
+  const uso = {
+    periodo: { desde: "2026-09-18T00:00:00Z", hasta: "2026-10-18T00:00:00Z" },
+    incluye_sin_atribuir: true,
+    total: { turns: 0, input_tokens: 0, output_tokens: 0, cost_usd: null },
+    by_connection: [],
+    by_day: [],
+    consistency: { scope: "negocio", measurements: [] },
+  };
+  const detalle = (kind: string) => ({
+    id: ID, key: "atencion", name: "Atención", kind, description: "", status: "active", nivel_ia: "estandar",
+    draft: { content: {}, lock_version: 1 }, versions: [], latest_version: 1, paused: false,
+  });
+
+  it("Consumo trae el selector con créditos por conversación; en Basic, Avanzado atenuado", async () => {
+    Object.assign(respuestas, {
+      "/admin/agents/overview": agentes,
+      "/admin/me": me,
+      "/admin/plan": plan,
+      [`/admin/agents/${ID}`]: detalle("specialist"),
+      [`/admin/agents/${ID}/usage`]: uso,
+    });
+    const { container } = await abrir(ID, { tab: "consumo" });
+    expect(screen.getByRole("heading", { name: "Nivel de IA" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /Estándar · ≈ 11 créditos por conversación/ }).getAttribute("aria-checked")).toBe("true");
+    expect((screen.getByRole("radio", { name: /Avanzado · ≈ 45 créditos por conversación/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Se aplica al publicar/)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/deepseek/i);
+  });
+
+  it("el Coordinador no tiene selector de nivel de IA", async () => {
+    Object.assign(respuestas, {
+      "/admin/agents/overview": { ...agentes, items: agentes.items.map((a) => (a.id === ID ? { ...a, kind: "core" } : a)) },
+      "/admin/me": me,
+      "/admin/plan": plan,
+      [`/admin/agents/${ID}`]: detalle("core"),
+      [`/admin/agents/${ID}/usage`]: uso,
+    });
+    await abrir(ID, { tab: "consumo" });
+    expect(screen.queryByRole("heading", { name: "Nivel de IA" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: /Avanzado/ })).toBeNull();
+  });
+});

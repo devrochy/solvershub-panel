@@ -323,6 +323,8 @@ function beneficio(clave: string, valor: unknown): string | null | undefined {
       return `${valor} % de descuento al comprar créditos`;
     case "marca_propia":
       return valor === true ? "Tu marca, sin la de SolversHub" : null;
+    case "exportar":
+      return valor === true ? "Descarga tu historial en CSV" : null;
     case "historial_dias":
       return historial(valor);
     case "campanas":
@@ -335,7 +337,7 @@ function beneficio(clave: string, valor: unknown): string | null | undefined {
 }
 
 /** Orden de los beneficios en la tarjeta del plan. */
-const ORDEN_DE_BENEFICIOS = ["canales", "nivel_ia", "acumulable_meses", "descuento_recarga", "marca_propia", "historial_dias", "campanas", "byok", "soporte"];
+const ORDEN_DE_BENEFICIOS = ["canales", "nivel_ia", "acumulable_meses", "descuento_recarga", "marca_propia", "historial_dias", "exportar", "campanas", "byok", "soporte"];
 
 const FUNCION: Record<string, string> = {
   reportes: "Reportes",

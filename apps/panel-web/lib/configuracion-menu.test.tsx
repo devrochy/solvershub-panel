@@ -145,12 +145,12 @@ describe("resumen de Configuración (rediseño B)", () => {
 
   it("?seccion= abre ese ajuste y le gana a ?tab=", () => {
     montar({ defaultSeccion: "cerebro", defaultTab: "memory" });
-    expect(titulo().textContent).toBe("Cerebro y modelos");
+    expect(titulo().textContent).toBe("Cerebro");
   });
 
   it("?tab= sigue valiendo, con los ids de la antigua pantalla y los del panel clásico", () => {
     montar({ defaultTab: "brain" });
-    expect(titulo().textContent).toBe("Cerebro y modelos");
+    expect(titulo().textContent).toBe("Cerebro");
     cleanup();
     montar({ defaultTab: "web-chat" });
     expect(titulo().textContent).toBe("Chat web");
@@ -174,18 +174,19 @@ describe("resumen de Configuración (rediseño B)", () => {
 
 describe("cambios sin guardar", () => {
   it("cerrar con cambios pregunta; «Seguir editando» se queda y conserva lo escrito", async () => {
-    montar({ defaultSeccion: "cerebro" });
+    // El modelo solo lo edita el master (ADR-0210 §5).
+    montar({ defaultSeccion: "cerebro", esMaster: true });
     fireEvent.change(screen.getByLabelText(/Modelo primario/), { target: { value: "otro-modelo" } });
     fireEvent.click(within(cajon()).getByRole("button", { name: "Cerrar" }));
     const pregunta = await screen.findByRole("alertdialog");
-    expect(within(pregunta).getByText(/Si cierras «Cerebro y modelos», se pierde lo que cambiaste/)).toBeTruthy();
+    expect(within(pregunta).getByText(/Si cierras «Cerebro», se pierde lo que cambiaste/)).toBeTruthy();
     fireEvent.click(within(pregunta).getByRole("button", { name: "Seguir editando" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect((screen.getByLabelText(/Modelo primario/) as HTMLInputElement).value).toBe("otro-modelo");
   });
 
   it("«Descartar cambios» cierra el cajón y la URL vuelve al resumen", async () => {
-    montar({ defaultSeccion: "cerebro" });
+    montar({ defaultSeccion: "cerebro", esMaster: true });
     window.history.replaceState(null, "", "/configuracion?seccion=cerebro");
     fireEvent.change(screen.getByLabelText(/Modelo primario/), { target: { value: "otro-modelo" } });
     fireEvent.click(within(cajon()).getByRole("button", { name: "Cerrar" }));
@@ -239,5 +240,32 @@ describe("limpieza de campos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copiar el lunes a los demás días" }));
     expect((screen.getByRole("switch", { name: "Abierto el domingo" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe("true");
     expect(screen.queryByText(/Días: 0 Lun/)).toBeNull();
+  });
+});
+
+describe("el modelo solo lo ve el master (HU-BILL-24, HU-BILL-27)", () => {
+  const brainDelGestor = { ...ajustes.brain, model_primary: "", model_router: null, model_fallback: null };
+
+  it("al gestor el resumen del Cerebro no pinta el modelo vacío ni «null»", () => {
+    montar({ settings: { ...ajustes, brain: brainDelGestor } });
+    const resumen = fila("Cerebro");
+    expect(resumen.textContent).toContain("Respuestas precisas");
+    expect(resumen.textContent).not.toMatch(/null|·/);
+  });
+
+  it("al gestor el Cerebro no muestra los campos de modelo y se puede guardar", () => {
+    montar({ defaultSeccion: "cerebro", settings: { ...ajustes, brain: brainDelGestor } });
+    expect(within(cajon()).queryByLabelText(/Modelo primario/)).toBeNull();
+    expect(within(cajon()).queryByLabelText(/Modelo de razonamiento/)).toBeNull();
+    expect(within(cajon()).queryByLabelText(/Modelo de respaldo/)).toBeNull();
+    expect(within(cajon()).getByRole("button", { name: "Guardar" })).toBeTruthy();
+  });
+
+  it("el master sigue viendo el modelo en el resumen y en el formulario", () => {
+    montar({ defaultSeccion: "cerebro", esMaster: true });
+    expect((within(cajon()).getByLabelText(/Modelo primario/) as HTMLInputElement).value).toBe(ajustes.brain.model_primary);
+    cleanup();
+    montar({ esMaster: true });
+    expect(fila("Cerebro").textContent).toContain(`${ajustes.brain.model_primary} · respuestas precisas`);
   });
 });

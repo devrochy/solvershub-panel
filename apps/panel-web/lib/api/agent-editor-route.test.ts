@@ -65,4 +65,27 @@ describe("BFF PATCH del agente", () => {
     expect((await PATCH(pedido({ name: "Laura", description: 3 }), ctx(AGENTE))).status).toBe(400);
     expect((await PATCH(pedido({ description: "sin nombre" }), ctx(AGENTE))).status).toBe(400);
   });
+
+  it("el nivel de IA (HU-BILL-24) viaja solo y el 409 del plan llega con su código y detalles", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: { code: "plan_nivel_ia_not_included", message: "Tu plan no incluye Avanzado.", details: { nivel_ia: "avanzado", plan: "basic" } },
+        }),
+        { status: 409 },
+      ),
+    );
+    const res = await PATCH(pedido({ nivel_ia: "avanzado", name: "otro" }), ctx(AGENTE));
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ nivel_ia: "avanzado" });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({
+      code: "plan_nivel_ia_not_included",
+      details: { nivel_ia: "avanzado", plan: "basic" },
+    });
+  });
+
+  it("un nivel de IA desconocido no llega a la API", async () => {
+    expect((await PATCH(pedido({ nivel_ia: "turbo" }), ctx(AGENTE))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

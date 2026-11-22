@@ -14,6 +14,7 @@ import { BannerPersonalizar, BotonPersonalizar } from "@/components/domain/agent
 import { PausarAgente } from "@/components/domain/agentes/pausar-agente";
 import { ConexionesDelAgente } from "@/components/domain/agentes/conexiones-del-agente";
 import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agentes/indicadores-del-agente";
+import { NivelDeIa } from "@/components/domain/agentes/nivel-de-ia";
 import { HabilidadesDelAgente } from "@/components/domain/agentes/habilidades-del-agente";
 import { ProbarAgente } from "@/components/domain/agentes/probar-agente";
 import { SelectorDeAgentes } from "@/components/domain/agentes/selector-de-agentes";
@@ -79,6 +80,8 @@ import {
   resueltasSinPersona,
 } from "@/lib/agentes-ficha";
 import { creditosPorAgenteId } from "@/lib/consumo";
+import { incluyeAvanzado } from "@/lib/nivel-ia";
+import { funcionesDelPlanActual } from "@/lib/plan-limite";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import { usaConocimiento } from "@/lib/conocimiento";
 
@@ -329,11 +332,28 @@ export default async function AgentePage({
     );
   } else {
     const res = await apiFetch<AgentUsage>(`${base}/usage?${queryDeApi(filtros, new Date(), false)}`);
-    contenido = res.ok ? (
+    const consumo = res.ok ? (
       <ConsumoDelAgente usage={res.data} nombre={agente.name} creditosDelMes={creditosDelMes} verCosto={esMaster} />
     ) : (
       <NoCargo que="el consumo" res={res} />
     );
+    // HU-BILL-24/27: el nivel de IA solo es de los especialistas (el Coordinador responde 409); nunca el modelo.
+    contenido =
+      detalle && agente.id && agente.kind === "specialist" && !estaArchivado(agente) ? (
+        <div className="flex flex-col gap-6">
+          <Seccion titulo="Nivel de IA">
+            <NivelDeIa
+              agenteId={agente.id}
+              inicial={detalle.nivel_ia ?? "estandar"}
+              incluyeAvanzado={incluyeAvanzado(funcionesDelPlanActual(planRes.ok ? planRes.data : null))}
+              puedeEditar={puedeEditar}
+            />
+          </Seccion>
+          {consumo}
+        </div>
+      ) : (
+        consumo
+      );
   }
 
   // Generar datos de prueba e importar ya no van en la ficha del agente (decisión del dueño 2026-11-14): se generan

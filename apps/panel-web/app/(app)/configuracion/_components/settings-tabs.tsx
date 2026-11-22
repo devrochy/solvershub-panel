@@ -28,7 +28,7 @@ import {
   SECCIONES_DE_IDENTIDAD,
   type SeccionId,
 } from "@/lib/configuracion-secciones";
-import { habilidadesEnPalabras, memoriaEnPalabras, resumenDeGrupos, temperaturaEnPalabras } from "@/lib/configuracion-resumen";
+import { cerebroEnPalabras, habilidadesEnPalabras, memoriaEnPalabras, resumenDeGrupos } from "@/lib/configuracion-resumen";
 import type {
   BajasSettings,
   CatalogoConfig,
@@ -145,7 +145,7 @@ export function SettingsTabs({
       case "memoria":
         return memoriaEnPalabras(settings.memory);
       case "cerebro":
-        return `${settings.brain.model_primary} · respuestas ${temperaturaEnPalabras(settings.brain.model_temperature).toLowerCase()}`;
+        return cerebroEnPalabras(settings.brain, esMaster);
       case "chat-web": {
         const sitios = webChat.allowed_origins.length;
         return webChat.enabled ? `Activo en ${sitios === 1 ? "1 sitio" : `${sitios} sitios`}` : "Apagado";
@@ -254,7 +254,7 @@ export function SettingsTabs({
               )}
               {abierta === "identidad" && bajas && <BajasCard bajas={bajas} catalogo={catalogo} puedeEditar={puedeEditar} />}
               {abierta === "whatsapp-web" && waweb && catalogo && <WawebCard politica={waweb} catalogo={catalogo} />}
-              {abierta === "cerebro" && <BrainForm brain={settings.brain} catalogo={catalogo} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
+              {abierta === "cerebro" && <BrainForm brain={settings.brain} catalogo={catalogo} puedeEditar={puedeEditar} verModelos={esMaster} onGuardado={cerrarSinPreguntar} />}
               {abierta === "memoria" && <MemoryForm memory={settings.memory} catalogo={catalogo} puedeEditar={puedeEditar} onGuardado={cerrarSinPreguntar} />}
               {abierta === "datos-cliente" && (
                 <>
