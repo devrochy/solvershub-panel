@@ -61,6 +61,7 @@ const PAGO: Pago = {
   paid_at: null,
   checkout_url: "https://checkout.wompi.co/l/test-123",
   periodo: "2026-10",
+  concepto: "plan",
 };
 
 describe("enlace para pagar un pago pendiente", () => {

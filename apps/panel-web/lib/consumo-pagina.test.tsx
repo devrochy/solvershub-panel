@@ -43,8 +43,8 @@ type Pagina = (p: { searchParams: Promise<Record<string, string>> }) => Promise<
 const CON_PAGOS: PlanResponse = {
   ...planDePrueba,
   payments: [
-    { plan_id: "basic", amount_cop: 129000, status: "pending", provider: "wompi", created_at: "2026-11-09T12:00:00Z", paid_at: null, checkout_url: "https://checkout.wompi.co/l/x", periodo: "2026-11" },
-    { plan_id: "basic", amount_cop: 129000, status: "declined", provider: "plataforma", created_at: "2026-10-09T12:00:00Z", paid_at: null, checkout_url: null, periodo: "2026-10" },
+    { plan_id: "basic", amount_cop: 129000, status: "pending", provider: "wompi", created_at: "2026-11-09T12:00:00Z", paid_at: null, checkout_url: "https://checkout.wompi.co/l/x", periodo: "2026-11", concepto: "plan" },
+    { plan_id: "basic", amount_cop: 129000, status: "declined", provider: "plataforma", created_at: "2026-10-09T12:00:00Z", paid_at: null, checkout_url: null, periodo: "2026-10", concepto: "plan" },
   ],
   cobro: { referencia: "PLAN-BASIC-2026-11", inicio: "2026-10-20T12:00:00Z", fin: "2026-11-19T12:00:00Z", plan_id: "basic", monto_cop: 129000, estado: "pendiente", pagado_por: null, disponible_desde: null },
 };
