@@ -7212,11 +7212,11 @@ export interface paths {
         /**
          * Save Web Chat Settings
          * @description Habilita/deshabilita el chat web, edita dominios permitidos, rota la clave
-         *     o cambia el secreto de Turnstile. Se guarda en `app_settings.web_chat_config`
-         *     (JSONB, migración 0047) y, en la misma transacción, en la conexión `webchat` del
-         *     negocio (ADR-0115 §4, doble escritura hasta el *contract*: `chat_web_conexion`). El
-         *     primer guardado crea la conexión con sus instancias de agentes si el negocio ya las
-         *     tiene (HU-AOS-11 parte 2).
+         *     o cambia la protección de Turnstile (site key + secret key). Se guarda en
+         *     `app_settings.web_chat_config` (JSONB, migración 0047) y, en la misma transacción, en
+         *     la conexión `webchat` del negocio (ADR-0115 §4, doble escritura hasta el *contract*:
+         *     `chat_web_conexion`). El primer guardado crea la conexión con sus instancias de agentes
+         *     si el negocio ya las tiene (HU-AOS-11 parte 2).
          */
         put: operations["save_web_chat_settings_api_v1_admin_settings_web_chat_put"];
         post?: never;
@@ -24452,7 +24452,8 @@ export interface components {
         /**
          * WebChatSettings
          * @description Configuración del chat web embebible (HU-CHAN-02). El secreto de Turnstile
-         *     NUNCA se devuelve; solo si está configurado (`turnstile_configured`).
+         *     NUNCA se devuelve; solo si está configurado (`turnstile_configured`). La site key
+         *     es pública (la necesita el widget para pedir el token).
          */
         WebChatSettings: {
             /**
@@ -24476,6 +24477,11 @@ export interface components {
              */
             turnstile_configured: boolean;
             /**
+             * Turnstile Site Key
+             * @default
+             */
+            turnstile_site_key: string;
+            /**
              * Snippet
              * @default
              */
@@ -24493,6 +24499,8 @@ export interface components {
              * @default []
              */
             allowed_origins: string[];
+            /** Turnstile Site Key */
+            turnstile_site_key?: string | null;
             /** Turnstile Secret */
             turnstile_secret?: string | null;
             /**
