@@ -9803,6 +9803,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/guardrails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Guardrails
+         * @description Las reglas de respuesta del borrador del agente. El Coordinador no tiene (lista vacía).
+         */
+        get: operations["get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get"];
+        /**
+         * Save Agent Guardrails
+         * @description Reemplaza las reglas del borrador (frase prohibida, tool obligatoria ante una frase, largo máximo; con
+         *     `retry` o `escalate`). Valen al publicar. 422 por campo (`guardrails[i]...`); 409 `coordinador_inmutable`
+         *     para el Coordinador y `stale_lock_version` si otro guardó antes.
+         */
+        put: operations["save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/declarative-tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Declarative Tools
+         * @description Las tools HTTP del borrador del agente, los secretos del negocio (nombres y dominios, nunca valores) y las
+         *     tools que el turno no ofrecerá. El Coordinador no tiene tools (lista vacía).
+         */
+        get: operations["get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get"];
+        /**
+         * Save Agent Declarative Tools
+         * @description Reemplaza las tools HTTP del borrador. Valida todo antes de escribir: un header sensible con valor literal,
+         *     un dominio interno, un secreto sin valor o un valor que ninguna tool usa dan 422 por campo y no se guarda nada.
+         *     Luego cifra los secretos nuevos en la instalación `core` del negocio, atados a los dominios de las tools que los
+         *     usan (más los que ya tenían), y por último guarda el borrador. Si el borrador choca con otra edición (409) los
+         *     secretos ya quedaron escritos (un valor rotado ya vale para las tools publicadas que lo usan); reintentar con
+         *     el borrador al día termina de guardar.
+         */
+        put: operations["save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -25101,6 +25157,127 @@ export interface components {
         TopUpRequest: {
             /** Paquete */
             paquete: string;
+        };
+        /** AgentDeclarativeToolsIn */
+        AgentDeclarativeToolsIn: {
+            /** Tools */
+            tools: {
+                [key: string]: unknown;
+            }[];
+            /** Secrets */
+            secrets?: {
+                [key: string]: string;
+            };
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentDeclarativeToolsOut */
+        AgentDeclarativeToolsOut: {
+            /** Tools */
+            tools: components["schemas"]["DeclarativeTool"][];
+            /** Secrets */
+            secrets: components["schemas"]["ConfiguredSecret"][];
+            /** Omitted */
+            omitted: string[];
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentGuardrailsIn */
+        AgentGuardrailsIn: {
+            /** Guardrails */
+            guardrails: {
+                [key: string]: unknown;
+            }[];
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentGuardrailsOut */
+        AgentGuardrailsOut: {
+            /** Guardrails */
+            guardrails: components["schemas"]["GuardrailRule"][];
+            /** Lock Version */
+            lock_version: number;
+        };
+        /**
+         * ConfiguredSecret
+         * @description Un secreto del negocio: su nombre y los dominios a los que puede viajar. Nunca el valor.
+         */
+        ConfiguredSecret: {
+            /** Name */
+            name: string;
+            /** Domains */
+            domains: string[];
+        };
+        /** DeclarativeTool */
+        DeclarativeTool: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Method
+             * @default GET
+             * @enum {string}
+             */
+            method: "GET" | "POST";
+            /** Url */
+            url: string;
+            /**
+             * Alloweddomains
+             * @default []
+             */
+            allowedDomains: string[];
+            /**
+             * Headers
+             * @default {}
+             */
+            headers: {
+                [key: string]: string | components["schemas"]["SecretRef"];
+            };
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Body
+             * @default {}
+             */
+            body: {
+                [key: string]: unknown;
+            };
+        };
+        /** GuardrailRule */
+        GuardrailRule: {
+            /** Name */
+            name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "forbidden_phrase" | "required_tool" | "max_length";
+            /**
+             * Action
+             * @default retry
+             * @enum {string}
+             */
+            action: "retry" | "escalate";
+            /**
+             * Phrases
+             * @default []
+             */
+            phrases: string[];
+            /** Tool */
+            tool?: string | null;
+            /** Value */
+            value?: number | null;
+        };
+        /** SecretRef */
+        SecretRef: {
+            /** Secret */
+            secret: string;
         };
     };
     responses: never;
@@ -46630,6 +46807,150 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubscribeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentGuardrailsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentGuardrailsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentGuardrailsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentDeclarativeToolsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
                 };
             };
             /** @description Validation Error */

@@ -80,6 +80,8 @@ import { useAction } from "@/lib/use-action";
 import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
+import { ReglasDelAgenteEditable } from "@/components/domain/agentes/reglas-del-agente";
+import { ToolsHttpDelAgenteEditable } from "@/components/domain/agentes/tools-http-del-agente";
 import { SemaforoListo } from "@/components/domain/agentes/semaforo-listo";
 import { agentMeta } from "@/components/domain/agent-icon";
 import { AnilloDeListo, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
@@ -93,6 +95,7 @@ import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-d
 import { semaforo } from "@/lib/listo-para-responder";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
+import type { ReglasDelAgente, ToolsHttpDelAgente } from "@/lib/reglas-y-tools-del-agente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
 import {
@@ -224,6 +227,8 @@ export function EditorDeAgente({
   formasDePago = null,
   semillaDelFlujo = null,
   horarioDelAgente = null,
+  reglasDelAgente = null,
+  toolsHttpDelAgente = null,
   flujoInicial = { sections: [] },
   flujoSeeded = false,
   accionesDelFlujo = [],
@@ -260,6 +265,10 @@ export function EditorDeAgente({
   semillaDelFlujo?: FlujoDelAgente | null;
   /** Horario propio del agente (HU-AOS-82); `null` si no se pudo leer. */
   horarioDelAgente?: HorarioDelAgente | null;
+  /** Reglas de respuesta del agente (HU-AOS-97); `null` si no se pudieron leer (no se muestra la sección). */
+  reglasDelAgente?: ReglasDelAgente | null;
+  /** Tools HTTP del agente con los secretos del negocio (HU-AOS-97); `null` si no se pudieron leer. */
+  toolsHttpDelAgente?: ToolsHttpDelAgente | null;
   /** Flujo del agente (ADR-0195, HU-AOS-76); si la API no responde, se abre vacío. */
   flujoInicial?: FlujoDelAgente;
   flujoSeeded?: boolean;
@@ -807,22 +816,40 @@ export function EditorDeAgente({
       />
     ),
     reglas: (
-      <PasoReglas
-        horario={negocio.horario}
-        motivos={negocio.motivos}
-        horarioDelAgente={
-          horarioDelAgente ? (
-            <HorarioDelAgenteEditable
+      <div className="flex flex-col gap-6">
+        <PasoReglas
+          horario={negocio.horario}
+          motivos={negocio.motivos}
+          horarioDelAgente={
+            horarioDelAgente ? (
+              <HorarioDelAgenteEditable
+                agenteId={agente.id}
+                inicial={horarioDelAgente}
+                lockVersion={lock}
+                onLockVersion={setLock}
+                puedeEditar={puedeEditar}
+                zonaDelNegocio="America/Bogota"
+              />
+            ) : undefined
+          }
+        />
+        {reglasDelAgente && (
+          <div className="max-w-xl">
+            <ReglasDelAgenteEditable
               agenteId={agente.id}
-              inicial={horarioDelAgente}
+              inicial={reglasDelAgente}
               lockVersion={lock}
-              onLockVersion={setLock}
+              onGuardado={(nuevo, guardrails) => {
+                setLock(nuevo);
+                // El borrador del editor lleva las reglas nuevas: el próximo «Guardar» no las pisa.
+                setBase((b) => ({ ...b, guardrails }));
+              }}
               puedeEditar={puedeEditar}
-              zonaDelNegocio="America/Bogota"
+              acciones={[...new Set([...accionesDelFlujo.map((a) => a.tool), ...(toolsHttpDelAgente?.tools ?? []).map((t) => t.name)])]}
             />
-          ) : undefined
-        }
-      />
+          </div>
+        )}
+      </div>
     ),
     habilidades: (
       <div className="flex flex-col gap-10">
@@ -861,6 +888,23 @@ export function EditorDeAgente({
                 const recompuesto = componerGuion(estado.flujo, estadosDeBloques(nuevas, estado.flujo), accionesDelFlujo);
                 if (!mismoGuion(recompuesto, estado.flujo)) cambiar({ flujo: recompuesto });
               }}
+            />
+          </section>
+        )}
+        {toolsHttpDelAgente && (
+          <section aria-labelledby="habilidades-tools-http" className="flex flex-col gap-4">
+            <h3 id="habilidades-tools-http" className="font-display text-sh-block text-headline">
+              Tools HTTP
+            </h3>
+            <ToolsHttpDelAgenteEditable
+              agenteId={agente.id}
+              inicial={toolsHttpDelAgente}
+              lockVersion={lock}
+              onGuardado={(nuevo, declarativeTools) => {
+                setLock(nuevo);
+                setBase((b) => ({ ...b, declarativeTools }));
+              }}
+              puedeEditar={puedeEditar}
             />
           </section>
         )}
