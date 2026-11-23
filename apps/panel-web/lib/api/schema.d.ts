@@ -9859,6 +9859,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/coordinator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leer Opciones */
+        get: operations["leer_opciones_api_v1_admin_coordinator_get"];
+        /** Guardar Opciones */
+        put: operations["guardar_opciones_api_v1_admin_coordinator_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -25278,6 +25296,76 @@ export interface components {
         SecretRef: {
             /** Secret */
             secret: string;
+        };
+        /** BusinessRange */
+        BusinessRange: {
+            /** Day */
+            day: number;
+            /** From */
+            from: string;
+            /** To */
+            to: string;
+        };
+        /** CoordinatorOptions */
+        CoordinatorOptions: {
+            /** Assistant Name */
+            assistant_name: string;
+            /** Business Description */
+            business_description: string;
+            /** Brand Voice */
+            brand_voice: string;
+            /** Business Tz */
+            business_tz: string;
+            /** Business Ranges */
+            business_ranges: components["schemas"]["BusinessRange"][];
+            /**
+             * Business Hours Mode
+             * @enum {string}
+             */
+            business_hours_mode: "bloquea" | "informativo";
+            /** Out Of Hours Message */
+            out_of_hours_message: string;
+            /**
+             * Nivel Ia
+             * @enum {string}
+             */
+            nivel_ia: "estandar" | "avanzado";
+            /** Guardrails */
+            guardrails: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Guardrails Problems
+             * @default []
+             */
+            guardrails_problems: string[];
+        };
+        /**
+         * CoordinatorOptionsUpdate
+         * @description Todos opcionales: solo cambia lo que viene. `null` equivale a no enviarlo; para vaciar se envía `[]` o `""`
+         *     (`business_ranges: []` borra el horario del negocio).
+         */
+        CoordinatorOptionsUpdate: {
+            /** Assistant Name */
+            assistant_name?: string | null;
+            /** Business Description */
+            business_description?: string | null;
+            /** Brand Voice */
+            brand_voice?: string | null;
+            /** Business Tz */
+            business_tz?: string | null;
+            /** Business Ranges */
+            business_ranges?: components["schemas"]["BusinessRange"][] | null;
+            /** Business Hours Mode */
+            business_hours_mode?: ("bloquea" | "informativo") | null;
+            /** Out Of Hours Message */
+            out_of_hours_message?: string | null;
+            /** Nivel Ia */
+            nivel_ia?: ("estandar" | "avanzado") | null;
+            /** Guardrails */
+            guardrails?: {
+                [key: string]: unknown;
+            }[] | null;
         };
     };
     responses: never;
@@ -46951,6 +47039,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leer_opciones_api_v1_admin_coordinator_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoordinatorOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guardar_opciones_api_v1_admin_coordinator_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoordinatorOptionsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoordinatorOptions"];
                 };
             };
             /** @description Validation Error */

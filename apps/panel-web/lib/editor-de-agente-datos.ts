@@ -32,7 +32,7 @@ export type DatosDelEditor = Omit<PropsDelEditor, "modo" | "pasoInicial" | "bien
 export type CargaDelEditor =
   | { estado: "no_existe" }
   | { estado: "error"; detalle?: string }
-  | { estado: "no_especialista"; nombre: string }
+  | { estado: "no_especialista"; nombre: string; coordinador: boolean }
   | { estado: "ok"; nombre: string; datos: DatosDelEditor };
 
 /**
@@ -75,7 +75,9 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
     const falla = [agente, superpoderes, modelos].find((r) => !r.ok);
     return { estado: "error", detalle: falla && !falla.ok ? falla.error : undefined };
   }
-  if (agente.data.kind !== "specialist") return { estado: "no_especialista", nombre: agente.data.name };
+  if (agente.data.kind !== "specialist") {
+    return { estado: "no_especialista", nombre: agente.data.name, coordinador: agente.data.kind === "core" };
+  }
 
   const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
   const puedeEditar = me.ok && puedeEditarConfiguracion(me.data);

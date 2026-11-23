@@ -38,10 +38,13 @@ export function ReglasDelAgenteEditable({
   onGuardado,
   puedeEditar,
   acciones = [],
+  coordinador = false,
 }: {
   agenteId: string;
   inicial: ReglasDelAgente;
   lockVersion: number;
+  /** HU-AOS-98: las reglas de la recepción del Coordinador (ruta propia, sin borrador ni `lock_version`). */
+  coordinador?: boolean;
   /** El `lock_version` nuevo y las reglas tal como quedaron en el borrador. */
   onGuardado: (lock: number, guardrails: Record<string, unknown>[]) => void;
   puedeEditar: boolean;
@@ -72,10 +75,14 @@ export function ReglasDelAgenteEditable({
     setCampos(undefined);
     setGuardando(true);
     try {
-      const res = await fetch(`/api/agent-editor/${agenteId}/guardrails`, {
+      const res = await fetch(coordinador ? "/api/coordinator" : `/api/agent-editor/${agenteId}/guardrails`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ guardrails: reglas.map(reglaParaApi), lock_version: lockVersion }),
+        body: JSON.stringify(
+          coordinador
+            ? { guardrails: reglas.map(reglaParaApi) }
+            : { guardrails: reglas.map(reglaParaApi), lock_version: lockVersion },
+        ),
       });
       const cuerpo = await res.json().catch(() => null);
       if (!res.ok) {
@@ -90,6 +97,7 @@ export function ReglasDelAgenteEditable({
         return;
       }
       const nuevo = cuerpo as ReglasDelAgente;
+      nuevo.lock_version ??= lockVersion;
       const formas = nuevo.guardrails.map(reglaDesdeApi);
       setGuardadas(formas);
       setReglas(formas);
@@ -105,7 +113,7 @@ export function ReglasDelAgenteEditable({
   return (
     <section aria-labelledby={`${id}-titulo`} className="flex flex-col gap-3 rounded-md border border-border-soft p-4">
       <h3 id={`${id}-titulo`} className="text-sm font-medium text-headline">
-        Reglas de este agente
+        {coordinador ? "Reglas de la recepción" : "Reglas de este agente"}
       </h3>
       <p className="text-sm text-text-soft">
         Lo que este agente nunca debe hacer al responder. Solo aplican a este agente; los demás siguen con las suyas.
