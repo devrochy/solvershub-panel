@@ -10,7 +10,7 @@ import { FormFeedback } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { cambiosDeVoz, type OpcionesDelCoordinador } from "@/lib/coordinador-opciones";
+import { cambiosDeVoz, type OpcionesDelCoordinador } from "@/lib/coordinador-voz";
 import type { ReglasDelAgente } from "@/lib/reglas-y-tools-del-agente";
 import { creditosEnPalabras, NIVELES_IA, type NivelIa } from "@/lib/nivel-ia";
 import { RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/plan-limite";

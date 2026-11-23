@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { OpcionesDelCoordinador } from "@/components/domain/agentes/opciones-del-coordinador";
-import type { OpcionesDelCoordinador as Opciones } from "@/lib/coordinador-opciones";
+import type { OpcionesDelCoordinador as Opciones } from "@/lib/coordinador-voz";
 
 afterEach(cleanup);
 

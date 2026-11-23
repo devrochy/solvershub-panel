@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cambiosDeVoz } from "./coordinador-opciones";
+import { cambiosDeVoz } from "./coordinador-voz";
 
 const base = { assistant_name: "Lía", business_description: "Tienda", brand_voice: "cercana" };
 
