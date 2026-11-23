@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,15 +35,27 @@ export function WebChatForm({
   const [enabled, setEnabled] = useState(webChat.enabled);
   const [originsText, setOriginsText] = useState(webChat.allowed_origins.join("\n"));
   // Lo último guardado, para saber si hay cambios sin guardar.
-  const [guardado, setGuardado] = useState({ enabled: webChat.enabled, originsText: webChat.allowed_origins.join("\n") });
+  const [guardado, setGuardado] = useState({
+    enabled: webChat.enabled,
+    originsText: webChat.allowed_origins.join("\n"),
+    turnstileSiteKey: webChat.turnstile_site_key || "",
+  });
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState(webChat.turnstile_site_key || "");
+  const [turnstileConfigured, setTurnstileConfigured] = useState(webChat.turnstile_configured);
   const [turnstile, setTurnstile] = useState("");
+  const [quitarTurnstile, setQuitarTurnstile] = useState(false);
   const [rotateKey, setRotateKey] = useState(false);
   const [avanzado, setAvanzado] = useState(false);
   const [snippet, setSnippet] = useState(webChat.snippet);
   const { run, pending } = useAction();
   useAvisarCambios(
     "chat-web",
-    enabled !== guardado.enabled || originsText !== guardado.originsText || turnstile.trim() !== "" || rotateKey,
+    enabled !== guardado.enabled ||
+      originsText !== guardado.originsText ||
+      turnstileSiteKey !== guardado.turnstileSiteKey ||
+      turnstile.trim() !== "" ||
+      quitarTurnstile ||
+      rotateKey,
   );
 
   async function onSubmit(event: FormEvent) {
@@ -51,6 +64,13 @@ export function WebChatForm({
       .split(/[\n,]/)
       .map((o) => o.trim())
       .filter(Boolean);
+    const siteKey = turnstileSiteKey.trim();
+    // undefined = no tocar. Solo se manda si cambió (o si se quita la protección): así un
+    // negocio con una configuración vieja puede guardar otros cambios sin tocar Turnstile.
+    let turnstile_site_key: string | undefined;
+    if (quitarTurnstile) turnstile_site_key = "";
+    else if (siteKey !== guardado.turnstileSiteKey) turnstile_site_key = siteKey;
+    const turnstile_secret = quitarTurnstile ? "" : turnstile.trim() || undefined;
     await run(async () => {
       const res = await fetch("/api/settings/web-chat", {
         method: "PUT",
@@ -58,18 +78,23 @@ export function WebChatForm({
         body: JSON.stringify({
           enabled,
           allowed_origins,
-          // undefined = no tocar el secreto existente.
-          turnstile_secret: turnstile.trim() === "" ? undefined : turnstile.trim(),
+          turnstile_site_key,
+          // La secret key solo se manda si el usuario escribe una nueva.
+          turnstile_secret,
           rotate_key: rotateKey,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as Partial<WebChatSettings> & { error?: string; code?: string };
       // Prender el chat web es un alta de conexión: con el tope del plan lleno, el toast ofrece mejorarlo (HU-BILL-19).
       if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar el chat web.", code: json.code };
-      setGuardado({ enabled, originsText });
+      const siteKeyGuardada = json.turnstile_site_key ?? (quitarTurnstile ? "" : turnstileSiteKey.trim());
+      setGuardado({ enabled, originsText, turnstileSiteKey: siteKeyGuardada });
+      setTurnstileSiteKey(siteKeyGuardada);
+      setTurnstileConfigured(Boolean(json.turnstile_configured));
       setSnippet(json.snippet ?? "");
       setRotateKey(false);
       setTurnstile("");
+      setQuitarTurnstile(false);
       return { ok: true, success: "Chat web guardado." };
     });
   }
@@ -113,23 +138,59 @@ export function WebChatForm({
           </button>
           {avanzado && (
             <div id="chat-web-avanzado" className="flex flex-col gap-4">
-              <Field
-                label="Protección contra bots (Turnstile de Cloudflare)"
-                htmlFor="turnstile_secret"
-                help={
-                  webChat.turnstile_configured
-                    ? "Ya está configurada. Escribe una clave nueva solo si quieres cambiarla."
-                    : "Opcional. Con la clave secreta, el chat pide la verificación anti-bots de Cloudflare."
-                }
-              >
-                <InputPassword
-                  etiqueta="clave secreta"
-                  id="turnstile_secret"
-                  value={turnstile}
-                  onChange={(e) => setTurnstile(e.target.value)}
-                  autoComplete="off"
-                />
-              </Field>
+              <div className="flex flex-col gap-3 rounded-md border border-border/60 p-3">
+                <div>
+                  <p className="text-sm font-medium text-headline">Protección contra bots (Turnstile)</p>
+                  <p className="text-xs text-text-soft">
+                    Crea un widget de Turnstile en Cloudflare para el sitio donde vive el chat y pega sus dos claves. El chat pedirá la verificación antes de enviar.
+                  </p>
+                </div>
+                <Field
+                  label="Site key (pública)"
+                  htmlFor="turnstile_site_key"
+                  help="Cloudflare → Turnstile → tu widget → Site key. Se puede mostrar; no es secreta."
+                >
+                  <Input
+                    id="turnstile_site_key"
+                    value={turnstileSiteKey}
+                    onChange={(e) => setTurnstileSiteKey(e.target.value)}
+                    placeholder="0x4AAAAAAA…"
+                    autoComplete="off"
+                    disabled={quitarTurnstile}
+                  />
+                </Field>
+                <Field
+                  label="Secret key (privada)"
+                  htmlFor="turnstile_secret"
+                  help={
+                    turnstileConfigured
+                      ? "Ya está configurada. Escribe una nueva solo si quieres cambiarla."
+                      : "La secret key del mismo widget. No se vuelve a mostrar después de guardar."
+                  }
+                >
+                  <InputPassword
+                    etiqueta="clave secreta"
+                    id="turnstile_secret"
+                    value={turnstile}
+                    onChange={(e) => setTurnstile(e.target.value)}
+                    autoComplete="off"
+                    disabled={quitarTurnstile}
+                  />
+                </Field>
+                {turnstileConfigured || turnstileSiteKey ? (
+                  <Checkbox
+                    id="quitar-turnstile"
+                    label="Quitar la protección anti-bots"
+                    checked={quitarTurnstile}
+                    onCheckedChange={setQuitarTurnstile}
+                  />
+                ) : null}
+                {quitarTurnstile ? (
+                  <p className="text-xs text-text-soft">
+                    Al guardar se borran la site key y la secret key; el chat dejará de pedir verificación.
+                  </p>
+                ) : null}
+              </div>
               <Checkbox
                 id="rotar-clave-chat-web"
                 label="Cambiar la clave del chat (el fragmento que ya pegaste deja de funcionar)"

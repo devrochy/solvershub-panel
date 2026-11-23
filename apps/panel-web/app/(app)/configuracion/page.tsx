@@ -93,7 +93,7 @@ export default async function SettingsPage({
         defaultSeccion={seccion}
         puedeEditar={puedeEditar}
         settings={res.data}
-        webChat={webChatRes.ok ? webChatRes.data : { enabled: false, key: "", allowed_origins: [], turnstile_configured: false, snippet: "" }}
+        webChat={webChatRes.ok ? webChatRes.data : { enabled: false, key: "", allowed_origins: [], turnstile_configured: false, turnstile_site_key: "", snippet: "" }}
         media={mediaRes.ok ? mediaRes.data : MEDIA_FALLBACK}
         catalogo={catalogoRes.ok ? catalogoRes.data : null}
         bajas={bajasRes.ok ? bajasRes.data : null}
