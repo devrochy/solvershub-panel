@@ -677,6 +677,7 @@ export const chatWeb: WebChatSettings = {
   key: "test-widget-key",
   allowed_origins: [],
   turnstile_configured: false,
+  turnstile_site_key: "",
   snippet: "",
 };
 
