@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { OpcionesDelCoordinador } from "@/components/domain/agentes/opciones-del-coordinador";
 import { EditorDeAgente } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { pasoDesdeParametro } from "@/lib/agentes-editor";
 import { AvisoAlSalir } from "@/lib/cambios-sin-guardar";
+import { cargarOpcionesDelCoordinador } from "@/lib/coordinador-opciones";
 import { cargarEditorDeAgente } from "@/lib/editor-de-agente-datos";
 
 export const metadata = { title: "Personalizar agente" };
@@ -52,6 +54,20 @@ export default async function PersonalizarAgentePage({
       <Link href={`/agentes/${id}`}>{creando ? "Terminar después" : `Volver a ${carga.nombre}`}</Link>
     </Button>
   );
+  if (carga.estado === "no_especialista" && carga.coordinador) {
+    // HU-AOS-98 (ADR-0211): las opciones propias del Coordinador, sin borrador ni recorrido por pasos.
+    const opciones = await cargarOpcionesDelCoordinador();
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title={titulo} breadcrumbs={migas} tabs={false} actions={volver} />
+        {opciones.estado === "ok" ? (
+          <OpcionesDelCoordinador inicial={opciones.opciones} agenteId={id} puedeEditar={opciones.puedeEditar} />
+        ) : (
+          <ErrorDeCarga titulo="No pudimos abrir las opciones del Coordinador" detalle={opciones.detalle} />
+        )}
+      </div>
+    );
+  }
   if (carga.estado === "no_especialista") {
     return (
       <div className="flex flex-col gap-6">
