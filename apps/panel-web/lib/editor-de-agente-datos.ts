@@ -22,6 +22,7 @@ import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
 import type { AgenteDatos } from "@/lib/datos-cliente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
+import type { ReglasDelAgente, ToolsHttpDelAgente } from "@/lib/reglas-y-tools-del-agente";
 
 type PropsDelEditor = ComponentProps<typeof EditorDeAgente>;
 
@@ -39,7 +40,7 @@ export type CargaDelEditor =
  * bienvenida (HU-UX-23). Solo agente, superpoderes y modelos son obligatorias; lo demás abre vacío si no responde.
  */
 export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> {
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario] =
+  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp] =
     await Promise.all([
       apiFetch<AgentDetail>(`/admin/agents/${id}`),
       apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
@@ -65,6 +66,9 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       apiFetch<FormasDePago>(`/pack/commerce/agents/${id}/payment-forms`),
       // Horario propio del agente (HU-AOS-82); sin respuesta, el paso muestra solo el del negocio.
       apiFetch<HorarioDelAgente>(`/admin/agents/${id}/schedule`),
+      // Reglas y tools HTTP del agente (HU-AOS-97); sin respuesta, esas secciones no se muestran.
+      apiFetch<ReglasDelAgente>(`/admin/agents/${id}/guardrails`),
+      apiFetch<ToolsHttpDelAgente>(`/admin/agents/${id}/declarative-tools`),
     ]);
   if (!agente.ok && agente.status === 404) return { estado: "no_existe" };
   if (!agente.ok || !superpoderes.ok || !modelos.ok) {
@@ -101,6 +105,8 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       puedeEditarDatos: puedeEditar,
       formasDePago: formas.ok ? formas.data : null,
       horarioDelAgente: horario.ok ? horario.data : null,
+      reglasDelAgente: reglas.ok ? reglas.data : null,
+      toolsHttpDelAgente: toolsHttp.ok ? toolsHttp.data : null,
       flujoInicial: flujo.ok ? flujoDesdeApi(flujo.data.flow) : { sections: [] },
       flujoSeeded: flujo.ok ? flujo.data.seeded : false,
       accionesDelFlujo: opcionesDeFlujo.ok ? opcionesDeFlujo.data.actions : [],
