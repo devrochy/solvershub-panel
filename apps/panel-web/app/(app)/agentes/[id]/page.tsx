@@ -409,7 +409,8 @@ export default async function AgentePage({
               />
             )}
             {/* Archivado no se edita (la API responde 409): primero se reactiva. */}
-            {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && (
+            {/* El Coordinador también se personaliza (ADR-0211): voz, nivel y reglas de la recepción. */}
+            {puedeEditar && agente.id && (agente.kind === "specialist" || agente.kind === "core") && !archivado && (
               <BotonPersonalizar agenteId={agente.id} usuarioId={meRes.ok ? meRes.data.admin_id : ""} />
             )}
             {puedeEditar && agente.id && agente.kind === "specialist" && !archivado && (
