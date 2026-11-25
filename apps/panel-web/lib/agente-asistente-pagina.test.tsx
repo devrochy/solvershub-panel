@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
 import { FeedbackProviders } from "@/components/ui/providers";
-import type { AgentTemplatePage } from "@/lib/api/types";
+import type { AgentTypesOut } from "@/lib/api/types";
 import { agentes, me } from "@/lib/testing/fixtures";
 import { resolverServidor } from "@/lib/testing/servidor";
 
@@ -32,8 +32,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-const PLANTILLAS: AgentTemplatePage = {
-  items: [
+const PLANTILLAS: AgentTypesOut = {
+  coordinator: { key: "coordinador", name: "Coordinador", description: "", skill: "core:recepcion", tools: [] },
+  types: [
     {
       key: "agenda",
       name: "Agenda",
@@ -48,14 +49,13 @@ const PLANTILLAS: AgentTemplatePage = {
       will_enable: [],
       superpowers: [],
       requirements: [],
+      mandatory_skills: ["pack_calendar"],
+      transversal_skills: [],
+      customer_data_operations: [],
+      default_flow_sections: [],
     },
   ],
-  total: 1,
-  page: 1,
-  page_size: 100,
-  pages: 1,
-  has_more: false,
-} as AgentTemplatePage;
+} as AgentTypesOut;
 
 beforeAll(() => {
   window.matchMedia ??= ((query: string) => ({
@@ -84,7 +84,7 @@ async function abrir() {
 describe("página Nuevo agente", () => {
   it("con permiso y negocio v3 muestra el asistente y lee el runtime de la vista general", async () => {
     Object.assign(respuestas, {
-      "/admin/agent-templates": PLANTILLAS,
+      "/admin/agent-types": PLANTILLAS,
       "/admin/me": me,
       "/admin/agents/overview": agentes,
     });
@@ -95,7 +95,7 @@ describe("página Nuevo agente", () => {
 
   it("sin permiso de escritura en Ajustes ve un aviso y no el asistente", async () => {
     Object.assign(respuestas, {
-      "/admin/agent-templates": PLANTILLAS,
+      "/admin/agent-types": PLANTILLAS,
       "/admin/me": { ...me, role: "colaborador", permissions: { settings: "read" } },
       "/admin/agents/overview": agentes,
     });
@@ -106,7 +106,7 @@ describe("página Nuevo agente", () => {
 
   it("al tope de agentes no abre el asistente y ofrece mejorar el plan", async () => {
     Object.assign(respuestas, {
-      "/admin/agent-templates": PLANTILLAS,
+      "/admin/agent-types": PLANTILLAS,
       "/admin/me": me,
       "/admin/agents/overview": { ...agentes, cuota_agentes: { used: 1, limit: 1, allowed: false } },
     });

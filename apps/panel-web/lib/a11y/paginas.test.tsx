@@ -45,7 +45,7 @@ const RESPUESTAS: Record<string, unknown> = {
   ...RESPUESTAS_BASE,
   "/admin/settings/catalog": CATALOGO_DE_PRUEBA,
   // Nuevo agente (HU-AOS-86): dos tipos, uno de ellos ocupado por un agente del negocio.
-  "/admin/agent-templates": { items: PLANTILLAS_DE_PRUEBA, total: PLANTILLAS_DE_PRUEBA.length, page: 1, page_size: 100, has_more: false },
+  "/admin/agent-types": { coordinator: { key: "coordinador", name: "Coordinador", description: "", skill: "core:recepcion", tools: [] }, types: PLANTILLAS_DE_PRUEBA },
 };
 
 vi.mock("@/lib/api/server", async (original) => ({

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { apiFetch } from "@/lib/api/server";
-import type { AgentDetail, AgentTemplatePage, Me, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
+import type { AgentDetail, AgentTypesOut, Me, PrimerosPasos, SettingsResponse } from "@/lib/api/types";
 import { PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, pasoDeCinco, type TipoDeNegocio } from "@/lib/onboarding";
 
 import { RecorridoDeBienvenida } from "./_components/recorrido";
@@ -21,7 +21,7 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
     apiFetch<Me>("/admin/me"),
     apiFetch<PrimerosPasos>("/admin/onboarding"),
     apiFetch<SettingsResponse>("/admin/settings"),
-    apiFetch<AgentTemplatePage>("/admin/agent-templates?page_size=100"),
+    apiFetch<AgentTypesOut>("/admin/agent-types"),
   ]);
   if (!me.ok) redirect(me.status === 401 ? "/api/session/cerrar" : "/login");
   if (!onboarding.ok || !ajustes.ok || !me.data.tenant) redirect("/dashboard");
@@ -36,11 +36,11 @@ export default async function BienvenidaPage({ searchParams }: { searchParams: P
   // Tipos de negocio cuya plantilla de agente se puede ofrecer; si la lista no carga, no se bloquea ninguno.
   // Elegir un tipo activa sus habilidades (`will_enable`): ya no hay que activarlas antes. Solo queda fuera un
   // tipo que este servicio no trae.
-  const listas = plantillas.ok ? new Set(plantillas.data.items.filter((p) => p.available).map((p) => p.key)) : null;
+  const listas = plantillas.ok ? new Set(plantillas.data.types.filter((p) => p.available).map((p) => p.key)) : null;
   const disponibles = listas ? TIPOS_DE_NEGOCIO.filter((t) => listas.has(t.id)).map((t) => t.id as TipoDeNegocio) : null;
   const habilitara: Partial<Record<TipoDeNegocio, string[]>> = plantillas.ok
     ? Object.fromEntries(
-        TIPOS_DE_NEGOCIO.map((t) => [t.id, plantillas.data.items.find((p) => p.key === t.id)?.will_enable ?? []]),
+        TIPOS_DE_NEGOCIO.map((t) => [t.id, plantillas.data.types.find((p) => p.key === t.id)?.will_enable ?? []]),
       )
     : {};
 

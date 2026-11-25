@@ -219,6 +219,8 @@ export type AgentTemplate = components["schemas"]["AgentTemplate"];
 export type Requirement = components["schemas"]["Requirement"];
 export type RequirementPage = components["schemas"]["Page_Requirement_"];
 export type AgentTemplatePage = components["schemas"]["Page_AgentTemplate_"];
+/** Catálogo de tipos de agente (HU-AOS-94): el Coordinador y los tipos, cada uno con todo lo de la plantilla. */
+export type AgentTypesOut = components["schemas"]["AgentTypesOut"];
 export type Superpower = components["schemas"]["Superpower"];
 export type SuperpowerPage = components["schemas"]["Page_Superpower_"];
 export type LlmModel = components["schemas"]["LlmModel"];

@@ -1099,11 +1099,11 @@ if (process.env.AGENTES === "1") {
     ...plan,
     credit: { ...plan.credit, used: 4900, by_agent: [{ agent_id: VENTAS_ID, name: "Ventas", used: 3200 }, { agent_id: GENERAL_ID, name: "General", used: 1400 }, { agent_id: null, name: null, used: 300 }] },
   };
-  respuestas["/admin/agent-templates"] = { items: [
+  respuestas["/admin/agent-types"] = { coordinator: { key: "coordinador", name: "Coordinador", description: "Recibe cada conversación y la reparte.", skill: "core:recepcion", tools: [] }, types: [
     plantilla("ventas", "Ventas", "Toma pedidos, cotiza y resuelve dudas del catálogo.", "pack_commerce", ["pack_commerce"], true, { superpowers: [poder("pack_commerce.tomar_pedido", "pack_commerce", "Tomar un pedido", "Arma el pedido y lo confirma.")] }),
     plantilla("agenda", "Agenda", "Agenda, mueve y confirma citas.", "pack_calendar", ["pack_calendar"], true, { requirements: [{ skill: "pack_calendar", kind: "sin_contenido", title: "Aún no hay servicios", explanation: "Crea al menos un tipo de cita para que pueda agendar.", section: "pack_calendar", content: "servicios" }] }),
     plantilla("cobranza", "Cobranza", "Recuerda pagos y registra promesas.", "pack_cobranza", ["pack_cobranza"], false),
-  ], total: 3, page: 1, page_size: 100, has_more: false };
+  ] };
 }
 
 // NUEVO_AGENTE (HU-AOS-86): Ventas ocupada por Laura y el borrador de Agenda «Tomás» que crea Nuevo agente.
@@ -1117,12 +1117,12 @@ if (NUEVO && process.env.AGENTES === "1") {
     items: [{ ...base, id: VENTAS_ID, ref: VENTAS_ID, key: "ventas", name: "Laura", virtual: false, status: NUEVO === "archivado" ? "archived" : "active" }],
     cuota_agentes: { used: 1, limit: 5, allowed: true },
   };
-  const plantillas = respuestas["/admin/agent-templates"].items;
+  const plantillas = respuestas["/admin/agent-types"].types;
   const largo = {
     id: "largo_respuesta", text: "¿Qué tan largas son sus respuestas?", help: "", type: "option", default: "normal",
     options: [{ id: "cortas", text: "Cortas", help: "Van al grano." }, { id: "normal", text: "Normales", help: "Lo justo para resolver." }, { id: "detalladas", text: "Detalladas", help: "Explican con calma." }],
   };
-  respuestas["/admin/agent-templates"] = { ...respuestas["/admin/agent-templates"], items: [
+  respuestas["/admin/agent-types"] = { ...respuestas["/admin/agent-types"], types: [
     { ...plantillas.find((p) => p.key === "ventas"), name: "Ventas", description: "Vende y toma pedidos", questions: [largo] },
     { ...plantillas.find((p) => p.key === "agenda"), name: "Agenda", description: "Agenda citas y entregas", questions: [largo] },
     { ...plantillas.find((p) => p.key === "cobranza"), name: "Cobranza", description: "Recuerda pagos pendientes", available: true, questions: [largo] },

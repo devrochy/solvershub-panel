@@ -8,7 +8,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ key: strin
   if (!/^[a-z0-9_]{2,40}$/.test(key)) return invalido("Plantilla inválida.");
   const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
   const name = typeof body?.name === "string" && body.name.trim() ? body.name.trim().slice(0, 120) : undefined;
-  const res = await apiFetch<FromTemplateOut>(`/admin/agent-templates/${key}/agents`, {
+  const res = await apiFetch<FromTemplateOut>(`/admin/agent-types/${key}/agents`, {
     method: "POST",
     body: name ? { name } : {},
   });
