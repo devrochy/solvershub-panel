@@ -35,6 +35,12 @@ describe("OpcionesDelCoordinador", () => {
     expect(screen.getByText("Reglas de la recepción")).toBeTruthy();
   });
 
+  it("no ofrece el nombre del asistente: es de cada agente, el Coordinador es el core", () => {
+    render(<OpcionesDelCoordinador inicial={inicial} agenteId="a-1" puedeEditar />);
+    expect(screen.queryByLabelText("Nombre del asistente")).toBeNull();
+    expect(screen.getByLabelText("Qué hace tu negocio")).toBeTruthy();
+  });
+
   it("guarda solo lo que cambió de la voz", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ...inicial, brand_voice: "formal" }), { status: 200 }));
     render(<OpcionesDelCoordinador inicial={inicial} agenteId="a-1" puedeEditar />);
