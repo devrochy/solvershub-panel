@@ -7,7 +7,6 @@ import { ReglasDelAgenteEditable } from "@/components/domain/agentes/reglas-del-
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { Input } from "@/components/ui/input";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { cambiosDeVoz, type OpcionesDelCoordinador } from "@/lib/coordinador-voz";
@@ -47,7 +46,6 @@ export function OpcionesDelCoordinador({
   const id = useId();
   const [guardada, setGuardada] = useState(inicial);
   const [voz, setVoz] = useState({
-    assistant_name: inicial.assistant_name,
     business_description: inicial.business_description,
     brand_voice: inicial.brand_voice,
   });
@@ -99,15 +97,6 @@ export function OpcionesDelCoordinador({
         <h3 id={`${id}-voz`} className="text-sm font-medium text-headline">
           Voz e identidad
         </h3>
-        <Field label="Nombre del asistente" htmlFor={`${id}-nombre`}>
-          <Input
-            id={`${id}-nombre`}
-            value={voz.assistant_name}
-            maxLength={120}
-            disabled={!puedeEditar || guardando}
-            onChange={(e) => setVoz((v) => ({ ...v, assistant_name: e.target.value }))}
-          />
-        </Field>
         <Field label="Qué hace tu negocio" htmlFor={`${id}-desc`}>
           <Textarea
             id={`${id}-desc`}

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { cambiosDeVoz } from "./coordinador-voz";
 
-const base = { assistant_name: "Lía", business_description: "Tienda", brand_voice: "cercana" };
+const base = { business_description: "Tienda", brand_voice: "cercana" };
 
 describe("cambiosDeVoz", () => {
   it("sin cambios no envía nada", () => {
