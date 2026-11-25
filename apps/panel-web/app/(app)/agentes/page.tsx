@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { LayoutGrid, List } from "lucide-react";
 
 import { AgentCard, EstadoDelAgente, loQueHizo, ultimaConversacion, type AgenteDeLaLista } from "@/app/(app)/agentes/_components/agent-card";
+import { CoordinadorEnLaLista } from "@/components/domain/agentes/coordinador-en-la-lista";
 import { AvisoDeReferenciasEnLista } from "@/components/domain/aviso-de-referencias-retiradas";
 import { NuevoAgenteBoton } from "@/app/(app)/agentes/_components/nuevo-agente-boton";
 import { AgentIcon } from "@/components/domain/agent-icon";
@@ -64,6 +65,7 @@ export default async function AgentesPage({
   const items = archivadosAlFinal(res.data.items.filter((a) => !a.virtual || a.turns > 0));
   const conAviso = new Set(retiradas.ok ? retiradas.data.agents.map((a) => a.agent_id) : []);
   const puedeEditar = meRes.ok && puedeEditarAgentes(meRes.data);
+  const coordinador = resumenes.ok ? resumenes.data.find((a) => a.kind === "core" && a.status !== "archived") : undefined;
   const avisoTope = avisoDeTopeDeAgentes(res.data.cuota_agentes);
   const propositos = new Map(resumenes.ok ? resumenes.data.map((a) => [a.id, a.description]) : []);
   const delMes = creditosPorAgenteId(plan.ok ? plan.data.credit : null);
@@ -144,6 +146,8 @@ export default async function AgentesPage({
       )}
 
       <AvisoDeReferenciasEnLista avisos={retiradas.ok ? retiradas.data : null} />
+
+      {coordinador && <CoordinadorEnLaLista id={coordinador.id} nombre={coordinador.name} puedeEditar={puedeEditar} />}
 
       {items.length === 0 ? (
         <EmptyState
