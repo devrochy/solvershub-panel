@@ -1340,7 +1340,7 @@ export const catalogoDeMensajes: CatalogoDeMensajes = {
   truncado: [],
 };
 
-/** `/admin/datos-cliente/politica` (HU-CRM-13): qué datos del cliente pide cada acción del agente. */
+/** `/admin/agents/{id}/datos-cliente` (HU-CRM-28): qué datos del cliente pide cada acción de un agente. */
 export const politicaDatosCliente: PoliticaDatos = {
   agente_id: "11111111-1111-1111-1111-111111111111",
   niveles: ["requerido", "recomendado", "no_pedir"],
