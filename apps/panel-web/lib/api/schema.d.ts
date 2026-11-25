@@ -7552,17 +7552,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Politica Deprecada
+         * Get Politica Retirada
          * @deprecated
-         * @description Deprecado: la política es de cada agente. Devuelve la del especialista por defecto.
+         * @description Retirado (ADR-0198 §5): la política de datos del cliente es de cada agente (410 `politica_por_agente`).
          */
-        get: operations["get_politica_deprecada_api_v1_admin_datos_cliente_politica_get"];
+        get: operations["get_politica_retirada_api_v1_admin_datos_cliente_politica_get"];
         /**
-         * Save Politica Deprecado
+         * Save Politica Retirada
          * @deprecated
-         * @description Deprecado: aplica el cuerpo al especialista por defecto, ignorando lo que ese agente no tenga.
+         * @description Retirado (ADR-0198 §5): la política de datos del cliente es de cada agente (410 `politica_por_agente`).
          */
-        put: operations["save_politica_deprecado_api_v1_admin_datos_cliente_politica_put"];
+        put: operations["save_politica_retirada_api_v1_admin_datos_cliente_politica_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -19807,35 +19807,6 @@ export interface components {
              * @default
              */
             setup_guide: string;
-        };
-        /**
-         * PoliticaDatosOut
-         * @description Contrato legado de la política global; se conserva un release, deprecado.
-         */
-        PoliticaDatosOut: {
-            /** Niveles */
-            niveles: ("requerido" | "recomendado" | "no_pedir")[];
-            /** Acciones */
-            acciones: components["schemas"]["AccionPoliticaOut"][];
-            /**
-             * Herramientas Del Agente
-             * @default false
-             */
-            herramientas_del_agente: boolean;
-        };
-        /**
-         * PoliticaDatosUpdate
-         * @description Cuerpo legado. Se aplica al especialista por defecto del negocio; lo que no tenga se ignora.
-         */
-        PoliticaDatosUpdate: {
-            /** Politica */
-            politica?: {
-                [key: string]: {
-                    [key: string]: "requerido" | "recomendado" | "no_pedir";
-                };
-            } | null;
-            /** Herramientas Del Agente */
-            herramientas_del_agente?: boolean | null;
         };
         /** Portfolio */
         Portfolio: {
@@ -41669,7 +41640,7 @@ export interface operations {
             };
         };
     };
-    get_politica_deprecada_api_v1_admin_datos_cliente_politica_get: {
+    get_politica_retirada_api_v1_admin_datos_cliente_politica_get: {
         parameters: {
             query?: never;
             header?: {
@@ -41681,13 +41652,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
-            200: {
+            /** @description Retirado: la política es de cada agente, `error.code = politica_por_agente` (ADR-0198 §5). */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoliticaDatosOut"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -41701,7 +41672,7 @@ export interface operations {
             };
         };
     };
-    save_politica_deprecado_api_v1_admin_datos_cliente_politica_put: {
+    save_politica_retirada_api_v1_admin_datos_cliente_politica_put: {
         parameters: {
             query?: never;
             header?: {
@@ -41711,19 +41682,15 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PoliticaDatosUpdate"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Successful Response */
-            200: {
+            /** @description Retirado: la política es de cada agente, `error.code = politica_por_agente` (ADR-0198 §5). */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoliticaDatosOut"];
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
