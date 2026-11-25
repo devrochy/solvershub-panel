@@ -40,9 +40,16 @@ export type CargaDelEditor =
  * bienvenida (HU-UX-23). Solo agente, superpoderes y modelos son obligatorias; lo demás abre vacío si no responde.
  */
 export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> {
-  const [agente, superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp] =
+  // Primero el agente: el Coordinador y el back-office no tienen superpoderes, modelos, flujo ni destinos propios
+  // (esas rutas responden 404 o 500), así que no se piden. Con el Coordinador, Personalizar abre sus opciones (HU-AOS-98).
+  const agente = await apiFetch<AgentDetail>(`/admin/agents/${id}`);
+  if (!agente.ok && agente.status === 404) return { estado: "no_existe" };
+  if (!agente.ok) return { estado: "error", detalle: agente.error };
+  if (agente.data.kind !== "specialist") {
+    return { estado: "no_especialista", nombre: agente.data.name, coordinador: agente.data.kind === "core" };
+  }
+  const [superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp] =
     await Promise.all([
-      apiFetch<AgentDetail>(`/admin/agents/${id}`),
       apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
       // Con `agent_id`, el modelo con el que atenderá este agente (HU-AOS-79), para la línea de Publicar.
       apiFetch<LlmModelCatalog>(`/admin/agent-models?agent_id=${id}&page_size=100`),
@@ -70,13 +77,9 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       apiFetch<ReglasDelAgente>(`/admin/agents/${id}/guardrails`),
       apiFetch<ToolsHttpDelAgente>(`/admin/agents/${id}/declarative-tools`),
     ]);
-  if (!agente.ok && agente.status === 404) return { estado: "no_existe" };
-  if (!agente.ok || !superpoderes.ok || !modelos.ok) {
-    const falla = [agente, superpoderes, modelos].find((r) => !r.ok);
+  if (!superpoderes.ok || !modelos.ok) {
+    const falla = [superpoderes, modelos].find((r) => !r.ok);
     return { estado: "error", detalle: falla && !falla.ok ? falla.error : undefined };
-  }
-  if (agente.data.kind !== "specialist") {
-    return { estado: "no_especialista", nombre: agente.data.name, coordinador: agente.data.kind === "core" };
   }
 
   const nombre = nombresDeHabilidades(plugins.ok ? plugins.data : []);
