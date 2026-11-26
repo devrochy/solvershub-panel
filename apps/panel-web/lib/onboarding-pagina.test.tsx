@@ -85,7 +85,7 @@ afterEach(() => {
 });
 
 describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
-  it("arranca en «Tu negocio» a pantalla completa, con el escenario, el logo actual y sin violaciones graves", async () => {
+  it("arranca en «Tu negocio» a pantalla completa, con el logo arriba, el celular y sin violaciones graves", async () => {
     const { container } = montar();
     expect(await screen.findByRole("heading", { level: 1, name: "Cuéntanos de tu negocio" })).toBeTruthy();
     expect(screen.getAllByText("Paso 1 de 5 · Tu negocio").length).toBeGreaterThan(0);
@@ -96,11 +96,14 @@ describe("bienvenida en 5 estaciones (HU-UX-25)", () => {
       expect.arrayContaining([expect.stringContaining("Tu negocio"), expect.stringContaining("Revisar y publicar")]),
     );
     expect(estaciones).toHaveLength(5);
-    // El escenario a la izquierda con el logo horizontal; en el celular, la franja con el simple.
-    expect(screen.getByRole("complementary", { name: "Lo que gana tu agente" })).toBeTruthy();
-    expect(container.querySelectorAll('img[src="/marca/horizontal-tema-oscuro.svg"]').length).toBe(1);
-    expect(container.querySelectorAll('img[src="/marca/horizontal-simple-tema-oscuro.svg"]').length).toBe(1);
-    expect(screen.getAllByRole("button", { name: "Seguir después" }).length).toBeGreaterThan(0);
+    // El logo horizontal y «Seguir después» en el encabezado; el celular a la derecha (HU-UX-26).
+    const encabezado = screen.getByRole("banner");
+    expect(encabezado.querySelectorAll('img[src="/marca/horizontal-tema-oscuro.svg"]').length).toBe(1);
+    expect(encabezado.querySelectorAll('img[src="/marca/horizontal-tema-claro.svg"]').length).toBe(1);
+    expect(within(encabezado).getByRole("button", { name: "Seguir después" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Seguir después" })).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Vista previa del agente en el celular" })).toBeTruthy();
+    expect(screen.queryByRole("complementary", { name: "Lo que gana tu agente" })).toBeNull();
     expect(await violacionesGraves(container)).toEqual([]);
     await waitFor(() => expect(llamadas.some((l) => l.url === "/api/onboarding/avanzar")).toBe(true));
     expect(llamadas.find((l) => l.url === "/api/onboarding/avanzar")?.cuerpo).toEqual({ paso: 1 });

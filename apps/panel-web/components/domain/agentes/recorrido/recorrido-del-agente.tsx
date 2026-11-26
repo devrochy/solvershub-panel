@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MensajeDeVistaPrevia } from "@/lib/vista-previa";
 
+import { BurbujaDePrueba } from "./burbuja-de-prueba";
 import { HojaDeVistaPrevia, VistaPreviaWhatsApp, type SugerenciaDeVistaPrevia } from "./vista-previa-whatsapp";
 
 export type AccionDelPie = {
@@ -35,10 +36,14 @@ export type VistaPreviaDelPaso = {
  *
  * `disposicion="ruta"` es la ruta de lanzamiento (HU-UX-24, SPEC-49): la barra pasa a estaciones
  * (con `extremo` a su derecha, por ejemplo «Seguir después»), la pregunta lleva encima el eyebrow
- * «Paso N de M · {estación}» y debajo su `bajada`, con el título de 36 px desde `md` (`text-sh-ruta`),
- * y el pie suma la línea `queSigue`. A la derecha va `lateral` (el escenario en tarjeta) en lugar del
- * teléfono, cuando el propio recorrido mide al menos 56 rem (consulta de contenedor: dentro del shell
- * cuenta el ancho que deja el menú, no el de la ventana). El escenario a pantalla completa de la bienvenida lo compone la página, fuera del cascarón.
+ * «Paso N de M · {estación}» y debajo su `bajada`, con el título de 32 px desde `md` (`text-sh-ruta`),
+ * y el pie suma la línea `queSigue` y el `estado` («Faltan 2 preguntas»).
+ *
+ * En `ruta` el `celular` (`CelularDeVistaPrevia`, HU-UX-26, D-SPEC-52-2) va a la derecha en los dos recorridos,
+ * en una columna de `clamp(480px, 36vw, 720px)` igual en las 5 estaciones, y el formulario se centra en el resto
+ * hasta 960 px. Por debajo de 1280 px de pantalla (no de contenedor: así lo pide la spec, y el menú del panel
+ * ya se pliega a 72 px por debajo de `xl`) todo va en una sola fila y el celular se abre desde la
+ * `BurbujaDePrueba`.
  */
 export function RecorridoDelAgente({
   pasos,
@@ -57,7 +62,9 @@ export function RecorridoDelAgente({
   bajada,
   queSigue,
   extremo,
-  lateral,
+  celular,
+  avisoEnLaBurbuja = false,
+  estado,
   children,
   className,
 }: {
@@ -87,8 +94,12 @@ export function RecorridoDelAgente({
   queSigue?: string;
   /** A la derecha de la ruta de estaciones (solo en `ruta`). */
   extremo?: ReactNode;
-  /** Columna derecha de 340 px en lugar del teléfono (solo en `ruta`), por ejemplo `EscenarioTarjeta`. */
-  lateral?: ReactNode;
+  /** El celular a la derecha (solo en `ruta`): `CelularDeVistaPrevia`. Por debajo de 1280 px, en la burbuja. */
+  celular?: ReactNode;
+  /** El punto de aviso en la burbuja (la última prueba de la estación 5). */
+  avisoEnLaBurbuja?: boolean;
+  /** En el pie, antes de la acción principal: «Faltan 2 preguntas» (solo en `ruta`). */
+  estado?: string;
   children: ReactNode;
   className?: string;
 }) {
@@ -99,7 +110,7 @@ export function RecorridoDelAgente({
   );
   const pasoActual = pasos[indice];
   const eyebrow = pasoActual ? `Paso ${indice + 1} de ${pasos.length} · ${pasoActual.corto ?? pasoActual.titulo}` : "";
-  const conLateral = ruta && Boolean(lateral);
+  const conCelular = ruta && Boolean(celular);
   const titulo = useRef<HTMLHeadingElement>(null);
   const Pregunta = nivelDePregunta;
   const primero = useRef(true);
@@ -113,7 +124,7 @@ export function RecorridoDelAgente({
   }, [actual]);
 
   return (
-    <div className={cn("flex min-h-full flex-col", ruta && "@container", className)}>
+    <div className={cn("flex min-h-full flex-col", className)}>
       <div className="flex flex-1 flex-col gap-6">
         {ruta ? (
           <div className="flex items-start justify-between gap-4">
@@ -134,10 +145,10 @@ export function RecorridoDelAgente({
         <div
           className={cn(
             "grid flex-1 gap-10",
-            conLateral ? "@4xl:grid-cols-[minmax(0,1fr)_21.25rem]" : vistaPrevia && "lg:grid-cols-[minmax(0,1fr)_21rem]",
+            conCelular ? "xl:grid-cols-[minmax(0,1fr)_clamp(480px,36vw,720px)]" : !ruta && vistaPrevia && "lg:grid-cols-[minmax(0,1fr)_21rem]",
           )}
         >
-          <div className={cn("flex min-w-0 flex-col pb-6", ruta ? "gap-6" : "gap-8")}>
+          <div className={cn("flex min-w-0 flex-col pb-6", ruta ? "mx-auto w-full max-w-[60rem] gap-6" : "gap-8")}>
             {ruta ? (
               <div className="flex flex-col gap-2">
                 <p className="hidden text-sm font-semibold text-link md:block">{eyebrow}</p>
@@ -157,10 +168,10 @@ export function RecorridoDelAgente({
             )}
             {children}
           </div>
-          {conLateral ? (
-            <div className="sticky top-6 hidden self-start @4xl:flex">{lateral}</div>
+          {conCelular ? (
+            <div className="sticky top-6 hidden min-w-0 self-start xl:flex">{celular}</div>
           ) : (
-            vistaPrevia && <VistaPreviaWhatsApp {...vistaPrevia} className="sticky top-6 hidden self-start lg:flex" />
+            !ruta && vistaPrevia && <VistaPreviaWhatsApp {...vistaPrevia} className="sticky top-6 hidden self-start lg:flex" />
           )}
         </div>
       </div>
@@ -170,7 +181,7 @@ export function RecorridoDelAgente({
           dentroDelPanel && "-bottom-6 -mb-6 md:-bottom-8 md:-mb-8",
         )}
       >
-        {vistaPrevia && <HojaDeVistaPrevia {...vistaPrevia} className="lg:hidden" />}
+        {!ruta && vistaPrevia && <HojaDeVistaPrevia {...vistaPrevia} className="lg:hidden" />}
         <footer className="flex items-center justify-between gap-2 border-t border-border-soft bg-surface px-4 py-3 sm:gap-3 md:px-6">
           <div className="shrink-0">
             {atras && (
@@ -188,6 +199,11 @@ export function RecorridoDelAgente({
             )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            {ruta && estado && (
+              <p role="status" className="text-sm text-body">
+                {estado}
+              </p>
+            )}
             {guardar && (
               <Button
                 variant="outline"
@@ -215,6 +231,7 @@ export function RecorridoDelAgente({
           </div>
         </footer>
       </div>
+      {conCelular && <BurbujaDePrueba conAviso={avisoEnLaBurbuja}>{celular}</BurbujaDePrueba>}
     </div>
   );
 }

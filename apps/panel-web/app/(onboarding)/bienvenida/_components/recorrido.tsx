@@ -5,16 +5,14 @@ import { useRouter } from "next/navigation";
 
 import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
-import { AnilloDeListo, PildoraDelAgente, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
+import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
-import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import type { IdentitySettings } from "@/lib/api/types";
 import { crearYDejarListo } from "@/lib/onboarding-agente";
 import {
   DESCRIPCION_MIN,
   ESTADO_INICIAL,
-  NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
   PARTES_DEL_PASO_1,
   PASOS,
   PASOS_DEL_NEGOCIO,
@@ -121,15 +119,9 @@ function enLista(partes: string[]): string {
   return partes.length < 2 ? partes.join("") : `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
 }
 
-/** La frase recortada para la tarjeta del escenario. */
-function corta(frase: string): string {
-  const limpia = frase.trim();
-  return limpia.length > 44 ? `${limpia.slice(0, 42).trim()}…` : limpia;
-}
-
 /**
  * Bienvenida de primer uso, estación 1 de 5: «Tu negocio» (HU-UX-25, SPEC-49, tablero `rb1`). Pantalla completa
- * con el escenario a la izquierda; llega con lo recomendado (Vendo productos, «Laura» y la frase del tipo) y
+ * con el logo arriba y el celular a la derecha (HU-UX-26); llega con lo recomendado (Vendo productos, «Laura» y la frase del tipo) y
  * escribe en la identidad del negocio. Al seguir se crea el agente y se deja listo para probar, y la bienvenida
  * sigue con el editor del agente (`/bienvenida/agente/[id]`, estaciones 2 a 5).
  */
@@ -267,8 +259,7 @@ function Asistente({
   const cambios = cambiosFrenteARecomendado(valoresDe(estado), valoresDe(recomendado));
   const tieneFrase = estado.descripcion.trim().length >= DESCRIPCION_MIN;
 
-  // El escenario: lo que el agente ya sabe del negocio (n/4) y su chat simulado (D-SPEC-49-4).
-  const sabe = [Boolean(nombre), Boolean(negocio), Boolean(tipo), tieneFrase].filter(Boolean).length;
+  // Lo que le falta saber al agente va en el pie; el chat simulado, en el celular (D-SPEC-49-4).
   const faltan = [
     !nombre && "su nombre",
     !negocio && "el nombre del negocio",
@@ -276,49 +267,8 @@ function Asistente({
     !tieneFrase && "cómo presentarse",
   ].filter((x): x is string => Boolean(x));
   const completo = faltan.length === 0;
-  const seguirDespues = (enEscenario: boolean) => (
-    <SeguirDespues nombreDelAgente={quien} guardar={guardarAlSalir} ocupado={ocupado} enEscenario={enEscenario} />
-  );
-
   return (
-    <MarcoDeBienvenida
-      extremo={seguirDespues(true)}
-      escenario={{
-        agente: quien,
-        titulo: completo ? `${quien} ya puede saludar` : `${quien} ya sabe ${sabe} de 4 cosas`,
-        bajada: completo
-          ? cambios.length === 0
-            ? "Con lo recomendado por SolversHub."
-            : "Sabe quién es, a qué se dedica y cómo presentarse."
-          : `Falta ${enLista(faltan)}.`,
-        bajadaCorta: completo ? "Sabe quién es y cómo presentarse." : `Falta ${enLista(faltan)}.`,
-        destacado: <AnilloDeListo hechas={sabe} total={4} />,
-        children: (
-          <>
-            <PildoraDelAgente
-              nombre={nombre || "Sin nombre"}
-              etiqueta={nombre === NOMBRE_SUGERIDO_DE_LA_BIENVENIDA ? "Sugerido" : undefined}
-              className="self-start"
-            />
-            <div className="grid grid-cols-3 gap-2">
-              <TarjetaDelEscenario etiqueta="Negocio" valor={negocio || "Falta el nombre"} hecha={Boolean(negocio)} />
-              <TarjetaDelEscenario etiqueta="Se dedica a" valor={tipo?.titulo ?? "Elige un tipo"} hecha={Boolean(tipo)} />
-              <TarjetaDelEscenario etiqueta="Se presenta así" valor={tieneFrase ? corta(estado.descripcion) : "Falta la frase"} hecha={tieneFrase} />
-            </div>
-            {tipo && (
-              <ChatDeVistaPrevia
-                key={`${tipo.id}:${quien}:${negocio}`}
-                tipo={tipo.id}
-                estacion="negocio"
-                agente={quien}
-                negocio={negocio || nombreDelNegocio}
-                className="min-h-0 flex-1"
-              />
-            )}
-          </>
-        ),
-      }}
-    >
+    <MarcoDeBienvenida extremo={<SeguirDespues nombreDelAgente={quien} guardar={guardarAlSalir} ocupado={ocupado} />}>
       <RecorridoDelAgente
         disposicion="ruta"
         pasos={ESTACIONES_DE_LA_BIENVENIDA}
@@ -328,7 +278,15 @@ function Asistente({
         pregunta="Cuéntanos de tu negocio"
         bajada={`Con esto ${quien} sabe quién es y cómo presentarse en su primera conversación.`}
         queSigue={error ? "Completa lo que falta arriba para seguir." : `Sigue: ${PASOS[destino - 1].corto}.`}
-        extremo={<div className="hidden lg:block">{seguirDespues(false)}</div>}
+        estado={completo ? undefined : `Falta ${enLista(faltan)}.`}
+        celular={
+          <CelularDeVistaPrevia
+            tipo={tipo?.id}
+            estacion="negocio"
+            agente={quien}
+            negocio={negocio || nombreDelNegocio}
+          />
+        }
         principal={{
           // Con el agente ya creado no se crea otro: se guarda y se retoma donde iba.
           texto: recorrido.agente_id ? "Guardar y seguir" : nombre ? `Crear a ${nombre} y seguir` : "Crear mi agente y seguir",

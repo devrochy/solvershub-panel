@@ -11,6 +11,7 @@ import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenari
 import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
+import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { BarraDePasos } from "@/components/ui/barra-de-pasos";
 import { GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 import { Field } from "@/components/ui/field";
@@ -313,7 +314,7 @@ export function DemoChatSimulado() {
   );
 }
 
-/** El cascarón con la disposición «ruta»: eyebrow, título grande, bajada, «qué sigue» y el escenario en tarjeta. */
+/** El cascarón con la disposición «ruta»: eyebrow, título grande, bajada, «qué sigue» y el celular a la derecha. */
 export function DemoRecorridoEnRuta() {
   const [actual, setActual] = useState<string>("tipo");
   const [nombre, setNombre] = useState("Tomás");
@@ -336,11 +337,8 @@ export function DemoRecorridoEnRuta() {
         texto: siguiente ? `Guardar y seguir: ${siguiente.titulo}` : "Publicar a Tomás",
         onClick: () => siguiente && setActual(siguiente.id),
       }}
-      lateral={
-        <EscenarioTarjeta agente={nombre} estado="Borrador">
-          <TarjetaDelEscenario etiqueta="Se dedica a" valor="Agenda" hecha />
-        </EscenarioTarjeta>
-      }
+      estado="Falta 1 pregunta"
+      celular={<CelularDeVistaPrevia tipo="agenda" estacion="tipo" agente={nombre} negocio={NEGOCIO} />}
     >
       <NombreSugerido valor={nombre} onCambiar={setNombre} ideas={ideasDeNombre(nombreSugeridoDelTipo("agenda"), "agenda", 3)} etiqueta="Nombre del agente" />
     </RecorridoDelAgente>

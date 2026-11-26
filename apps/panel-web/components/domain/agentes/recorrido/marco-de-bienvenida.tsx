@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { EscenarioPantallaCompleta, FranjaDelEscenario } from "./escenario-pantalla-completa";
+import { Marca } from "@/components/ui/marca";
 
 /** Lo que muestra el escenario en una estación de la bienvenida. */
 export type EscenarioDeLaEstacion = {
@@ -17,42 +17,29 @@ export type EscenarioDeLaEstacion = {
 };
 
 /**
- * Marco a pantalla completa de la bienvenida (HU-UX-25, tableros `rb1`–`rb5`): el escenario de 500 px a la
- * izquierda, siempre oscuro y con el logo actual, y la ruta a la derecha. Por debajo de `lg` el escenario pasa
- * a la franja de arriba (logo, `extremo` y una línea con lo que gana el agente). Lo usan la estación 1
- * (`/bienvenida`) y las 2 a 5 (el editor del agente en modo bienvenida): el contenido de cada estación lo decide
- * quien lo usa.
+ * Marco a pantalla completa de la bienvenida (HU-UX-26, D-SPEC-52-2, tablero `E1-E-bienvenida`, que enmienda
+ * D-SPEC-49-7): arriba, a todo el ancho, el logo horizontal y `extremo` («Seguir después») a la derecha; debajo,
+ * la ruta. El celular va a la derecha, dentro de `RecorridoDelAgente`, como en Nuevo agente. Lo usan la estación
+ * 1 (`/bienvenida`) y las 2 a 5 (el editor del agente en modo bienvenida).
+ *
+ * `EscenarioDeLaEstacion` queda solo para el escenario del catálogo hasta que se retire en HU-UX-31.
  */
 export function MarcoDeBienvenida({
-  escenario,
   extremo,
   children,
 }: {
-  escenario: EscenarioDeLaEstacion;
-  /** En la franja del celular, a la derecha del logo («Seguir después»). */
+  /** A la derecha del logo: «Seguir después». */
   extremo?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <EscenarioPantallaCompleta
-        titulo={escenario.titulo}
-        bajada={escenario.bajada}
-        destacado={escenario.destacado}
-        leyenda={escenario.leyenda}
-        className="hidden shrink-0 lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto"
-      >
-        {escenario.children}
-      </EscenarioPantallaCompleta>
-      <FranjaDelEscenario
-        agente={escenario.agente}
-        titulo={escenario.titulo}
-        bajada={escenario.bajadaCorta ?? escenario.bajada}
-        extremo={extremo}
-        className="lg:hidden"
-      />
-      <main id="contenido" className="flex w-full min-w-0 flex-1 flex-col px-4 pt-6 md:px-6 lg:pt-8">
-        <div className="mx-auto flex w-full max-w-[60rem] flex-1 flex-col">{children}</div>
+    <div className="flex min-h-screen flex-col">
+      <header className="flex min-h-16 items-center justify-between gap-4 border-b border-border-soft px-4 py-3 md:px-8">
+        <Marca pieza="horizontal" className="h-7 w-auto sm:h-8" />
+        {extremo}
+      </header>
+      <main id="contenido" className="flex w-full min-w-0 flex-1 flex-col px-4 pt-6 md:px-6 lg:pt-8 xl:px-8">
+        {children}
       </main>
     </div>
   );
