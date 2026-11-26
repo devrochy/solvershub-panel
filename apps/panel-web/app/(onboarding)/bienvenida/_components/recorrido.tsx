@@ -224,6 +224,7 @@ function Asistente({
   }
 
   function abrir(indice: number) {
+    setError(null);
     setAbierta(indice);
     guardarBorrador(negocioId, estado, indice);
   }
