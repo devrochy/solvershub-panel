@@ -31,10 +31,13 @@ export const PASOS = [
 /** Los pasos que viven en `/bienvenida` (escriben en el negocio); del 2 en adelante va el editor del agente. */
 export const PASOS_DEL_NEGOCIO = 1;
 
-/** Lo que pide el paso 1: los datos del negocio y la identidad del agente (antes, dos pasos). */
-export const PARTES_DEL_PASO_1 = ["negocio", "identidad"] as const;
+/**
+ * Lo que guarda el paso 1: los datos del negocio, la identidad del agente y el tono de voz, que en la bienvenida
+ * va en «Opciones avanzadas» (HU-UX-27). El tono es del negocio (Configuración › Voz del negocio).
+ */
+export const PARTES_DEL_PASO_1 = ["negocio", "identidad", "tono"] as const;
 
-export type IdDePaso = (typeof PASOS)[number]["id"] | "identidad" | "voz" | "reglas";
+export type IdDePaso = (typeof PASOS)[number]["id"] | "identidad" | "tono" | "voz" | "reglas";
 
 /** Los pasos del editor del agente en la bienvenida (estaciones 2 a 5). */
 export type PasoDelEditorEnLaBienvenida = Exclude<(typeof PASOS)[number]["id"], "negocio">;
@@ -429,6 +432,10 @@ export function cambiosDelPaso(id: IdDePaso, estado: EstadoDelAsistente): Cambio
   }
   if (id === "identidad") {
     return { assistant_name: estado.nombreDelAgente.trim() };
+  }
+  if (id === "tono") {
+    // Solo el tono: la calidez, los emojis y el largo de la identidad no se tocan desde la estación 1.
+    return { persona_tone: estado.tono };
   }
   if (id === "voz") {
     const largo = LARGOS.find((l) => l.id === estado.largo) ?? LARGOS[1];

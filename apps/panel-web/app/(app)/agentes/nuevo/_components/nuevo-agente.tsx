@@ -8,6 +8,12 @@ import { agentMeta } from "@/components/domain/agent-icon";
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
 import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
+import { OpcionesAvanzadas } from "@/components/domain/agentes/recorrido/opciones-avanzadas";
+import {
+  ListaDePreguntas,
+  textoDeFaltan,
+  type PreguntaDeLaLista,
+} from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
@@ -39,15 +45,20 @@ import { useAction } from "@/lib/use-action";
 /** Ids de pasos del guion que no son preguntas de opción (los toma el propio recorrido). */
 const PROPIOS = new Set(["tipo", "nombre", "contenido", "revisar", "datos", "cargado", "probar"]);
 
+/** La línea visible de «Opciones avanzadas» de la estación 1 en Nuevo agente (decisión del dueño, 2026-11-26). */
+export const AVANZADAS_DE_NUEVO_AGENTE = "Largo de las respuestas, tono de voz y para qué sirve el agente.";
+
 /** Lo que se compara con lo recomendado en la estación 1: el tipo y cada respuesta del guion. */
 function valoresDe(estado: EstadoDelAsistente): Record<string, string | null> {
   return { tipo: estado.plantilla, ...estado.respuestas };
 }
 
 /**
- * Nuevo agente, estación 1 de la ruta de lanzamiento (HU-AOS-86, SPEC-49): Tipo. Todo llega con lo
- * recomendado: el primer tipo libre, el guion con su `Question.default` y el nombre sugerido del tipo
- * («Tomás» en Agenda). Los tipos que el negocio ya tiene se avisan en la tarjeta antes de crear: con
+ * Nuevo agente, estación 1 de la ruta de lanzamiento (HU-AOS-86 y HU-UX-27, tablero `E1-E-nuevo`): Tipo, con dos
+ * preguntas una a la vez, «¿Qué hará tu agente?» y «¿Cómo se llama?». Todo llega con lo recomendado: el primer
+ * tipo libre, el guion con su `Question.default` y el nombre sugerido del tipo («Tomás» en Agenda). En «Opciones
+ * avanzadas» van las preguntas de opción del guion (hoy, el largo de las respuestas), el tono de voz del negocio
+ * (solo se ve: se cambia en Configuración, porque es de todos los agentes) y «Para qué sirve». Los tipos que el negocio ya tiene se avisan en la tarjeta antes de crear: con
  * un agente activo, «Editar a {nombre}»; con uno archivado, «Desarchívalo». «Crear a {nombre} y seguir»
  * crea el borrador con `from-script` y sigue en Habilidades (estación 2, en el editor en modo crear).
  * El 409 `key_taken` queda como red de seguridad por si otro usuario creó el tipo mientras tanto.
@@ -74,6 +85,8 @@ export function NuevoAgente({
   // El 409 `key_taken` de una carrera: el tipo que ya existe y su agente.
   const [existente, setExistente] = useState<{ texto: string; ocupado: Ocupado | null } | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
+  const [abierta, setAbierta] = useState(0);
+  const [avanzadasAbiertas, setAvanzadasAbiertas] = useState(false);
 
   const plantilla = plantillas.find((p) => p.key === estado.plantilla) ?? null;
   const preguntas = (plantilla?.questions ?? []).filter((q) => q.type === "option" && !PROPIOS.has(q.id));
@@ -104,6 +117,8 @@ export function NuevoAgente({
   async function crear() {
     const problema = validar();
     setError(problema);
+    // Las preguntas del guion viven en «Opciones avanzadas»: se abre si falta una.
+    if (problema && plantilla && preguntas.some((q) => problema.includes(`«${q.text}»`))) setAvanzadasAbiertas(true);
     if (problema || !plantilla) return;
     setExistente(null);
     setLimite(null);
@@ -195,6 +210,62 @@ export function NuevoAgente({
   }
 
   const quien = nombre || "tu agente";
+  const tipos = (
+    <GrupoDeOpciones titulo="Tipo de agente" tituloOculto unica className="grid gap-3 sm:grid-cols-2">
+      {plantillas.map((p) => {
+        const ocupado = ocupadoDe(p.key, agentes);
+        const Icono = agentMeta(p.key, p.name).icon;
+        const nota = ocupado
+          ? textoDeOcupado(p.name, ocupado.archivado)
+          : !p.available
+            ? "No está en tu servicio por ahora. Pídelo a SolversHub."
+            : undefined;
+        return (
+          <TarjetaElegible
+            key={p.key}
+            nombre={`${id}-tipo`}
+            valor={p.key}
+            elegida={estado.plantilla === p.key}
+            onElegir={elegir}
+            titulo={p.name}
+            ayuda={p.description}
+            icono={<Icono className="h-5 w-5" />}
+            baldosa
+            etiqueta={p.key === recomendado.plantilla ? "Recomendado" : undefined}
+            deshabilitada={Boolean(nota)}
+            nota={nota}
+            accion={ocupado ? accionDeOcupado(ocupado) : undefined}
+          />
+        );
+      })}
+    </GrupoDeOpciones>
+  );
+  const lista: PreguntaDeLaLista[] = [
+    {
+      id: "tipo",
+      titulo: "¿Qué hará tu agente?",
+      ayuda: "Su trabajo principal. Activa las habilidades que necesita; las ajustas en el siguiente paso.",
+      respuesta: plantilla?.name ?? "Sin elegir",
+      puedeContinuar: Boolean(plantilla?.available),
+      contenido: tipos,
+    },
+    {
+      id: "nombre",
+      titulo: "¿Cómo se llama?",
+      ayuda: "Un nombre de persona hace que la conversación se sienta cercana.",
+      respuesta: nombre || "Sin nombre",
+      puedeContinuar: errorDelNombre(estado.nombre) === null,
+      contenido: (
+        <NombreSugerido
+          valor={estado.nombre}
+          onCambiar={(n) => setEstado({ ...estado, nombre: n })}
+          ideas={ideasDeNombre(sugerido, tipo, 3)}
+          etiqueta="Nombre del agente"
+        />
+      ),
+    },
+  ];
+  const faltan = lista.length - abierta;
   return (
     <RecorridoDelAgente
       disposicion="ruta"
@@ -202,98 +273,67 @@ export function NuevoAgente({
       actual="tipo"
       modo="en-orden"
       etiquetaDePasos="Pasos para crear el agente"
-      pregunta="¿Qué quieres que haga tu agente?"
+      pregunta="Nuevo agente"
       nivelDePregunta="h1"
-      bajada="Viene con lo recomendado por SolversHub: revisa y sigue, o cambia lo que quieras."
+      bajada="Dos preguntas. Lo demás viene recomendado por SolversHub."
       queSigue="Sigue: Habilidades."
+      estado={faltan > 0 ? textoDeFaltan(faltan) : undefined}
       dentroDelPanel
       principal={{
         texto: nombre ? `Crear a ${nombre} y seguir` : "Crear y seguir",
         onClick: () => void crear(),
         cargando: pending,
-        deshabilitado: pending,
+        deshabilitado: pending || faltan > 0,
       }}
       celular={<CelularDeVistaPrevia tipo={tipo} estacion="tipo" agente={quien} negocio={negocio.nombre} />}
     >
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <BarraRecomendado cambios={cambios} onUsar={() => setEstado(recomendado)} />
-        <GrupoDeOpciones titulo="Tipo de agente" unica className="grid gap-3 sm:grid-cols-2">
-          {plantillas.map((p) => {
-            const ocupado = ocupadoDe(p.key, agentes);
-            const Icono = agentMeta(p.key, p.name).icon;
-            const nota = ocupado
-              ? textoDeOcupado(p.name, ocupado.archivado)
-              : !p.available
-                ? "No está en tu servicio por ahora. Pídelo a SolversHub."
-                : undefined;
-            return (
-              <TarjetaElegible
-                key={p.key}
-                nombre={`${id}-tipo`}
-                valor={p.key}
-                elegida={estado.plantilla === p.key}
-                onElegir={elegir}
-                titulo={p.name}
-                ayuda={p.description}
-                icono={<Icono className="h-5 w-5" />}
-                baldosa
-                etiqueta={p.key === recomendado.plantilla ? "Recomendado" : undefined}
-                deshabilitada={Boolean(nota)}
-                nota={nota}
-                accion={ocupado ? accionDeOcupado(ocupado) : undefined}
-              />
-            );
-          })}
-        </GrupoDeOpciones>
-        {preguntas.length > 0 && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {preguntas.map((q) => (
-              <GrupoDeOpciones key={q.id} titulo={q.text} unica className="flex-col">
-                {q.options.map((o) => (
-                  <TarjetaElegible
-                    key={o.id}
-                    nombre={`${id}-pregunta-${q.id}`}
-                    valor={o.id}
-                    elegida={estado.respuestas[q.id] === o.id}
-                    onElegir={(valor) => setEstado({ ...estado, respuestas: { ...estado.respuestas, [q.id]: valor } })}
-                    titulo={o.text}
-                    razon={o.help || undefined}
-                    etiqueta={o.id === q.default ? "Recomendado" : undefined}
-                    className="w-full"
-                  />
-                ))}
-              </GrupoDeOpciones>
-            ))}
-          </div>
-        )}
+        <ListaDePreguntas preguntas={lista} abierta={abierta} onAbrir={setAbierta} />
         {plantilla && (
-          <div className="flex max-w-xl flex-col gap-4">
-            <NombreSugerido
-              valor={estado.nombre}
-              onCambiar={(n) => setEstado({ ...estado, nombre: n })}
-              ideas={ideasDeNombre(sugerido, tipo, 3)}
-              etiqueta="Nombre del agente"
-            />
-            <details className="group">
-              <summary className="cursor-pointer text-sm font-medium text-link">Para qué sirve (opcional)</summary>
-              <div className="pt-3">
-                <Field label="Para qué sirve" htmlFor={`${id}-descripcion`} help="Una frase para tu equipo. Los clientes no la ven.">
-                  <Textarea
-                    id={`${id}-descripcion`}
-                    value={descripcion}
-                    maxLength={1000}
-                    rows={2}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                  />
-                </Field>
-              </div>
-            </details>
-            <AvisoDeRequisitos
-              requisitos={plantilla.requirements}
-              titulo="Puedes crearlo, pero tu agente no funcionará del todo hasta que configures:"
-            />
-          </div>
+          <AvisoDeRequisitos
+            requisitos={plantilla.requirements}
+            titulo="Puedes crearlo, pero tu agente no funcionará del todo hasta que configures:"
+          />
         )}
+        <OpcionesAvanzadas descripcion={AVANZADAS_DE_NUEVO_AGENTE} abierta={avanzadasAbiertas}>
+          {preguntas.map((q) => (
+            <GrupoDeOpciones key={q.id} titulo={q.text} ayuda={q.help || undefined} unica className="grid gap-3 sm:grid-cols-3">
+              {q.options.map((o) => (
+                <TarjetaElegible
+                  key={o.id}
+                  nombre={`${id}-pregunta-${q.id}`}
+                  valor={o.id}
+                  elegida={estado.respuestas[q.id] === o.id}
+                  onElegir={(valor) => setEstado({ ...estado, respuestas: { ...estado.respuestas, [q.id]: valor } })}
+                  titulo={o.text}
+                  razon={o.help || undefined}
+                  etiqueta={o.id === q.default ? "Recomendado" : undefined}
+                  className="w-full"
+                />
+              ))}
+            </GrupoDeOpciones>
+          ))}
+          <div className="flex flex-col gap-1">
+            <p className="font-display text-base font-semibold text-headline">Tono de voz</p>
+            <p className="text-sm text-body">
+              {negocio.resumenDeVoz ?? "No pudimos leer la voz de tu negocio."}{" "}
+              <Link href="/configuracion?seccion=voz" className="text-link underline-offset-2 hover:underline">
+                Cambiar en Configuración
+              </Link>
+            </p>
+            <p className="text-sm text-text-soft">Es la voz de tu negocio: la usan todos tus agentes.</p>
+          </div>
+          <Field label="Para qué sirve" htmlFor={`${id}-descripcion`} help="Una frase para tu equipo. Los clientes no la ven. Es opcional.">
+            <Textarea
+              id={`${id}-descripcion`}
+              value={descripcion}
+              maxLength={1000}
+              rows={2}
+              onChange={(e) => setDescripcion(e.target.value)}
+            />
+          </Field>
+        </OpcionesAvanzadas>
         <FormFeedback error={error ?? undefined} />
         {existente && (
           <p role="alert" className="flex flex-wrap items-center gap-x-2 text-sm text-body">

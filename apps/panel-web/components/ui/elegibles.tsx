@@ -220,11 +220,14 @@ export function GrupoDeOpciones({
   titulo,
   ayuda,
   unica = false,
+  tituloOculto = false,
   children,
   className,
 }: {
   titulo: string;
   ayuda?: string;
+  /** Solo para el lector de pantalla, cuando la pregunta que lo contiene ya lo dice (HU-UX-27). */
+  tituloOculto?: boolean;
   /** Opciones excluyentes: el grupo se anuncia como `radiogroup`. */
   unica?: boolean;
   children: ReactNode;
@@ -232,7 +235,7 @@ export function GrupoDeOpciones({
 }) {
   return (
     <fieldset className="flex min-w-0 flex-col gap-3" role={unica ? "radiogroup" : undefined}>
-      <legend className="font-display text-base font-semibold text-headline">{titulo}</legend>
+      <legend className={tituloOculto ? "sr-only" : "font-display text-base font-semibold text-headline"}>{titulo}</legend>
       {ayuda && <p className="-mt-1 text-sm text-text-soft">{ayuda}</p>}
       <div className={cn("flex flex-wrap gap-2", className)}>{children}</div>
     </fieldset>

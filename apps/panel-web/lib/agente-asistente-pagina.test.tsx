@@ -89,7 +89,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": agentes,
     });
     await abrir();
-    expect(screen.getByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "¿Qué hará tu agente?" })).toBeTruthy();
     expect(llamadas).toContain("/admin/agents/overview");
   });
 
@@ -100,7 +100,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": agentes,
     });
     await abrir();
-    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "¿Qué hará tu agente?" })).toBeNull();
     expect(screen.getByText(/permiso de escritura/)).toBeTruthy();
   });
 
@@ -111,7 +111,7 @@ describe("página Nuevo agente", () => {
       "/admin/agents/overview": { ...agentes, cuota_agentes: { used: 1, limit: 1, allowed: false } },
     });
     await abrir();
-    expect(screen.queryByRole("heading", { name: "¿Qué quieres que haga tu agente?" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "¿Qué hará tu agente?" })).toBeNull();
     expect(screen.getByText(/permite 1 agente publicado y ya tienes 1/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Mejorar mi plan" }).getAttribute("href")).toBe("/plan");
   });

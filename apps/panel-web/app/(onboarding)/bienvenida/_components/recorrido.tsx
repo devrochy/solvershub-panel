@@ -7,11 +7,11 @@ import { ResultadoConPlan } from "@/components/domain/aviso-limite-de-plan";
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
 import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
+import { textoDeFaltan } from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import type { IdentitySettings } from "@/lib/api/types";
 import { crearYDejarListo } from "@/lib/onboarding-agente";
 import {
-  DESCRIPCION_MIN,
   ESTADO_INICIAL,
   PARTES_DEL_PASO_1,
   PASOS,
@@ -31,7 +31,7 @@ import {
 } from "@/lib/onboarding";
 import { ESTACIONES_DE_LA_BIENVENIDA, cambiosFrenteARecomendado } from "@/lib/ruta-de-lanzamiento";
 
-import { PasoNegocio } from "./paso-negocio";
+import { PREGUNTAS_DE_LA_BIENVENIDA, PasoNegocio } from "./paso-negocio";
 import { SeguirDespues } from "./seguir-despues";
 
 type Resultado<T> = { ok: true; data: T } | { ok: false; error: string; status: number };
@@ -55,8 +55,13 @@ async function post<T>(url: string, cuerpo?: unknown): Promise<Resultado<T>> {
 
 const BORRADOR = (negocioId: string) => `sh-onboarding:${negocioId}`;
 
-/** Lo de la estación 1 que todavía no está en el servidor (el tipo vive solo aquí hasta crear el agente). */
-type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "negocio" | "descripcion" | "nombreDelAgente">>;
+/**
+ * Lo de la estación 1 que todavía no está en el servidor (el tipo vive solo aquí hasta crear el agente), con la
+ * pregunta abierta para retomar donde quedó (HU-UX-27).
+ */
+type Borrador = Partial<Pick<EstadoDelAsistente, "tipo" | "negocio" | "descripcion" | "nombreDelAgente" | "tono" | "largo">> & {
+  abierta?: number;
+};
 
 function leerBorrador(negocioId: string): Borrador {
   try {
@@ -67,13 +72,16 @@ function leerBorrador(negocioId: string): Borrador {
   }
 }
 
-function guardarBorrador(negocioId: string, estado: EstadoDelAsistente) {
+function guardarBorrador(negocioId: string, estado: EstadoDelAsistente, abierta: number) {
   try {
     const borrador: Borrador = {
       tipo: estado.tipo,
       negocio: estado.negocio,
       descripcion: estado.descripcion,
       nombreDelAgente: estado.nombreDelAgente,
+      tono: estado.tono,
+      largo: estado.largo,
+      abierta,
     };
     window.localStorage.setItem(BORRADOR(negocioId), JSON.stringify(borrador));
   } catch {
@@ -106,23 +114,28 @@ export function RecorridoDeBienvenida(props: Props) {
 }
 
 /**
- * Lo que se compara con lo recomendado en la estación 1 (el tablero `rb1`): el tipo, el nombre y la frase. La
- * frase cuenta como recomendada mientras sea la sugerida de su tipo: cambiar el tipo es un cambio, no dos.
+ * Lo que se compara con lo recomendado en la estación 1: el tipo, el nombre y, en «Opciones avanzadas», el largo,
+ * el tono y la frase. La frase cuenta como recomendada mientras sea la sugerida de su tipo: cambiar el tipo es un
+ * cambio, no dos.
  */
 function valoresDe(estado: EstadoDelAsistente) {
   const sugerida = estado.descripcion === fraseDelTipo(estado.tipo);
-  return { tipo: estado.tipo, nombre: estado.nombreDelAgente.trim(), frase: sugerida ? "sugerida" : estado.descripcion };
+  return {
+    tipo: estado.tipo,
+    nombre: estado.nombreDelAgente.trim(),
+    largo: estado.largo,
+    tono: estado.tono,
+    frase: sugerida ? "sugerida" : estado.descripcion,
+  };
 }
 
-/** «a», «a y b», «a, b y c». */
-function enLista(partes: string[]): string {
-  return partes.length < 2 ? partes.join("") : `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
-}
+const TOTAL_DE_PREGUNTAS = PREGUNTAS_DE_LA_BIENVENIDA.length;
 
 /**
- * Bienvenida de primer uso, estación 1 de 5: «Tu negocio» (HU-UX-25, SPEC-49, tablero `rb1`). Pantalla completa
- * con el logo arriba y el celular a la derecha (HU-UX-26); llega con lo recomendado (Vendo productos, «Laura» y la frase del tipo) y
- * escribe en la identidad del negocio. Al seguir se crea el agente y se deja listo para probar, y la bienvenida
+ * Bienvenida de primer uso, estación 1 de 5: «Tu negocio» (HU-UX-25 y HU-UX-27, tablero `E1-E-bienvenida`). Pantalla
+ * completa con el logo arriba y el celular a la derecha (HU-UX-26); tres preguntas, una a la vez, que llegan con lo
+ * recomendado (Vendo productos, «Laura», el nombre del negocio del alta y, en «Opciones avanzadas», el largo, el
+ * tono y la frase del tipo). Escribe en la identidad del negocio. Al seguir se crea el agente y se deja listo para probar, y la bienvenida
  * sigue con el editor del agente (`/bienvenida/agente/[id]`, estaciones 2 a 5).
  */
 function Asistente({
@@ -160,11 +173,18 @@ function Asistente({
     return {
       ...base,
       tipo,
+      tono: borrador.tono ?? base.tono,
+      largo: borrador.largo ?? base.largo,
       nombreDelAgente: borrador.nombreDelAgente ?? nombreElegido,
       descripcion: borrador.descripcion ?? (tipo !== base.tipo && descripcion === fraseDelTipo(base.tipo) ? fraseDelTipo(tipo) : descripcion),
       negocio: borrador.negocio ?? nombreDelNegocio,
     };
   });
+  // La pregunta abierta: con el agente ya creado (volvió a «Tu negocio») llegan todas respondidas.
+  const [abierta, setAbierta] = useState(() =>
+    recorridoInicial.agente_id ? TOTAL_DE_PREGUNTAS : Math.min(Math.max(borrador.abierta ?? 0, 0), TOTAL_DE_PREGUNTAS),
+  );
+  const [avanzadasAbiertas, setAvanzadasAbiertas] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   // El error con su `code`: el 409 del plan al crear el agente (HU-BILL-19) sale con «Mejorar mi plan».
   const [error, setError] = useState<{ error: string; code?: string } | null>(null);
@@ -187,24 +207,36 @@ function Asistente({
       setError(null);
       setEstado((e) => {
         const nuevo = { ...e, ...cambios };
-        guardarBorrador(negocioId, nuevo);
+        guardarBorrador(negocioId, nuevo, abierta);
         return nuevo;
       });
     },
-    [negocioId],
+    [negocioId, abierta],
   );
 
   function elegirTipo(tipo: TipoDeNegocio) {
     setError(null);
     setEstado((e) => {
       const nuevo = conTipo(e, tipo);
-      guardarBorrador(negocioId, nuevo);
+      guardarBorrador(negocioId, nuevo, abierta);
       return nuevo;
     });
   }
 
+  function abrir(indice: number) {
+    setError(null);
+    setAbierta(indice);
+    guardarBorrador(negocioId, estado, indice);
+  }
+
   function usarLoRecomendado() {
-    cambiar({ tipo: recomendado.tipo, nombreDelAgente: recomendado.nombreDelAgente, descripcion: recomendado.descripcion });
+    cambiar({
+      tipo: recomendado.tipo,
+      nombreDelAgente: recomendado.nombreDelAgente,
+      descripcion: recomendado.descripcion,
+      largo: recomendado.largo,
+      tono: recomendado.tono,
+    });
   }
 
   /**
@@ -225,6 +257,8 @@ function Asistente({
     const problema = PARTES_DEL_PASO_1.map((id) => errorDelPaso(id, estado)).find(Boolean);
     if (problema) {
       setError({ error: problema });
+      // La frase vive en «Opciones avanzadas»: se abre para que el dueño vea dónde corregir.
+      if (estado.tipo && estado.negocio.trim() && estado.nombreDelAgente.trim()) setAvanzadasAbiertas(true);
       return;
     }
     setOcupado(true);
@@ -253,37 +287,30 @@ function Asistente({
   // La estación a la que se sigue: «Habilidades», o donde iba si volvió desde una posterior.
   const destino = Math.max(PASOS_DEL_NEGOCIO + 1, pasoDeCinco(recorrido));
   const nombre = estado.nombreDelAgente.trim();
-  const quien = nombre || "Tu agente";
   const negocio = estado.negocio.trim();
   const tipo = TIPOS_DE_NEGOCIO.find((t) => t.id === estado.tipo);
   const cambios = cambiosFrenteARecomendado(valoresDe(estado), valoresDe(recomendado));
-  const tieneFrase = estado.descripcion.trim().length >= DESCRIPCION_MIN;
 
-  // Lo que le falta saber al agente va en el pie; el chat simulado, en el celular (D-SPEC-49-4).
-  const faltan = [
-    !nombre && "su nombre",
-    !negocio && "el nombre del negocio",
-    !tipo && "a qué se dedica",
-    !tieneFrase && "cómo presentarse",
-  ].filter((x): x is string => Boolean(x));
-  const completo = faltan.length === 0;
+  // Cuántas preguntas faltan va en el pie; el chat simulado, en el celular (D-SPEC-49-4). Mientras falten, no se crea.
+  const faltan = TOTAL_DE_PREGUNTAS - abierta;
   return (
-    <MarcoDeBienvenida extremo={<SeguirDespues nombreDelAgente={quien} guardar={guardarAlSalir} ocupado={ocupado} />}>
+    <MarcoDeBienvenida extremo={<SeguirDespues nombreDelAgente={nombre} guardar={guardarAlSalir} ocupado={ocupado} />}>
       <RecorridoDelAgente
         disposicion="ruta"
         pasos={ESTACIONES_DE_LA_BIENVENIDA}
         actual="negocio"
         modo="en-orden"
         etiquetaDePasos="Estaciones de la bienvenida"
-        pregunta="Cuéntanos de tu negocio"
-        bajada={`Con esto ${quien} sabe quién es y cómo presentarse en su primera conversación.`}
+        pregunta="Arma a tu primer agente"
+        bajada="Tres preguntas. Lo demás viene recomendado por SolversHub."
         queSigue={error ? "Completa lo que falta arriba para seguir." : `Sigue: ${PASOS[destino - 1].corto}.`}
-        estado={completo ? undefined : `Falta ${enLista(faltan)}.`}
+        estado={faltan > 0 ? textoDeFaltan(faltan) : undefined}
         celular={
           <CelularDeVistaPrevia
             tipo={tipo?.id}
             estacion="negocio"
-            agente={quien}
+            // Sin nombre, el chat dice «Hola, soy tu agente» (no «Tu agente», que es para el inicio de frase).
+            agente={nombre}
             negocio={negocio || nombreDelNegocio}
           />
         }
@@ -292,6 +319,7 @@ function Asistente({
           texto: recorrido.agente_id ? "Guardar y seguir" : nombre ? `Crear a ${nombre} y seguir` : "Crear mi agente y seguir",
           onClick: () => void siguiente(),
           cargando: ocupado,
+          deshabilitado: faltan > 0,
         }}
       >
         <BarraRecomendado
@@ -305,6 +333,9 @@ function Asistente({
           disponibles={disponibles ? new Set(disponibles) : null}
           tipoFijo={tipoDelAgente}
           habilitara={habilitara}
+          abierta={abierta}
+          onAbrir={abrir}
+          avanzadasAbiertas={avanzadasAbiertas}
         />
         <ResultadoConPlan error={error?.error} code={error?.code} className="max-w-xl" />
       </RecorridoDelAgente>

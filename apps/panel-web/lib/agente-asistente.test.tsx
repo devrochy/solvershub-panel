@@ -187,24 +187,44 @@ describe("Nuevo agente en pantalla (HU-AOS-86)", () => {
     );
   }
 
-  it("es la estación 1 de 5, con todo recomendado: Agenda, su guion y «Tomás» con ideas", async () => {
+  /** Responde las dos preguntas con lo que haya. */
+  function responderTodo() {
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+  }
+
+  it("es la estación 1 de 5, con dos preguntas y todo recomendado: Agenda, «Tomás» con ideas y el guion en avanzadas", async () => {
     const { container } = abrir();
     expect(screen.getAllByText("Paso 1 de 5 · Tipo").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { level: 1, name: "¿Qué quieres que haga tu agente?" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Nuevo agente" })).toBeTruthy();
+    expect(screen.getByText("Dos preguntas. Lo demás viene recomendado por SolversHub.")).toBeTruthy();
     const ruta = screen.getByRole("navigation", { name: "Pasos para crear el agente" });
     for (const estacion of ["Tipo", "Habilidades", "Datos del cliente", "Datos para probar", "Revisar y publicar"]) {
       expect(ruta.textContent).toContain(estacion);
     }
+    // Dos preguntas, sin la del negocio.
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "¿Qué hará tu agente?",
+      expect.stringContaining("¿Cómo se llama?"),
+    ]);
+    expect(screen.queryByText(/tu negocio\?/)).toBeNull();
+    expect(screen.getByText("Pregunta 1 de 2")).toBeTruthy();
+    expect(screen.getByText("Faltan 2 preguntas")).toBeTruthy();
     const agenda = screen.getByRole("radio", { name: /Agenda/ }) as HTMLInputElement;
     expect(agenda.checked).toBe(true);
     expect(agenda.closest("label")?.textContent).toContain("Recomendado");
+    // En «Opciones avanzadas»: el guion con su recomendado, el tono del negocio con su enlace y «Para qué sirve».
+    expect(screen.getByText("Largo de las respuestas, tono de voz y para qué sirve el agente.")).toBeTruthy();
     const normales = screen.getByRole("radio", { name: /Normales/ }) as HTMLInputElement;
     expect(normales.checked).toBe(true);
     expect(normales.closest("label")?.textContent).toContain("Recomendado");
-    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Tomás");
-    expect(screen.getByRole("radiogroup", { name: "Ideas de nombre" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Cambiar en Configuración" }).getAttribute("href")).toBe("/configuracion?seccion=voz");
+    expect(screen.getByLabelText("Para qué sirve")).toBeTruthy();
     expect(screen.getByText("Todo viene con lo recomendado por SolversHub")).toBeTruthy();
     expect(screen.queryByText(/modelo/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Tomás");
+    expect(screen.getByRole("radiogroup", { name: "Ideas de nombre" })).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
@@ -240,38 +260,75 @@ describe("Nuevo agente en pantalla (HU-AOS-86)", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("crea el borrador con lo recomendado y sigue en Habilidades (estación 2)", async () => {
+  it("no crea mientras falten preguntas; respondidas, crea el borrador con lo recomendado y sigue en Habilidades", async () => {
     fetchMock.mockImplementation(async (url: string) =>
       url === "/api/agent-editor/from-script"
         ? new Response(JSON.stringify({ agentId: "a-1" }), { status: 201 })
         : new Response(JSON.stringify({}), { status: 200 }),
     );
     abrir();
-    fireEvent.click(screen.getByRole("button", { name: /Crear a Tomás y seguir/ }));
+    const crear = screen.getByRole("button", { name: /Crear a Tomás y seguir/ }) as HTMLButtonElement;
+    expect(crear.disabled).toBe(true);
+    responderTodo();
+    expect(screen.getByRole("region", { name: /¿Qué hará tu agente\?, respondida/ }).textContent).toContain("Agenda");
+    expect(crear.disabled).toBe(false);
+    fireEvent.click(crear);
     await waitFor(() => expect(push).toHaveBeenCalledWith("/agentes/a-1/personalizar?paso=habilidades&modo=crear"));
-    const [, crear] = fetchMock.mock.calls[0];
-    expect(JSON.parse(crear.body)).toEqual({ template_key: "agenda", answers: { largo_respuesta: "normal" }, name: "Tomás" });
+    const [, cuerpo] = fetchMock.mock.calls[0];
+    expect(JSON.parse(cuerpo.body)).toEqual({ template_key: "agenda", answers: { largo_respuesta: "normal" }, name: "Tomás" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("lo de «Opciones avanzadas» se envía: el largo en `from-script` y «Para qué sirve» en el PATCH", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url === "/api/agent-editor/from-script"
+        ? new Response(JSON.stringify({ agentId: "a-1" }), { status: 201 })
+        : new Response(JSON.stringify({}), { status: 200 }),
+    );
+    abrir();
+    fireEvent.click(screen.getByRole("radio", { name: /Cortas/ }));
+    fireEvent.change(screen.getByLabelText("Para qué sirve"), { target: { value: "Citas de la sede norte" } });
+    responderTodo();
+    fireEvent.click(screen.getByRole("button", { name: /Crear a Tomás y seguir/ }));
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ template_key: "agenda", answers: { largo_respuesta: "cortas" }, name: "Tomás" });
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/agent-editor/a-1");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ name: "Tomás", description: "Citas de la sede norte" });
   });
 
   it("cambiar de tipo trae su nombre sugerido si no se tocó, y «Usar lo recomendado» vuelve a todo", () => {
     abrir([]);
     // Sin agentes, lo recomendado es el primero: Ventas con «Laura».
-    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Laura");
     fireEvent.click(screen.getByRole("radio", { name: /Agenda/ }));
-    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Tomás");
     fireEvent.click(screen.getByRole("radio", { name: /Cortas/ }));
     expect(screen.getByText(/2 cambios/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Tomás");
     fireEvent.click(screen.getByRole("button", { name: /Usar lo recomendado/ }));
-    expect((screen.getByRole("radio", { name: /Ventas/ }) as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Laura");
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar: ¿Qué hará tu agente?" }));
+    expect((screen.getByRole("radio", { name: /Ventas/ }) as HTMLInputElement).checked).toBe(true);
   });
 
-  it("sin nombre no crea", () => {
+  it("«Cambiar» reabre el tipo con lo elegido y conserva el nombre que el dueño escribió", () => {
     abrir();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.change(screen.getByLabelText(/Nombre del agente/), { target: { value: "Rosa" } });
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar: ¿Qué hará tu agente?" }));
+    expect((screen.getByRole("radio", { name: /Agenda/ }) as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: /Cobranza/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect((screen.getByLabelText(/Nombre del agente/) as HTMLInputElement).value).toBe("Rosa");
+  });
+
+  it("sin nombre no deja continuar ni crear", () => {
+    abrir();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
     fireEvent.change(screen.getByLabelText(/Nombre del agente/), { target: { value: " " } });
-    fireEvent.click(screen.getByRole("button", { name: /Crear y seguir/ }));
     expect(screen.getAllByText("Ponle un nombre para seguir").length).toBeGreaterThan(0);
+    expect((screen.getByRole("button", { name: "Listo" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Crear y seguir/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -283,6 +340,7 @@ describe("Nuevo agente en pantalla (HU-AOS-86)", () => {
       ),
     );
     abrir();
+    responderTodo();
     fireEvent.click(screen.getByRole("button", { name: /Crear a Tomás y seguir/ }));
     expect((await screen.findAllByText(/Ya tienes un agente «Agenda»: edítalo en vez de crear otro\./)).length).toBeGreaterThan(0);
     // a-9 no está en la lista que cargó la página: el enlace usa el nombre del tipo.
@@ -296,6 +354,7 @@ describe("Nuevo agente en pantalla (HU-AOS-86)", () => {
       new Response(JSON.stringify({ error: "Ya tienes un agente «Agenda».", code: "key_taken" }), { status: 409 }),
     );
     abrir();
+    responderTodo();
     fireEvent.click(screen.getByRole("button", { name: /Crear a Tomás y seguir/ }));
     expect((await screen.findAllByText(/Ya tienes un agente «Agenda»: edítalo en vez de crear otro\./)).length).toBeGreaterThan(0);
     expect(screen.queryByRole("link", { name: "Editar a Agenda" })).toBeNull();
