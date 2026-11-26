@@ -113,10 +113,10 @@
   --text-sh-caption: var(--sh-type-caption-font-size);
   --text-sh-caption--line-height: var(--sh-type-caption-line-height);
   --text-sh-caption--font-weight: var(--sh-type-caption-font-weight);
-  /* Título de la ruta de lanzamiento (HU-UX-24, D-SPEC-49-8): 36/44/700, solo en la bienvenida y Nuevo
-     agente, desde `md`. Por debajo, `text-sh-h1`. */
-  --text-sh-ruta: 2.25rem;
-  --text-sh-ruta--line-height: 2.75rem;
+  /* Título de la ruta de lanzamiento (HU-UX-26, D-SPEC-52-5, que enmienda D-SPEC-49-8): 32/40/700, solo en la
+     bienvenida y Nuevo agente, desde `md`. Por debajo, `text-sh-h1`. */
+  --text-sh-ruta: 2rem;
+  --text-sh-ruta--line-height: 2.5rem;
   --text-sh-ruta--font-weight: 700;
   --text-sh-mono: var(--sh-type-mono-font-size);
   --text-sh-mono--line-height: var(--sh-type-mono-line-height);
@@ -232,6 +232,22 @@ body {
 }
 .sh-acceso-sube {
   animation: sh-acceso-sube 600ms cubic-bezier(0.16, 1, 0.3, 1) 500ms both;
+}
+
+/* Panel lateral del celular en el recorrido del agente (HU-UX-26, `BurbujaDePrueba`): entra desde la
+   derecha en 220 ms. `prefers-reduced-motion` ya lo reduce a ~0 de forma global. */
+@keyframes sh-celular-entra {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sh-celular-entra[data-state="open"] {
+  animation: sh-celular-entra 220ms var(--sh-motion-easing-out);
 }
 
 /* Centro de notificaciones (ADR-0167): apertura y cierre animados con los tokens de motion.

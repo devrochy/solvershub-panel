@@ -136,6 +136,10 @@ function Cabecera({
  * Ofrece los mensajes de prueba de la estación y el tipo («Pruebas de «Datos del cliente» · toca una»);
  * al tocar uno, el cliente lo «escribe», el agente pasa a «escribiendo…» y llega la respuesta fija de
  * `lib/vista-previa.ts`. Al cambiar de estación o de tipo, la conversación vuelve a empezar.
+ *
+ * `enCelular` es la pantalla de `CelularDeVistaPrevia` (HU-UX-26): sin marco ni leyenda propios (los pone el
+ * celular), a todo el alto y con la caja «Escribe como un cliente…» abajo. En las estaciones 1 a 4 la caja no
+ * escribe (el chat es simulado, D-SPEC-52-7): solo se prueba con las frases.
  */
 export function ChatDeVistaPrevia(props: {
   tipo: TipoDeNegocio;
@@ -146,6 +150,9 @@ export function ChatDeVistaPrevia(props: {
   cargados?: readonly CargadoDeVistaPrevia[];
   /** Cuánto tarda en «escribir» la respuesta, en ms. */
   demora?: number;
+  enCelular?: boolean;
+  /** Al tocar una frase de prueba (el celular cierra su aviso). */
+  onProbar?: () => void;
   className?: string;
 }) {
   return <Conversacion key={`${props.tipo}:${props.estacion}`} {...props} />;
@@ -158,6 +165,8 @@ function Conversacion({
   negocio,
   cargados = [],
   demora = 900,
+  enCelular = false,
+  onProbar,
   className,
 }: {
   tipo: TipoDeNegocio;
@@ -166,6 +175,8 @@ function Conversacion({
   negocio: string;
   cargados?: readonly CargadoDeVistaPrevia[];
   demora?: number;
+  enCelular?: boolean;
+  onProbar?: () => void;
   className?: string;
 }) {
   const [mensajes, setMensajes] = useState<MensajeDeVistaPrevia[]>(() => [saludoDePrueba(tipo, agente, negocio)]);
@@ -181,6 +192,7 @@ function Conversacion({
 
   function probar(id: string, texto: string) {
     if (escribiendo) return;
+    onProbar?.();
     setMensajes((m) => [...m, { tipo: "cliente", texto }]);
     setEscribiendo(true);
     temporizador.current = setTimeout(() => {
@@ -191,9 +203,14 @@ function Conversacion({
 
   return (
     <section aria-label="Vista previa en WhatsApp" className={cn("flex min-h-0 flex-col gap-2", className)}>
-      <div className="flex min-h-[28rem] flex-1 flex-col overflow-hidden rounded-[2rem] border-[6px] border-surface-2 bg-bg-deep">
+      <div
+        className={cn(
+          "flex flex-1 flex-col overflow-hidden bg-bg-deep",
+          enCelular ? "min-h-0 rounded-[1.75rem]" : "min-h-[28rem] rounded-[2rem] border-[6px] border-surface-2",
+        )}
+      >
         <Cabecera negocio={negocio} agente={agente} escribiendo={escribiendo} />
-        <Burbujas mensajes={mensajes} className="flex-1 overflow-y-auto p-4" />
+        <Burbujas mensajes={mensajes} className="min-h-0 flex-1 overflow-y-auto p-4" />
         <div className="flex flex-col gap-1.5 border-t border-border-soft px-3 py-2.5">
           <p className="text-xs text-text-soft">{rotuloDePruebas(estacion)}</p>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={rotuloDePruebas(estacion)}>
@@ -209,10 +226,26 @@ function Conversacion({
               </button>
             ))}
           </div>
+          {enCelular && <CajaSinEscribir />}
         </div>
       </div>
-      <p className="text-center text-xs text-text-soft">{LEYENDA_DEL_CHAT}</p>
+      {!enCelular && <p className="text-center text-xs text-text-soft">{LEYENDA_DEL_CHAT}</p>}
     </section>
+  );
+}
+
+/**
+ * La caja de texto del celular mientras el chat es simulado: se ve como la de WhatsApp, pero no escribe
+ * (es puro adorno, `aria-hidden`). La caja que escribe llega con la prueba real de la estación 5 (HU-UX-31).
+ */
+export function CajaSinEscribir() {
+  return (
+    <div
+      aria-hidden
+      className="mt-1 flex h-9 items-center rounded-full border border-border-soft bg-bg-deep px-3.5 text-xs text-text-soft"
+    >
+      Escribe como un cliente…
+    </div>
   );
 }
 

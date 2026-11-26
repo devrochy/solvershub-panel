@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
-import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
+import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { ChatDeVistaPrevia, VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
@@ -150,13 +150,20 @@ describe("BarraDePasos forma=estaciones", () => {
     return { escritorio, movil };
   }
 
-  it("marca las hechas con ✓ y «hecho», la actual con aria-current y las siguientes con su número", () => {
+  it("marca las hechas con la V del logo y «hecho», la actual con aria-current y las siguientes con su número", () => {
     render(<BarraDePasos forma="estaciones" pasos={ESTACIONES} actual="datos-cliente" modo="en-orden" etiqueta="Ruta" />);
     const nodos = within(listas().escritorio).getAllByRole("listitem");
     expect(nodos).toHaveLength(5);
     expect(nodos[0].textContent).toBe("Tipo, hecho");
     expect(nodos[1].textContent).toBe("Habilidades, hecho");
-    expect(nodos[0].querySelector("svg")).toBeTruthy();
+    // La V del wordmark (HU-UX-26), con el degradado de la marca y un id propio por nodo.
+    const ves = [nodos[0], nodos[1]].map((n) => n.querySelector("svg"));
+    expect(ves.every((v) => v?.getAttribute("viewBox") === "-84 488 188 168")).toBe(true);
+    expect(ves.every((v) => v?.getAttribute("aria-hidden") === "true")).toBe(true);
+    const degradados = ves.map((v) => v?.querySelector("linearGradient")?.id);
+    expect(new Set(degradados).size).toBe(2);
+    expect(ves[0]?.querySelector("path")?.getAttribute("fill")).toBe(`url(#${degradados[0]})`);
+    expect(nodos[2].querySelector("svg")).toBeNull();
     const actual = nodos[2].querySelector("[aria-current]");
     expect(actual?.getAttribute("aria-current")).toBe("step");
     expect(nodos[2].textContent).toContain("Datos del cliente, actual");
@@ -332,7 +339,8 @@ describe("RecorridoDelAgente en disposición ruta", () => {
         bajada="Laura ya vende; Tomás agenda."
         queSigue="Sigue: Habilidades."
         extremo={<a href="#despues">Seguir después</a>}
-        lateral={<EscenarioTarjeta agente="Tomás" estado="Borrador" />}
+        estado="Faltan 2 preguntas"
+        celular={<CelularDeVistaPrevia tipo="agenda" estacion="tipo" agente="Tomás" negocio="La Espiga" />}
         principal={{ texto: "Guardar y seguir: Habilidades", onClick: () => setActual("habilidades") }}
       >
         <p>Contenido</p>
@@ -340,15 +348,21 @@ describe("RecorridoDelAgente en disposición ruta", () => {
     );
   }
 
-  it("muestra el eyebrow, el título grande, la bajada, «qué sigue» y el escenario", () => {
+  it("muestra el eyebrow, el título grande, la bajada, el estado, «qué sigue», el celular y la burbuja", () => {
     render(<Ruta />);
     expect(screen.getAllByText("Paso 1 de 5 · Tipo").length).toBeGreaterThanOrEqual(1);
     const h1 = screen.getByRole("heading", { level: 1, name: "¿Qué quieres que haga tu agente?" });
     expect(h1.className).toContain("md:text-sh-ruta");
     expect(screen.getByText("Laura ya vende; Tomás agenda.")).toBeTruthy();
     expect(screen.getByText("Sigue: Habilidades.")).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: "Lo que gana Tomás" })).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Vista previa en WhatsApp" })).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("Faltan 2 preguntas");
+    // El celular va en su columna (visible desde xl) y la burbuja lo abre por debajo de 1280 px.
+    const celular = screen.getByRole("region", { name: "Vista previa del agente en el celular" });
+    expect(celular.parentElement?.className).toContain("xl:flex");
+    expect(celular.parentElement?.className).toContain("hidden");
+    const burbuja = screen.getByRole("button", { name: "Probar el chat" });
+    expect(burbuja.className).toContain("xl:hidden");
+    expect(burbuja.className).toContain("fixed");
     fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir/ }));
     expect(screen.getAllByText("Paso 2 de 5 · Habilidades").length).toBeGreaterThanOrEqual(1);
   });

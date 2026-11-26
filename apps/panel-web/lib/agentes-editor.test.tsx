@@ -507,11 +507,14 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getByRole("heading", { level: 1, name: "¿Qué sabe hacer Ventas?" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Guardar cambios" })).toBeNull();
     expect(screen.getByRole("button", { name: "Seguir después" })).toBeTruthy();
-    // El escenario a pantalla completa, con el logo actual y «Cambiar nombre» que lleva a «Tu negocio».
-    expect(screen.getByRole("complementary", { name: "Lo que gana tu agente" })).toBeTruthy();
+    // El logo arriba y el celular a la derecha con el chat simulado (HU-UX-26); «Tu negocio» se retoma desde el
+    // stepper o con «Atrás».
+    expect(screen.getByRole("banner").querySelector('img[src="/marca/horizontal-tema-oscuro.svg"]')).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Vista previa del agente en el celular" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Probar el chat" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Atrás/ }));
     expect(volverA).toHaveBeenCalledWith(1);
-    fireEvent.click(screen.getByRole("button", { name: "Cambiar nombre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tu negocio, hecho" }));
     expect(volverA).toHaveBeenCalledTimes(2);
 
     cleanup();

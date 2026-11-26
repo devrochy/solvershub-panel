@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { agentMeta } from "@/components/domain/agent-icon";
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
-import { TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
-import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
+import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
 import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
-import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { useConfirm } from "@/components/ui/confirm";
@@ -215,15 +213,7 @@ export function NuevoAgente({
         cargando: pending,
         deshabilitado: pending,
       }}
-      lateral={
-        <EscenarioTarjeta agente={nombre} estado="Borrador" leyenda="Vista previa: no envía mensajes">
-          <div className="grid grid-cols-2 gap-3">
-            <TarjetaDelEscenario etiqueta="Se dedica a" valor={plantilla?.name ?? "Elige un tipo"} hecha={Boolean(plantilla)} />
-            <TarjetaDelEscenario etiqueta="Se llama" valor={nombre || "Sin nombre"} hecha={Boolean(nombre)} />
-          </div>
-          {tipo && <ChatDeVistaPrevia key={`${tipo}:${nombre}`} tipo={tipo} estacion="tipo" agente={quien} negocio={negocio.nombre} />}
-        </EscenarioTarjeta>
-      }
+      celular={<CelularDeVistaPrevia tipo={tipo} estacion="tipo" agente={quien} negocio={negocio.nombre} />}
     >
       <div className="flex flex-col gap-8">
         <BarraRecomendado cambios={cambios} onUsar={() => setEstado(recomendado)} />

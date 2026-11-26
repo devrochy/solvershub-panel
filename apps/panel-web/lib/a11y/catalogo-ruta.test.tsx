@@ -10,12 +10,18 @@ import {
   DemoRecorridoEnRuta,
   DemoRutaDeEstaciones,
 } from "@/app/(dev)/catalogo/_components/ruta-de-lanzamiento";
+import {
+  DemoBurbuja,
+  DemoCelular,
+  DemoListaDePreguntas,
+  DemoOpcionesAvanzadas,
+} from "@/app/(dev)/catalogo/_components/una-pregunta-a-la-vez";
 import { violacionesGraves } from "@/lib/testing/axe";
 
 afterEach(cleanup);
 
 /**
- * Las piezas de la ruta de lanzamiento en `/catalogo` (HU-UX-24). El catálogo pinta cada pieza dos
+ * Las piezas de la ruta de lanzamiento en `/catalogo` (HU-UX-24, HU-UX-26). El catálogo pinta cada pieza dos
  * veces (tema claro y oscuro), así que se prueban así: dos copias en la misma página, sin `id`
  * repetidos ni radios que se pisen, y sin violaciones graves de axe.
  */
@@ -26,6 +32,10 @@ const DEMOS = [
   ["escenario", DemoEscenario],
   ["chat simulado", DemoChatSimulado],
   ["recorrido en ruta", DemoRecorridoEnRuta],
+  ["una pregunta a la vez", DemoListaDePreguntas],
+  ["opciones avanzadas", DemoOpcionesAvanzadas],
+  ["celular con canales", DemoCelular],
+  ["burbuja «Probar el chat»", DemoBurbuja],
 ] as const;
 
 describe("catálogo · ruta de lanzamiento", () => {

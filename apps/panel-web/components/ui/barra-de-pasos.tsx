@@ -1,7 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
-
+import { VDeLaMarca } from "@/components/ui/glifos-de-marca";
 import { cn } from "@/lib/utils";
 
 /** Un paso de la barra. `marca` dice si tiene cambios sin guardar o algo que revisar. */
@@ -21,8 +20,8 @@ const TEXTO_DE_MARCA = { cambios: "con cambios", revisar: "revisar" } as const;
  * recorridos; `libre` deja ir a cualquiera. La marca de cada paso va con texto para el lector de
  * pantalla: el color nunca es lo único que la dice.
  *
- * `forma="estaciones"` es la ruta de lanzamiento (HU-UX-24, SPEC-49): nodos unidos por tramos, con ✓ y
- * «hecho» en las anteriores, `aria-current="step"` en la actual y su número en las que siguen. Por debajo
+ * `forma="estaciones"` es la ruta de lanzamiento (HU-UX-24, SPEC-49): nodos unidos por tramos, con la V del
+ * logo y «hecho» en las anteriores (HU-UX-26, D-SPEC-52-4), `aria-current="step"` en la actual y su número en las que siguen. Por debajo
  * de `md`, una fila de puntos con el actual alargado y «Paso N de M · {corto}». El avance de escritorio
  * lo dice el eyebrow de `RecorridoDelAgente`.
  */
@@ -65,7 +64,7 @@ export function BarraDePasos({
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute right-1/2 top-3.5 h-0.5 w-full -translate-y-1/2",
+                    "absolute right-1/2 top-[1.125rem] h-0.5 w-full -translate-y-1/2",
                     i <= indice ? "bg-focus" : "bg-control-border",
                   )}
                 />
@@ -244,7 +243,7 @@ function Pildora({
   );
 }
 
-/** Un nodo de la ruta de estaciones: ✓ y «hecho» (texto) en las hechas, anillo en la actual, número en las pendientes. */
+/** Un nodo de la ruta de estaciones: la V del logo y «hecho» (texto) en las hechas, anillo en la actual, número en las pendientes. */
 function NodoDeEstacion({
   paso,
   numero,
@@ -261,14 +260,14 @@ function NodoDeEstacion({
       <span
         aria-hidden
         className={cn(
-          "relative flex h-7 w-7 items-center justify-center rounded-full font-display text-xs font-bold transition-colors duration-150 motion-reduce:transition-none",
-          estado === "hecha" && "bg-focus text-surface",
+          "relative z-10 flex h-9 w-9 items-center justify-center rounded-full font-display text-[0.8125rem] font-bold transition-colors duration-150 motion-reduce:transition-none",
+          estado === "hecha" && "border-2 border-focus bg-surface",
           estado === "actual" &&
-            "border-2 border-focus bg-surface text-headline shadow-[0_0_0_5px_color-mix(in_oklab,var(--sh-focus)_16%,transparent)]",
+            "border-2 border-focus bg-surface text-headline shadow-[0_0_0_4px_color-mix(in_oklab,var(--sh-focus)_16%,transparent)]",
           estado === "pendiente" && "border border-control-border bg-surface text-text-soft",
         )}
       >
-        {estado === "hecha" ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : numero}
+        {estado === "hecha" ? <VDeLaMarca className="h-4 w-[1.125rem]" /> : numero}
       </span>
       <span
         className={cn(

@@ -23,6 +23,7 @@ import {
   DemoRecorridoEnRuta,
   DemoRutaDeEstaciones,
 } from "@/app/(dev)/catalogo/_components/ruta-de-lanzamiento";
+import { DemoBurbuja, DemoCelular, DemoListaDePreguntas, DemoOpcionesAvanzadas } from "@/app/(dev)/catalogo/_components/una-pregunta-a-la-vez";
 import { TarjetaElegible } from "@/components/ui/elegibles";
 import { BarraDePasos } from "@/components/ui/barra-de-pasos";
 import { VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
@@ -253,6 +254,10 @@ export const GRUPOS: Grupo[] = [
       { id: "ruta-nombre", titulo: "Nombre sugerido" },
       { id: "ruta-escenario", titulo: "Escenario" },
       { id: "ruta-chat", titulo: "Chat simulado por estación" },
+      { id: "ruta-preguntas", titulo: "Una pregunta a la vez" },
+      { id: "ruta-avanzadas", titulo: "Opciones avanzadas" },
+      { id: "ruta-celular", titulo: "Celular con canales" },
+      { id: "ruta-burbuja", titulo: "Burbuja «Probar el chat»" },
       { id: "ruta-cascaron", titulo: "Recorrido en disposición ruta" },
     ],
   },
@@ -1080,9 +1085,9 @@ export function Catalogo() {
           <Seccion
             id="ruta-estaciones"
             titulo="Ruta de estaciones"
-            cuando="la bienvenida o Nuevo agente avanzan por sus 5 estaciones: ✓ y «hecho» en las anteriores, la actual con aria-current y el número en las que siguen; en el celular, puntos con el actual alargado."
+            cuando="la bienvenida o Nuevo agente avanzan por sus 5 estaciones: la V del logo, con el degradado de la marca, y «hecho» en las anteriores, la actual con aria-current y el número en las que siguen; en el celular, puntos con el actual alargado."
             no="Personalizar ni recorridos libres (para eso, la forma de segmentos)."
-            piezas="SPEC-49 · BarraDePasos forma=estaciones · lib/ruta-de-lanzamiento"
+            piezas="SPEC-49 · HU-UX-26 · BarraDePasos forma=estaciones · VDeLaMarca · lib/ruta-de-lanzamiento"
           >
             <DemoRutaDeEstaciones />
           </Seccion>
@@ -1106,8 +1111,8 @@ export function Catalogo() {
           <Seccion
             id="ruta-escenario"
             titulo="Escenario"
-            cuando="la estación muestra lo que gana el agente: a pantalla completa en la bienvenida (con el logo), en tarjeta dentro del panel y como franja en el celular. Siempre oscuro y con tarjetas sólidas."
-            no="pantallas fuera de la ruta de lanzamiento."
+            cuando="ya no se usa en la ruta: desde HU-UX-26 va el celular a la derecha. Queda aquí hasta retirarlo en HU-UX-31."
+            no="pantallas nuevas: usa «Celular con canales»."
             piezas="SPEC-49 · EscenarioPantallaCompleta · EscenarioTarjeta · FranjaDelEscenario · TarjetaDelEscenario · AnilloDeListo · tokens escena-*"
           >
             <DemoEscenario />
@@ -1115,8 +1120,8 @@ export function Catalogo() {
           <Seccion
             id="ruta-escenario-bienvenida"
             titulo="Escenario de la bienvenida por estación"
-            cuando="las estaciones 2 a 5 de la bienvenida: lo que gana el agente en cada una, con «Cambiar nombre» que vuelve a Tu negocio. En la 5 no hay chat simulado: la prueba real va por la conexión."
-            no="Nuevo agente (usa la tarjeta de 340 px)."
+            cuando="ya no se usa en la bienvenida: desde HU-UX-26 va el celular a la derecha. Queda aquí hasta retirarlo en HU-UX-31."
+            no="pantallas nuevas: usa «Celular con canales»."
             piezas="HU-UX-25 · escenarioDeLaBienvenida · MarcoDeBienvenida"
           >
             <DemoEscenarioDeLaBienvenida />
@@ -1131,10 +1136,46 @@ export function Catalogo() {
             <DemoChatSimulado />
           </Seccion>
           <Seccion
+            id="ruta-preguntas"
+            titulo="Una pregunta a la vez"
+            cuando="una estación de la ruta pregunta varias cosas: una sola abierta, con «Pregunta n de m», título de 24 px, ayuda y «Continuar» («Listo» en la última); las respondidas en una línea con el favicon y «Cambiar»; las pendientes con su número. Al continuar o cambiar, el foco pasa al título de la abierta."
+            no="Personalizar ni formularios de una sola pregunta."
+            piezas="HU-UX-26 · PreguntaDelRecorrido · ListaDePreguntas · textoDeFaltan · FaviconDeLaMarca"
+          >
+            <DemoListaDePreguntas />
+          </Seccion>
+          <Seccion
+            id="ruta-avanzadas"
+            titulo="Opciones avanzadas"
+            cuando="al final de una estación, lo técnico que no va en las preguntas: un plegable en la misma página con una línea que dice qué hay adentro."
+            no="una estación sin opciones técnicas (se omite) ni una hoja aparte."
+            piezas="HU-UX-26 · OpcionesAvanzadas (details)"
+          >
+            <DemoOpcionesAvanzadas />
+          </Seccion>
+          <Seccion
+            id="ruta-celular"
+            titulo="Celular con canales"
+            cuando="la ruta muestra a su agente: el chat simulado de la estación en un teléfono sobre el fondo de los 8 canales, a la derecha y del mismo ancho en las 5 estaciones. El aviso de una línea flota sobre la caja de texto y se cierra con su × o al tocar una frase."
+            no="Personalizar (usa el teléfono de 21 rem)."
+            piezas="HU-UX-26 · CelularDeVistaPrevia · ChatDeVistaPrevia enCelular · LEYENDA_DEL_CELULAR"
+          >
+            <DemoCelular />
+          </Seccion>
+          <Seccion
+            id="ruta-burbuja"
+            titulo="Burbuja «Probar el chat»"
+            cuando="la pantalla mide menos de 1280 px: la burbuja queda fija abajo a la derecha y abre el celular en un panel lateral (foco atrapado, Escape, toque fuera y foco de vuelta en la burbuja). Con punto cuando el celular tiene un aviso."
+            no="1280 px o más (el celular ya está en su columna)."
+            piezas="HU-UX-26 · BurbujaDePrueba · Sheet"
+          >
+            <DemoBurbuja />
+          </Seccion>
+          <Seccion
             id="ruta-cascaron"
             titulo="Recorrido en disposición ruta"
-            cuando="una pantalla de la ruta: eyebrow «Paso N de 5», título de 36 px desde md, bajada, «qué sigue» junto a la acción principal y el escenario en tarjeta a la derecha."
-            piezas="SPEC-49 · RecorridoDelAgente disposicion=ruta · text-sh-ruta"
+            cuando="una pantalla de la ruta: eyebrow «Paso N de 5», título de 32 px desde md, bajada, el estado («Faltan 2 preguntas») y «qué sigue» junto a la acción principal, y el celular a la derecha en una columna de clamp(480px, 36vw, 720px) desde 1280 px, con el formulario centrado hasta 960 px. Por debajo, la burbuja."
+            piezas="SPEC-49 · HU-UX-26 · RecorridoDelAgente disposicion=ruta celular estado · text-sh-ruta"
             apilada
           >
             <DemoRecorridoEnRuta />
