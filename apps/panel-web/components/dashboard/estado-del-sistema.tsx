@@ -30,7 +30,7 @@ export function EstadoDelSistema({ d, esPlataforma = false }: { d: Dashboard; es
             <span className="font-mono text-xs tabular-nums text-headline">{d.llm_label}</span>
           </Link>
         )}
-        <Link href="/habilidades" className={FILA}>
+        <Link href="/agentes" className={FILA}>
           <span className="text-body">Habilidades activas</span>
           <Badge variant="accent">{d.kpi.active_plugins}</Badge>
         </Link>

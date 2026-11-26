@@ -130,7 +130,8 @@ describe("resumen de Configuración (rediseño B)", () => {
       habilidades: [{ id: "pack_commerce", name: "pack_commerce", display_name: "Comercio", enabled_for_tenant: true, status: "loaded" } as never],
       fallidos: 2,
     });
-    expect(screen.getByRole("link", { name: /^Habilidades.*Comercio activa/ }).getAttribute("href")).toBe("/habilidades");
+    expect(screen.getByRole("link", { name: /^Habilidades.*Comercio activa/ }).getAttribute("href")).toBe("/agentes");
+    expect(screen.getByRole("link", { name: /^Captar leads/ }).getAttribute("href")).toBe("/habilidades/captar-leads");
     expect(screen.getByRole("link", { name: /^Mensajes fallidos.*2 por reintentar/ }).getAttribute("href")).toBe("/dlq");
   });
 

@@ -14,6 +14,7 @@ import { MemoryForm } from "@/app/(app)/configuracion/_components/memory-form";
 import { MultimediaForm } from "@/app/(app)/configuracion/_components/multimedia-form";
 import { WebChatForm } from "@/app/(app)/configuracion/_components/web-chat-form";
 import { WawebCard } from "@/app/(app)/configuracion/_components/waweb-card";
+import { SubscriptionProviderCard } from "@/app/(app)/configuracion/_components/subscription-provider-card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/ui/confirm";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -35,6 +36,7 @@ import type {
   MediaSettings,
   PluginSummary,
   SettingsResponse,
+  SubscriptionProviderSettings,
   WawebPolitica,
   WebChatSettings,
 } from "@/lib/api/types";
@@ -69,6 +71,7 @@ export function SettingsTabs({
   esMaster = false,
   habilidades = null,
   fallidos = null,
+  proveedorSuscripciones = null,
 }: {
   /** `?tab=` de la URL (id de la antigua pantalla o alias del panel clásico). */
   defaultTab?: string;
@@ -95,6 +98,8 @@ export function SettingsTabs({
   habilidades?: PluginSummary[] | null;
   /** Mensajes fallidos por reintentar; `null` = sin permiso o no se pudo leer. */
   fallidos?: number | null;
+  /** Quién cobra los planes recurrentes; `null` = el negocio no vende suscripciones. */
+  proveedorSuscripciones?: SubscriptionProviderSettings | null;
 }) {
   const confirm = useConfirm();
   const registro = useRegistroDeCambios();
@@ -201,10 +206,11 @@ export function SettingsTabs({
             <h2 id="grupo-habilidades" className="px-1 text-xs font-medium tracking-[0.06em] text-text-soft uppercase">
               Habilidades
             </h2>
+            {proveedorSuscripciones && <SubscriptionProviderCard settings={proveedorSuscripciones} />}
             <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
               {habilidades !== null && (
                 <li className="border-b border-border-soft last:border-b-0">
-                  <Link href="/habilidades" className={fila}>
+                  <Link href="/agentes" className={fila}>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-4">
                       <span className="shrink-0 text-sm font-medium text-headline sm:w-48">Habilidades</span>
                       <span className="min-w-0 text-sm text-body max-sm:text-xs max-sm:text-text-soft">{habilidadesEnPalabras(habilidades)}</span>
@@ -213,6 +219,15 @@ export function SettingsTabs({
                   </Link>
                 </li>
               )}
+              <li className="border-b border-border-soft last:border-b-0">
+                <Link href="/habilidades/captar-leads" className={fila}>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-4">
+                    <span className="shrink-0 text-sm font-medium text-headline sm:w-48">Captar leads</span>
+                    <span className="min-w-0 text-sm text-body max-sm:text-xs max-sm:text-text-soft">El formulario de tu página y los avisos de seguimiento</span>
+                  </span>
+                  <ChevronRight aria-hidden className="ml-auto h-4 w-4 shrink-0 text-text-soft" />
+                </Link>
+              </li>
               {fallidos !== null && (
                 <li className="border-b border-border-soft last:border-b-0">
                   <Link href="/dlq" className={fila}>

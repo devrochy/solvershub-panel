@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AgentesDeConexion, type FilaAgente } from "@/app/(app)/conexiones/_components/agentes-de-conexion";
+import { CoordinadorReceptor } from "@/app/(app)/conexiones/_components/coordinador-receptor";
 import { SeccionFicha } from "@/app/(app)/conexiones/_components/seccion-ficha";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { apiFetch } from "@/lib/api/server";
@@ -13,6 +14,7 @@ import { versionDeAgente } from "@/lib/conexiones";
 export const metadata = { title: "Agentes" };
 
 type Instancia = components["schemas"]["ConnectionAgentInstance"];
+type AgentPosibles = components["schemas"]["AgentPosibles"];
 
 /**
  * Agentes de la conexión (HU-UX-09): el Coordinador y los especialistas con su rol, prioridad,
@@ -53,6 +55,11 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
     .filter((a) => a.kind !== "core" && a.latest_version != null && a.status !== "retired" && !yaEstan.has(a.id))
     .map((a) => ({ id: a.id, name: a.name }));
   const tieneCoordinador = c.coordinator != null || instanciasRes.data.some((i) => i.role === "core");
+  // Sin especialistas atiende el Coordinador (HU-AOS-95): sus habilidades fijas salen de `/posibles`.
+  const sinEspecialistas = tieneCoordinador && !instanciasRes.data.some((i) => i.role !== "core" && i.enabled);
+  const idCoordinador = c.coordinator?.agent_id ?? instanciasRes.data.find((i) => i.role === "core")?.agent_id;
+  const posiblesRes =
+    sinEspecialistas && idCoordinador ? await apiFetch<AgentPosibles>(`/admin/agents/${idCoordinador}/posibles`) : null;
 
   return (
     <SeccionFicha titulo="Agentes" descripcion="Quién atiende a tus clientes por esta conexión.">
@@ -61,6 +68,9 @@ export default async function AgentesPage({ params }: { params: Promise<{ id: st
           Esta conexión todavía no tiene Coordinador: sin él no se pueden sumar especialistas. Se crea solo con la próxima
           versión.
         </p>
+      )}
+      {sinEspecialistas && (
+        <CoordinadorReceptor posibles={posiblesRes?.ok ? posiblesRes.data : null} puedeCrear={puedeEditar} />
       )}
       <AgentesDeConexion
         conexionId={id}

@@ -136,11 +136,14 @@ export function actividadDeLaSemana(u: ConexionConsola["usage_7d"]): string {
   return `${conversaciones} · ${respuestas}`;
 }
 
-/** Quién atiende: el principal primero; las integraciones no llevan agentes. */
-export function agentesDeLaConexion(c: Pick<ConexionConsola, "agents" | "conversational">): string {
+/** Lo que atiende una conexión sin especialistas (HU-AOS-95, D-78): el Coordinador recibe y capta leads. */
+export const TEXTO_ATIENDE_COORDINADOR = "Atendiendo con el Coordinador (recepción y captura de leads)";
+
+/** Quién atiende: el principal primero; sin especialistas, el Coordinador; las integraciones no llevan agentes. */
+export function agentesDeLaConexion(c: Pick<ConexionConsola, "agents" | "conversational"> & { coordinator?: ConexionConsola["coordinator"] }): string {
   if (!c.conversational) return "—";
   const habilitados = c.agents.filter((a) => a.enabled);
-  if (habilitados.length === 0) return "Sin agentes";
+  if (habilitados.length === 0) return c.coordinator?.enabled ? "Coordinador (recepción y leads)" : "Sin agentes";
   return [...habilitados].sort((a, b) => Number(b.is_default) - Number(a.is_default)).map((a) => a.name).join(", ");
 }
 

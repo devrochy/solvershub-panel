@@ -106,6 +106,10 @@ describe("consola de conexiones", () => {
     const ag = (name: string, is_default = false, enabled = true) => ({ name, is_default, enabled }) as never;
     expect(agentesDeLaConexion({ conversational: true, agents: [ag("Agenda"), ag("Ventas", true), ag("Viejo", false, false)] })).toBe("Ventas, Agenda");
     expect(agentesDeLaConexion({ conversational: true, agents: [] })).toBe("Sin agentes");
+    // Sin especialistas atiende el Coordinador (HU-AOS-95); con uno, se nombra al especialista.
+    const coord = { name: "Coordinador", enabled: true } as never;
+    expect(agentesDeLaConexion({ conversational: true, agents: [], coordinator: coord })).toBe("Coordinador (recepción y leads)");
+    expect(agentesDeLaConexion({ conversational: true, agents: [ag("Ventas", true)], coordinator: coord })).toBe("Ventas");
     expect(agentesDeLaConexion({ conversational: false, agents: [] })).toBe("—");
   });
 

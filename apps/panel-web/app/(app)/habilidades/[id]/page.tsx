@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
-import { estadoDeHabilidad } from "@/app/(app)/habilidades/_components/plugin-card";
+import { estadoDeHabilidad } from "@/lib/estado-de-habilidad";
+import { PluginActions } from "@/app/(app)/habilidades/_components/plugin-actions";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
 import { JsonSchemaForm } from "@/components/domain/json-schema-form";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +12,7 @@ import { apiFetch } from "@/lib/api/server";
 import type { PluginConfigResponse, PluginSummary } from "@/lib/api/types";
 
 /**
- * Ajustes de una habilidad (CFG-07): se titula con su nombre visible y su estado en palabras; las migas
- * llevan de vuelta a Habilidades. Una habilidad sin ajustes lo dice en vez de romper la pantalla.
+ * Ajustes de una habilidad (CFG-07): se titula con su nombre visible y su estado en palabras; el reintento de su salud vive aquí. Una habilidad sin ajustes lo dice en vez de romper la pantalla.
  */
 export default async function PluginConfigPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -44,6 +44,14 @@ export default async function PluginConfigPage({ params }: { params: Promise<{ i
         description={config.description ?? resumen?.description ?? undefined}
         actions={estado ? <Badge variant={estado.tono}>{estado.etiqueta}</Badge> : undefined}
       />
+
+      {resumen && (
+        <PluginActions
+          pluginId={id}
+          enabled={resumen.enabled_for_tenant}
+          hasError={Boolean(resumen.error_message || resumen.tenant_health_error)}
+        />
+      )}
 
       <Card>
         {conAjustes ? (
