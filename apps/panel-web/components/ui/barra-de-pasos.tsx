@@ -260,7 +260,7 @@ function NodoDeEstacion({
       <span
         aria-hidden
         className={cn(
-          "relative flex h-9 w-9 items-center justify-center rounded-full font-display text-[0.8125rem] font-bold transition-colors duration-150 motion-reduce:transition-none",
+          "relative z-10 flex h-9 w-9 items-center justify-center rounded-full font-display text-[0.8125rem] font-bold transition-colors duration-150 motion-reduce:transition-none",
           estado === "hecha" && "border-2 border-focus bg-surface",
           estado === "actual" &&
             "border-2 border-focus bg-surface text-headline shadow-[0_0_0_4px_color-mix(in_oklab,var(--sh-focus)_16%,transparent)]",

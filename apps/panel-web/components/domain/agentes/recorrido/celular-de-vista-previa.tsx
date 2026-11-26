@@ -58,12 +58,13 @@ export function CelularDeVistaPrevia({
     <section
       aria-label="Vista previa del agente en el celular"
       className={cn("relative flex w-full flex-col items-center gap-4 overflow-hidden rounded-xl px-6 pb-6 pt-8", className)}
+      // Los `--sh-*` del tema (no los `--color-*`, que se resuelven en `:root`) para seguir un `data-theme` anidado.
       style={{
         background:
-          "radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--color-focus) 20%, transparent), transparent 42%)," +
-          "radial-gradient(circle at 92% 38%, color-mix(in oklab, var(--color-data-3) 16%, transparent), transparent 46%)," +
-          "radial-gradient(circle at 30% 96%, color-mix(in oklab, var(--color-action) 16%, transparent), transparent 48%)," +
-          "var(--color-bg-deep)",
+          "radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--sh-focus) 20%, transparent), transparent 42%)," +
+          "radial-gradient(circle at 92% 38%, color-mix(in oklab, var(--sh-data-cat-3) 16%, transparent), transparent 46%)," +
+          "radial-gradient(circle at 30% 96%, color-mix(in oklab, var(--sh-blue-600) 16%, transparent), transparent 48%)," +
+          "var(--sh-bg-deep)",
       }}
     >
       <div
