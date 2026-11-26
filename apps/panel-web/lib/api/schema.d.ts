@@ -1440,6 +1440,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/leads/{lead_id}/seguimiento/hecho": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Seguimiento Hecho
+         * @description Marca como hecho el seguimiento del lead del cliente; queda en su línea de tiempo con la nota (ADR-0193: antes
+         *     `POST /api/v1/pack/commerce/leads/{customer_id}/seguimiento/hecho`, que sigue como alias).
+         */
+        post: operations["seguimiento_hecho_api_v1_admin_leads__lead_id__seguimiento_hecho_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leads/{lead_id}/timeline": {
         parameters: {
             query?: never;
@@ -2283,7 +2304,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/agent-templates": {
+    "/api/v1/admin/agent-types": {
         parameters: {
             query?: never;
             header?: never;
@@ -2291,11 +2312,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Templates
-         * @deprecated
-         * @description Obsoleta: usa `GET /admin/agent-types` (HU-AOS-94, ADR-0207 §6). Sigue igual hasta que panel y APK migren.
+         * List Agent Types
+         * @description El Coordinador y los tipos de agente (Ventas, Agenda, Cobranza, Suscripciones) desde los manifiestos de los
+         *     packs (HU-AOS-94, ADR-0207 §6): cada tipo trae la plantilla y lo que declara su manifiesto.
          */
-        get: operations["list_templates_api_v1_admin_agent_templates_get"];
+        get: operations["list_agent_types_api_v1_admin_agent_types_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2304,7 +2325,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/agent-templates/{template_key}/agents": {
+    "/api/v1/admin/skill-catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Skill Catalog
+         * @description Cada habilidad de la plataforma con sus tools y metadatos (HU-AOS-94). Es el mismo catálogo para todos los
+         *     negocios: no lleva configuración, secretos ni instalaciones de nadie.
+         */
+        get: operations["get_skill_catalog_api_v1_admin_skill_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agent-types/{template_key}/agents": {
         parameters: {
             query?: never;
             header?: never;
@@ -2313,11 +2355,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Create From Template
-         * @deprecated
-         */
-        post: operations["create_from_template_api_v1_admin_agent_templates__template_key__agents_post"];
+        /** Create From Template */
+        post: operations["create_from_template_api_v1_admin_agent_types__template_key__agents_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2475,6 +2514,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/posibles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Posibles
+         * @description Lo que la ficha del agente puede mostrar de sus habilidades (HU-AOS-94): la de especialidad, las operaciones
+         *     de datos del cliente de su tipo y las transversales que su tipo admite con su estado. 404 si el agente no es del
+         *     negocio. El Coordinador responde con su habilidad fija y sin transversales; un agente sin tipo, con todo vacío.
+         */
+        get: operations["get_agent_posibles_api_v1_admin_agents__agent_id__posibles_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agents/{agent_id}/skills/{pack_id}": {
         parameters: {
             query?: never;
@@ -2521,6 +2582,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Schedule
+         * @description Horario del borrador del agente y el del negocio que hereda si no tiene uno propio.
+         */
+        get: operations["get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get"];
+        /**
+         * Save Agent Schedule
+         * @description Guarda el horario propio (o `null` para heredar) con el `lock_version` del borrador. Vale al publicar.
+         */
+        put: operations["save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/agents/{agent_id}/flow/options": {
         parameters: {
             query?: never;
@@ -2534,6 +2619,80 @@ export interface paths {
          */
         get: operations["get_agent_flow_options_api_v1_admin_agents__agent_id__flow_options_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/guardrails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Guardrails
+         * @description Las reglas de respuesta del borrador del agente. El Coordinador no tiene (lista vacía).
+         */
+        get: operations["get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get"];
+        /**
+         * Save Agent Guardrails
+         * @description Reemplaza las reglas del borrador (frase prohibida, tool obligatoria ante una frase, largo máximo; con
+         *     `retry` o `escalate`). Valen al publicar. 422 por campo (`guardrails[i]...`); 409 `coordinador_inmutable`
+         *     para el Coordinador y `stale_lock_version` si otro guardó antes.
+         */
+        put: operations["save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/declarative-tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Agent Declarative Tools
+         * @description Las tools HTTP del borrador del agente, los secretos del negocio (nombres y dominios, nunca valores) y las
+         *     tools que el turno no ofrecerá. El Coordinador no tiene tools (lista vacía).
+         */
+        get: operations["get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get"];
+        /**
+         * Save Agent Declarative Tools
+         * @description Reemplaza las tools HTTP del borrador. Valida todo antes de escribir: un header sensible con valor literal,
+         *     un dominio interno, un secreto sin valor o un valor que ninguna tool usa dan 422 por campo y no se guarda nada.
+         *     Luego cifra los secretos nuevos en la instalación `core` del negocio, atados a los dominios de las tools que los
+         *     usan (más los que ya tenían), y por último guarda el borrador. Si el borrador choca con otra edición (409) los
+         *     secretos ya quedaron escritos (un valor rotado ya vale para las tools publicadas que lo usan); reintentar con
+         *     el borrador al día termina de guardar.
+         */
+        put: operations["save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/coordinator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leer Opciones */
+        get: operations["leer_opciones_api_v1_admin_coordinator_get"];
+        /** Guardar Opciones */
+        put: operations["guardar_opciones_api_v1_admin_coordinator_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -5806,6 +5965,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/plan/recargas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Comprar Recarga
+         * @description Link de pago de un paquete de recarga de créditos (ADR-0209 §4, HU-BILL-23). Mismo permiso que
+         *     `POST /subscribe`. El precio lo arma el servidor con el descuento del plan vigente.
+         *
+         *     400 `unknown_package`: paquete desconocido.
+         *     409 `recarga_no_disponible`: sin suscripción activa o en Free.
+         *     409 `recarga_bajo_minimo`: el precio queda bajo el mínimo de Wompi del ambiente (sandbox: 150.000 COP).
+         */
+        post: operations["comprar_recarga_api_v1_admin_plan_recargas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/platform/tenants": {
         parameters: {
             query?: never;
@@ -8394,6 +8578,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/commerce/agents/{agent_id}/payment-forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Formas De Pago Del Agente
+         * @description Formas de pago del agente con su estado, sus cuentas de transferencia y el proveedor en línea.
+         */
+        get: operations["formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get"];
+        /**
+         * Guardar Formas De Pago
+         * @description Guarda las formas y las cuentas del agente. Transferencia encendida sin cuenta se guarda y queda
+         *     «Falta configurar» (el agente no la ofrece); tiene que quedar al menos una forma encendida.
+         */
+        put: operations["guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/orders/{order_id}/payment-proofs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Comprobantes Del Pedido
+         * @description Comprobantes del pedido (los 20 más recientes) con su imagen firmada y el resultado.
+         */
+        get: operations["comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/commerce/orders/{order_id}/payment-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cambiar Estado De Pago
+         * @description Revisión manual del pago. Queda quién, cuándo y la nota. Un pedido pagado no se vuelve a
+         *     rechazar desde aquí (un reembolso no es un rechazo); rechazar un comprobante deja el pedido
+         *     `rechazado` y el agente deja de presentarlo como pagado.
+         */
+        post: operations["cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/calendar/status": {
         parameters: {
             query?: never;
@@ -9673,298 +9924,6 @@ export interface paths {
         patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
         trace?: never;
     };
-    "/api/v1/pack/commerce/agents/{agent_id}/payment-forms": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Formas De Pago Del Agente
-         * @description Formas de pago del agente con su estado, sus cuentas de transferencia y el proveedor en línea.
-         */
-        get: operations["formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get"];
-        /**
-         * Guardar Formas De Pago
-         * @description Guarda las formas y las cuentas del agente. Transferencia encendida sin cuenta se guarda y queda
-         *     «Falta configurar» (el agente no la ofrece); tiene que quedar al menos una forma encendida.
-         */
-        put: operations["guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/commerce/orders/{order_id}/payment-proofs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Comprobantes Del Pedido
-         * @description Comprobantes del pedido (los 20 más recientes) con su imagen firmada y el resultado.
-         */
-        get: operations["comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/commerce/orders/{order_id}/payment-status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cambiar Estado De Pago
-         * @description Revisión manual del pago. Queda quién, cuándo y la nota. Un pedido pagado no se vuelve a
-         *     rechazar desde aquí (un reembolso no es un rechazo); rechazar un comprobante deja el pedido
-         *     `rechazado` y el agente deja de presentarlo como pagado.
-         */
-        post: operations["cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/schedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Schedule
-         * @description Horario del borrador del agente y el del negocio que hereda si no tiene uno propio.
-         */
-        get: operations["get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get"];
-        /**
-         * Save Agent Schedule
-         * @description Guarda el horario propio (o `null` para heredar) con el `lock_version` del borrador. Vale al publicar.
-         */
-        put: operations["save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/leads/{lead_id}/seguimiento/hecho": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Seguimiento Hecho
-         * @description Marca como hecho el seguimiento del lead del cliente; queda en su línea de tiempo con la nota (ADR-0193: antes
-         *     `POST /api/v1/pack/commerce/leads/{customer_id}/seguimiento/hecho`, que sigue como alias).
-         */
-        post: operations["seguimiento_hecho_api_v1_admin_leads__lead_id__seguimiento_hecho_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/plan/recargas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Comprar Recarga
-         * @description Link de pago de un paquete de recarga de créditos (ADR-0209 §4, HU-BILL-23). Mismo permiso que
-         *     `POST /subscribe`. El precio lo arma el servidor con el descuento del plan vigente.
-         *
-         *     400 `unknown_package`: paquete desconocido.
-         *     409 `recarga_no_disponible`: sin suscripción activa o en Free.
-         *     409 `recarga_bajo_minimo`: el precio queda bajo el mínimo de Wompi del ambiente (sandbox: 150.000 COP).
-         */
-        post: operations["comprar_recarga_api_v1_admin_plan_recargas_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/guardrails": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Guardrails
-         * @description Las reglas de respuesta del borrador del agente. El Coordinador no tiene (lista vacía).
-         */
-        get: operations["get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get"];
-        /**
-         * Save Agent Guardrails
-         * @description Reemplaza las reglas del borrador (frase prohibida, tool obligatoria ante una frase, largo máximo; con
-         *     `retry` o `escalate`). Valen al publicar. 422 por campo (`guardrails[i]...`); 409 `coordinador_inmutable`
-         *     para el Coordinador y `stale_lock_version` si otro guardó antes.
-         */
-        put: operations["save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/declarative-tools": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Declarative Tools
-         * @description Las tools HTTP del borrador del agente, los secretos del negocio (nombres y dominios, nunca valores) y las
-         *     tools que el turno no ofrecerá. El Coordinador no tiene tools (lista vacía).
-         */
-        get: operations["get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get"];
-        /**
-         * Save Agent Declarative Tools
-         * @description Reemplaza las tools HTTP del borrador. Valida todo antes de escribir: un header sensible con valor literal,
-         *     un dominio interno, un secreto sin valor o un valor que ninguna tool usa dan 422 por campo y no se guarda nada.
-         *     Luego cifra los secretos nuevos en la instalación `core` del negocio, atados a los dominios de las tools que los
-         *     usan (más los que ya tenían), y por último guarda el borrador. Si el borrador choca con otra edición (409) los
-         *     secretos ya quedaron escritos (un valor rotado ya vale para las tools publicadas que lo usan); reintentar con
-         *     el borrador al día termina de guardar.
-         */
-        put: operations["save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/coordinator": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Leer Opciones */
-        get: operations["leer_opciones_api_v1_admin_coordinator_get"];
-        /** Guardar Opciones */
-        put: operations["guardar_opciones_api_v1_admin_coordinator_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agent-types": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Agent Types
-         * @description El Coordinador y los tipos de agente (Ventas, Agenda, Cobranza, Suscripciones) desde los manifiestos de los
-         *     packs. Reemplaza a `agent-templates` (HU-AOS-94, ADR-0207 §6): cada tipo trae todo lo de la plantilla.
-         */
-        get: operations["list_agent_types_api_v1_admin_agent_types_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/skill-catalog": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Skill Catalog
-         * @description Cada habilidad de la plataforma con sus tools y metadatos (HU-AOS-94). Es el mismo catálogo para todos los
-         *     negocios: no lleva configuración, secretos ni instalaciones de nadie.
-         */
-        get: operations["get_skill_catalog_api_v1_admin_skill_catalog_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agent-types/{template_key}/agents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create From Template */
-        post: operations["create_from_template_api_v1_admin_agent_types__template_key__agents_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/posibles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent Posibles
-         * @description Lo que la ficha del agente puede mostrar de sus habilidades (HU-AOS-94): la de especialidad, las operaciones
-         *     de datos del cliente de su tipo y las transversales que su tipo admite con su estado. 404 si el agente no es del
-         *     negocio. El Coordinador responde con su habilidad fija y sin transversales; un agente sin tipo, con todo vacío.
-         */
-        get: operations["get_agent_posibles_api_v1_admin_agents__agent_id__posibles_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -10636,6 +10595,30 @@ export interface components {
              */
             last_turn_at: string;
         };
+        /** AgentDeclarativeToolsIn */
+        AgentDeclarativeToolsIn: {
+            /** Tools */
+            tools: {
+                [key: string]: unknown;
+            }[];
+            /** Secrets */
+            secrets?: {
+                [key: string]: string;
+            };
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentDeclarativeToolsOut */
+        AgentDeclarativeToolsOut: {
+            /** Tools */
+            tools: components["schemas"]["DeclarativeTool"][];
+            /** Secrets */
+            secrets: components["schemas"]["ConfiguredSecret"][];
+            /** Omitted */
+            omitted: string[];
+            /** Lock Version */
+            lock_version: number;
+        };
         /** AgentDetail */
         AgentDetail: {
             /**
@@ -10748,6 +10731,22 @@ export interface components {
              */
             warnings: string[];
         };
+        /** AgentGuardrailsIn */
+        AgentGuardrailsIn: {
+            /** Guardrails */
+            guardrails: {
+                [key: string]: unknown;
+            }[];
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentGuardrailsOut */
+        AgentGuardrailsOut: {
+            /** Guardrails */
+            guardrails: components["schemas"]["GuardrailRule"][];
+            /** Lock Version */
+            lock_version: number;
+        };
         /** AgentOverviewItem */
         AgentOverviewItem: {
             /** Turns */
@@ -10796,6 +10795,16 @@ export interface components {
         AgentPauseIn: {
             /** Reason */
             reason?: string | null;
+        };
+        /** AgentPosibles */
+        AgentPosibles: {
+            /** Type Key */
+            type_key: string | null;
+            specialty: components["schemas"]["Skill"] | null;
+            /** Customer Data */
+            customer_data: components["schemas"]["CustomerDataOperation"][];
+            /** Transversal */
+            transversal: components["schemas"]["PosibleTransversal"][];
         };
         /** AgentRecordItem */
         AgentRecordItem: {
@@ -10876,6 +10885,42 @@ export interface components {
             blocks_publish: boolean;
             /** Notices */
             notices: components["schemas"]["RetiredNotice"][];
+        };
+        /** AgentScheduleIn */
+        AgentScheduleIn: {
+            /**
+             * Schedule
+             * @description `null` vuelve a heredar el horario del negocio.
+             */
+            schedule: {
+                [key: string]: unknown;
+            } | null;
+            /** Lock Version */
+            lock_version: number;
+        };
+        /** AgentScheduleOut */
+        AgentScheduleOut: {
+            /**
+             * Schedule
+             * @description Horario propio del agente (`{tz, ranges}`); `null` = hereda el del negocio.
+             */
+            schedule: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Business Hours
+             * @description El horario del negocio (lo que hereda).
+             */
+            business_hours: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "agente" | "negocio";
+            /** Lock Version */
+            lock_version: number;
         };
         /** AgentSkill */
         AgentSkill: {
@@ -10981,8 +11026,11 @@ export interface components {
             /** Connection Id */
             connection_id: string | null;
         };
-        /** AgentTemplate */
-        AgentTemplate: {
+        /**
+         * AgentType
+         * @description Un tipo de agente: todo lo de `AgentTemplate` (el panel migra 1 a 1) y lo que declara su manifiesto.
+         */
+        AgentType: {
             /** Key */
             key: string;
             /** Name */
@@ -11009,6 +11057,39 @@ export interface components {
             superpowers: components["schemas"]["Superpower"][];
             /** Requirements */
             requirements: components["schemas"]["Requirement"][];
+            /** Mandatory Skills */
+            mandatory_skills: string[];
+            /** Transversal Skills */
+            transversal_skills: string[];
+            /** Customer Data Operations */
+            customer_data_operations: components["schemas"]["CustomerDataOperation"][];
+            /** Default Flow Sections */
+            default_flow_sections: string[];
+        };
+        /**
+         * AgentTypeCoordinator
+         * @description El Coordinador: no es un tipo de pack, su habilidad es fija (ADR-0205 §5).
+         */
+        AgentTypeCoordinator: {
+            /**
+             * Key
+             * @constant
+             */
+            key: "coordinador";
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Skill */
+            skill: string;
+            /** Tools */
+            tools: string[];
+        };
+        /** AgentTypesOut */
+        AgentTypesOut: {
+            coordinator: components["schemas"]["AgentTypeCoordinator"];
+            /** Types */
+            types: components["schemas"]["AgentType"][];
         };
         /** AgentUsage */
         AgentUsage: {
@@ -11885,6 +11966,15 @@ export interface components {
              * @default []
              */
             warnings: string[];
+        };
+        /** BusinessRange */
+        BusinessRange: {
+            /** Day */
+            day: number;
+            /** From */
+            from: string;
+            /** To */
+            to: string;
         };
         /** CalendarDelete */
         CalendarDelete: {
@@ -12939,6 +13029,65 @@ export interface components {
             /** Orders */
             orders: number;
         };
+        /** ComprobanteOut */
+        ComprobanteOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pagado" | "en_revision" | "rechazado";
+            /**
+             * Image Url
+             * @description URL firmada de vida corta; `null` si la imagen no está.
+             */
+            image_url: string | null;
+            /**
+             * Extracted
+             * @description Lo que leyó la visión: monto, fecha, estado, banco, cuenta (últimos 4)…
+             */
+            extracted: {
+                [key: string]: unknown;
+            };
+            /**
+             * Match
+             * @description Resultado de la comparación con el pedido y sus motivos.
+             */
+            match: {
+                [key: string]: unknown;
+            };
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Review Note */
+            review_note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ComprobantesOut */
+        ComprobantesOut: {
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** Payment Status */
+            payment_status: string;
+            /** Payment Method */
+            payment_method: string;
+            /** Payment Status Changed At */
+            payment_status_changed_at: string | null;
+            /** Payment Status Reason */
+            payment_status_reason: string | null;
+            /** Items */
+            items: components["schemas"]["ComprobanteOut"][];
+        };
         /** ConexionDeEnvioOut */
         ConexionDeEnvioOut: {
             /**
@@ -13058,6 +13207,16 @@ export interface components {
              * @default false
              */
             requiere_accion_manual: boolean;
+        };
+        /**
+         * ConfiguredSecret
+         * @description Un secreto del negocio: su nombre y los dominios a los que puede viajar. Nunca el valor.
+         */
+        ConfiguredSecret: {
+            /** Name */
+            name: string;
+            /** Domains */
+            domains: string[];
         };
         /** ConfirmarPagoBody */
         ConfirmarPagoBody: {
@@ -13797,6 +13956,67 @@ export interface components {
             /** Turns */
             turns: number;
         };
+        /** CoordinatorOptions */
+        CoordinatorOptions: {
+            /** Assistant Name */
+            assistant_name: string;
+            /** Business Description */
+            business_description: string;
+            /** Brand Voice */
+            brand_voice: string;
+            /** Business Tz */
+            business_tz: string;
+            /** Business Ranges */
+            business_ranges: components["schemas"]["BusinessRange"][];
+            /**
+             * Business Hours Mode
+             * @enum {string}
+             */
+            business_hours_mode: "bloquea" | "informativo";
+            /** Out Of Hours Message */
+            out_of_hours_message: string;
+            /**
+             * Nivel Ia
+             * @enum {string}
+             */
+            nivel_ia: "estandar" | "avanzado";
+            /** Guardrails */
+            guardrails: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Guardrails Problems
+             * @default []
+             */
+            guardrails_problems: string[];
+        };
+        /**
+         * CoordinatorOptionsUpdate
+         * @description Todos opcionales: solo cambia lo que viene. `null` equivale a no enviarlo; para vaciar se envía `[]` o `""`
+         *     (`business_ranges: []` borra el horario del negocio).
+         */
+        CoordinatorOptionsUpdate: {
+            /** Assistant Name */
+            assistant_name?: string | null;
+            /** Business Description */
+            business_description?: string | null;
+            /** Brand Voice */
+            brand_voice?: string | null;
+            /** Business Tz */
+            business_tz?: string | null;
+            /** Business Ranges */
+            business_ranges?: components["schemas"]["BusinessRange"][] | null;
+            /** Business Hours Mode */
+            business_hours_mode?: ("bloquea" | "informativo") | null;
+            /** Out Of Hours Message */
+            out_of_hours_message?: string | null;
+            /** Nivel Ia */
+            nivel_ia?: ("estandar" | "avanzado") | null;
+            /** Guardrails */
+            guardrails?: {
+                [key: string]: unknown;
+            }[] | null;
+        };
         /** CostsResponse */
         CostsResponse: {
             meta?: components["schemas"]["MetaPricing"] | null;
@@ -13909,6 +14129,52 @@ export interface components {
              * @default false
              */
             platform: boolean;
+        };
+        /**
+         * CreditBalance
+         * @description Saldo del ciclo desglosado (ADR-0209 §2 y §5, HU-BILL-22): el crédito del mes del plan más lo
+         *     acumulado (sobrante de ciclos anteriores, en Premium y Empresarial) y las recargas. Se gasta en ese
+         *     orden: mes, acumulado (el que vence antes primero) y recargas. `over_balance` es lo consumido por
+         *     encima del saldo (colchón de las conversaciones abiertas, lo absorbe la plataforma). En créditos con
+         *     décimas (1 crédito = COP 10).
+         */
+        CreditBalance: {
+            /** Total */
+            total: number;
+            /** Month */
+            month: number;
+            /**
+             * Accumulated
+             * @default 0
+             */
+            accumulated: number;
+            /** Accumulated Expires At */
+            accumulated_expires_at?: string | null;
+            /**
+             * Top Ups
+             * @default 0
+             */
+            top_ups: number;
+            /**
+             * Used Month
+             * @default 0
+             */
+            used_month: number;
+            /**
+             * Used Accumulated
+             * @default 0
+             */
+            used_accumulated: number;
+            /**
+             * Used Top Ups
+             * @default 0
+             */
+            used_top_ups: number;
+            /**
+             * Over Balance
+             * @default 0
+             */
+            over_balance: number;
         };
         /**
          * CreditByAgent
@@ -14256,6 +14522,47 @@ export interface components {
             /** Modulos */
             modulos: components["schemas"]["CronModuleSummary"][];
         };
+        /** CuentaDeTransferencia */
+        CuentaDeTransferencia: {
+            /**
+             * Entity
+             * @description Entidad (Bancolombia, Nequi…).
+             */
+            entity: string;
+            /**
+             * Accounttype
+             * @default
+             */
+            accountType: string;
+            /** Accountnumber */
+            accountNumber: string;
+            /**
+             * Holdername
+             * @default
+             */
+            holderName: string;
+            /**
+             * Holderdocument
+             * @default
+             */
+            holderDocument: string;
+        };
+        /**
+         * CustomerDataOperation
+         * @description Una operación del módulo que pide datos del cliente (ADR-0198). Sin niveles: esos son del agente.
+         */
+        CustomerDataOperation: {
+            /** Id */
+            id: string;
+            /** Module */
+            module: string;
+            /** Pack */
+            pack: string;
+            /** Label */
+            label: string;
+            /** Fields */
+            fields: components["schemas"]["DataOperationField"][];
+        };
         /** DashboardResponse */
         DashboardResponse: {
             /** Tenant Id */
@@ -14269,10 +14576,60 @@ export interface components {
             recent: components["schemas"]["RecentConversation"][];
             billing: components["schemas"]["BillingSummary"] | null;
         };
+        /** DataOperationField */
+        DataOperationField: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Adjustable */
+            adjustable: boolean;
+        };
         /** DatosRetirados */
         DatosRetirados: {
             /** Retirados */
             retirados: number;
+        };
+        /** DeclarativeTool */
+        DeclarativeTool: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Method
+             * @default GET
+             * @enum {string}
+             */
+            method: "GET" | "POST";
+            /** Url */
+            url: string;
+            /**
+             * Alloweddomains
+             * @default []
+             */
+            allowedDomains: string[];
+            /**
+             * Headers
+             * @default {}
+             */
+            headers: {
+                [key: string]: string | components["schemas"]["SecretRef"];
+            };
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Body
+             * @default {}
+             */
+            body: {
+                [key: string]: unknown;
+            };
         };
         /** Definicion */
         Definicion: {
@@ -14820,6 +15177,25 @@ export interface components {
             falta_descripcion: boolean;
             lote: components["schemas"]["LoteDePrueba"] | null;
         };
+        /** EstadoDePagoIn */
+        EstadoDePagoIn: {
+            /**
+             * Accion
+             * @description `confirmar`: el comprobante en revisión es válido. `rechazar`: no lo es. `marcar_pagado`: el pago se verificó por fuera (sin comprobante).
+             * @enum {string}
+             */
+            accion: "confirmar" | "rechazar" | "marcar_pagado";
+            /**
+             * Proof Id
+             * @description Comprobante que se confirma o rechaza.
+             */
+            proof_id?: string | null;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
         /** EstadoImportacion */
         EstadoImportacion: {
             /** Disponible */
@@ -15107,6 +15483,94 @@ export interface components {
             /** Titulo */
             titulo: string;
         };
+        /** FormaDePagoIn */
+        FormaDePagoIn: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Instructions
+             * @default
+             */
+            instructions: string;
+        };
+        /** FormaDePagoOut */
+        FormaDePagoOut: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
+            /** Label */
+            label: string;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Estado
+             * @description `falta_configurar`: encendida pero sin lo que necesita (cuenta o proveedor); el agente no la ofrece.
+             * @enum {string}
+             */
+            estado: "activa" | "falta_configurar" | "apagada";
+            /**
+             * Falta
+             * @description Qué falta, en palabras del dueño; vacío si nada.
+             */
+            falta: string;
+            /** Instructions */
+            instructions: string;
+            /**
+             * Superpoder
+             * @description Superpoder del dominio «Formas de pago» que la acompaña; contra entrega no tiene.
+             */
+            superpoder: string | null;
+        };
+        /** FormasDePagoIn */
+        FormasDePagoIn: {
+            /** Forms */
+            forms: components["schemas"]["FormaDePagoIn"][];
+            /** Transfer Accounts */
+            transfer_accounts?: components["schemas"]["CuentaDeTransferencia"][];
+            /**
+             * Transfer Proof Required
+             * @default true
+             */
+            transfer_proof_required: boolean;
+            /**
+             * Transfer Ocr Enabled
+             * @default true
+             */
+            transfer_ocr_enabled: boolean;
+        };
+        /** FormasDePagoOut */
+        FormasDePagoOut: {
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /**
+             * Configurada
+             * @description `false`: el agente aún no guardó sus formas y se deducen como antes.
+             */
+            configurada: boolean;
+            /** Forms */
+            forms: components["schemas"]["FormaDePagoOut"][];
+            /** Transfer Accounts */
+            transfer_accounts: components["schemas"]["CuentaDeTransferencia"][];
+            /** Transfer Proof Required */
+            transfer_proof_required: boolean;
+            /** Transfer Ocr Enabled */
+            transfer_ocr_enabled: boolean;
+            /**
+             * Pago En Linea Disponible
+             * @description El negocio tiene una cuenta de pagos en línea conectada.
+             */
+            pago_en_linea_disponible: boolean;
+        };
         /**
          * FromScriptIn
          * @description Respuestas del guion de una plantilla: `answers` es `id de la pregunta` → id de la opción
@@ -15308,6 +15772,31 @@ export interface components {
          */
         GuardadoErrorOut: {
             error: components["schemas"]["GuardadoError"];
+        };
+        /** GuardrailRule */
+        GuardrailRule: {
+            /** Name */
+            name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "forbidden_phrase" | "required_tool" | "max_length";
+            /**
+             * Action
+             * @default retry
+             * @enum {string}
+             */
+            action: "retry" | "escalate";
+            /**
+             * Phrases
+             * @default []
+             */
+            phrases: string[];
+            /** Tool */
+            tool?: string | null;
+            /** Value */
+            value?: number | null;
         };
         /** GuardrailsSettings */
         GuardrailsSettings: {
@@ -18797,19 +19286,6 @@ export interface components {
             /** Has More */
             has_more: boolean;
         };
-        /** Page[AgentTemplate] */
-        Page_AgentTemplate_: {
-            /** Items */
-            items: components["schemas"]["AgentTemplate"][];
-            /** Total */
-            total: number;
-            /** Page */
-            page: number;
-            /** Page Size */
-            page_size: number;
-            /** Has More */
-            has_more: boolean;
-        };
         /** Page[CanjeOut] */
         Page_CanjeOut_: {
             /** Items */
@@ -19716,6 +20192,22 @@ export interface components {
             /** Operational */
             operational: boolean;
         };
+        /**
+         * PlaygroundCredit
+         * @description Consumo del playground del panel en el mes del ciclo (D-79, ADR-0208 §15). Es gratis hasta
+         *     `free_limit` créditos; lo que pasa (`charged`) ya está sumado en `used` del crédito y en
+         *     `by_concept.playground`. El playground lo lee para avisar antes de empezar a descontar.
+         */
+        PlaygroundCredit: {
+            /** Used */
+            used: number;
+            /** Free Limit */
+            free_limit: number;
+            /** Free Remaining */
+            free_remaining: number;
+            /** Charged */
+            charged: number;
+        };
         /** PlaygroundMensajeOut */
         PlaygroundMensajeOut: {
             /**
@@ -20032,6 +20524,18 @@ export interface components {
              * @default 0
              */
             costo_cobro: number;
+        };
+        /** PosibleTransversal */
+        PosibleTransversal: {
+            /** Pack Id */
+            pack_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "lista" | "falta_configurar" | "sin_agregar";
+            /** Tools */
+            tools: components["schemas"]["SkillTool"][];
         };
         /** PositionIn */
         PositionIn: {
@@ -22373,6 +22877,11 @@ export interface components {
             /** Resultados */
             resultados: components["schemas"]["ResultadoSeccion"][];
         };
+        /** SecretRef */
+        SecretRef: {
+            /** Secret */
+            secret: string;
+        };
         /**
          * SeguimientoHechoIn
          * @description Cierra el seguimiento y, si se pide, programa el siguiente en el mismo gesto (HU-CRM-21). `siguiente_en` es
@@ -22403,6 +22912,26 @@ export interface components {
             memory: components["schemas"]["MemorySettings"];
             /** Skills */
             skills: components["schemas"]["SkillBinding"][];
+        };
+        /**
+         * Skill
+         * @description Una habilidad con sus tools. `core:recepcion` repite a propósito tools de otras habilidades (es la vista del
+         *     Coordinador): quien sume tools por habilidad las contaría dos veces.
+         */
+        Skill: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "core" | "especialidad" | "transversal";
+            /** Tools */
+            tools: components["schemas"]["SkillTool"][];
         };
         /** SkillBinding */
         SkillBinding: {
@@ -22480,6 +23009,21 @@ export interface components {
              * Format: uuid
              */
             connection_id: string;
+        };
+        /** SkillTool */
+        SkillTool: {
+            /** Name */
+            name: string;
+            /** Group */
+            group: string;
+            /** Description */
+            description: string;
+            /** Side Effect */
+            side_effect: string | null;
+            /** Scopes */
+            scopes: string[];
+            /** Requires Confirmation Default */
+            requires_confirmation_default: boolean;
         };
         /** SkillsUpdate */
         SkillsUpdate: {
@@ -23312,6 +23856,28 @@ export interface components {
              * @default false
              */
             has_whatsapp_scopes: boolean;
+        };
+        /**
+         * TopUpPackage
+         * @description Paquete de recarga de créditos con el precio del plan vigente (ADR-0209 §4, D-79): el de lista
+         *     menos `features.descuento_recarga` del plan, en pesos enteros.
+         */
+        TopUpPackage: {
+            /** Id */
+            id: string;
+            /** Creditos */
+            creditos: number;
+            /** Precio Lista Cop */
+            precio_lista_cop: number;
+            /** Descuento Pct */
+            descuento_pct: number;
+            /** Precio Cop */
+            precio_cop: number;
+        };
+        /** TopUpRequest */
+        TopUpRequest: {
+            /** Paquete */
+            paquete: string;
         };
         /** TramoDeMora */
         TramoDeMora: {
@@ -24931,655 +25497,6 @@ export interface components {
              * Format: date-time
              */
             fecha_hora: string;
-        };
-        /** CuentaDeTransferencia */
-        CuentaDeTransferencia: {
-            /**
-             * Entity
-             * @description Entidad (Bancolombia, Nequi…).
-             */
-            entity: string;
-            /**
-             * Accounttype
-             * @default
-             */
-            accountType: string;
-            /** Accountnumber */
-            accountNumber: string;
-            /**
-             * Holdername
-             * @default
-             */
-            holderName: string;
-            /**
-             * Holderdocument
-             * @default
-             */
-            holderDocument: string;
-        };
-        /** FormaDePagoOut */
-        FormaDePagoOut: {
-            /**
-             * Method
-             * @enum {string}
-             */
-            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
-            /** Label */
-            label: string;
-            /** Enabled */
-            enabled: boolean;
-            /**
-             * Estado
-             * @description `falta_configurar`: encendida pero sin lo que necesita (cuenta o proveedor); el agente no la ofrece.
-             * @enum {string}
-             */
-            estado: "activa" | "falta_configurar" | "apagada";
-            /**
-             * Falta
-             * @description Qué falta, en palabras del dueño; vacío si nada.
-             */
-            falta: string;
-            /** Instructions */
-            instructions: string;
-            /**
-             * Superpoder
-             * @description Superpoder del dominio «Formas de pago» que la acompaña; contra entrega no tiene.
-             */
-            superpoder: string | null;
-        };
-        /** FormasDePagoOut */
-        FormasDePagoOut: {
-            /**
-             * Agent Id
-             * Format: uuid
-             */
-            agent_id: string;
-            /**
-             * Configurada
-             * @description `false`: el agente aún no guardó sus formas y se deducen como antes.
-             */
-            configurada: boolean;
-            /** Forms */
-            forms: components["schemas"]["FormaDePagoOut"][];
-            /** Transfer Accounts */
-            transfer_accounts: components["schemas"]["CuentaDeTransferencia"][];
-            /** Transfer Proof Required */
-            transfer_proof_required: boolean;
-            /** Transfer Ocr Enabled */
-            transfer_ocr_enabled: boolean;
-            /**
-             * Pago En Linea Disponible
-             * @description El negocio tiene una cuenta de pagos en línea conectada.
-             */
-            pago_en_linea_disponible: boolean;
-        };
-        /** FormaDePagoIn */
-        FormaDePagoIn: {
-            /**
-             * Method
-             * @enum {string}
-             */
-            method: "efectivo_contraentrega" | "transferencia" | "pago_en_linea";
-            /** Enabled */
-            enabled: boolean;
-            /**
-             * Instructions
-             * @default
-             */
-            instructions: string;
-        };
-        /** FormasDePagoIn */
-        FormasDePagoIn: {
-            /** Forms */
-            forms: components["schemas"]["FormaDePagoIn"][];
-            /** Transfer Accounts */
-            transfer_accounts?: components["schemas"]["CuentaDeTransferencia"][];
-            /**
-             * Transfer Proof Required
-             * @default true
-             */
-            transfer_proof_required: boolean;
-            /**
-             * Transfer Ocr Enabled
-             * @default true
-             */
-            transfer_ocr_enabled: boolean;
-        };
-        /** EstadoDePagoIn */
-        EstadoDePagoIn: {
-            /**
-             * Accion
-             * @description `confirmar`: el comprobante en revisión es válido. `rechazar`: no lo es. `marcar_pagado`: el pago se verificó por fuera (sin comprobante).
-             * @enum {string}
-             */
-            accion: "confirmar" | "rechazar" | "marcar_pagado";
-            /**
-             * Proof Id
-             * @description Comprobante que se confirma o rechaza.
-             */
-            proof_id?: string | null;
-            /**
-             * Nota
-             * @default
-             */
-            nota: string;
-        };
-        /** ComprobanteOut */
-        ComprobanteOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "pagado" | "en_revision" | "rechazado";
-            /**
-             * Image Url
-             * @description URL firmada de vida corta; `null` si la imagen no está.
-             */
-            image_url: string | null;
-            /**
-             * Extracted
-             * @description Lo que leyó la visión: monto, fecha, estado, banco, cuenta (últimos 4)…
-             */
-            extracted: {
-                [key: string]: unknown;
-            };
-            /**
-             * Match
-             * @description Resultado de la comparación con el pedido y sus motivos.
-             */
-            match: {
-                [key: string]: unknown;
-            };
-            /** Reviewed At */
-            reviewed_at: string | null;
-            /** Review Note */
-            review_note: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /** ComprobantesOut */
-        ComprobantesOut: {
-            /**
-             * Order Id
-             * Format: uuid
-             */
-            order_id: string;
-            /** Payment Status */
-            payment_status: string;
-            /** Payment Method */
-            payment_method: string;
-            /** Payment Status Changed At */
-            payment_status_changed_at: string | null;
-            /** Payment Status Reason */
-            payment_status_reason: string | null;
-            /** Items */
-            items: components["schemas"]["ComprobanteOut"][];
-        };
-        /** AgentScheduleIn */
-        AgentScheduleIn: {
-            /**
-             * Schedule
-             * @description `null` vuelve a heredar el horario del negocio.
-             */
-            schedule: {
-                [key: string]: unknown;
-            } | null;
-            /** Lock Version */
-            lock_version: number;
-        };
-        /** AgentScheduleOut */
-        AgentScheduleOut: {
-            /**
-             * Schedule
-             * @description Horario propio del agente (`{tz, ranges}`); `null` = hereda el del negocio.
-             */
-            schedule: {
-                [key: string]: unknown;
-            } | null;
-            /**
-             * Business Hours
-             * @description El horario del negocio (lo que hereda).
-             */
-            business_hours: {
-                [key: string]: unknown;
-            } | null;
-            /**
-             * Source
-             * @enum {string}
-             */
-            source: "agente" | "negocio";
-            /** Lock Version */
-            lock_version: number;
-        };
-        /**
-         * PlaygroundCredit
-         * @description Consumo del playground del panel en el mes del ciclo (D-79, ADR-0208 §15). Es gratis hasta
-         *     `free_limit` créditos; lo que pasa (`charged`) ya está sumado en `used` del crédito y en
-         *     `by_concept.playground`. El playground lo lee para avisar antes de empezar a descontar.
-         */
-        PlaygroundCredit: {
-            /** Used */
-            used: number;
-            /** Free Limit */
-            free_limit: number;
-            /** Free Remaining */
-            free_remaining: number;
-            /** Charged */
-            charged: number;
-        };
-        /**
-         * CreditBalance
-         * @description Saldo del ciclo desglosado (ADR-0209 §2 y §5, HU-BILL-22): el crédito del mes del plan más lo
-         *     acumulado (sobrante de ciclos anteriores, en Premium y Empresarial) y las recargas. Se gasta en ese
-         *     orden: mes, acumulado (el que vence antes primero) y recargas. `over_balance` es lo consumido por
-         *     encima del saldo (colchón de las conversaciones abiertas, lo absorbe la plataforma). En créditos con
-         *     décimas (1 crédito = COP 10).
-         */
-        CreditBalance: {
-            /** Total */
-            total: number;
-            /** Month */
-            month: number;
-            /**
-             * Accumulated
-             * @default 0
-             */
-            accumulated: number;
-            /** Accumulated Expires At */
-            accumulated_expires_at?: string | null;
-            /**
-             * Top Ups
-             * @default 0
-             */
-            top_ups: number;
-            /**
-             * Used Month
-             * @default 0
-             */
-            used_month: number;
-            /**
-             * Used Accumulated
-             * @default 0
-             */
-            used_accumulated: number;
-            /**
-             * Used Top Ups
-             * @default 0
-             */
-            used_top_ups: number;
-            /**
-             * Over Balance
-             * @default 0
-             */
-            over_balance: number;
-        };
-        /**
-         * TopUpPackage
-         * @description Paquete de recarga de créditos con el precio del plan vigente (ADR-0209 §4, D-79): el de lista
-         *     menos `features.descuento_recarga` del plan, en pesos enteros.
-         */
-        TopUpPackage: {
-            /** Id */
-            id: string;
-            /** Creditos */
-            creditos: number;
-            /** Precio Lista Cop */
-            precio_lista_cop: number;
-            /** Descuento Pct */
-            descuento_pct: number;
-            /** Precio Cop */
-            precio_cop: number;
-        };
-        /** TopUpRequest */
-        TopUpRequest: {
-            /** Paquete */
-            paquete: string;
-        };
-        /** AgentDeclarativeToolsIn */
-        AgentDeclarativeToolsIn: {
-            /** Tools */
-            tools: {
-                [key: string]: unknown;
-            }[];
-            /** Secrets */
-            secrets?: {
-                [key: string]: string;
-            };
-            /** Lock Version */
-            lock_version: number;
-        };
-        /** AgentDeclarativeToolsOut */
-        AgentDeclarativeToolsOut: {
-            /** Tools */
-            tools: components["schemas"]["DeclarativeTool"][];
-            /** Secrets */
-            secrets: components["schemas"]["ConfiguredSecret"][];
-            /** Omitted */
-            omitted: string[];
-            /** Lock Version */
-            lock_version: number;
-        };
-        /** AgentGuardrailsIn */
-        AgentGuardrailsIn: {
-            /** Guardrails */
-            guardrails: {
-                [key: string]: unknown;
-            }[];
-            /** Lock Version */
-            lock_version: number;
-        };
-        /** AgentGuardrailsOut */
-        AgentGuardrailsOut: {
-            /** Guardrails */
-            guardrails: components["schemas"]["GuardrailRule"][];
-            /** Lock Version */
-            lock_version: number;
-        };
-        /**
-         * ConfiguredSecret
-         * @description Un secreto del negocio: su nombre y los dominios a los que puede viajar. Nunca el valor.
-         */
-        ConfiguredSecret: {
-            /** Name */
-            name: string;
-            /** Domains */
-            domains: string[];
-        };
-        /** DeclarativeTool */
-        DeclarativeTool: {
-            /** Name */
-            name: string;
-            /**
-             * Description
-             * @default
-             */
-            description: string;
-            /**
-             * Method
-             * @default GET
-             * @enum {string}
-             */
-            method: "GET" | "POST";
-            /** Url */
-            url: string;
-            /**
-             * Alloweddomains
-             * @default []
-             */
-            allowedDomains: string[];
-            /**
-             * Headers
-             * @default {}
-             */
-            headers: {
-                [key: string]: string | components["schemas"]["SecretRef"];
-            };
-            /** Parameters */
-            parameters?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Body
-             * @default {}
-             */
-            body: {
-                [key: string]: unknown;
-            };
-        };
-        /** GuardrailRule */
-        GuardrailRule: {
-            /** Name */
-            name: string;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "forbidden_phrase" | "required_tool" | "max_length";
-            /**
-             * Action
-             * @default retry
-             * @enum {string}
-             */
-            action: "retry" | "escalate";
-            /**
-             * Phrases
-             * @default []
-             */
-            phrases: string[];
-            /** Tool */
-            tool?: string | null;
-            /** Value */
-            value?: number | null;
-        };
-        /** SecretRef */
-        SecretRef: {
-            /** Secret */
-            secret: string;
-        };
-        /** BusinessRange */
-        BusinessRange: {
-            /** Day */
-            day: number;
-            /** From */
-            from: string;
-            /** To */
-            to: string;
-        };
-        /** CoordinatorOptions */
-        CoordinatorOptions: {
-            /** Assistant Name */
-            assistant_name: string;
-            /** Business Description */
-            business_description: string;
-            /** Brand Voice */
-            brand_voice: string;
-            /** Business Tz */
-            business_tz: string;
-            /** Business Ranges */
-            business_ranges: components["schemas"]["BusinessRange"][];
-            /**
-             * Business Hours Mode
-             * @enum {string}
-             */
-            business_hours_mode: "bloquea" | "informativo";
-            /** Out Of Hours Message */
-            out_of_hours_message: string;
-            /**
-             * Nivel Ia
-             * @enum {string}
-             */
-            nivel_ia: "estandar" | "avanzado";
-            /** Guardrails */
-            guardrails: {
-                [key: string]: unknown;
-            }[];
-            /**
-             * Guardrails Problems
-             * @default []
-             */
-            guardrails_problems: string[];
-        };
-        /**
-         * CoordinatorOptionsUpdate
-         * @description Todos opcionales: solo cambia lo que viene. `null` equivale a no enviarlo; para vaciar se envía `[]` o `""`
-         *     (`business_ranges: []` borra el horario del negocio).
-         */
-        CoordinatorOptionsUpdate: {
-            /** Assistant Name */
-            assistant_name?: string | null;
-            /** Business Description */
-            business_description?: string | null;
-            /** Brand Voice */
-            brand_voice?: string | null;
-            /** Business Tz */
-            business_tz?: string | null;
-            /** Business Ranges */
-            business_ranges?: components["schemas"]["BusinessRange"][] | null;
-            /** Business Hours Mode */
-            business_hours_mode?: ("bloquea" | "informativo") | null;
-            /** Out Of Hours Message */
-            out_of_hours_message?: string | null;
-            /** Nivel Ia */
-            nivel_ia?: ("estandar" | "avanzado") | null;
-            /** Guardrails */
-            guardrails?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /** AgentPosibles */
-        AgentPosibles: {
-            /** Type Key */
-            type_key: string | null;
-            specialty: components["schemas"]["Skill"] | null;
-            /** Customer Data */
-            customer_data: components["schemas"]["CustomerDataOperation"][];
-            /** Transversal */
-            transversal: components["schemas"]["PosibleTransversal"][];
-        };
-        /**
-         * AgentType
-         * @description Un tipo de agente: todo lo de `AgentTemplate` (el panel migra 1 a 1) y lo que declara su manifiesto.
-         */
-        AgentType: {
-            /** Key */
-            key: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description: string;
-            /** Section */
-            section: string;
-            /** Tools */
-            tools: string[];
-            /** Questions */
-            questions: components["schemas"]["Question"][];
-            /** Skills */
-            skills: string[];
-            /** Optional Skills */
-            optional_skills: string[];
-            /** Available */
-            available: boolean;
-            /** Missing Skills */
-            missing_skills: string[];
-            /** Will Enable */
-            will_enable: string[];
-            /** Superpowers */
-            superpowers: components["schemas"]["Superpower"][];
-            /** Requirements */
-            requirements: components["schemas"]["Requirement"][];
-            /** Mandatory Skills */
-            mandatory_skills: string[];
-            /** Transversal Skills */
-            transversal_skills: string[];
-            /** Customer Data Operations */
-            customer_data_operations: components["schemas"]["CustomerDataOperation"][];
-            /** Default Flow Sections */
-            default_flow_sections: string[];
-        };
-        /**
-         * AgentTypeCoordinator
-         * @description El Coordinador: no es un tipo de pack, su habilidad es fija (ADR-0205 §5).
-         */
-        AgentTypeCoordinator: {
-            /**
-             * Key
-             * @constant
-             */
-            key: "coordinador";
-            /** Name */
-            name: string;
-            /** Description */
-            description: string;
-            /** Skill */
-            skill: string;
-            /** Tools */
-            tools: string[];
-        };
-        /** AgentTypesOut */
-        AgentTypesOut: {
-            coordinator: components["schemas"]["AgentTypeCoordinator"];
-            /** Types */
-            types: components["schemas"]["AgentType"][];
-        };
-        /**
-         * CustomerDataOperation
-         * @description Una operación del módulo que pide datos del cliente (ADR-0198). Sin niveles: esos son del agente.
-         */
-        CustomerDataOperation: {
-            /** Id */
-            id: string;
-            /** Module */
-            module: string;
-            /** Pack */
-            pack: string;
-            /** Label */
-            label: string;
-            /** Fields */
-            fields: components["schemas"]["DataOperationField"][];
-        };
-        /** DataOperationField */
-        DataOperationField: {
-            /** Key */
-            key: string;
-            /** Label */
-            label: string;
-            /** Adjustable */
-            adjustable: boolean;
-        };
-        /** PosibleTransversal */
-        PosibleTransversal: {
-            /** Pack Id */
-            pack_id: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "lista" | "falta_configurar" | "sin_agregar";
-            /** Tools */
-            tools: components["schemas"]["SkillTool"][];
-        };
-        /**
-         * Skill
-         * @description Una habilidad con sus tools. `core:recepcion` repite a propósito tools de otras habilidades (es la vista del
-         *     Coordinador): quien sume tools por habilidad las contaría dos veces.
-         */
-        Skill: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description: string;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "core" | "especialidad" | "transversal";
-            /** Tools */
-            tools: components["schemas"]["SkillTool"][];
-        };
-        /** SkillTool */
-        SkillTool: {
-            /** Name */
-            name: string;
-            /** Group */
-            group: string;
-            /** Description */
-            description: string;
-            /** Side Effect */
-            side_effect: string | null;
-            /** Scopes */
-            scopes: string[];
-            /** Requires Confirmation Default */
-            requires_confirmation_default: boolean;
         };
     };
     responses: never;
@@ -28514,6 +28431,42 @@ export interface operations {
             };
         };
     };
+    seguimiento_hecho_api_v1_admin_leads__lead_id__seguimiento_hecho_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeguimientoHechoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     lead_timeline_api_v1_admin_leads__lead_id__timeline_get: {
         parameters: {
             query?: {
@@ -30531,12 +30484,9 @@ export interface operations {
             };
         };
     };
-    list_templates_api_v1_admin_agent_templates_get: {
+    list_agent_types_api_v1_admin_agent_types_get: {
         parameters: {
-            query?: {
-                page?: number;
-                page_size?: number;
-            };
+            query?: never;
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
@@ -30552,7 +30502,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Page_AgentTemplate_"];
+                    "application/json": components["schemas"]["AgentTypesOut"];
                 };
             };
             /** @description Validation Error */
@@ -30566,7 +30516,39 @@ export interface operations {
             };
         };
     };
-    create_from_template_api_v1_admin_agent_templates__template_key__agents_post: {
+    get_skill_catalog_api_v1_admin_skill_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Skill"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_from_template_api_v1_admin_agent_types__template_key__agents_post: {
         parameters: {
             query?: never;
             header?: {
@@ -30920,6 +30902,40 @@ export interface operations {
             };
         };
     };
+    get_agent_posibles_api_v1_admin_agents__agent_id__posibles_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentPosibles"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     put_agent_skill_api_v1_admin_agents__agent_id__skills__pack_id__put: {
         parameters: {
             query?: never;
@@ -31038,6 +31054,78 @@ export interface operations {
             };
         };
     };
+    get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentScheduleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_agent_flow_options_api_v1_admin_agents__agent_id__flow_options_get: {
         parameters: {
             query?: never;
@@ -31059,6 +31147,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgentFlowOptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentGuardrailsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentGuardrailsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentGuardrailsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentDeclarativeToolsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leer_opciones_api_v1_admin_coordinator_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoordinatorOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guardar_opciones_api_v1_admin_coordinator_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoordinatorOptionsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoordinatorOptions"];
                 };
             };
             /** @description Validation Error */
@@ -38054,6 +38354,42 @@ export interface operations {
             };
         };
     };
+    comprar_recarga_api_v1_admin_plan_recargas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopUpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscribeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_platform_tenants_api_v1_admin_platform_tenants_get: {
         parameters: {
             query?: {
@@ -43801,6 +44137,150 @@ export interface operations {
             };
         };
     };
+    formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormasDePagoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormasDePagoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormasDePagoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComprobantesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstadoDePagoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComprobantesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     calendar_status_api_v1_pack_calendar_status_get: {
         parameters: {
             query?: never;
@@ -46817,649 +47297,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentAccount"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    formas_de_pago_del_agente_api_v1_pack_commerce_agents__agent_id__payment_forms_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FormasDePagoOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    guardar_formas_de_pago_api_v1_pack_commerce_agents__agent_id__payment_forms_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FormasDePagoIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FormasDePagoOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    comprobantes_del_pedido_api_v1_pack_commerce_orders__order_id__payment_proofs_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                order_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ComprobantesOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                order_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EstadoDePagoIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ComprobantesOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_schedule_api_v1_admin_agents__agent_id__schedule_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentScheduleOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    save_agent_schedule_api_v1_admin_agents__agent_id__schedule_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentScheduleIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentScheduleOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    seguimiento_hecho_api_v1_admin_leads__lead_id__seguimiento_hecho_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                lead_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SeguimientoHechoIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    comprar_recarga_api_v1_admin_plan_recargas_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TopUpRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SubscribeResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentGuardrailsOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    save_agent_guardrails_api_v1_admin_agents__agent_id__guardrails_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentGuardrailsIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentGuardrailsOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    save_agent_declarative_tools_api_v1_admin_agents__agent_id__declarative_tools_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentDeclarativeToolsIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDeclarativeToolsOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    leer_opciones_api_v1_admin_coordinator_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CoordinatorOptions"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    guardar_opciones_api_v1_admin_coordinator_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CoordinatorOptionsUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CoordinatorOptions"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_agent_types_api_v1_admin_agent_types_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentTypesOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_skill_catalog_api_v1_admin_skill_catalog_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Skill"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_from_template_api_v1_admin_agent_types__template_key__agents_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                template_key: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FromTemplateIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FromTemplateOut"];
-                };
-            };
-            /** @description Tope o alcance del plan: `error.code` es `plan_limit_agentes`, `plan_plugin_not_included`; `plan_limit_*` trae `error.details = {metric, used, limit}`; `plan_plugin_not_included` trae `error.details = {skills, min_plan, plan}`. No se escribió nada. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_posibles_api_v1_admin_agents__agent_id__posibles_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentPosibles"];
                 };
             };
             /** @description Validation Error */
