@@ -221,6 +221,31 @@ describe("pestaña Agentes", () => {
     expect(await violacionesGraves(container)).toEqual([]);
   });
 
+  it("sin especialistas atiende el Coordinador: estado, habilidades fijas en solo lectura y Crear agente especialista (HU-AOS-95)", async () => {
+    const { container } = await abrir({
+      [`/admin/connections/${WA}/agents`]: [instancias[0]],
+      [`/admin/agents/${AG_COORD}/posibles`]: {
+        type_key: "coordinador",
+        specialty: {
+          id: "core:recepcion", name: "Recepción", description: "Recibe al cliente y capta el lead.", kind: "core",
+          tools: [{ name: "capturar_lead", group: "leads", description: "Guarda el lead", side_effect: null, scopes: [], requires_confirmation_default: false }],
+        },
+        customer_data: [],
+        transversal: [],
+      },
+    });
+    expect(screen.getByText("Atendiendo con el Coordinador (recepción y captura de leads)")).toBeTruthy();
+    expect(screen.getByText("Recepción")).toBeTruthy();
+    expect(screen.getByText("capturar_lead")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Crear agente especialista" }).getAttribute("href")).toBe("/agentes/nuevo");
+    expect(await violacionesGraves(container)).toEqual([]);
+  });
+
+  it("con un especialista no se muestra el estado del Coordinador", async () => {
+    await abrir();
+    expect(screen.queryByText(/Atendiendo con el Coordinador/)).toBeNull();
+  });
+
   it("sin Coordinador: aviso y no deja asignar", async () => {
     await abrir({
       "/admin/connections/console": { ...CONSOLA, items: [{ ...ITEMS[0], coordinator: null }, ...ITEMS.slice(1)] },

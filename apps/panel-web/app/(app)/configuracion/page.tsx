@@ -10,6 +10,7 @@ import type {
   CatalogoConfig,
   Me,
   PluginSummary,
+  SubscriptionProviderSettings,
   WawebPolitica,
   MediaSettings,
   SettingsResponse,
@@ -32,7 +33,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string; seccion?: string }>;
 }) {
   const { tab, seccion } = await searchParams;
-  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, avisoRes, meRes, habilidadesRes, fallidosRes] = await Promise.all([
+  const [res, advancedRes, webChatRes, mediaRes, catalogoRes, bajasRes, avisoRes, meRes, habilidadesRes, fallidosRes, proveedorRes] = await Promise.all([
     apiFetch<SettingsResponse>("/admin/settings"),
     apiFetch<Parameters<typeof SettingsTabs>[0]["advanced"]>("/admin/settings/advanced"),
     apiFetch<WebChatSettings>("/admin/settings/web-chat"),
@@ -46,6 +47,8 @@ export default async function SettingsPage({
     // Filas de Habilidades y Mensajes fallidos del resumen (CFG-11): si no cargan, la fila no aparece.
     apiFetch<PluginSummary[]>("/admin/plugins"),
     apiFetch<{ entries: unknown[] }>("/admin/dlq"),
+    // Quién cobra los planes recurrentes (vivía en la lista de Habilidades, retirada en HU-AOS-95).
+    apiFetch<SubscriptionProviderSettings>("/admin/settings/subscription-provider"),
   ]);
   const cabecera = (
     <PageHeader title="Configuración" description="Cómo se presenta y cómo responde el asistente de este negocio." helpSection="settings" />
@@ -87,6 +90,7 @@ export default async function SettingsPage({
       <SettingsTabs
         esMaster={meRes.ok && meRes.data.role === "master"}
         habilidades={habilidadesRes.ok ? habilidadesRes.data : null}
+        proveedorSuscripciones={proveedorRes.ok && proveedorRes.data.estado !== "sin_proveedor" ? proveedorRes.data : null}
         fallidos={fallidosRes.ok ? fallidosRes.data.entries.length : null}
         advanced={advancedRes.data}
         defaultTab={tab}
