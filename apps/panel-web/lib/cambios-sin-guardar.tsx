@@ -14,6 +14,8 @@ interface Registro {
   marcar: (id: string, sucio: boolean) => void;
   /** ¿Algún formulario tiene cambios? `ignorar` deja fuera al que sigue montado al cambiar de sección. */
   hayCambios: (ignorar?: string) => boolean;
+  /** Ids de las secciones con cambios, para nombrarlas antes de descartar. */
+  cambios: () => string[];
 }
 
 const Contexto = createContext<Registro | null>(null);
@@ -40,6 +42,7 @@ export function useRegistroDeCambios(): Registro {
     (ignorar?: string) => [...sucios.current].some((id) => id !== ignorar),
     [],
   );
+  const cambios = useCallback(() => [...sucios.current], []);
 
   // El navegador también avisa si se cierra la pestaña con cambios sin guardar.
   useEffect(() => {
@@ -51,7 +54,7 @@ export function useRegistroDeCambios(): Registro {
     return () => window.removeEventListener("beforeunload", alSalir);
   }, []);
 
-  return useMemo(() => ({ marcar, hayCambios }), [marcar, hayCambios]);
+  return useMemo(() => ({ marcar, hayCambios, cambios }), [marcar, hayCambios, cambios]);
 }
 
 /**
@@ -100,11 +103,20 @@ export function AvisoAlSalir({
   return <CambiosSinGuardarProvider registro={registro}>{children}</CambiosSinGuardarProvider>;
 }
 
-/** Un formulario avisa si tiene cambios sin guardar; al desmontarse deja de avisar. */
-export function useAvisarCambios(id: string, sucio: boolean): void {
+/**
+ * Un formulario avisa si tiene cambios sin guardar; al desmontarse deja de avisar. Acepta varios ids
+ * cuando un mismo formulario pinta campos de varias secciones (Identidad, Horario, Voz y Calidad).
+ */
+export function useAvisarCambios(id: string | readonly string[], sucio: boolean): void {
   const registro = useContext(Contexto);
+  // La clave evita re-ejecutar el efecto cuando el arreglo se recrea con los mismos ids.
+  const clave = typeof id === "string" ? id : id.join("|");
   useEffect(() => {
-    registro?.marcar(id, sucio);
-    return () => registro?.marcar(id, false);
-  }, [registro, id, sucio]);
+    if (!registro) return;
+    const ids = clave ? clave.split("|") : [];
+    for (const seccion of ids) registro.marcar(seccion, sucio);
+    return () => {
+      for (const seccion of ids) registro.marcar(seccion, false);
+    };
+  }, [registro, clave, sucio]);
 }
