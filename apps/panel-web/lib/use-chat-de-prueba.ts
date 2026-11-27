@@ -58,7 +58,8 @@ export function useChatDePrueba({
     void (async () => {
       const res = await fetch(`/api/playground${consulta ? `?${consulta}` : ""}`).catch(() => null);
       const json = (await res?.json().catch(() => ({}))) as { turns?: TurnoDePrueba[] } | undefined;
-      if (vigente) setTurnos(json?.turns ?? []);
+      // Si el dueño ya escribió mientras llegaba el historial, lo suyo va después (no se pisa).
+      if (vigente) setTurnos((previos) => [...(json?.turns ?? []), ...previos]);
     })();
     return () => {
       vigente = false;

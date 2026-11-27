@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { EditorDeAgente, type BienvenidaDelEditor } from "@/components/domain/agentes/recorrido/editor-de-agente";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -239,6 +239,25 @@ describe("estación 5: la última prueba en el celular", () => {
     expect(screen.getByText("Tomás respondió en el celular. Prueba otra frase o sigue.")).toBeTruthy();
     continuar();
     expect(screen.getByText("1 mensaje de prueba")).toBeTruthy();
+  });
+
+  it("si el historial llega después del primer mensaje, no lo pisa", async () => {
+    let soltarHistorial: (r: Response) => void = () => {};
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation((url: string, init?: RequestInit) =>
+      String(url).startsWith("/api/playground?") ? new Promise<Response>((r) => (soltarHistorial = r)) : base(url, init),
+    );
+    abrir();
+    continuar();
+    fireEvent.change(screen.getByRole("textbox", { name: "Mensaje para Tomás" }), { target: { value: "Hola" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    expect(await screen.findByText("Con gusto. ¿Qué día te sirve?")).toBeTruthy();
+    await act(async () => {
+      soltarHistorial(json({ turns: [] }));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getByText("Con gusto. ¿Qué día te sirve?")).toBeTruthy();
+    expect(screen.getByText("Tomás respondió en el celular. Prueba otra frase o sigue.")).toBeTruthy();
   });
 
   it("al dejar la estación se cierra la prueba (el backend la purga)", async () => {

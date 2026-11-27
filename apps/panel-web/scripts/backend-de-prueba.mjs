@@ -1237,7 +1237,7 @@ if (process.env.DATOS_CLIENTE === "1") {
     version: "abc123def456",
   };
 }
-function nuevoAgente(metodo, ruta) {
+function nuevoAgente(metodo, ruta, cuerpo = {}) {
   if (!NUEVO) return undefined;
   if (metodo === "POST" && ruta === "/admin/agents/from-script" && !NUEVO) {
     return [201, { agent: { id: NUEVO_ID, key: "agenda", name: "Tomás" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
@@ -1246,7 +1246,10 @@ function nuevoAgente(metodo, ruta) {
   if (metodo === "POST" && ruta === `/admin/agents/${NUEVO_ID}/publish`) {
     return [200, {
       version: { id: "v-1", version: 1, created_at: new Date().toISOString(), notes: null }, warnings: [],
-      connections: [{ connection_id: "00000000-0000-4000-8000-0000000000c2", instance: "created", release_id: "00000000-0000-4000-8000-0000000000e1", release_number: 1, release_created: true, error: null }],
+      // Una versión por cada conexión elegida en «¿Dónde atiende?».
+      connections: (cuerpo.connection_ids ?? ["00000000-0000-4000-8000-0000000000c2"]).map((id, i) => (
+        { connection_id: id, instance: "created", release_id: `00000000-0000-4000-8000-0000000000e${i + 1}`, release_number: 1, release_created: true, error: null }
+      )),
     }];
   }
   return undefined;
@@ -2192,7 +2195,18 @@ createServer(async (req, res) => {
       return;
     }
   }
-  const delNuevo = nuevoAgente(req.method ?? "GET", ruta);
+  // Publicar a Tomás (HU-UX-31): la respuesta lleva las conexiones elegidas.
+  let cuerpoDelNuevo = {};
+  if (NUEVO && req.method === "POST" && ruta.endsWith("/publish")) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    try {
+      cuerpoDelNuevo = texto ? JSON.parse(texto) : {};
+    } catch {
+      cuerpoDelNuevo = {};
+    }
+  }
+  const delNuevo = nuevoAgente(req.method ?? "GET", ruta, cuerpoDelNuevo);
   if (delNuevo) {
     res.statusCode = delNuevo[0];
     res.end(JSON.stringify(delNuevo[1]));

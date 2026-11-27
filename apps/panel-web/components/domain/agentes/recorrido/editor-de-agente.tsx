@@ -803,7 +803,8 @@ export function EditorDeAgente({
         // Al crear, «Publicar» ya es la decisión del dueño: se activa enseguida donde atiende (D-SPEC-49-9).
         const activado = await activarAlCrear(resultado);
         setAlPublicar(activado);
-        return { ok: true, success: activado.atiende ? undefined : activado.texto };
+        const nombre = estado.nombre.trim() || "Tu agente";
+        return { ok: true, success: activado.atiende ? `${nombre} quedó publicado y ya atiende.` : activado.texto };
       }
       setPublicado(resultado);
       void recargarAvisos();
