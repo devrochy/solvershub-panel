@@ -47,6 +47,7 @@ const opcion = (
 const catalogo: CatalogoConfig = {
   version: "test",
   opciones: [
+    opcion("brand_voice", "identidad", "texto_largo", "Voz de marca"),
     opcion("persona_tone", "voz", "elegir_una", "Tono de personalidad", {
       valores: [valor("cercano", "Cercano"), valor("formal", "Formal"), valor("neutral", "Neutral"), valor("informal", "Informal")],
     }),

@@ -72,7 +72,7 @@ export const SECCIONES: Seccion[] = [
     grupo: "respuesta",
     titulo: "Voz y estilo",
     descripcion:
-      "La personalidad base del asistente y el ritmo con que envía sus respuestas. La voz se aplica al publicar una versión nueva del agente.",
+      "La voz de tu marca, la personalidad base del asistente y el ritmo con que envía sus respuestas. La voz se aplica al publicar una versión nueva del agente.",
     gruposIdentidad: ["voz", "respuesta"],
   },
   {
@@ -128,6 +128,22 @@ export const SECCIONES: Seccion[] = [
 
 /** Secciones que comparten el formulario (y el único PUT) de identidad. */
 export const SECCIONES_DE_IDENTIDAD: SeccionId[] = SECCIONES.filter((s) => s.gruposIdentidad).map((s) => s.id);
+
+/**
+ * Claves que se muestran en una sección distinta a la de su grupo del catálogo. `brand_voice` se movió
+ * a Voz y estilo; el override hace que también funcione mientras el backend viejo aún la manda en
+ * Identidad (despliegue desfasado del panel y del core).
+ */
+const SECCION_POR_CLAVE: Partial<Record<string, SeccionId>> = { brand_voice: "voz" };
+
+/** Sección que pinta una clave del catálogo, con los overrides de producto. */
+export function seccionDeClave(clave: string, grupo?: GrupoCatalogo): SeccionId | undefined {
+  return SECCION_POR_CLAVE[clave] ?? SECCIONES.find((s) => grupo && s.gruposIdentidad?.includes(grupo))?.id;
+}
+
+export function esSeccionDeIdentidad(id: SeccionId | null | undefined): boolean {
+  return id != null && SECCIONES_DE_IDENTIDAD.includes(id);
+}
 
 export const SECCION_INICIAL: SeccionId = "identidad";
 
@@ -197,20 +213,28 @@ export function consultaConSeccion(consulta: string, id: SeccionId): string {
 }
 
 /**
- * Secciones de identidad donde hay campos con error. Las secciones de identidad guardan juntas
- * (un solo PUT), así que un error puede estar en una sección que la persona no está viendo.
+ * Secciones de identidad donde hay campos de esas claves. Sirve para errores y para cambios: las
+ * secciones de identidad guardan juntas (un solo PUT), así que ambos pueden estar en una sección
+ * que la persona no está viendo.
  */
-export function seccionesConErrores(
-  claves: string[],
+export function seccionesDeClaves(
+  claves: readonly string[],
   grupoDe: (clave: string) => GrupoCatalogo | undefined,
 ): SeccionId[] {
   const encontradas = new Set<SeccionId>();
   for (const clave of claves) {
-    const grupo = grupoDe(clave);
-    const seccion = SECCIONES.find((s) => grupo && s.gruposIdentidad?.includes(grupo));
-    if (seccion) encontradas.add(seccion.id);
+    const seccion = seccionDeClave(clave, grupoDe(clave));
+    if (seccion) encontradas.add(seccion);
   }
   return SECCIONES.filter((s) => encontradas.has(s.id)).map((s) => s.id);
+}
+
+/** Alias histórico: los errores de validación usan la misma repartición que los cambios. */
+export function seccionesConErrores(
+  claves: string[],
+  grupoDe: (clave: string) => GrupoCatalogo | undefined,
+): SeccionId[] {
+  return seccionesDeClaves(claves, grupoDe);
 }
 
 /** Quien puede cambiar la configuración: master o permiso `settings` en escritura. */

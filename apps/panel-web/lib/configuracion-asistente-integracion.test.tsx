@@ -139,7 +139,7 @@ describe("«Ajustar con preguntas» en Configuración", () => {
     expect(campo("business_hours_mode").value).toBe("informativo");
 
     // Guardar a mano manda lo que dejó el asistente.
-    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Guardar/ }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     const [url, init] = fetchMock.mock.calls[2] as [string, RequestInit];
     expect(url).toBe("/api/settings/identity");

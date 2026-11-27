@@ -16346,6 +16346,11 @@ export interface components {
              */
             brand_voice_warning: boolean;
             /**
+             * Language
+             * @default es
+             */
+            language: string;
+            /**
              * Tono
              * @deprecated
              * @default calido
@@ -18070,6 +18075,27 @@ export interface components {
             id: string;
             /** Label */
             label: string;
+            /** Quality */
+            quality: number;
+            /** Tier */
+            tier: string;
+            /**
+             * Legacy
+             * @default false
+             */
+            legacy: boolean;
+            /**
+             * Offered
+             * @default true
+             */
+            offered: boolean;
+            /** Cost Usd */
+            cost_usd: number;
+            /**
+             * Cost Unit
+             * @enum {string}
+             */
+            cost_unit: "minute" | "image";
         };
         /** MediaCatalogProvider */
         MediaCatalogProvider: {

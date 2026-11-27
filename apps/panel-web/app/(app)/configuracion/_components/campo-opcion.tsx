@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpcionConfig } from "@/lib/api/types";
 import { ayudaDeOpcion, dependencia, etiquetaDeValor, valoresConActual } from "@/lib/catalogo-config";
+import { valorEnPalabras } from "@/lib/configuracion-resumen";
 import { CALIDEZ_ETIQUETAS } from "@/lib/onboarding";
 import { type Pendiente } from "@/lib/frases-pendientes";
 import type { Franja } from "@/lib/horario-atencion";
@@ -65,6 +66,21 @@ export function CampoOpcion({
     </a>
   ) : null;
 
+  // Una opción que el backend marca como solo lectura se lee como dato, no como un control roto:
+  // el foco de teclado no la salta y la persona ve su valor y por qué no se edita.
+  if (opcion.solo_lectura) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-sh-label font-medium text-body">{opcion.etiqueta}</span>
+        <span className="text-sm text-headline">{valorEnPalabras(opcion, valor) || "—"}</span>
+        <span className="text-sh-label text-text-soft">
+          {ayuda}
+          {enlace}
+        </span>
+      </div>
+    );
+  }
+
   if (opcion.tipo === "booleano") {
     return (
       <label className="flex flex-col gap-1 text-sm text-headline">
@@ -77,7 +93,7 @@ export function CampoOpcion({
           />
           {opcion.etiqueta}
         </span>
-        <span className="pl-11 text-xs text-text-soft">
+        <span className="pl-11 text-sh-label text-text-soft">
           {error ?? ayuda}
           {enlace}
         </span>
@@ -92,7 +108,7 @@ export function CampoOpcion({
     return (
       <fieldset className="flex flex-col gap-3">
         <legend className="text-sh-label font-medium text-body">{opcion.etiqueta}</legend>
-        <p className="text-xs text-text-soft">
+        <p className="text-sh-label text-text-soft">
           {ayuda}
           {enlace}
         </p>
@@ -112,7 +128,7 @@ export function CampoOpcion({
                 <span className="flex flex-col">
                   {posible.etiqueta}
                   {/* Qué evita esta validación (la declara el pack o el core, SPEC-37). */}
-                  {posible.nota && <span className="text-xs text-text-soft">{posible.nota}</span>}
+                  {posible.nota && <span className="text-sh-label text-text-soft">{posible.nota}</span>}
                 </span>
               </label>
             );
@@ -127,7 +143,7 @@ export function CampoOpcion({
       <Field label={opcion.etiqueta} htmlFor={clave} help={ayuda} error={error}>
         {control()}
       </Field>
-      {enlace && <p className="mt-1 text-xs text-text-soft">{enlace}</p>}
+      {enlace && <p className="mt-1 text-sh-label text-text-soft">{enlace}</p>}
     </>
   );
 
@@ -182,8 +198,9 @@ export function CampoOpcion({
         return (
           <Textarea
             id={clave}
-            rows={3}
+            rows={4}
             disabled={bloqueado}
+            placeholder={opcion.ejemplo || undefined}
             value={String(valor ?? "")}
             onChange={(e) => onChange(clave, e.target.value)}
           />
@@ -231,6 +248,7 @@ export function CampoOpcion({
           <Input
             id={clave}
             disabled={bloqueado}
+            placeholder={opcion.ejemplo || undefined}
             value={String(valor ?? "")}
             onChange={(e) => onChange(clave, e.target.value)}
           />

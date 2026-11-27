@@ -114,10 +114,6 @@ export function VozYEstilo({
 
   return (
     <div className="flex flex-col gap-6">
-      <p role="note" className="rounded-md border border-border-soft bg-status-info-bg p-2 text-xs text-status-info-fg">
-        Tu negocio usa el Agent OS: el nombre, la descripción y la voz se aplican cuando publicas una nueva versión del agente, no al guardar aquí.
-      </p>
-
       <section aria-labelledby="voz-muestra" className="flex flex-col gap-2 rounded-lg border border-border-soft bg-surface-2 p-4">
         <div className="flex items-center justify-between gap-2">
           <h3 id="voz-muestra" className="text-xs font-semibold text-text-soft">

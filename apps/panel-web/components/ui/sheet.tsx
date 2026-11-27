@@ -70,7 +70,7 @@ export function SheetContent({
           {despuesDelTitulo}
           <DialogPrimitive.Close
             aria-label="Cerrar"
-            className="rounded-md p-1 text-text-soft transition-colors hover:bg-hover hover:text-headline"
+            className="rounded-md p-3.5 text-text-soft transition-colors hover:bg-hover hover:text-headline sm:p-2"
           >
             <X className="h-4 w-4" aria-hidden />
           </DialogPrimitive.Close>

@@ -85,7 +85,7 @@ export const GRUPOS_IDENTIDAD: { id: OpcionConfig["grupo"]; titulo: string; desc
   {
     id: "voz",
     titulo: "Cómo habla",
-    descripcion: "La personalidad base con la que responde a tus clientes; se aplica al publicar una versión nueva.",
+    descripcion: "La voz de tu marca y la personalidad base con la que responde a tus clientes; se aplican al publicar una versión nueva.",
   },
   { id: "respuesta", titulo: "Cómo responde", descripcion: "El ritmo y la forma de enviar sus respuestas." },
   { id: "calidad", titulo: "Calidad de las respuestas", descripcion: "Cuándo el asistente piensa más y qué validaciones aplica." },

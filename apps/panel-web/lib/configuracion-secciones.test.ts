@@ -9,6 +9,7 @@ import {
   resolverSeccion,
   SECCIONES,
   seccionesConErrores,
+  seccionesDeClaves,
   seccionesVisibles,
 } from "@/lib/configuracion-secciones";
 
@@ -74,11 +75,16 @@ describe("sección → URL", () => {
   });
 });
 
-describe("errores de validación entre secciones", () => {
+describe("errores y cambios entre secciones", () => {
   it("dice en qué secciones están los campos con error", () => {
     const grupos: Record<string, "voz" | "horario"> = { persona_tone: "voz", business_ranges: "horario" };
     expect(seccionesConErrores(["persona_tone", "business_ranges"], (c) => grupos[c])).toEqual(["horario", "voz"]);
     expect(seccionesConErrores(["desconocida"], () => undefined)).toEqual([]);
+  });
+
+  it("Voz de marca se pinta en Voz y estilo aunque el catálogo viejo la mande en identidad", () => {
+    expect(seccionesDeClaves(["brand_voice"], () => "identidad")).toEqual(["voz"]);
+    expect(seccionesConErrores(["brand_voice"], () => "identidad")).toEqual(["voz"]);
   });
 });
 
