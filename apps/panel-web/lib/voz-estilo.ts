@@ -10,6 +10,28 @@ export const VELOCIDADES = ["rapido", "natural", "pausado"] as const;
 export const VELOCIDADES_SECUNDARIAS = ["inmediato", "corto"] as const;
 export const ENVIOS = ["un_mensaje", "pocos_cortos", "varios_cortos"] as const;
 
+/**
+ * Nombres cortos para las tarjetas. El catálogo conserva la etiqueta completa («Pocos mensajes
+ * cortos»); en una tarjeta de tres columnas esa etiqueta obliga a tres líneas y descompensa la fila.
+ */
+export const TITULO_ENVIO: Record<string, string> = {
+  un_mensaje: "Un solo mensaje",
+  pocos_cortos: "Pocos mensajes",
+  varios_cortos: "Varios mensajes",
+};
+
+/** La consecuencia de cada envío, en el espacio de una línea. */
+export const NOTA_ENVIO: Record<string, string> = {
+  un_mensaje: "1 mensaje · gasta menos",
+  pocos_cortos: "hasta 3 mensajes",
+  varios_cortos: "hasta 6 mensajes",
+};
+
+/** «Responde sin esperar» no cabe en la tarjeta de la velocidad inmediata. */
+export const NOTA_VELOCIDAD: Record<string, string> = {
+  inmediato: "sin esperar",
+};
+
 /** Las dos velocidades que no se ofrecen de entrada pero siguen siendo válidas. */
 export function esVelocidadSecundaria(clave: string): boolean {
   return (VELOCIDADES_SECUNDARIAS as readonly string[]).includes(clave);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { largoDeMaxLength, negocioParaLaMuestra, resumenDeRitmo } from "@/lib/voz-estilo";
+import { largoDeMaxLength, negocioParaLaMuestra, NOTA_ENVIO, NOTA_VELOCIDAD, resumenDeRitmo, TITULO_ENVIO } from "@/lib/voz-estilo";
 
 describe("voz-estilo", () => {
   it("elige el largo de la muestra más cercano al tope guardado", () => {
@@ -20,6 +20,13 @@ describe("voz-estilo", () => {
       "responde sin esperar y envía varios mensajes cortos.",
     );
     expect(resumenDeRitmo(null, { etiqueta: "Un solo mensaje" })).toBe("");
+  });
+
+  it("los nombres cortos cubren las opciones que se muestran", () => {
+    expect(Object.keys(TITULO_ENVIO).sort()).toEqual(["pocos_cortos", "un_mensaje", "varios_cortos"]);
+    expect(NOTA_ENVIO.un_mensaje).toContain("gasta menos");
+    expect(NOTA_ENVIO.pocos_cortos).toBe("hasta 3 mensajes");
+    expect(NOTA_VELOCIDAD.inmediato).toBe("sin esperar");
   });
 
   it("recorta la descripción del negocio sin cortar palabras a la mitad", () => {
