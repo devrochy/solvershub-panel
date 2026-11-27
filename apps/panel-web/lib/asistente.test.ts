@@ -22,9 +22,11 @@ describe("cuerpoIdentidad", () => {
     expect(cuerpoIdentidad(inicial, inicial)).not.toHaveProperty("out_of_hours_default_message");
   });
 
-  it("ya no manda el tono retirado", () => {
+  it("ya no manda el tono retirado ni el idioma de solo lectura", () => {
     const inicial = ajustes.identity;
-    expect(cuerpoIdentidad(inicial, inicial)).not.toHaveProperty("tono");
+    const cuerpo = cuerpoIdentidad(inicial, inicial);
+    expect(cuerpo).not.toHaveProperty("tono");
+    expect(cuerpo).not.toHaveProperty("language");
   });
 
   it("usa la zona del negocio para el horario de atención", () => {

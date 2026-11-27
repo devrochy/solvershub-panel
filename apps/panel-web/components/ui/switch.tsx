@@ -3,11 +3,12 @@
 import { cn } from "@/lib/utils";
 
 /** Tono del interruptor encendido: foco (por defecto), éxito o peligro. */
-export type SwitchTone = "default" | "success" | "danger";
+export type SwitchTone = "default" | "success" | "warning" | "danger";
 
 const TONO: Record<SwitchTone, { pista: string; bola: string }> = {
   default: { pista: "border-focus bg-focus/25", bola: "bg-focus" },
   success: { pista: "border-status-success-border bg-status-success-bg", bola: "bg-status-success-fg" },
+  warning: { pista: "border-status-warning-border bg-status-warning-bg", bola: "bg-status-warning-fg" },
   danger: { pista: "border-status-danger-border bg-status-danger-bg", bola: "bg-status-danger-fg" },
 };
 
@@ -37,15 +38,15 @@ export function Switch({
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill border transition-[background-color,border-color,transform] duration-150 active:scale-95",
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-pill border transition-[background-color,border-color,transform] duration-150 active:scale-95 after:absolute after:-inset-3 after:content-['']",
         checked ? TONO[tone].pista : "border-control-border bg-bg-deep",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
       <span
         className={cn(
-          "block h-3.5 w-3.5 rounded-full transition-transform duration-150",
-          checked ? cn("translate-x-[18px]", TONO[tone].bola) : "translate-x-[3px] bg-text-soft",
+          "block h-4 w-4 rounded-full transition-transform duration-150",
+          checked ? cn("translate-x-[22px]", TONO[tone].bola) : "translate-x-[3px] bg-text-soft",
         )}
       />
     </button>
