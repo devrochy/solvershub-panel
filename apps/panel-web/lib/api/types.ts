@@ -99,7 +99,21 @@ export type BrainSettings = components["schemas"]["BrainSettings"];
 
 // Multimedia entrante (SPEC-04, ADR-0151). Tipos locales hasta que el backend
 // con los endpoints de media esté en `origin/develop` y se regenere el schema.
-export type MediaCatalogModel = { id: string; label: string };
+export type MediaCatalogModel = {
+  id: string;
+  label: string;
+  /** 1–5, definida por capacidad; el panel la muestra como barras + palabra. */
+  quality?: number;
+  /** Identidad de la opción para el panel; no es el nombre del modelo. */
+  tier?: string;
+  /** Válido para configuraciones guardadas, pero no se ofrece como opción nueva. */
+  legacy?: boolean;
+  /** Se ofrece en el panel; un modelo vigente pero dominado puede quedar fuera. */
+  offered?: boolean;
+  /** Costo de referencia por minuto de audio o por imagen estimada. */
+  cost_usd?: number;
+  cost_unit?: "minute" | "image";
+};
 export type MediaCatalogProvider = {
   key: string;
   label: string;
