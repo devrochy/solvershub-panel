@@ -415,3 +415,21 @@ export type AutomatizacionesResponse = {
 export type CronNegocioEjecucion = components["schemas"]["CronNegocioRunOut"];
 export type CronNegocioEjecucionesPage = components["schemas"]["Page_CronNegocioRunOut_"];
 export type NegocioDeCron = components["schemas"]["CronNegocioResumenOut"];
+
+// Pruebas del agente (SPEC-53, HU-AOS-101 a 105, ADR-0212).
+export type EscenarioDePrueba = components["schemas"]["EscenarioDePrueba"];
+export type EscenariosDePrueba = components["schemas"]["EscenariosDePrueba"];
+export type EscenarioDePruebaIn = components["schemas"]["EscenarioDePruebaIn"];
+export type EscenarioDePruebaPatch = components["schemas"]["EscenarioDePruebaPatch"];
+export type EscenariosPropuestos = components["schemas"]["EscenariosPropuestos"];
+export type PruebasEstimado = components["schemas"]["PruebasEstimadoOut"];
+export type PruebasEstimadoDeK = components["schemas"]["PruebasEstimadoDeKOut"];
+export type PruebasCorrida = components["schemas"]["PruebasCorridaOut"];
+export type PruebasCorridaCancelada = components["schemas"]["PruebasCorridaCanceladaOut"];
+export type PruebasInforme = components["schemas"]["PruebasInformeOut"];
+export type PruebasEscenarioInforme = components["schemas"]["PruebasEscenarioInformeOut"];
+export type PruebasIntento = components["schemas"]["PruebasIntentoOut"];
+export type PruebasArreglo = components["schemas"]["PruebasArregloOut"];
+export type PruebasArregloVista = components["schemas"]["PruebasArregloVistaOut"];
+export type PruebasAplicado = components["schemas"]["PruebasAplicadoOut"];
+export type PruebasCambio = components["schemas"]["PruebasCambioOut"];

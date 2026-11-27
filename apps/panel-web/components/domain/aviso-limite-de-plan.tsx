@@ -8,16 +8,25 @@ import { esLimiteDePlan, RUTA_MEJORAR_PLAN, TEXTO_MEJORAR_PLAN } from "@/lib/pla
  * el límite («Tu plan permite 2 agentes publicados y ya tienes 2…», «Tu plan Basic no incluye Instagram…»);
  * aquí se suma el camino para crecer.
  */
-export function AvisoLimiteDePlan({ mensaje }: { mensaje: string }) {
+export function AvisoLimiteDePlan({
+  mensaje,
+  accion = { href: RUTA_MEJORAR_PLAN, label: TEXTO_MEJORAR_PLAN },
+}: {
+  mensaje: string;
+  /** El camino para crecer: por defecto «Mejorar mi plan»; sin saldo de créditos, «Comprar créditos». `null` = solo el aviso. */
+  accion?: { href: string; label: string } | null;
+}) {
   return (
     <div
       role="alert"
       className="flex flex-col gap-2 rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg sm:flex-row sm:items-center sm:justify-between"
     >
       <span>{mensaje}</span>
-      <Link href={RUTA_MEJORAR_PLAN} className="shrink-0 font-medium underline underline-offset-2">
-        {TEXTO_MEJORAR_PLAN}
-      </Link>
+      {accion && (
+        <Link href={accion.href} className="shrink-0 font-medium underline underline-offset-2">
+          {accion.label}
+        </Link>
+      )}
     </div>
   );
 }

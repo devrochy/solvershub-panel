@@ -373,3 +373,37 @@ describe("nivel de IA en la ficha (HU-BILL-24, HU-BILL-27)", () => {
     expect(screen.queryByRole("radio", { name: /Avanzado/ })).toBeNull();
   });
 });
+
+describe("pestaña Pruebas en la ficha (SPEC-53, HU-AOS-105)", () => {
+  const VENTAS = agentes.items[1].ref;
+  const listado = { escenarios: [], tope: 50, ultima_corrida: null };
+  const nombresDePestanas = () => within(screen.getByRole("navigation", { name: /Pestañas de/ })).getAllByRole("link").map((a) => a.textContent);
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("con la bandera apagada en este entorno no hay pestaña, y ?tab=pruebas abre la actividad sin pedir nada", async () => {
+    vi.stubEnv("PRUEBAS_AGENTE_ENABLED", "");
+    Object.assign(respuestas, { "/admin/agents/overview": agentes, "/admin/me": me, [`/admin/agents/${VENTAS}/conversations`]: conversacionesDeAgente });
+    await abrir(VENTAS, { tab: "pruebas" });
+    expect(nombresDePestanas()).not.toContain("Pruebas");
+    expect(llamadas.some((r) => r.includes("/pruebas"))).toBe(false);
+  }, 15_000);
+
+  it("con la bandera encendida, un especialista la muestra con el estado vacío", async () => {
+    vi.stubEnv("PRUEBAS_AGENTE_ENABLED", "1");
+    Object.assign(respuestas, { "/admin/agents/overview": agentes, "/admin/me": me, [`/admin/agents/${VENTAS}/pruebas`]: listado });
+    await abrir(VENTAS, { tab: "pruebas" });
+    expect(nombresDePestanas()).toContain("Pruebas");
+    expect(screen.getByText("Pon a prueba a tu agente", { selector: "p" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Proponer pruebas" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Período" })).toBeNull();
+  }, 15_000);
+
+  it("el Coordinador no tiene pestaña de pruebas", async () => {
+    vi.stubEnv("PRUEBAS_AGENTE_ENABLED", "1");
+    const items = agentes.items.map((a) => (a.ref === VENTAS ? { ...a, kind: "core" } : a));
+    Object.assign(respuestas, { "/admin/agents/overview": { ...agentes, items }, "/admin/me": me, [`/admin/agents/${VENTAS}/conversations`]: conversacionesDeAgente });
+    await abrir(VENTAS);
+    expect(nombresDePestanas()).not.toContain("Pruebas");
+  }, 15_000);
+});
