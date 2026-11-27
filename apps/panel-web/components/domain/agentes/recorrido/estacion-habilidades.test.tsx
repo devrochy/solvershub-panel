@@ -8,6 +8,7 @@ import type { AgentDetail, LlmModelCatalog, Superpower } from "@/lib/api/types";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { ToolsHttpDelAgente } from "@/lib/reglas-y-tools-del-agente";
+import { violacionesGraves } from "@/lib/testing/axe";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
@@ -340,6 +341,16 @@ describe("Estación 2 · Habilidades una pregunta a la vez (HU-UX-28)", () => {
     expect(screen.getAllByText("Paso 2 de 5 · Habilidades").length).toBeGreaterThan(0);
     expect(screen.queryByText(/^Pregunta \d de 3$/)).toBeNull();
     expect(screen.getByRole("button", { name: "Cambiar: ¿Cómo te pagan tus clientes?" })).toBeTruthy();
+  });
+
+  it("sin violaciones graves de axe en cada pregunta, con «Opciones avanzadas» abierta", async () => {
+    const { container } = abrir();
+    expect(await violacionesGraves(container)).toEqual([]);
+    continuar();
+    expect(await violacionesGraves(container)).toEqual([]);
+    continuar();
+    (screen.getByText("Opciones avanzadas").closest("details") as HTMLDetailsElement).open = true;
+    expect(await violacionesGraves(container)).toEqual([]);
   });
 
   it("Personalizar sigue con su página de Habilidades completa, con las tools HTTP", () => {
