@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 export type EstacionResumida<Id extends string> = { id: Id; titulo: string; resumen: string };
 
 /**
- * «Revisar y publicar» (estación 5 de Nuevo agente, HU-AOS-86, tablero `rn5`): las estaciones ya
- * hechas, cada una con lo que quedó y «Editar», que vuelve a ella sin perder nada. El ✓ va con la
- * palabra «hecha» para el lector: el estado nunca va solo por el color.
+ * «¿Todo quedó como querías?» (estación 5, HU-UX-31, tablero `E5S`): las estaciones ya hechas, cada una con lo
+ * que quedó y «Cambiar», que vuelve a ella sin perder nada. El ✓ va con la palabra «hecha» para el lector: el
+ * estado nunca va solo por el color.
  */
 export function ResumenDeEstaciones<Id extends string>({
   estaciones,
@@ -32,8 +32,8 @@ export function ResumenDeEstaciones<Id extends string>({
             <span className="font-semibold text-headline">{e.titulo}</span>
             <span className="sr-only"> (hecha)</span> <span className="text-text-soft">{e.resumen}</span>
           </p>
-          <Button variant="ghost" size="sm" onClick={() => onEditar(e.id)} aria-label={`Editar ${e.titulo}`}>
-            Editar
+          <Button variant="ghost" size="sm" onClick={() => onEditar(e.id)} aria-label={`Cambiar ${e.titulo}`}>
+            Cambiar
           </Button>
         </li>
       ))}

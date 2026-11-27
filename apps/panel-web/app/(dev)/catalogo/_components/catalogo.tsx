@@ -16,14 +16,19 @@ import { TablaResponsiva } from "@/components/domain/tabla-responsiva";
 import { SelectorDeHorario } from "@/app/(onboarding)/bienvenida/_components/selector-de-horario";
 import {
   DemoChatSimulado,
-  DemoEscenario,
-  DemoEscenarioDeLaBienvenida,
   DemoNombreSugerido,
   DemoOpcionesRecomendadas,
   DemoRecorridoEnRuta,
   DemoRutaDeEstaciones,
 } from "@/app/(dev)/catalogo/_components/ruta-de-lanzamiento";
-import { DemoBurbuja, DemoCelular, DemoListaDePreguntas, DemoOpcionesAvanzadas } from "@/app/(dev)/catalogo/_components/una-pregunta-a-la-vez";
+import {
+  DemoBurbuja,
+  DemoCelular,
+  DemoListaDePreguntas,
+  DemoNivelDeIa,
+  DemoOpcionesAvanzadas,
+  DemoUltimaPrueba,
+} from "@/app/(dev)/catalogo/_components/una-pregunta-a-la-vez";
 import { TarjetaElegible } from "@/components/ui/elegibles";
 import { BarraDePasos } from "@/components/ui/barra-de-pasos";
 import { VistaPreviaWhatsApp } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
@@ -252,12 +257,13 @@ export const GRUPOS: Grupo[] = [
       { id: "ruta-estaciones", titulo: "Ruta de estaciones" },
       { id: "ruta-opciones", titulo: "Opción con ícono y Recomendado" },
       { id: "ruta-nombre", titulo: "Nombre sugerido" },
-      { id: "ruta-escenario", titulo: "Escenario" },
       { id: "ruta-chat", titulo: "Chat simulado por estación" },
       { id: "ruta-preguntas", titulo: "Una pregunta a la vez" },
       { id: "ruta-avanzadas", titulo: "Opciones avanzadas" },
       { id: "ruta-celular", titulo: "Celular con canales" },
       { id: "ruta-burbuja", titulo: "Burbuja «Probar el chat»" },
+      { id: "ruta-ultima-prueba", titulo: "Última prueba en el celular" },
+      { id: "ruta-nivel-ia", titulo: "Nivel de IA en la estación 5" },
       { id: "ruta-cascaron", titulo: "Recorrido en disposición ruta" },
     ],
   },
@@ -1109,28 +1115,10 @@ export function Catalogo() {
             <DemoNombreSugerido />
           </Seccion>
           <Seccion
-            id="ruta-escenario"
-            titulo="Escenario"
-            cuando="ya no se usa en la ruta: desde HU-UX-26 va el celular a la derecha. Queda aquí hasta retirarlo en HU-UX-31."
-            no="pantallas nuevas: usa «Celular con canales»."
-            piezas="SPEC-49 · EscenarioPantallaCompleta · EscenarioTarjeta · FranjaDelEscenario · TarjetaDelEscenario · AnilloDeListo · tokens escena-*"
-          >
-            <DemoEscenario />
-          </Seccion>
-          <Seccion
-            id="ruta-escenario-bienvenida"
-            titulo="Escenario de la bienvenida por estación"
-            cuando="ya no se usa en la bienvenida: desde HU-UX-26 va el celular a la derecha. Queda aquí hasta retirarlo en HU-UX-31."
-            no="pantallas nuevas: usa «Celular con canales»."
-            piezas="HU-UX-25 · escenarioDeLaBienvenida · MarcoDeBienvenida"
-          >
-            <DemoEscenarioDeLaBienvenida />
-          </Seccion>
-          <Seccion
             id="ruta-chat"
             titulo="Chat simulado por estación"
             cuando="el dueño quiere probar en cada estación: mensajes de prueba por estación y tipo, «escribiendo…» y una respuesta fija, sin modelo ni red. Sin cifras en las estaciones 1 a 3; desde la 4, solo lo cargado."
-            no="la prueba real de la estación 5 (esa habla con el agente)."
+            no="la prueba real de la estación 5: esa habla con el agente (`ChatDelCelular`)."
             piezas="SPEC-49 · ChatDeVistaPrevia · sugerenciasPorEstacion · respuestaDePrueba · rotuloDePruebas"
           >
             <DemoChatSimulado />
@@ -1170,6 +1158,24 @@ export function Catalogo() {
             piezas="HU-UX-26 · BurbujaDePrueba · Sheet"
           >
             <DemoBurbuja />
+          </Seccion>
+          <Seccion
+            id="ruta-ultima-prueba"
+            titulo="Última prueba en el celular"
+            cuando="la estación 5 pide «Hazle una última prueba»: el celular habla de verdad con el agente (el borrador en Nuevo agente, la conexión de pruebas en la bienvenida), con frases para tocar, una caja que escribe y el aviso «Escribe aquí para probar a {nombre}», que se cierra al escribir, al tocar una frase o con la ×."
+            no="las estaciones 1 a 4 (su chat es simulado: «Celular con canales»)."
+            piezas="HU-UX-31 · ChatDelCelular · useChatDePrueba · CelularDeVistaPrevia pantalla · avisoDeLaPrueba"
+          >
+            <DemoUltimaPrueba />
+          </Seccion>
+          <Seccion
+            id="ruta-nivel-ia"
+            titulo="Nivel de IA en la estación 5"
+            cuando="«Opciones avanzadas» de Revisar y publicar: el nivel con que responde, su gasto aproximado, lo que trae el plan y «Cambiar» (enlace a la ficha en Nuevo agente, texto en la bienvenida)."
+            no="cambiar el nivel en el recorrido: eso es `NivelDeIa`, en la ficha del agente."
+            piezas="HU-UX-31 · LineaDelNivelDeIa · lib/nivel-ia"
+          >
+            <DemoNivelDeIa />
           </Seccion>
           <Seccion
             id="ruta-cascaron"

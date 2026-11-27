@@ -64,6 +64,7 @@ export function RecorridoDelAgente({
   extremo,
   celular,
   avisoEnLaBurbuja = false,
+  terminado = false,
   estado,
   children,
   className,
@@ -98,6 +99,8 @@ export function RecorridoDelAgente({
   celular?: ReactNode;
   /** El punto de aviso en la burbuja (la última prueba de la estación 5). */
   avisoEnLaBurbuja?: boolean;
+  /** Ya se publicó: todas las estaciones van con la V (HU-UX-31). */
+  terminado?: boolean;
   /** En el pie, antes de la acción principal: «Faltan 2 preguntas» (solo en `ruta`). */
   estado?: string;
   children: ReactNode;
@@ -135,6 +138,7 @@ export function RecorridoDelAgente({
               onIr={onIr}
               etiqueta={etiquetaDePasos}
               forma="estaciones"
+              terminado={terminado}
               className="min-w-0 flex-1"
             />
             {extremo && <div className="shrink-0">{extremo}</div>}

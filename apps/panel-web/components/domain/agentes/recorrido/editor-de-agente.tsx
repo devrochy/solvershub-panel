@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { RotateCcw } from "lucide-react";
 
 import {
   PasoFlujo,
@@ -17,7 +18,6 @@ import { AccionesDelAgente } from "@/components/domain/agentes/acciones-del-agen
 import { DatosDelAgente } from "@/components/domain/agentes/datos-del-agente";
 import { PasoDatos, type Cargado } from "@/components/domain/agentes/paso-datos";
 import { PasoLoCargado } from "@/components/domain/agentes/paso-lo-cargado";
-import { PasoProbarBorrador } from "@/components/domain/agentes/paso-probar-borrador";
 import { AvisoDeReferenciasRetiradas } from "@/components/domain/aviso-de-referencias-retiradas";
 import { AvisoLimiteDePlan } from "@/components/domain/aviso-limite-de-plan";
 import { RecorridoDelAgente, type VistaPreviaDelPaso } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
@@ -82,7 +82,6 @@ import { habilidadLabel } from "@/lib/labels";
 import { esLimiteDePlan } from "@/lib/plan-limite";
 import { avisosDelBorrador, referenciasDelError } from "@/lib/referencias-retiradas";
 import { useAction } from "@/lib/use-action";
-import { sugerenciasDePrueba } from "@/lib/carga-de-datos";
 import { FormasDePagoDelAgente } from "@/components/domain/agentes/formas-de-pago-del-agente";
 import { HorarioDelAgenteEditable } from "@/components/domain/agentes/horario-del-agente";
 import { ReglasDelAgenteEditable } from "@/components/domain/agentes/reglas-del-agente";
@@ -101,6 +100,16 @@ import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resum
 import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
 import { TIPOS_DE_NEGOCIO } from "@/lib/onboarding";
 import { MarcoDeBienvenida } from "@/components/domain/agentes/recorrido/marco-de-bienvenida";
+import { ChatDelCelular, SIN_ENVIAR_NADA } from "@/components/domain/agentes/recorrido/chat-del-celular";
+import {
+  AVANZADAS_DE_REVISAR,
+  avisoDeLaPrueba,
+  frasesDeLaUltimaPrueba,
+  LineaDelNivelDeIa,
+  nombreDeLaConexion,
+  preguntasDeRevisar,
+} from "@/components/domain/agentes/recorrido/preguntas-de-revisar";
+import { useChatDePrueba } from "@/lib/use-chat-de-prueba";
 import { semaforo } from "@/lib/listo-para-responder";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
@@ -141,7 +150,7 @@ const EN_LA_RUTA: Partial<Record<PasoId, { titulo: string; corto: string }>> = {
   conocimiento: { titulo: "Datos para probar", corto: "Datos para probar" },
   probar: { titulo: "Revisar y publicar", corto: "Revisar y publicar" },
 };
-/** La estación de la ruta de cada paso de la creación (para el chat simulado del escenario). */
+/** La estación de la ruta de cada paso de la creación (para el chat simulado del celular). */
 const ESTACION_DEL_PASO: Partial<Record<PasoId, EstacionDeLaRuta>> = {
   habilidades: "habilidades",
   "datos-cliente": "datos-cliente",
@@ -156,11 +165,13 @@ const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
   conocimiento: "¿Con qué {lo} probamos a {nombre}?",
   probar: "Revisa y publica a {nombre}",
 };
+/** Debajo de la pregunta de la estación 5, en los dos recorridos (tablero `E5S`). */
+const BAJADA_DE_REVISAR = "Revisa, pruébalo una vez y elige dónde atiende.";
 /** La pregunta de cada estación en la bienvenida (tableros `rb2`–`rb5`); «Datos para probar» va por tipo. */
 const PREGUNTA_EN_LA_BIENVENIDA: Partial<Record<PasoId, string>> = {
   habilidades: "¿Qué sabe hacer {nombre}?",
   "datos-cliente": "¿Qué datos pide {nombre}?",
-  probar: "La última vuelta antes de atender",
+  probar: "Revisa y publica a {nombre}",
 };
 const DATOS_PARA_PROBAR: Partial<Record<string, string>> = {
   ventas: "Dale a {nombre} algo que vender",
@@ -170,7 +181,7 @@ const DATOS_PARA_PROBAR: Partial<Record<string, string>> = {
 const BAJADA_EN_LA_BIENVENIDA: Partial<Record<PasoId, string>> = {
   "datos-cliente": "Lo que le pregunta a cada cliente para atenderlo. Viene con lo justo.",
   conocimiento: "Datos de ejemplo para probar cómo responde en el chat. Puedes seguir sin cargar nada.",
-  probar: "Revisa lo que configuraste y escríbele una vez como cliente.",
+  probar: BAJADA_DE_REVISAR,
 };
 const PASO_UNO_DE_LA_CREACION = { id: "tipo", titulo: "Tipo", corto: "Tipo" };
 
@@ -186,8 +197,8 @@ type Respuesta = {
 };
 
 /**
- * La bienvenida (HU-UX-25) usa el editor para sus estaciones 2 a 5, a pantalla completa con el escenario a la
- * izquierda. La 1 («Tu negocio») escribe en el negocio y vive en `/bienvenida`: aquí se ve hecha en la ruta y
+ * La bienvenida (HU-UX-25) usa el editor para sus estaciones 2 a 5, a pantalla completa con el celular a la
+ * derecha. La 1 («Tu negocio») escribe en el negocio y vive en `/bienvenida`: aquí se ve hecha en la ruta y
  * volver a ella lo decide `volverA`.
  */
 export type BienvenidaDelEditor = {
@@ -197,15 +208,14 @@ export type BienvenidaDelEditor = {
   volverA: (numero: number) => void;
   /** Guarda en el recorrido la estación (1 a 5) a la que se llega. */
   avanzar: (numero: number) => void;
-  /**
-   * «Seguir después», con el nombre del agente y cómo guardar lo de la estación antes de salir. `enEscenario`:
-   * va en la franja oscura del celular.
-   */
-  seguirDespues: (opciones: { nombre: string; guardar: () => Promise<boolean>; enEscenario: boolean }) => ReactNode;
+  /** «Seguir después», con el nombre del agente y cómo guardar lo de la estación antes de salir. */
+  seguirDespues: (opciones: { nombre: string; guardar: () => Promise<boolean> }) => ReactNode;
   /** Vuelve a dejar el agente listo antes de «Pruébalo», con lo último configurado. Devuelve el error, si hubo. */
   prepararPrueba: () => Promise<string | null>;
-  /** El chat de prueba de la bienvenida, por la conexión de pruebas; lo cargado en la estación 4 va primero en las frases. */
-  prueba: (cargados: readonly RegistroDePrueba[]) => ReactNode;
+  /** La conexión de pruebas donde quedó listo (`dejar-listo`): la última prueba va por ahí. `null` si aún no hay. */
+  conexionDePrueba: string | null;
+  /** El agente contestó en la última prueba: el recorrido lo recuerda y deja terminar. */
+  onRespuesta: () => void;
   /** Ya le escribió a su agente: se puede terminar. */
   probado: boolean;
   /** Deja el agente listo con lo último y da por terminado el recorrido. */
@@ -249,6 +259,7 @@ export function EditorDeAgente({
   accionesDelFlujo = [],
   negocio = { nombre: "", voz: null, resumenDeVoz: null, horario: null, motivos: null },
   modeloEfectivo = null,
+  incluyeAvanzado = null,
   puedeEditar = true,
   modo = "editar",
   bienvenida,
@@ -293,6 +304,8 @@ export function EditorDeAgente({
   negocio?: NegocioDelEditor;
   /** El modelo con el que atenderá (HU-AOS-79), solo para mostrarlo en Publicar. */
   modeloEfectivo?: { nombre: string; origen: "negocio" | "agente" } | null;
+  /** ¿El plan incluye el nivel de IA Avanzado? `null` si no se pudo leer (estación 5, «Opciones avanzadas»). */
+  incluyeAvanzado?: boolean | null;
   /** Sin permiso de escritura: se ve todo, sin guardar ni publicar. */
   puedeEditar?: boolean;
   /** `crear`: continuación de Nuevo agente (pasos en orden, «Siguiente» guarda). `bienvenida`: estaciones 2 a 5 del primer uso. */
@@ -384,6 +397,19 @@ export function EditorDeAgente({
   const [abiertaDeDatos, setAbiertaDeDatos] = useState<number | null>(() => (paso === "datos-cliente" ? 0 : null));
   // Lo recomendado de la estación 3: los niveles por defecto y las entregas y la memoria con que llegó el agente.
   const [recomendadoDeDatos] = useState<RecomendadoDeDatos>(() => ({ metodos, herramientas }));
+  // Estación 5 de la ruta (HU-UX-31): la pregunta abierta, el aviso del celular y cómo quedó al publicar en Nuevo agente.
+  const [abiertaDeRevisar, setAbiertaDeRevisar] = useState(0);
+  const [avisoCerrado, setAvisoCerrado] = useState(false);
+  const [alPublicar, setAlPublicar] = useState<{ atiende: boolean; texto: string } | null>(null);
+  // La última prueba, de verdad (D-SPEC-52-7): el borrador en Nuevo agente, la conexión de pruebas en la bienvenida.
+  // Una sola conversación aunque el celular se pinte dos veces (columna y panel lateral).
+  const conexionDePrueba = enBienvenida ? bienvenida.conexionDePrueba : null;
+  const prueba = useChatDePrueba({
+    agenteId: creacionRapida ? agente.id : undefined,
+    conexionId: conexionDePrueba ?? undefined,
+    activo: comoCreacionRapida && paso === "probar" && (creacionRapida || Boolean(conexionDePrueba)),
+    alRecibirRespuesta: () => bienvenida?.onRespuesta(),
+  });
 
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
@@ -592,6 +618,8 @@ export function EditorDeAgente({
     if (!primero) return;
     const destino = pasoDelCampo(primero);
     if (destino === "habilidades" && comoCreacionRapida) abrirLaDelError(campos);
+    // Lo de las conexiones se ve en «¿Dónde atiende?»; lo de otro paso, en la revisión.
+    if (comoCreacionRapida && !deLaRuta.includes(destino)) setAbiertaDeRevisar(destino === "publicar" ? 2 : 0);
     // En la ruta solo se ven 4 estaciones del editor: lo de otro paso se avisa en «Revisar y publicar».
     irA(comoCreacionRapida && !deLaRuta.includes(destino) ? "probar" : destino);
   }
@@ -602,6 +630,8 @@ export function EditorDeAgente({
    */
   function irA(id: PasoId, haciaAdelante = false) {
     if (id === "datos-cliente") setAbiertaDeDatos((a) => a ?? (haciaAdelante ? 0 : Number.MAX_SAFE_INTEGER));
+    // La estación 5 abre siempre en su primera pregunta: la revisión de lo que se acaba de cambiar.
+    if (id === "probar" && paso !== "probar") setAbiertaDeRevisar(0);
     setPaso(id);
   }
 
@@ -771,7 +801,10 @@ export function EditorDeAgente({
       resultado = json as EditorPublishOut;
       if (creacionRapida) {
         // Al crear, «Publicar» ya es la decisión del dueño: se activa enseguida donde atiende (D-SPEC-49-9).
-        return { ok: true, success: await activarAlCrear(resultado) };
+        const activado = await activarAlCrear(resultado);
+        setAlPublicar(activado);
+        const nombre = estado.nombre.trim() || "Tu agente";
+        return { ok: true, success: activado.atiende ? `${nombre} quedó publicado y ya atiende.` : activado.texto };
       }
       setPublicado(resultado);
       void recargarAvisos();
@@ -784,32 +817,40 @@ export function EditorDeAgente({
    * Estación 5 de Nuevo agente (HU-AOS-86): activa la versión recién publicada en las conexiones de
    * «Dónde atiende» (si el usuario puede activar) y dice cómo quedó. Un fallo no deshace la publicación.
    */
-  async function activarAlCrear(hecho: EditorPublishOut): Promise<string> {
+  async function activarAlCrear(hecho: EditorPublishOut): Promise<{ atiende: boolean; texto: string }> {
     const nombre = estado.nombre.trim() || "Tu agente";
     const listas = hecho.connections.filter((c) => c.release_id && !c.error);
-    if (!puedeActivar) return `${nombre} quedó publicado. Lo activa el propietario del negocio desde su ficha.`;
-    if (listas.length === 0) return `${nombre} quedó publicado, pero ninguna conexión quedó lista para activarlo: revísalo desde su ficha.`;
+    if (!puedeActivar) return { atiende: false, texto: `${nombre} quedó publicado. Lo activa el propietario del negocio desde su ficha.` };
+    if (listas.length === 0) {
+      return { atiende: false, texto: `${nombre} quedó publicado, pero ninguna conexión quedó lista para activarlo: revísalo desde su ficha.` };
+    }
     const fallidas: string[] = [];
+    const activas: string[] = [];
     for (const c of listas) {
       const res = await fetch("/api/agent-editor/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ connection_id: c.connection_id, release_id: c.release_id }),
       }).catch(() => null);
-      if (!res?.ok) {
-        const destino = destinos.find((d) => d.connection_id === c.connection_id);
-        fallidas.push(destino?.label || destino?.channel || "una conexión");
-      }
+      const destino = destinos.find((d) => d.connection_id === c.connection_id);
+      const visible = destino ? nombreDeLaConexion(destino) : "una conexión";
+      if (res?.ok) activas.push(visible);
+      else fallidas.push(visible);
     }
     if (fallidas.length > 0) {
-      return `${nombre} quedó publicado, pero no se activó en ${fallidas.join(", ")}: actívalo desde su ficha.`;
+      return { atiende: false, texto: `${nombre} quedó publicado, pero no se activó en ${fallidas.join(", ")}: actívalo desde su ficha.` };
     }
-    return `${nombre} quedó publicado y ya atiende.`;
+    // «Atiende en Chat web y WhatsApp.» (tablero `E5S`); sin WhatsApp, cómo sumarlo.
+    const conWhatsApp = destinos.some((d) => d.channel === "whatsapp" && activas.includes(nombreDeLaConexion(d)));
+    return {
+      atiende: true,
+      texto: `Atiende en ${activas.join(" y ")}.${conWhatsApp ? "" : " Cuando conectes WhatsApp, lo activas desde Conexiones."}`,
+    };
   }
 
-  /** «Publicar a {nombre}» (estación 5): publica la versión 1, la activa y va a la ficha del agente. */
+  /** «Publicar a {nombre}» (estación 5): publica la versión 1 y la activa; la estación muestra cómo quedó. */
   async function publicarAlCrear() {
-    if (await publicar()) router.push(`/agentes/${agente.id}`);
+    await publicar();
   }
 
   async function activar(connectionId: string, releaseId: string, nombre: string) {
@@ -1045,6 +1086,140 @@ export function EditorDeAgente({
     datosDelCliente
   );
 
+  // Estación 5 de la ruta (HU-UX-31): la revisión, la última prueba en el celular y dónde atiende, una a la vez.
+  const nombreEnLaRuta = estado.nombre.trim() || "tu agente";
+  const mensajesDePrueba = prueba.turnos.filter((t) => t.role === "user").length;
+  // En la bienvenida lo recuerda el recorrido (`probado_en`); en Nuevo agente, la respuesta de esta visita.
+  const probadoEnLaRuta = enBienvenida ? bienvenida.probado : prueba.turnos.some((t) => t.role === "assistant");
+  const sinConexionDePrueba = enBienvenida && !conexionDePrueba;
+  const estacionesHechas = enBienvenida
+    ? [
+        { id: "negocio" as const, titulo: "Tu negocio", resumen: resumenDelNegocio },
+        ...PASOS_DE_LA_BIENVENIDA.filter((p) => p !== "probar").map((p) => ({ id: p, titulo: EN_LA_RUTA[p]?.titulo ?? p, resumen: resumenDeEstacion(p) })),
+      ]
+    : PASOS_DE_LA_CREACION.filter((p) => p !== "probar").map((p) => ({ id: p, titulo: EN_LA_RUTA[p]?.titulo ?? p, resumen: resumenDeEstacion(p) }));
+  const preguntasDeLaEstacion5 = preguntasDeRevisar({
+    nombre: nombreEnLaRuta,
+    pendientes: requisitos.length + fueraDeLaRuta.length,
+    revision: (
+      <div className="flex flex-col gap-4">
+        {creacionRapida && (
+          <SemaforoListo
+            semaforo={semaforo({
+              requisitos,
+              formas,
+              superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
+              conDatos: cargados.length > 0,
+            })}
+          />
+        )}
+        <ResumenDeEstaciones<PasoId | "negocio">
+          estaciones={estacionesHechas}
+          onEditar={(id) => (id === "negocio" ? bienvenida?.volverA(1) : irA(id))}
+        />
+        <AvisoDeRequisitos
+          requisitos={requisitos}
+          titulo="Queda por configurar después"
+          bajada={
+            enBienvenida
+              ? `${nombreEnLaRuta} ya puede responder. Esto lo haces después de terminar.`
+              : `${nombreEnLaRuta} ya puede responder. Esto lo haces ahora o después.`
+          }
+          sinEnlaces={enBienvenida}
+        />
+        {fueraDeLaRuta.length > 0 && (
+          <p role="alert" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+            Hay algo por revisar en {fueraDeLaRuta.map((p) => `«${PASOS.find((x) => x.id === p)?.titulo ?? p}»`).join(", ")}.{" "}
+            {enBienvenida ? (
+              "Lo ajustas después en Personalizar."
+            ) : (
+              <>
+                <Link className="underline" href={rutaDePersonalizar(agente.id, { paso: fueraDeLaRuta[0] })}>
+                  Ábrelo en Personalizar
+                </Link>
+                .
+              </>
+            )}
+          </p>
+        )}
+        {requisitos.length === 0 && fueraDeLaRuta.length === 0 && (
+          <p className="text-sm text-body">No queda nada por configurar: {nombreEnLaRuta} ya puede atender.</p>
+        )}
+      </div>
+    ),
+    prueba: {
+      mensajes: mensajesDePrueba,
+      probado: probadoEnLaRuta,
+      exigida: enBienvenida,
+      contenido: sinConexionDePrueba ? (
+        <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+          {nombreEnLaRuta} todavía no está listo para probar. Vuelve a «Datos para probar» y sigue otra vez.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {/* Por debajo de 1280 px el celular va en la burbuja. */}
+          <p className="text-sm text-body xl:hidden">Toca «Probar el chat», abajo a la derecha, para escribirle.</p>
+          {probadoEnLaRuta ? (
+            <p role="status" className="text-sm text-status-success-fg">
+              {nombreEnLaRuta} respondió en el celular. Prueba otra frase o sigue.
+            </p>
+          ) : (
+            enBienvenida && (
+              <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
+                Para publicar a {nombreEnLaRuta}, envíale al menos una frase.
+              </p>
+            )
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <p className="text-sm text-text-soft">{SIN_ENVIAR_NADA}</p>
+            {mensajesDePrueba > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => void prueba.reiniciar()} disabled={prueba.cargando}>
+                <RotateCcw className="h-4 w-4" aria-hidden />
+                Reiniciar conversación
+              </Button>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    canales: enBienvenida
+      ? { tipo: "informativa" }
+      : {
+          tipo: "conexiones",
+          destinos,
+          destinosError,
+          elegidas,
+          alternar: (id, activo) => setElegidas((e) => (activo ? [...new Set([...e, id])] : e.filter((x) => x !== id))),
+          error: errores.connection_ids,
+        },
+  });
+  const faltanDeLaEstacion5 = preguntasDeLaEstacion5.length - Math.min(abiertaDeRevisar, preguntasDeLaEstacion5.length);
+  // «Escribe aquí para probar a Laura»: con la última prueba abierta, hasta escribir, tocar una frase o la ×.
+  const avisoVisible =
+    comoCreacionRapida &&
+    paso === "probar" &&
+    !alPublicar &&
+    abiertaDeRevisar === 1 &&
+    !avisoCerrado &&
+    !sinConexionDePrueba &&
+    mensajesDePrueba === 0;
+  const revisarEnLaRuta = alPublicar ? (
+    <p className="max-w-2xl text-body">
+      Sus conversaciones aparecen en su ficha. Cómo habla, su horario y su flujo los ajustas cuando quieras en Personalizar.
+    </p>
+  ) : (
+    <div className="flex flex-col gap-6">
+      <ListaDePreguntas preguntas={preguntasDeLaEstacion5} abierta={abiertaDeRevisar} onAbrir={setAbiertaDeRevisar} />
+      <OpcionesAvanzadas descripcion={AVANZADAS_DE_REVISAR}>
+        <LineaDelNivelDeIa
+          nivel={agente.nivel_ia ?? "estandar"}
+          incluyeAvanzado={incluyeAvanzado}
+          hrefCambiar={enBienvenida ? undefined : `/agentes/${agente.id}?tab=consumo`}
+        />
+      </OpcionesAvanzadas>
+    </div>
+  );
+
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
   const sugerido = guionSugerido(semillaDelFlujo ?? flujoInicial, bloquesDelGuion, accionesDelFlujo);
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
@@ -1226,92 +1401,8 @@ export function EditorDeAgente({
         </section>
       </div>
     ),
-    probar: enBienvenida ? (
-      <div className="flex flex-col gap-8">
-        <ResumenDeEstaciones<PasoId | "negocio">
-          estaciones={[
-            { id: "negocio", titulo: "Tu negocio", resumen: resumenDelNegocio },
-            ...PASOS_DE_LA_BIENVENIDA.filter((p) => p !== "probar").map((p) => ({
-              id: p,
-              titulo: EN_LA_RUTA[p]?.titulo ?? p,
-              resumen: resumenDeEstacion(p),
-            })),
-          ]}
-          onEditar={(id) => (id === "negocio" ? bienvenida.volverA(1) : irA(id))}
-        />
-        {fueraDeLaRuta.length > 0 && (
-          <p role="alert" className="max-w-xl rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
-            Hay algo por revisar en {fueraDeLaRuta.map((p) => `«${PASOS.find((x) => x.id === p)?.titulo ?? p}»`).join(", ")}.
-            Lo ajustas después en Personalizar.
-          </p>
-        )}
-        <section aria-labelledby="ultima-prueba" className="flex flex-col gap-3">
-          <h2 id="ultima-prueba" className="font-display text-sh-block text-headline">
-            Última prueba: qué le escribes
-          </h2>
-          {bienvenida.prueba(cargados)}
-          {!bienvenida.probado && (
-            <p role="status" className="rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
-              Para publicar a {estado.nombre.trim() || "tu agente"}, envíale al menos una frase aquí.
-            </p>
-          )}
-        </section>
-        <p className="text-sm text-text-soft">
-          Queda listo en tu chat de pruebas, cerrado al público. Cómo habla, su horario y su flujo los ajustas después en
-          Personalizar; cuando conectes tu WhatsApp, lo activas desde Conexiones.
-        </p>
-      </div>
-    ) : creacionRapida ? (
-      <div className="flex flex-col gap-8">
-        <SemaforoListo
-          semaforo={semaforo({
-            requisitos,
-            formas,
-            superpoderesActivos: Object.values(estado.superpoderes).filter((p) => p.activo).length,
-            conDatos: cargados.length > 0,
-          })}
-        />
-        <ResumenDeEstaciones
-          estaciones={PASOS_DE_LA_CREACION.filter((p) => p !== "probar").map((p) => ({
-            id: p,
-            titulo: EN_LA_RUTA[p]?.titulo ?? p,
-            resumen: resumenDeEstacion(p),
-          }))}
-          onEditar={irA}
-        />
-        {fueraDeLaRuta.length > 0 && (
-          <p role="alert" className="max-w-xl rounded-md bg-status-warning-bg px-3 py-2 text-sm text-status-warning-fg">
-            Hay algo por revisar en {fueraDeLaRuta.map((p) => `«${PASOS.find((x) => x.id === p)?.titulo ?? p}»`).join(", ")}.{" "}
-            <Link className="underline" href={rutaDePersonalizar(agente.id, { paso: fueraDeLaRuta[0] })}>
-              Ábrelo en Personalizar
-            </Link>
-            .
-          </p>
-        )}
-        <section aria-labelledby="ultima-prueba" className="flex flex-col gap-3">
-          <h3 id="ultima-prueba" className="font-display text-sh-block text-headline">
-            Última prueba
-          </h3>
-          <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
-        </section>
-        <PasoPublicar
-          destinos={destinos}
-          destinosError={destinosError}
-          requisitos={requisitos}
-          elegidas={elegidas}
-          alternar={(id, activo) => setElegidas((e) => (activo ? [...new Set([...e, id])] : e.filter((x) => x !== id)))}
-          errores={errores}
-          notas={notas}
-          setNotas={setNotas}
-          modelo={modeloEfectivo}
-          alCrear
-        />
-        <p className="text-sm text-text-soft">Si prefieres seguir después, guárdalo como borrador: no atiende hasta que lo publiques.</p>
-      </div>
-    ) : creando ? (
-      <div className="flex flex-col gap-6">
-        <PasoProbarBorrador agenteId={agente.id} sugerencias={sugerenciasDePrueba(cargados)} />
-      </div>
+    probar: comoCreacionRapida ? (
+      revisarEnLaRuta
     ) : (
       <div className="flex max-w-xl flex-col gap-4">
         <p className="text-sm text-body">
@@ -1449,12 +1540,13 @@ export function EditorDeAgente({
   const tituloSiguiente = siguienteDeLaRuta ? (EN_LA_RUTA[siguienteDeLaRuta]?.titulo ?? "") : "";
   const nombreVisible = estado.nombre.trim();
   const estacionDelChat = ESTACION_DEL_PASO[paso];
-  // El celular a la derecha en los dos recorridos (HU-UX-26). En la estación 5 de la bienvenida no hay chat
-  // simulado: la última prueba es de verdad, por la conexión de pruebas, en el formulario.
+  // El celular a la derecha en los dos recorridos (HU-UX-26). En la estación 5 es la prueba real (HU-UX-31): las dos
+  // copias (columna y panel lateral) muestran la misma conversación y el mismo aviso.
+  const cerrarAviso = () => setAvisoCerrado(true);
   const celular = comoCreacionRapida ? (
     <CelularDeVistaPrevia
       tipo={tipoDelChat}
-      estacion={enBienvenida && paso === "probar" ? undefined : estacionDelChat}
+      estacion={estacionDelChat}
       agente={nombreVisible || "tu agente"}
       negocio={negocio.nombre}
       cargados={cargados}
@@ -1463,11 +1555,25 @@ export function EditorDeAgente({
           ? activos.flatMap((p) => (estado.superpoderes[p.id]?.frases ?? []).map((texto) => ({ texto, superpoder: p.title })))
           : undefined
       }
+      pantalla={
+        paso === "probar" && !sinConexionDePrueba ? (
+          <ChatDelCelular
+            chat={prueba}
+            agente={nombreVisible || "Tu agente"}
+            negocio={negocio.nombre}
+            sugerencias={frasesDeLaUltimaPrueba(cargados, tipoDeLaRuta)}
+            onEscribir={cerrarAviso}
+            className="min-w-0 flex-1"
+          />
+        ) : undefined
+      }
       sinChat={
-        enBienvenida && paso === "probar"
-          ? `La última prueba es de verdad: escríbele a ${nombreVisible || "tu agente"} en esta estación.`
+        paso === "probar" && sinConexionDePrueba
+          ? `${nombreVisible || "Tu agente"} todavía no está listo para probar.`
           : undefined
       }
+      aviso={avisoVisible ? avisoDeLaPrueba(nombreVisible || "tu agente") : undefined}
+      onCerrarAviso={cerrarAviso}
     />
   ) : undefined;
 
@@ -1479,13 +1585,16 @@ export function EditorDeAgente({
     : creacionRapida
       ? PREGUNTA_EN_LA_RUTA[paso]
       : undefined;
-  const pregunta = preguntaDeLaRuta
+  // Al publicar en Nuevo agente, la estación dice cómo quedó (tablero `E5S`): «Tomás ya está atendiendo».
+  const pregunta = alPublicar
+    ? `${nombreVisible || "Tu agente"} ${alPublicar.atiende ? "ya está atendiendo" : "quedó publicado"}`
+    : preguntaDeLaRuta
     ? preguntaDeLaRuta.replace("{nombre}", nombreVisible || "tu agente").replace("{lo}", LO_DEL_TIPO[tipoDeLaRuta ?? "ventas"].varios)
     : preguntaDelPaso(paso, estado.nombre);
 
   // «Seguir después» guarda lo de la estación (sin las reglas de publicar) antes de salir.
   const seguirDespues = () =>
-    enBienvenida ? bienvenida.seguirDespues({ nombre: nombreVisible || "Tu agente", guardar: guardarCambios, enEscenario: false }) : null;
+    enBienvenida ? bienvenida.seguirDespues({ nombre: nombreVisible || "Tu agente", guardar: guardarCambios }) : null;
 
   const editor = (
     <div className={enBienvenida ? "flex flex-1 flex-col gap-6" : "flex flex-col gap-6"}>
@@ -1513,6 +1622,8 @@ export function EditorDeAgente({
                 : "Cada operación pide sus propios datos. Viene con lo justo, como lo recomienda SolversHub."
             : creacionRapida && paso === "conocimiento"
               ? "Datos de ejemplo para probar cómo responde. Puedes seguir sin cargar nada."
+            : comoCreacionRapida && paso === "probar"
+              ? (alPublicar?.texto ?? BAJADA_DE_REVISAR)
             : enBienvenida
               ? BAJADA_EN_LA_BIENVENIDA[paso]
               : undefined
@@ -1524,11 +1635,19 @@ export function EditorDeAgente({
               ? textoDeFaltan(faltanDeLaEstacion3)
               : comoCreacionRapida && paso === "conocimiento" && cargaGuiada.faltan > 0
                 ? textoDeFaltan(cargaGuiada.faltan)
-                : undefined
+                : comoCreacionRapida && paso === "probar"
+                  ? alPublicar
+                    ? "Publicado"
+                    : faltanDeLaEstacion5 > 0
+                      ? textoDeFaltan(faltanDeLaEstacion5)
+                      : "Listo para publicar"
+                  : undefined
         }
+        terminado={Boolean(alPublicar)}
+        avisoEnLaBurbuja={avisoVisible}
         celular={celular}
         queSigue={
-          comoCreacionRapida
+          comoCreacionRapida && !alPublicar
             ? tituloSiguiente
               ? `Sigue: ${tituloSiguiente}.`
               : enBienvenida
@@ -1537,7 +1656,7 @@ export function EditorDeAgente({
             : undefined
         }
         extremo={
-          creacionRapida ? (
+          creacionRapida && !alPublicar ? (
             <Button asChild variant="outline" size="sm">
               <Link href={`/agentes/${agente.id}`}>Terminar después</Link>
             </Button>
@@ -1545,11 +1664,17 @@ export function EditorDeAgente({
         }
         dentroDelPanel={!enBienvenida}
         className={enBienvenida ? "flex-1" : undefined}
-        // En la bienvenida el chat simulado va en el escenario de la izquierda, no en el teléfono.
+        // En la bienvenida y en Nuevo agente el chat va en el `celular`; `vistaPrevia` es la de Personalizar.
         vistaPrevia={enBienvenida ? undefined : vistaPrevia}
-        atras={{ texto: "Atrás", onClick: () => mover(-1), deshabilitado: (indice === 0 && !enBienvenida) || primeroDeLaCreacion }}
+        atras={
+          alPublicar
+            ? undefined
+            : { texto: "Atrás", onClick: () => mover(-1), deshabilitado: (indice === 0 && !enBienvenida) || primeroDeLaCreacion }
+        }
         guardar={
-          ultimo && creacionRapida && puedeEditar
+          alPublicar
+            ? undefined
+            : ultimo && creacionRapida && puedeEditar
             ? {
                 texto: "Guardar como borrador",
                 onClick: () => void guardarComoBorrador(),
@@ -1567,13 +1692,15 @@ export function EditorDeAgente({
             : undefined
         }
         principal={
-          ultimo && enBienvenida
+          alPublicar
+            ? { texto: `Ir a la ficha de ${nombreVisible || "tu agente"}`, onClick: () => router.push(`/agentes/${agente.id}`) }
+            : ultimo && enBienvenida
             ? {
                 // La prueba por la conexión de pruebas es lo que deja terminar (`finalizar`).
                 texto: `Publicar a ${nombreVisible || "tu agente"}`,
                 onClick: () => void bienvenida.terminar(),
                 cargando: bienvenida.terminando,
-                deshabilitado: !bienvenida.probado || bienvenida.terminando,
+                deshabilitado: !bienvenida.probado || bienvenida.terminando || faltanDeLaEstacion5 > 0,
               }
             : ultimo && creacionRapida
             ? puedeEditar
@@ -1582,7 +1709,11 @@ export function EditorDeAgente({
                   onClick: () => void publicarAlCrear(),
                   cargando: publicarAccion.pending,
                   deshabilitado:
-                    publicarAccion.pending || guardarAccion.pending || datosAccion.pending || destinos.length === 0,
+                    publicarAccion.pending ||
+                    guardarAccion.pending ||
+                    datosAccion.pending ||
+                    destinos.length === 0 ||
+                    faltanDeLaEstacion5 > 0,
                 }
               : undefined
             : ultimo

@@ -21,10 +21,11 @@ export const LEYENDA_DEL_CELULAR = "Vista previa: no le escribe a nadie. Conecta
  * Va a la derecha de la ruta desde 1280 px y, por debajo, dentro del panel lateral de `BurbujaDePrueba`. El
  * teléfono no pasa de 440 px de ancho y se achica para caber en el alto de la pantalla.
  *
- * Sin `tipo` o sin `estacion` no hay chat (todavía no hay tipo, o la estación prueba de verdad en otro lado):
- * el teléfono muestra `sinChat`. `aviso` es una línea que flota sobre la caja de texto («Escribe aquí para
- * probar a Laura»), dentro del celular para que el borde de la pantalla no la corte; se cierra con su × o al
- * tocar una frase.
+ * Sin `tipo` o sin `estacion` no hay chat (todavía no hay tipo): el teléfono muestra `sinChat`. `pantalla`
+ * reemplaza el chat simulado por otro contenido: la prueba real de la estación 5 (`ChatDelCelular`, HU-UX-31).
+ * `aviso` es una línea que flota sobre la caja de texto («Escribe aquí para probar a Laura»), dentro del celular
+ * para que el borde de la pantalla no la corte; se cierra con su × o al tocar una frase. Con `pantalla`, quien la
+ * pasa lo cierra al escribir (deja de pasar `aviso`).
  */
 export function CelularDeVistaPrevia({
   tipo,
@@ -36,6 +37,7 @@ export function CelularDeVistaPrevia({
   aviso,
   onCerrarAviso,
   frasesPropias,
+  pantalla,
   className,
 }: {
   tipo: TipoDeNegocio | null | undefined;
@@ -48,6 +50,8 @@ export function CelularDeVistaPrevia({
   onCerrarAviso?: () => void;
   /** Frases propias del dueño para probar (estación 2, HU-UX-28); no reinician la conversación. */
   frasesPropias?: readonly FrasePropiaDePrueba[];
+  /** Lo que va en la pantalla en vez del chat simulado (la prueba real de la estación 5). */
+  pantalla?: ReactNode;
   className?: string;
 }) {
   const [avisoCerrado, setAvisoCerrado] = useState(false);
@@ -78,7 +82,9 @@ export function CelularDeVistaPrevia({
       >
         <FondoDeCanales />
         <div className="absolute left-[18.6%] top-[15.1%] flex h-[70%] w-[62.8%] rounded-[2.25rem] border-2 border-border-strong bg-bg-deep p-2.5 shadow-elev-3">
-          {tipo && estacion ? (
+          {pantalla ? (
+            pantalla
+          ) : tipo && estacion ? (
             <ChatDeVistaPrevia
               key={`${tipo}:${estacion}:${agente}:${cargados?.length ?? 0}`}
               enCelular

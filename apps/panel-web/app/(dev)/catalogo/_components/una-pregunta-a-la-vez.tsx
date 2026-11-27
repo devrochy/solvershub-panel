@@ -1,16 +1,19 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { BurbujaDePrueba } from "@/components/domain/agentes/recorrido/burbuja-de-prueba";
 import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
+import { ChatDelCelular } from "@/components/domain/agentes/recorrido/chat-del-celular";
+import { avisoDeLaPrueba, LineaDelNivelDeIa } from "@/components/domain/agentes/recorrido/preguntas-de-revisar";
 import { OpcionesAvanzadas } from "@/components/domain/agentes/recorrido/opciones-avanzadas";
 import { ListaDePreguntas, textoDeFaltan } from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
 import { GrupoDeOpciones, TarjetaElegible } from "@/components/ui/elegibles";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { TIPOS_DE_NEGOCIO, type TipoDeNegocio } from "@/lib/onboarding";
+import { FRASES_DE_PRUEBA, TIPOS_DE_NEGOCIO, type TipoDeNegocio } from "@/lib/onboarding";
+import type { ChatDePrueba, TurnoDePrueba } from "@/lib/use-chat-de-prueba";
 
 /*
  * Demostraciones del kit «Una pregunta a la vez» (HU-UX-26, SPEC-52) para `/catalogo`. Como el resto del
@@ -125,6 +128,69 @@ export function DemoBurbuja() {
       <BurbujaDePrueba enLinea conAviso>
         <CelularDeVistaPrevia tipo="ventas" estacion="revisar" agente="Laura" negocio={NEGOCIO} aviso="Escribe aquí para probar a Laura" />
       </BurbujaDePrueba>
+    </div>
+  );
+}
+
+/**
+ * La última prueba de la estación 5 (HU-UX-31): `ChatDelCelular` dentro del celular, con el aviso «Escribe aquí
+ * para probar a Laura», que se cierra al escribir, al tocar una frase o con la ×. Aquí el chat no tiene red: contesta
+ * siempre lo mismo. En la ruta habla con el borrador (`/api/playground`) o con la conexión de pruebas.
+ */
+export function DemoUltimaPrueba() {
+  const [turnos, setTurnos] = useState<TurnoDePrueba[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [avisoCerrado, setAvisoCerrado] = useState(false);
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chat: ChatDePrueba = {
+    turnos,
+    setTurnos,
+    cargando,
+    setEstado: (e) => setCargando(Boolean(e.loading)),
+    enviar: async (frase) => {
+      setTurnos((t) => [...t, { role: "user", text: frase }]);
+      setCargando(true);
+      temporizador.current = setTimeout(() => {
+        setTurnos((t) => [...t, { role: "assistant", text: "¡Hola! Hoy tenemos pan de masa madre y torta de zanahoria. ¿Qué se te antoja?" }]);
+        setCargando(false);
+      }, 900);
+      return true;
+    },
+    reiniciar: async () => {
+      if (temporizador.current) clearTimeout(temporizador.current);
+      setTurnos([]);
+      setCargando(false);
+      return true;
+    },
+  };
+  return (
+    <CelularDeVistaPrevia
+      tipo="ventas"
+      agente="Laura"
+      negocio={NEGOCIO}
+      className="max-w-[30rem]"
+      aviso={avisoCerrado || turnos.length > 0 ? undefined : avisoDeLaPrueba("Laura")}
+      onCerrarAviso={() => setAvisoCerrado(true)}
+      pantalla={
+        <ChatDelCelular
+          chat={chat}
+          agente="Laura"
+          negocio={NEGOCIO}
+          sugerencias={FRASES_DE_PRUEBA.ventas}
+          onEscribir={() => setAvisoCerrado(true)}
+          className="min-w-0 flex-1"
+        />
+      }
+    />
+  );
+}
+
+/** «Opciones avanzadas» de la estación 5: solo el nivel de IA, con «Cambiar» (enlace en Nuevo agente, texto en la bienvenida). */
+export function DemoNivelDeIa() {
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <LineaDelNivelDeIa nivel="estandar" incluyeAvanzado={false} hrefCambiar="#nivel-de-ia" />
+      <LineaDelNivelDeIa nivel="avanzado" incluyeAvanzado />
     </div>
   );
 }

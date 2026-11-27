@@ -110,7 +110,7 @@ export function HojaDeVistaPrevia(props: {
   );
 }
 
-function Cabecera({
+export function Cabecera({
   negocio,
   agente,
   subtitulo,
@@ -249,7 +249,7 @@ function Conversacion({
 
 /**
  * La caja de texto del celular mientras el chat es simulado: se ve como la de WhatsApp, pero no escribe
- * (es puro adorno, `aria-hidden`). La caja que escribe llega con la prueba real de la estación 5 (HU-UX-31).
+ * (es puro adorno, `aria-hidden`). La caja que escribe es la de `ChatDelCelular`, en la estación 5 (HU-UX-31).
  */
 export function CajaSinEscribir() {
   return (
@@ -274,7 +274,7 @@ function Inicial({ nombre, className }: { nombre: string; className?: string }) 
   );
 }
 
-function Burbujas({ mensajes, className }: { mensajes: readonly MensajeDeVistaPrevia[]; className?: string }) {
+export function Burbujas({ mensajes, className }: { mensajes: readonly MensajeDeVistaPrevia[]; className?: string }) {
   return (
     <ol aria-live="polite" className={cn("flex flex-col justify-end gap-2", className)}>
       {mensajes.map((m, i) => {

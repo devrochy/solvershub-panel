@@ -4,10 +4,6 @@ import { useId, useState } from "react";
 import { CalendarCheck, Clock, HandCoins, Layers, Repeat, ShoppingBag, Timer } from "lucide-react";
 
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
-import { escenarioDeLaBienvenida, type EstacionDelEditor } from "@/components/domain/agentes/recorrido/escenario-de-la-bienvenida";
-import { EscenarioPantallaCompleta, FranjaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-pantalla-completa";
-import { AnilloDeListo, PildoraDelAgente, TarjetaDelEscenario } from "@/components/domain/agentes/recorrido/escenario-piezas";
-import { EscenarioTarjeta } from "@/components/domain/agentes/recorrido/escenario-tarjeta";
 import { NombreSugerido } from "@/components/domain/agentes/recorrido/nombre-sugerido";
 import { RecorridoDelAgente } from "@/components/domain/agentes/recorrido/recorrido-del-agente";
 import { ChatDeVistaPrevia } from "@/components/domain/agentes/recorrido/vista-previa-whatsapp";
@@ -26,7 +22,7 @@ import {
   nombreSugeridoDelTipo,
   type EstacionDeLaRuta,
 } from "@/lib/ruta-de-lanzamiento";
-import { LEYENDA_DEL_CHAT, type CargadoDeVistaPrevia } from "@/lib/vista-previa";
+import type { CargadoDeVistaPrevia } from "@/lib/vista-previa";
 
 /*
  * Demostraciones del kit «Ruta de lanzamiento» (HU-UX-24, SPEC-49) para `/catalogo`. Cada una guarda
@@ -179,94 +175,6 @@ export function DemoNombreSugerido() {
   return <NombreSugerido valor={nombre} onCambiar={setNombre} ideas={ideasDeNombre(NOMBRE_SUGERIDO_DE_LA_BIENVENIDA, "ventas")} />;
 }
 
-/** Escenario: pantalla completa (bienvenida), tarjeta (Nuevo agente) y franja del celular. */
-export function DemoEscenario() {
-  return (
-    <div className="flex flex-col gap-6">
-      <EscenarioPantallaCompleta
-        className="min-h-[30rem] rounded-lg"
-        titulo="Laura ya puede saludar"
-        bajada="Con lo recomendado por SolversHub."
-        destacado={<AnilloDeListo hechas={4} total={4} />}
-        leyenda={LEYENDA_DEL_CHAT}
-      >
-        <PildoraDelAgente nombre="Laura" etiqueta="Sugerido" className="self-center" />
-        <div className="grid grid-cols-2 gap-3">
-          <TarjetaDelEscenario etiqueta="Negocio" valor={NEGOCIO} hecha />
-          <TarjetaDelEscenario etiqueta="Se dedica a" valor="Vendo productos" hecha />
-          <TarjetaDelEscenario etiqueta="Se presenta así" valor="Pan artesanal y tortas por encargo" hecha />
-          <TarjetaDelEscenario etiqueta="Su catálogo" valor="Lo cargas en Datos para probar" hecha={false} />
-        </div>
-      </EscenarioPantallaCompleta>
-      <EscenarioTarjeta agente="Tomás" estado="Borrador" leyenda="Vista previa: no envía mensajes">
-        <div className="grid grid-cols-2 gap-3">
-          <TarjetaDelEscenario etiqueta="Se dedica a" valor="Agenda" hecha />
-          <TarjetaDelEscenario etiqueta="Su guion" valor="Degustación y entrega" hecha />
-          <TarjetaDelEscenario etiqueta="Se llama" valor="Tomás" hecha />
-          <TarjetaDelEscenario etiqueta="Habilidades" valor="En el paso 2" hecha={false} />
-        </div>
-      </EscenarioTarjeta>
-      <div className="max-w-[390px] overflow-hidden rounded-lg">
-        <FranjaDelEscenario agente="Laura" titulo="Laura ya puede saludar" bajada="Sabe quién es y cómo presentarse." />
-      </div>
-      <div className="max-w-[390px] overflow-hidden rounded-lg">
-        <FranjaDelEscenario agente="Tomás" titulo="Tomás · Borrador" cerrar={() => {}} rotulo="Nuevo agente · 1 de 5" />
-      </div>
-    </div>
-  );
-}
-
-const ESTACIONES_DEL_EDITOR: { valor: EstacionDelEditor; texto: string }[] = [
-  { valor: "habilidades", texto: "2 · Habilidades" },
-  { valor: "datos-cliente", texto: "3 · Datos del cliente" },
-  { valor: "conocimiento", texto: "4 · Datos para probar" },
-  { valor: "probar", texto: "5 · Revisar y publicar" },
-];
-
-/**
- * Escenario de las estaciones 2 a 5 de la bienvenida (HU-UX-25): lo que gana Laura en cada una, como lo arma
- * `escenarioDeLaBienvenida`. En la bienvenida va dentro de `MarcoDeBienvenida` (pantalla completa).
- */
-export function DemoEscenarioDeLaBienvenida() {
-  const id = useId();
-  const [estacion, setEstacion] = useState<EstacionDelEditor>("datos-cliente");
-  const escenario = escenarioDeLaBienvenida({
-    estacion,
-    nombre: NOMBRE_SUGERIDO_DE_LA_BIENVENIDA,
-    negocio: NEGOCIO,
-    tipo: "ventas",
-    encendidas: ["Tomar un pedido", "Hacer cotizaciones", "Aplicar promociones", "Recomendar productos"],
-    cuantoPregunta: "«Lo justo»",
-    tiposDePedido: ["A domicilio", "Recoger en tienda"],
-    consultaHistorial: true,
-    cargados: estacion === "conocimiento" ? [{ tipo: "producto", nombre: "Torta de zanahoria", detalle: "$ 45.000" }] : [],
-    probado: false,
-    onCambiarNombre: () => {},
-  });
-  return (
-    <div className="flex flex-col gap-4">
-      <Field label="Estación" htmlFor={`${id}-estacion`}>
-        <Select id={`${id}-estacion`} value={estacion} onChange={(e) => setEstacion(e.target.value as EstacionDelEditor)} className="max-w-xs">
-          {ESTACIONES_DEL_EDITOR.map((e) => (
-            <option key={e.valor} value={e.valor}>
-              {e.texto}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <EscenarioPantallaCompleta
-        className="min-h-[44rem] rounded-lg"
-        titulo={escenario.titulo}
-        bajada={escenario.bajada}
-        destacado={escenario.destacado}
-        leyenda={escenario.leyenda}
-      >
-        {escenario.children}
-      </EscenarioPantallaCompleta>
-    </div>
-  );
-}
-
 const TIPOS: { valor: TipoDeNegocio; texto: string }[] = [
   { valor: "ventas", texto: "Ventas" },
   { valor: "agenda", texto: "Agenda y encargos" },
@@ -329,8 +237,8 @@ export function DemoRecorridoEnRuta() {
       modo="en-orden"
       onIr={setActual}
       etiquetaDePasos="Ruta de ejemplo"
-      pregunta="¿Qué quieres que haga tu agente?"
-      bajada="Laura ya vende; Tomás agenda las degustaciones y la entrega de tus encargos."
+      pregunta="¿Cómo se llama tu agente?"
+      bajada="Tomás agenda las degustaciones y la entrega de tus encargos."
       queSigue={siguiente ? `Sigue: ${siguiente.titulo}.` : undefined}
       atras={{ texto: "Atrás", onClick: () => setActual(ESTACIONES_DE_NUEVO_AGENTE[Math.max(0, indice - 1)].id), deshabilitado: indice === 0 }}
       principal={{
