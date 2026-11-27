@@ -8,12 +8,15 @@ import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
 import { cn } from "@/lib/utils";
 import {
   LEYENDA_DEL_CHAT,
+  pruebasDeFrasesPropias,
+  respuestaAFrasePropia,
   respuestaDePrueba,
   rotuloDePruebas,
   saludoDePrueba,
   sugerenciasPorEstacion,
   ultimosMensajes,
   type CargadoDeVistaPrevia,
+  type FrasePropiaDePrueba,
   type MensajeDeVistaPrevia,
 } from "@/lib/vista-previa";
 
@@ -153,6 +156,8 @@ export function ChatDeVistaPrevia(props: {
   enCelular?: boolean;
   /** Al tocar una frase de prueba (el celular cierra su aviso). */
   onProbar?: () => void;
+  /** Frases propias del dueño (estación 2, HU-UX-28): van primero entre las pruebas. */
+  frasesPropias?: readonly FrasePropiaDePrueba[];
   className?: string;
 }) {
   return <Conversacion key={`${props.tipo}:${props.estacion}`} {...props} />;
@@ -167,6 +172,7 @@ function Conversacion({
   demora = 900,
   enCelular = false,
   onProbar,
+  frasesPropias = [],
   className,
 }: {
   tipo: TipoDeNegocio;
@@ -177,6 +183,7 @@ function Conversacion({
   demora?: number;
   enCelular?: boolean;
   onProbar?: () => void;
+  frasesPropias?: readonly FrasePropiaDePrueba[];
   className?: string;
 }) {
   const [mensajes, setMensajes] = useState<MensajeDeVistaPrevia[]>(() => [saludoDePrueba(tipo, agente, negocio)]);
@@ -188,15 +195,21 @@ function Conversacion({
     },
     [],
   );
-  const sugerencias = sugerenciasPorEstacion(tipo, estacion, cargados);
+  const delGuion = sugerenciasPorEstacion(tipo, estacion, cargados);
+  const propias = pruebasDeFrasesPropias(frasesPropias, delGuion);
+  const sugerencias = [...propias, ...delGuion];
 
   function probar(id: string, texto: string) {
     if (escribiendo) return;
     onProbar?.();
+    const propia = propias.find((p) => p.id === id);
     setMensajes((m) => [...m, { tipo: "cliente", texto }]);
     setEscribiendo(true);
     temporizador.current = setTimeout(() => {
-      setMensajes((m) => [...m, ...respuestaDePrueba(tipo, estacion, id, { agente, negocio, cargados })]);
+      const respuesta = propia
+        ? respuestaAFrasePropia(propia.superpoder)
+        : respuestaDePrueba(tipo, estacion, id, { agente, negocio, cargados });
+      setMensajes((m) => [...m, ...respuesta]);
       setEscribiendo(false);
     }, demora);
   }

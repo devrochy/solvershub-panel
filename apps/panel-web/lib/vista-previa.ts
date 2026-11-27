@@ -94,6 +94,37 @@ export type CargadoDeVistaPrevia = { tipo: string; nombre: string; detalle?: str
 
 export type SugerenciaDePrueba = { id: string; texto: string };
 
+/** Una frase propia del dueño para un superpoder (HU-UX-28): se prueba en el celular de la estación 2. */
+export type FrasePropiaDePrueba = { texto: string; superpoder: string };
+
+/** Hasta cuántas frases propias se ofrecen como prueba en el celular, las últimas agregadas primero. */
+export const MAX_FRASES_PROPIAS_DE_PRUEBA = 2;
+
+/**
+ * Las frases propias como pruebas del celular (HU-UX-28): las últimas agregadas, sin repetir las del guion de la
+ * estación. Su id lleva el prefijo `propia:` y la respuesta la da `respuestaAFrasePropia`.
+ */
+export function pruebasDeFrasesPropias(
+  propias: readonly FrasePropiaDePrueba[],
+  delGuion: readonly SugerenciaDePrueba[] = [],
+): (SugerenciaDePrueba & { superpoder: string })[] {
+  const vistas = new Set(delGuion.map((s) => s.texto.trim().toLocaleLowerCase("es-CO")));
+  const salida: (SugerenciaDePrueba & { superpoder: string })[] = [];
+  for (const f of [...propias].reverse()) {
+    const clave = f.texto.trim().toLocaleLowerCase("es-CO");
+    if (!clave || vistas.has(clave)) continue;
+    vistas.add(clave);
+    salida.push({ id: `propia:${clave}`, texto: f.texto.trim(), superpoder: f.superpoder });
+    if (salida.length === MAX_FRASES_PROPIAS_DE_PRUEBA) break;
+  }
+  return salida;
+}
+
+/** La respuesta fija a una frase propia: el agente la reconoce como el superpoder al que se sumó. */
+export function respuestaAFrasePropia(superpoder: string): MensajeDeVistaPrevia[] {
+  return [{ tipo: "agente", texto: `Claro, con eso te ayudo. Lo atiendo con «${superpoder}».` }];
+}
+
 /** Las respuestas posibles del guion; cada sugerencia apunta a una. */
 type Respuesta =
   | "quien"

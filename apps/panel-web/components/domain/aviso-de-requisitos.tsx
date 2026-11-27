@@ -11,10 +11,13 @@ import { copiaDelRequisito } from "@/lib/requisitos-de-agente";
 export function AvisoDeRequisitos({
   requisitos,
   titulo = "Te falta configurar para que funcione",
+  bajada,
   className,
 }: {
   requisitos: Requirement[];
   titulo?: string;
+  /** Una línea bajo el título, por ejemplo «Esto lo haces ahora o después.» (HU-UX-28). */
+  bajada?: string;
   className?: string;
 }) {
   if (requisitos.length === 0) return null;
@@ -27,6 +30,7 @@ export function AvisoDeRequisitos({
         <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
         {titulo}
       </p>
+      {bajada && <p className="text-body">{bajada}</p>}
       <ul className="flex flex-col gap-2">
         {requisitos.map((r) => {
           const copia = copiaDelRequisito(r);
