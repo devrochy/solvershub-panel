@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="es" data-theme="sh-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta · Cerebro por inteligencia · SolversHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens: copiados de apps/panel-web/app/tokens.css (v1.4)
+   ============================================================ */
+:root{
+  --sh-navy-600:#21408A; --sh-navy-700:#172F6C; --sh-navy-750:#16294F;
+  --sh-navy-800:#11224D; --sh-navy-900:#0B1733; --sh-navy-950:#080F22;
+  --sh-blue-500:#2F6BFF; --sh-blue-600:#2560E6; --sh-cyan-400:#22C7E0;
+  --sh-gold-500:#C9A227; --sh-slate-300:#C9D2E3; --sh-slate-400:#7C8AA3;
+  --sh-slate-500:#616F88; --sh-slate-600:#5A6B85; --sh-ice:#E8EDF7; --sh-fog:#A9B6CC;
+  --sh-haze:#8695B0; --sh-steel:#6B7A94; --sh-cloud:#EEF2F8; --sh-frost:#F1F5FA;
+  --sh-white:#FFFFFF; --sh-paper:#F7F9FC; --sh-mist:#E2E8F2;
+  --sh-gradient-cta:linear-gradient(135deg,#172F6C 0%,#2560E6 100%);
+  --sh-font-display:Montserrat,'Century Gothic','Didact Gothic',system-ui,sans-serif;
+  --sh-font-body:Inter,'Segoe UI',system-ui,sans-serif;
+  --sh-font-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --sh-radius-sm:6px; --sh-radius-md:12px; --sh-radius-lg:20px;
+  --sh-motion-fast:150ms; --sh-motion-base:200ms;
+  --sh-ease-out:cubic-bezier(.2,0,0,1);
+  --sh-ease-in:cubic-bezier(.3,0,1,1);
+  --sh-space-1:4px; --sh-space-2:8px; --sh-space-3:12px; --sh-space-4:16px;
+  --sh-space-6:24px; --sh-space-8:32px; --sh-space-12:48px; --sh-space-16:64px;
+}
+[data-theme="sh-dark"]{
+  --bg:#0B1733; --bg-deep:#080F22; --surface:#11224D; --surface-2:#16294F;
+  --surface-raised:#172F6C; --border:rgba(201,210,227,.10); --border-soft:rgba(201,210,227,.06);
+  --border-strong:#21408A; --control-border:#6B7A94;
+  --text:#E8EDF7; --text-strong:#FFFFFF; --body:#A9B6CC; --soft:#8695B0;
+  --link:#22C7E0; --focus:#22C7E0; --hover:rgba(201,210,227,.06);
+  --overlay:rgba(8,15,34,.72);
+  --success:#2FBF7F; --warning:#E0A106; --danger:#F28B82;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(34,199,224,.12);
+  --focus-soft:rgba(34,199,224,.10); --focus-border:rgba(34,199,224,.32);
+  --selected-bg:rgba(34,199,224,.065); --icon-bg:rgba(34,199,224,.08);
+  --check-fg:#0B1733; --grid-line:rgba(201,210,227,.10);
+  --elev-2:0 8px 24px rgba(0,0,0,.32); --elev-3:0 16px 48px rgba(0,0,0,.40);
+}
+[data-theme="sh-light"]{
+  --bg:#F7F9FC; --bg-deep:#EEF2F8; --surface:#FFFFFF; --surface-2:#F1F5FA;
+  --surface-raised:#E8EDF7; --border:#E2E8F2; --border-soft:#EDF1F7;
+  --border-strong:#C9D2E3; --control-border:#7C8AA3;
+  --text:#0B1733; --text-strong:#080F22; --body:#5A6B85; --soft:#616F88;
+  --link:#2560E6; --focus:#2560E6; --hover:#F1F5FA;
+  --overlay:rgba(11,23,51,.48);
+  --success:#17784F; --warning:#8A6100; --danger:#B42E2E;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(37,96,230,.12);
+  --focus-soft:rgba(37,96,230,.07); --focus-border:rgba(37,96,230,.28);
+  --selected-bg:rgba(37,96,230,.045); --icon-bg:rgba(37,96,230,.07);
+  --check-fg:#FFFFFF; --grid-line:#E2E8F2;
+  --elev-2:0 8px 24px rgba(8,15,34,.12); --elev-3:0 16px 48px rgba(8,15,34,.18);
+}
+
+/* ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg-deep);color-scheme:dark}
+html[data-theme="sh-light"]{color-scheme:light}
+body{
+  margin:0;background:var(--bg-deep);color:var(--text);
+  font:400 15px/24px var(--sh-font-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+svg{display:block}
+::selection{background:var(--focus);color:var(--check-fg)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sr-only{
+  position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+.mono{font-family:var(--sh-font-mono);font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   Página del caso
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+  gap:24px;padding:14px 32px;background:var(--bg-deep);
+  background:color-mix(in srgb,var(--bg-deep) 94%,transparent);
+  border-bottom:1px solid var(--border-soft);backdrop-filter:blur(10px);
+}
+.brand{display:flex;align-items:center;gap:10px;font:600 15px/20px var(--sh-font-display);letter-spacing:.01em}
+.brand svg{width:30px;height:30px;color:var(--text-strong)}
+.brand b{font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--body);
+  font:500 11px/14px var(--sh-font-body);letter-spacing:.02em;white-space:nowrap;
+}
+.tag-focus{border-color:var(--focus-border);background:var(--focus-soft);color:var(--focus)}
+.theme-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 12px;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--body);
+  font:500 12px/16px var(--sh-font-body);transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+}
+.theme-btn:hover{background:var(--surface-2);border-color:var(--border-strong);color:var(--text)}
+.theme-btn svg{width:15px;height:15px}
+[data-theme="sh-dark"] .icon-sun{display:none}
+[data-theme="sh-light"] .icon-moon{display:none}
+
+.page{max-width:1280px;margin:0 auto;padding:64px 32px 80px}
+.hero{max-width:840px}
+.eyebrow{
+  margin:0 0 14px;color:var(--focus);font:500 12px/16px var(--sh-font-body);
+  letter-spacing:.09em;text-transform:uppercase;
+}
+.hero h1{
+  margin:0;font:700 clamp(30px,4vw,44px)/1.14 var(--sh-font-display);
+  letter-spacing:-.022em;color:var(--text-strong);text-wrap:balance;
+}
+.hero .lede{
+  max-width:700px;margin:20px 0 0;color:var(--body);
+  font:400 17px/27px var(--sh-font-body);text-wrap:pretty;
+}
+.hero .thesis{
+  margin:22px 0 0;padding-left:14px;border-left:2px solid var(--focus);
+  color:var(--text);font:500 15px/24px var(--sh-font-body);
+}
+
+.before-after{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:40px 0 0;max-width:840px;
+}
+.ba{
+  padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);
+}
+.ba p{margin:6px 0 0;color:var(--body);font:400 13px/20px var(--sh-font-body)}
+.ba .ba-label{display:flex;align-items:center;gap:7px;font:500 12px/16px var(--sh-font-body);color:var(--soft)}
+.ba .ba-label svg{width:14px;height:14px}
+.ba.after{border-color:var(--focus-border);background:var(--focus-soft)}
+.ba.after .ba-label{color:var(--focus)}
+
+/* ============================================================
+   Escenario + cajón
+   ============================================================ */
+.prototype{margin-top:28px}
+.stage-tools{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.stage-tools .note{margin:0;color:var(--soft);font:400 12px/18px var(--sh-font-body)}
+.tool-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tool-group > span{color:var(--soft);font:500 11px/14px var(--sh-font-body);letter-spacing:.03em;text-transform:uppercase}
+.view-toggle{display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.view-toggle button{
+  min-height:30px;padding:0 12px;border:0;border-radius:6px;background:transparent;
+  color:var(--body);font:500 12px/16px var(--sh-font-body);
+}
+.view-toggle button[aria-pressed="true"]{background:var(--surface-raised);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+
+.stage{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,672px);
+  min-height:900px;overflow:hidden;border:1px solid var(--border);border-radius:var(--sh-radius-lg);
+  background:var(--bg);box-shadow:var(--elev-2);
+}
+.stage[data-view="mobile"]{grid-template-columns:1fr;max-width:430px;min-height:820px;margin-inline:auto}
+.stage[data-view="mobile"] .app-bg{display:none}
+
+/* Fondo: el panel real, atenuado */
+.app-bg{position:relative;min-width:0;padding:26px 28px;overflow:hidden}
+.app-bg::after{content:"";position:absolute;inset:0;background:var(--overlay);pointer-events:none}
+.mini-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border-soft)}
+.mini-brand{font:700 14px/18px var(--sh-font-display);letter-spacing:.06em;color:var(--text)}
+.mini-pill{padding:4px 8px;border:1px solid var(--border);border-radius:6px;color:var(--soft);font:500 10px/14px var(--sh-font-body)}
+.mini-crumb{margin:26px 0 8px;color:var(--soft);font:400 11px/16px var(--sh-font-body)}
+.mini-title{margin:0 0 22px;color:var(--text);font:600 22px/28px var(--sh-font-display)}
+.mini-group{margin-top:22px}
+.mini-group h3{margin:0 0 8px;color:var(--soft);font:500 10px/14px var(--sh-font-body);letter-spacing:.07em;text-transform:uppercase}
+.mini-row{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:13px 14px;border:1px solid var(--border-soft);border-bottom:0;background:var(--surface);
+}
+.mini-row:first-of-type{border-radius:8px 8px 0 0}
+.mini-row:last-of-type{border-bottom:1px solid var(--border-soft);border-radius:0 0 8px 8px}
+.mini-row span:first-child{color:var(--text);font:500 13px/18px var(--sh-font-body)}
+.mini-row span:last-child{max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--soft);font:400 12px/16px var(--sh-font-body)}
+.mini-row.is-current{box-shadow:inset 3px 0 0 var(--focus);background:var(--surface-2)}
+
+/* ============================================================
+   Cajón (sheet)
+   ============================================================ */
+.sheet{
+  display:flex;flex-direction:column;min-width:0;height:900px;
+  background:var(--surface);border-left:1px solid var(--border);
+  container-type:inline-size;container-name:sheet;
+}
+.sheet-head{
+  display:flex;align-items:flex-start;gap:16px;padding:20px;
+  border-bottom:1px solid var(--border-soft);
+}
+.sheet-head h2{margin:0;color:var(--text);font:600 17px/24px var(--sh-font-display)}
+.sheet-head p{margin:4px 0 0;color:var(--body);font:400 13px/19px var(--sh-font-body)}
+.sheet-head .icon-btn{
+  display:grid;place-items:center;width:32px;height:32px;margin-left:auto;flex:none;
+  border:1px solid transparent;border-radius:8px;background:transparent;color:var(--soft);
+}
+.sheet-head .icon-btn:hover{background:var(--hover);color:var(--text)}
+.sheet-head .icon-btn svg{width:16px;height:16px}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:22px}
+.sheet-body > *{flex:0 0 auto}
+
+.block{display:flex;flex-direction:column;gap:10px}
+.block-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.block-head h3{margin:0;color:var(--text);font:600 15px/21px var(--sh-font-display)}
+.block-hint{color:var(--soft);font:400 11px/16px var(--sh-font-body);white-space:nowrap}
+.block-lede{margin:0;color:var(--body);font:400 13px/20px var(--sh-font-body);text-wrap:pretty}
+
+/* Avisos */
+.notice{
+  display:flex;align-items:flex-start;gap:8px;padding:10px 11px;border-radius:8px;
+  font:400 12px/18px var(--sh-font-body);
+}
+.notice svg{width:14px;height:14px;flex:none;margin-top:2px}
+.notice.info{background:var(--info-bg);color:var(--text)}
+.notice.info svg{color:var(--focus)}
+.notice.warn{background:var(--warning-bg);color:var(--warning)}
+.notice.error{background:var(--danger-bg);color:var(--danger)}
+.notice a{font-weight:500}
+
+/* Opciones de inteligencia: mismo patrón que Multimedia */
+.options-field{border:0;margin:0;padding:0;min-width:0}
+.field-legend{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;
+  padding:0;margin:0 0 9px;color:var(--text);font:500 13px/18px var(--sh-font-body);
+}
+.legend-hint{color:var(--soft);font:400 12px/16px var(--sh-font-body)}
+.options{
+  display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface);overflow:hidden;
+}
+.option{
+  position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) 152px 18px;
+  align-items:center;gap:10px;min-height:70px;padding:12px 13px;
+  border-bottom:1px solid var(--border-soft);cursor:pointer;
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),box-shadow var(--sh-motion-fast) var(--sh-ease-out);
+}
+.option:last-child{border-bottom:0}
+.option:hover{background:var(--hover)}
+.option:has(input:checked){background:var(--selected-bg);box-shadow:inset 3px 0 0 var(--focus)}
+.option:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:-2px}
+.option input{position:absolute;width:1px;height:1px;opacity:0}
+.option.is-disabled{cursor:not-allowed;opacity:.62}
+.option.is-disabled:hover{background:transparent}
+.option-icon{
+  display:grid;place-items:center;width:32px;height:32px;border-radius:8px;
+  border:1px solid var(--border);background:var(--icon-bg);color:var(--focus);
+}
+.option-icon svg{width:16px;height:16px}
+.option-main{display:flex;flex-direction:column;gap:1px;min-width:0}
+.option-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:var(--text);font:600 14px/19px var(--sh-font-display)}
+.option-badge{
+  display:inline-flex;align-items:center;padding:1px 6px;border:1px solid var(--focus-border);
+  border-radius:999px;background:var(--focus-soft);color:var(--focus);
+  font:500 11px/15px var(--sh-font-body);letter-spacing:.04em;text-transform:uppercase;
+}
+.option-badge.lock{border-color:var(--border-strong);background:var(--surface-2);color:var(--soft);text-transform:none;letter-spacing:0}
+.option-desc{color:var(--body);font:400 12px/17px var(--sh-font-body);text-wrap:pretty}
+.option-model{display:inline-flex;align-items:center;gap:4px;margin-top:3px;color:var(--soft);font:400 11px/15px var(--sh-font-mono)}
+.option-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.option-quality{display:flex;align-items:center;gap:6px;color:var(--soft);font:500 12px/16px var(--sh-font-body)}
+.bars{display:inline-flex;gap:2px}
+.bars i{display:block;width:9px;height:4px;border-radius:2px;background:var(--border-strong)}
+.bars i.on{background:var(--focus)}
+.option-cost{color:var(--text);font:500 13px/17px var(--sh-font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.option-cost small{color:var(--soft);font:400 11px/15px var(--sh-font-body)}
+.option-check{
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  background:var(--focus);color:var(--check-fg);opacity:0;transform:scale(.82);
+  transition:opacity var(--sh-motion-fast) var(--sh-ease-out),transform var(--sh-motion-fast) var(--sh-ease-out);
+}
+.option-check svg{width:11px;height:11px}
+.option:has(input:checked) .option-check{opacity:1;transform:scale(1)}
+.cap-footnote{
+  display:flex;align-items:flex-start;gap:6px;margin:0;color:var(--soft);
+  font:400 12px/17px var(--sh-font-body);
+}
+.cap-footnote svg{width:13px;height:13px;flex:none;margin-top:1px}
+.link{
+  display:inline;padding:0;border:0;background:none;color:var(--link);
+  font:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;
+}
+.link:hover{color:var(--text)}
+
+/* Filas de interruptor */
+.switch-row{
+  display:flex;align-items:flex-start;gap:12px;padding:12px 13px;
+  border:1px solid var(--border);border-radius:10px;background:var(--surface);
+}
+.switch-row .copy{min-width:0;flex:1}
+.switch-row h4{margin:0;color:var(--text);font:500 13px/19px var(--sh-font-body)}
+.switch-row p{margin:2px 0 0;color:var(--body);font:400 12px/18px var(--sh-font-body);text-wrap:pretty}
+.switch{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;margin:-10px -10px -10px 0;flex:none;cursor:pointer;
+}
+.switch input{position:absolute;width:1px;height:1px;opacity:0}
+.switch-track{
+  position:relative;width:38px;height:22px;border-radius:999px;border:1px solid var(--control-border);
+  background:var(--bg-deep);transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+}
+.switch-thumb{
+  position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--soft);
+  transition:transform var(--sh-motion-fast) var(--sh-ease-out),background var(--sh-motion-fast) var(--sh-ease-out);
+}
+.switch input:checked + .switch-track{background:var(--focus-soft);border-color:var(--focus)}
+.switch input:checked + .switch-track .switch-thumb{transform:translateX(16px);background:var(--focus)}
+.switch input:focus-visible + .switch-track{outline:2px solid var(--focus);outline-offset:2px}
+.switch input:disabled + .switch-track{opacity:.5}
+
+/* Segmentado y campos */
+.segmented{
+  display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;align-self:flex-start;
+  border:1px solid var(--border);border-radius:8px;background:var(--bg-deep);
+}
+.seg-btn{
+  min-height:32px;padding:0 12px;border:0;border-radius:6px;background:transparent;
+  color:var(--body);font:500 12px/16px var(--sh-font-body);white-space:nowrap;
+}
+.seg-btn[aria-pressed="true"]{background:var(--surface-raised);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+.exact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--soft);font:400 12px/17px var(--sh-font-body)}
+.exact output{color:var(--text);font:500 12px/17px var(--sh-font-mono)}
+.mini-input{
+  width:74px;min-height:32px;padding:0 8px;border:1px solid var(--control-border);border-radius:7px;
+  background:var(--surface);color:var(--text);font:400 12px/16px var(--sh-font-mono);
+}
+.mini-input:disabled{opacity:.5}
+
+.limits{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.limit-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:13px}
+.limit-card h4{margin:0;color:var(--text);font:500 13px/18px var(--sh-font-body)}
+.limit-card .help{margin:3px 0 9px;color:var(--soft);font:400 11px/16px var(--sh-font-body);text-wrap:pretty}
+.stepper{display:inline-grid;grid-auto-flow:column;align-items:center;border:1px solid var(--control-border);border-radius:8px;overflow:hidden}
+.stepper button{width:34px;min-height:34px;border:0;background:var(--surface-2);color:var(--text);font:500 16px/1 var(--sh-font-body)}
+.stepper button:hover{background:var(--hover)}
+.stepper output{min-width:44px;padding:0 4px;text-align:center;color:var(--text);font:500 13px/18px var(--sh-font-mono);font-variant-numeric:tabular-nums}
+.money{display:flex;align-items:center;gap:6px;border:1px solid var(--control-border);border-radius:8px;background:var(--surface);padding:0 8px;min-height:34px}
+.money span{color:var(--soft);font:500 12px/16px var(--sh-font-body)}
+.money input{width:80px;border:0;background:transparent;color:var(--text);font:500 13px/18px var(--sh-font-mono);font-variant-numeric:tabular-nums}
+.money input:focus{outline:0}
+.money em{color:var(--soft);font:400 11px/15px var(--sh-font-body);font-style:normal}
+.check-inline{display:flex;align-items:center;gap:7px;margin-top:9px;color:var(--body);font:400 12px/17px var(--sh-font-body);cursor:pointer}
+.check-inline input{width:15px;height:15px;accent-color:var(--focus)}
+
+/* Maestro */
+.master-box{border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-2);padding:12px 13px}
+.master-box summary{cursor:pointer;color:var(--text);font:500 12px/17px var(--sh-font-body);list-style:none;display:flex;align-items:center;gap:7px}
+.master-box summary::-webkit-details-marker{display:none}
+.master-box summary svg{width:14px;height:14px;color:var(--focus);transition:transform var(--sh-motion-fast) var(--sh-ease-out)}
+.master-box[open] summary svg{transform:rotate(90deg)}
+.master-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.master-field{display:flex;flex-direction:column;gap:4px}
+.master-field label{color:var(--soft);font:500 11px/15px var(--sh-font-body)}
+.master-field select{
+  min-height:34px;padding:0 8px;border:1px solid var(--control-border);border-radius:7px;
+  background:var(--surface);color:var(--text);font:400 12px/16px var(--sh-font-mono);
+}
+.master-field .why{color:var(--soft);font:400 11px/16px var(--sh-font-body)}
+
+/* Pie del cajón */
+.sheet-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px 20px;border-top:1px solid var(--border-soft);background:var(--surface);
+}
+.foot-status{display:flex;align-items:center;gap:7px;color:var(--soft);font:400 12px/18px var(--sh-font-body);min-width:0}
+.status-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--soft)}
+.foot-status[data-state="dirty"]{color:var(--warning)}
+.foot-status[data-state="dirty"] .status-dot{background:var(--warning)}
+.foot-status[data-state="success"]{color:var(--success)}
+.foot-status[data-state="success"] .status-dot{background:var(--success)}
+.foot-actions{display:flex;gap:8px;flex:none;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;
+  border:1px solid transparent;border-radius:8px;font:500 13px/18px var(--sh-font-body);
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out),filter var(--sh-motion-fast) var(--sh-ease-out);
+}
+.btn svg{width:14px;height:14px}
+.btn-outline{border-color:var(--control-border);background:transparent;color:var(--text)}
+.btn-outline:hover{background:var(--focus-soft);border-color:var(--focus)}
+.btn-cta{background-image:var(--sh-gradient-cta);color:#fff}
+.btn-cta:hover{filter:brightness(1.08) saturate(.92)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* Rol: dueño / maestro / BYOK */
+.stage[data-role="dueno"] .solo-master,
+.stage[data-role="maestro"] .solo-dueno,
+.stage[data-role="byok"] .solo-master{display:none!important}
+.stage[data-role="byok"] .solo-byok{display:flex!important}
+.stage:not([data-role="byok"]) .solo-byok{display:none!important}
+.stage[data-role="byok"] .options-field.is-byok{opacity:.45;pointer-events:none}
+.stage[data-plan="basico"] .avanzado-off{display:flex!important}
+.stage:not([data-plan="basico"]) .avanzado-off{display:none!important}
+.stage[data-plan="basico"] .option[data-level="avanzado"]{opacity:.62}
+
+/* ============================================================
+   Secciones de la página
+   ============================================================ */
+.section{margin-top:72px}
+.section h2{margin:0;color:var(--text-strong);font:600 24px/32px var(--sh-font-display);letter-spacing:-.01em}
+.section .sec-lede{max-width:760px;margin:10px 0 0;color:var(--body);font:400 15px/24px var(--sh-font-body);text-wrap:pretty}
+.change-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
+.change-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:18px}
+.change-card .mini-icon{
+  display:grid;place-items:center;width:34px;height:34px;margin-bottom:14px;border-radius:9px;
+  border:1px solid var(--border);background:var(--focus-soft);color:var(--focus);
+}
+.change-card .mini-icon svg{width:16px;height:16px}
+.change-card h3{margin:0 0 6px;color:var(--text);font:600 14px/20px var(--sh-font-display)}
+.change-card p{margin:0;color:var(--body);font:400 12px/19px var(--sh-font-body)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-top:24px}
+table{width:100%;border-collapse:collapse;min-width:860px}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border-soft)}
+tr:last-child td{border-bottom:0}
+th{
+  color:var(--soft);font:500 10px/14px var(--sh-font-body);letter-spacing:.06em;
+  text-transform:uppercase;background:var(--surface-2);white-space:nowrap;
+}
+td{color:var(--body);font:400 12px/18px var(--sh-font-body)}
+td strong{color:var(--text);font:600 13px/18px var(--sh-font-display)}
+td code,li code,p code{font:400 11px/16px var(--sh-font-mono);color:var(--text);background:var(--bg-deep);padding:1px 4px;border-radius:4px}
+.sev{display:inline-flex;align-items:center;padding:1px 6px;border-radius:999px;border:1px solid;font:500 10px/15px var(--sh-font-body);letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.sev.high{color:var(--danger);border-color:var(--danger);background:var(--danger-bg)}
+.sev.medium{color:var(--warning);border-color:var(--warning);background:var(--warning-bg)}
+.sev.low{color:var(--focus);border-color:var(--focus-border);background:var(--focus-soft)}
+.verdict{display:block;margin-bottom:3px;color:var(--text);font:500 12px/17px var(--sh-font-body)}
+.fine{margin:12px 0 0;color:var(--soft);font:400 11px/17px var(--sh-font-body)}
+
+.map-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start;margin-top:24px}
+.map-grid table{min-width:520px}
+.map-grid th,.map-grid td{padding:10px 12px}
+.side-note{padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.side-note h3{margin:0 0 8px;color:var(--text);font:600 13px/18px var(--sh-font-display)}
+.side-note p{margin:0 0 10px;color:var(--body);font:400 12px/19px var(--sh-font-body)}
+.side-note p:last-child{margin-bottom:0}
+
+.state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:24px}
+.state-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:12px}
+.state-card h3{margin:0;color:var(--text);font:600 13px/18px var(--sh-font-display)}
+.state-card p{margin:0;color:var(--body);font:400 12px/18px var(--sh-font-body)}
+.state-demo{
+  border:1px solid var(--border);border-radius:9px;background:var(--surface-2);padding:11px;
+  display:flex;flex-direction:column;gap:8px;min-height:110px;
+}
+.state-demo .mini-tier{display:flex;align-items:center;gap:7px;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--soft);font:500 11px/15px var(--sh-font-body)}
+.state-demo .mini-tier svg{width:12px;height:12px;flex:none}
+.state-demo .mini-tier strong{color:var(--text);font-weight:600}
+.state-demo .mini-tier.locked{border-style:dashed}
+.state-demo .mini-note{display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border-radius:6px;background:var(--warning-bg);color:var(--warning);font:400 11px/16px var(--sh-font-body)}
+.state-demo .mini-note.info{background:var(--info-bg);color:var(--focus)}
+.state-demo .mini-note svg{width:11px;height:11px;flex:none;margin-top:2px}
+.state-demo .mini-link{color:var(--link);font:500 11px/15px var(--sh-font-body);text-decoration:underline;text-underline-offset:2px}
+.state-demo .mini-switch{position:relative;width:28px;height:16px;margin-left:auto;border-radius:999px;border:1px solid var(--control-border);background:var(--bg-deep)}
+.state-demo .mini-switch::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--soft)}
+.state-demo .mini-switch.on{border-color:var(--focus);background:var(--focus-soft)}
+.state-demo .mini-switch.on::after{left:14px;background:var(--focus)}
+
+.impl{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;margin-top:24px;align-items:start}
+.impl-list{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.impl-item{display:flex;gap:12px;padding:15px 16px;border-bottom:1px solid var(--border-soft)}
+.impl-item:last-child{border-bottom:0}
+.impl-item .num{
+  display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;
+  border:1px solid var(--focus-border);background:var(--focus-soft);color:var(--focus);
+  font:500 11px/1 var(--sh-font-mono);
+}
+.impl-item h3{margin:0 0 3px;color:var(--text);font:500 13px/18px var(--sh-font-body)}
+.impl-item p{margin:0;color:var(--body);font:400 12px/18px var(--sh-font-body)}
+
+.decision{padding:16px;border:1px solid var(--focus-border);border-radius:12px;background:var(--focus-soft);margin-top:12px}
+.decision .d-head{display:flex;align-items:center;gap:8px;color:var(--focus);font:500 11px/16px var(--sh-font-body);letter-spacing:.05em;text-transform:uppercase}
+.decision .d-head svg{width:13px;height:13px}
+.decision h3{margin:6px 0 6px;color:var(--text);font:600 14px/20px var(--sh-font-display)}
+.decision p{margin:0 0 8px;color:var(--body);font:400 12px/19px var(--sh-font-body)}
+.decision p:last-child{margin-bottom:0}
+.decision .rec{display:inline-flex;align-items:center;gap:5px;color:var(--success);font:500 11px/15px var(--sh-font-body)}
+.decision .rec svg{width:12px;height:12px}
+
+.checklist{margin-top:24px;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.check-item{display:flex;align-items:flex-start;gap:11px;padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--body);font:400 13px/19px var(--sh-font-body)}
+.check-item:last-child{border-bottom:0}
+.check-item input{width:16px;height:16px;margin-top:2px;accent-color:var(--focus);flex:none}
+.check-item b{color:var(--text);font-weight:500}
+.check-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;background:var(--surface-2);border-bottom:1px solid var(--border-soft)}
+.check-head span{color:var(--soft);font:500 11px/15px var(--sh-font-body);letter-spacing:.04em;text-transform:uppercase}
+.check-head output{color:var(--focus);font:500 12px/16px var(--sh-font-mono)}
+
+.sources{margin-top:24px;border-top:1px solid var(--border-soft);padding-top:18px}
+.sources p{margin:0 0 6px;color:var(--soft);font:400 11px/17px var(--sh-font-body)}
+.sources code{font:400 11px/16px var(--sh-font-mono);color:var(--body)}
+
+.page-foot{
+  max-width:1280px;margin:0 auto;padding:24px 32px 48px;border-top:1px solid var(--border-soft);
+  display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;
+  color:var(--soft);font:400 11px/17px var(--sh-font-body);
+}
+.page-foot b{color:var(--body);font-weight:500}
+
+/* ============================================================
+   Adaptación
+   ============================================================ */
+@container sheet (max-width:620px){
+  .sheet-body{padding:16px}
+  .option{
+    grid-template-columns:32px minmax(0,1fr) 18px;
+    grid-template-areas:"icon main check" "meta meta meta";
+    gap:8px 10px;padding:11px 12px;min-height:0;align-items:start;
+  }
+  .option-icon{grid-area:icon;align-self:start}
+  .option-main{grid-area:main}
+  .option-check{grid-area:check;align-self:start}
+  .option-meta{
+    grid-area:meta;flex-direction:row;align-items:center;justify-content:space-between;
+    width:100%;gap:8px;padding-top:8px;border-top:1px solid var(--border-soft);text-align:left;
+  }
+  .limits,.master-grid{grid-template-columns:1fr}
+  .sheet-foot{position:sticky;bottom:0}
+}
+@media (max-width:900px){
+  .before-after,.map-grid,.impl,.change-grid{grid-template-columns:1fr}
+  .state-grid{grid-template-columns:1fr 1fr}
+  .page{padding:44px 20px 64px}
+  .topbar{padding:12px 20px;flex-wrap:wrap}
+  /* El prototipo se apila solo: en un teléfono no se le pide al lector que pulse «Móvil». */
+  .stage{grid-template-columns:1fr;min-height:0;max-width:100%}
+  .stage .app-bg{display:none}
+  .sheet{height:auto;max-height:none;border-left:0}
+  .sheet-body{max-height:none;overflow:visible}
+}
+@media (max-width:620px){
+  .state-grid{grid-template-columns:1fr}
+  .brand span{display:none}
+  .topbar .tag{display:none}
+  .stage-tools .note{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+@media print{
+  .topbar{position:static;backdrop-filter:none}
+  .stage{box-shadow:none;border-color:#C9D2E3}
+  .sheet{height:auto;max-height:none;border-left:0}
+  .sheet-body{overflow:visible;max-height:none}
+  .table-wrap{overflow:visible}
+  table{min-width:0}
+  th,td{padding:8px 9px;font-size:10px}
+  tr,.option,.state-card,.change-card,.decision,.impl-item{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="1" y="1" width="30" height="30" rx="9" stroke="currentColor" stroke-width="2"/>
+      <path d="M9 21V11h3.4l3.6 5.4L19.6 11H23v10h-2.8v-6.1L16.9 20h-1.8l-3.3-5.1V21H9Z" fill="currentColor"/>
+    </svg>
+    <b>SolversHub</b><span>· propuesta de diseño</span>
+  </div>
+  <div class="topbar-right">
+    <span class="tag tag-focus">Cerebro</span>
+    <span class="tag">Configuración › Respuesta</span>
+    <button type="button" class="theme-btn" id="theme-btn" aria-label="Cambiar entre tema claro y oscuro">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span id="theme-label">Claro</span>
+    </button>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <p class="eyebrow">Configuración › Cerebro · revisión y propuesta</p>
+    <h1>El dueño elige inteligencia,<br>no nombres de modelo.</h1>
+    <p class="lede">
+      Multimedia ya resolvió el problema: el negocio elige calidad y costo, y el sistema decide el proveedor.
+      Cerebro hoy hace lo contrario —tres campos de texto con nombres de modelo que el dueño no puede juzgar
+      y que el runtime casi siempre ignora—. Esta propuesta lleva el mismo patrón a Cerebro y deja los modelos
+      solo al equipo técnico.
+    </p>
+    <p class="thesis">
+      Tesis: una sola decisión visible, <strong>«qué tan inteligente y a qué costo»</strong>, con el modelo
+      escondido detrás. El resto son límites con nombre de negocio, no parámetros de máquina.
+    </p>
+
+    <div class="before-after">
+      <div class="ba">
+        <div class="ba-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          Hoy
+        </div>
+        <p>Tres campos de texto con <span class="mono">deepseek-flash</span> y compañía, dos controles para la
+        misma temperatura y un presupuesto que en 0 apaga al asistente sin avisar. El negocio no puede decidir; el máster sí, pero lo que guarda se sobrescribe al publicar.</p>
+      </div>
+      <div class="ba after">
+        <div class="ba-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+          Propuesta
+        </div>
+        <p>Dos niveles con calidad, <strong>≈ créditos por conversación</strong> y una nota que dice cuándo
+        aplica. El modelo vive en una caja del máster y el nivel manda. Los límites dicen qué le pasa a la
+        conversación, con unidad y sin trampas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Prototipo
+       ============================================================ -->
+  <section class="prototype" aria-labelledby="proto-title">
+    <div class="stage-tools">
+      <p class="note" id="proto-title">Prototipo interactivo · cambia rol, plan y tamaño para validar los estados.</p>
+      <div class="tool-group">
+        <span>Rol</span>
+        <div class="view-toggle" role="group" aria-label="Rol que mira la pantalla">
+          <button type="button" data-role-btn="dueno" aria-pressed="true">Dueño</button>
+          <button type="button" data-role-btn="maestro" aria-pressed="false">Máster</button>
+          <button type="button" data-role-btn="byok" aria-pressed="false">BYOK</button>
+        </div>
+        <span>Plan</span>
+        <div class="view-toggle" role="group" aria-label="Plan del negocio">
+          <button type="button" data-plan-btn="premium" aria-pressed="true">Premium</button>
+          <button type="button" data-plan-btn="basico" aria-pressed="false">Básico</button>
+        </div>
+        <span>Vista</span>
+        <div class="view-toggle" role="group" aria-label="Tamaño de la vista">
+          <button type="button" data-view-btn="desktop" aria-pressed="true">Escritorio</button>
+          <button type="button" data-view-btn="mobile" aria-pressed="false">Móvil</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" data-view="desktop" data-role="dueno" data-plan="premium">
+      <!-- Panel de fondo -->
+      <div class="app-bg" aria-hidden="true">
+        <div class="mini-top">
+          <span class="mini-brand">SOLVERSHUB</span>
+          <span class="mini-pill">Negocio · activo</span>
+        </div>
+        <p class="mini-crumb">Configuración</p>
+        <h2 class="mini-title">Tu asistente</h2>
+
+        <div class="mini-group">
+          <h3>Respuesta</h3>
+          <div class="mini-row is-current">
+            <span>Cerebro</span><span id="mini-brain-value">Avanzado · ≈ 45 créditos por conversación</span>
+          </div>
+          <div class="mini-row"><span>Identidad</span><span>Voz cercana · emojis: pocos</span></div>
+          <div class="mini-row"><span>Memoria</span><span>Recuerda 10 mensajes</span></div>
+          <div class="mini-row"><span>Multimedia</span><span>Transcribe notas · mira imágenes</span></div>
+        </div>
+
+        <div class="mini-group">
+          <h3>Canales</h3>
+          <div class="mini-row"><span>Chat web</span><span>Activo en 1 sitio</span></div>
+          <div class="mini-row"><span>WhatsApp</span><span>Conectado</span></div>
+        </div>
+
+        <div class="mini-group">
+          <h3>Avanzado</h3>
+          <div class="mini-row"><span>Cuenta y proveedor</span><span>IA de SolversHub</span></div>
+          <div class="mini-row"><span>Accesibilidad</span><span>Atajos de teclado</span></div>
+        </div>
+      </div>
+
+      <!-- Cajón -->
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <header class="sheet-head">
+          <div>
+            <h2 id="sheet-title">Cerebro</h2>
+            <p>Cómo responde el asistente y cuánto puede gastar.</p>
+          </div>
+          <button type="button" class="icon-btn" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+
+        <div class="sheet-body">
+          <!-- 1. Inteligencia -->
+          <section class="block" aria-labelledby="intel-title">
+            <div class="block-head">
+              <h3 id="intel-title">Inteligencia</h3>
+              <span class="block-hint">Calidad de cada respuesta</span>
+            </div>
+
+            <div class="notice info solo-byok" role="note" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8.5v.5"/></svg>
+              <span>Este negocio usa su propia llave: <strong id="byok-model">OpenAI · gpt-4o-mini</strong>. La
+              inteligencia se define en <a href="#" class="link">Cuenta y proveedor</a> y manda sobre esta elección.</span>
+            </div>
+
+            <p class="block-lede solo-dueno">Los dos niveles usan el mismo asistente; cambian cuánto razona en los
+            casos difíciles y cuánto gasta.</p>
+
+            <fieldset class="options-field is-byok">
+              <legend class="field-legend">Nivel de IA <span class="legend-hint">por conversación</span></legend>
+              <div class="options">
+                <label class="option" data-level="estandar">
+                  <input type="radio" name="nivel" value="estandar">
+                  <span class="option-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z"/></svg>
+                  </span>
+                  <span class="option-main">
+                    <span class="option-title">Estándar <span class="option-badge">Recomendado</span></span>
+                    <span class="option-desc">Responde bien la mayoría de las conversaciones. El día a día del negocio.</span>
+                    <span class="option-model solo-master" aria-hidden="true">deepseek-flash</span>
+                  </span>
+                  <span class="option-meta">
+                    <span class="option-quality">
+                      <span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+                      Muy buena
+                    </span>
+                    <span class="option-cost">≈ 11 <small>créditos / conversación</small></span>
+                  </span>
+                  <span class="option-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>
+                  </span>
+                </label>
+
+                <label class="option" data-level="avanzado">
+                  <input type="radio" name="nivel" value="avanzado" checked>
+                  <span class="option-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4L12 3Z"/><path d="M19 16.5 20 19l2.5 1L20 21l-1 2.5L18 21l-2.5-1L18 19l1-2.5Z"/></svg>
+                  </span>
+                  <span class="option-main">
+                    <span class="option-title">Avanzado <span class="option-badge lock avanzado-off" style="display:none">Plan Premium</span></span>
+                    <span class="option-desc">Razona mejor los casos difíciles: pedidos largos, excepciones y varias condiciones.</span>
+                    <span class="option-model solo-master" aria-hidden="true">deepseek-v4-pro</span>
+                  </span>
+                  <span class="option-meta">
+                    <span class="option-quality">
+                      <span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
+                      Máxima
+                    </span>
+                    <span class="option-cost">≈ 45 <small>créditos / conversación</small></span>
+                  </span>
+                  <span class="option-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            <p class="cap-footnote">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8.5v.5"/></svg>
+              <span><strong>Se aplica al publicar:</strong> hasta entonces tus clientes siguen con el nivel actual.
+              Avanzado gasta unas 4 veces más crédito por conversación.</span>
+            </p>
+            <p class="notice warn avanzado-off" style="display:none" role="note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+              <span>Avanzado viene en Premium y Empresarial. <a href="#" class="link">Mejorar mi plan</a></span>
+            </p>
+          </section>
+
+          <!-- 2. Cómo piensa -->
+          <section class="block" aria-labelledby="think-title">
+            <div class="block-head">
+              <h3 id="think-title">Cómo piensa</h3>
+            </div>
+
+            <div class="switch-row">
+              <div class="copy">
+                <h4 id="razon-label">Pensar más en preguntas difíciles</h4>
+                <p>En preguntas largas o con análisis usa el modo de razonamiento del nivel. Si lo apagas,
+                todas las respuestas usan el modelo normal: más rápido y más barato.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="razon" checked aria-labelledby="razon-label">
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div class="copy">
+                <h4 id="respaldo-label">Respaldo si la IA falla</h4>
+                <p>Si el proveedor no responde, un segundo modelo del mismo proveedor intenta una vez antes de
+                pasar la conversación a una persona.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="respaldo" checked aria-labelledby="respaldo-label">
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+            <p class="notice warn" id="respaldo-warn" role="note" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+              <span>Sin respaldo, si la IA falla el cliente recibe el aviso de que una persona seguirá la conversación.</span>
+            </p>
+          </section>
+
+          <!-- 3. Cómo salen las respuestas -->
+          <section class="block" aria-labelledby="temp-title">
+            <div class="block-head">
+              <h3 id="temp-title">Cómo salen las respuestas</h3>
+              <span class="block-hint">Temperatura</span>
+            </div>
+            <div class="segmented" role="group" aria-label="Cómo salen las respuestas">
+              <button type="button" class="seg-btn" data-temp="0.2" aria-pressed="false">Precisas</button>
+              <button type="button" class="seg-btn" data-temp="0.5" aria-pressed="true">Equilibradas</button>
+              <button type="button" class="seg-btn" data-temp="0.9" aria-pressed="false">Creativas</button>
+            </div>
+            <p class="exact">
+              Valor exacto: <output id="temp-out">0,5</output>
+              <button type="button" class="link" id="temp-fine">Ajustar</button>
+              <input type="number" class="mini-input" id="temp-number" min="0" max="2" step="0.1" value="0.5" hidden aria-label="Temperatura exacta de 0 a 2">
+            </p>
+            <p class="cap-footnote">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8.5v.5"/></svg>
+              Para atender clientes conviene un valor bajo: respuestas casi iguales y sin inventar.
+            </p>
+          </section>
+
+          <!-- 4. Límites -->
+          <section class="block" aria-labelledby="limits-title">
+            <div class="block-head">
+              <h3 id="limits-title">Límites por conversación</h3>
+            </div>
+            <div class="limits">
+              <div class="limit-card">
+                <h4>Herramientas por respuesta</h4>
+                <p class="help">Cuántas veces puede consultar o actuar (agendar, cobrar, buscar) antes de
+                responder. 10 cubre casi todo.</p>
+                <div class="stepper" role="group" aria-label="Herramientas por respuesta">
+                  <button type="button" data-step="-1" aria-label="Una menos">−</button>
+                  <output id="tools-out">10</output>
+                  <button type="button" data-step="1" aria-label="Una más">+</button>
+                </div>
+              </div>
+
+              <div class="limit-card">
+                <h4>Límite de gasto</h4>
+                <p class="help">Al llegar a este monto, el asistente se despide y deja la conversación para una
+                persona.</p>
+                <div class="money">
+                  <span aria-hidden="true">$</span>
+                  <input type="number" id="budget" min="0" step="0.1" value="0.50" aria-label="Límite de gasto por conversación en dólares">
+                  <em>USD</em>
+                </div>
+                <label class="check-inline">
+                  <input type="checkbox" id="no-limit">
+                  Sin tope
+                </label>
+              </div>
+            </div>
+            <p class="notice error" id="budget-error" role="alert" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg>
+              <span>Con <strong>0</strong> el asistente no responde ninguna conversación. Escribe un monto mayor
+              o marca «Sin tope».</span>
+            </p>
+          </section>
+
+          <!-- 5. Solo máster -->
+          <details class="master-box solo-master">
+            <summary>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+              Modelos exactos (solo máster)
+            </summary>
+            <div class="master-grid">
+              <div class="master-field">
+                <label for="m-primary">Modelo primario</label>
+                <select id="m-primary">
+                  <option>deepseek-flash</option>
+                  <option selected>deepseek-v4-pro</option>
+                  <option>gpt-4o-mini</option>
+                </select>
+                <span class="why">El nivel lo reescribe al publicar.</span>
+              </div>
+              <div class="master-field">
+                <label for="m-router">Razonamiento</label>
+                <select id="m-router">
+                  <option>deepseek-flash</option>
+                  <option selected>deepseek-v4-pro</option>
+                  <option>gpt-4o</option>
+                </select>
+                <span class="why">Apagado = el primario, nunca vacío.</span>
+              </div>
+              <div class="master-field">
+                <label for="m-fallback">Respaldo</label>
+                <select id="m-fallback">
+                  <option selected>deepseek-flash</option>
+                  <option>Sin respaldo</option>
+                  <option>gpt-4o-mini</option>
+                </select>
+                <span class="why">Debe ser del mismo proveedor.</span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <footer class="sheet-foot">
+          <p class="foot-status" id="foot-status" data-state="clean" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="foot-text">Sin cambios</span>
+          </p>
+          <div class="foot-actions">
+            <button type="button" class="btn btn-outline" id="test-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg>
+              Probar
+            </button>
+            <button type="button" class="btn btn-cta" id="save-btn" disabled>Guardar cambios</button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Qué se usa y qué no
+       ============================================================ -->
+  <section class="section" aria-labelledby="audit-title">
+    <h2 id="audit-title">Qué se usa y qué no</h2>
+    <p class="sec-lede">
+      Las seis opciones de Cerebro se leen en algún punto del runtime: ninguna está muerta. Pero tres no hacen
+      lo que su ayuda promete, y una cuarta es una trampa de un solo dígito. Esto es lo que encontré en el código
+      del panel y del core, con la línea que lo demuestra.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Opción</th>
+            <th>Qué promete hoy</th>
+            <th>Qué hace de verdad</th>
+            <th>Veredicto</th>
+            <th>Severidad</th>
+            <th>Qué hacer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Modelo primario</strong><br><code>model_primary</code></td>
+            <td>«El modelo que responde a tus clientes. Cambiarlo afecta el costo y la calidad de todas las respuestas.»</td>
+            <td>Se lee en <code>loop.py:1821</code> como tercera prioridad: BYOK del negocio manda, y al publicar
+            el nivel del agente reescribe <code>model.primary</code> (ADR-0210 §3). En hu104 Cerebro solo edita
+            <code>agent_defaults</code>: no toca las versiones vivas.</td>
+            <td><span class="verdict">Casi siempre sobrescrito</span>Solo aplica al máster con llave de plataforma y hasta la próxima publicación.</td>
+            <td><span class="sev high">Alta</span></td>
+            <td>Quitarlo de la vista del dueño. El máster lo conserva en una caja aparte, con la nota de que el nivel manda al publicar.</td>
+          </tr>
+          <tr>
+            <td><strong>Modelo de razonamiento</strong><br><code>model_router</code></td>
+            <td>«Para turnos complejos sin herramientas.»</td>
+            <td>Entra como <code>reasoning_model</code> (<code>loop.py:528</code>). Si queda vacío cae al
+            <code>LLM_MODEL_REASONING</code> del servidor: apagarlo en Avanzado lo baja a flash. Un modelo de otra
+            familia falla porque el proveedor es el del negocio.</td>
+            <td><span class="verdict">Se usa, pero mal</span>Vacío no es «apagado» y texto libre permite una familia imposible.</td>
+            <td><span class="sev high">Alta</span></td>
+            <td>Convertirlo en interruptor: encendido usa el router del nivel, apagado usa el primario. Nunca vacío.</td>
+          </tr>
+          <tr>
+            <td><strong>Modelo de respaldo</strong><br><code>model_fallback</code></td>
+            <td>«Se usa si el primario falla.»</td>
+            <td>Reintenta una vez ante error (<code>loop.py:651</code>) y en el verificador solo si
+            <code>misma_familia</code> (<code>loop.py:1830</code>). Con otra familia no se intenta y queda
+            <code>respaldo_no_disponible</code>.</td>
+            <td><span class="verdict">Se usa a medias</span>La promesa es más grande que el comportamiento.</td>
+            <td><span class="sev high">Alta</span></td>
+            <td>Interruptor con el respaldo del mismo proveedor ya elegido. El máster puede sustituirlo; el dueño no escribe modelos.</td>
+          </tr>
+          <tr>
+            <td><strong>Temperatura</strong><br><code>model_temperature</code></td>
+            <td>«Qué tan variadas son las respuestas.»</td>
+            <td>Se pasa en cada llamada (<code>loop.py:545</code>). Hay dos controles para el mismo valor y el
+            segmentado queda sin opción seleccionada con el 0,3 de fábrica (sus cortes son 0,2 / 0,5 / 0,9).</td>
+            <td><span class="verdict">Se usa; la interfaz miente</span>Dos entradas para un dato y un estado vacío que parece un error.</td>
+            <td><span class="sev medium">Media</span></td>
+            <td>Un solo control: presets con el más cercano seleccionado y «Ajustar» para el valor exacto.</td>
+          </tr>
+          <tr>
+            <td><strong>Herramientas por turno</strong><br><code>policy_max_tool_calls</code></td>
+            <td>«Máx. llamadas a herramientas por turno.»</td>
+            <td>Tope de iteraciones del bucle (<code>loop.py:613</code>), entre 1 y 50. Se confunde con el tope
+            por conversación de Habilidades (HU-CFG-09).</td>
+            <td><span class="verdict">Se usa</span>Correcto, con nombre técnico y sin unidad visible.</td>
+            <td><span class="sev low">Baja</span></td>
+            <td>«Herramientas por respuesta», con paso −/+ y la explicación de qué cuenta.</td>
+          </tr>
+          <tr>
+            <td><strong>Presupuesto por conversación</strong><br><code>policy_budget</code></td>
+            <td>«En dólares: deja de trabajar al llegar a este gasto.»</td>
+            <td>Se compara <code>spent &gt;= budget</code> antes de cada llamada (<code>loop.py:601</code>).
+            Con 0 bloquea todas las conversaciones. El dato ya admite nulo (hu104) y el registro lo llama
+            «sin tope», pero <code>BrainUpdate</code> no lo expone.</td>
+            <td><span class="verdict">Se usa, con trampa</span>0 no significa «sin límite»: significa «no responde».</td>
+            <td><span class="sev high">Alta</span></td>
+            <td>«Sin tope» explícito (nulo) y validación en línea que impide guardar 0. Mostrar USD, no solo el número.</td>
+          </tr>
+          <tr>
+            <td><strong>Quién ve los modelos</strong><br><code>verModelos</code></td>
+            <td>Solo el máster.</td>
+            <td>En la base del panel, <code>_brain_out</code> devuelve los modelos a todos y <code>save_brain</code>
+            acepta los que lleguen con permiso <code>settings</code>. En hu104 (ADR-0210 §5) ya se ocultan y se ignoran.</td>
+            <td><span class="verdict">Depende de la rama</span>El diseño debe asumir la regla de ADR-0210, no la del código viejo.</td>
+            <td><span class="sev medium">Media</span></td>
+            <td>Implementar contra la rama que ya oculta los modelos; probar con un gestor que intente enviarlos.</td>
+          </tr>
+          <tr>
+            <td><strong>Guardado</strong><br>Cerebro vs Multimedia</td>
+            <td>«Guardar».</td>
+            <td>Cerebro no tiene barra de estado ni «cambios sin guardar»; Multimedia sí. El mismo cajón se
+            comporta distinto según la sección.</td>
+            <td><span class="verdict">Inconsistente</span>El cierre con cambios ya pide confirmación, pero el pie no lo dice.</td>
+            <td><span class="sev medium">Media</span></td>
+            <td>Reutilizar el pie de Multimedia: estado, «Probar», «Guardar cambios» deshabilitado sin cambios.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">
+      Rutas del core citadas sobre <code>solvershub-backend</code>; la ocultación por rol y <code>agent_defaults</code>
+      sobre la rama <code>hu104</code> (ADR-0210, ADR-0206 §6). Si el panel se implementa antes de esa rama, el
+      hallazgo de visibilidad vuelve a estar vivo.
+    </p>
+  </section>
+
+  <!-- ============================================================
+       El mapa
+       ============================================================ -->
+  <section class="section" aria-labelledby="map-title">
+    <h2 id="map-title">El mapa que queda debajo</h2>
+    <p class="sec-lede">
+      El dueño ve dos niveles; el core traduce cada uno a un modelo y a su router. Es el mapa que ya aceptó
+      ADR-0210, con el costo calibrado en HU-BILL-29. Esta tabla es para el equipo: el dueño nunca ve la
+      columna del modelo.
+    </p>
+
+    <div class="map-grid">
+      <div class="table-wrap" style="margin-top:0">
+        <table>
+          <thead>
+            <tr><th>Nivel</th><th>Primario</th><th>Razonamiento</th><th>≈ créditos / conversación</th><th>Plan</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Estándar</strong></td>
+              <td class="mono">deepseek-flash</td>
+              <td class="mono">deepseek-flash</td>
+              <td><strong>11</strong></td>
+              <td>Todos</td>
+            </tr>
+            <tr>
+              <td><strong>Avanzado</strong></td>
+              <td class="mono">deepseek-v4-pro</td>
+              <td class="mono">deepseek-v4-pro</td>
+              <td><strong>45</strong></td>
+              <td>Premium y Empresarial</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <aside class="side-note">
+        <h3>Dónde vive cada cosa</h3>
+        <p><b>Nivel</b>: <code>agents.nivel_ia</code> por agente. Al publicar fija <code>model.primary</code> y
+        <code>model.router</code> de esa versión.</p>
+        <p><b>Valores por defecto</b>: <code>agent_defaults</code> del negocio si Cerebro siembra a los agentes
+        nuevos.</p>
+        <p><b>BYOK</b>: si hay proveedor y llave propios, el nivel no decide; manda el modelo del negocio.</p>
+        <p><b>Costo</b>: 11 / 45 créditos es una guía calibrada, no un precio por conversación real.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Estados
+       ============================================================ -->
+  <section class="section" aria-labelledby="states-title">
+    <h2 id="states-title">Estados que el diseño resuelve</h2>
+    <p class="sec-lede">Los seis casos que hoy no tienen respuesta en Cerebro. Ninguno depende de un color: todos dicen qué pasa y qué hacer.</p>
+
+    <div class="state-grid">
+      <div class="state-card">
+        <h3>Plan sin Avanzado</h3>
+        <div class="state-demo">
+          <div class="mini-tier locked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><strong>Avanzado</strong> · Plan Premium</span></div>
+          <div class="mini-note info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8.5v.5"/></svg><span>Se atenúa, no desaparece. <span class="mini-link">Mejorar mi plan</span></span></div>
+        </div>
+        <p>La fila sigue visible para que el dueño sepa que existe; el 409 del plan se evita antes de enviar.</p>
+      </div>
+
+      <div class="state-card">
+        <h3>Llave propia (BYOK)</h3>
+        <div class="state-demo">
+          <div class="mini-note info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8.5v.5"/></svg><span>Usas <strong>OpenAI · gpt-4o-mini</strong>. Se define en Cuenta y proveedor.</span></div>
+          <div class="mini-tier locked"><span><strong>Nivel de IA</strong> · no aplica</span></div>
+        </div>
+        <p>El selector no se finge: se reemplaza por el aviso y el enlace. Un control que no hace nada es peor que ninguno.</p>
+      </div>
+
+      <div class="state-card">
+        <h3>Modelo retirado</h3>
+        <div class="state-demo">
+          <div class="mini-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span>Tu agente usaba un modelo que ya no existe. Al publicar pasa al del nivel.</span></div>
+        </div>
+        <p>Se avisa en la ficha del agente y en Cerebro, una vez. No se cambia en silencio.</p>
+      </div>
+
+      <div class="state-card">
+        <h3>Sin respaldo</h3>
+        <div class="state-demo">
+          <div class="mini-tier"><span><strong>Respaldo</strong> · apagado</span><span class="mini-switch" aria-hidden="true"></span></div>
+          <div class="mini-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span>Si la IA falla, el cliente recibe el aviso y sigue una persona.</span></div>
+        </div>
+        <p>La consecuencia se dice antes de guardar, no se descubre en producción.</p>
+      </div>
+
+      <div class="state-card">
+        <h3>Presupuesto en 0</h3>
+        <div class="state-demo">
+          <div class="mini-tier"><span><strong>$</strong> 0,00 <em style="font-style:normal;color:var(--soft)">USD</em></span></div>
+          <div class="mini-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg><span>Con 0 no responde ninguna conversación.</span></div>
+        </div>
+        <p>Error en línea y botón deshabilitado. «Sin tope» es una casilla aparte, no un cero.</p>
+      </div>
+
+      <div class="state-card">
+        <h3>Cambios sin guardar</h3>
+        <div class="state-demo">
+          <div class="mini-tier"><span><strong>Cambios sin guardar</strong></span></div>
+          <div class="mini-tier"><span>Guardar cambios</span><span class="mini-link">Probar</span></div>
+        </div>
+        <p>Pie fijo como en Multimedia. Al cerrar el cajón, confirmación con «Descartar cambios».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Implementación
+       ============================================================ -->
+  <section class="section" aria-labelledby="impl-title">
+    <h2 id="impl-title">Para implementar sin sorpresas</h2>
+    <p class="sec-lede">El orden es el de la skill: accesibilidad, convenciones, craft y pulido. Nada de esto cambia un contrato congelado.</p>
+
+    <div class="impl">
+      <div class="impl-list">
+        <div class="impl-item">
+          <span class="num">1</span>
+          <div>
+            <h3>Un módulo de opciones, calcado de Multimedia</h3>
+            <p><code>lib/inteligencia-opciones.ts</code>: niveles, créditos, copy y el «recomendado». Sin nombres
+            de modelo en la vista del dueño. Tests como <code>media-opciones.test.ts</code>.</p>
+          </div>
+        </div>
+        <div class="impl-item">
+          <span class="num">2</span>
+          <div>
+            <h3>Reescribir <code>brain-form.tsx</code></h3>
+            <p>Fuera los tres <code>Input</code> de modelo. Dentro el selector de nivel, los dos interruptores,
+            un solo control de temperatura y los límites con unidad. Los modelos quedan en un bloque del máster.</p>
+          </div>
+        </div>
+        <div class="impl-item">
+          <span class="num">3</span>
+          <div>
+            <h3>Mover Cerebro a «Respuesta»</h3>
+            <p>En <code>lib/configuracion-secciones.ts</code> cambia de <code>avanzado</code> a
+            <code>respuesta</code>. El resumen pasa a «Avanzado · ≈ 45 créditos por conversación» y deja de decir
+            solo «Respuestas precisas».</p>
+          </div>
+        </div>
+        <div class="impl-item">
+          <span class="num">4</span>
+          <div>
+            <h3>Decidir dónde escribe el nivel</h3>
+            <p>Si Cerebro siembra a los agentes nuevos: <code>agent_defaults.model.nivel</code> y la herencia al
+            crear. Si aplica a todos: fan-out al <code>PATCH /admin/agents/{id}</code> que ya existe, con
+            confirmación y «se aplica al publicar».</p>
+          </div>
+        </div>
+        <div class="impl-item">
+          <span class="num">5</span>
+          <div>
+            <h3>Arreglar los dos ceros y el router vacío</h3>
+            <p><code>policy_budget</code> acepta nulo para «sin tope»; 0 se rechaza en el cliente. Router apagado
+            escribe el primario, nunca <code>null</code>. Pruebas de API para ambos.</p>
+          </div>
+        </div>
+        <div class="impl-item">
+          <span class="num">6</span>
+          <div>
+            <h3>Heredar en la APK</h3>
+            <p>La APK no edita agentes, pero el copy del nivel y los créditos ya vienen del registro. No se
+            duplica texto en el cliente.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="decision">
+          <div class="d-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 8h14M5 16h14"/></svg>Decisión A</div>
+          <h3>¿Nivel por defecto o para todos?</h3>
+          <p><b>Por defecto</b> (recomendado): Cerebro siembra a los agentes nuevos y muestra la lista de los
+          existentes con su nivel, cada uno cambiable en su ficha. No toca lo que el dueño ya eligió.</p>
+          <p><b>Para todos</b>: al guardar se aplica a todos los agentes, con confirmación «se aplica a 4 agentes».
+          Más directo, pero pisa decisiones por agente.</p>
+          <span class="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>Recomiendo la primera: es la que no sorprende.</span>
+        </div>
+
+        <div class="decision">
+          <div class="d-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 8h14M5 16h14"/></svg>Decisión B</div>
+          <h3>¿USD o créditos?</h3>
+          <p>El runtime mide dólares, pero el dueño compra créditos (ADR-0208). La fila de nivel ya habla en
+          créditos; el límite debería hacerlo también, con el equivalente en USD como ayuda, no al revés.</p>
+          <span class="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>Créditos primero; USD en la ayuda.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Checklist
+       ============================================================ -->
+  <section class="section" aria-labelledby="check-title">
+    <h2 id="check-title">Para validar</h2>
+    <p class="sec-lede">Marca lo que aceptas. El prototipo de arriba responde a cada punto: cambia rol, plan y vista.</p>
+
+    <div class="checklist">
+      <div class="check-head"><span>Validación de la propuesta</span><output id="check-count">0 / 10</output></div>
+      <label class="check-item"><input type="checkbox"><span><b>Una sola decisión visible.</b> El dueño ve Estándar y Avanzado; nunca un nombre de modelo.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>El costo es parte de la opción.</b> Cada nivel muestra ≈ créditos por conversación y la nota de que se aplica al publicar.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>El plan no rompe el flujo.</b> Avanzado sin plan se atenúa con «Mejorar mi plan»; no hay toast ni 409.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Con BYOK no se finge un control.</b> El selector se reemplaza por el aviso y el enlace a Cuenta y proveedor.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Temperatura con un solo control</b> y siempre una opción seleccionada; el valor exacto queda a un clic.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Presupuesto sin trampa:</b> «Sin tope» explícito, 0 bloqueado en línea y USD visible.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Router apagado = primario</b>, no vacío. En Avanzado, apagarlo no debe bajar el turno a flash.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>El máster ve los modelos</b> en una caja aparte y sabe que el nivel los reescribe al publicar.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Mismo pie que Multimedia:</b> estado, Probar y Guardar cambios; el cierre pide confirmación.</span></label>
+      <label class="check-item"><input type="checkbox"><span><b>Móvil a 320 px:</b> la fila de opción apila costo y calidad sin cortar el nombre ni el botón.</span></label>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="keep-title">
+    <h2 id="keep-title">Lo que se queda</h2>
+    <p class="sec-lede">No todo se reescribe. Estas decisiones actuales funcionan y deben sobrevivir al cambio.</p>
+    <div class="change-grid">
+      <div class="change-card">
+        <div class="mini-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></div>
+        <h3>El patrón de Multimedia</h3>
+        <p>Filas con icono, promesa, barras de calidad y costo. Ya está probado y el dueño lo entiende.</p>
+      </div>
+      <div class="change-card">
+        <div class="mini-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12h8"/></svg></div>
+        <h3>El cajón y su confirmación</h3>
+        <p>Configuración ya cierra con confirmación si hay cambios. Eso se conserva y se completa con el pie.</p>
+      </div>
+      <div class="change-card">
+        <div class="mini-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg></div>
+        <h3>La ayuda del registro</h3>
+        <p>Las explicaciones vienen de <code>config_registro</code> y la APK las hereda. El texto nuevo va ahí, no en el TSX.</p>
+      </div>
+      <div class="change-card">
+        <div class="mini-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 7v6c0 5 8 8 8 8s8-3 8-8V7l-8-4Z"/></svg></div>
+        <h3>El modelo oculto</h3>
+        <p>ADR-0210 ya decidió que el negocio no ve el modelo. Esta propuesta lo aplica también a Cerebro.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sources" aria-label="Referencias">
+    <p><b>Referencias HIG citadas:</b> <code>accessibility.md › Vision / Mobility</code> · <code>layout.md › Visual hierarchy / Adaptability</code> ·
+    <code>typography.md › Ensuring legibility</code> · <code>color.md › Best practices / Inclusive color</code> ·
+    <code>settings.md › Best practices / Task-specific options</code> · <code>entering-data.md › Best practices</code> ·
+    <code>segmented-controls.md › Best practices</code> · <code>toggles.md › Desktop (macOS)</code> ·
+    <code>writing.md › Best practices</code> · <code>dark-mode.md › Dark Mode colors</code> · <code>feedback.md › Best practices</code> ·
+    <code>generative-ai.md › Transparency / Models</code> · <code>cross-platform.md › Conventions to check</code>.</p>
+    <p><b>Contraste medido:</b> texto 13,15:1 y cuerpo 7,54:1 sobre superficie oscura; cuerpo 5,42:1 y texto suave 5,08:1 sobre blanco; insignia de foco 6,29:1 (oscuro) y 4,68:1 (claro). Todo pasa AA. En el código actual la insignia «Recomendado» usa 10 px, por debajo del mínimo de 11 px; en este prototipo ya está en 11 px y conviene llevarlo así al panel.</p>
+    <p><b>Fuentes de producto:</b> ADR-0210 (nivel de IA), ADR-0206 §6 (<code>agent_defaults</code>), HU-BILL-24/27, HU-CFG-09; <code>brain-form.tsx</code>, <code>multimedia-form.tsx</code>, <code>lib/media-opciones.ts</code>, <code>lib/nivel-ia.ts</code>, <code>core/orchestrator/loop.py</code>, <code>core/llm/difficulty_router.py</code>, <code>core/llm/niveles.py</code>.</p>
+  </section>
+</main>
+
+<footer class="page-foot">
+  <span><b>SolversHub</b> · propuesta de Cerebro · artefacto de validación</span>
+  <span>Sin cambios en el código: esto es para decidir antes de implementar.</span>
+</footer>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var stage = document.getElementById('stage');
+  var themeBtn = document.getElementById('theme-btn');
+  var themeLabel = document.getElementById('theme-label');
+
+  themeBtn.addEventListener('click', function(){
+    var light = root.getAttribute('data-theme') === 'sh-light';
+    root.setAttribute('data-theme', light ? 'sh-dark' : 'sh-light');
+    themeLabel.textContent = light ? 'Claro' : 'Oscuro';
+  });
+
+  function group(attr, onPick){
+    var buttons = document.querySelectorAll('[' + attr + ']');
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        buttons.forEach(function(b){ b.setAttribute('aria-pressed', String(b === btn)); });
+        onPick(btn.getAttribute(attr));
+      });
+    });
+  }
+
+  group('data-role-btn', function(role){
+    stage.setAttribute('data-role', role);
+    if (role === 'byok') {
+      var value = document.getElementById('mini-brain-value');
+      if (value) value.textContent = 'OpenAI · gpt-4o-mini (llave propia)';
+    } else {
+      syncSummary();
+    }
+  });
+
+  group('data-plan-btn', function(plan){
+    stage.setAttribute('data-plan', plan);
+    var avanzado = document.querySelector('.option[data-level="avanzado"]');
+    var input = avanzado && avanzado.querySelector('input');
+    if (!input) return;
+    input.disabled = plan === 'basico';
+    if (plan === 'basico' && input.checked) {
+      document.querySelector('.option[data-level="estandar"] input').checked = true;
+      dirty();
+      syncSummary();
+    }
+  });
+
+  group('data-view-btn', function(view){
+    stage.setAttribute('data-view', view);
+  });
+
+  // Estado de cambios
+  var dirtyState = false;
+  var footStatus = document.getElementById('foot-status');
+  var footText = document.getElementById('foot-text');
+  var saveBtn = document.getElementById('save-btn');
+
+  function dirty(){
+    dirtyState = true;
+    footStatus.setAttribute('data-state', 'dirty');
+    footText.textContent = 'Cambios sin guardar';
+    saveBtn.disabled = false;
+  }
+  function clean(){
+    dirtyState = false;
+    footStatus.setAttribute('data-state', 'success');
+    footText.textContent = 'Cambios guardados';
+    saveBtn.disabled = true;
+  }
+
+  // Nivel
+  document.querySelectorAll('input[name="nivel"]').forEach(function(input){
+    input.addEventListener('change', function(){
+      dirty();
+      syncSummary();
+    });
+  });
+
+  function syncSummary(){
+    var value = document.getElementById('mini-brain-value');
+    if (!value) return;
+    if (stage.getAttribute('data-role') === 'byok') {
+      value.textContent = 'OpenAI · gpt-4o-mini (llave propia)';
+      return;
+    }
+    var checked = document.querySelector('input[name="nivel"]:checked');
+    var level = checked ? checked.value : 'estandar';
+    value.textContent = level === 'avanzado'
+      ? 'Avanzado · ≈ 45 créditos por conversación'
+      : 'Estándar · ≈ 11 créditos por conversación';
+  }
+
+  // Interruptores
+  ['razon', 'respaldo'].forEach(function(id){
+    var input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('change', function(){
+      dirty();
+      if (id === 'respaldo') {
+        document.getElementById('respaldo-warn').style.display = input.checked ? 'none' : 'flex';
+      }
+    });
+  });
+
+  // Temperatura
+  var tempOut = document.getElementById('temp-out');
+  var tempNumber = document.getElementById('temp-number');
+  var presets = [0.2, 0.5, 0.9];
+
+  function nearest(value){
+    return presets.reduce(function(best, p){
+      return Math.abs(p - value) < Math.abs(best - value) ? p : best;
+    }, presets[0]);
+  }
+  function paintTemp(value){
+    var p = nearest(value);
+    document.querySelectorAll('[data-temp]').forEach(function(btn){
+      btn.setAttribute('aria-pressed', String(Number(btn.getAttribute('data-temp')) === p));
+    });
+    tempOut.textContent = String(value).replace('.', ',');
+    tempNumber.value = value;
+  }
+  document.querySelectorAll('[data-temp]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      paintTemp(Number(btn.getAttribute('data-temp')));
+      dirty();
+    });
+  });
+  document.getElementById('temp-fine').addEventListener('click', function(){
+    tempNumber.hidden = !tempNumber.hidden;
+    if (!tempNumber.hidden) tempNumber.focus();
+  });
+  tempNumber.addEventListener('input', function(){
+    var n = Number(tempNumber.value);
+    if (!isFinite(n)) return;
+    n = Math.max(0, Math.min(2, n));
+    tempOut.textContent = String(n).replace('.', ',');
+    document.querySelectorAll('[data-temp]').forEach(function(btn){
+      btn.setAttribute('aria-pressed', String(Number(btn.getAttribute('data-temp')) === nearest(n)));
+    });
+    dirty();
+  });
+
+  // Herramientas
+  var tools = 10;
+  var toolsOut = document.getElementById('tools-out');
+  document.querySelectorAll('[data-step]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tools = Math.max(1, Math.min(50, tools + Number(btn.getAttribute('data-step'))));
+      toolsOut.textContent = tools;
+      dirty();
+    });
+  });
+
+  // Presupuesto
+  var budget = document.getElementById('budget');
+  var noLimit = document.getElementById('no-limit');
+  var budgetError = document.getElementById('budget-error');
+
+  function checkBudget(){
+    var zero = !noLimit.checked && Number(budget.value) === 0;
+    budgetError.style.display = zero ? 'flex' : 'none';
+    saveBtn.disabled = zero || !dirtyState;
+  }
+  budget.addEventListener('input', function(){ dirty(); checkBudget(); });
+  noLimit.addEventListener('change', function(){
+    budget.disabled = noLimit.checked;
+    dirty();
+    checkBudget();
+  });
+
+  document.getElementById('test-btn').addEventListener('click', function(){
+    footStatus.setAttribute('data-state', 'dirty');
+    footText.textContent = 'Probando…';
+    setTimeout(function(){
+      footStatus.setAttribute('data-state', 'success');
+      footText.textContent = 'Conexión verificada';
+    }, 900);
+  });
+
+  saveBtn.addEventListener('click', function(){
+    if (Number(budget.value) === 0 && !noLimit.checked) return;
+    clean();
+  });
+
+  // Checklist
+  var checks = document.querySelectorAll('.check-item input');
+  var counter = document.getElementById('check-count');
+  function count(){
+    var n = Array.prototype.filter.call(checks, function(c){ return c.checked; }).length;
+    counter.textContent = n + ' / ' + checks.length;
+  }
+  checks.forEach(function(c){ c.addEventListener('change', count); });
+  count();
+})();
+</script>
+</body>
+</html>
