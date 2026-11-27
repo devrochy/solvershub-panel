@@ -334,4 +334,27 @@ describe("llegar a la estación 3 (HU-UX-29)", () => {
     expect(screen.queryByText(/Faltan/)).toBeNull();
     expect(seguir().disabled).toBe(false);
   });
+
+  it("«Seguir después» con las dos entregas desmarcadas guarda las de antes, no una lista vacía", async () => {
+    let guardar: (() => Promise<boolean>) | null = null;
+    const bienvenida = {
+      pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
+      volverA: vi.fn(),
+      avanzar: vi.fn(),
+      seguirDespues: (o: { guardar: () => Promise<boolean> }) => {
+        guardar = o.guardar;
+        return null;
+      },
+      prepararPrueba: vi.fn(async () => null),
+      prueba: () => null,
+      probado: false,
+      terminar: vi.fn(async () => {}),
+      terminando: false,
+    };
+    abrir({ modo: "bienvenida", bienvenida });
+    fireEvent.click(entrega(/A domicilio/));
+    fireEvent.click(entrega(/Recoger en tienda/));
+    expect(await (guardar as unknown as () => Promise<boolean>)()).toBe(true);
+    expect(cuerpoDelPut().metodos_entrega).toEqual(["domicilio", "recoger_en_tienda"]);
+  });
 });

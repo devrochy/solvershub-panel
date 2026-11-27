@@ -423,7 +423,8 @@ export function EditorDeAgente({
         body: JSON.stringify({
           ...cuerpoParaGuardar(datosCliente, datos),
           herramientas_del_agente: herramientasNuevas,
-          metodos_entrega: metodos,
+          // En la ruta se pueden desmarcar las dos entregas; al salir con «Seguir después» se guardan las de antes.
+          metodos_entrega: metodos.length > 0 ? metodos : metodosGuardado,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: unknown };
@@ -436,7 +437,7 @@ export function EditorDeAgente({
     if (ok) {
       setDatosGuardado(datos);
       setHerramientasGuardado(herramientasNuevas);
-      setMetodosGuardado(metodos);
+      if (metodos.length > 0) setMetodosGuardado(metodos);
     }
     return ok;
   }

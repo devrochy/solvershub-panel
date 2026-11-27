@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   cuerpoDelAviso,
+  estadoDelAviso,
   mensajeDeErrorAlRetirar,
   mensajeDeErrorAviso,
   mostrarEnFicha,
@@ -45,5 +46,16 @@ describe("aviso de datos", () => {
     expect(mensajeDeErrorAviso(500)).toBe("No se pudo guardar el aviso.");
     expect(mensajeDeErrorAlRetirar(403)).toMatch(/propietario/);
     expect(mensajeDeErrorAlRetirar(500)).toBe("No se pudieron retirar los datos.");
+  });
+});
+
+describe("estado del aviso en la estación 3 (HU-UX-29)", () => {
+  it("dice si está activo, si es el borrador sin revisar o si tiene un texto propio listo", () => {
+    const aviso = { activo: false, texto: "Usamos tus datos.", texto_propio: "", es_borrador: true, version: "v1" };
+    expect(estadoDelAviso({ ...aviso, activo: true })).toBe("Activo: el agente lo muestra antes de pedir datos personales.");
+    expect(estadoDelAviso(aviso)).toBe("Apagado. El texto es un borrador sin revisión legal.");
+    expect(estadoDelAviso({ ...aviso, texto_propio: "Nuestro aviso.", es_borrador: false })).toBe(
+      "Apagado. Tiene un texto propio listo para activar.",
+    );
   });
 });
