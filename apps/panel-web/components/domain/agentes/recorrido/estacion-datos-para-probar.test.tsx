@@ -355,4 +355,20 @@ describe("Opciones avanzadas de la estación 4 (dueño, 2026-11-26)", () => {
     await waitFor(() => expect(llamadas(`/agentes/${ID}/importar-datos`, "DELETE")).toHaveLength(1));
     expect(await screen.findByText("Todavía no tiene datos para probar.")).toBeTruthy();
   });
+
+  it("si el borrado falla, lo dice en «Lo ya cargado» aunque la pregunta abierta sea otra", async () => {
+    registros = [{ tipo: "producto", nombre: "Pan de bono", detalle: "$2.500", origen: "llm" }];
+    const normal = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) =>
+      String(url).endsWith("/datos-de-prueba") && init?.method === "DELETE"
+        ? json({ error: "No se pudo borrar ahora." }, 500)
+        : normal?.(url, init),
+    );
+    await abrirAvanzadas();
+    fireEvent.click(boton("Continuar"));
+    fireEvent.click(boton(/Borrar lo generado/));
+    fireEvent.click(await screen.findByRole("button", { name: "Borrar" }));
+    const seccion = screen.getByRole("heading", { name: "Lo ya cargado" }).closest("section") as HTMLElement;
+    expect(await within(seccion).findByText("No se pudo borrar ahora.")).toBeTruthy();
+  });
 });

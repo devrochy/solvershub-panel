@@ -142,6 +142,8 @@ export function useDatosParaProbar({
   const [locales, setLocales] = useState<RegistroDePrueba[]>([]);
   const [costoPorFoto, setCostoPorFoto] = useState<CotizacionFotos | null>(null);
   const [borrando, setBorrando] = useState<"generado" | "importado" | null>(null);
+  // Se ve en «Lo ya cargado», sea cual sea la pregunta abierta.
+  const [errorDeBorrado, setErrorDeBorrado] = useState<string | null>(null);
 
   const cargados = registros && registros.length > 0 ? registros : locales;
   useEffect(() => {
@@ -300,12 +302,12 @@ export function useDatosParaProbar({
       destructive: true,
     });
     if (!ok) return;
-    setError(null);
+    setErrorDeBorrado(null);
     setBorrando(que);
     const r = que === "generado" ? await llamarDatosDePrueba<unknown>(agenteId, "DELETE") : await borrarImportacion(agenteId);
     setBorrando(null);
     if (!r.ok) {
-      setError(r.error);
+      setErrorDeBorrado(r.error);
       return;
     }
     setLocales([]);
@@ -707,7 +709,7 @@ export function useDatosParaProbar({
                     )}
                   </div>
                 )}
-                {abierta === 0 && <FormFeedback error={error} />}
+                <FormFeedback error={errorDeBorrado} />
               </section>
             )}
           </>
