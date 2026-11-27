@@ -10,6 +10,8 @@ export const PESTANAS = [
   { id: "sabe", label: "Lo que sabe" },
   { id: "atiende", label: "Dónde atiende" },
   { id: "consumo", label: "Consumo" },
+  // SPEC-53 (HU-AOS-105): pruebas con clientes simulados. Solo en un especialista activo y con la bandera encendida.
+  { id: "pruebas", label: "Pruebas" },
 ] as const;
 
 export type Pestana = (typeof PESTANAS)[number]["id"];
@@ -25,7 +27,7 @@ export const VISTAS_DE_ACTIVIDAD = [
 export type VistaDeActividad = (typeof VISTAS_DE_ACTIVIDAD)[number]["id"];
 
 /** Pestañas sin período ni conexión. */
-export const PESTANAS_SIN_FILTROS: ReadonlySet<Pestana> = new Set(["sabe", "atiende"]);
+export const PESTANAS_SIN_FILTROS: ReadonlySet<Pestana> = new Set(["sabe", "atiende", "pruebas"]);
 
 /**
  * Las ocho pestañas de antes siguen abriendo su lugar (Resumen enlaza `?tab=tareas` y `?tab=consumo`,

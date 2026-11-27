@@ -14,6 +14,7 @@
 //   AGENTES=1 (toda la sección Agentes con datos: incluye FICHA_AGENTE=1; para el editor, sumar RETIRADAS=limpio)
 //   PLATAFORMA=1 (con MASTER=1: App de Meta, requisitos de Embedded Signup y alta automática con documentos y altas en revisión)
 //   SUSCRIPCIONES=1 (Suscripciones con datos: todos los estados, cuatro planes, cobros, mora, avisos y métricas)
+//   PRUEBAS_AGENTE=1|sin-saldo|vacio (SPEC-53, HU-AOS-105: pestaña «Pruebas» de la ficha del agente; el panel necesita PRUEBAS_AGENTE_ENABLED=1)
 //   PRUEBAS=1 (Plataforma › Pruebas con catálogo, ejecución propia, informes, ciclos, evolución, checklists, datos y testers)
 //   CONEXIONES=1 (Conexiones con datos en todas sus vistas: Messenger, números, plantillas, versiones, costos y altas)
 //   OPCIONES_BANDERA=0 (plantillas con opciones apagadas) · SOLO_LECTURA=1 (quien mira no es el propietario)
@@ -60,6 +61,8 @@
 // Las rutas sin fixture responden 404 (la página muestra su estado de error).
 
 import { createServer } from "node:http";
+
+import { pruebasDelAgente } from "./pruebas-del-agente-de-prueba.mjs";
 
 const { RESPUESTAS, politicaDatosCliente, accionesDeOpciones, ajustes, conversacionesDeAgente, dosAgendas, eventosAgenda, listaDeOpciones, me, metaDeVersion, planesV3, plantillaDeOpciones, variablesDeOpciones, versionesConMeta } =
   await import("../lib/testing/fixtures.ts");
@@ -2169,6 +2172,17 @@ createServer(async (req, res) => {
     if (r) {
       res.statusCode = r[0];
       res.end(JSON.stringify(r[1]));
+      return;
+    }
+  }
+  // SPEC-53 (HU-AOS-105): pruebas del agente en memoria (`PRUEBAS_AGENTE=1|sin-saldo|vacio`).
+  if (process.env.PRUEBAS_AGENTE && /^\/admin\/agents\/[^/]+\/pruebas(\/|$)/.test(ruta)) {
+    let texto = "";
+    for await (const trozo of req) texto += trozo;
+    const r = pruebasDelAgente(req.method ?? "GET", ruta, texto ? JSON.parse(texto) : {});
+    if (r) {
+      res.statusCode = r[0];
+      res.end(r[1] === null ? undefined : JSON.stringify(r[1]));
       return;
     }
   }

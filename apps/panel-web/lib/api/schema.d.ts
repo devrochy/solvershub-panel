@@ -10032,6 +10032,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar Corrida
+         * @description Cancela una corrida en cola o corriendo. Se cobra solo lo gastado.
+         */
+        post: operations["cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/platform/tenants/{tenant_id}/pruebas": {
         parameters: {
             query?: never;
@@ -10051,6 +10071,127 @@ export interface paths {
          */
         put: operations["fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Informe
+         * @description El informe de la corrida: progreso, créditos, porcentaje y, por escenario, la conversación, la razón del juez y
+         *     el arreglo sugerido con su diff. Se puede sondear mientras corre.
+         */
+        get: operations["informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/arreglo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Arreglo
+         * @description El arreglo de un resultado con el diff contra el borrador de ahora. No escribe nada.
+         */
+        get: operations["ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/aplicar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aplicar Arreglo
+         * @description Aplica el arreglo al BORRADOR del agente, con la confirmación explícita del dueño. Nunca publica.
+         */
+        post: operations["aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/juez-equivocado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Juez Equivocado
+         * @description «Esto no es una falla»: el resultado sale del porcentaje y de volver a probar. Idempotente.
+         */
+        post: operations["juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar/estimado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Estimar Fallidas
+         * @description Cuánto cuesta repetir solo las pruebas que fallaron, con cada `k`. No escribe.
+         */
+        post: operations["estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Volver A Probar
+         * @description Nueva corrida solo con los escenarios que fallaron, contra el borrador, con su propio estimado y aprobación.
+         */
+        post: operations["volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -21341,6 +21482,145 @@ export interface components {
             /** Label */
             label: string;
         };
+        /** PruebasAplicadoOut */
+        PruebasAplicadoOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /**
+             * Arreglo Aplicado En
+             * Format: date-time
+             */
+            arreglo_aplicado_en: string;
+            /** Borrador Lock Version */
+            borrador_lock_version: number;
+            /**
+             * Cambios
+             * @description Vacío si el borrador ya lo tenía.
+             */
+            cambios: components["schemas"]["PruebasCambioOut"][];
+            /**
+             * Publicado
+             * @description Aplicar nunca publica: el agente sigue con su versión.
+             * @default false
+             * @constant
+             */
+            publicado: false;
+        };
+        /** PruebasAplicarIn */
+        PruebasAplicarIn: {
+            /**
+             * Confirmo
+             * @description Confirmación explícita del dueño: vio el cambio y quiere aplicarlo.
+             * @constant
+             */
+            confirmo: true;
+            /**
+             * Lock Version
+             * @description El `borrador_lock_version` que vio al mirar el cambio.
+             */
+            lock_version: number;
+        };
+        /** PruebasArregloOut */
+        PruebasArregloOut: {
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "regla" | "respuesta" | "dato";
+            /** Porque */
+            porque: string;
+            /** @description Solo en `regla`. */
+            regla?: components["schemas"]["PruebasReglaOut"] | null;
+            /**
+             * Texto
+             * @description La respuesta o el dato que falta (`respuesta` y `dato`).
+             */
+            texto?: string | null;
+            /** Procedimiento */
+            procedimiento?: string | null;
+            /**
+             * Seccion
+             * @description Dónde se edita un `dato`.
+             */
+            seccion?: string | null;
+            /**
+             * Aplicable
+             * @description Si «Aplicar al borrador» puede escribirlo ahora.
+             */
+            aplicable: boolean;
+            /**
+             * Motivo No Aplicable
+             * @description `tipo` (se edita a mano), `sin_borrador` o `ya_aplicado`.
+             */
+            motivo_no_aplicable?: string | null;
+            /**
+             * Diff
+             * @description Lo que cambiaría en el borrador de AHORA; vacío si no aplica.
+             */
+            diff: components["schemas"]["PruebasCambioOut"][];
+        };
+        /** PruebasArregloVistaOut */
+        PruebasArregloVistaOut: {
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "regla" | "respuesta" | "dato";
+            /** Porque */
+            porque: string;
+            /** @description Solo en `regla`. */
+            regla?: components["schemas"]["PruebasReglaOut"] | null;
+            /**
+             * Texto
+             * @description La respuesta o el dato que falta (`respuesta` y `dato`).
+             */
+            texto?: string | null;
+            /** Procedimiento */
+            procedimiento?: string | null;
+            /**
+             * Seccion
+             * @description Dónde se edita un `dato`.
+             */
+            seccion?: string | null;
+            /**
+             * Aplicable
+             * @description Si «Aplicar al borrador» puede escribirlo ahora.
+             */
+            aplicable: boolean;
+            /**
+             * Motivo No Aplicable
+             * @description `tipo` (se edita a mano), `sin_borrador` o `ya_aplicado`.
+             */
+            motivo_no_aplicable?: string | null;
+            /**
+             * Diff
+             * @description Lo que cambiaría en el borrador de AHORA; vacío si no aplica.
+             */
+            diff: components["schemas"]["PruebasCambioOut"][];
+            /** Borrador Lock Version */
+            borrador_lock_version: number | null;
+        };
+        /** PruebasCambioOut */
+        PruebasCambioOut: {
+            /**
+             * Ruta
+             * @description Dónde cambia el borrador, p. ej. `guardrails[2]`.
+             */
+            ruta: string;
+            /**
+             * Antes
+             * @description Lo que había (`null` si es nuevo).
+             */
+            antes: unknown | null;
+            /**
+             * Despues
+             * @description Lo que quedará.
+             */
+            despues: unknown;
+        };
         /** PublishIn */
         PublishIn: {
             /** Lock Version */
@@ -25774,6 +26054,28 @@ export interface components {
              */
             fecha_hora: string;
         };
+        /** PruebasCorridaCanceladaOut */
+        PruebasCorridaCanceladaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /**
+             * Creditos Reales
+             * @description Lo gastado hasta ahora (puede crecer un poco: el intento abierto termina).
+             */
+            creditos_reales: number;
+            /** Terminada En */
+            terminada_en: string | null;
+        };
         /** PruebasCorridaIn */
         PruebasCorridaIn: {
             /**
@@ -25821,6 +26123,18 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** PruebasEscenarioInformeOut */
+        PruebasEscenarioInformeOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Titulo */
+            titulo: string;
+            /** Intentos */
+            intentos: components["schemas"]["PruebasIntentoOut"][];
         };
         /** PruebasEstimadoDeKOut */
         PruebasEstimadoDeKOut: {
@@ -25891,6 +26205,151 @@ export interface components {
             /** Por K */
             por_k: components["schemas"]["PruebasEstimadoDeKOut"][];
         };
+        /** PruebasInformeOut */
+        PruebasInformeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /** K */
+            k: number;
+            /**
+             * Reintento De
+             * @description La corrida de la que esta repite las fallidas.
+             */
+            reintento_de: string | null;
+            /**
+             * Version Probada
+             * @description `borrador`.
+             */
+            version_probada: string | null;
+            /** Iniciada En */
+            iniciada_en: string | null;
+            /** Terminada En */
+            terminada_en: string | null;
+            /** Creditos Estimados */
+            creditos_estimados: number;
+            /** Creditos Reales */
+            creditos_reales: number;
+            /**
+             * Creditos Reales De Cuota
+             * @description De lo gastado, lo que cubre la cuota gratis de pruebas.
+             */
+            creditos_reales_de_cuota: number;
+            /** Creditos Reales Del Saldo */
+            creditos_reales_del_saldo: number;
+            /** Tope Creditos */
+            tope_creditos: number;
+            progreso: components["schemas"]["PruebasProgresoOut"];
+            resumen: components["schemas"]["PruebasResumenOut"];
+            /**
+             * Borrador Lock Version
+             * @description El que hay que mandar al aplicar un arreglo.
+             */
+            borrador_lock_version: number | null;
+            /** Escenarios */
+            escenarios: components["schemas"]["PruebasEscenarioInformeOut"][];
+        };
+        /** PruebasIntentoOut */
+        PruebasIntentoOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /** Intento */
+            intento: number;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pasa" | "falla" | "no_se_pudo_probar";
+            /** Fin */
+            fin: string | null;
+            /** Criterio Incumplido */
+            criterio_incumplido: string | null;
+            /** Razon */
+            razon: string | null;
+            /** Transcripcion */
+            transcripcion: components["schemas"]["PruebasTurnoOut"][];
+            /** Tools Llamadas */
+            tools_llamadas: string[];
+            arreglo: components["schemas"]["PruebasArregloOut"] | null;
+            /** Arreglo Aplicado En */
+            arreglo_aplicado_en: string | null;
+            /** Juez Equivocado */
+            juez_equivocado: boolean;
+        };
+        /** PruebasJuezEquivocadoIn */
+        PruebasJuezEquivocadoIn: {
+            /**
+             * Juez Equivocado
+             * @description `false` revierte la marca.
+             * @default true
+             */
+            juez_equivocado: boolean;
+        };
+        /** PruebasJuezEquivocadoOut */
+        PruebasJuezEquivocadoOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /** Estado */
+            estado: string;
+            /** Juez Equivocado */
+            juez_equivocado: boolean;
+        };
+        /** PruebasProgresoOut */
+        PruebasProgresoOut: {
+            /** Hechos */
+            hechos: number;
+            /** Total */
+            total: number;
+        };
+        /** PruebasReglaOut */
+        PruebasReglaOut: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Action */
+            action: string;
+            /** Phrases */
+            phrases?: string[];
+            /** Tool */
+            tool?: string | null;
+            /** Value */
+            value?: number | null;
+        };
+        /** PruebasResumenOut */
+        PruebasResumenOut: {
+            /** Pasan */
+            pasan: number;
+            /**
+             * Fallan
+             * @description Fallas vigentes: sin las marcadas `juez_equivocado`.
+             */
+            fallan: number;
+            /** No Se Pudo Probar */
+            no_se_pudo_probar: number;
+            /** Juez Equivocado */
+            juez_equivocado: number;
+            /**
+             * Porcentaje
+             * @description Pasan sobre lo que se pudo juzgar; `null` si no hay nada que juzgar.
+             */
+            porcentaje: number | null;
+        };
         /** PruebasTopeDeKIn */
         PruebasTopeDeKIn: {
             /**
@@ -25913,6 +26372,29 @@ export interface components {
             k_maximo_propio: number | null;
             /** K Maximo De Plataforma */
             k_maximo_de_plataforma: number;
+        };
+        /** PruebasTurnoOut */
+        PruebasTurnoOut: {
+            /**
+             * Quien
+             * @enum {string}
+             */
+            quien: "cliente" | "agente";
+            /** Texto */
+            texto: string;
+        };
+        /** PruebasVolverIn */
+        PruebasVolverIn: {
+            /**
+             * K
+             * @description Intentos por escenario: de 1 al tope del negocio.
+             */
+            k: number;
+            /**
+             * Confirmo Creditos
+             * @description El `estimado` de ese `k` para las fallidas (409 `estimado_cambio` si cambió).
+             */
+            confirmo_creditos: number;
         };
     };
     responses: never;
@@ -48039,6 +48521,60 @@ export interface operations {
             };
         };
     };
+    cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaCanceladaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_no_activa`: la corrida ya terminó. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get: {
         parameters: {
             query?: never;
@@ -48108,6 +48644,348 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasInformeOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasArregloVistaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_arreglo`: el resultado no tiene un arreglo sugerido. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasAplicarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasAplicadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `resultado_no_es_falla`, `sin_arreglo`, `arreglo_ya_aplicado`, `arreglo_no_aplicable` (`details = {tipo, seccion, texto}`: se edita a mano), `sin_borrador`, `agente_archivado` o `stale_lock_version` (`details.lock_version` trae el vigente). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `arreglo_invalido`: el cambio no pasa el contrato del borrador (`fields` por campo); o `validation_error` si falta `confirmo: true` o el `lock_version`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PruebasJuezEquivocadoIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasJuezEquivocadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `resultado_no_es_falla`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasEstimadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_en_curso`: la corrida todavía no termina. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_fallidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasVolverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_en_curso` (la corrida de origen sigue activa: `details.estado`; u otra corrida del negocio: sin `details`), `estimado_cambio` o `plan_limit_creditos`; no se creó la corrida. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_fallidas` o `k_fuera_de_rango`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corridas_por_dia`. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
