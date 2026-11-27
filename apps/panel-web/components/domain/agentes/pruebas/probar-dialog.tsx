@@ -366,7 +366,10 @@ export function ProbarDialog({
                 loading={pending}
                 disabled={sinSaldo || cargando}
               >
-                Aprobar y probar · {creditos(fila.del_saldo)}
+                Aprobar y probar
+                {fila.del_saldo === 0
+                  ? " · gratis"
+                  : ` · ${creditos(fila.del_saldo)}`}
               </Button>
             </div>
           </div>
