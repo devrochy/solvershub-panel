@@ -49,13 +49,13 @@ export function Field({
       </label>
       {control}
       {error ? (
-        <p id={idMensaje} role="alert" className="flex items-start gap-1 text-xs text-status-danger-fg">
+        <p id={idMensaje} role="alert" className="flex items-start gap-1 text-sh-label text-status-danger-fg">
           <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
           {error}
         </p>
       ) : (
         help && (
-          <p id={idMensaje} className="text-xs text-text-soft">
+          <p id={idMensaje} className="text-sh-label text-text-soft">
             {help}
           </p>
         )

@@ -16346,6 +16346,11 @@ export interface components {
              */
             brand_voice_warning: boolean;
             /**
+             * Language
+             * @default es
+             */
+            language: string;
+            /**
              * Tono
              * @deprecated
              * @default calido

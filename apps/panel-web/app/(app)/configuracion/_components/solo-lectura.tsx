@@ -27,7 +27,7 @@ export function ControlesEditables({
 /** Aviso de solo lectura; va donde iría el botón de guardar. */
 export function AvisoSoloLectura() {
   return (
-    <p className="flex items-center gap-1.5 text-xs text-text-soft">
+    <p className="flex items-center gap-1.5 text-sh-label text-text-soft">
       <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
       Solo puedes ver esta sección. Pídele acceso de edición a quien administra el negocio.
     </p>

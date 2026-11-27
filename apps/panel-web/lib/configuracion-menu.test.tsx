@@ -49,6 +49,36 @@ const catalogo: CatalogoConfig = {
   asistente: [],
 };
 
+/** Catálogo con las claves de Identidad que el resumen de prueba no trae, y Voz de marca en Voz. */
+const catalogoIdentidad: CatalogoConfig = {
+  ...catalogo,
+  opciones: [
+    ...catalogo.opciones,
+    { ...opcion("business_description", "identidad", "texto_largo", "Descripción del negocio"), ejemplo: "Panadería artesanal." },
+    { ...opcion("bot_paused", "identidad", "booleano", "Pausar el asistente") },
+    {
+      ...opcion("language", "identidad", "elegir_una", "Idioma del negocio"),
+      solo_lectura: true,
+      valores: [{ valor: "es", etiqueta: "Español", nota: "" }],
+    },
+    {
+      ...opcion("timezone", "identidad", "elegir_una", "Zona horaria del negocio"),
+      valores: [{ valor: "America/Bogota", etiqueta: "Colombia (Bogotá)", nota: "" }],
+    },
+    {
+      ...opcion("brand_voice", "voz", "texto_largo", "Voz de marca"),
+      ejemplo: "Cercana y breve.",
+      explicacion: "Guía el estilo de cada respuesta. Se usa en todos los turnos cuando está escrita.",
+    },
+  ],
+};
+
+/** El mismo catálogo con el grupo viejo: el panel debe mover Voz de marca igual. */
+const catalogoIdentidadViejo: CatalogoConfig = {
+  ...catalogoIdentidad,
+  opciones: catalogoIdentidad.opciones.map((o) => (o.clave === "brand_voice" ? { ...o, grupo: "identidad" } : o)),
+};
+
 function montar(props: Partial<Parameters<typeof SettingsTabs>[0]> = {}) {
   return render(
     <FeedbackProviders>
@@ -170,6 +200,84 @@ describe("resumen de Configuración (rediseño B)", () => {
     montar({ defaultSeccion: "identidad" });
     expect(screen.getByText(/el cobro usa la moneda de cada habilidad/)).toBeTruthy();
     expect(within(cajon()).getByLabelText("Moneda").tagName).toBe("SELECT");
+  });
+});
+
+describe("Identidad: carta de presentación y guardado conjunto", () => {
+  it("el resumen muestra nombre y moneda, y marca el asistente pausado", () => {
+    montar({ settings: { ...ajustes, identity: { ...ajustes.identity, bot_paused: true } } });
+    const filaIdentidad = fila("Identidad");
+    expect(filaIdentidad.textContent).toContain("Asistente de prueba · COP");
+    expect(filaIdentidad.textContent).toContain("Pausado");
+  });
+
+  it("la vista previa sigue al nombre y el pie nombra la sección que se guarda", () => {
+    montar({ defaultSeccion: "identidad", catalogo: catalogoIdentidad });
+
+    expect(within(cajon()).getByText("Guardado conjunto")).toBeTruthy();
+    expect(within(cajon()).getByText("Así te ve tu cliente")).toBeTruthy();
+
+    fireEvent.change(within(cajon()).getByLabelText("Nombre del asistente"), { target: { value: "Sofía" } });
+    expect(within(cajon()).getAllByText("Sofía").length).toBeGreaterThan(0);
+    expect(within(cajon()).getByRole("button", { name: "Guardar 1 sección" })).toBeTruthy();
+  });
+
+  it("las cuatro secciones comparten formulario: el rail cambia de sección sin perder lo escrito", () => {
+    montar({ defaultSeccion: "identidad", catalogo: catalogoIdentidad });
+    fireEvent.change(within(cajon()).getByLabelText("Nombre del asistente"), { target: { value: "Sofía" } });
+
+    fireEvent.click(within(cajon()).getByRole("button", { name: /Ir a Horario y escalamiento/ }));
+    expect(titulo().textContent).toBe("Horario y escalamiento");
+    expect(within(cajon()).getByText("Guardado conjunto")).toBeTruthy();
+
+    fireEvent.click(within(cajon()).getByRole("button", { name: /Ir a Identidad/ }));
+    expect((within(cajon()).getByLabelText("Nombre del asistente") as HTMLInputElement).value).toBe("Sofía");
+  });
+
+  it("pausar pide confirmación; al guardar, el resumen y la vista previa lo reflejan", async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) }));
+    vi.stubGlobal("fetch", fetchMock);
+    montar({ defaultSeccion: "identidad", catalogo: catalogoIdentidad });
+
+    fireEvent.click(within(cajon()).getByRole("switch", { name: "Pausar el asistente" }));
+    expect(within(cajon()).getByRole("alert").textContent).toMatch(/¿Pausar el asistente/);
+    fireEvent.click(within(cajon()).getByRole("button", { name: "Sí, pausar" }));
+    expect(within(cajon()).getByText("Pausado")).toBeTruthy();
+
+    fireEvent.click(within(cajon()).getByRole("button", { name: /^Guardar/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(fetchMock).toHaveBeenCalledWith("/api/settings/identity", expect.objectContaining({ method: "PUT" }));
+    expect(fila("Identidad").textContent).toContain("Pausado");
+  });
+
+  it("el idioma es un dato de solo lectura con salida, no un select deshabilitado", () => {
+    montar({ defaultSeccion: "identidad", catalogo: catalogoIdentidad });
+
+    expect(within(cajon()).queryByLabelText("Idioma del negocio")).toBeNull();
+    expect(within(cajon()).getAllByText("Español").length).toBeGreaterThan(0);
+    expect(within(cajon()).getByRole("link", { name: "Escríbenos" }).getAttribute("href")).toBe(
+      "/ayuda/06-solucion-de-problemas/04-soporte-y-tickets",
+    );
+  });
+});
+
+describe("Voz de marca", () => {
+  it("se pinta en Voz y estilo y no en Identidad, aunque el catálogo viejo la mande en identidad", () => {
+    montar({ defaultSeccion: "voz", catalogo: catalogoIdentidadViejo });
+    expect(within(cajon()).getByLabelText("Voz de marca")).toBeTruthy();
+
+    cleanup();
+    montar({ defaultSeccion: "identidad", catalogo: catalogoIdentidadViejo });
+    expect(within(cajon()).queryByLabelText("Voz de marca")).toBeNull();
+  });
+
+  it("sin voz de marca avisa qué pierde el asistente", () => {
+    montar({
+      defaultSeccion: "voz",
+      catalogo: catalogoIdentidad,
+      settings: { ...ajustes, identity: { ...ajustes.identity, brand_voice: "", brand_voice_warning: true } },
+    });
+    expect(within(cajon()).getByText(/Sin voz de marca/)).toBeTruthy();
   });
 });
 

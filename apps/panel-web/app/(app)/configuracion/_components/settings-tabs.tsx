@@ -22,8 +22,10 @@ import type { AvisoDatos } from "@/lib/aviso-datos";
 import { CambiosSinGuardarProvider, useRegistroDeCambios } from "@/lib/cambios-sin-guardar";
 import {
   consultaConSeccion,
+  esSeccionDeIdentidad,
   GRUPOS_MENU,
   resolverSeccion,
+  SECCIONES,
   seccionesVisibles,
   seccionPorId,
   SECCIONES_DE_IDENTIDAD,
@@ -48,6 +50,25 @@ function urlSinSeccion(consulta: string): string {
   parametros.delete("tab");
   const resto = parametros.toString();
   return resto ? `?${resto}` : window.location.pathname;
+}
+
+/** Los formularios que no son secciones del menú también pueden tener cambios. */
+const TITULOS_EXTRA: Record<string, string> = {
+  bajas: "Bajas",
+  "aviso-datos": "Aviso de datos",
+  waweb: "WhatsApp Web",
+};
+
+function tituloDeRegistro(id: string): string {
+  const seccion = SECCIONES.find((s) => s.id === id);
+  return seccion?.titulo ?? TITULOS_EXTRA[id] ?? id;
+}
+
+function nombrarTitulos(titulos: string[]): string {
+  const entrecomillados = titulos.map((titulo) => `«${titulo}»`);
+  if (entrecomillados.length === 1) return entrecomillados[0];
+  if (entrecomillados.length === 2) return `${entrecomillados[0]} y ${entrecomillados[1]}`;
+  return `${entrecomillados.slice(0, -1).join(", ")} y ${entrecomillados[entrecomillados.length - 1]}`;
 }
 
 /**
@@ -103,6 +124,8 @@ export function SettingsTabs({
 }) {
   const confirm = useConfirm();
   const registro = useRegistroDeCambios();
+  // Lo último guardado del formulario de identidad: el resumen se actualiza al guardar, sin recargar.
+  const [identidad, setIdentidad] = useState(settings.identity);
   const visibles = seccionesVisibles({ waweb: Boolean(waweb && catalogo), agentspec: esMaster });
   const disponibles = new Set(visibles.map((s) => s.id));
   const pedidaPorUrl = defaultSeccion || defaultTab ? resolverSeccion({ seccion: defaultSeccion, tab: defaultTab }, disponibles) : null;
@@ -114,10 +137,34 @@ export function SettingsTabs({
     setAbierta(pedidaPorUrl);
   }
 
-  function abrir(id: SeccionId) {
+  function abrirDirecto(id: SeccionId) {
     setAbierta(id);
     // Sin `router`: solo se reescribe la URL (compartible y sobrevive a recargar) sin volver a pedir los datos.
     window.history.replaceState(null, "", consultaConSeccion(window.location.search, id));
+  }
+
+  /**
+   * Cambiar de sección desmonta el formulario. Las cuatro secciones de identidad comparten uno solo,
+   * así que entre ellas no se pierde nada; hacia otra sección se pregunta, nombrando lo que se pierde.
+   * `forzar` lo usa el salto a un error: la persona ya sabe que hay algo que corregir y conserva lo escrito.
+   */
+  async function abrir(id: SeccionId, opciones: { forzar?: boolean } = {}) {
+    if (id === abierta) return;
+    const comparteFormulario = abierta !== null && esSeccionDeIdentidad(abierta) && esSeccionDeIdentidad(id);
+    if (!opciones.forzar && abierta !== null && !comparteFormulario && registro.hayCambios()) {
+      const titulos = registro.cambios().map(tituloDeRegistro);
+      const salir = await confirm({
+        title: "Tienes cambios sin guardar",
+        description: titulos.length
+          ? `Si cambias de sección, se pierde lo que cambiaste en ${nombrarTitulos(titulos)}.`
+          : `Si cambias de sección, se pierde lo que cambiaste en «${seccionPorId(abierta).titulo}».`,
+        confirmLabel: "Descartar cambios",
+        cancelLabel: "Seguir editando",
+        destructive: true,
+      });
+      if (!salir) return;
+    }
+    abrirDirecto(id);
   }
 
   function cerrarSinPreguntar() {
@@ -127,9 +174,18 @@ export function SettingsTabs({
 
   async function cerrar() {
     if (abierta && registro.hayCambios()) {
+      const cambios = registro.cambios();
+      const titulos = cambios.map(tituloDeRegistro);
+      const soloActual = titulos.length === 1 && cambios[0] === abierta;
       const salir = await confirm({
         title: "Tienes cambios sin guardar",
-        description: `Si cierras «${seccionPorId(abierta).titulo}», se pierde lo que cambiaste.`,
+        // Cuando el único formulario sucio es el que se cierra, el aviso de siempre; si el guardado
+        // conjunto alcanzó otras secciones, se nombran para que nadie se lleve una sorpresa.
+        description: soloActual
+          ? `Si cierras «${seccionPorId(abierta).titulo}», se pierde lo que cambiaste.`
+          : titulos.length
+            ? `Si cierras «${seccionPorId(abierta).titulo}», se pierde lo que cambiaste en ${nombrarTitulos(titulos)}.`
+            : `Si cierras «${seccionPorId(abierta).titulo}», se pierde lo que cambiaste.`,
         confirmLabel: "Descartar cambios",
         cancelLabel: "Seguir editando",
         destructive: true,
@@ -142,8 +198,15 @@ export function SettingsTabs({
   /** El valor actual de cada ajuste, en palabras. */
   function resumen(id: SeccionId): string {
     const seccion = seccionPorId(id);
-    const identidad = settings.identity as unknown as Record<string, unknown>;
-    if (seccion.gruposIdentidad) return resumenDeGrupos(catalogo, seccion.gruposIdentidad, identidad) || seccion.descripcion;
+    const valoresIdentidad = identidad as unknown as Record<string, unknown>;
+    if (seccion.gruposIdentidad) {
+      // La fila de Identidad se lee con lo que importa: nombre + moneda; el estado va en su badge.
+      if (id === "identidad") {
+        const nombre = identidad.assistant_name.trim() || "Sin nombre";
+        return `${nombre} · ${identidad.currency}`;
+      }
+      return resumenDeGrupos(catalogo, seccion.gruposIdentidad, valoresIdentidad) || seccion.descripcion;
+    }
     switch (id) {
       case "datos-cliente":
         return datosCliente.aviso?.activo ? "aviso de datos activo" : "aviso de datos apagado";
@@ -188,11 +251,12 @@ export function SettingsTabs({
             <ul className="overflow-hidden rounded-lg border border-border-soft bg-surface">
               {g.secciones.map((s) => (
                 <li key={s.id} className="border-b border-border-soft last:border-b-0">
-                  <button type="button" onClick={() => abrir(s.id)} className={fila} aria-haspopup="dialog">
+                  <button type="button" onClick={() => void abrir(s.id)} className={fila} aria-haspopup="dialog">
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-4">
                       <span className="shrink-0 text-sm font-medium text-headline sm:w-48">{s.titulo}</span>
                       <span className="min-w-0 text-sm text-body max-sm:text-xs max-sm:text-text-soft">{resumen(s.id)}</span>
                     </span>
+                    {s.id === "identidad" && identidad.bot_paused && <Badge variant="warning">Pausado</Badge>}
                     <ChevronRight aria-hidden className="ml-auto h-4 w-4 shrink-0 text-text-soft" />
                   </button>
                 </li>
@@ -259,12 +323,15 @@ export function SettingsTabs({
               {/* Las secciones de identidad comparten el formulario: sigue montado al pasar de una a otra. */}
               {esIdentidad && abierta && (
                 <IdentityForm
-                  identity={settings.identity}
+                  identity={identidad}
                   catalogo={catalogo}
                   seccion={abierta}
                   puedeEditar={puedeEditar}
-                  irASeccion={abrir}
-                  onGuardado={cerrarSinPreguntar}
+                  irASeccion={(id) => void abrir(id, { forzar: true })}
+                  onGuardado={(nueva) => {
+                    setIdentidad(nueva);
+                    cerrarSinPreguntar();
+                  }}
                 />
               )}
               {abierta === "identidad" && bajas && <BajasCard bajas={bajas} catalogo={catalogo} puedeEditar={puedeEditar} />}
