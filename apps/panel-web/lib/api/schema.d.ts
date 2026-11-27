@@ -1779,6 +1779,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/pruebas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Escenarios
+         * @description Los escenarios del agente y su última corrida.
+         */
+        get: operations["listar_escenarios_api_v1_admin_agents__agent_id__pruebas_get"];
+        put?: never;
+        /**
+         * Escribir Escenario
+         * @description El dueño escribe un escenario. Sus tools deben ser del agente.
+         */
+        post: operations["escribir_escenario_api_v1_admin_agents__agent_id__pruebas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/proponer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Proponer Escenarios
+         * @description La IA propone hasta 10 escenarios con la configuración del agente. Quedan en `borrador`.
+         */
+        post: operations["proponer_escenarios_api_v1_admin_agents__agent_id__pruebas_proponer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Borrar Escenario
+         * @description Borrado lógico: el escenario deja de salir y de correrse.
+         */
+        delete: operations["borrar_escenario_api_v1_admin_agents__agent_id__pruebas__case_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Editar Escenario
+         * @description Edita un escenario o lo aprueba (`estado = aprobado`).
+         */
+        patch: operations["editar_escenario_api_v1_admin_agents__agent_id__pruebas__case_id__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/agents/overview": {
         parameters: {
             query?: never;
@@ -9924,6 +9992,71 @@ export interface paths {
         patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/agents/{agent_id}/pruebas/estimado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Estimar
+         * @description Cuánto cuesta correr los escenarios con cada `k` y cuánto sale de la cuota gratis. No escribe nada.
+         */
+        post: operations["estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear Corrida
+         * @description Aprueba el estimado y deja la corrida en cola. Una a la vez por negocio, 5 por día.
+         */
+        post: operations["crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/pruebas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer Tope
+         * @description Tope de `k` de las pruebas del negocio. Solo el master.
+         */
+        get: operations["leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get"];
+        /**
+         * Fijar Tope
+         * @description Baja o sube el tope de `k` de UN negocio (auditado como `pruebas_k_maximo`); `null` lo devuelve al de
+         *     plataforma. Idempotente. Solo el master.
+         */
+        put: operations["fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -15127,6 +15260,133 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** EscenarioDePrueba */
+        EscenarioDePrueba: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Titulo */
+            titulo: string;
+            /** Objetivo Cliente */
+            objetivo_cliente: string;
+            /** Datos Cliente */
+            datos_cliente: {
+                [key: string]: unknown;
+            };
+            /** Criterios */
+            criterios: string[];
+            /** Tools Esperadas */
+            tools_esperadas: string[];
+            /** Tools Prohibidas */
+            tools_prohibidas: string[];
+            /**
+             * Origen
+             * @enum {string}
+             */
+            origen: "ia" | "manual";
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "borrador" | "aprobado";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** EscenarioDePruebaIn */
+        EscenarioDePruebaIn: {
+            /** Titulo */
+            titulo: string;
+            /**
+             * Objetivo Cliente
+             * @description Lo que el cliente simulado quiere lograr.
+             */
+            objetivo_cliente: string;
+            /**
+             * Datos Cliente
+             * @description Datos inventados que el cliente conoce.
+             */
+            datos_cliente?: {
+                [key: string]: unknown;
+            };
+            /** Criterios */
+            criterios?: string[];
+            /** Tools Esperadas */
+            tools_esperadas?: string[];
+            /** Tools Prohibidas */
+            tools_prohibidas?: string[];
+            /**
+             * Estado
+             * @default borrador
+             * @enum {string}
+             */
+            estado: "borrador" | "aprobado";
+        };
+        /**
+         * EscenarioDePruebaPatch
+         * @description Solo los campos enviados cambian.
+         */
+        EscenarioDePruebaPatch: {
+            /** Titulo */
+            titulo?: string | null;
+            /** Objetivo Cliente */
+            objetivo_cliente?: string | null;
+            /** Datos Cliente */
+            datos_cliente?: {
+                [key: string]: unknown;
+            } | null;
+            /** Criterios */
+            criterios?: string[] | null;
+            /** Tools Esperadas */
+            tools_esperadas?: string[] | null;
+            /** Tools Prohibidas */
+            tools_prohibidas?: string[] | null;
+            /** Estado */
+            estado?: ("borrador" | "aprobado") | null;
+        };
+        /** EscenariosDePrueba */
+        EscenariosDePrueba: {
+            /** Escenarios */
+            escenarios: components["schemas"]["EscenarioDePrueba"][];
+            /**
+             * Tope
+             * @description Máximo de escenarios por agente.
+             */
+            tope: number;
+            ultima_corrida: components["schemas"]["ResumenDeCorridaDePrueba"] | null;
+        };
+        /** EscenariosPropuestos */
+        EscenariosPropuestos: {
+            /**
+             * Escenarios
+             * @description Los guardados en `borrador`, hasta 10.
+             */
+            escenarios: components["schemas"]["EscenarioDePrueba"][];
+            /**
+             * Descartados
+             * @description Propuestas que se descartaron: repetidas, sin título u objetivo.
+             */
+            descartados: number;
+            /**
+             * Creditos
+             * @description Lo que costó pedir la propuesta; `null` si no se pudo medir.
+             */
+            creditos: number | null;
         };
         /** EstadisticaSnapshot */
         EstadisticaSnapshot: {
@@ -22492,6 +22752,22 @@ export interface components {
             /** Items */
             items: components["schemas"]["ItemBusqueda"][];
         };
+        /** ResumenDeCorridaDePrueba */
+        ResumenDeCorridaDePrueba: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Estado */
+            estado: string;
+            /** K */
+            k: number;
+            /** Iniciada En */
+            iniciada_en: string | null;
+            /** Terminada En */
+            terminada_en: string | null;
+        };
         /** ResumenPorAgente */
         ResumenPorAgente: {
             periodo: components["schemas"]["PeriodoOut"];
@@ -25497,6 +25773,146 @@ export interface components {
              * Format: date-time
              */
             fecha_hora: string;
+        };
+        /** PruebasCorridaIn */
+        PruebasCorridaIn: {
+            /**
+             * Case Ids
+             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
+             */
+            case_ids: string[];
+            /**
+             * K
+             * @description Intentos por escenario: de 1 al tope del negocio (`k_fuera_de_rango` si no).
+             */
+            k: number;
+            /**
+             * Confirmo Creditos
+             * @description Créditos que el dueño aprobó: el `estimado` de este `k`. Si cambió, 409 `estimado_cambio`.
+             */
+            confirmo_creditos: number;
+        };
+        /** PruebasCorridaOut */
+        PruebasCorridaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /** K */
+            k: number;
+            /** Escenarios */
+            escenarios: number;
+            /** Creditos Estimados */
+            creditos_estimados: number;
+            /** Creditos De Cuota */
+            creditos_de_cuota: number;
+            /** Tope Creditos */
+            tope_creditos: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** PruebasEstimadoDeKOut */
+        PruebasEstimadoDeKOut: {
+            /**
+             * K
+             * @description Intentos por escenario.
+             */
+            k: number;
+            /**
+             * Estimado
+             * @description Créditos que cuesta correr con este `k` (es el de k = 1 por `k`).
+             */
+            estimado: number;
+            /**
+             * De La Cuota
+             * @description Cuánto sale de la cuota gratis de pruebas y playground del ciclo.
+             */
+            de_la_cuota: number;
+            /**
+             * Del Saldo
+             * @description Cuánto sale del saldo: `estimado menos de_la_cuota`.
+             */
+            del_saldo: number;
+            /**
+             * Saldo Despues
+             * @description Saldo tras la corrida; `null` si el negocio no tiene tope.
+             */
+            saldo_despues: number | null;
+            /**
+             * Alcanza
+             * @description Si `del_saldo` cabe en el saldo.
+             */
+            alcanza: boolean;
+            /**
+             * Costo Usd
+             * @description Costo real en USD. Solo lo ve el master.
+             */
+            costo_usd?: number | null;
+        };
+        /** PruebasEstimadoIn */
+        PruebasEstimadoIn: {
+            /**
+             * Case Ids
+             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
+             */
+            case_ids: string[];
+        };
+        /** PruebasEstimadoOut */
+        PruebasEstimadoOut: {
+            /** Escenarios */
+            escenarios: number;
+            /** Nivel Ia */
+            nivel_ia: string;
+            /** K Por Defecto */
+            k_por_defecto: number;
+            /**
+             * K Maximo
+             * @description Tope de `k` del negocio (el de plataforma o el que fijó el master).
+             */
+            k_maximo: number;
+            /**
+             * Saldo
+             * @description Créditos que le quedan al negocio en el ciclo; `null` si no hay tope.
+             */
+            saldo: number | null;
+            /** Cuota Gratis Restante */
+            cuota_gratis_restante: number;
+            /** Por K */
+            por_k: components["schemas"]["PruebasEstimadoDeKOut"][];
+        };
+        /** PruebasTopeDeKIn */
+        PruebasTopeDeKIn: {
+            /**
+             * K Maximo
+             * @description Tope de `k` del negocio, de 1 a 10; `null` vuelve al de plataforma.
+             */
+            k_maximo: number | null;
+        };
+        /** PruebasTopeDeKOut */
+        PruebasTopeDeKOut: {
+            /**
+             * K Maximo
+             * @description Tope efectivo de `k` del negocio.
+             */
+            k_maximo: number;
+            /**
+             * K Maximo Propio
+             * @description Lo que fijó el master; `null` si usa el de plataforma.
+             */
+            k_maximo_propio: number | null;
+            /** K Maximo De Plataforma */
+            k_maximo_de_plataforma: number;
         };
     };
     responses: never;
@@ -29158,6 +29574,205 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProcedureValidateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_escenarios_api_v1_admin_agents__agent_id__pruebas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscenariosDePrueba"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    escribir_escenario_api_v1_admin_agents__agent_id__pruebas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscenarioDePruebaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscenarioDePrueba"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    proponer_escenarios_api_v1_admin_agents__agent_id__pruebas_proponer_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscenariosPropuestos"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description `propuesta_invalida`: la IA respondió sin escenarios utilizables (ya se cobró la llamada). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `ia_no_disponible`: el proveedor no respondió; no se cobró nada. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    borrar_escenario_api_v1_admin_agents__agent_id__pruebas__case_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_escenario_api_v1_admin_agents__agent_id__pruebas__case_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscenarioDePruebaPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscenarioDePrueba"];
                 };
             };
             /** @description Validation Error */
@@ -47297,6 +47912,192 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentAccount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasEstimadoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasEstimadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasCorridaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `plan_limit_creditos` (`details = {metric, used, limit}`), `estimado_cambio` (`details.estimado` trae el vigente) o `corrida_en_curso`; no se creó la corrida. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corridas_por_dia`. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasTopeDeKIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
                 };
             };
             /** @description Validation Error */
