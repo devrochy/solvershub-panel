@@ -6,6 +6,7 @@ import { Info } from "lucide-react";
 
 import { AsistenteDeConfiguracion } from "@/app/(app)/configuracion/_components/asistente-de-configuracion";
 import { CampoOpcion } from "@/app/(app)/configuracion/_components/campo-opcion";
+import { VozYEstilo } from "@/app/(app)/configuracion/_components/voz-y-estilo";
 import { EstadoDelAsistente } from "@/app/(app)/configuracion/_components/estado-del-asistente";
 import { GuardadoConjunto } from "@/app/(app)/configuracion/_components/guardado-conjunto";
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
@@ -134,7 +135,6 @@ export function IdentityForm({
     (o) => !CLAVES_PRESENTACION.includes(o.clave) && !CLAVES_DATOS.includes(o.clave) && o.clave !== CLAVE_PAUSA && o.clave !== "brand_voice",
   );
   const vozDeMarca = indice.get("brand_voice");
-  const tonoYEstilo = opcionesDe("voz").filter((o) => !(vozDeMarca && o.clave === "brand_voice"));
 
   const etiquetaDe = (clave: string): string => {
     const opcion = indice.get(clave);
@@ -398,45 +398,53 @@ export function IdentityForm({
                     </section>
                   )}
 
-                  {grupos.map((id) => {
-                    const grupo = GRUPOS_IDENTIDAD.find((g) => g.id === id);
-                    if (!grupo) return null;
-                    const opciones = id === "voz" ? tonoYEstilo : opcionesDe(id);
-                    if (opciones.length === 0) return null;
-                    return (
-                      <section
-                        key={grupo.id}
-                        aria-labelledby={`grupo-${grupo.id}`}
-                        className={id === "respuesta" ? "flex flex-col gap-4 border-t border-border-soft pt-6" : "flex flex-col gap-4"}
-                      >
-                        <div>
-                          <h3 id={`grupo-${grupo.id}`} className="text-sm font-semibold text-headline">
-                            {grupo.titulo}
-                          </h3>
-                          <p className="text-sh-label text-text-soft">
-                            {grupo.id === "voz"
-                              ? "El tono, la calidez, los emojis y el largo de las respuestas."
-                              : grupo.descripcion}
-                          </p>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          {opciones.map((opcion) => (
-                            <div
-                              key={opcion.clave}
-                              className={
-                                ["texto_largo", "lista_de_textos", "franjas", "elegir_varias", "booleano"].includes(opcion.tipo) ||
-                                ["persona_tone", "persona_warmth"].includes(opcion.clave)
-                                  ? "md:col-span-2"
-                                  : undefined
-                              }
-                            >
-                              {campo(opcion)}
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    );
-                  })}
+                  {seccion === "voz" ? (
+                    <VozYEstilo
+                      identity={identity}
+                      catalogo={catalogo}
+                      valores={valores}
+                      errores={errores}
+                      cambiar={cambiar}
+                      pendientes={pendientes}
+                      irASeccion={irASeccion}
+                    />
+                  ) : (
+                    grupos.map((id) => {
+                      const grupo = GRUPOS_IDENTIDAD.find((g) => g.id === id);
+                      if (!grupo) return null;
+                      const opciones = opcionesDe(id);
+                      if (opciones.length === 0) return null;
+                      return (
+                        <section
+                          key={grupo.id}
+                          aria-labelledby={`grupo-${grupo.id}`}
+                          className={id === "respuesta" ? "flex flex-col gap-4 border-t border-border-soft pt-6" : "flex flex-col gap-4"}
+                        >
+                          <div>
+                            <h3 id={`grupo-${grupo.id}`} className="text-sm font-semibold text-headline">
+                              {grupo.titulo}
+                            </h3>
+                            <p className="text-sh-label text-text-soft">{grupo.descripcion}</p>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            {opciones.map((opcion) => (
+                              <div
+                                key={opcion.clave}
+                                className={
+                                  ["texto_largo", "lista_de_textos", "franjas", "elegir_varias", "booleano"].includes(opcion.tipo) ||
+                                  ["persona_tone", "persona_warmth"].includes(opcion.clave)
+                                    ? "md:col-span-2"
+                                    : undefined
+                                }
+                              >
+                                {campo(opcion)}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })
+                  )}
                 </>
               )}
             </ControlesEditables>
