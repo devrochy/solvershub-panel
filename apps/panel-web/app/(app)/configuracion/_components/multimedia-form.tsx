@@ -1,130 +1,187 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  Check,
+  Crown,
+  Eye,
+  Feather,
+  FlaskConical,
+  Gem,
+  Image as ImageIcon,
+  Info,
+  Mic,
+  Scale,
+  Sparkles,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field } from "@/components/ui/field";
-import { InputPassword } from "@/components/ui/input-password";
-import { Select } from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
-import type { CatalogoConfig, MediaSettings } from "@/lib/api/types";
-import { ayudaDelCatalogo, indexarCatalogo } from "@/lib/catalogo-config";
+import type { MediaAudioSettings, MediaSettings, MediaVisionSettings } from "@/lib/api/types";
 import { useAvisarCambios } from "@/lib/cambios-sin-guardar";
 import { igualProfundo } from "@/lib/configuracion-secciones";
+import {
+  costoVisible,
+  etiquetaCalidad,
+  opcionesDeMedia,
+  resolverSeleccion,
+  type CapacidadMedia,
+  type OpcionMedia,
+} from "@/lib/media-opciones";
+import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
+import { cn } from "@/lib/utils";
 
-type Capability = "audio" | "vision";
+/** Icono por identidad de opción; el catálogo solo manda el `tier`. */
+const ICONOS: Record<string, LucideIcon> = {
+  economico: Feather,
+  equilibrado: Scale,
+  rapido: Zap,
+  precision: Gem,
+  preciso: Sparkles,
+  detallado: Eye,
+  maxima: Crown,
+};
 
-const AYUDA_PROVEEDOR = "La empresa de IA que procesa esto. Si no estás seguro, deja el que viene elegido.";
-const AYUDA_MODELO = "Cada proveedor ofrece varios modelos; el que viene por defecto sirve para la mayoría de los casos.";
+const LEYENDA_AUDIO = "Estimado para 10 minutos de audio";
+const LEYENDA_VISION = "Estimado para 100 imágenes";
 
 /** Configuración de multimedia: notas de voz (STT) e imágenes (visión). */
 export function MultimediaForm({
   media,
-  catalogo = null,
   puedeEditar = true,
 }: {
   media: MediaSettings;
-  catalogo?: CatalogoConfig | null;
   puedeEditar?: boolean;
 }) {
-  const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
-  const [audio, setAudio] = useState(media.audio);
-  const [vision, setVision] = useState(media.vision);
+  const opcionesAudio = useMemo(() => opcionesDeMedia(media, "audio"), [media]);
+  const opcionesVision = useMemo(() => opcionesDeMedia(media, "vision"), [media]);
+  const inicialAudio = useMemo(() => resolverSeleccion(media.audio, media, "audio"), [media]);
+  const inicialVision = useMemo(() => resolverSeleccion(media.vision, media, "vision"), [media]);
+
+  const [audio, setAudio] = useState<MediaAudioSettings>(() => ({
+    ...media.audio,
+    ...inicialAudio.seleccion,
+  }));
+  const [vision, setVision] = useState<MediaVisionSettings>(() => ({
+    ...media.vision,
+    ...inicialVision.seleccion,
+  }));
   const [guardado, setGuardado] = useState({ audio: media.audio, vision: media.vision });
-  const [audioKey, setAudioKey] = useState("");
-  const [visionKey, setVisionKey] = useState("");
-  // Qué acción está en curso («test-audio», «save-vision»…), para el texto de cada botón.
-  const [activa, setActiva] = useState<string | null>(null);
+  const [notaAudio, setNotaAudio] = useState<string | undefined>(inicialAudio.nota);
+  const [notaVision, setNotaVision] = useState<string | undefined>(inicialVision.nota);
+
   const guardar = useAction();
   const probar = useAction({ refresh: false });
   const ocupado = guardar.pending || probar.pending;
-  useAvisarCambios(
-    "multimedia",
-    !igualProfundo({ audio, vision }, guardado) || audioKey !== "" || visionKey !== "",
-  );
+  const hayCambios = !igualProfundo({ audio, vision }, guardado);
+  useAvisarCambios("multimedia", hayCambios);
 
-  const audioProvider = media.catalog.audio.find((p) => p.key === audio.provider);
-  const visionProvider = media.catalog.vision.find((p) => p.key === vision.provider);
-  const disponible = media.catalog.audio.length > 0 || media.catalog.vision.length > 0;
-
-  function providerModels(capability: Capability, providerKey: string): { id: string; label: string }[] {
-    const lista = media.catalog[capability].find((p) => p.key === providerKey)?.models ?? [];
-    return lista;
+  function elegir(capacidad: CapacidadMedia, opcion: OpcionMedia) {
+    if (capacidad === "audio") {
+      setAudio((prev) => ({ ...prev, provider: opcion.provider, model: opcion.model }));
+      setNotaAudio(undefined);
+    } else {
+      setVision((prev) => ({ ...prev, provider: opcion.provider, model: opcion.model }));
+      setNotaVision(undefined);
+    }
   }
 
-  function onAudioProvider(providerKey: string) {
-    const entry = media.catalog.audio.find((p) => p.key === providerKey);
-    setAudio({ ...audio, provider: providerKey, model: entry?.default_model ?? "" });
-  }
+  async function probarConexion() {
+    const objetivos: { kind: CapacidadMedia; provider: string; model: string }[] = [];
+    if (audio.enabled && opcionesAudio.length > 0) {
+      objetivos.push({ kind: "audio", provider: audio.provider, model: audio.model });
+    }
+    if (vision.enabled && opcionesVision.length > 0) {
+      objetivos.push({ kind: "vision", provider: vision.provider, model: vision.model });
+    }
+    if (objetivos.length === 0) {
+      toast.error(
+        audio.enabled || vision.enabled
+          ? "No hay una opción disponible para probar."
+          : "Enciende al menos un medio para probar.",
+      );
+      return;
+    }
 
-  function onVisionProvider(providerKey: string) {
-    const entry = media.catalog.vision.find((p) => p.key === providerKey);
-    setVision({ ...vision, provider: providerKey, model: entry?.default_model ?? "" });
-  }
-
-  const nombre = (capability: Capability) => (capability === "audio" ? "audio" : "visión");
-
-  async function test(capability: Capability) {
-    const values = capability === "audio" ? audio : vision;
-    const key = capability === "audio" ? audioKey : visionKey;
-    setActiva(`test-${capability}`);
     await probar.run(async () => {
-      const res = await fetch("/api/settings/media/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind: capability,
-          provider: values.provider,
-          model: values.model,
-          api_key: key,
-        }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo probar la conexión." };
-      return { ok: true, success: `Conexión de ${nombre(capability)} verificada.` };
-    });
-    setActiva(null);
-  }
-
-  async function save(capability: Capability) {
-    const values = capability === "audio" ? audio : vision;
-    const key = capability === "audio" ? audioKey : visionKey;
-    setActiva(`save-${capability}`);
-    await guardar.run(async () => {
-      const res = await fetch("/api/settings/media", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: capability,
-          enabled: values.enabled,
-          provider: values.provider,
-          model: values.model,
-          ...(capability === "vision" ? { mode: vision.mode } : {}),
-          api_key: key,
-        }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar." };
-      if (capability === "audio") {
-        const nuevo = { ...audio, has_api_key: audio.has_api_key || Boolean(key), using_platform_key: false };
-        setAudio(nuevo);
-        setGuardado((prev) => ({ ...prev, audio: nuevo }));
-        setAudioKey("");
-      } else {
-        const nuevo = { ...vision, has_api_key: vision.has_api_key || Boolean(key), using_platform_key: false };
-        setVision(nuevo);
-        setGuardado((prev) => ({ ...prev, vision: nuevo }));
-        setVisionKey("");
+      for (const objetivo of objetivos) {
+        const res = await fetch("/api/settings/media/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...objetivo, api_key: "" }),
+        });
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          return {
+            ok: false,
+            status: res.status,
+            error: json.error ?? "No se pudo probar la conexión.",
+          };
+        }
       }
-      return { ok: true, success: `Configuración de ${nombre(capability)} guardada.` };
+      return { ok: true, success: "Conexión verificada." };
     });
-    setActiva(null);
   }
 
-  if (!disponible) {
+  async function guardarCambios() {
+    const cambios: { kind: CapacidadMedia; body: Record<string, unknown> }[] = [];
+    if (!igualProfundo(audio, guardado.audio)) {
+      cambios.push({
+        kind: "audio",
+        body: {
+          action: "audio",
+          enabled: audio.enabled,
+          provider: audio.provider,
+          model: audio.model,
+        },
+      });
+    }
+    if (!igualProfundo(vision, guardado.vision)) {
+      cambios.push({
+        kind: "vision",
+        body: {
+          action: "vision",
+          enabled: vision.enabled,
+          mode: vision.mode,
+          provider: vision.provider,
+          model: vision.model,
+        },
+      });
+    }
+    if (cambios.length === 0) return;
+
+    await guardar.run(async () => {
+      let nuevo = { ...guardado };
+      for (const cambio of cambios) {
+        const res = await fetch("/api/settings/media", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cambio.body),
+        });
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          setGuardado(nuevo);
+          return { ok: false, status: res.status, error: json.error ?? "No se pudo guardar." };
+        }
+        nuevo =
+          cambio.kind === "audio"
+            ? { ...nuevo, audio: { ...audio } }
+            : { ...nuevo, vision: { ...vision } };
+      }
+      setGuardado(nuevo);
+      setNotaAudio(undefined);
+      setNotaVision(undefined);
+      return { ok: true, success: "Cambios guardados." };
+    });
+  }
+
+  if (!media.catalog?.audio?.length && !media.catalog?.vision?.length) {
     return (
       <Card>
         <CardContent className="pt-5">
@@ -139,204 +196,306 @@ export function MultimediaForm({
 
   return (
     <div className="flex flex-col gap-5">
-      <Card>
-        <CardHeader>
-          <CardTitle>Notas de voz</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-headline">Transcribir notas de voz</p>
-              <p className="text-xs text-text-soft">
-                El cliente manda un audio y el asistente responde como si lo hubiera escrito.
-              </p>
-            </div>
-            <Switch
-              checked={audio.enabled}
-              onCheckedChange={(checked) => setAudio({ ...audio, enabled: checked })}
-              aria-label="Transcribir notas de voz"
-            />
-          </div>
+      <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-5">
+        <CapacidadCard
+          icono={Mic}
+          titulo="Notas de voz"
+          ariaLabel="Entender notas de voz"
+          descripcion="El cliente manda un audio y el asistente responde como si lo hubiera escrito."
+          encendido={audio.enabled}
+          hayOpciones={opcionesAudio.length > 0}
+          puedeEditar={puedeEditar}
+          onEncendido={(enabled) => setAudio((prev) => ({ ...prev, enabled }))}
+        >
+          {notaAudio && <NotaRetirada texto={notaAudio} />}
+          <OpcionesCalidad
+            capacidad="audio"
+            leyenda={LEYENDA_AUDIO}
+            opciones={opcionesAudio}
+            seleccion={{ provider: audio.provider, model: audio.model }}
+            onElegir={(opcion) => elegir("audio", opcion)}
+            deshabilitado={!puedeEditar}
+          />
+          <NotaPie />
+        </CapacidadCard>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Proveedor" htmlFor="audio_provider" help={AYUDA_PROVEEDOR}>
-              <Select
-                id="audio_provider"
-                value={audio.provider}
-                onChange={(e) => onAudioProvider(e.target.value)}
-              >
-                {media.catalog.audio.map((p) => (
-                  <option key={p.key} value={p.key}>
-                    {p.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Modelo" htmlFor="audio_model" help={AYUDA_MODELO}>
-              <Select
-                id="audio_model"
-                value={audio.model}
-                onChange={(e) => setAudio({ ...audio, model: e.target.value })}
-              >
-                {providerModels("audio", audio.provider).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-                {audio.model &&
-                  !providerModels("audio", audio.provider).some((m) => m.id === audio.model) && (
-                    <option value={audio.model}>{audio.model}</option>
-                  )}
-              </Select>
-            </Field>
-          </div>
-
-          <Field
-            label="Llave de API (BYOK)"
-            htmlFor="audio_api_key"
-            help={
-              audio.has_api_key
-                ? "Ya hay una llave guardada; déjala vacía para conservarla."
-                : audio.using_platform_key
-                  ? "Sin llave propia se usa la de la plataforma."
-                  : "Sin llave no se pueden transcribir audios."
-            }
-          >
-            <InputPassword
-              id="audio_api_key"
-              autoComplete="new-password"
-              placeholder={audioProvider?.key === "groq" ? "gsk_…" : "sk-…"}
-              value={audioKey}
-              onChange={(e) => setAudioKey(e.target.value)}
-            />
-          </Field>
-
-          </ControlesEditables>
-
-          {puedeEditar ? (
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="outline" onClick={() => void test("audio")} disabled={ocupado}>
-                {activa === "test-audio" ? "Probando…" : "Probar conexión"}
-              </Button>
-              <Button type="button" variant="accent" onClick={() => void save("audio")} disabled={ocupado}>
-                {activa === "save-audio" ? "Guardando…" : "Guardar audio"}
-              </Button>
-            </div>
-          ) : (
-            <AvisoSoloLectura />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Imágenes</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-headline">Interpretar imágenes</p>
-              <p className="text-xs text-text-soft">
-                El asistente describe la imagen y sigue la conversación como texto.
-              </p>
-            </div>
-            <Switch
-              checked={vision.enabled}
-              onCheckedChange={(checked) => setVision({ ...vision, enabled: checked })}
-              aria-label="Interpretar imágenes"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Proveedor" htmlFor="vision_provider" help={AYUDA_PROVEEDOR}>
-              <Select
-                id="vision_provider"
-                value={vision.provider}
-                onChange={(e) => onVisionProvider(e.target.value)}
-                disabled={!vision.enabled}
-              >
-                {media.catalog.vision.map((p) => (
-                  <option key={p.key} value={p.key}>
-                    {p.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Modelo" htmlFor="vision_model" help={AYUDA_MODELO}>
-              <Select
-                id="vision_model"
-                value={vision.model}
-                onChange={(e) => setVision({ ...vision, model: e.target.value })}
-                disabled={!vision.enabled}
-              >
-                {providerModels("vision", vision.provider).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-                {vision.model &&
-                  !providerModels("vision", vision.provider).some((m) => m.id === vision.model) && (
-                    <option value={vision.model}>{vision.model}</option>
-                  )}
-              </Select>
-            </Field>
-          </div>
-
-          <Field
-            label="Modo de imagen"
-            htmlFor="vision_mode"
-            help={ayudaDelCatalogo(indice, "vision_mode", "Sin descripción, el asistente solo acusa recibo y pregunta qué necesita.")}
-          >
-            <Select
-              id="vision_mode"
+        <CapacidadCard
+          icono={ImageIcon}
+          titulo="Imágenes"
+          ariaLabel="Entender imágenes"
+          descripcion="El asistente mira la foto, la describe y sigue la conversación como texto."
+          encendido={vision.enabled}
+          hayOpciones={opcionesVision.length > 0}
+          puedeEditar={puedeEditar}
+          onEncendido={(enabled) => setVision((prev) => ({ ...prev, enabled }))}
+        >
+          {notaVision && <NotaRetirada texto={notaVision} />}
+          <div className="mb-4 flex flex-col gap-2">
+            <span className="text-sh-label font-medium text-body">Qué hace con la foto</span>
+            <SegmentedControl
+              label="Qué hace con la foto"
+              options={[
+                { value: "describir", label: "Describir" },
+                { value: "sin_descripcion", label: "Solo confirmar" },
+              ]}
               value={vision.mode}
-              onChange={(e) => setVision({ ...vision, mode: e.target.value })}
-              disabled={!vision.enabled}
-            >
-              <option value="describir">Describir la imagen automáticamente</option>
-              <option value="sin_descripcion">No describir: solo acusar recibo</option>
-            </Select>
-          </Field>
-
-          <Field
-            label="Llave de API (BYOK)"
-            htmlFor="vision_api_key"
-            help={
-              vision.has_api_key
-                ? "Ya hay una llave guardada; déjala vacía para conservarla."
-                : vision.using_platform_key
-                  ? "Sin llave propia se usa la de la plataforma."
-                  : "Sin llave no se pueden describir imágenes."
-            }
-          >
-            <InputPassword
-              id="vision_api_key"
-              autoComplete="new-password"
-              placeholder={visionProvider?.key === "anthropic" ? "sk-ant-…" : "sk-…"}
-              value={visionKey}
-              onChange={(e) => setVisionKey(e.target.value)}
-              disabled={!vision.enabled}
+              onChange={puedeEditar ? (mode) => setVision((prev) => ({ ...prev, mode })) : undefined}
+              className="self-start"
             />
-          </Field>
+            <p className="text-xs text-text-soft">
+              {vision.mode === "sin_descripcion"
+                ? "Avisa que la foto llegó y pregunta qué necesita. No la describe."
+                : "Cuenta lo que ve y sigue la charla como texto."}
+            </p>
+          </div>
+          <OpcionesCalidad
+            capacidad="vision"
+            leyenda={LEYENDA_VISION}
+            opciones={opcionesVision}
+            seleccion={{ provider: vision.provider, model: vision.model }}
+            onElegir={(opcion) => elegir("vision", opcion)}
+            deshabilitado={!puedeEditar}
+          />
+          <NotaPie />
+        </CapacidadCard>
+      </ControlesEditables>
 
-          </ControlesEditables>
-
-          {puedeEditar ? (
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="outline" onClick={() => void test("vision")} disabled={ocupado || !vision.enabled}>
-                {activa === "test-vision" ? "Probando…" : "Probar conexión"}
-              </Button>
-              <Button type="button" variant="accent" onClick={() => void save("vision")} disabled={ocupado}>
-                {activa === "save-vision" ? "Guardando…" : "Guardar imágenes"}
-              </Button>
-            </div>
-          ) : (
-            <AvisoSoloLectura />
-          )}
-        </CardContent>
-      </Card>
+      {puedeEditar ? (
+        <div className="sticky bottom-0 z-10 -mx-5 flex flex-col gap-3 border-t border-border-soft bg-surface px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "flex items-center gap-2 text-xs",
+              hayCambios ? "text-status-warning-fg" : "text-text-soft",
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                hayCambios ? "bg-status-warning-fg" : "bg-border-strong",
+              )}
+            />
+            {hayCambios ? "Cambios sin guardar" : "Sin cambios"}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void probarConexion()}
+              disabled={ocupado || (!audio.enabled && !vision.enabled)}
+              loading={probar.pending}
+              className="pointer-coarse:h-11"
+            >
+              {!probar.pending && <FlaskConical className="h-4 w-4" aria-hidden />}
+              Probar conexión
+            </Button>
+            <Button
+              type="button"
+              variant="accent"
+              onClick={() => void guardarCambios()}
+              disabled={ocupado || !hayCambios}
+              loading={guardar.pending}
+              className="pointer-coarse:h-11"
+            >
+              Guardar cambios
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <AvisoSoloLectura />
+      )}
     </div>
+  );
+}
+
+function CapacidadCard({
+  icono: Icono,
+  titulo,
+  ariaLabel,
+  descripcion,
+  encendido,
+  hayOpciones,
+  puedeEditar,
+  onEncendido,
+  children,
+}: {
+  icono: LucideIcon;
+  titulo: string;
+  ariaLabel: string;
+  descripcion: string;
+  encendido: boolean;
+  hayOpciones: boolean;
+  puedeEditar: boolean;
+  onEncendido: (enabled: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="bg-surface-2">
+      <CardHeader className="flex-row items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-focus/10 text-focus">
+          <Icono className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <CardTitle as="h3">{titulo}</CardTitle>
+          <p className="mt-0.5 text-xs text-text-soft">{descripcion}</p>
+        </div>
+        <Switch
+          checked={encendido}
+          onCheckedChange={onEncendido}
+          disabled={!puedeEditar || !hayOpciones}
+          aria-label={ariaLabel}
+        />
+      </CardHeader>
+      <CardContent>
+        {encendido && hayOpciones ? (
+          children
+        ) : (
+          <p className="pl-[52px] text-xs text-text-soft">
+            {hayOpciones
+              ? "Apagado. Enciéndelo para elegir una opción."
+              : "No hay opciones disponibles con tu cuenta. Pídele a quien administra tu negocio que habilite un modelo."}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function OpcionesCalidad({
+  capacidad,
+  leyenda,
+  opciones,
+  seleccion,
+  onElegir,
+  deshabilitado,
+}: {
+  capacidad: CapacidadMedia;
+  leyenda: string;
+  opciones: OpcionMedia[];
+  seleccion: { provider: string; model: string };
+  onElegir: (opcion: OpcionMedia) => void;
+  deshabilitado: boolean;
+}) {
+  return (
+    <fieldset className="m-0 min-w-0 border-0 p-0">
+      <legend className="flex flex-wrap items-baseline gap-1.5 text-sh-label font-medium text-body">
+        Calidad y costo <span className="text-xs font-normal text-text-soft">{leyenda}</span>
+      </legend>
+      <div className="mt-2.5 overflow-hidden rounded-md border border-border bg-surface">
+        {opciones.map((opcion) => (
+          <OpcionFila
+            key={opcion.clave}
+            capacidad={capacidad}
+            opcion={opcion}
+            seleccionada={
+              seleccion.provider === opcion.provider && seleccion.model === opcion.model
+            }
+            onElegir={() => onElegir(opcion)}
+            deshabilitada={deshabilitado}
+          />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function OpcionFila({
+  capacidad,
+  opcion,
+  seleccionada,
+  onElegir,
+  deshabilitada,
+}: {
+  capacidad: CapacidadMedia;
+  opcion: OpcionMedia;
+  seleccionada: boolean;
+  onElegir: () => void;
+  deshabilitada: boolean;
+}) {
+  const Icono = ICONOS[opcion.tier] ?? Sparkles;
+  const { monto, unidad } = costoVisible(opcion);
+
+  return (
+    <label
+      className={cn(
+        "relative flex cursor-pointer flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border-soft px-3.5 py-2.5 transition-colors last:border-b-0 hover:bg-hover focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-focus",
+        seleccionada && "bg-focus/5",
+        deshabilitada && "cursor-not-allowed opacity-60",
+      )}
+    >
+      <input
+        type="radio"
+        name={`${capacidad}_option`}
+        value={opcion.clave}
+        checked={seleccionada}
+        onChange={onElegir}
+        disabled={deshabilitada}
+        className="sr-only"
+      />
+      {seleccionada && <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-focus" />}
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-focus/10 text-focus">
+        <Icono className="h-[15px] w-[15px]" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-1.5 font-display text-sm font-semibold text-headline">
+          {opcion.nombre}
+          {opcion.recomendada && (
+            <span className="rounded-pill border border-focus/30 bg-focus/10 px-1.5 py-px text-[10px] font-medium tracking-[0.04em] text-focus uppercase">
+              Recomendado
+            </span>
+          )}
+        </span>
+        <span className="block text-xs text-text-soft">{opcion.descripcion}</span>
+      </span>
+      <span className="order-3 flex w-full items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-text-soft sm:order-none sm:w-[138px] sm:flex-col sm:items-end sm:gap-0.5 sm:border-0 sm:pt-0 sm:text-right">
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="inline-flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <span
+                key={n}
+                className={cn(
+                  "h-1 w-2 rounded-sm",
+                  n <= opcion.calidad ? "bg-focus" : "bg-border-strong",
+                )}
+              />
+            ))}
+          </span>
+          {etiquetaCalidad(opcion.calidad)}
+        </span>
+        <span className="font-mono text-[13px] font-medium tabular-nums text-headline">
+          {monto}{" "}
+          <span className="font-sans text-[11px] font-normal text-text-soft">{unidad}</span>
+        </span>
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          "order-2 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-focus text-[var(--sh-bg-deep)] sm:order-none",
+          !seleccionada && "invisible",
+        )}
+      >
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </span>
+    </label>
+  );
+}
+
+function NotaRetirada({ texto }: { texto: string }) {
+  return (
+    <p className="mb-3 flex items-start gap-1.5 rounded-md bg-status-warning-bg px-2.5 py-2 text-xs text-status-warning-fg">
+      <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+      {texto}
+    </p>
+  );
+}
+
+function NotaPie() {
+  return (
+    <p className="mt-3 flex items-start gap-1.5 text-xs text-text-soft">
+      <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+      Elegimos el proveedor y el modelo por ti. Tú solo eliges calidad y costo.
+    </p>
   );
 }

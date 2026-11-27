@@ -386,6 +386,8 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
     // En la creación este paso es solo «Datos para probar»: sin memoria.
     expect(screen.queryByText(/Lo que sabe del cliente/)).toBeNull();
+    // La carga guiada (HU-UX-30): sin formas de carga solo queda «Lo hago después», y con «Listo» se sigue.
+    fireEvent.click(await screen.findByRole("button", { name: "Listo" }));
     fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Revisar y publicar/ }));
     await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
   });
@@ -520,6 +522,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     cleanup();
     abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida });
     expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Listo" }));
     fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Revisar y publicar/ }));
     await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
     expect(prepararPrueba).toHaveBeenCalled();
@@ -528,7 +531,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getByRole("button", { name: "Publicar a Ventas" })).toBeTruthy();
   });
 
-  it("en la bienvenida, un negocio de Agenda fuera de test ve «Seguir sin datos» en la estación 4 y pasa a la 5", async () => {
+  it("en la bienvenida, un negocio de Agenda fuera de test solo ve «Lo hago después» en la estación 4 y pasa a la 5", async () => {
     fetchMock.mockImplementation(async (url: string) =>
       /datos-de-prueba|importar-datos/.test(String(url))
         ? new Response(JSON.stringify({ error: "No existe aquí." }), { status: 404 })
@@ -549,7 +552,10 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     };
     abrir({ modo: "bienvenida", pasoInicial: "conocimiento", bienvenida, agente: { ...agente, key: "agenda", name: "Tomás" } });
     expect(screen.getByRole("heading", { level: 1, name: "¿Qué citas agenda Tomás?" })).toBeTruthy();
-    fireEvent.click(await screen.findByRole("button", { name: "Seguir sin datos" }));
+    expect(await screen.findByRole("radio", { name: /Lo hago después/ })).toBeTruthy();
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+    fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Revisar y publicar/ }));
     await waitFor(() => expect(avanzar).toHaveBeenCalledWith(5));
     expect(prepararPrueba).toHaveBeenCalled();
     expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0);

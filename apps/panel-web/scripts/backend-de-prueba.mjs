@@ -1236,7 +1236,7 @@ if (process.env.DATOS_CLIENTE === "1") {
 }
 function nuevoAgente(metodo, ruta) {
   if (!NUEVO) return undefined;
-  if (metodo === "POST" && ruta === "/admin/agents/from-script") {
+  if (metodo === "POST" && ruta === "/admin/agents/from-script" && !NUEVO) {
     return [201, { agent: { id: NUEVO_ID, key: "agenda", name: "Tomás" }, draft: {}, warnings: [], enabled_skills: [], requirements: [] }];
   }
   if (metodo === "PUT" && ruta === `/admin/agents/${NUEVO_ID}/draft`) return [200, { lock_version: 2, content: respuestas[`/admin/agents/${NUEVO_ID}`].draft.content }];
@@ -1265,6 +1265,16 @@ const PLANTILLA_PRODUCTOS = {
   ],
   tope_filas: 500, tope_bytes: 1_000_000, en_produccion: true, importa_fotos: true,
 };
+// Agenda (Tomás, NUEVO_AGENTE): tipos de cita, sin fotos y sin importación fuera de test (HU-UX-30).
+const PLANTILLA_CITAS = {
+  id: "tipos_de_cita", titulo: "Tipos de cita", ayuda: "Un servicio por fila.", columna_clave: "nombre",
+  columnas: [
+    { nombre: "nombre", descripcion: "Cómo se llama el servicio", obligatoria: true },
+    { nombre: "duracion_minutos", descripcion: "Cuánto dura", obligatoria: true },
+    { nombre: "precio", descripcion: "Precio", obligatoria: false },
+  ],
+  tope_filas: 500, tope_bytes: 1_000_000, en_produccion: false, importa_fotos: false,
+};
 const carga = { registros: [], fotos: 0 };
 function vistaPrevia(filas) {
   const errores = filas.flatMap((f) =>
@@ -1282,21 +1292,47 @@ function cargaDeDatos(metodo, ruta, cuerpo) {
   if (!m) return undefined;
   const [, base, resto = ""] = m;
   const prod = CARGA === "prod";
+  const esAgenda = ruta.includes(NUEVO_ID);
+  const plantilla = esAgenda ? PLANTILLA_CITAS : PLANTILLA_PRODUCTOS;
+  const sinImportados = () => carga.registros.filter((r) => r.origen !== "importacion");
   if (base === "datos-de-prueba") {
     if (prod) return [404, { error: { code: "not_found", message: "No existe." } }];
     if (resto === "/registros") return [200, { lote: null, registros: carga.registros, total: carga.registros.length, sin_detalle: 0 }];
+    if (metodo === "DELETE") {
+      carga.registros = carga.registros.filter((r) => r.origen === "importacion");
+      return [200, { retirados: { producto: 3 } }];
+    }
     if (metodo === "POST") {
-      carga.registros = [
-        { tipo: "categoria", nombre: "Panadería", detalle: null, origen: "llm" },
-        { tipo: "producto", nombre: "Pan de bono", detalle: "$2.500 · Panadería", origen: "llm" },
-        { tipo: "producto", nombre: "Almojábana", detalle: "$2.800 · Panadería", origen: "llm" },
-        { tipo: "producto", nombre: "Torta de chocolate", detalle: "$45.000 · Tortas", origen: "llm" },
-      ];
-      return [200, { lote_id: "l-1", modo: "agente", origen: "llm", motivo_plantilla: null, creado_en: new Date().toISOString(), conteos: { producto: 3, categoria: 1 }, retirados: {} }];
+      const generados = esAgenda
+        ? [
+            { tipo: "tipo", nombre: "Asesoría inicial", detalle: "30 min · Gratis", origen: "llm" },
+            { tipo: "tipo", nombre: "Demo del producto", detalle: "45 min · Gratis", origen: "llm" },
+            { tipo: "tipo", nombre: "Reunión de seguimiento", detalle: "30 min · $80.000", origen: "llm" },
+          ]
+        : [
+            { tipo: "categoria", nombre: "Panadería", detalle: null, origen: "llm" },
+            { tipo: "producto", nombre: "Pan de bono", detalle: "$2.500 · Panadería", origen: "llm" },
+            { tipo: "producto", nombre: "Almojábana", detalle: "$2.800 · Panadería", origen: "llm" },
+            { tipo: "producto", nombre: "Torta de chocolate", detalle: "$45.000 · Tortas", origen: "llm" },
+          ];
+      carga.registros = [...carga.registros.filter((r) => r.origen === "importacion"), ...generados];
+      const conteos = esAgenda ? { tipo: 3 } : { producto: 3, categoria: 1 };
+      return [200, { lote_id: "l-1", modo: "agente", origen: "llm", motivo_plantilla: null, creado_en: new Date().toISOString(), conteos, retirados: {} }];
     }
     return [200, { disponible: true, motivo: null, falta_descripcion: false, lote: null }];
   }
-  if (resto === "" && metodo === "GET") return [200, { disponible: true, motivo: null, plantilla: PLANTILLA_PRODUCTOS, importado: null }];
+  // Fuera de test solo se importan productos de Commerce (`en_produccion`).
+  if (prod && !plantilla.en_produccion) return [200, { disponible: false, motivo: "Fuera de pruebas solo se importan productos.", plantilla: null, importado: null }];
+  if (resto === "" && metodo === "GET") return [200, { disponible: true, motivo: null, plantilla, importado: null }];
+  if (resto === "" && metodo === "DELETE") {
+    carga.registros = sinImportados();
+    return [200, { retirados: { producto: 3 } }];
+  }
+  if (resto === "/plantilla.csv") {
+    const cabecera = plantilla.columnas.map((c) => c.nombre).filter((c) => c !== "imagen");
+    const ejemplo = esAgenda ? ["Asesoría inicial", "30", "0"] : ["CAM-01", "Camiseta básica", "35000", "Ropa > Camisetas", "", "10"];
+    return [200, { __csv: `\uFEFF${cabecera.join(",")}\r\n${ejemplo.join(",")}\r\n`, nombre: `plantilla-${plantilla.id}.csv` }];
+  }
   if (resto === "/mapear") {
     const filas = [
       { fila: 2, valores: { sku: "CAM-01", nombre: "Camiseta básica", precio: "35000", categoria: "Ropa > Camisetas" } },
@@ -1322,7 +1358,7 @@ function cargaDeDatos(metodo, ruta, cuerpo) {
     if (v.con_errores && !cuerpo.solo_validas) return [422, { error: { code: "archivo_con_errores", message: "Hay filas con errores." } }];
     const malas = new Set(v.errores.map((e) => e.fila));
     const buenas = filas.filter((f) => !malas.has(f.fila));
-    if (!prod) carga.registros = buenas.map((f) => ({ tipo: "producto", nombre: f.valores.nombre, detalle: `$${f.valores.precio}`, origen: "importacion" }));
+    if (!prod) carga.registros = [...sinImportados(), ...buenas.map((f) => ({ tipo: esAgenda ? "tipo" : "producto", nombre: f.valores.nombre, detalle: esAgenda ? `${f.valores.duracion_minutos} min` : `$${f.valores.precio}`, origen: "importacion" }))];
     return [201, { lote_id: "i-1", plantilla: "productos", creado_en: new Date().toISOString(), creadas: buenas.length, existentes: 0, con_errores: malas.size, conteos: { producto: buenas.length } }];
   }
   if (resto.startsWith("/fotos/cotizacion")) {
@@ -2010,6 +2046,13 @@ createServer(async (req, res) => {
       cuerpo = {};
     }
     const r = cargaDeDatos(req.method ?? "GET", ruta + (url.search ?? ""), cuerpo);
+    if (r && r[1]?.__csv) {
+      res.statusCode = 200;
+      res.setHeader("content-type", "text/csv; charset=utf-8");
+      res.setHeader("content-disposition", `attachment; filename="${r[1].nombre}"`);
+      res.end(r[1].__csv);
+      return;
+    }
     if (r) {
       res.statusCode = r[0];
       res.end(JSON.stringify(r[1]));

@@ -348,7 +348,7 @@ export function SettingsTabs({
                 </>
               )}
               {abierta === "chat-web" && <WebChatForm webChat={webChat} catalogo={catalogo} puedeEditar={puedeEditar} />}
-              {abierta === "multimedia" && <MultimediaForm media={media} catalogo={catalogo} puedeEditar={puedeEditar} />}
+              {abierta === "multimedia" && <MultimediaForm media={media} puedeEditar={puedeEditar} />}
               {abierta === "agentspec" && <AdvancedPanel advanced={advanced} puedeEditar={puedeEditar} />}
               {abierta === "accesibilidad" && <AccesibilidadPanel />}
             </div>
