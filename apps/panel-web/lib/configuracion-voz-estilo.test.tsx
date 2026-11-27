@@ -130,6 +130,7 @@ describe("Voz y estilo (HU-CFG-12)", () => {
     expect(within(dialogo).getByText(/Avanzado · límites de este negocio/)).toBeTruthy();
     expect(within(dialogo).getByText("Aplica al publicar")).toBeTruthy();
     expect(within(dialogo).getByText("Aplica ahora")).toBeTruthy();
+    expect(within(dialogo).getByText(/Tu negocio usa el Agent OS/)).toBeTruthy();
 
     // La voz y el ritmo se eligen con tarjetas/botones; ningún `select` en la sección.
     expect(within(dialogo).queryAllByRole("combobox")).toHaveLength(0);
