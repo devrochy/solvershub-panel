@@ -82,9 +82,11 @@ export function VozYEstilo({
   const largoOpcion = indice.get("persona_max_length");
   const prohibidasOpcion = indice.get("persona_forbidden");
 
-  const tono = String(valores.persona_tone ?? tonoOpcion?.por_defecto ?? "cercano") as Tono;
+  const tonoGuardado = String(valores.persona_tone ?? tonoOpcion?.por_defecto ?? "cercano");
+  const tono = (TONOS.some((t) => t.id === tonoGuardado) ? tonoGuardado : "cercano") as Tono;
   const calidez = Math.min(5, Math.max(0, Number(valores.persona_warmth ?? 3)));
-  const emojis = String(valores.persona_emojis ?? emojisOpcion?.por_defecto ?? "sparse") as Emojis;
+  const emojisGuardados = String(valores.persona_emojis ?? emojisOpcion?.por_defecto ?? "sparse");
+  const emojis = (EMOJIS.some((e) => e.id === emojisGuardados) ? emojisGuardados : "sparse") as Emojis;
   const velocidad = String(valores.debounce_mode ?? velocidadOpcion?.por_defecto ?? "natural");
   const envio = String(valores.split_style ?? envioOpcion?.por_defecto ?? "un_mensaje");
   const maxLength = Number(valores.persona_max_length ?? largoOpcion?.por_defecto ?? 500);
@@ -96,10 +98,12 @@ export function VozYEstilo({
   ];
   const puedeOcultarExtras = !esVelocidadSecundaria(velocidad);
 
+  const nombre = String(valores.assistant_name ?? identity.assistant_name);
+  const descripcion = String(valores.business_description ?? identity.business_description);
   const muestra = muestraDeVoz(
     { tono, calidez, emojis, largo: largoDeMaxLength(maxLength) },
-    identity.assistant_name,
-    negocioParaLaMuestra(identity.business_description),
+    nombre,
+    negocioParaLaMuestra(descripcion),
   );
   const resumen = resumenDeRitmo(
     valorDe(velocidadOpcion, velocidad) ?? null,
@@ -127,7 +131,7 @@ export function VozYEstilo({
             Hola, ¿tienen domicilio al centro?
           </div>
           <div className="ml-auto max-w-[88%] rounded-xl rounded-br-sm border border-border-soft bg-surface-raised p-3 text-sm text-headline">
-            <span className="mb-1 block text-xs text-text-soft">{identity.assistant_name || "Tu asistente"}</span>
+            <span className="mb-1 block text-xs text-text-soft">{nombre || "Tu asistente"}</span>
             <span aria-live="polite">{muestra}</span>
           </div>
         </div>
