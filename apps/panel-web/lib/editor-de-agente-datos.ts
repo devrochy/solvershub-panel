@@ -12,6 +12,7 @@ import type {
   AgentRetiredNotices,
   LlmModelCatalog,
   Me,
+  PlanResponse,
   PluginSummary,
   PublishTargetPage,
   RequirementPage,
@@ -24,6 +25,8 @@ import type { AgenteDatos } from "@/lib/datos-cliente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { ReglasDelAgente, ToolsHttpDelAgente } from "@/lib/reglas-y-tools-del-agente";
+import { incluyeAvanzado } from "@/lib/nivel-ia";
+import { funcionesDelPlanActual } from "@/lib/plan-limite";
 
 type PropsDelEditor = ComponentProps<typeof EditorDeAgente>;
 
@@ -49,7 +52,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
   if (agente.data.kind !== "specialist") {
     return { estado: "no_especialista", nombre: agente.data.name, coordinador: agente.data.kind === "core" };
   }
-  const [superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp, aviso] =
+  const [superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp, aviso, plan] =
     await Promise.all([
       apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
       // Con `agent_id`, el modelo con el que atenderá este agente (HU-AOS-79), para la línea de Publicar.
@@ -79,6 +82,8 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       apiFetch<ToolsHttpDelAgente>(`/admin/agents/${id}/declarative-tools`),
       // Aviso de tratamiento de datos del negocio (HU-CRM-16), en «Opciones avanzadas» de la estación 3 (HU-UX-29).
       apiFetch<AvisoDatos>("/admin/datos-cliente/aviso"),
+      // El plan, para decir en la estación 5 si trae el nivel de IA Avanzado (HU-UX-31); sin respuesta no se dice.
+      apiFetch<PlanResponse>("/admin/plan"),
     ]);
   if (!superpoderes.ok || !modelos.ok) {
     const falla = [superpoderes, modelos].find((r) => !r.ok);
@@ -122,6 +127,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       semillaDelFlujo: opcionesDeFlujo.ok ? flujoDesdeApi(opcionesDeFlujo.data.seed) : null,
       negocio: negocioDesdeIdentidad(me.ok ? (me.data.tenant?.name ?? "") : "", ajustes.ok ? ajustes.data.identity : null),
       modeloEfectivo: efectivo,
+      incluyeAvanzado: incluyeAvanzado(funcionesDelPlanActual(plan.ok ? plan.data : null)),
       puedeEditar,
     },
   };

@@ -23,7 +23,7 @@ const TEXTO_DE_MARCA = { cambios: "con cambios", revisar: "revisar" } as const;
  * `forma="estaciones"` es la ruta de lanzamiento (HU-UX-24, SPEC-49): nodos unidos por tramos, con la V del
  * logo y «hecho» en las anteriores (HU-UX-26, D-SPEC-52-4), `aria-current="step"` en la actual y su número en las que siguen. Por debajo
  * de `md`, una fila de puntos con el actual alargado y «Paso N de M · {corto}». El avance de escritorio
- * lo dice el eyebrow de `RecorridoDelAgente`.
+ * lo dice el eyebrow de `RecorridoDelAgente`. Con `terminado` (ya se publicó, HU-UX-31) todas van hechas.
  */
 export function BarraDePasos({
   pasos,
@@ -32,6 +32,7 @@ export function BarraDePasos({
   onIr,
   etiqueta,
   forma = "segmentos",
+  terminado = false,
   className,
 }: {
   pasos: readonly PasoDeLaBarra[];
@@ -40,17 +41,25 @@ export function BarraDePasos({
   onIr?: (id: string) => void;
   etiqueta: string;
   forma?: "segmentos" | "estaciones";
+  terminado?: boolean;
   className?: string;
 }) {
-  const indice = Math.max(
-    0,
-    pasos.findIndex((p) => p.id === actual),
-  );
+  const indice = terminado
+    ? pasos.length
+    : Math.max(
+        0,
+        pasos.findIndex((p) => p.id === actual),
+      );
   const pasoActual = pasos[indice];
-  const avance = pasoActual ? `Paso ${indice + 1} de ${pasos.length} · ${pasoActual.corto ?? pasoActual.titulo}` : "";
+  const avance = terminado
+    ? `${pasos.length} de ${pasos.length} hechos`
+    : pasoActual
+      ? `Paso ${indice + 1} de ${pasos.length} · ${pasoActual.corto ?? pasoActual.titulo}`
+      : "";
 
+  // Terminado, ya no se vuelve a las estaciones desde la barra.
   function puedeIr(i: number): boolean {
-    return Boolean(onIr) && i !== indice && (modo === "libre" || i < indice);
+    return Boolean(onIr) && !terminado && i !== indice && (modo === "libre" || i < indice);
   }
 
   if (forma === "estaciones") {
