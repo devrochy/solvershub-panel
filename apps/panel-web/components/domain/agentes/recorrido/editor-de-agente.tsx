@@ -46,13 +46,16 @@ import {
 import { erroresPorAccion, erroresSueltosDeAcciones } from "@/lib/acciones-del-agente";
 import {
   alPorDefecto,
+  cambiosDeLaEstacion3,
   conCuantoPregunta,
+  conMetodo,
   conNivel,
-  CUANTO_PREGUNTA,
-  cuantoPreguntaActual,
   cuerpoParaGuardar,
+  datosRecomendadosEnLaRuta,
   estadoInicial,
   METODOS_ENTREGA,
+  operacionesEnLaRuta,
+  preguntaPorEntregas,
   restablecida,
   tipoDelAgente,
   type AgenteDatos,
@@ -60,7 +63,9 @@ import {
   type EstadoDatos,
   type MetodoEntrega,
   type NivelDato,
+  type RecomendadoDeDatos,
 } from "@/lib/datos-cliente";
+import type { AvisoDatos } from "@/lib/aviso-datos";
 import type {
   AgentDetail,
   AgentRetiredNotices,
@@ -87,6 +92,7 @@ import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celu
 import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
 import { OpcionesAvanzadas } from "@/components/domain/agentes/recorrido/opciones-avanzadas";
 import { LineaDelHorario, preguntasDeHabilidades } from "@/components/domain/agentes/recorrido/preguntas-de-habilidades";
+import { AVANZADAS_DE_DATOS, LineaDelAviso, preguntasDeDatos } from "@/components/domain/agentes/recorrido/preguntas-de-datos";
 import { ListaDePreguntas, textoDeFaltan } from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
@@ -143,6 +149,7 @@ const ESTACION_DEL_PASO: Partial<Record<PasoId, EstacionDeLaRuta>> = {
 /** La pregunta de cada estación en la ruta (las demás, la de `PASOS`). */
 const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
   habilidades: "¿Qué sabe hacer {nombre}?",
+  "datos-cliente": "¿Qué datos pide {nombre}?",
   conocimiento: "¿Con qué datos probamos a {nombre}?",
   probar: "Revisa y publica a {nombre}",
 };
@@ -228,6 +235,7 @@ export function EditorDeAgente({
   datosCliente = null,
   datosClienteError,
   puedeEditarDatos = true,
+  avisoDeDatos = null,
   formasDePago = null,
   semillaDelFlujo = null,
   horarioDelAgente = null,
@@ -263,6 +271,8 @@ export function EditorDeAgente({
   datosClienteError?: string;
   /** Quien puede escribir la configuración del negocio (la política de datos la exige). */
   puedeEditarDatos?: boolean;
+  /** El aviso de tratamiento de datos del negocio (HU-CRM-16), para «Opciones avanzadas» de la estación 3; `null` si no se pudo leer. */
+  avisoDeDatos?: AvisoDatos | null;
   /** Formas de pago del agente (SPEC-48, HU-COM-21); `null` si el agente no tiene Comercio. */
   formasDePago?: FormasDePago | null;
   /** Semilla del flujo de sus habilidades, para «Restaurar guion sugerido» (HU-COM-25). */
@@ -359,6 +369,10 @@ export function EditorDeAgente({
     () => datosCliente?.metodos_entrega ?? METODOS_ENTREGA.map((m) => m.id),
   );
   const [metodosGuardado, setMetodosGuardado] = useState<MetodoEntrega[]>(metodos);
+  // Estación 3 de la ruta (HU-UX-29): la pregunta abierta; `null` = aún no se llegó a la estación.
+  const [abiertaDeDatos, setAbiertaDeDatos] = useState<number | null>(() => (paso === "datos-cliente" ? 0 : null));
+  // Lo recomendado de la estación 3: los niveles por defecto y las entregas y la memoria con que llegó el agente.
+  const [recomendadoDeDatos] = useState<RecomendadoDeDatos>(() => ({ metodos, herramientas }));
 
   const minFrases = modelos.min_phrases;
   const cambios = JSON.stringify(estado) !== JSON.stringify(guardado);
@@ -409,7 +423,8 @@ export function EditorDeAgente({
         body: JSON.stringify({
           ...cuerpoParaGuardar(datosCliente, datos),
           herramientas_del_agente: herramientasNuevas,
-          metodos_entrega: metodos,
+          // En la ruta se pueden desmarcar las dos entregas; al salir con «Seguir después» se guardan las de antes.
+          metodos_entrega: metodos.length > 0 ? metodos : metodosGuardado,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: unknown };
@@ -422,7 +437,7 @@ export function EditorDeAgente({
     if (ok) {
       setDatosGuardado(datos);
       setHerramientasGuardado(herramientasNuevas);
-      setMetodosGuardado(metodos);
+      if (metodos.length > 0) setMetodosGuardado(metodos);
     }
     return ok;
   }
@@ -432,11 +447,9 @@ export function EditorDeAgente({
     setHerramientas(activo);
   }
 
+  /** En la ruta (HU-UX-29) se pueden desmarcar todas: la pregunta no deja seguir sin una. En Personalizar, la última no se apaga. */
   function cambiarMetodo(metodo: MetodoEntrega, activo: boolean) {
-    setMetodos((actual) => {
-      if (activo) return METODOS_ENTREGA.map((m) => m.id).filter((id) => id === metodo || actual.includes(id));
-      return actual.length === 1 ? actual : actual.filter((id) => id !== metodo);
-    });
+    setMetodos((actual) => conMetodo(actual, metodo, activo, comoCreacionRapida));
   }
 
   function cambiarNivel(accionId: string, clave: string, nivel: NivelDato) {
@@ -572,7 +585,12 @@ export function EditorDeAgente({
     irA(comoCreacionRapida && !deLaRuta.includes(destino) ? "probar" : destino);
   }
 
-  function irA(id: PasoId) {
+  /**
+   * La primera vez que se llega a la estación 3 de la ruta hacia adelante, se abre su primera pregunta; si se llega
+   * volviendo (Atrás, la barra o «Editar»), llega todo respondido, como la estación 2.
+   */
+  function irA(id: PasoId, haciaAdelante = false) {
+    if (id === "datos-cliente") setAbiertaDeDatos((a) => a ?? (haciaAdelante ? 0 : Number.MAX_SAFE_INTEGER));
     setPaso(id);
   }
 
@@ -581,14 +599,14 @@ export function EditorDeAgente({
     if (creacionRapida) {
       const j = PASOS_DE_LA_CREACION.indexOf(paso);
       const siguiente = PASOS_DE_LA_CREACION[j + delta];
-      if (siguiente) irA(siguiente);
+      if (siguiente) irA(siguiente, delta > 0);
       return;
     }
     if (enBienvenida) {
       // Antes de «Habilidades» va el paso del negocio, que vive en `/bienvenida`.
       const j = PASOS_DE_LA_BIENVENIDA.indexOf(paso);
       const siguiente = PASOS_DE_LA_BIENVENIDA[j + delta];
-      if (siguiente) irA(siguiente);
+      if (siguiente) irA(siguiente, delta > 0);
       else if (delta < 0) bienvenida.volverA(bienvenida.pasosDelNegocio.length);
       return;
     }
@@ -848,9 +866,16 @@ export function EditorDeAgente({
       return `${encendidas} de ${superpoderes.length} encendidas`;
     }
     if (id === "datos-cliente") {
+      // Sin los atajos de «Cuánto pregunta» en la ruta (HU-UX-29): las entregas y cuántos datos pide siempre.
       if (!datosCliente) return "Sin cargar";
-      const preset = cuantoPreguntaActual(datosCliente, datos);
-      return preset ? `«${CUANTO_PREGUNTA.find((c) => c.id === preset)?.titulo ?? preset}»` : "A tu medida";
+      const siempre = operacionesEnLaRuta(datosCliente, metodos).reduce(
+        (n, { accion }) => n + accion.campos.filter((c) => (datos[accion.id]?.[c.clave] ?? c.nivel) === "requerido").length,
+        0,
+      );
+      const entregas = preguntaPorEntregas(datosCliente)
+        ? METODOS_ENTREGA.filter((m) => metodos.includes(m.id)).map((m) => m.etiqueta).join(" y ")
+        : "";
+      return [entregas, `${siempre} ${siempre === 1 ? "dato" : "datos"} siempre`].filter(Boolean).join(" · ");
     }
     if (id === "conocimiento") {
       return cargados.length > 0 ? `${cargados.length} ${cargados.length === 1 ? "registro cargado" : "registros cargados"}` : "Sin datos de prueba";
@@ -956,6 +981,57 @@ export function EditorDeAgente({
         />
       </OpcionesAvanzadas>
     </div>
+  );
+
+  // Estación 3 de la ruta (HU-UX-29): entregas, una pregunta por entrega u operación y la memoria; el aviso, en avanzadas.
+  const preguntasDeLaEstacion3 = datosCliente
+    ? preguntasDeDatos({
+        nombre: estado.nombre.trim(),
+        politica: datosCliente,
+        estado: datos,
+        metodos,
+        herramientas,
+        onNivel: cambiarNivel,
+        onMetodo: cambiarMetodo,
+        onHerramientas: cambiarHerramientas,
+        error: errores["datos.metodos_entrega"],
+      })
+    : [];
+  const abiertaEnDatos = Math.min(abiertaDeDatos ?? 0, preguntasDeLaEstacion3.length);
+  const faltanDeLaEstacion3 = preguntasDeLaEstacion3.length - abiertaEnDatos;
+  const cambiosEnDatos = datosCliente
+    ? cambiosDeLaEstacion3(datosCliente, datos, metodos, herramientas, recomendadoDeDatos)
+    : 0;
+  function usarLoRecomendadoEnDatos() {
+    if (!datosCliente) return;
+    setDatos((actual) => datosRecomendadosEnLaRuta(datosCliente, actual, recomendadoDeDatos.metodos));
+    setHerramientas(recomendadoDeDatos.herramientas);
+    if (JSON.stringify(metodos) !== JSON.stringify(recomendadoDeDatos.metodos)) {
+      // Con otras entregas cambian las preguntas: se vuelve a la primera.
+      setMetodos(recomendadoDeDatos.metodos);
+      setAbiertaDeDatos(0);
+    }
+  }
+  const datosEnLaRuta = datosCliente ? (
+    <div className="flex flex-col gap-6">
+      {puedeEditarDatos && <BarraRecomendado cambios={cambiosEnDatos} onUsar={usarLoRecomendadoEnDatos} />}
+      {!puedeEditarDatos && (
+        <p role="note" className="text-sm text-text-soft">
+          Solo puedes ver esta configuración. Para cambiarla, pídele acceso a quien administra el negocio.
+        </p>
+      )}
+      <fieldset disabled={!puedeEditarDatos} className="min-w-0">
+        <legend className="sr-only">Datos del cliente</legend>
+        <ListaDePreguntas preguntas={preguntasDeLaEstacion3} abierta={abiertaEnDatos} onAbrir={setAbiertaDeDatos} />
+      </fieldset>
+      {avisoDeDatos && (
+        <OpcionesAvanzadas descripcion={AVANZADAS_DE_DATOS}>
+          <LineaDelAviso aviso={avisoDeDatos} conEnlace={!enBienvenida} />
+        </OpcionesAvanzadas>
+      )}
+    </div>
+  ) : (
+    datosDelCliente
   );
 
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
@@ -1081,7 +1157,7 @@ export function EditorDeAgente({
         </section>
       </div>
     ),
-    "datos-cliente": datosDelCliente,
+    "datos-cliente": comoCreacionRapida ? datosEnLaRuta : datosDelCliente,
     flujo: (
       <PasoFlujo
         flujo={estado.flujo}
@@ -1411,11 +1487,21 @@ export function EditorDeAgente({
         bajada={
           comoCreacionRapida && paso === "habilidades"
             ? bajadaDeHabilidades(preguntasDeLaEstacion2.length)
+            : comoCreacionRapida && paso === "datos-cliente"
+              ? datosCliente && preguntaPorEntregas(datosCliente)
+                ? "Cada forma de entrega pide sus propios datos. Viene con lo justo, como lo recomienda SolversHub."
+                : "Cada operación pide sus propios datos. Viene con lo justo, como lo recomienda SolversHub."
             : enBienvenida
               ? BAJADA_EN_LA_BIENVENIDA[paso]
               : undefined
         }
-        estado={comoCreacionRapida && paso === "habilidades" && faltanDeLaEstacion2 > 0 ? textoDeFaltan(faltanDeLaEstacion2) : undefined}
+        estado={
+          comoCreacionRapida && paso === "habilidades" && faltanDeLaEstacion2 > 0
+            ? textoDeFaltan(faltanDeLaEstacion2)
+            : comoCreacionRapida && paso === "datos-cliente" && faltanDeLaEstacion3 > 0
+              ? textoDeFaltan(faltanDeLaEstacion3)
+              : undefined
+        }
         celular={celular}
         queSigue={
           comoCreacionRapida
@@ -1490,8 +1576,9 @@ export function EditorDeAgente({
                   texto: `Guardar y seguir: ${tituloSiguiente}`,
                   onClick: () => void siguienteAlCrear(),
                   cargando: guardarAccion.pending || datosAccion.pending || formasAccion.pending || preparando,
-                  // En Habilidades, como en la estación 1, se sigue con todas las preguntas respondidas.
-                  deshabilitado: paso === "habilidades" && faltanDeLaEstacion2 > 0,
+                  // En Habilidades y Datos del cliente, como en la estación 1, se sigue con todas las preguntas respondidas.
+                  deshabilitado:
+                    (paso === "habilidades" && faltanDeLaEstacion2 > 0) || (paso === "datos-cliente" && faltanDeLaEstacion3 > 0),
                 }
             : creando
               ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }

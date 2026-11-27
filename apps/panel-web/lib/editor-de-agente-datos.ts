@@ -19,6 +19,7 @@ import type {
   SuperpowerPage,
 } from "@/lib/api/types";
 import { puedeEditarConfiguracion } from "@/lib/configuracion-secciones";
+import type { AvisoDatos } from "@/lib/aviso-datos";
 import type { AgenteDatos } from "@/lib/datos-cliente";
 import type { FormasDePago } from "@/lib/formas-de-pago";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
@@ -48,7 +49,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
   if (agente.data.kind !== "specialist") {
     return { estado: "no_especialista", nombre: agente.data.name, coordinador: agente.data.kind === "core" };
   }
-  const [superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp] =
+  const [superpoderes, modelos, destinos, me, requisitos, retiradas, plugins, acciones, datosCliente, flujo, opcionesDeFlujo, ajustes, formas, horario, reglas, toolsHttp, aviso] =
     await Promise.all([
       apiFetch<SuperpowerPage>(`/admin/agent-superpowers?agent_id=${id}&page_size=100`),
       // Con `agent_id`, el modelo con el que atenderá este agente (HU-AOS-79), para la línea de Publicar.
@@ -76,6 +77,8 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       // Reglas y tools HTTP del agente (HU-AOS-97); sin respuesta, esas secciones no se muestran.
       apiFetch<ReglasDelAgente>(`/admin/agents/${id}/guardrails`),
       apiFetch<ToolsHttpDelAgente>(`/admin/agents/${id}/declarative-tools`),
+      // Aviso de tratamiento de datos del negocio (HU-CRM-16), en «Opciones avanzadas» de la estación 3 (HU-UX-29).
+      apiFetch<AvisoDatos>("/admin/datos-cliente/aviso"),
     ]);
   if (!superpoderes.ok || !modelos.ok) {
     const falla = [superpoderes, modelos].find((r) => !r.ok);
@@ -108,6 +111,7 @@ export async function cargarEditorDeAgente(id: string): Promise<CargaDelEditor> 
       datosCliente: datosCliente.ok ? datosCliente.data : null,
       datosClienteError: datosCliente.ok ? undefined : datosCliente.error,
       puedeEditarDatos: puedeEditar,
+      avisoDeDatos: aviso.ok ? aviso.data : null,
       formasDePago: formas.ok ? formas.data : null,
       horarioDelAgente: horario.ok ? horario.data : null,
       reglasDelAgente: reglas.ok ? reglas.data : null,

@@ -42,6 +42,16 @@ export function mensajeDeErrorAviso(status: number | undefined, error?: string):
   return error && error.trim() ? error : "No se pudo guardar el aviso.";
 }
 
+/**
+ * El estado del aviso en una línea, para «Opciones avanzadas» de la estación 3 (HU-UX-29): si está activo y, si
+ * no, si el texto sigue siendo el borrador sin revisión legal.
+ */
+export function estadoDelAviso(aviso: AvisoDatos): string {
+  if (aviso.activo) return "Activo: el agente lo muestra antes de pedir datos personales.";
+  if (aviso.es_borrador && !aviso.texto_propio) return "Apagado. El texto es un borrador sin revisión legal.";
+  return "Apagado. Tiene un texto propio listo para activar.";
+}
+
 /** ¿Vale la pena mostrar este bloque en la ficha? Solo con el aviso activo o si ya hay historia. */
 export function mostrarEnFicha(datos: ConsentimientoDatos | null): boolean {
   return Boolean(datos && (datos.aviso_activo || datos.historial.length > 0));
