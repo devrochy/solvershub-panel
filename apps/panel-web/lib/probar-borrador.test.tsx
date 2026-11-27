@@ -7,7 +7,6 @@ vi.mock("@/lib/api/server", () => ({ apiFetch: api.apiFetch }));
 
 import { ChatPrueba } from "@/app/(app)/asistente/_components/chat-prueba";
 import { GET, POST } from "@/app/api/playground/route";
-import { PasoProbarBorrador } from "@/components/domain/agentes/paso-probar-borrador";
 
 // HU-AOS-72: probar el borrador de un agente sin publicarlo. El chat le habla al agente (`agent_id`), que gana
 // sobre la conexión, y el BFF lo pasa al backend en el historial, el mensaje, el reinicio y el cierre.
@@ -52,15 +51,6 @@ describe("chat de prueba sobre el borrador", () => {
         fetchMock.mock.calls.some(([, i]) => i?.method === "POST" && JSON.parse(String(i.body)).action === "reset" && JSON.parse(String(i.body)).agent_id === AGENTE),
       ).toBe(true),
     );
-  });
-
-  it("el paso Pruébalo de la creación conversa con el borrador y ya no dice «Muy pronto»", async () => {
-    fetchMock.mockResolvedValue(json({ turns: [] }));
-    render(<PasoProbarBorrador agenteId={AGENTE} sugerencias={["¿Tienen hamburguesas?"]} />);
-    expect(screen.queryByText(/Muy pronto/)).toBeNull();
-    expect(screen.getByText(/no se publica/)).toBeTruthy();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(`/api/playground?agent_id=${AGENTE}`));
-    expect(screen.getByRole("button", { name: "¿Tienen hamburguesas?" })).toBeTruthy();
   });
 });
 

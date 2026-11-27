@@ -29,6 +29,8 @@
 //   que les falta para funcionar del todo (catálogo, servicios y Wompi), para la estación 2 · Habilidades.
 //   DATOS_CLIENTE=1 (HU-UX-29, igual): Laura con las dos entregas de Comercio, Tomás con la cita de Agenda y el aviso
 //   de tratamiento de datos, para la estación 3 · Datos del cliente.
+//   SIN_WHATSAPP=1 (HU-UX-31, con NUEVO_AGENTE=1): Tomás solo puede publicar en el Chat web, y la estación 5 ofrece
+//   «Conectar en Conexiones» para WhatsApp. El playground contesta como el borrador o la conexión de pruebas.
 //   avanzar, omitir, dejar listo y finalizar cambian el recorrido en memoria. BIENVENIDA=viejo: igual, pero guardado
 //   con 4 pasos en el paso 3 (retoma en «Datos para probar», 4 de 5).
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -1141,10 +1143,11 @@ if (NUEVO && process.env.AGENTES === "1") {
   }
   respuestas[`/admin/agents/${NUEVO_ID}`] = { ...respuestas[`/admin/agents/${VENTAS_ID}`], id: NUEVO_ID, key: "agenda", name: "Tomás", latest_version: null, versions: [] };
   respuestas[`/admin/agents/${NUEVO_ID}/datos-cliente`] = { ...politicaDatosCliente, agente_id: NUEVO_ID, metodos_entrega: ["domicilio", "recoger_en_tienda"] };
-  respuestas[`/admin/agents/${NUEVO_ID}/publish-targets`] = { items: [
+  const destinosDeTomas = [
     { connection_id: "00000000-0000-4000-8000-0000000000c2", label: "WhatsApp", channel: "whatsapp", installed: false, covers_skills: true, missing_skills: [], active_release_id: null },
     { connection_id: "00000000-0000-4000-8000-0000000000c1", label: "Chat web", channel: "web", installed: false, covers_skills: true, missing_skills: [], active_release_id: null },
-  ], total: 2, page: 1, page_size: 100, has_more: false };
+  ].filter((d) => process.env.SIN_WHATSAPP !== "1" || d.channel !== "whatsapp");
+  respuestas[`/admin/agents/${NUEVO_ID}/publish-targets`] = { items: destinosDeTomas, total: destinosDeTomas.length, page: 1, page_size: 100, has_more: false };
 }
 // La bienvenida (HU-UX-25) usa a Ventas como «Laura»: datos del cliente y formas de pago para sus estaciones 2 y 3.
 if (BIENVENIDA && BIENVENIDA !== "1" && respuestas[`/admin/agents/${VENTAS_ID}`]) {
@@ -1578,7 +1581,10 @@ function playground(metodo, ruta, cuerpo) {
   if (sub === "/message") {
     // Bienvenida (HU-UX-25): la prueba por la conexión de pruebas es la que deja terminar.
     const deLaBienvenida = BIENVENIDA && cuerpo.connection_id ? bienvenidaEnMemoria("POST", "/admin/playground/message", cuerpo) : undefined;
-    return deLaBienvenida ?? [200, { text: "Hola, soy el asistente de prueba.", image_url: null, escalated: false }];
+    if (deLaBienvenida) return deLaBienvenida;
+    // Nuevo agente (HU-UX-31): la última prueba le habla al borrador, con las acciones simuladas.
+    if (cuerpo.agent_id) return [200, { text: "Con gusto. ¿Qué servicio buscas y qué día te sirve?", image_url: null, escalated: false, simulado: false }];
+    return [200, { text: "Hola, soy el asistente de prueba.", image_url: null, escalated: false }];
   }
   if (sub !== "/options" && sub !== "/tap") return undefined;
   if (!bandera()) return errorOpciones(404, "opciones_directas_no_habilitadas", "Las opciones directas no están habilitadas en este negocio.");

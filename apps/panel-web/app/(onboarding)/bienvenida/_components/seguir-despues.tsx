@@ -12,22 +12,18 @@ import { cn } from "@/lib/utils";
 /**
  * «Seguir después» de la bienvenida (HU-UX-25): confirma que el agente no atiende hasta terminar y que lo hecho
  * queda guardado, guarda lo que falte de la estación (`guardar`, si la estación tiene algo propio sin guardar) y
- * deja el recorrido omitido: el aviso persistente lo retoma desde Inicio. Va en la ruta (escritorio) y en la
- * franja del escenario (celular).
+ * deja el recorrido omitido: el aviso persistente lo retoma desde Inicio. Va arriba a la derecha, junto al logo.
  */
 export function SeguirDespues({
   nombreDelAgente,
   guardar,
   ocupado = false,
-  enEscenario = false,
   className,
 }: {
   nombreDelAgente: string;
   /** Guarda lo de la estación antes de salir; `false` = no se pudo y no se sale. */
   guardar?: () => Promise<boolean>;
   ocupado?: boolean;
-  /** Sobre la franja oscura del celular. */
-  enEscenario?: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -68,7 +64,7 @@ export function SeguirDespues({
       size="sm"
       onClick={() => void omitir()}
       disabled={ocupado || saliendo}
-      className={cn("min-h-11", enEscenario ? "text-escena-acento hover:bg-escena-tarjeta" : "text-link", className)}
+      className={cn("min-h-11 text-link", className)}
     >
       Seguir después
     </Button>

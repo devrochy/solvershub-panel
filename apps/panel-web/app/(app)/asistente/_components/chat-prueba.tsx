@@ -13,18 +13,12 @@ import {
   leerInteractivo,
   mensajeDeErrorPlayground,
   type AvisoDeToque,
-  type InteractivoLeido,
 } from "@/lib/playground-opciones";
 import { playgroundOpcionesApi } from "@/lib/playground-opciones-cliente";
+import { textoDelTurno as texto, useChatDePrueba, type TurnoDePrueba as Turno } from "@/lib/use-chat-de-prueba";
 
 import { MensajeConBotones } from "./mensaje-con-botones";
 import { ProbarPlantilla } from "./probar-plantilla";
-
-type Turno = { role?: string; text?: string; content?: string; interactivo?: InteractivoLeido; simulado?: boolean };
-
-function texto(t: Turno): string {
-  return t.text ?? t.content ?? JSON.stringify(t);
-}
 
 /** Mensajes de `/options` y `/tap` → turnos del chat (los que traen botones se pintan tocables). */
 function turnosDe(mensajes: PlaygroundMensaje[]): Turno[] {
@@ -67,40 +61,14 @@ export function ChatPrueba({
   /** Muestra el selector de plantillas con opciones; `plantillaInicial` es la clave que viene del editor. */
   probarOpciones?: { plantillaInicial?: string };
 } = {}) {
-  const [turnos, setTurnos] = useState<Turno[]>([]);
+  const chat = useChatDePrueba({ agenteId, conexionId, alRecibirRespuesta });
+  const { turnos, setTurnos } = chat;
+  const status = { loading: chat.cargando, error: chat.error };
+  const setStatus = chat.setEstado;
   const [texto_, setTexto] = useState("");
-  const [status, setStatus] = useState<{ loading?: boolean; error?: string }>({});
   const [aviso, setAviso] = useState<AvisoDeToque | null>(null);
   const [tocados, setTocados] = useState<ReadonlySet<string>>(new Set());
   const fin = useRef<HTMLDivElement>(null);
-  // A quién se le habla: el borrador del agente o la versión activa de una conexión.
-  const destino: Record<string, string> = agenteId ? { agent_id: agenteId } : conexionId ? { connection_id: conexionId } : {};
-  const consulta = new URLSearchParams(destino).toString();
-
-  useEffect(() => {
-    let activo = true;
-    void (async () => {
-      const res = await fetch(`/api/playground${consulta ? `?${consulta}` : ""}`);
-      const json = (await res.json().catch(() => ({}))) as { turns?: Turno[] };
-      if (activo) setTurnos(json.turns ?? []);
-    })();
-    return () => {
-      activo = false;
-    };
-  }, [consulta]);
-
-  // HU-ARCH-14: al salir de la prueba se cierra y se purga en el backend. `keepalive` cubre
-  // el cierre de pestaña; el backend lo trata como idempotente.
-  useEffect(() => {
-    return () => {
-      void fetch("/api/playground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "close", ...Object.fromEntries(new URLSearchParams(consulta)) }),
-        keepalive: true,
-      }).catch(() => undefined);
-    };
-  }, [consulta]);
 
   // Baja solo la caja de mensajes: con `scrollIntoView` la página saltaba hasta el chat al abrir la
   // pestaña Probar de la ficha del agente y la cabecera y las pestañas quedaban fuera de la vista.
@@ -112,32 +80,8 @@ export function ChatPrueba({
   async function enviar(frase?: string) {
     const limpio = (frase ?? texto_).trim();
     if (!limpio) return;
-    setStatus({ loading: true });
-    setTurnos((previos) => [...previos, { role: "user", text: limpio }]);
     setTexto("");
-    const res = await fetch("/api/playground", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "message", text: limpio, ...destino }),
-    });
-    const json = (await res.json().catch(() => ({}))) as {
-      text?: string;
-      image_url?: string | null;
-      escalated?: boolean;
-      simulado?: boolean;
-      error?: string;
-    };
-    setStatus({ loading: false });
-    if (!res.ok) {
-      setStatus({ error: json.error ?? "No se pudo procesar el mensaje." });
-      return;
-    }
-    setTurnos((previos) => [
-      ...previos,
-      { role: "assistant", text: json.text ?? "(sin respuesta)", simulado: json.simulado },
-      ...(json.escalated ? [{ role: "assistant", text: "⚠️ Escalado a un humano" }] : []),
-    ]);
-    if (!json.escalated) alRecibirRespuesta?.();
+    await chat.enviar(limpio);
   }
 
   async function enviarPlantilla(clave: string, nombre: string) {
@@ -182,18 +126,7 @@ export function ChatPrueba({
   }
 
   async function reiniciar() {
-    setStatus({ loading: true });
-    const res = await fetch("/api/playground", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reset", ...destino }),
-    });
-    setStatus({ loading: false });
-    if (!res.ok) {
-      setStatus({ error: "No se pudo reiniciar la prueba." });
-      return;
-    }
-    setTurnos([]);
+    if (!(await chat.reiniciar())) return;
     setAviso(null);
     setTocados(new Set());
   }

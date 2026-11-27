@@ -337,6 +337,13 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     );
   }
 
+  /** Las tres preguntas de la estación 5 (HU-UX-31): revisión, última prueba y dónde atiende. */
+  function responderLaEstacion5() {
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
+  }
+
   it("ocho pasos libres y sin «Proveedor y modelo»; Publicar dice el modelo del negocio", () => {
     abrir();
     expect(screen.getByRole("heading", { level: 2, name: "¿Cómo se llama tu agente y para qué sirve?" })).toBeTruthy();
@@ -392,7 +399,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
   });
 
-  it("la estación 5 resume lo hecho con «Editar», ofrece «Dónde atiende» y «Guardar como borrador» no publica", async () => {
+  it("la estación 5 resume lo hecho con «Cambiar» y «Guardar como borrador» no publica", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 }));
     push.mockReset();
     abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear] });
@@ -404,9 +411,10 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       expect.stringContaining("Datos del cliente"),
       expect.stringContaining("Datos para probar"),
     ]);
-    expect(screen.getByRole("group", { name: "Dónde atiende" })).toBeTruthy();
-    expect(screen.getByLabelText(/Nota de versión/)).toBeTruthy();
-    fireEvent.click(within(resumen).getByRole("button", { name: "Editar Datos del cliente" }));
+    // Una pregunta a la vez (HU-UX-31): sin la nota de versión ni el modelo.
+    expect(screen.getByRole("heading", { name: "¿Todo quedó como querías?" })).toBeTruthy();
+    expect(screen.queryByLabelText(/Nota de versión/)).toBeNull();
+    fireEvent.click(within(resumen).getByRole("button", { name: "Cambiar Datos del cliente" }));
     expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
     cleanup();
     abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear] });
@@ -415,7 +423,7 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith("/publish"))).toBe(false);
   });
 
-  it("«Publicar a {nombre}» publica la versión 1, la activa en la conexión elegida y va a la ficha", async () => {
+  it("«Publicar a {nombre}» publica la versión 1, la activa en la conexión elegida y dice que ya atiende", async () => {
     push.mockReset();
     fetchMock.mockImplementation(async (url: string) => {
       if (url.endsWith("/publish")) {
@@ -442,15 +450,18 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     // Dos conexiones sin instalar: «Dónde atiende» llega con la primera marcada (lo recomendado).
     const web: PublishTarget = { ...conexionDeCrear, connection_id: "44444444-4444-4444-8444-444444444444", label: "Chat web", channel: "web" };
     abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear, web], modelos: { ...modelos, min_phrases: 1 } });
+    responderLaEstacion5();
     fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+    expect(await screen.findByRole("heading", { level: 1, name: "Ventas ya está atendiendo" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ir a la ficha de Ventas" }));
+    expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`);
     const publicar = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/publish"));
     expect(JSON.parse(publicar?.[1].body)).toMatchObject({ connection_ids: [conexionDeCrear.connection_id] });
     const activar = fetchMock.mock.calls.find(([u]) => u === "/api/agent-editor/activate");
     expect(JSON.parse(activar?.[1].body)).toEqual({ connection_id: conexionDeCrear.connection_id, release_id: "r-1" });
   });
 
-  it("si la conexión no quedó lista al publicar, no intenta activar y va a la ficha igual", async () => {
+  it("si la conexión no quedó lista al publicar, no intenta activar y lo dice", async () => {
     push.mockReset();
     fetchMock.mockImplementation(async (url: string) => {
       if (url.endsWith("/publish")) {
@@ -475,8 +486,9 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       return new Response(JSON.stringify({ lockVersion: 2, content: BASE }), { status: 200 });
     });
     abrir({ modo: "crear", pasoInicial: "probar", destinos: [conexionDeCrear], modelos: { ...modelos, min_phrases: 1 } });
+    responderLaEstacion5();
     fireEvent.click(screen.getByRole("button", { name: "Publicar a Ventas" }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith(`/agentes/${agente.id}`));
+    expect(await screen.findByRole("heading", { level: 1, name: "Ventas quedó publicado" })).toBeTruthy();
     expect(fetchMock.mock.calls.some(([u]) => u === "/api/agent-editor/activate")).toBe(false);
   });
 
@@ -497,9 +509,10 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
       volverA,
       avanzar,
-      seguirDespues: ({ enEscenario }: { enEscenario: boolean }) => (enEscenario ? null : <button type="button">Seguir después</button>),
+      seguirDespues: () => <button type="button">Seguir después</button>,
       prepararPrueba,
-      prueba: () => <p>Chat de prueba</p>,
+      conexionDePrueba: "00000000-0000-4000-8000-0000000000c1",
+      onRespuesta: vi.fn(),
       probado: false,
       terminar,
       terminando: false,
@@ -527,7 +540,8 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     await waitFor(() => expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0));
     expect(prepararPrueba).toHaveBeenCalled();
     expect(avanzar).toHaveBeenCalledWith(5);
-    expect(screen.getByText("Chat de prueba")).toBeTruthy();
+    // La última prueba va en el celular, por la conexión de pruebas (HU-UX-31).
+    expect(screen.getAllByRole("textbox", { name: "Mensaje para Ventas" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Publicar a Ventas" })).toBeTruthy();
   });
 
@@ -545,7 +559,8 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       avanzar,
       seguirDespues: () => null,
       prepararPrueba,
-      prueba: () => null,
+      conexionDePrueba: null,
+      onRespuesta: vi.fn(),
       probado: false,
       terminar: vi.fn(async () => {}),
       terminando: false,
@@ -561,7 +576,8 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
     expect(screen.getAllByText("Paso 5 de 5 · Revisar y publicar").length).toBeGreaterThan(0);
   });
 
-  it("en la bienvenida «Publicar a {nombre}» espera la prueba por la conexión y «Editar» vuelve a cada estación", () => {
+  it("en la bienvenida «Publicar a {nombre}» espera la prueba por la conexión y «Cambiar» vuelve a cada estación", () => {
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ turns: [] }), { status: 200 }));
     const terminar = vi.fn(async () => {});
     const volverA = vi.fn();
     const bienvenida = {
@@ -570,23 +586,30 @@ describe("editar con el recorrido común (HU-AOS-78)", () => {
       avanzar: vi.fn(),
       seguirDespues: () => null,
       prepararPrueba: vi.fn(async () => null),
-      prueba: () => null,
+      conexionDePrueba: null,
+      onRespuesta: vi.fn(),
       probado: false,
       terminar,
       terminando: false,
     };
-    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida });
+    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida: { ...bienvenida, conexionDePrueba: "c-1" } });
     expect((screen.getByRole("button", { name: "Publicar a Ventas" }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/envíale al menos una frase aquí/)).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 1, name: "La última vuelta antes de atender" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Editar Tu negocio" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Revisa y publica a Ventas" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/Para publicar a Ventas, envíale al menos una frase/)).toBeTruthy();
+    // Sin respuesta no se sigue: la prueba es la que deja terminar.
+    expect((screen.getByRole("button", { name: "Continuar" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar: ¿Todo quedó como querías?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar Tu negocio" }));
     expect(volverA).toHaveBeenCalledWith(1);
-    fireEvent.click(screen.getByRole("button", { name: "Editar Datos del cliente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar Datos del cliente" }));
     expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
 
     cleanup();
-    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida: { ...bienvenida, probado: true } });
+    abrir({ modo: "bienvenida", pasoInicial: "probar", bienvenida: { ...bienvenida, conexionDePrueba: "c-1", probado: true } });
     const publicar = screen.getByRole("button", { name: "Publicar a Ventas" }) as HTMLButtonElement;
+    expect(publicar.disabled).toBe(true);
+    responderLaEstacion5();
     expect(publicar.disabled).toBe(false);
     fireEvent.click(publicar);
     expect(terminar).toHaveBeenCalled();
@@ -811,7 +834,8 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
       avanzar,
       seguirDespues: () => null,
       prepararPrueba: vi.fn(async () => null),
-      prueba: () => null,
+      conexionDePrueba: null,
+      onRespuesta: vi.fn(),
       probado: false,
       terminar: vi.fn(async () => {}),
       terminando: false,

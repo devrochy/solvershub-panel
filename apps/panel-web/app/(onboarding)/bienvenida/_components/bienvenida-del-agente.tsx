@@ -7,11 +7,10 @@ import { EditorDeAgente, type BienvenidaDelEditor } from "@/components/domain/ag
 import type { DatosDelEditor } from "@/lib/editor-de-agente-datos";
 import type { PasoId } from "@/lib/agentes-editor";
 import { dejarListo, textoDeErrorAlDejarListo } from "@/lib/onboarding-agente";
-import { ESTADO_INICIAL, PASOS, PASOS_DEL_NEGOCIO, TIPOS_DE_NEGOCIO, type Recorrido } from "@/lib/onboarding";
+import { PASOS, PASOS_DEL_NEGOCIO, type Recorrido } from "@/lib/onboarding";
 import { toast } from "@/lib/toast-store";
 
 import { PantallaFinal } from "./pantalla-final";
-import { PasoProbar } from "./paso-probar";
 import { SeguirDespues } from "./seguir-despues";
 
 const FALTA: Record<string, string> = {
@@ -34,9 +33,9 @@ async function post<T>(url: string, cuerpo?: unknown): Promise<{ ok: true; data:
 
 /**
  * Estaciones 2 a 5 de la bienvenida (HU-UX-25): el editor del agente en modo bienvenida, a pantalla completa
- * con el escenario a la izquierda. Antes de «Revisar y publicar» y al publicar se deja el agente listo otra vez
+ * con el celular a la derecha. Antes de «Revisar y publicar» y al publicar se deja el agente listo otra vez
  * (`dejar-listo`), para que la prueba y lo publicado sean lo último que el dueño configuró. La prueba de la
- * estación 5 va por esa conexión: es la única que deja terminar (`finalizar`).
+ * estación 5 va en el celular por esa conexión (HU-UX-31): es la única que deja terminar (`finalizar`).
  */
 export function BienvenidaDelAgente({
   datos,
@@ -53,7 +52,6 @@ export function BienvenidaDelAgente({
   const [terminando, setTerminando] = useState(false);
   const [terminado, setTerminado] = useState(false);
   const agenteId = datos.agente.id;
-  const tipo = TIPOS_DE_NEGOCIO.find((t) => t.id === datos.agente.key)?.id ?? null;
 
   async function prepararPrueba(): Promise<string | null> {
     const r = await dejarListo(agenteId);
@@ -88,18 +86,12 @@ export function BienvenidaDelAgente({
     pasosDelNegocio: PASOS.slice(0, PASOS_DEL_NEGOCIO).map((p) => ({ id: `negocio-${p.id}`, titulo: p.corto, corto: p.corto })),
     volverA: (numero) => router.push(`/bienvenida?paso=${numero}`),
     avanzar: (numero) => void post("/api/onboarding/avanzar", { paso: numero }),
-    seguirDespues: ({ nombre, guardar, enEscenario }) => (
-      <SeguirDespues nombreDelAgente={nombre} guardar={guardar} ocupado={terminando} enEscenario={enEscenario} />
+    seguirDespues: ({ nombre, guardar }) => (
+      <SeguirDespues nombreDelAgente={nombre} guardar={guardar} ocupado={terminando} />
     ),
     prepararPrueba,
-    prueba: (cargados) => (
-      <PasoProbar
-        estado={{ ...ESTADO_INICIAL, tipo }}
-        conexionId={conexionId}
-        onRespuesta={() => setProbado(true)}
-        cargados={[...cargados]}
-      />
-    ),
+    conexionDePrueba: conexionId,
+    onRespuesta: () => setProbado(true),
     probado,
     terminar,
     terminando,
