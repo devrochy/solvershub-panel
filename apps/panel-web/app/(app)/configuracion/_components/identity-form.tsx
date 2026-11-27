@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { AsistenteDeConfiguracion } from "@/app/(app)/configuracion/_components/asistente-de-configuracion";
 import { CampoOpcion } from "@/app/(app)/configuracion/_components/campo-opcion";
+import { VozYEstilo } from "@/app/(app)/configuracion/_components/voz-y-estilo";
 import { AvisoSoloLectura, ControlesEditables } from "@/app/(app)/configuracion/_components/solo-lectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -175,6 +176,18 @@ export function IdentityForm({
         {/* noValidate: los errores salen en español junto a cada campo, no en la burbuja del navegador. */}
         <form key={version} onSubmit={onSubmit} noValidate className="flex flex-col gap-8">
           <ControlesEditables puedeEditar={puedeEditar} className="flex flex-col gap-8">
+          {seccion === "voz" ? (
+            <VozYEstilo
+              identity={identity}
+              catalogo={catalogo}
+              valores={valores}
+              errores={errores}
+              cambiar={cambiar}
+              pendientes={pendientes}
+              irASeccion={irASeccion}
+            />
+          ) : (
+          <>
           {/* En el orden de la sección (Horario antes que Escalamiento), no el del catálogo. */}
           {grupos.flatMap((id) => GRUPOS_IDENTIDAD.filter((g) => g.id === id)).map((grupo) => {
             const opciones = opcionesDelGrupo(catalogo, grupo.id, valores);
@@ -227,6 +240,8 @@ export function IdentityForm({
               </section>
             );
           })}
+          </>
+          )}
 
           </ControlesEditables>
 
