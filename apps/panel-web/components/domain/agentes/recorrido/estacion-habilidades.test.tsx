@@ -363,7 +363,9 @@ describe("Estación 2 · Habilidades una pregunta a la vez (HU-UX-28)", () => {
     expect(within(aviso).queryByRole("link")).toBeNull();
     expect(within(aviso).getByText("Lo haces después en Comercio › Productos.")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Cambiar el horario en Personalizar" })).toBeNull();
-    expect(screen.getByText(/^Atiende en el horario del negocio: .*\. Lo cambias después en Personalizar\.$/)).toBeTruthy();
+    const horario = screen.getByText(/^Atiende en el horario del negocio: .* Lo cambias después en Personalizar\.$/).textContent ?? "";
+    // Sin punto doble cuando el horario termina en «p. m.».
+    expect(horario).not.toContain("..");
     continuar();
     expect(screen.queryByRole("link", { name: "Conectar Wompi" })).toBeNull();
     expect(screen.getByText(/Lo haces después en Conexiones › Pagos\./)).toBeTruthy();

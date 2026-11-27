@@ -273,7 +273,7 @@ export function LineaDelHorario({
             </Link>
           </>
         ) : (
-          `${lineaDelHorario(horario, delNegocio)}. Lo cambias después en Personalizar.`
+          `${lineaDelHorario(horario, delNegocio).replace(/\.?$/, ".")} Lo cambias después en Personalizar.`
         )}
       </p>
     </div>
