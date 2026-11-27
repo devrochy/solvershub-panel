@@ -4,14 +4,12 @@ import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Clock, Hourglass, MessageSquare, MessageSquareMore, MessagesSquare, Sun, Waves, Zap } from "lucide-react";
 
-import { CampoOpcion } from "@/app/(app)/configuracion/_components/campo-opcion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TarjetaElegible } from "@/components/ui/elegibles";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { CatalogoConfig, IdentitySettings, OpcionConfig, ValorPosibleConfig } from "@/lib/api/types";
 import { indexarCatalogo } from "@/lib/catalogo-config";
-import type { usePendientes } from "@/lib/frases-pendientes";
 import { CALIDEZ_ETIQUETAS, EMOJIS, muestraDeVoz, TONOS, type Emojis, type Tono } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import {
@@ -59,17 +57,13 @@ export function VozYEstilo({
   identity,
   catalogo,
   valores,
-  errores,
   cambiar,
-  pendientes,
   irASeccion,
 }: {
   identity: IdentitySettings;
   catalogo: CatalogoConfig;
   valores: Record<string, unknown>;
-  errores: Record<string, string>;
   cambiar: (clave: string, valor: unknown) => void;
-  pendientes: ReturnType<typeof usePendientes>;
   irASeccion?: (id: SeccionId) => void;
 }) {
   const indice = useMemo(() => indexarCatalogo(catalogo), [catalogo]);
@@ -79,7 +73,6 @@ export function VozYEstilo({
   const velocidadOpcion = indice.get("debounce_mode");
   const envioOpcion = indice.get("split_style");
   const largoOpcion = indice.get("persona_max_length");
-  const prohibidasOpcion = indice.get("persona_forbidden");
 
   const tonoGuardado = String(valores.persona_tone ?? tonoOpcion?.por_defecto ?? "cercano");
   const tono = (TONOS.some((t) => t.id === tonoGuardado) ? tonoGuardado : "cercano") as Tono;
@@ -317,36 +310,16 @@ export function VozYEstilo({
       <details className="rounded-md border border-border-soft bg-surface-2">
         <summary className="flex cursor-pointer flex-wrap items-center gap-2 p-3 text-xs font-medium text-body">
           Avanzado · límites de este negocio
-          <Badge variant="info">Aplica al crear el agente</Badge>
+          <Badge variant="info">Se editan en cada agente</Badge>
         </summary>
-        <div className="grid gap-4 border-t border-border-soft p-3 sm:grid-cols-2">
-          {largoOpcion && (
-            <CampoOpcion
-              opcion={largoOpcion}
-              valores={valores}
-              onChange={cambiar}
-              error={errores.persona_max_length}
-              etiquetaDe={(clave) => indice.get(clave)?.etiqueta}
-            />
-          )}
-          {prohibidasOpcion && (
-            <CampoOpcion
-              opcion={prohibidasOpcion}
-              valores={valores}
-              onChange={cambiar}
-              error={errores.persona_forbidden}
-              onPendiente={pendientes.registrar("persona_forbidden")}
-              etiquetaDe={(clave) => indice.get(clave)?.etiqueta}
-            />
-          )}
-        </div>
-        <p className="px-3 pb-3 text-xs text-text-soft">
-          Cambiar esto aquí <strong>no</strong> afecta a los agentes ya publicados.{" "}
-          <Link href="/agentes" className="text-link underline">
+        <div className="flex flex-col gap-3 border-t border-border-soft p-3">
+          <p className="text-sm text-body">
+            El largo máximo y las frases prohibidas viven en la versión de cada agente: se aplican al publicar y pueden ser distintos entre agentes.
+          </p>
+          <Link href="/agentes" className="text-sm text-link underline underline-offset-2">
             Editar en la ficha del agente
           </Link>
-          .
-        </p>
+        </div>
       </details>
 
       <p className="text-xs text-text-soft">
