@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="es" data-theme="sh-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta · Multimedia sin modelos · SolversHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens: copiados de apps/panel-web/app/tokens.css (v1.4)
+   ============================================================ */
+:root{
+  --sh-navy-600:#21408A; --sh-navy-700:#172F6C; --sh-navy-750:#16294F;
+  --sh-navy-800:#11224D; --sh-navy-900:#0B1733; --sh-navy-950:#080F22;
+  --sh-blue-500:#2F6BFF; --sh-blue-600:#2560E6; --sh-cyan-400:#22C7E0;
+  --sh-gold-500:#C9A227; --sh-slate-300:#C9D2E3; --sh-slate-400:#7C8AA3;
+  --sh-slate-500:#616F88; --sh-ice:#E8EDF7; --sh-fog:#A9B6CC; --sh-haze:#8695B0;
+  --sh-steel:#6B7A94; --sh-cloud:#EEF2F8; --sh-frost:#F1F5FA; --sh-white:#FFFFFF;
+  --sh-paper:#F7F9FC; --sh-mist:#E2E8F2;
+  --sh-gradient-cta:linear-gradient(135deg,#172F6C 0%,#2560E6 100%);
+  --sh-font-display:Montserrat,'Century Gothic','Didact Gothic',system-ui,sans-serif;
+  --sh-font-body:Inter,'Segoe UI',system-ui,sans-serif;
+  --sh-font-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --sh-radius-sm:6px; --sh-radius-md:12px; --sh-radius-lg:20px;
+  --sh-motion-fast:150ms; --sh-motion-base:200ms;
+  --sh-ease-out:cubic-bezier(.2,0,0,1);
+  --sh-ease-in:cubic-bezier(.3,0,1,1);
+  --sh-space-1:4px; --sh-space-2:8px; --sh-space-3:12px; --sh-space-4:16px;
+  --sh-space-6:24px; --sh-space-8:32px; --sh-space-12:48px; --sh-space-16:64px;
+}
+[data-theme="sh-dark"]{
+  --bg:#0B1733; --bg-deep:#080F22; --surface:#11224D; --surface-2:#16294F;
+  --surface-raised:#172F6C; --border:rgba(201,210,227,.10); --border-soft:rgba(201,210,227,.06);
+  --border-strong:#21408A; --control-border:#6B7A94;
+  --text:#E8EDF7; --text-strong:#FFFFFF; --body:#A9B6CC; --soft:#8695B0;
+  --link:#22C7E0; --focus:#22C7E0; --hover:rgba(201,210,227,.06);
+  --overlay:rgba(8,15,34,.72);
+  --success:#2FBF7F; --warning:#E0A106; --danger:#F28B82;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(34,199,224,.12);
+  --focus-soft:rgba(34,199,224,.10); --focus-border:rgba(34,199,224,.32);
+  --selected-bg:rgba(34,199,224,.065); --icon-bg:rgba(34,199,224,.08);
+  --check-fg:#0B1733; --grid-line:rgba(201,210,227,.10);
+  --elev-2:0 8px 24px rgba(0,0,0,.32); --elev-3:0 16px 48px rgba(0,0,0,.40);
+}
+[data-theme="sh-light"]{
+  --bg:#F7F9FC; --bg-deep:#EEF2F8; --surface:#FFFFFF; --surface-2:#F1F5FA;
+  --surface-raised:#E8EDF7; --border:#E2E8F2; --border-soft:#EDF1F7;
+  --border-strong:#C9D2E3; --control-border:#7C8AA3;
+  --text:#0B1733; --text-strong:#080F22; --body:#5A6B85; --soft:#616F88;
+  --link:#2560E6; --focus:#2560E6; --hover:#F1F5FA;
+  --overlay:rgba(11,23,51,.48);
+  --success:#17784F; --warning:#8A6100; --danger:#B42E2E;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(37,96,230,.12);
+  --focus-soft:rgba(37,96,230,.07); --focus-border:rgba(37,96,230,.28);
+  --selected-bg:rgba(37,96,230,.045); --icon-bg:rgba(37,96,230,.07);
+  --check-fg:#FFFFFF; --grid-line:#E2E8F2;
+  --elev-2:0 8px 24px rgba(8,15,34,.12); --elev-3:0 16px 48px rgba(8,15,34,.18);
+}
+
+/* ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg-deep);color-scheme:dark}
+html[data-theme="sh-light"]{color-scheme:light}
+body{
+  margin:0;background:var(--bg-deep);color:var(--text);
+  font:400 15px/24px var(--sh-font-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+svg{display:block}
+::selection{background:var(--focus);color:var(--check-fg)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sr-only{
+  position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+.mono{font-family:var(--sh-font-mono);font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   Página del caso
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+  gap:24px;padding:14px 32px;background:var(--bg-deep);
+  background:color-mix(in srgb,var(--bg-deep) 94%,transparent);
+  border-bottom:1px solid var(--border-soft);backdrop-filter:blur(10px);
+}
+.brand{display:flex;align-items:center;gap:10px;font:600 15px/20px var(--sh-font-display);letter-spacing:.01em}
+.brand svg{width:30px;height:30px;color:var(--text-strong)}
+.brand b{font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--body);
+  font:500 11px/14px var(--sh-font-body);letter-spacing:.02em;white-space:nowrap;
+}
+.tag-focus{border-color:var(--focus-border);background:var(--focus-soft);color:var(--focus)}
+.theme-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 12px;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--body);
+  font:500 12px/16px var(--sh-font-body);transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+}
+.theme-btn:hover{background:var(--surface-2);border-color:var(--border-strong);color:var(--text)}
+.theme-btn svg{width:15px;height:15px}
+[data-theme="sh-dark"] .icon-sun{display:none}
+[data-theme="sh-light"] .icon-moon{display:none}
+
+.page{max-width:1280px;margin:0 auto;padding:64px 32px 80px}
+.hero{max-width:840px}
+.eyebrow{
+  margin:0 0 14px;color:var(--focus);font:500 12px/16px var(--sh-font-body);
+  letter-spacing:.09em;text-transform:uppercase;
+}
+.hero h1{
+  margin:0;font:700 clamp(30px,4vw,44px)/1.14 var(--sh-font-display);
+  letter-spacing:-.022em;color:var(--text-strong);text-wrap:balance;
+}
+.hero .lede{
+  max-width:700px;margin:20px 0 0;color:var(--body);
+  font:400 17px/27px var(--sh-font-body);text-wrap:pretty;
+}
+.hero .thesis{
+  margin:22px 0 0;padding-left:14px;border-left:2px solid var(--focus);
+  color:var(--text);font:500 15px/24px var(--sh-font-body);
+}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--body);
+  font:500 12px/16px var(--sh-font-body);
+}
+.chip svg{width:13px;height:13px;color:var(--focus)}
+
+.before-after{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:40px 0 0;max-width:840px;
+}
+.ba{
+  padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);
+}
+.ba p{margin:6px 0 0;color:var(--body);font:400 13px/20px var(--sh-font-body)}
+.ba .ba-label{display:flex;align-items:center;gap:7px;font:500 12px/16px var(--sh-font-body);color:var(--soft)}
+.ba .ba-label svg{width:14px;height:14px}
+.ba.after{border-color:var(--focus-border);background:var(--focus-soft)}
+.ba.after .ba-label{color:var(--focus)}
+
+/* ============================================================
+   Escenario + cajón
+   ============================================================ */
+.prototype{margin-top:28px}
+.stage-tools{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.stage-tools .note{margin:0;color:var(--soft);font:400 12px/18px var(--sh-font-body)}
+.view-toggle{display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.view-toggle button{
+  min-height:30px;padding:0 12px;border:0;border-radius:6px;background:transparent;
+  color:var(--body);font:500 12px/16px var(--sh-font-body);
+}
+.view-toggle button[aria-pressed="true"]{background:var(--surface-raised);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+
+.stage{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,672px);
+  min-height:860px;overflow:hidden;border:1px solid var(--border);border-radius:var(--sh-radius-lg);
+  background:var(--bg);box-shadow:var(--elev-2);
+}
+.stage[data-view="mobile"]{grid-template-columns:1fr;max-width:430px;min-height:800px;margin-inline:auto}
+.stage[data-view="mobile"] .app-bg{display:none}
+
+/* Fondo: el panel real, atenuado */
+.app-bg{position:relative;min-width:0;padding:26px 28px;overflow:hidden}
+.app-bg::after{content:"";position:absolute;inset:0;background:var(--overlay);pointer-events:none}
+.mini-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border-soft)}
+.mini-brand{font:700 14px/18px var(--sh-font-display);letter-spacing:.06em;color:var(--text)}
+.mini-pill{padding:4px 8px;border:1px solid var(--border);border-radius:6px;color:var(--soft);font:500 10px/14px var(--sh-font-body)}
+.mini-crumb{margin:26px 0 8px;color:var(--soft);font:400 11px/16px var(--sh-font-body)}
+.mini-title{margin:0 0 22px;color:var(--text);font:600 22px/28px var(--sh-font-display)}
+.mini-group{margin-top:22px}
+.mini-group h3{margin:0 0 8px;color:var(--soft);font:500 10px/14px var(--sh-font-body);letter-spacing:.07em;text-transform:uppercase}
+.mini-row{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:13px 14px;border:1px solid var(--border-soft);border-bottom:0;background:var(--surface);
+}
+.mini-row:first-of-type{border-radius:8px 8px 0 0}
+.mini-row:last-of-type{border-bottom:1px solid var(--border-soft);border-radius:0 0 8px 8px}
+.mini-row span:first-child{color:var(--text);font:500 13px/18px var(--sh-font-body)}
+.mini-row span:last-child{max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--soft);font:400 12px/16px var(--sh-font-body)}
+.mini-row.is-current{box-shadow:inset 3px 0 0 var(--focus);background:var(--surface-2)}
+
+/* ============================================================
+   Cajón (sheet)
+   ============================================================ */
+.sheet{
+  display:flex;flex-direction:column;min-width:0;height:860px;
+  background:var(--surface);border-left:1px solid var(--border);
+  container-type:inline-size;container-name:sheet;
+}
+.sheet-head{
+  display:flex;align-items:flex-start;gap:16px;padding:20px;
+  border-bottom:1px solid var(--border-soft);
+}
+.sheet-head h2{margin:0;color:var(--text);font:600 17px/24px var(--sh-font-display)}
+.sheet-head p{margin:4px 0 0;color:var(--body);font:400 13px/19px var(--sh-font-body)}
+.sheet-head .icon-btn{
+  display:grid;place-items:center;width:32px;height:32px;margin-left:auto;flex:none;
+  border:1px solid transparent;border-radius:8px;background:transparent;color:var(--soft);
+}
+.sheet-head .icon-btn:hover{background:var(--hover);color:var(--text)}
+.sheet-head .icon-btn svg{width:16px;height:16px}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.sheet-body > *{flex:0 0 auto}
+
+/* Capacidad */
+.cap{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface-2);padding:16px}
+.cap-head{display:flex;align-items:flex-start;gap:12px}
+.cap-icon{
+  display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:10px;
+  border:1px solid var(--border);background:var(--icon-bg);color:var(--focus);
+}
+.cap-icon svg{width:20px;height:20px}
+.cap-copy{min-width:0;flex:1}
+.cap-copy h3{margin:0;color:var(--text);font:600 15px/21px var(--sh-font-display)}
+.cap-copy p{margin:3px 0 0;color:var(--body);font:400 12px/18px var(--sh-font-body);text-wrap:pretty}
+.cap.is-off{border-style:dashed;background:transparent}
+.cap.is-off .cap-content{display:none}
+.off-note{margin:12px 0 0;padding-left:52px;color:var(--soft);font:400 12px/18px var(--sh-font-body)}
+
+/* Interruptor: pista de 38×22, zona táctil de 44×44 */
+.switch{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;margin:-10px -10px -10px 0;flex:none;cursor:pointer;
+}
+.switch input{position:absolute;width:1px;height:1px;opacity:0}
+.switch-track{
+  position:relative;width:38px;height:22px;border-radius:999px;border:1px solid var(--control-border);
+  background:var(--bg-deep);transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+}
+.switch-thumb{
+  position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--soft);
+  transition:transform var(--sh-motion-fast) var(--sh-ease-out),background var(--sh-motion-fast) var(--sh-ease-out);
+}
+.switch input:checked + .switch-track{background:var(--focus-soft);border-color:var(--focus)}
+.switch input:checked + .switch-track .switch-thumb{transform:translateX(16px);background:var(--focus)}
+.switch input:focus-visible + .switch-track{outline:2px solid var(--focus);outline-offset:2px}
+.switch input:disabled + .switch-track{opacity:.5}
+
+/* Opciones de calidad y costo */
+.cap-content{margin-top:16px}
+.options-field{border:0;margin:0;padding:0;min-width:0}
+.field-legend{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;
+  padding:0;margin:0 0 10px;color:var(--text);font:500 13px/18px var(--sh-font-body);
+}
+.legend-hint{color:var(--soft);font:400 12px/16px var(--sh-font-body)}
+.options{
+  display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface);overflow:hidden;
+}
+.option{
+  position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) 138px 18px;
+  align-items:center;gap:10px;min-height:64px;padding:11px 13px;
+  border-bottom:1px solid var(--border-soft);cursor:pointer;
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),box-shadow var(--sh-motion-fast) var(--sh-ease-out);
+}
+.option:last-child{border-bottom:0}
+.option:hover{background:var(--hover)}
+.option:has(input:checked){background:var(--selected-bg);box-shadow:inset 3px 0 0 var(--focus)}
+.option:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:-2px}
+.option input{position:absolute;width:1px;height:1px;opacity:0}
+.option-icon{
+  display:grid;place-items:center;width:30px;height:30px;border-radius:8px;
+  border:1px solid var(--border);background:var(--icon-bg);color:var(--focus);
+}
+.option-icon svg{width:15px;height:15px}
+.option-main{display:flex;flex-direction:column;gap:1px;min-width:0}
+.option-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:var(--text);font:600 14px/19px var(--sh-font-display)}
+.option-badge{
+  display:inline-flex;align-items:center;padding:1px 6px;border:1px solid var(--focus-border);
+  border-radius:999px;background:var(--focus-soft);color:var(--focus);
+  font:500 10px/14px var(--sh-font-body);letter-spacing:.04em;text-transform:uppercase;
+}
+.option-desc{color:var(--body);font:400 12px/17px var(--sh-font-body);text-wrap:pretty}
+.option-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.option-quality{display:flex;align-items:center;gap:6px;color:var(--soft);font:500 12px/16px var(--sh-font-body)}
+.bars{display:inline-flex;gap:2px}
+.bars i{display:block;width:9px;height:4px;border-radius:2px;background:var(--border-strong)}
+.bars i.on{background:var(--focus)}
+.option-cost{color:var(--text);font:500 13px/17px var(--sh-font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.option-cost small{color:var(--soft);font:400 11px/15px var(--sh-font-body)}
+.option-check{
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  background:var(--focus);color:var(--check-fg);opacity:0;transform:scale(.82);
+  transition:opacity var(--sh-motion-fast) var(--sh-ease-out),transform var(--sh-motion-fast) var(--sh-ease-out);
+}
+.option-check svg{width:11px;height:11px}
+.option:has(input:checked) .option-check{opacity:1;transform:scale(1)}
+.cap-footnote{
+  display:flex;align-items:flex-start;gap:6px;margin:10px 0 0;color:var(--soft);
+  font:400 12px/17px var(--sh-font-body);
+}
+.cap-footnote svg{width:13px;height:13px;flex:none;margin-top:1px}
+.link{
+  display:inline;padding:0;border:0;background:none;color:var(--link);
+  font:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;
+}
+.link:hover{color:var(--text)}
+
+/* Modo de imagen */
+.mode-field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.segmented{
+  display:inline-grid;grid-auto-flow:column;gap:2px;padding:3px;align-self:flex-start;
+  border:1px solid var(--border);border-radius:8px;background:var(--bg-deep);
+}
+.seg-btn{
+  min-height:30px;padding:0 12px;border:0;border-radius:6px;background:transparent;
+  color:var(--body);font:500 12px/16px var(--sh-font-body);white-space:nowrap;
+}
+.seg-btn[aria-pressed="true"]{background:var(--surface-raised);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+.mode-help{margin:0;color:var(--soft);font:400 12px/17px var(--sh-font-body)}
+
+
+/* Pie del cajón */
+.sheet-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 20px;border-top:1px solid var(--border-soft);background:var(--surface);
+}
+.foot-status{display:flex;align-items:center;gap:7px;color:var(--soft);font:400 12px/18px var(--sh-font-body);min-width:0}
+.status-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--soft)}
+.foot-status[data-state="dirty"]{color:var(--warning)}
+.foot-status[data-state="dirty"] .status-dot{background:var(--warning)}
+.foot-status[data-state="success"]{color:var(--success)}
+.foot-status[data-state="success"] .status-dot{background:var(--success)}
+.foot-status[data-state="error"]{color:var(--danger)}
+.foot-status[data-state="error"] .status-dot{background:var(--danger)}
+.foot-actions{display:flex;gap:8px;flex:none}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;
+  border:1px solid transparent;border-radius:8px;font:500 13px/18px var(--sh-font-body);
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out),filter var(--sh-motion-fast) var(--sh-ease-out);
+}
+.btn svg{width:14px;height:14px}
+.btn-outline{border-color:var(--control-border);background:transparent;color:var(--text)}
+.btn-outline:hover{background:var(--focus-soft);border-color:var(--focus)}
+.btn-cta{background-image:var(--sh-gradient-cta);color:#fff}
+.btn-cta:hover{filter:brightness(1.08) saturate(.92)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn[aria-busy="true"]{cursor:progress}
+.spinner{width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   Secciones de la página
+   ============================================================ */
+.section{margin-top:72px}
+.section h2{margin:0;color:var(--text-strong);font:600 24px/32px var(--sh-font-display);letter-spacing:-.01em}
+.section .sec-lede{max-width:760px;margin:10px 0 0;color:var(--body);font:400 15px/24px var(--sh-font-body);text-wrap:pretty}
+.change-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
+.change-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:18px}
+.change-card .mini-icon{
+  display:grid;place-items:center;width:34px;height:34px;margin-bottom:14px;border-radius:9px;
+  border:1px solid var(--border);background:var(--focus-soft);color:var(--focus);
+}
+.change-card .mini-icon svg{width:16px;height:16px}
+.change-card h3{margin:0 0 6px;color:var(--text);font:600 14px/20px var(--sh-font-display)}
+.change-card p{margin:0;color:var(--body);font:400 12px/19px var(--sh-font-body)}
+
+.levels{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px;align-items:start;margin-top:24px}
+.levels-tables{display:flex;flex-direction:column;gap:20px;min-width:0}
+.level-block{display:flex;flex-direction:column;gap:8px;min-width:0}
+.level-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.level-head h3{margin:0;color:var(--text);font:600 15px/21px var(--sh-font-display)}
+.mini-badge{
+  display:inline-flex;align-items:center;padding:1px 6px;border:1px solid var(--focus-border);
+  border-radius:999px;background:var(--focus-soft);color:var(--focus);
+  font:500 10px/14px var(--sh-font-body);letter-spacing:.04em;text-transform:uppercase;vertical-align:1px;
+}
+.nuevo{
+  display:inline-flex;align-items:center;padding:1px 5px;border:1px solid var(--success);
+  border-radius:999px;background:var(--success-bg);color:var(--success);
+  font:500 10px/14px var(--sh-font-body);letter-spacing:.03em;text-transform:uppercase;vertical-align:1px;
+}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border-soft)}
+tr:last-child td{border-bottom:0}
+th{
+  color:var(--soft);font:500 10px/14px var(--sh-font-body);letter-spacing:.06em;
+  text-transform:uppercase;background:var(--surface-2);white-space:nowrap;
+}
+td{color:var(--body);font:400 12px/18px var(--sh-font-body)}
+td strong{color:var(--text);font:600 13px/18px var(--sh-font-display)}
+td.cost{font-family:var(--sh-font-mono);font-variant-numeric:tabular-nums;color:var(--text);white-space:nowrap}
+.side-note{
+  padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);
+}
+.side-note h3{margin:0 0 8px;color:var(--text);font:600 13px/18px var(--sh-font-display)}
+.side-note p{margin:0 0 10px;color:var(--body);font:400 12px/19px var(--sh-font-body)}
+.side-note p:last-child{margin-bottom:0}
+.side-note code{font:400 11px/16px var(--sh-font-mono);color:var(--text);background:var(--bg-deep);padding:1px 4px;border-radius:4px}
+.fine{margin:12px 0 0;color:var(--soft);font:400 11px/17px var(--sh-font-body)}
+
+.state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:24px}
+.state-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:12px}
+.state-card h3{margin:0;color:var(--text);font:600 13px/18px var(--sh-font-display)}
+.state-card p{margin:0;color:var(--body);font:400 12px/18px var(--sh-font-body)}
+.state-demo{
+  border:1px solid var(--border);border-radius:9px;background:var(--surface-2);padding:11px;
+  display:flex;flex-direction:column;gap:8px;min-height:104px;
+}
+.state-demo .mini-cap{display:flex;align-items:center;gap:8px}
+.state-demo .mini-cap .dot-icon{width:24px;height:24px;border-radius:6px;background:var(--icon-bg);border:1px solid var(--border);display:grid;place-items:center;color:var(--focus)}
+.state-demo .mini-cap .dot-icon svg{width:12px;height:12px}
+.state-demo .mini-cap span{color:var(--text);font:500 11px/16px var(--sh-font-body)}
+.state-demo .mini-switch{margin-left:auto;width:28px;height:16px;border-radius:999px;border:1px solid var(--control-border);background:var(--bg-deep);position:relative}
+.state-demo .mini-switch::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--soft)}
+.state-demo .mini-switch.on{border-color:var(--focus);background:var(--focus-soft)}
+.state-demo .mini-switch.on::after{left:14px;background:var(--focus)}
+.state-demo .dashed{flex:1;border:1px dashed var(--border-strong);border-radius:6px}
+.state-demo .mini-note{display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border-radius:6px;background:var(--warning-bg);color:var(--warning);font:400 10px/15px var(--sh-font-body)}
+.state-demo .mini-note.info{background:var(--info-bg);color:var(--focus)}
+.state-demo .mini-note svg{width:11px;height:11px;flex:none;margin-top:2px}
+.state-demo .mini-tier{display:flex;align-items:center;gap:7px;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--soft);font:500 10px/14px var(--sh-font-body)}
+.state-demo .mini-tier svg{width:12px;height:12px}
+.state-demo .mini-tier strong{color:var(--text);font-weight:600}
+.state-demo .mini-tier.locked{border-style:dashed}
+.state-demo .mini-link{color:var(--link);font:500 10px/14px var(--sh-font-body);text-decoration:underline;text-underline-offset:2px}
+
+.impl{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;margin-top:24px;align-items:start}
+.impl-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.impl-item{display:flex;gap:12px;padding:15px 16px;border-bottom:1px solid var(--border-soft)}
+.impl-item:last-child{border-bottom:0}
+.impl-item .num{
+  display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;
+  border:1px solid var(--focus-border);background:var(--focus-soft);color:var(--focus);
+  font:500 11px/1 var(--sh-font-mono);
+}
+.impl-item h3{margin:0 0 3px;color:var(--text);font:500 13px/18px var(--sh-font-body)}
+.impl-item p{margin:0;color:var(--body);font:400 12px/18px var(--sh-font-body)}
+.impl-item code{font:400 11px/16px var(--sh-font-mono);color:var(--text);background:var(--bg-deep);padding:1px 4px;border-radius:4px}
+.floor{padding:18px;border:1px solid var(--focus-border);border-radius:12px;background:var(--focus-soft)}
+.floor h3{margin:0 0 10px;color:var(--text);font:600 13px/18px var(--sh-font-display)}
+.floor ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.floor li{display:flex;align-items:flex-start;gap:7px;color:var(--body);font:400 12px/18px var(--sh-font-body)}
+.floor li svg{width:13px;height:13px;flex:none;margin-top:2px;color:var(--success)}
+
+.page-foot{
+  max-width:1280px;margin:0 auto;padding:24px 32px 48px;border-top:1px solid var(--border-soft);
+  display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;
+  color:var(--soft);font:400 11px/17px var(--sh-font-body);
+}
+.page-foot b{color:var(--body);font-weight:500}
+
+/* ============================================================
+   Adaptación
+   ============================================================ */
+@container sheet (max-width:620px){
+  .sheet-body{padding:16px}
+  .option{
+    grid-template-columns:30px minmax(0,1fr) 18px;
+    grid-template-areas:"icon main check" "meta meta meta";
+    gap:8px 10px;padding:11px 12px;min-height:0;align-items:start;
+  }
+  .option-icon{grid-area:icon;align-self:start}
+  .option-main{grid-area:main}
+  .option-meta{
+    grid-area:meta;flex-direction:row;align-items:center;justify-content:space-between;
+    text-align:left;border-top:1px solid var(--border-soft);padding-top:7px;margin-top:1px;
+  }
+  .option-check{grid-area:check;margin-top:5px}
+  .sheet-foot{align-items:stretch;flex-direction:column;gap:10px;padding:12px 16px}
+  .foot-status{justify-content:center;text-align:center}
+  .foot-actions{display:grid;grid-template-columns:1fr 1fr}
+  .btn{min-height:44px}
+  .sheet-head{padding:16px}
+  .sheet-head h2{font-size:16px}
+  .cap{padding:14px}
+  .cap-icon{width:36px;height:36px}
+  .segmented{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .seg-btn{min-height:34px}
+}
+@container sheet (max-width:420px){
+  .sheet-head p{font-size:12px;line-height:18px}
+  .cap-head{gap:10px}
+  .cap-copy h3{font-size:14px}
+  .option-title{font-size:13px}
+  .option-cost{font-size:12px}
+  .option-meta{gap:6px}
+  .foot-actions{grid-template-columns:1fr}
+}
+@media (max-width:1080px){
+  .change-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .levels{grid-template-columns:1fr}
+  .state-grid{grid-template-columns:1fr 1fr}
+  .impl{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .topbar{padding:12px 18px}
+  .page{padding:40px 18px 56px}
+  .hero h1{font-size:32px;line-height:38px}
+  .before-after{grid-template-columns:1fr}
+  .stage{grid-template-columns:1fr;min-height:760px}
+  .app-bg{display:none}
+  .sheet{height:760px;border-left:0}
+  .section{margin-top:56px}
+  .change-grid,.state-grid{grid-template-columns:1fr}
+  .stage-tools{align-items:flex-start;flex-direction:column}
+  .topbar .tag{display:none}
+  .page-foot{padding:20px 18px 40px}
+}
+@media (pointer:coarse){
+  .btn,.seg-btn,.view-toggle button,.theme-btn{min-height:44px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand" aria-label="SolversHub">
+    <svg viewBox="-185.53 114.4 371.05 371.05" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id="iso-core" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#22C7E0"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0 152.34 A40.95 40.95 0 0 1 77.81 157.99 A44.35 44.35 0 0 1 135.34 216.27 A46.4 46.4 0 0 1 139.33 301.53 A43.25 43.25 0 0 1 76.3 356.06 L50.36 382 A20 20 0 0 0 44.5 396.14 L44.5 405.35 A2 2 0 0 1 42.5 407.35 L-42.5 407.35 A2 2 0 0 1 -44.5 405.35 L-44.5 396.14 A20 20 0 0 0 -50.36 382 L-76.3 356.06 A43.25 43.25 0 0 1 -139.33 301.53 A46.4 46.4 0 0 1 -135.34 216.27 A44.35 44.35 0 0 1 -77.81 157.99 A40.95 40.95 0 0 1 0 152.34 Z" stroke-width="12.5"/>
+        <path d="M0 152.34V226.75M-17.25 197.25H17.25M-90.5 230.2L-65.9 254.8M90.5 230.2L65.9 254.8M-98.4 288.2L-90.8 295.8M-41.5 429H41.5M-34.1 451.2H34.1M-21.1 473.2H21.1" stroke-width="12.5"/>
+      </g>
+      <circle cx="0" cy="310" r="66.6" fill="url(#iso-core)"/>
+      <path d="M-30 309.05L-9.45 329.6L31.3 288.6" fill="none" stroke="currentColor" stroke-width="15.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Solvers<b>Hub</b></span>
+  </div>
+  <div class="topbar-right">
+    <span class="tag">Propuesta de diseño · Configuración</span>
+    <button class="theme-btn" id="themeToggle" type="button" aria-label="Cambiar a tema claro">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <span>Tema</span>
+    </button>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <p class="eyebrow">Configuración › Multimedia</p>
+    <h1>Elegir por calidad y costo,<br>no por modelo.</h1>
+    <p class="lede">
+      El dueño del negocio decide qué tanto quiere invertir en entender audios e imágenes.
+      El proveedor y el modelo quedan detrás: él solo ve calidad y costo.
+    </p>
+    <p class="thesis">El trabajo de esta pantalla no es configurar un proveedor. Es decidir qué entiende el asistente.</p>
+    <div class="chips">
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/></svg>Opciones, no modelos</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v18M7 8l5-5 5 5"/></svg>Costo en la unidad del negocio</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>Un solo guardado</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>El catálogo manda</span>
+    </div>
+  </section>
+
+  <div class="before-after" aria-label="Antes y después">
+    <div class="ba">
+      <span class="ba-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Antes
+      </span>
+      <p>Proveedor, modelo, llave y modo; dos formularios y dos guardados. La decisión real queda escondida.</p>
+    </div>
+    <div class="ba after">
+      <span class="ba-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>
+        Después
+      </span>
+      <p>Una lista de opciones por medio, cada una con su costo y su calidad. Un pie con «Guardar cambios».</p>
+    </div>
+  </div>
+
+  <section class="prototype" aria-labelledby="proto-title">
+    <div class="stage-tools">
+      <p class="note" id="proto-title">Prototipo interactivo. Enciende y apaga, cambia de opción, cambia el modo de imagen y prueba el guardado.</p>
+      <div class="view-toggle" role="group" aria-label="Ancho de la vista previa">
+        <button type="button" data-view="desktop" aria-pressed="true">Escritorio</button>
+        <button type="button" data-view="mobile" aria-pressed="false">Móvil</button>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" data-view="desktop">
+      <div class="app-bg" aria-hidden="true">
+        <div class="mini-top">
+          <span class="mini-brand">SOLVERSHUB</span>
+          <span class="mini-pill">Negocio de prueba</span>
+        </div>
+        <p class="mini-crumb">Cuenta / Configuración</p>
+        <h2 class="mini-title">Configuración</h2>
+        <div class="mini-group">
+          <h3>Mi negocio</h3>
+          <div class="mini-row"><span>Identidad</span><span>Laura · COP</span></div>
+          <div class="mini-row"><span>Horario y escalamiento</span><span>Sin horario: atiende a toda hora</span></div>
+          <div class="mini-row"><span>Datos del cliente</span><span>Aviso de datos apagado</span></div>
+        </div>
+        <div class="mini-group">
+          <h3>Cómo responde</h3>
+          <div class="mini-row"><span>Voz y estilo</span><span>Cercano · calidez: 3 puntos</span></div>
+          <div class="mini-row"><span>Calidad de respuestas</span><span>Reintentos: 1</span></div>
+          <div class="mini-row"><span>Memoria</span><span>Recuerda 10 mensajes</span></div>
+        </div>
+        <div class="mini-group">
+          <h3>Canales y medios</h3>
+          <div class="mini-row"><span>Chat web</span><span>Apagado</span></div>
+          <div class="mini-row is-current"><span>Multimedia</span><span>Transcribe notas de voz · mira imágenes</span></div>
+        </div>
+      </div>
+
+      <section class="sheet" aria-label="Vista previa del cajón Multimedia">
+        <header class="sheet-head">
+          <div>
+            <h2>Multimedia</h2>
+            <p>Lo que tu asistente entiende cuando el cliente manda un audio o una foto.</p>
+          </div>
+          <span class="icon-btn" aria-hidden="true" title="En el panel, este botón cierra el cajón">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </span>
+        </header>
+
+        <div class="sheet-body">
+          <!-- AUDIO -->
+          <section class="cap" id="cap-audio">
+            <div class="cap-head">
+              <span class="cap-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+              </span>
+              <div class="cap-copy">
+                <h3>Notas de voz</h3>
+                <p>El cliente manda un audio y el asistente responde como si lo hubiera escrito.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="audioOn" role="switch" checked>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                <span class="sr-only">Entender notas de voz</span>
+              </label>
+            </div>
+            <p class="off-note" hidden>Apagado. Enciéndelo para elegir una opción.</p>
+
+            <div class="cap-content">
+              <fieldset class="options-field">
+                <legend class="field-legend">Calidad y costo <span class="legend-hint">Estimado para 10 minutos de audio</span></legend>
+                <div class="options">
+                  <label class="option">
+                    <input type="radio" name="audioOption" value="rapido" checked>
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Rápido</span>
+                      <span class="option-desc">Responde en segundos, para chats en vivo.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>Excelente</span>
+                      <span class="option-cost">US$ 0,01 <small>/ 10 min</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="audioOption" value="precision">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l4 6-10 12L2 9l4-6Z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Precisión <span class="option-badge">Recomendado</span></span>
+                      <span class="option-desc">El día a día, con algo de ruido.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>Excelente</span>
+                      <span class="option-cost">US$ 0,02 <small>/ 10 min</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="audioOption" value="maxima">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.3l4.28-3.67a.5.5 0 0 1 .8.52l-2.84 10.25a1 1 0 0 1-.95.73H5.8a1 1 0 0 1-.96-.73L2.01 6.02a.5.5 0 0 1 .8-.52l4.27 3.67a1 1 0 0 0 1.52-.3l2.96-5.6Z"/><path d="M5 21h14"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Máxima</span>
+                      <span class="option-desc">Audios difíciles: acentos o varias personas.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>Máxima</span>
+                      <span class="option-cost">US$ 0,06 <small>/ 10 min</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+                </div>
+              </fieldset>
+              <p class="cap-footnote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                <span>Elegimos el proveedor y el modelo por ti. Tú solo eliges calidad y costo.</span>
+              </p>
+            </div>
+          </section>
+
+          <!-- VISIÓN -->
+          <section class="cap" id="cap-vision">
+            <div class="cap-head">
+              <span class="cap-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-4.5-4.5L7 20"/></svg>
+              </span>
+              <div class="cap-copy">
+                <h3>Imágenes</h3>
+                <p>El asistente mira la foto, la describe y sigue la conversación como texto.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="visionOn" role="switch" checked>
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                <span class="sr-only">Entender imágenes</span>
+              </label>
+            </div>
+            <p class="off-note" hidden>Apagado. Enciéndelo para elegir una opción.</p>
+
+            <div class="cap-content">
+              <div class="mode-field">
+                <span class="field-legend" id="modeLabel">Qué hace con la foto</span>
+                <div class="segmented" role="group" aria-labelledby="modeLabel">
+                  <button type="button" class="seg-btn" data-mode="describir" aria-pressed="true">Describir</button>
+                  <button type="button" class="seg-btn" data-mode="confirmar" aria-pressed="false">Solo confirmar</button>
+                </div>
+                <p class="mode-help" id="modeHelp">Cuenta lo que ve y sigue la charla como texto.</p>
+              </div>
+
+              <fieldset class="options-field">
+                <legend class="field-legend">Calidad y costo <span class="legend-hint">Estimado para 100 imágenes</span></legend>
+                <div class="options">
+                  <label class="option">
+                    <input type="radio" name="visionOption" value="economico">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.2 5.8a4.6 4.6 0 0 0-6.5 0L4 15.5V20h4.5l9.7-9.7a4.6 4.6 0 0 0 0-6.5Z"/><path d="M14 6l4 4"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Económico</span>
+                      <span class="option-desc">Fotos simples: productos y capturas.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>Buena</span>
+                      <span class="option-cost">US$ 0,03 <small>/ 100 imágenes</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="visionOption" value="equilibrado">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M5 8l-3 6h6L5 8ZM19 8l-3 6h6l-3-6ZM7 21h10"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Equilibrado</span>
+                      <span class="option-desc">Documentos y comprobantes del día a día.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>Muy buena</span>
+                      <span class="option-cost">US$ 0,04 <small>/ 100 imágenes</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="visionOption" value="preciso" checked>
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 1.9 4.6 4.6 1.9-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Preciso <span class="option-badge">Recomendado</span></span>
+                      <span class="option-desc">Letra pequeña, pedidos y varios detalles.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>Excelente</span>
+                      <span class="option-cost">US$ 0,10 <small>/ 100 imágenes</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="visionOption" value="detallado">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Detallado</span>
+                      <span class="option-desc">Fotos complejas y descripciones largas.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>Excelente</span>
+                      <span class="option-cost">US$ 0,27 <small>/ 100 imágenes</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+
+                  <label class="option">
+                    <input type="radio" name="visionOption" value="maxima">
+                    <span class="option-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l4 6-10 12L2 9l4-6Z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/></svg></span>
+                    <span class="option-main">
+                      <span class="option-title">Máxima</span>
+                      <span class="option-desc">Letra a mano, poca luz o mucho detalle.</span>
+                    </span>
+                    <span class="option-meta">
+                      <span class="option-quality"><span class="bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>Máxima</span>
+                      <span class="option-cost">US$ 0,81 <small>/ 100 imágenes</small></span>
+                    </span>
+                    <span class="option-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></span>
+                  </label>
+                </div>
+              </fieldset>
+              <p class="cap-footnote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                <span>Elegimos el proveedor y el modelo por ti. Tú solo eliges calidad y costo.</span>
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <footer class="sheet-foot">
+          <div class="foot-status" id="saveStatus" data-state="idle" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="saveStatusText">Sin cambios</span>
+          </div>
+          <div class="foot-actions">
+            <button type="button" class="btn btn-outline" id="testBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3"/><path d="M7.5 15h9"/></svg>
+              <span id="testBtnText">Probar conexión</span>
+            </button>
+            <button type="button" class="btn btn-cta" id="saveBtn">
+              <span id="saveBtnText">Guardar cambios</span>
+            </button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="changes-title">
+    <h2 id="changes-title">Qué cambia en la decisión</h2>
+    <p class="sec-lede">No es un rediseño por gusto: cada cambio quita una decisión que el dueño del negocio no puede evaluar y devuelve una que sí.</p>
+    <div class="change-grid">
+      <article class="change-card">
+        <span class="mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="17" cy="12" r="2"/><circle cx="14" cy="17" r="2"/></svg></span>
+        <h3>Una decisión, no seis</h3>
+        <p>Proveedor y modelo salen del camino principal. Queda una lista de opciones con su costo y su calidad.</p>
+      </article>
+      <article class="change-card">
+        <span class="mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M7 8l5-5 5 5"/><path d="M5 21h14"/></svg></span>
+        <h3>El costo a la vista</h3>
+        <p>Cada opción dice cuánto cuesta en la unidad que el negocio entiende: 10 minutos de audio o 100 imágenes.</p>
+      </article>
+      <article class="change-card">
+        <span class="mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12l4 4L19 6"/><path d="M4 4h16v16H4z"/></svg></span>
+        <h3>Un solo guardado</h3>
+        <p>Los dos medios comparten un pie con «Guardar cambios» y un estado de cambios sin guardar.</p>
+      </article>
+      <article class="change-card">
+        <span class="mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <h3>El catálogo manda</h3>
+        <p>Si agregas un modelo con su precio y su calidad, aparece una opción nueva. Si lo retiras, desaparece. No hay que tocar el formulario.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="levels-title">
+    <h2 id="levels-title">El mapa que queda debajo</h2>
+    <p class="sec-lede">Cada fila es un modelo del catálogo con su precio y su calidad. El panel lo convierte en una opción sin nombre de modelo: si agregas o retiras un modelo, la lista cambia sola.</p>
+    <div class="levels">
+      <div class="levels-tables">
+        <div class="level-block">
+          <div class="level-head"><h3>Notas de voz</h3><span class="tag">3 opciones</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">Opción</th><th scope="col">Modelo</th><th scope="col">Costo / 10 min</th><th scope="col">Calidad</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Rápido</strong></td><td>Groq · Whisper Large v3 Turbo</td><td class="cost">US$ 0,01</td><td>4/5 · Excelente</td></tr>
+                <tr><td><strong>Precisión</strong> <span class="mini-badge">Recomendado</span></td><td>Groq · Whisper Large v3</td><td class="cost">US$ 0,02</td><td>4/5 · Excelente</td></tr>
+                <tr><td><strong>Máxima</strong></td><td>OpenAI · GPT-4o Transcribe <span class="nuevo">nuevo</span></td><td class="cost">US$ 0,06</td><td>5/5 · Máxima</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="level-block">
+          <div class="level-head"><h3>Imágenes</h3><span class="tag">5 opciones</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">Opción</th><th scope="col">Modelo</th><th scope="col">Costo / 100 imágenes</th><th scope="col">Calidad</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Económico</strong></td><td>DeepSeek · Flash</td><td class="cost">US$ 0,03</td><td>2/5 · Buena</td></tr>
+                <tr><td><strong>Equilibrado</strong></td><td>OpenAI · GPT-4o mini</td><td class="cost">US$ 0,04</td><td>3/5 · Muy buena</td></tr>
+                <tr><td><strong>Preciso</strong> <span class="mini-badge">Recomendado</span></td><td>OpenAI · GPT-4.1 mini <span class="nuevo">nuevo</span></td><td class="cost">US$ 0,10</td><td>4/5 · Excelente</td></tr>
+                <tr><td><strong>Detallado</strong></td><td>Claude · Haiku 4.5</td><td class="cost">US$ 0,27</td><td>4/5 · Excelente</td></tr>
+                <tr><td><strong>Máxima</strong></td><td>Claude · Sonnet 4.5</td><td class="cost">US$ 0,81</td><td>5/5 · Máxima</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <aside class="side-note">
+        <h3>De dónde salen las opciones</h3>
+        <p>Cada modelo del catálogo trae <code>quality</code> (1–5) y <code>cost</code>. El panel lo ordena por costo y lo pinta como una opción; el nombre del modelo no sale a la vista.</p>
+        <p>Agregar un modelo es agregar una fila en <code>core/media/catalog.py</code>. El formulario no cambia.</p>
+        <p><strong>Ojo con la unidad:</strong> Groq publica por hora (US$ 0,04/h turbo y US$ 0,111/h large), no por minuto. Por eso el orden real es Groq &lt; OpenAI. El panel muestra el costo por 10 minutos de audio.</p>
+        <p>Para voz agregamos <strong>GPT-4o Transcribe</strong> como opción premium. <strong>OpenAI mini</strong> queda <code>offered=false</code> porque está dominado por Groq, y <strong>Whisper-1</strong> queda como legado.</p>
+        <p>Para imágenes agregamos <strong>GPT-4.1 mini</strong>: llena el hueco entre GPT-4o mini y Claude Haiku a ~US$ 0,10 por 100 imágenes. GPT-4o queda como legado.</p>
+      </aside>
+    </div>
+    <p class="fine"><strong>Calidad:</strong> 1 = no sirve · 2 = simple · 3 = uso diario · 4 = difícil · 5 = máxima. La define el equipo por capacidad y se revisa cuando entra o sale un modelo.</p>
+    <p class="fine">Tarifas de referencia de noviembre de 2026. Audio: 10 minutos. Imágenes: 100 imágenes de ~1.200 tokens de entrada y 300 de salida. El uso real manda.</p>
+  </section>
+
+  <section class="section" aria-labelledby="states-title">
+    <h2 id="states-title">Estados que el diseño resuelve</h2>
+    <p class="sec-lede">Sin nombres de proveedor ni de modelo, los estados también son del negocio: apagado, sin opciones o una elección que se actualizó.</p>
+    <div class="state-grid">
+      <article class="state-card">
+        <div class="state-demo" aria-hidden="true">
+          <div class="mini-cap">
+            <span class="dot-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></span>
+            <span>Notas de voz</span>
+            <span class="mini-switch"></span>
+          </div>
+          <div class="dashed"></div>
+          <span style="color:var(--soft);font:400 10px/15px var(--sh-font-body)">Apagado. Enciéndelo para elegir una opción.</span>
+        </div>
+        <h3>Apagado</h3>
+        <p>La sección se pliega a su encabezado y una línea explica cómo volver. No quedan cuatro filas muertas ocupando espacio.</p>
+      </article>
+      <article class="state-card">
+        <div class="state-demo" aria-hidden="true">
+          <div class="mini-cap">
+            <span class="dot-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-4.5-4.5L7 20"/></svg></span>
+            <span>Imágenes</span>
+            <span class="mini-switch on"></span>
+          </div>
+          <div class="mini-note info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>No hay opciones disponibles con tu cuenta. <span class="mini-link">Hablar con soporte</span></span></div>
+        </div>
+        <h3>Sin opciones</h3>
+        <p>Si la cuenta no tiene acceso a ningún modelo, no se muestra una lista vacía: se explica qué pasa y a quién escribir.</p>
+      </article>
+      <article class="state-card">
+        <div class="state-demo" aria-hidden="true">
+          <div class="mini-cap">
+            <span class="dot-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></span>
+            <span>Notas de voz</span>
+            <span class="mini-switch on"></span>
+          </div>
+          <div class="mini-note info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>Actualizamos tu elección a Precisión.</span></div>
+          <div class="mini-tier"><strong>Precisión</strong> · US$ 0,02 / 10 min</div>
+        </div>
+        <h3>Se actualizó</h3>
+        <p>Si el modelo guardado sale del catálogo, el panel elige la opción más cercana por calidad y costo, y lo cuenta una vez.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="impl-title">
+    <h2 id="impl-title">Para implementar sin sorpresas</h2>
+    <p class="sec-lede">La propuesta se sostiene si las opciones son datos del catálogo y el panel no repite precios, modelos ni nombres de proveedor.</p>
+    <div class="impl">
+      <div class="impl-list">
+        <div class="impl-item">
+          <span class="num" aria-hidden="true">1</span>
+          <div><h3>Calidad y costo en el catálogo</h3><p>Agregar <code>quality</code> (1–5), <code>tier</code>, <code>offered</code> y <code>cost</code> (monto, unidad) a <code>ModelOption</code> y al contrato de <code>MediaCatalogProvider</code>. Sumar <code>gpt-4o-transcribe</code> a <code>AUDIO_CATALOG</code> y <code>gpt-4.1-mini</code> a <code>VISION_CATALOG</code>; <code>gpt-4o-mini-transcribe</code> queda <code>offered=false</code> por dominado, y <code>whisper-1</code> + <code>gpt-4o</code> como legado.</p></div>
+        </div>
+        <div class="impl-item">
+          <span class="num" aria-hidden="true">2</span>
+          <div><h3>La opción no enseña el modelo</h3><p>El panel ordena por costo y pinta una fila por modelo. Al guardar traduce la opción a <code>provider</code> + <code>model</code>; al cargar busca el par guardado. Si ya no existe, elige la opción más cercana por calidad y lo avisa una vez.</p></div>
+        </div>
+        <div class="impl-item">
+          <span class="num" aria-hidden="true">3</span>
+          <div><h3>Un pie, dos capacidades</h3><p>Usar el <code>footer</code> de <code>SheetContent</code> para «Probar conexión» y «Guardar cambios». Guardar solo lo que cambió; si una capacidad está apagada, no se prueba ni se guarda su opción.</p></div>
+        </div>
+        <div class="impl-item">
+          <span class="num" aria-hidden="true">4</span>
+          <div><h3>Las llaves no viven aquí</h3><p>BYOK y proveedor se gestionan en «Cuenta y proveedor». Multimedia solo muestra las opciones que la cuenta puede usar; las que dependen de un proveedor sin credenciales se ocultan, no se deshabilitan. El dueño no ve jerga técnica.</p></div>
+        </div>
+        <div class="impl-item">
+          <span class="num" aria-hidden="true">5</span>
+          <div><h3>La accesibilidad no es una capa final</h3><p>Filas de opción como radios nativos, 64 px de alto, foco visible, <code>aria-live</code> para probar y guardar, y el layout probado a 320 px y al 200 % de zoom.</p></div>
+        </div>
+      </div>
+      <aside class="floor">
+        <h3>Piso de calidad</h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4L19 6"/></svg>Texto hasta 17 px: 4,5:1. El cuerpo del cajón está en 7,54:1 (oscuro) y 5,42:1 (claro).</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4L19 6"/></svg>La selección no depende del color: barra lateral, fondo, marca de verificación y estado del radio.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4L19 6"/></svg>Filas de 64 px con radio nativo: flechas del teclado y un solo objetivo táctil por opción.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4L19 6"/></svg>Un solo primario por vista; «Probar» es secundario.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4L19 6"/></svg>Sin animación en la ruta frecuente; la selección se resuelve en 150 ms y respeta «movimiento reducido».</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="page-foot">
+  <span><b>Propuesta de diseño</b> · Configuración › Multimedia · SolversHub</span>
+  <span>Basada en el panel real (Next.js 16 + Tailwind v4) y en <code>core/media/catalog.py</code> · 26 nov 2026</span>
+</footer>
+
+<script>
+(function () {
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  /* ---------- Tema ---------- */
+  const html = document.documentElement;
+  const themeToggle = $('#themeToggle');
+  themeToggle.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'sh-dark' ? 'sh-light' : 'sh-dark';
+    html.setAttribute('data-theme', next);
+    themeToggle.setAttribute('aria-label', next === 'sh-dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+  });
+
+  /* ---------- Ancho de la vista previa ---------- */
+  const stage = $('#stage');
+  $$('.view-toggle button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('.view-toggle button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      stage.dataset.view = btn.dataset.view;
+    });
+  });
+
+  /* ---------- Estado ---------- */
+  let dirty = false;
+  const status = $('#saveStatus');
+  const statusText = $('#saveStatusText');
+  const saveBtn = $('#saveBtn');
+  const saveBtnText = $('#saveBtnText');
+  const testBtn = $('#testBtn');
+  const testBtnText = $('#testBtnText');
+
+  function setStatus(state, text) {
+    status.dataset.state = state;
+    statusText.textContent = text;
+  }
+  function markDirty() {
+    dirty = true;
+    setStatus('dirty', 'Cambios sin guardar');
+  }
+
+  $$('input[name="audioOption"], input[name="visionOption"]').forEach((radio) => {
+    radio.addEventListener('change', markDirty);
+  });
+
+  /* ---------- Interruptores ---------- */
+  function bindCap(checkboxId, sectionId) {
+    const checkbox = $('#' + checkboxId);
+    const section = $('#' + sectionId);
+    const offNote = $('.off-note', section);
+    checkbox.addEventListener('change', () => {
+      section.classList.toggle('is-off', !checkbox.checked);
+      offNote.hidden = checkbox.checked;
+      $$('input[type="radio"]', section).forEach((r) => { r.disabled = !checkbox.checked; });
+      $$('.seg-btn', section).forEach((b) => { b.disabled = !checkbox.checked; });
+      markDirty();
+    });
+  }
+  bindCap('audioOn', 'cap-audio');
+  bindCap('visionOn', 'cap-vision');
+
+  /* ---------- Modo de imagen ---------- */
+  const modeHelp = $('#modeHelp');
+  const modeTexts = {
+    describir: 'Cuenta lo que ve y sigue la charla como texto.',
+    confirmar: 'Avisa que la foto llegó y pregunta qué necesita. No la describe.'
+  };
+  $$('.seg-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('.seg-btn').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      modeHelp.textContent = modeTexts[btn.dataset.mode];
+      markDirty();
+    });
+  });
+
+  /* ---------- Probar ---------- */
+  let testTimer = null;
+  testBtn.addEventListener('click', () => {
+    const audioOn = $('#audioOn').checked;
+    const visionOn = $('#visionOn').checked;
+    if (!audioOn && !visionOn) {
+      setStatus('error', 'Enciende al menos un medio para probar.');
+      return;
+    }
+    if (testTimer) clearTimeout(testTimer);
+    testBtn.disabled = true;
+    testBtn.setAttribute('aria-busy', 'true');
+    testBtnText.textContent = 'Probando…';
+    testBtn.insertAdjacentHTML('afterbegin', '<span class="spinner" aria-hidden="true"></span>');
+    setStatus('idle', 'Probando la conexión…');
+    testTimer = setTimeout(() => {
+      testBtn.disabled = false;
+      testBtn.removeAttribute('aria-busy');
+      testBtnText.textContent = 'Probar conexión';
+      const spinner = $('.spinner', testBtn);
+      if (spinner) spinner.remove();
+      const count = [audioOn, visionOn].filter(Boolean).length;
+      setStatus('success', count === 2 ? 'Conexión verificada: audio e imágenes.' : 'Conexión verificada.');
+      testTimer = setTimeout(() => {
+        setStatus(dirty ? 'dirty' : 'idle', dirty ? 'Cambios sin guardar' : 'Sin cambios');
+      }, 4000);
+    }, 1100);
+  });
+
+  /* ---------- Guardar ---------- */
+  saveBtn.addEventListener('click', () => {
+    saveBtn.disabled = true;
+    saveBtn.setAttribute('aria-busy', 'true');
+    saveBtnText.textContent = 'Guardando…';
+    saveBtn.insertAdjacentHTML('afterbegin', '<span class="spinner" aria-hidden="true"></span>');
+    setStatus('idle', 'Guardando…');
+    setTimeout(() => {
+      saveBtn.disabled = false;
+      saveBtn.removeAttribute('aria-busy');
+      const spinner = $('.spinner', saveBtn);
+      if (spinner) spinner.remove();
+      saveBtnText.textContent = 'Guardado';
+      saveBtn.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>');
+      dirty = false;
+      setStatus('success', 'Guardado');
+      setTimeout(() => {
+        saveBtnText.textContent = 'Guardar cambios';
+        const check = $('svg', saveBtn);
+        if (check) check.remove();
+        setStatus('idle', 'Sin cambios');
+      }, 2200);
+    }, 900);
+  });
+})();
+</script>
+</body>
+</html>
