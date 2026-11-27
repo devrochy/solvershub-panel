@@ -1,0 +1,1845 @@
+<!doctype html>
+<html lang="es" data-theme="sh-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta · Identidad que se presenta sola · SolversHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens: copiados de apps/panel-web/app/tokens.css
+   ============================================================ */
+:root{
+  --sh-navy-600:#21408A; --sh-navy-700:#172F6C; --sh-navy-750:#16294F;
+  --sh-navy-800:#11224D; --sh-navy-900:#0B1733; --sh-navy-950:#080F22;
+  --sh-blue-500:#2F6BFF; --sh-blue-600:#2560E6; --sh-cyan-400:#22C7E0;
+  --sh-gold-500:#C9A227; --sh-slate-300:#C9D2E3; --sh-slate-400:#7C8AA3;
+  --sh-slate-500:#616F88; --sh-ice:#E8EDF7; --sh-fog:#A9B6CC; --sh-haze:#8695B0;
+  --sh-steel:#6B7A94; --sh-cloud:#EEF2F8; --sh-frost:#F1F5FA; --sh-white:#FFFFFF;
+  --sh-paper:#F7F9FC; --sh-mist:#E2E8F2;
+  --sh-gradient-cta:linear-gradient(135deg,#172F6C 0%,#2560E6 100%);
+  --sh-font-display:Montserrat,'Century Gothic','Didact Gothic',system-ui,sans-serif;
+  --sh-font-body:Inter,'Segoe UI',system-ui,sans-serif;
+  --sh-font-mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --sh-radius-sm:6px; --sh-radius-md:12px; --sh-radius-lg:20px;
+  --sh-motion-fast:150ms; --sh-motion-base:200ms;
+  --sh-ease-out:cubic-bezier(.2,0,0,1);
+  --sh-space-1:4px; --sh-space-2:8px; --sh-space-3:12px; --sh-space-4:16px;
+  --sh-space-6:24px; --sh-space-8:32px; --sh-space-12:48px; --sh-space-16:64px;
+}
+[data-theme="sh-dark"]{
+  --bg:#0B1733; --bg-deep:#080F22; --surface:#11224D; --surface-2:#16294F;
+  --surface-raised:#172F6C; --border:rgba(201,210,227,.10); --border-soft:rgba(201,210,227,.06);
+  --border-strong:#21408A; --control-border:#6B7A94;
+  --text:#E8EDF7; --text-strong:#FFFFFF; --body:#A9B6CC; --soft:#8695B0;
+  --link:#22C7E0; --focus:#22C7E0; --hover:rgba(201,210,227,.06);
+  --overlay:rgba(8,15,34,.72);
+  --success:#2FBF7F; --warning:#E0A106; --danger:#F28B82;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(34,199,224,.12);
+  --focus-soft:rgba(34,199,224,.10); --focus-border:rgba(34,199,224,.32);
+  --selected-bg:rgba(34,199,224,.065); --icon-bg:rgba(34,199,224,.08);
+  --check-fg:#0B1733; --grid-line:rgba(201,210,227,.10);
+  --elev-2:0 8px 24px rgba(0,0,0,.32); --elev-3:0 16px 48px rgba(0,0,0,.40);
+}
+[data-theme="sh-light"]{
+  --bg:#F7F9FC; --bg-deep:#EEF2F8; --surface:#FFFFFF; --surface-2:#F1F5FA;
+  --surface-raised:#E8EDF7; --border:#E2E8F2; --border-soft:#EDF1F7;
+  --border-strong:#C9D2E3; --control-border:#7C8AA3;
+  --text:#0B1733; --text-strong:#080F22; --body:#5A6B85; --soft:#616F88;
+  --link:#2560E6; --focus:#2560E6; --hover:#F1F5FA;
+  --overlay:rgba(11,23,51,.48);
+  --success:#17784F; --warning:#8A6100; --danger:#B42E2E;
+  --success-bg:rgba(34,160,107,.12); --warning-bg:rgba(224,161,6,.12);
+  --danger-bg:rgba(214,69,69,.12); --info-bg:rgba(37,96,230,.12);
+  --focus-soft:rgba(37,96,230,.07); --focus-border:rgba(37,96,230,.28);
+  --selected-bg:rgba(37,96,230,.045); --icon-bg:rgba(37,96,230,.07);
+  --check-fg:#FFFFFF; --grid-line:#E2E8F2;
+  --elev-2:0 8px 24px rgba(8,15,34,.12); --elev-3:0 16px 48px rgba(8,15,34,.18);
+}
+
+/* ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg-deep);color-scheme:dark}
+html[data-theme="sh-light"]{color-scheme:light}
+body{
+  margin:0;background:var(--bg-deep);color:var(--text);
+  font:400 15px/24px var(--sh-font-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+svg{display:block}
+::selection{background:var(--focus);color:var(--check-fg)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* ---------- topbar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:12px 24px;background:color-mix(in srgb,var(--bg-deep) 88%,transparent);
+  border-bottom:1px solid var(--border-soft);backdrop-filter:blur(12px);
+}
+.brand{display:flex;align-items:center;gap:10px;font:600 15px/1 var(--sh-font-body);letter-spacing:.02em}
+.brand b{font-weight:600;color:var(--link)}
+.brand-mark{
+  display:grid;place-items:center;width:28px;height:28px;border-radius:8px;
+  background:var(--icon-bg);border:1px solid var(--border);color:var(--link);
+}
+.brand-mark svg{width:16px;height:16px}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--body);
+  font:500 11px/1.2 var(--sh-font-body);letter-spacing:.04em;text-transform:uppercase;
+}
+.theme-btn{
+  display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:5px 10px;
+  border-radius:999px;border:1px solid var(--border);background:var(--surface);
+  color:var(--body);font:500 12px/1 var(--sh-font-body);transition:background var(--sh-motion-fast) var(--sh-ease-out);
+}
+.theme-btn:hover{background:var(--hover);color:var(--text)}
+.theme-btn svg{width:15px;height:15px}
+[data-theme="sh-dark"] .icon-sun{display:none}
+[data-theme="sh-light"] .icon-moon{display:none}
+
+/* ---------- page ---------- */
+.page{max-width:1180px;margin:0 auto;padding:44px 24px 64px}
+.eyebrow{
+  margin:0 0 12px;color:var(--link);font:600 12px/1.3 var(--sh-font-body);
+  letter-spacing:.11em;text-transform:uppercase;
+}
+h1{
+  margin:0;font:600 clamp(30px,5vw,46px)/1.08 var(--sh-font-display);
+  letter-spacing:-.02em;color:var(--text-strong);
+}
+.lede{max-width:720px;margin:16px 0 0;color:var(--body);font-size:16px;line-height:26px}
+.thesis{
+  max-width:760px;margin:20px 0 0;padding:14px 16px;border-left:2px solid var(--link);
+  background:var(--focus-soft);border-radius:0 var(--sh-radius-sm) var(--sh-radius-sm) 0;
+  color:var(--text);font-size:15px;line-height:24px;
+}
+.thesis b{font-weight:600}
+.verdict{
+  display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;max-width:820px;margin:14px 0 0;
+  color:var(--body);font-size:13px;line-height:20px;
+}
+.rating{
+  flex:none;padding:3px 8px;border-radius:999px;border:1px solid var(--warning);
+  background:var(--warning-bg);color:var(--warning);font:600 10px/1.3 var(--sh-font-body);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--body);
+  font:500 12px/1.2 var(--sh-font-body);
+}
+.chip svg{width:14px;height:14px;color:var(--link)}
+
+/* ---------- context ---------- */
+.context-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:32px}
+.ctx-card{
+  padding:14px 15px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:var(--surface);
+}
+.ctx-k{
+  margin:0 0 5px;color:var(--soft);font:600 10px/1.3 var(--sh-font-body);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.ctx-v{margin:0;color:var(--text);font-size:13px;line-height:20px}
+.ctx-v code{font:500 11.5px/1.4 var(--sh-font-mono);color:var(--body)}
+
+/* ---------- before/after ---------- */
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:36px}
+.ba{
+  padding:16px 17px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:var(--surface);
+}
+.ba.after{border-color:var(--focus-border);background:var(--selected-bg)}
+.ba-label{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;
+  color:var(--soft);font:600 10px/1.2 var(--sh-font-body);letter-spacing:.11em;text-transform:uppercase;
+}
+.ba.after .ba-label{color:var(--link)}
+.ba-label svg{width:13px;height:13px}
+.ba p{margin:0;color:var(--body);font-size:13.5px;line-height:21px}
+
+/* ---------- prototype ---------- */
+.prototype{margin-top:44px}
+.section-head{margin:0 0 16px}
+.section-head h2{
+  margin:0;font:600 22px/1.25 var(--sh-font-display);letter-spacing:-.01em;color:var(--text-strong);
+}
+.section-head p{margin:6px 0 0;color:var(--body);font-size:14px;line-height:22px;max-width:760px}
+.stage-tools{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.note{margin:0;color:var(--soft);font-size:12.5px;line-height:20px;max-width:740px}
+.tool-cluster{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.view-toggle{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.view-toggle button{
+  min-height:30px;padding:4px 11px;border:0;border-radius:999px;background:transparent;
+  color:var(--body);font:500 12px/1 var(--sh-font-body);
+}
+.view-toggle button[aria-pressed="true"]{background:var(--focus-soft);color:var(--link);box-shadow:inset 0 0 0 1px var(--focus-border)}
+.sim-btn{
+  min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);color:var(--body);font:500 12px/1 var(--sh-font-body);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.sim-btn:hover{background:var(--hover);color:var(--text)}
+.sim-btn[aria-pressed="true"]{border-color:var(--focus-border);background:var(--focus-soft);color:var(--link)}
+.sim-btn .dot{width:7px;height:7px;border-radius:50%;background:var(--soft)}
+.sim-btn[aria-pressed="true"] .dot{background:var(--link)}
+
+.stage{
+  position:relative;display:flex;justify-content:flex-end;min-height:1320px;padding:26px;
+  border:1px solid var(--border);border-radius:var(--sh-radius-lg);
+  background:
+    radial-gradient(900px 420px at 12% -10%,color-mix(in srgb,var(--link) 9%,transparent),transparent 70%),
+    var(--bg-deep);
+  overflow:hidden;
+}
+.stage[data-view="mobile"]{justify-content:center;min-height:820px;padding:16px}
+
+/* fondo: el resumen real, detrás del cajón */
+.app-bg{width:min(560px,48%);margin-right:auto;padding:10px 18px 0;color:var(--body);font-size:12px;line-height:18px}
+.mini-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.mini-brand{font:600 11px/1 var(--sh-font-body);letter-spacing:.08em;color:var(--text)}
+.mini-brand b{color:var(--link)}
+.mini-pill{padding:3px 8px;border:1px solid var(--border);border-radius:999px;font-size:10px;color:var(--soft)}
+.mini-crumb{margin:0 0 4px;color:var(--soft);font-size:11px}
+.mini-title{margin:0 0 16px;color:var(--text-strong);font:600 20px/1.2 var(--sh-font-display)}
+.mini-group{margin-bottom:18px}
+.mini-group h3{
+  margin:0 0 6px;color:var(--soft);font:600 9.5px/1.2 var(--sh-font-body);
+  letter-spacing:.11em;text-transform:uppercase;
+}
+.mini-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:44px;padding:8px 10px;border-bottom:1px solid var(--border-soft);
+}
+.mini-row:first-of-type{border-top:1px solid var(--border-soft)}
+.mini-row span:first-child{color:var(--text);font-weight:500}
+.mini-row span:last-child{color:var(--soft);text-align:right;max-width:64%}
+.mini-row.is-current{background:var(--selected-bg);border-radius:6px}
+.mini-row.is-paused span:last-child{color:var(--warning)}
+.mini-badge{
+  display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 6px;border-radius:999px;
+  background:var(--warning-bg);color:var(--warning);font:600 9px/1.2 var(--sh-font-body);
+}
+.side-notes{
+  margin-top:22px;padding:12px 13px;border:1px solid var(--border-soft);border-radius:10px;
+  background:color-mix(in srgb,var(--surface) 55%,transparent);
+}
+.side-notes h3{
+  margin:0 0 7px;color:var(--soft);font:600 9px/1.3 var(--sh-font-body);
+  letter-spacing:.11em;text-transform:uppercase;
+}
+.side-notes ul{margin:0;padding-left:14px}
+.side-notes li{margin:0 0 6px;color:var(--body);font-size:11px;line-height:16px}
+.side-notes li:last-child{margin-bottom:0}
+.side-notes b{color:var(--text);font-weight:600}
+
+/* el cajón de la propuesta */
+.sheet{
+  position:relative;width:min(640px,58%);display:flex;flex-direction:column;
+  border:1px solid var(--border);border-radius:var(--sh-radius-lg);
+  background:var(--surface);box-shadow:var(--elev-3);
+  max-height:1292px;overflow:hidden;
+}
+.stage[data-view="mobile"] .app-bg{display:none}
+.stage[data-view="mobile"] .sheet{width:100%;max-width:420px;border-radius:14px;max-height:none}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px 20px 14px;border-bottom:1px solid var(--border-soft)}
+.sheet-head h2{margin:0;font:600 19px/1.2 var(--sh-font-display);color:var(--text-strong)}
+.sheet-head p{margin:4px 0 0;color:var(--body);font-size:12.5px;line-height:19px;max-width:48ch}
+.sheet-close{
+  display:grid;place-items:center;width:30px;height:30px;border-radius:8px;border:0;
+  background:transparent;color:var(--soft);
+}
+.sheet-close:hover{background:var(--hover);color:var(--text)}
+.sheet-close svg{width:16px;height:16px}
+.sheet-body{flex:1;overflow:auto;padding:16px 20px 20px}
+.stage[data-view="mobile"] .sheet-body{padding:14px 16px 18px}
+
+/* rail de guardado conjunto */
+.rail{
+  margin:0 0 16px;padding:12px 13px;border:1px solid var(--focus-border);border-radius:var(--sh-radius-md);
+  background:var(--selected-bg);
+}
+.rail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}
+.rail-title{margin:0;color:var(--text);font:600 12px/1.3 var(--sh-font-body);letter-spacing:.02em}
+.rail-title small{display:block;margin-top:2px;color:var(--soft);font:400 11px/1.4 var(--sh-font-body);letter-spacing:0}
+.rail-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rail-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--body);
+  font:500 11px/1.2 var(--sh-font-body);
+}
+.rail-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--soft)}
+.rail-chip.is-current{border-color:var(--focus-border);color:var(--text)}
+.rail-chip.is-dirty{border-color:var(--focus-border);background:var(--focus-soft);color:var(--text)}
+.rail-chip.is-dirty .dot{background:var(--link)}
+.rail-chip.is-error{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.rail-chip.is-error .dot{background:var(--danger)}
+.rail-note{margin:9px 0 0;color:var(--body);font-size:12px;line-height:17px}
+.rail-note b{color:var(--text);font-weight:600}
+
+/* preview */
+.preview{margin:0 0 18px}
+.preview-label{
+  display:flex;align-items:center;gap:6px;margin:0 0 7px;color:var(--soft);
+  font:600 10px/1.2 var(--sh-font-body);letter-spacing:.1em;text-transform:uppercase;
+}
+.preview-label svg{width:12px;height:12px;color:var(--link)}
+.preview-card{
+  padding:13px 14px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:linear-gradient(180deg,var(--surface-2),var(--surface));
+}
+.preview-top{display:flex;align-items:center;gap:10px}
+.avatar{
+  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  background:var(--focus-soft);border:1px solid var(--focus-border);color:var(--link);
+  font:600 14px/1 var(--sh-font-display);flex:none;
+}
+.preview-id{min-width:0}
+.preview-name{margin:0;color:var(--text-strong);font:600 14px/1.3 var(--sh-font-display)}
+.preview-sub{margin:1px 0 0;color:var(--soft);font-size:11px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42ch}
+.bubble{
+  margin:10px 0 0 44px;padding:9px 11px;border-radius:12px 12px 12px 4px;
+  background:var(--surface);border:1px solid var(--border-soft);
+  color:var(--body);font-size:12px;line-height:18px;
+}
+.bubble b{color:var(--text);font-weight:600}
+.preview-meta{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 0 44px}
+.meta-chip{
+  padding:3px 7px;border-radius:999px;border:1px solid var(--border);
+  color:var(--soft);background:var(--surface);font:500 10px/1.3 var(--sh-font-body);
+}
+.paused-banner{
+  display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 10px;border-radius:8px;
+  border:1px solid var(--warning);background:var(--warning-bg);color:var(--warning);
+  font-size:11.5px;line-height:17px;
+}
+.paused-banner svg{width:14px;height:14px;flex:none}
+.paused-banner button{
+  margin-left:auto;padding:0;border:0;background:transparent;color:var(--warning);
+  font:600 11px/1 var(--sh-font-body);text-decoration:underline;white-space:nowrap;
+}
+
+/* zonas */
+.zone{padding:14px 0 2px;border-top:1px solid var(--border-soft)}
+.zone:first-of-type{border-top:0;padding-top:0}
+.zone-head{margin:0 0 11px}
+.zone-head h3{margin:0;color:var(--text);font:600 13px/1.3 var(--sh-font-body)}
+.zone-head p{margin:3px 0 0;color:var(--soft);font-size:12px;line-height:17px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.stage[data-view="mobile"] .grid-2{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{color:var(--body);font:500 12.5px/1.4 var(--sh-font-body)}
+.field .hint{color:var(--soft);font-size:12px;line-height:16px}
+.input,.textarea,.select{
+  width:100%;border:1px solid var(--control-border);border-radius:8px;background:var(--bg-deep);
+  color:var(--text);padding:0 10px;min-height:38px;font-size:12.5px;
+  transition:border-color var(--sh-motion-fast) var(--sh-ease-out),box-shadow var(--sh-motion-fast) var(--sh-ease-out);
+}
+.textarea{min-height:74px;padding:8px 10px;resize:vertical;line-height:18px}
+.input:focus,.textarea:focus,.select:focus{outline:0;border-color:var(--focus);box-shadow:0 0 0 3px var(--focus-soft)}
+.field .counter{align-self:flex-end;color:var(--soft);font:400 10px/1 var(--sh-font-mono)}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 6px;border-radius:999px;
+  background:var(--info-bg);color:var(--link);font:500 9.5px/1.2 var(--sh-font-body);vertical-align:1px;
+}
+.badge svg{width:10px;height:10px}
+.static-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;
+  padding:6px 0;border-bottom:1px solid var(--border-soft);
+}
+.static-row:last-child{border-bottom:0}
+.static-k{color:var(--body);font-size:12px}
+.static-v{color:var(--text);font-size:12.5px;font-weight:500;text-align:right}
+.static-v small{display:block;color:var(--soft);font-size:10px;font-weight:400;line-height:14px}
+.link-btn{padding:0;border:0;background:transparent;color:var(--link);font:500 10.5px/1.3 var(--sh-font-body);text-decoration:underline;text-underline-offset:2px}
+
+/* estado / pausa */
+.state-card{
+  display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;
+  border:1px solid var(--border);background:var(--surface-2);
+}
+.state-card.is-paused{border-color:var(--warning);background:var(--warning-bg)}
+.state-dot{width:8px;height:8px;border-radius:50%;background:var(--success);flex:none}
+.state-card.is-paused .state-dot{background:var(--warning)}
+.state-copy{min-width:0;flex:1}
+.state-copy b{display:block;color:var(--text);font:600 12px/1.3 var(--sh-font-body)}
+.state-copy span{display:block;margin-top:1px;color:var(--soft);font-size:10.5px;line-height:15px}
+.switch-wrap{display:flex;align-items:center;gap:8px;flex:none}
+.switch-label{color:var(--soft);font-size:10.5px;line-height:14px;max-width:9ch;text-align:right}
+.switch{
+  position:relative;display:inline-flex;align-items:center;width:44px;height:24px;padding:0;
+  border:1px solid var(--control-border);border-radius:999px;background:var(--bg-deep);
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+  flex:none;
+}
+.switch[aria-checked="true"]{background:var(--warning-bg);border-color:var(--warning)}
+.switch-thumb{
+  position:absolute;left:3px;width:16px;height:16px;border-radius:50%;background:var(--soft);
+  transition:transform var(--sh-motion-fast) var(--sh-ease-out),background var(--sh-motion-fast) var(--sh-ease-out);
+}
+.switch[aria-checked="true"] .switch-thumb{transform:translateX(20px);background:var(--warning)}
+.confirm{
+  margin-top:9px;padding:9px 10px;border:1px solid var(--warning);border-radius:8px;
+  background:var(--warning-bg);
+}
+.confirm p{margin:0 0 8px;color:var(--warning);font-size:11px;line-height:16px}
+.confirm-actions{display:flex;gap:7px;justify-content:flex-end}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 12px;
+  border-radius:8px;border:1px solid transparent;font:600 12px/1 var(--sh-font-body);
+  transition:background var(--sh-motion-fast) var(--sh-ease-out),border-color var(--sh-motion-fast) var(--sh-ease-out);
+}
+.btn-primary{background:var(--sh-gradient-cta);color:#fff}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;color:var(--body);border-color:var(--border)}
+.btn-ghost:hover{background:var(--hover);color:var(--text)}
+.btn-warn{background:var(--warning);color:var(--bg-deep)}
+.btn-sm{min-height:28px;padding:0 9px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* pie del cajón */
+.sheet-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);
+}
+.stage[data-view="mobile"] .sheet-foot{padding:11px 16px}
+.foot-status{display:flex;align-items:center;gap:7px;color:var(--soft);font-size:11px;line-height:16px;min-width:0}
+.foot-status .dot{width:7px;height:7px;border-radius:50%;background:var(--success);flex:none}
+.foot-status.is-dirty{color:var(--link)}
+.foot-status.is-dirty .dot{background:var(--link)}
+.foot-status.is-error{color:var(--danger)}
+.foot-status.is-error .dot{background:var(--danger)}
+.foot-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* reporte */
+.report{margin-top:52px}
+.sev-summary{
+  display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;
+}
+.sev-total{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--border);background:var(--surface);color:var(--body);
+  font:500 11.5px/1.2 var(--sh-font-body);
+}
+.sev-total b{font:600 12px/1 var(--sh-font-mono);color:var(--text)}
+.sev-total.critical{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.sev-total.high{border-color:var(--warning);background:var(--warning-bg);color:var(--warning)}
+.sev-total.medium{border-color:var(--focus-border);background:var(--focus-soft);color:var(--link)}
+.finding{
+  margin:0 0 12px;padding:16px 17px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:var(--surface);
+}
+.finding-head{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px}
+.sev{
+  flex:none;padding:3px 7px;border-radius:999px;font:600 9.5px/1.2 var(--sh-font-body);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.sev.high{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning)}
+.sev.medium{background:var(--focus-soft);color:var(--link);border:1px solid var(--focus-border)}
+.sev.low{background:var(--surface-2);color:var(--soft);border:1px solid var(--border)}
+.finding h3{margin:0;color:var(--text);font:600 14px/1.4 var(--sh-font-body)}
+.finding-grid{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:12px}
+.finding-grid h4{
+  margin:0 0 3px;color:var(--soft);font:600 9.5px/1.2 var(--sh-font-body);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.finding-grid p,.finding-grid li{margin:0;color:var(--body);font-size:12px;line-height:18px}
+.finding-grid ul{margin:0;padding-left:15px}
+.finding-grid li+li{margin-top:4px}
+.cite{
+  margin:0;padding:8px 10px;border-left:2px solid var(--focus-border);border-radius:0 6px 6px 0;
+  background:var(--surface-2);color:var(--body);font-size:11.5px;line-height:17px;
+}
+.cite code{font:500 10.5px/1.5 var(--sh-font-mono);color:var(--link)}
+.cite q{font-style:normal;color:var(--text)}
+
+/* plan */
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.panel{
+  padding:16px 17px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:var(--surface);
+}
+.panel h3{margin:0 0 8px;color:var(--text);font:600 14px/1.3 var(--sh-font-body)}
+.panel p{margin:0;color:var(--body);font-size:12.5px;line-height:19px}
+.panel p+p{margin-top:8px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--sh-radius-md);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12px;line-height:18px}
+th,td{padding:9px 11px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border-soft)}
+tr:last-child td{border-bottom:0}
+th{color:var(--soft);font:600 9.5px/1.2 var(--sh-font-body);letter-spacing:.09em;text-transform:uppercase;background:var(--surface-2)}
+td{color:var(--body)}
+td code{font:500 10.5px/1.5 var(--sh-font-mono);color:var(--text)}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid var(--border);vertical-align:-1px;margin-right:5px}
+.ascii{
+  margin:0;padding:14px;border:1px solid var(--border);border-radius:var(--sh-radius-md);
+  background:var(--bg-deep);color:var(--body);overflow-x:auto;
+  font:400 11px/17px var(--sh-font-mono);white-space:pre;
+}
+.ascii b{color:var(--text);font-weight:500}
+.ascii i{color:var(--link);font-style:normal}
+
+/* aprobación */
+.approve{margin-top:52px}
+.checklist{display:grid;gap:9px;margin-top:10px}
+.check{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 13px;
+  border:1px solid var(--border);border-radius:var(--sh-radius-md);background:var(--surface);
+}
+.check input{width:17px;height:17px;margin:2px 0 0;accent-color:var(--link);flex:none}
+.check label{color:var(--text);font:500 12.5px/19px var(--sh-font-body);cursor:pointer}
+.check label small{display:block;margin-top:2px;color:var(--soft);font:400 11px/16px var(--sh-font-body)}
+.approve-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.approve-count{color:var(--soft);font-size:12px}
+.copy-note{margin:0;color:var(--soft);font-size:11.5px;line-height:17px}
+.decisions-out{
+  margin:10px 0 0;padding:11px 12px;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg-deep);color:var(--body);white-space:pre-wrap;
+  font:400 11.5px/18px var(--sh-font-mono);user-select:all;
+}
+
+/* límites */
+.limits{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:16px}
+.works li,.limits li{margin:0 0 7px;color:var(--body);font-size:12.5px;line-height:19px}
+.works,.limits ul{margin:0;padding-left:16px}
+.works li::marker,.limits li::marker{color:var(--link)}
+
+/* toast */
+.toast{
+  position:fixed;right:20px;bottom:20px;z-index:50;max-width:min(360px,calc(100vw - 40px));
+  display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:10px;
+  border:1px solid var(--focus-border);background:var(--surface);color:var(--text);
+  box-shadow:var(--elev-2);font-size:12px;line-height:18px;
+  transform:translateY(8px);opacity:0;pointer-events:none;
+  transition:opacity var(--sh-motion-base) var(--sh-ease-out),transform var(--sh-motion-base) var(--sh-ease-out);
+}
+.toast.is-visible{transform:translateY(0);opacity:1}
+.toast.is-error{border-color:var(--danger);color:var(--danger)}
+.toast svg{width:15px;height:15px;flex:none;margin-top:1px}
+
+/* pie */
+.page-foot{
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  margin-top:56px;padding-top:18px;border-top:1px solid var(--border-soft);
+  color:var(--soft);font-size:11.5px;line-height:18px;
+}
+.page-foot code{font:500 10.5px/1.5 var(--sh-font-mono);color:var(--body)}
+
+@media (max-width:900px){
+  .context-grid{grid-template-columns:1fr 1fr}
+  .finding-grid{grid-template-columns:1fr}
+  .plan-grid,.limits{grid-template-columns:1fr}
+  .stage{min-height:0;padding:16px;justify-content:center}
+  .app-bg{display:none}
+  .sheet{width:100%;max-width:640px;max-height:none}
+}
+@media (max-width:560px){
+  .page{padding:30px 16px 48px}
+  .before-after{grid-template-columns:1fr}
+  .context-grid{grid-template-columns:1fr}
+  .sheet-head{padding:15px 15px 12px}
+  .sheet-body{padding:13px 15px 16px}
+  .sheet-foot{padding:11px 15px}
+  .grid-2{grid-template-columns:1fr}
+  .topbar{padding:10px 14px}
+  .tag{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media print{
+  .topbar,.stage-tools,.sim-btn,.view-toggle,.theme-btn,.toast{display:none!important}
+  body{background:#fff;color:#000}
+  .page{max-width:none;padding:0}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span>Solvers<b>Hub</b></span>
+  </div>
+  <div class="topbar-right">
+    <span class="tag">Propuesta de diseño · Configuración › Identidad</span>
+    <button class="theme-btn" id="themeToggle" type="button" aria-label="Cambiar a tema claro">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <span>Tema</span>
+    </button>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="hero">
+    <p class="eyebrow">Revisión + propuesta · Configuración › Identidad</p>
+    <h1>La identidad no se rellena.<br>Se presenta.</h1>
+    <p class="lede">
+      Identidad hoy es una tarjeta con siete campos dentro de un cajón. Funciona, pero no deja ver
+      lo único que importa: cómo se ve y cómo suena el asistente para el cliente. Y el guardado
+      compartido con Horario, Voz y Calidad existe en el código, pero no en la pantalla.
+    </p>
+    <p class="thesis">
+      <b>Tesis:</b> esta sección no es un formulario de datos del negocio. Es la carta de presentación
+      del asistente. El diseño debe enseñar esa carta, dejar editar lo que la cambia y decir con
+      todas las letras que un solo guardado toca cuatro secciones.
+    </p>
+    <p class="verdict">
+      <span class="rating">Necesita trabajo</span>
+      Sin hallazgos críticos, pero con cinco altas: el guardado conjunto invisible, la pausa enterrada,
+      el idioma sin salida, cuatro responsabilidades en una tarjeta y ninguna vista previa. La base
+      (catálogo, un solo PUT, errores por campo) es sólida y se conserva.
+    </p>
+    <div class="chips">
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/></svg>Tres zonas, no siete campos</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>Guardado conjunto visible</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Estado del asistente con consecuencia</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v12H8l-4 4V5Z"/></svg>Vista previa real</span>
+    </div>
+  </section>
+
+  <section class="context-grid" aria-label="Contexto de la revisión">
+    <div class="ctx-card">
+      <p class="ctx-k">Plataforma</p>
+      <p class="ctx-v">Web de escritorio primero; cajón a pantalla completa en móvil.</p>
+    </div>
+    <div class="ctx-card">
+      <p class="ctx-k">Framework</p>
+      <p class="ctx-v">Next.js 16 + Tailwind v4. Tokens y kit propios (<code>components/ui</code>).</p>
+    </div>
+    <div class="ctx-card">
+      <p class="ctx-k">Artefacto revisado</p>
+      <p class="ctx-v"><code>identity-form.tsx</code>, <code>settings-tabs.tsx</code>, <code>campo-opcion.tsx</code>, <code>catalogo-config.ts</code> y el catálogo del core.</p>
+    </div>
+    <div class="ctx-card">
+      <p class="ctx-k">Alcance</p>
+      <p class="ctx-v">Identidad y su relación con Horario, Voz y Calidad. No cambia la API ni el catálogo.</p>
+    </div>
+  </section>
+
+  <div class="before-after" aria-label="Antes y después">
+    <div class="ba">
+      <span class="ba-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Hoy
+      </span>
+      <p>Siete campos en una sola tarjeta. «Idioma» no se ve: el catálogo lo marca solo lectura y la API no lo devuelve. «Pausar» vive al final, sin estado visible en el resumen. El botón dice «Guardar» aunque también guarde Voz y Horario. Cerrar avisa «se pierde lo que cambiaste», sin decir dónde.</p>
+    </div>
+    <div class="ba after">
+      <span class="ba-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>
+        Después
+      </span>
+      <p>Una vista previa de la carta de presentación, tres zonas con jerarquía y un pie que dice qué se guarda y en cuántas secciones. Pausar es un estado de primera clase, con confirmación y rastro en el resumen. El guardado conjunto se ve antes de pulsar.</p>
+    </div>
+  </div>
+
+  <section class="prototype" aria-labelledby="proto-title">
+    <div class="section-head">
+      <h2 id="proto-title">Prototipo para tocar</h2>
+      <p>Escribe el nombre o la descripción y mira la tarjeta. Marca un cambio en Voz y otro en Horario para ver el guardado conjunto; fuerza un error para ver cómo se resuelve. El pie es el mismo en escritorio y móvil.</p>
+    </div>
+
+    <div class="stage-tools">
+      <p class="note" id="proto-note">Prototipo interactivo. Los estados de «otras secciones» son simulados para revisar el comportamiento; en el panel real salen del registro de cambios sin guardar.</p>
+      <div class="tool-cluster">
+        <button class="sim-btn" id="simVoz" type="button" aria-pressed="true"><span class="dot" aria-hidden="true"></span>Cambio en Voz</button>
+        <button class="sim-btn" id="simHorario" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span>Cambio en Horario</button>
+        <button class="sim-btn" id="simError" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span>Error en Horario</button>
+        <div class="view-toggle" role="group" aria-label="Ancho de la vista previa">
+          <button type="button" data-view="desktop" aria-pressed="true">Escritorio</button>
+          <button type="button" data-view="mobile" aria-pressed="false">Móvil</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" data-view="desktop">
+      <div class="app-bg" aria-hidden="true">
+        <div class="mini-top">
+          <span class="mini-brand">SOLVERS<b>HUB</b></span>
+          <span class="mini-pill">Negocio de prueba</span>
+        </div>
+        <p class="mini-crumb">Cuenta / Configuración</p>
+        <h2 class="mini-title">Configuración</h2>
+        <div class="mini-group">
+          <h3>Mi negocio</h3>
+          <div class="mini-row is-current">
+            <span>Identidad</span>
+            <span><span id="miniIdentityName">Asistente de prueba</span> <span class="mini-badge" id="miniPausedBadge" hidden>Pausado</span> · <span id="miniCurrency">COP</span></span>
+          </div>
+          <div class="mini-row"><span>Horario y escalamiento</span><span>Lun a vie, 9:00 a. m. a 6:00 p. m.</span></div>
+          <div class="mini-row"><span>Datos del cliente</span><span>2 acciones piden datos · aviso activo</span></div>
+        </div>
+        <div class="mini-group">
+          <h3>Cómo responde</h3>
+          <div class="mini-row"><span>Voz y estilo</span><span>Cercano · calidez: 3 puntos</span></div>
+          <div class="mini-row"><span>Calidad de respuestas</span><span>Reintentos: 1</span></div>
+          <div class="mini-row"><span>Memoria</span><span>Recuerda 10 mensajes</span></div>
+        </div>
+        <div class="side-notes">
+          <h3>Lo que esta propuesta resuelve</h3>
+          <ul>
+            <li><b>Antes de guardar:</b> el rail dice qué otras secciones cambian contigo.</li>
+            <li><b>Después de pausar:</b> el resumen muestra «Pausado» sin abrir el cajón.</li>
+            <li><b>Al escribir:</b> la vista previa enseña la carta de presentación real.</li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="sheet" aria-label="Vista previa del cajón Identidad">
+        <header class="sheet-head">
+          <div>
+            <h2>Identidad</h2>
+            <p>Cómo se presenta tu asistente y dónde está tu negocio.</p>
+          </div>
+          <button class="sheet-close" type="button" aria-label="Cerrar (solo demostración)" title="En el panel real, este botón cierra el cajón">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </header>
+
+        <div class="sheet-body">
+
+          <!-- RAIL DE GUARDADO CONJUNTO -->
+          <section class="rail" aria-labelledby="rail-title">
+            <div class="rail-head">
+              <p class="rail-title" id="rail-title">Guardado conjunto
+                <small>Identidad, Horario, Voz y Calidad se guardan con un solo envío.</small>
+              </p>
+            </div>
+            <div class="rail-chips" role="list">
+              <span class="rail-chip is-current" role="listitem"><span class="dot" aria-hidden="true"></span>Identidad · aquí</span>
+              <span class="rail-chip" id="chipHorario" role="listitem"><span class="dot" aria-hidden="true"></span>Horario</span>
+              <span class="rail-chip is-dirty" id="chipVoz" role="listitem"><span class="dot" aria-hidden="true"></span>Voz y estilo</span>
+              <span class="rail-chip" id="chipCalidad" role="listitem"><span class="dot" aria-hidden="true"></span>Calidad</span>
+            </div>
+            <p class="rail-note" id="railNote">Hay cambios sin guardar en <b>Voz y estilo</b>. Si guardas aquí, también se guarda ese cambio.</p>
+          </section>
+
+          <!-- VISTA PREVIA -->
+          <section class="preview" aria-labelledby="preview-label">
+            <p class="preview-label" id="preview-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              Así te ve tu cliente
+            </p>
+            <div class="preview-card">
+              <div class="preview-top">
+                <span class="avatar" id="previewAvatar" aria-hidden="true">S</span>
+                <div class="preview-id">
+                  <p class="preview-name" id="previewName">Sofía</p>
+                  <p class="preview-sub" id="previewSub">Panadería artesanal en Manizales con domicilios en el centro.</p>
+                </div>
+              </div>
+              <p class="bubble"><b id="previewBubbleName">Sofía</b>: «Hola, soy <span id="previewBubbleName2">Sofía</span>. ¿En qué te ayudo?»</p>
+              <div class="preview-meta">
+                <span class="meta-chip" id="previewLang">Español</span>
+                <span class="meta-chip" id="previewCurrency">COP</span>
+                <span class="meta-chip">America/Bogota</span>
+              </div>
+              <div class="paused-banner" id="pausedBanner" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>
+                <span>El asistente está pausado: no responde en ningún canal.</span>
+                <button type="button" id="bannerReactivate">Reactivar</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ZONA 1 -->
+          <section class="zone" aria-labelledby="zone-1">
+            <div class="zone-head">
+              <h3 id="zone-1">Cómo se presenta</h3>
+              <p>Lo que el cliente ve y siente en el primer mensaje. Se aplica al publicar una versión nueva del agente.</p>
+            </div>
+
+            <div class="field">
+              <label for="assistantName">Nombre del asistente</label>
+              <input class="input" id="assistantName" value="Sofía" autocomplete="off">
+              <span class="hint">Cómo se presenta y cómo firma sus mensajes. Ejemplo: Sofía.</span>
+            </div>
+
+            <div class="field">
+              <label for="businessDescription">Descripción del negocio</label>
+              <textarea class="textarea" id="businessDescription" maxlength="280" placeholder="Panadería artesanal en Manizales con domicilios en el centro.">Panadería artesanal en Manizales con domicilios en el centro.</textarea>
+              <span class="counter" id="descCounter">68/280</span>
+              <span class="hint">Qué haces, en dos o tres líneas. El asistente la usa para responder con contexto.</span>
+            </div>
+
+            <div class="field">
+              <label for="brandVoice">Voz de marca <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M7 8l5-5 5 5"/></svg>Al publicar</span></label>
+              <textarea class="textarea" id="brandVoice" placeholder="Cercana y breve; nunca promete tiempos de entrega.">Cercana y breve; nunca promete tiempos de entrega.</textarea>
+              <span class="hint">Cómo quieres que suene. Si la dejas vacía, usa la personalidad de <button class="link-btn" type="button">Voz y estilo</button>.</span>
+            </div>
+          </section>
+
+          <!-- ZONA 2 -->
+          <section class="zone" aria-labelledby="zone-2">
+            <div class="zone-head">
+              <h3 id="zone-2">Datos del negocio</h3>
+              <p>Se usan en montos, fechas y horarios. No cambian cómo habla el asistente.</p>
+            </div>
+
+            <div class="static-row">
+              <span class="static-k">Idioma</span>
+              <span class="static-v">Español <small>Se fija al crear el negocio · <button class="link-btn" type="button">Escríbenos</button></small></span>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="currency">Moneda</label>
+                <select class="select" id="currency">
+                  <option value="COP" selected>Peso colombiano (COP)</option>
+                  <option value="USD">Dólar estadounidense (USD)</option>
+                  <option value="MXN">Peso mexicano (MXN)</option>
+                  <option value="PEN">Sol peruano (PEN)</option>
+                </select>
+                <span class="hint">Solo cambia cómo se muestran los montos; el cobro usa la moneda de cada habilidad.</span>
+              </div>
+              <div class="field">
+                <label for="timezone">Zona horaria</label>
+                <select class="select" id="timezone">
+                  <option value="America/Bogota" selected>Colombia (Bogotá)</option>
+                  <option value="America/Lima">Perú (Lima)</option>
+                  <option value="America/Mexico_City">México (Ciudad de México)</option>
+                  <option value="America/Santiago">Chile (Santiago)</option>
+                </select>
+                <span class="hint">Con esta zona el asistente sabe qué día y hora es y aplica el horario de atención.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ZONA 3 -->
+          <section class="zone" aria-labelledby="zone-3">
+            <div class="zone-head">
+              <h3 id="zone-3">Estado del asistente</h3>
+              <p>La pausa detiene las respuestas en todos los canales. No cierra la bandeja.</p>
+            </div>
+
+            <div class="state-card" id="stateCard">
+              <span class="state-dot" aria-hidden="true"></span>
+              <div class="state-copy">
+                <b id="stateTitle">Activo</b>
+                <span id="stateCopy">Responde en todos los canales del negocio.</span>
+              </div>
+              <div class="switch-wrap">
+                <span class="switch-label" id="switchLabel">Pausar</span>
+                <button class="switch" id="pauseSwitch" type="button" role="switch" aria-checked="false" aria-labelledby="switchLabel">
+                  <span class="switch-thumb" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="confirm" id="pauseConfirm" hidden>
+              <p>¿Pausar el asistente? Dejará de responder en todos los canales hasta que lo reactives. Las conversaciones siguen entrando a la bandeja.</p>
+              <div class="confirm-actions">
+                <button class="btn btn-ghost btn-sm" type="button" id="cancelPause">Cancelar</button>
+                <button class="btn btn-warn btn-sm" type="button" id="confirmPause">Sí, pausar</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="sheet-foot">
+          <span class="foot-status is-dirty" id="footStatus" role="status" aria-live="polite">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="footStatusText">Cambios sin guardar en 2 secciones</span>
+          </span>
+          <div class="foot-actions">
+            <button class="btn btn-ghost" type="button" id="discardBtn">Descartar</button>
+            <button class="btn btn-primary" type="button" id="saveBtn"><span id="saveBtnText">Guardar 2 secciones</span></button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="report" aria-labelledby="report-title">
+    <div class="section-head">
+      <h2 id="report-title">Lo que encontré</h2>
+      <p>Severidades según la skill: Crítica (accesibilidad o convención que confunde), Alta (fricción real o pantalla que se siente ajena), Media (patrón subóptimo o inconsistencia), Baja (pulido). Sin hallazgos críticos en esta pantalla.</p>
+    </div>
+
+    <div class="sev-summary" aria-label="Resumen de severidades">
+      <span class="sev-total critical"><b>0</b> Críticas</span>
+      <span class="sev-total high"><b>5</b> Altas</span>
+      <span class="sev-total medium"><b>5</b> Medias</span>
+      <span class="sev-total"><b>3</b> Bajas</span>
+    </div>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev high">Alta</span>
+        <h3>El guardado conjunto existe en el código, pero no en la pantalla</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>Identidad, Horario, Voz y Calidad comparten un solo PUT y un solo formulario montado. Pero el botón solo dice «Guardar», no hay lista de secciones sucias y el aviso de cierre dice «Si cierras “Identidad”, se pierde lo que cambiaste», aunque el cambio pueda estar en Horario o Voz.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>feedback.md › Best practices</code> — <q>Warn people when they initiate a task that can cause data loss that’s unexpected and irreversible.</q> Y <code>writing.md › Best practices</code> — <q>Be clear.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Mostrar el rail «Guardado conjunto» en las cuatro secciones.</li>
+            <li>El botón nombra la cuenta: «Guardar 2 secciones».</li>
+            <li>«Descartar» y el cierre listan las secciones afectadas.</li>
+            <li>El registro expone ids sucios, no solo un booleano.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev high">Alta</span>
+        <h3>La pausa está enterrada y no se ve en el resumen</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>«Pausar el asistente» es el último control de «El negocio», dentro del cajón. El resumen de la fila Identidad muestra «Sofía · Español · COP»: un asistente pausado se ve idéntico a uno activo. Puede pasar días sin responder y nadie lo nota desde Configuración.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>feedback.md › Best practices</code> — <q>Consider integrating status feedback into your interface.</q> Cerca del ítem que describe. Y <code>toggles.md › Best practices</code> — <q>Clearly identify the setting, view, or content the toggle affects.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Zona «Estado del asistente» con estado, consecuencia y switch.</li>
+            <li>Confirmación en línea al pausar; reactivar es inmediato.</li>
+            <li>Badge «Pausado» con tono de advertencia en la fila del resumen.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev high">Alta</span>
+        <h3>«Idioma del negocio» es un selector deshabilitado sin salida</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>El catálogo lo marca <code>solo_lectura</code>, pero <code>IdentitySettings</code> no devuelve <code>language</code>: el formulario nunca lo pinta y el dueño no ve el dato. Si se pintara con el control genérico sería un <code>&lt;select disabled&gt;</code>: parece roto y el foco de teclado lo salta.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>writing.md › Best practices</code> — <q>If you need to direct someone to a setting, provide a direct link or button, rather than trying to describe its location.</q> Y <code>accessibility.md › Speech</code> — <q>Let people use the keyboard alone to navigate and interact with your app.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Devolver <code>language</code> en <code>IdentitySettings</code> (aditivo, sin cambio de esquema).</li>
+            <li>Fila estática «Español» con la nota «Se fija al crear el negocio».</li>
+            <li>Enlace «Escríbenos» para el caso excepcional.</li>
+            <li>Si algún día se puede cambiar, que sea un control real, no un disabled.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev high">Alta</span>
+        <h3>Cuatro responsabilidades en una sola tarjeta</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>«El negocio» mezcla presentación (nombre, descripción), voz de marca, metadatos (idioma, moneda, zona) y un interruptor operativo. «Voz de marca» vive aquí mientras «Voz y estilo» es otra sección; el aviso repite «nombre, descripción y voz» en ambas.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>layout.md › Visual hierarchy</code> — <q>Group related items to clearly express related information or functions.</q> Y <code>settings.md › General settings</code> — <q>Put general, infrequently changed settings in your custom settings area.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Tres zonas: «Cómo se presenta», «Datos del negocio», «Estado del asistente».</li>
+            <li>«Voz de marca» queda con enlace y aclaración frente a «Voz y estilo».</li>
+            <li>Progressive disclosure: lo operativo no compite con lo narrativo.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev high">Alta</span>
+        <h3>No hay vista previa de lo que estás configurando</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>Nombre, descripción y voz son texto abstracto. El dueño no puede verse como cliente: no sabe si «Sofía» suena a su negocio o si la descripción cabe en un primer mensaje. La pantalla se siente como un formulario genérico de ajustes.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>writing.md › Best practices</code> — <q>Consider each screen’s purpose.</q> Y <code>branding.md › Best practices</code> — <q>Use your brand’s unique voice and tone in all the written communication you display.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Tarjeta «Así te ve tu cliente» encima de los campos.</li>
+            <li>Se actualiza al escribir, sin guardar.</li>
+            <li>Muestra nombre, descripción, idioma/moneda y estado pausado.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev medium">Media</span>
+        <h3>La ayuda es el texto más pequeño y desaparece del campo</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>La ayuda de cada campo usa <code>text-xs</code> (12 px) con <code>text-text-soft</code>. Sobre <code>#11224D</code> da 5.10:1 y pasa AA, pero sobre <code>surface-raised</code> (<code>#172F6C</code>) cae a 4.18:1. Es el texto que explica la consecuencia y es el más difícil de leer.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>accessibility.md › Vision</code> — <q>Support larger text sizes.</q> Y <code>typography.md › Ensuring legibility</code> — <q>In general, avoid light font weights.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Subir la ayuda a 13 px / 18 px (<code>text-sh-label</code>).</li>
+            <li>Nunca usarla sobre <code>surface-raised</code>; si se usa, subir a <code>--body</code>.</li>
+            <li>Mantener el texto junto al campo, no en tooltip.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev medium">Media</span>
+        <h3>La rejilla de dos columnas rompe la lectura de los textos largos</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p><code>md:grid-cols-2</code> deja «Nombre del asistente» en media columna con un hueco al lado, y apila textareas a ancho completo. La mirada salta entre 1 y 2 columnas sin que la diferencia signifique nada.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>text-fields.md › Best practices</code> — <q>Stack multiple text fields vertically when possible, and use consistent widths to create a more organized layout.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Una columna para nombre, descripción y voz.</li>
+            <li>Dos columnas solo para moneda y zona horaria, que son cortas y pares.</li>
+            <li>Ancho de lectura máximo ~65 caracteres en las textareas.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev medium">Media</span>
+        <h3>El ejemplo del catálogo no llega a los campos de texto</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>El backend trae <code>ejemplo</code> y <code>explicacion</code> para las opciones, pero las textareas no tienen placeholder ni contador. La ayuda dice «Ejemplo: Panadería…» en prosa, cuando el campo podría mostrarlo dentro.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>entering-data.md › Best practices</code> — <q>Be clear about the data you need.</q> Y <code>writing.md › Best practices</code> — <q>Show hints in text fields.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Placeholder con el ejemplo del catálogo.</li>
+            <li>Contador visible para la descripción.</li>
+            <li>La ayuda explica el efecto, no repite el ejemplo.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev medium">Media</span>
+        <h3>El aviso del Agent OS se repite y no lleva a publicar</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>El mismo bloque azul aparece en Identidad y en Voz, con 12 px y sin enlace. Dice «se aplican cuando publicas una nueva versión», pero no dice dónde se publica ni qué pasa si no lo haces.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>writing.md › Best practices</code> — <q>Provide clear next steps.</q> Y <code>color.md › Best practices</code> — <q>Avoid using the same color to mean different things.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Badge «Al publicar» junto a los campos afectados.</li>
+            <li>Un enlace a la versión del agente, no un párrafo repetido.</li>
+            <li>El aviso largo, una sola vez y con acción.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev medium">Media</span>
+        <h3>Guardar cierra el cajón y borra la prueba de lo que se guardó</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>Al guardar, <code>onGuardado</code> cierra el cajón y el resumen se actualiza, pero no se confirma qué secciones entraron. Si había un cambio en Voz, la persona no sabe si también se guardó. No hay <kbd>⌘S</kbd> ni estado limpio visible antes de cerrar.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>feedback.md › Best practices</code> — <q>When it makes sense, confirm that a significant action or task has completed.</q> Y <code>designing-for-macos.md › Best practices</code> — <q>Handle keyboard shortcuts to help people accelerate actions.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Toast «Guardado: Identidad y Voz y estilo».</li>
+            <li>Si hay más de una sección, mantener abierto y mostrar el estado limpio.</li>
+            <li><kbd>⌘/Ctrl + S</kbd> guarda; <kbd>Esc</kbd> sigue cerrando con aviso.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev low">Baja</span>
+        <h3>Tres nombres para lo mismo</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>«Identidad» (sección), «Mi negocio» (grupo del menú) y «El negocio» (título interno). El usuario tiene que deducir si son el mismo lugar.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>writing.md › Best practices</code> — <q>Build language patterns.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Dejar «Identidad» como título y «Mi negocio» como grupo.</li>
+            <li>Dentro, usar «Cómo se presenta» en vez de «El negocio».</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev low">Baja</span>
+        <h3>«Guardar» no dice qué guarda</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p>El botón dice «Guardar» mientras el resto del kit usa «Guardar cambios». En una pantalla con guardado compartido, el verbo corto esconde el alcance.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>writing.md › Best practices</code> — <q>Be action oriented.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>«Guardar cambios» o «Guardar 2 secciones».</li>
+            <li>El mismo verbo en el toast y en el estado del pie.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="finding-head">
+        <span class="sev low">Baja</span>
+        <h3>El resumen de la fila corta a tres valores y pierde el estado</h3>
+      </div>
+      <div class="finding-grid">
+        <div>
+          <h4>Qué</h4>
+          <p><code>resumenDeGrupos</code> corta a tres valores y salta los textos largos. Quedan «Sofía · Español · COP»: se pierde la descripción y, sobre todo, la pausa.</p>
+        </div>
+        <div>
+          <h4>Por qué</h4>
+          <p class="cite"><code>layout.md › Visual hierarchy</code> — <q>Order content by relative importance.</q></p>
+        </div>
+        <div>
+          <h4>Cómo</h4>
+          <ul>
+            <li>Resumen: nombre + estado + moneda.</li>
+            <li>La descripción vive en la vista previa, no en la fila.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="craft-notes" aria-labelledby="craft-title" style="margin-top:52px">
+    <div class="section-head">
+      <h2 id="craft-title">Craft notes</h2>
+      <p>Lo que la pantalla debe recordar cuando ya cumpla lo básico. Si se recorta el alcance, esto es lo último que se sacrifica.</p>
+    </div>
+    <div class="plan-grid">
+      <div class="panel">
+        <h3>Punto de vista: la carta de presentación</h3>
+        <p>El objeto memorable es la tarjeta con el nombre, la descripción y la primera frase. No es un adorno: es el resultado de lo que se edita. Un formulario de siete campos podría pertenecer a cualquier SaaS; una carta que muestra cómo se presenta <em>este</em> asistente, no.</p>
+      </div>
+      <div class="panel">
+        <h3>Tipografía y contención</h3>
+        <p>Montserrat 600 solo en el nombre, como una firma. Inter para todo lo demás. Un solo acento (cian) en la vista previa y el foco; la advertencia se reserva para la pausa. Sin degradados decorativos ni más de un momento de movimiento.</p>
+      </div>
+      <div class="panel">
+        <h3>Quitar un accesorio</h3>
+        <p>El aviso largo del Agent OS repetido en dos secciones es el accesorio que sobra. Se reemplaza por un badge «Al publicar» junto a los campos afectados y un enlace. Todo lo demás —rail, vista previa, pie— se queda porque cada uno responde a una pregunta distinta.</p>
+      </div>
+      <div class="panel">
+        <h3>¿Es una plantilla?</h3>
+        <p>No: la estructura sale del objeto del producto (un asistente que tiene nombre, voz y estado), no de un dashboard genérico. La prueba es que la vista previa solo tiene sentido aquí. Si se quitara, la pantalla volvería a ser un formulario intercambiable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="plan" aria-labelledby="plan-title">
+    <div class="section-head">
+      <h2 id="plan-title">El plan, en concreto</h2>
+      <p>Se mantiene el guardado único y el catálogo como fuente. Cambia la composición, la jerarquía y la forma de contar el estado. Nada de backend nuevo en esta iteración.</p>
+    </div>
+
+    <div class="plan-grid">
+      <div class="panel">
+        <h3>Firma: la carta de presentación</h3>
+        <p>Una tarjeta viva con el avatar, el nombre, la descripción y la primera frase. Es el único elemento con color de acento; todo lo demás queda quieto. El dueño no configura campos: ve a su asistente.</p>
+        <p>Se actualiza al escribir, con un fundido de 150 ms y sin mover el layout. Con <code>prefers-reduced-motion</code>, cambia sin animación.</p>
+      </div>
+      <div class="panel">
+        <h3>Layout</h3>
+        <pre class="ascii"><b>Cajón Identidad</b>
+┌──────────────────────────────────────────┐
+│ Identidad                          [X]   │
+│ Cómo se presenta…                        │
+├──────────────────────────────────────────┤
+│ <i>Guardado conjunto</i>  [Identidad][Voz•] │
+│ Hay cambios en Voz y estilo…             │
+│ ┌──────────────────────────────────────┐ │
+│ │ <i>Así te ve tu cliente</i>             │ │
+│ │ (S) Sofía · Panadería artesanal…     │ │
+│ │ «Hola, soy Sofía…»  ES · COP · BOG   │ │
+│ └──────────────────────────────────────┘ │
+│ <b>Cómo se presenta</b>                      │
+│ Nombre          [Sofía            ]      │
+│ Descripción     [texto largo…      ]     │
+│ Voz de marca    [texto largo…      ]     │
+│ <b>Datos del negocio</b>                     │
+│ Idioma  Español (fijo)                   │
+│ [Moneda]            [Zona horaria]       │
+│ <b>Estado del asistente</b>                  │
+│ ● Activo                  [switch]       │
+├──────────────────────────────────────────┤
+│ ● 2 secciones sin guardar  [Descartar][Guardar 2] │
+└──────────────────────────────────────────┘</pre>
+      </div>
+    </div>
+
+    <h3 style="margin:22px 0 8px;color:var(--text);font:600 15px/1.3 var(--sh-font-body)">Tokens que se usan (medidos, no estimados)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Rol</th><th>Oscuro</th><th>Claro</th><th>Contraste</th><th>Uso</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Superficie</td><td><span class="swatch" style="background:#11224D"></span><code>#11224D</code></td><td><span class="swatch" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td>—</td><td>Cajón y tarjetas</td></tr>
+          <tr><td>Texto principal</td><td><span class="swatch" style="background:#E8EDF7"></span><code>#E8EDF7</code></td><td><span class="swatch" style="background:#0B1733"></span><code>#0B1733</code></td><td>13.15:1 / 17.73:1</td><td>Títulos y valores</td></tr>
+          <tr><td>Texto de cuerpo</td><td><span class="swatch" style="background:#A9B6CC"></span><code>#A9B6CC</code></td><td><span class="swatch" style="background:#5A6B85"></span><code>#5A6B85</code></td><td>7.54:1 / 5.42:1</td><td>Etiquetas y ayuda</td></tr>
+          <tr><td>Texto suave</td><td><span class="swatch" style="background:#8695B0"></span><code>#8695B0</code></td><td><span class="swatch" style="background:#616F88"></span><code>#616F88</code></td><td>5.10:1 / 5.08:1</td><td>Ayuda secundaria (nunca sobre <code>surface-raised</code>: 4.18:1)</td></tr>
+          <tr><td>Acento</td><td><span class="swatch" style="background:#22C7E0"></span><code>#22C7E0</code></td><td><span class="swatch" style="background:#2560E6"></span><code>#2560E6</code></td><td>7.58:1 / 5.39:1</td><td>Foco, enlaces y vista previa</td></tr>
+          <tr><td>Advertencia</td><td><span class="swatch" style="background:#E0A106"></span><code>#E0A106</code></td><td><span class="swatch" style="background:#8A6100"></span><code>#8A6100</code></td><td>6.82:1 / 5.54:1</td><td>Pausa y estado del asistente</td></tr>
+          <tr><td>Peligro</td><td><span class="swatch" style="background:#F28B82"></span><code>#F28B82</code></td><td><span class="swatch" style="background:#B42E2E"></span><code>#B42E2E</code></td><td>6.46:1 / 6.23:1</td><td>Errores de campo</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="plan-grid" style="margin-top:14px">
+      <div class="panel">
+        <h3>Tipografía</h3>
+        <p>Montserrat 600 solo en el nombre de la vista previa y el título del cajón. Inter para todo lo demás: cuerpo 15/24, etiquetas 13/18 en 500, ayuda 13/18. Se elimina la ayuda a 12 px.</p>
+        <p>El nombre del asistente se lee como una firma, no como un dato. La descripción no compite: mismo tamaño que el cuerpo, color secundario.</p>
+      </div>
+      <div class="panel">
+        <h3>Reglas de composición</h3>
+        <p>Una columna para lo narrativo; dos solo para el par moneda/zona. Máximo 65 caracteres por línea en textareas. El pie queda sticky dentro del cajón, con el estado también visible arriba en el rail: nunca la única señal al fondo.</p>
+        <p>La pausa es la única acción con tono de advertencia; no se mezcla con el acento de guardar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="impl" aria-labelledby="impl-title" style="margin-top:52px">
+    <div class="section-head">
+      <h2 id="impl-title">Para implementar sin sorpresas</h2>
+      <p>Rutas reales del repo. La propuesta no agrega endpoints ni campos al catálogo; recompone lo que ya existe.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Archivo</th><th>Cambio</th><th>Por qué</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>lib/cambios-sin-guardar.tsx</code></td>
+            <td>Guardar ids sucios y exponer <code>cambios(): string[]</code>; mantener <code>hayCambios</code>.</td>
+            <td>El rail y el cierre necesitan saber <em>qué</em> secciones, no solo <em>si</em> hay algo.</td>
+          </tr>
+          <tr>
+            <td><code>app/(app)/configuracion/_components/settings-tabs.tsx</code></td>
+            <td>Pasar las secciones sucias a <code>IdentityForm</code>; el aviso de cierre lista los títulos; el resumen de Identidad muestra «Pausado».</td>
+            <td>El guardado conjunto y la pausa se vuelven visibles fuera del cajón.</td>
+          </tr>
+          <tr>
+            <td><code>identity-form.tsx</code></td>
+            <td>Tres zonas, vista previa, rail, pie sticky, pausa separada y confirmación; textos y orden de campos.</td>
+            <td>Es donde vive la composición; se mantiene un solo <code>PUT /api/settings/identity</code>.</td>
+          </tr>
+          <tr>
+            <td><code>campo-opcion.tsx</code></td>
+            <td>Variante de solo lectura como fila estática; placeholder y contador para <code>texto_largo</code>; ayuda a 13 px; switch con área de 44×24.</td>
+            <td>El control genérico hoy no distingue «no editable» de «roto» ni aprovecha <code>ejemplo</code>.</td>
+          </tr>
+          <tr>
+            <td><code>components/ui/field.tsx</code></td>
+            <td>Ayuda de 12 a 13 px; conservar <code>aria-describedby</code> y el error con ícono.</td>
+            <td>La ayuda es la que explica la consecuencia; debe leerse.</td>
+          </tr>
+          <tr>
+            <td><code>lib/configuracion-resumen.ts</code></td>
+            <td>Resumen de Identidad: nombre + estado + moneda; la pausa primero.</td>
+            <td>Un asistente pausado no puede verse igual que uno activo.</td>
+          </tr>
+          <tr>
+            <td><code>lib/configuracion-secciones.ts</code></td>
+            <td><code>seccionDeClave</code> y <code>seccionesDeClaves</code>, con override de <code>brand_voice</code> a Voz; títulos para el rail.</td>
+            <td>Evita duplicar la lista de secciones en el formulario y cubre el catálogo viejo.</td>
+          </tr>
+          <tr>
+            <td><code>core/config_registro/opciones.py</code></td>
+            <td><code>brand_voice</code> pasa al grupo <code>voz</code>; la explicación dice que se usa en cada turno.</td>
+            <td>La voz de marca se edita donde se decide cómo habla el asistente.</td>
+          </tr>
+          <tr>
+            <td><code>core/api/routers/settings.py</code></td>
+            <td><code>IdentitySettings.language</code> (solo lectura, <code>es</code> por defecto).</td>
+            <td>El panel puede mostrar el idioma como dato sin inventarlo ni ofrecer un control falso.</td>
+          </tr>
+          <tr>
+            <td><code>docs/openapi.json</code> + <code>lib/api/schema.d.ts</code></td>
+            <td>El campo aditivo <code>language</code> en el contrato y en los tipos generados.</td>
+            <td>Mantiene el contrato y el panel sincronizados. El backend va primero en el orden de merge.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:10px">El cambio de panel es incremental y no toca el esquema de base. El backend es aditivo (un campo de lectura y un grupo del catálogo); conviene mergearlo antes que el panel para que <code>api:types:check</code> encuentre <code>language</code> en <code>develop</code>. «Voz de marca» ya vive en Voz y estilo, con override para un despliegue desfasado.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="approve" aria-labelledby="approve-title">
+    <div class="section-head">
+      <h2 id="approve-title">Decisiones para aprobar</h2>
+      <p>Marca lo que aceptas. La propuesta se implementa solo con lo aprobado; lo demás queda fuera de esta tanda.</p>
+    </div>
+    <div class="checklist" id="checklist">
+      <div class="check">
+        <input type="checkbox" id="d1" checked>
+        <label for="d1">A · Tres zonas + rail de guardado conjunto + pie sticky
+          <small>Recomendado. Mantiene el PUT único y hace visible lo que hoy solo existe en el código.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d2" checked>
+        <label for="d2">B · La pausa sale de Identidad y gana su propia zona y confirmación
+          <small>El resumen muestra «Pausado» como advertencia. Reactivar no pide confirmación.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d3" checked>
+        <label for="d3">C · La carta de presentación es la firma de la pantalla
+          <small>Vista previa viva encima de los campos. Si se rechaza, la pantalla sigue funcionando pero vuelve a sentirse genérica.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d4" checked>
+        <label for="d4">D · «Idioma» pasa a fila estática con salida
+          <small>Se acaba el select deshabilitado. Si el negocio necesita cambiarlo, se resuelve por soporte.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d5" checked>
+        <label for="d5">E · Una columna para lo narrativo; dos solo para moneda y zona
+          <small>Se alinea con la lectura y elimina el hueco al lado del nombre.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d6" checked>
+        <label for="d6">F · Ayuda a 13 px y ejemplos dentro de las textareas
+          <small>Sube la legibilidad y aprovecha el catálogo sin tocar el backend.</small>
+        </label>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="d7" checked>
+        <label for="d7">G · Mover «Voz de marca» a Voz y estilo
+          <small>Aprobada. Se implementó con override para que el panel la mueva aunque el catálogo viejo la mande en Identidad. El asistente la usa en cada turno cuando está escrita.</small>
+        </label>
+      </div>
+    </div>
+    <div class="approve-actions">
+      <button class="btn btn-primary" type="button" id="copyDecisions">Copiar decisiones</button>
+      <span class="approve-count" id="approveCount">7 de 7 aprobadas</span>
+    </div>
+    <p class="copy-note" style="margin-top:8px">El botón copia un resumen en texto para responder en la conversación. No envía nada.</p>
+    <pre class="decisions-out" id="decisionsOut" hidden aria-live="polite"></pre>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="limits" aria-labelledby="limits-title">
+    <div class="panel">
+      <h3 id="limits-title">Qué funciona (y hay que cuidar)</h3>
+      <ul class="works">
+        <li>El catálogo manda: etiquetas, ayudas, valores y rangos vienen del backend (SPEC-37).</li>
+        <li>Un solo <code>PUT</code> y el formulario montado al cambiar de sección: lo escrito no se pierde.</li>
+        <li><code>Field</code> ya conecta <code>aria-describedby</code> y <code>aria-invalid</code>; el error lleva ícono y <code>role="alert"</code>.</li>
+        <li>Los errores de otras secciones se nombran y llevan a la sección correcta.</li>
+        <li>El <code>Sheet</code> atrapa el foco, cierra con Escape y lo devuelve a la fila.</li>
+        <li>El botón conserva su ancho mientras carga (<code>aria-busy</code>).</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Trade-offs y límites</h3>
+      <ul>
+        <li><b>Pie sticky:</b> el escritorio pide no dejar información crítica solo al fondo (<code>layout.md › Desktop</code>). Por eso el estado también vive en el rail, arriba.</li>
+        <li><b>Vista previa:</b> es una aproximación, no el render exacto de WhatsApp. Se etiqueta como «Así te ve tu cliente» y no promete píxeles.</li>
+        <li><b>Pausa:</b> la confirmación en línea evita el alert; el estado queda visible en la fila para que no se olvide.</li>
+        <li><b>Alcance:</b> no se toca la navegación general de Configuración ni la API. La propuesta es incremental y revisable.</li>
+      </ul>
+    </div>
+    <div class="panel" style="grid-column:1/-1">
+      <h3>Notas de plataforma</h3>
+      <p><b>Escritorio:</b> el cajón conserva el foco atrapado y lo devuelve a la fila. El pie sticky se acompaña del estado en el rail, arriba, para no dejar información crítica solo al fondo (<code>layout.md › Desktop</code>). <kbd>⌘/Ctrl + S</kbd> guarda; <kbd>Esc</kbd> cierra con el aviso de secciones.</p>
+      <p><b>Móvil:</b> el cajón ocupa el ancho completo, una sola columna, objetivos de 44 px y el pie por encima del área segura. El rail y la vista previa siguen visibles antes de los campos; no se convierten en un acordeón que esconda el estado.</p>
+      <p><b>Apariencia:</b> el producto sigue el tema del sistema con tokens semánticos y no ofrece un interruptor propio (<code>dark-mode.md › Best practices</code>). El botón «Tema» de este artefacto es solo para revisar la propuesta en claro y oscuro.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="page-foot">
+  <span><b>Propuesta de diseño</b> · Configuración › Identidad · SolversHub</span>
+  <span>Revisión sobre el panel real (Next.js 16 + Tailwind v4) y el catálogo del core · implementado en <code>feat/identidad-configuracion-ux31</code> y <code>feat/identidad-voz-marca-ux31</code> · 26 nov 2026</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(function () {
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  /* ---------- Tema ---------- */
+  const html = document.documentElement;
+  const themeToggle = $('#themeToggle');
+  themeToggle.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'sh-dark' ? 'sh-light' : 'sh-dark';
+    html.setAttribute('data-theme', next);
+    themeToggle.setAttribute('aria-label', next === 'sh-dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+  });
+
+  /* ---------- Ancho de la vista previa ---------- */
+  const stage = $('#stage');
+  $$('.view-toggle button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('.view-toggle button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      stage.dataset.view = btn.dataset.view;
+    });
+  });
+
+  /* ---------- Estado ---------- */
+  const saved = {
+    name: 'Asistente de prueba',
+    description: 'Negocio ficticio para pruebas.',
+    voice: 'Cercana y breve; nunca promete tiempos de entrega.',
+    currency: 'COP',
+    timezone: 'America/Bogota',
+    paused: false,
+  };
+  const state = {
+    dirty: { identidad: true, voz: true, horario: false, calidad: false },
+    errorHorario: false,
+    paused: false,
+    pausePending: false,
+    saving: false,
+  };
+
+  const nameInput = $('#assistantName');
+  const descInput = $('#businessDescription');
+  const voiceInput = $('#brandVoice');
+  const currencySelect = $('#currency');
+  const timezoneSelect = $('#timezone');
+  const descCounter = $('#descCounter');
+  const footStatus = $('#footStatus');
+  const footStatusText = $('#footStatusText');
+  const saveBtn = $('#saveBtn');
+  const saveBtnText = $('#saveBtnText');
+  const discardBtn = $('#discardBtn');
+  const pauseSwitch = $('#pauseSwitch');
+  const pauseConfirm = $('#pauseConfirm');
+  const stateCard = $('#stateCard');
+  const stateTitle = $('#stateTitle');
+  const stateCopy = $('#stateCopy');
+  const pausedBanner = $('#pausedBanner');
+  const miniPausedBadge = $('#miniPausedBadge');
+  const miniIdentityName = $('#miniIdentityName');
+  const miniCurrency = $('#miniCurrency');
+  const chipVoz = $('#chipVoz');
+  const chipHorario = $('#chipHorario');
+  const railNote = $('#railNote');
+  const previewName = $('#previewName');
+  const previewSub = $('#previewSub');
+  const previewAvatar = $('#previewAvatar');
+  const previewBubbleName = $('#previewBubbleName');
+  const previewBubbleName2 = $('#previewBubbleName2');
+  const previewLang = $('#previewLang');
+  const previewCurrency = $('#previewCurrency');
+  const toast = $('#toast');
+  const toastText = $('#toastText');
+
+  const CURRENCY_LABEL = { COP: 'COP', USD: 'USD', MXN: 'MXN', PEN: 'PEN' };
+  const TZ_LABEL = {
+    'America/Bogota': 'America/Bogota',
+    'America/Lima': 'America/Lima',
+    'America/Mexico_City': 'America/Mexico_City',
+    'America/Santiago': 'America/Santiago',
+  };
+
+  function seccionesSucias() {
+    return Object.entries(state.dirty).filter(([, v]) => v).map(([k]) => k);
+  }
+  function hayCambios() {
+    return seccionesSucias().length > 0;
+  }
+  function nombreSeccion(id) {
+    return { identidad: 'Identidad', voz: 'Voz y estilo', horario: 'Horario', calidad: 'Calidad' }[id] || id;
+  }
+  function listarSecciones(ids) {
+    if (ids.length === 1) return nombreSeccion(ids[0]);
+    if (ids.length === 2) return nombreSeccion(ids[0]) + ' y ' + nombreSeccion(ids[1]);
+    return ids.slice(0, -1).map(nombreSeccion).join(', ') + ' y ' + nombreSeccion(ids[ids.length - 1]);
+  }
+
+  function renderPreview() {
+    const nombre = nameInput.value.trim() || 'Tu asistente';
+    const desc = descInput.value.trim();
+    previewName.textContent = nombre;
+    previewSub.textContent = desc || 'La descripción de tu negocio aparecerá aquí.';
+    previewAvatar.textContent = nombre.charAt(0).toUpperCase();
+    previewBubbleName.textContent = nombre;
+    previewBubbleName2.textContent = nombre;
+    previewLang.textContent = 'Español';
+    previewCurrency.textContent = CURRENCY_LABEL[currencySelect.value] || currencySelect.value;
+    descCounter.textContent = descInput.value.length + '/280';
+  }
+
+  function renderState() {
+    if (state.paused) {
+      stateCard.classList.add('is-paused');
+      stateTitle.textContent = 'Pausado';
+      stateCopy.textContent = 'No responde en ningún canal. Las conversaciones siguen entrando a la bandeja.';
+      pauseSwitch.setAttribute('aria-checked', 'true');
+      pausedBanner.hidden = false;
+      miniPausedBadge.hidden = false;
+    } else {
+      stateCard.classList.remove('is-paused');
+      stateTitle.textContent = 'Activo';
+      stateCopy.textContent = 'Responde en todos los canales del negocio.';
+      pauseSwitch.setAttribute('aria-checked', 'false');
+      pausedBanner.hidden = true;
+      miniPausedBadge.hidden = true;
+    }
+  }
+
+  function renderRail() {
+    const ids = seccionesSucias();
+    chipVoz.classList.toggle('is-dirty', state.dirty.voz);
+    chipHorario.classList.toggle('is-dirty', state.dirty.horario);
+    chipHorario.classList.toggle('is-error', state.errorHorario);
+    chipHorario.innerHTML = state.errorHorario
+      ? '<span class="dot" aria-hidden="true"></span>Horario · error'
+      : '<span class="dot" aria-hidden="true"></span>Horario';
+
+    if (state.errorHorario) {
+      railNote.innerHTML = 'Hay un campo por revisar en <b>Horario</b>. Corrígelo antes de guardar; lo demás se conserva.';
+    } else if (ids.length === 0) {
+      railNote.textContent = 'Todo guardado. Los cambios se aplican al publicar una versión nueva del agente.';
+    } else {
+      railNote.innerHTML = 'Hay cambios sin guardar en <b>' + listarSecciones(ids) + '</b>. Si guardas aquí, también se guarda' + (ids.length === 1 ? ' ese cambio.' : 'n esos cambios.');
+    }
+
+    if (state.errorHorario) {
+      footStatus.className = 'foot-status is-error';
+      footStatusText.textContent = 'Hay un error en Horario';
+    } else if (hayCambios()) {
+      footStatus.className = 'foot-status is-dirty';
+      footStatusText.textContent = ids.length === 1
+        ? 'Cambios sin guardar'
+        : 'Cambios sin guardar en ' + ids.length + ' secciones';
+    } else {
+      footStatus.className = 'foot-status';
+      footStatusText.textContent = 'Todo guardado';
+    }
+
+    if (state.errorHorario) {
+      saveBtnText.textContent = 'Revisar Horario';
+    } else if (!hayCambios()) {
+      saveBtnText.textContent = 'Guardar cambios';
+    } else if (ids.length === 1) {
+      saveBtnText.textContent = 'Guardar 1 sección';
+    } else {
+      saveBtnText.textContent = 'Guardar ' + ids.length + ' secciones';
+    }
+    saveBtn.disabled = !hayCambios() || state.errorHorario || state.saving;
+    discardBtn.disabled = !hayCambios() || state.saving;
+  }
+
+  function markDirty(id) {
+    state.dirty[id] = true;
+    renderRail();
+  }
+
+  function setSaved() {
+    saved.name = nameInput.value;
+    saved.description = descInput.value;
+    saved.voice = voiceInput.value;
+    saved.currency = currencySelect.value;
+    saved.timezone = timezoneSelect.value;
+    saved.paused = state.paused;
+    miniIdentityName.textContent = saved.name;
+    miniCurrency.textContent = CURRENCY_LABEL[saved.currency] || saved.currency;
+  }
+
+  function showToast(text, isError) {
+    toastText.textContent = text;
+    toast.classList.toggle('is-error', Boolean(isError));
+    toast.classList.add('is-visible');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('is-visible'), 3600);
+  }
+
+  ['input', 'change'].forEach((evento) => {
+    [nameInput, descInput, voiceInput, currencySelect, timezoneSelect].forEach((control) => {
+      control.addEventListener(evento, () => {
+        renderPreview();
+        markDirty('identidad');
+      });
+    });
+  });
+
+  /* ---------- Simulaciones ---------- */
+  const simVoz = $('#simVoz');
+  const simHorario = $('#simHorario');
+  const simError = $('#simError');
+
+  simVoz.addEventListener('click', () => {
+    state.dirty.voz = !state.dirty.voz;
+    simVoz.setAttribute('aria-pressed', String(state.dirty.voz));
+    renderRail();
+  });
+  simHorario.addEventListener('click', () => {
+    state.dirty.horario = !state.dirty.horario;
+    simHorario.setAttribute('aria-pressed', String(state.dirty.horario));
+    renderRail();
+  });
+  simError.addEventListener('click', () => {
+    state.errorHorario = !state.errorHorario;
+    if (state.errorHorario) state.dirty.horario = true;
+    simError.setAttribute('aria-pressed', String(state.errorHorario));
+    simHorario.setAttribute('aria-pressed', String(state.dirty.horario));
+    renderRail();
+  });
+
+  /* ---------- Pausa ---------- */
+  pauseSwitch.addEventListener('click', () => {
+    if (state.pausePending) return;
+    if (state.paused) {
+      state.paused = false;
+      state.pausePending = false;
+      pauseConfirm.hidden = true;
+      renderState();
+      markDirty('identidad');
+      showToast('Asistente reactivado. Responde en todos los canales.');
+      return;
+    }
+    state.pausePending = true;
+    pauseConfirm.hidden = false;
+    $('#confirmPause').focus();
+  });
+  $('#cancelPause').addEventListener('click', () => {
+    state.pausePending = false;
+    pauseConfirm.hidden = true;
+    pauseSwitch.focus();
+  });
+  $('#confirmPause').addEventListener('click', () => {
+    state.paused = true;
+    state.pausePending = false;
+    pauseConfirm.hidden = true;
+    renderState();
+    markDirty('identidad');
+    showToast('Asistente pausado. No responde hasta que lo reactives.', true);
+  });
+  $('#bannerReactivate').addEventListener('click', () => {
+    state.paused = false;
+    state.pausePending = false;
+    pauseConfirm.hidden = true;
+    renderState();
+    markDirty('identidad');
+    showToast('Asistente reactivado.');
+  });
+
+  /* ---------- Descartar ---------- */
+  discardBtn.addEventListener('click', () => {
+    nameInput.value = saved.name;
+    descInput.value = saved.description;
+    voiceInput.value = saved.voice;
+    currencySelect.value = saved.currency;
+    timezoneSelect.value = saved.timezone;
+    state.paused = saved.paused;
+    state.pausePending = false;
+    pauseConfirm.hidden = true;
+    state.dirty = { identidad: false, voz: false, horario: false, calidad: false };
+    state.errorHorario = false;
+    miniIdentityName.textContent = saved.name;
+    miniCurrency.textContent = CURRENCY_LABEL[saved.currency] || saved.currency;
+    simVoz.setAttribute('aria-pressed', 'false');
+    simHorario.setAttribute('aria-pressed', 'false');
+    simError.setAttribute('aria-pressed', 'false');
+    renderPreview();
+    renderState();
+    renderRail();
+    showToast('Cambios descartados. Volviste a lo último guardado.');
+  });
+
+  /* ---------- Guardar ---------- */
+  saveBtn.addEventListener('click', () => {
+    if (state.saving) return;
+    if (state.errorHorario) {
+      showToast('Corrige el campo marcado en Horario y vuelve a guardar. Lo demás se conserva.', true);
+      $('#chipHorario').scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (!hayCambios()) return;
+    const ids = seccionesSucias();
+    state.saving = true;
+    saveBtn.setAttribute('aria-busy', 'true');
+    saveBtnText.textContent = 'Guardando…';
+    footStatus.className = 'foot-status is-dirty';
+    footStatusText.textContent = 'Guardando…';
+
+    setTimeout(() => {
+      state.saving = false;
+      saveBtn.removeAttribute('aria-busy');
+      setSaved();
+      state.dirty = { identidad: false, voz: false, horario: false, calidad: false };
+      state.errorHorario = false;
+      simVoz.setAttribute('aria-pressed', 'false');
+      simHorario.setAttribute('aria-pressed', 'false');
+      simError.setAttribute('aria-pressed', 'false');
+      renderRail();
+      showToast('Guardado: ' + listarSecciones(ids) + '.');
+    }, 850);
+  });
+
+  /* ---------- Copiar decisiones ---------- */
+  const checks = $$('#checklist input[type="checkbox"]');
+  const approveCount = $('#approveCount');
+  function renderCount() {
+    const n = checks.filter((c) => c.checked).length;
+    approveCount.textContent = n + ' de ' + checks.length + ' aprobadas';
+  }
+  checks.forEach((c) => c.addEventListener('change', renderCount));
+  $('#copyDecisions').addEventListener('click', async () => {
+    const lines = checks.map((c) => {
+      const label = document.querySelector('label[for="' + c.id + '"]');
+      const title = label ? label.childNodes[0].textContent.trim() : c.id;
+      return (c.checked ? '[x] ' : '[ ] ') + title;
+    });
+    const texto = 'Identidad · decisiones\n' + lines.join('\n');
+    const salida = $('#decisionsOut');
+    let copiado = false;
+    try {
+      await navigator.clipboard.writeText(texto);
+      copiado = true;
+    } catch (e) {
+      const area = document.createElement('textarea');
+      area.value = texto;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.top = '-1000px';
+      document.body.appendChild(area);
+      area.select();
+      try { copiado = document.execCommand('copy'); } catch (e2) { copiado = false; }
+      document.body.removeChild(area);
+    }
+    if (copiado) {
+      salida.hidden = true;
+      showToast('Decisiones copiadas. Pégalas en la conversación.');
+    } else {
+      salida.textContent = texto;
+      salida.hidden = false;
+      salida.focus?.();
+      showToast('No se pudo copiar automáticamente; el texto quedó abajo para seleccionarlo.', true);
+    }
+  });
+
+  /* ---------- Inicio ---------- */
+  renderPreview();
+  renderState();
+  renderRail();
+  renderCount();
+})();
+</script>
+</body>
+</html>
