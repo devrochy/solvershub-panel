@@ -19,7 +19,10 @@ import {
   esVelocidadSecundaria,
   largoDeMaxLength,
   negocioParaLaMuestra,
+  NOTA_ENVIO,
+  NOTA_VELOCIDAD,
   resumenDeRitmo,
+  TITULO_ENVIO,
   VELOCIDADES,
   VELOCIDADES_SECUNDARIAS,
 } from "@/lib/voz-estilo";
@@ -46,10 +49,6 @@ const ICONO_ENVIO: Record<string, ReactNode> = {
   un_mensaje: <MessageSquare className="h-4 w-4" aria-hidden />,
   pocos_cortos: <MessageSquareMore className="h-4 w-4" aria-hidden />,
   varios_cortos: <MessagesSquare className="h-4 w-4" aria-hidden />,
-};
-
-const NOTA_ENVIO: Record<string, string> = {
-  un_mensaje: " · gasta menos",
 };
 
 function valorDe(opcion: OpcionConfig | undefined, valor: string): ValorPosibleConfig | undefined {
@@ -105,9 +104,10 @@ export function VozYEstilo({
     nombre,
     negocioParaLaMuestra(descripcion),
   );
+  const envioValor = valorDe(envioOpcion, envio);
   const resumen = resumenDeRitmo(
     valorDe(velocidadOpcion, velocidad) ?? null,
-    valorDe(envioOpcion, envio) ?? null,
+    envioValor ? { ...envioValor, etiqueta: TITULO_ENVIO[envio] ?? envioValor.etiqueta } : null,
   );
   const tonoElegido = TONOS.find((t) => t.id === tono);
   const emojisElegido = EMOJIS.find((e) => e.id === emojis);
@@ -270,7 +270,7 @@ export function VozYEstilo({
                     elegida={velocidad === clave}
                     onElegir={(v) => cambiar("debounce_mode", v)}
                     titulo={valor.etiqueta}
-                    ayuda={valor.nota}
+                    ayuda={NOTA_VELOCIDAD[clave] ?? valor.nota}
                     icono={ICONO_VELOCIDAD[clave]}
                     className="min-h-16 p-3"
                   />
@@ -296,8 +296,8 @@ export function VozYEstilo({
                     valor={clave}
                     elegida={envio === clave}
                     onElegir={(v) => cambiar("split_style", v)}
-                    titulo={valor.etiqueta}
-                    ayuda={`${valor.nota ?? ""}${NOTA_ENVIO[clave] ?? ""}`}
+                    titulo={TITULO_ENVIO[clave] ?? valor.etiqueta}
+                    ayuda={NOTA_ENVIO[clave] ?? valor.nota}
                     icono={ICONO_ENVIO[clave]}
                     className="min-h-16 p-3"
                   />

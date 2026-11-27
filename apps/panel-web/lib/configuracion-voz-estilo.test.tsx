@@ -137,6 +137,8 @@ describe("Voz y estilo (HU-CFG-12)", () => {
     expect(within(dialogo).queryAllByRole("combobox")).toHaveLength(0);
     expect(within(dialogo).getByRole("radio", { name: /Rápida/ })).toBeTruthy();
     expect(within(dialogo).getByRole("radio", { name: /Un solo mensaje/ })).toBeTruthy();
+    expect(within(dialogo).getByText("Pocos mensajes")).toBeTruthy();
+    expect(within(dialogo).getByText("hasta 3 mensajes")).toBeTruthy();
   });
 
   it("el resumen del ritmo sigue a la velocidad y al envío elegidos", async () => {
@@ -146,8 +148,8 @@ describe("Voz y estilo (HU-CFG-12)", () => {
     expect(within(dialogo).getByText(/espera 15 s y envía un solo mensaje\./)).toBeTruthy();
     fireEvent.click(within(dialogo).getByRole("radio", { name: /Pausada/ }));
     expect(within(dialogo).getByText(/espera 30 s y envía un solo mensaje\./)).toBeTruthy();
-    fireEvent.click(within(dialogo).getByRole("radio", { name: /Pocos mensajes cortos/ }));
-    expect(within(dialogo).getByText(/espera 30 s y envía pocos mensajes cortos\./)).toBeTruthy();
+    fireEvent.click(within(dialogo).getByRole("radio", { name: /Pocos mensajes/ }));
+    expect(within(dialogo).getByText(/espera 30 s y envía pocos mensajes\./)).toBeTruthy();
   });
 
   it("«Más opciones» muestra las velocidades secundarias y no esconde la guardada", async () => {
