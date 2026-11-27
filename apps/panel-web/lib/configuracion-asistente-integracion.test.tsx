@@ -115,7 +115,8 @@ describe("«Ajustar con preguntas» en Configuración", () => {
       .mockResolvedValueOnce(respuesta(200, aplicada))
       .mockResolvedValueOnce(respuesta(200, {}));
     montar({ defaultSeccion: "horario" });
-    expect(screen.getByRole("switch", { name: "Abierto el lunes" }).getAttribute("aria-checked")).toBe("false");
+    expect((screen.getByRole("switch", { name: "Atiende siempre" }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText("Siempre abierto, sin horario.")).toBeTruthy();
     expect(campo("business_hours_mode").value).toBe("bloquea");
 
     fireEvent.click(boton()!);
@@ -131,11 +132,16 @@ describe("«Ajustar con preguntas» en Configuración", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Aplicar cambios" })).toBeNull());
 
     // Lunes a viernes quedan abiertos de 8:00 a. m. a 6:00 p. m. en el horario por días.
+    // Como el modo queda «informativo», el horario se informa y no hay switch «Atiende siempre».
+    expect(screen.queryByRole("switch", { name: "Atiende siempre" })).toBeNull();
+    expect(screen.getByText(/El asistente responde siempre; este horario se usa para informar/)).toBeTruthy();
     for (const dia of ["lunes", "martes", "miércoles", "jueves", "viernes"]) {
-      expect(screen.getByRole("switch", { name: `Abierto el ${dia}` }).getAttribute("aria-checked")).toBe("true");
+      expect((screen.getByRole("switch", { name: `Abierto el ${dia}` }) as HTMLInputElement).checked).toBe(true);
     }
-    expect((screen.getByLabelText("Lunes: desde") as HTMLSelectElement).value).toBe("08:00");
-    expect(screen.getByRole("switch", { name: "Abierto el sábado" }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText(/Lun a Vie, 8:00 a. m. – 6:00 p. m./)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Lunes.*Editar el horario/ }));
+    expect((screen.getByLabelText("Lunes: abre") as HTMLSelectElement).value).toBe("08:00");
+    expect((screen.getByRole("switch", { name: "Abierto el sábado" }) as HTMLInputElement).checked).toBe(false);
     expect(campo("business_hours_mode").value).toBe("informativo");
 
     // Guardar a mano manda lo que dejó el asistente.
