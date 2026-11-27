@@ -22,6 +22,14 @@ import {
   pistaDePorDefecto,
   puedeEditarDatosCliente,
   restablecida,
+  cambiosDeLaEstacion3,
+  conMetodo,
+  datosRecomendadosEnLaRuta,
+  NIVELES_EN_LA_RUTA,
+  operacionesEnLaRuta,
+  preguntaPorEntregas,
+  resumenDeOperacion,
+  type MetodoEntrega,
 } from "@/lib/datos-cliente";
 import { politicaDatosCliente, politicaDatosCliente as politica } from "@/lib/testing/fixtures";
 
@@ -182,5 +190,120 @@ describe("Cuánto pregunta", () => {
     expect(tipoDelAgente("ventas", null)).toBe("ventas");
     expect(tipoDelAgente("mi_agente", politicaCita)).toBe("agenda");
     expect(tipoDelAgente("mi_agente", { ...politicaCita, acciones: [] })).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------------ estación 3 de la ruta (HU-UX-29)
+
+const campo = (clave: string, etiqueta: string, nivel: "requerido" | "recomendado" | "no_pedir", ajustable = true) => ({
+  clave,
+  etiqueta,
+  nivel,
+  por_defecto: nivel,
+  ajustable,
+  ajustado: false,
+});
+
+/** Las dos entregas de Comercio (`pack_commerce/datos.py`) y una operación de otro módulo. */
+const deVentas: PoliticaDatos = {
+  agente_id: "22222222-2222-2222-2222-222222222222",
+  niveles: ["requerido", "recomendado", "no_pedir"],
+  herramientas_del_agente: false,
+  metodos_entrega: ["domicilio", "recoger_en_tienda"],
+  procedimientos: [],
+  acciones: [
+    {
+      id: "ventas.pedido_domicilio",
+      modulo: "ventas",
+      etiqueta: "Pedido a domicilio",
+      campos: [campo("name", "Nombre completo", "requerido"), campo("address", "Dirección", "requerido", false), campo("email", "Correo", "no_pedir")],
+    },
+    {
+      id: "ventas.pedido_retiro",
+      modulo: "ventas",
+      etiqueta: "Pedido para recoger en tienda",
+      campos: [campo("name", "Nombre completo", "requerido"), campo("email", "Correo", "recomendado")],
+    },
+    {
+      id: "suscripciones.inscribirse",
+      modulo: "suscripciones",
+      etiqueta: "Inscribirse a un plan",
+      campos: [campo("name", "Nombre completo", "requerido")],
+    },
+  ],
+};
+
+describe("preguntas de la estación 3 (HU-UX-29)", () => {
+  it("una pregunta por entrega encendida, con el nombre de la entrega, y una por cada otra operación", () => {
+    expect(operacionesEnLaRuta(deVentas, ["domicilio", "recoger_en_tienda"]).map((o) => o.titulo)).toEqual([
+      "A domicilio · ¿Qué datos pide?",
+      "Recoger en tienda · ¿Qué datos pide?",
+      "¿Qué datos pide para inscribirse a un plan?",
+    ]);
+    const soloRetiro = operacionesEnLaRuta(deVentas, ["recoger_en_tienda"]);
+    expect(soloRetiro.map((o) => o.accion.id)).toEqual(["ventas.pedido_retiro", "suscripciones.inscribirse"]);
+    expect(soloRetiro[0].entrega).toBe("recoger_en_tienda");
+    expect(soloRetiro[1].entrega).toBeNull();
+  });
+
+  it("en Agenda la pregunta habla de la cita y no hay pregunta de entregas", () => {
+    expect(operacionesEnLaRuta(politica, []).map((o) => o.titulo)).toEqual([
+      "¿Qué datos pide para crear un pedido?",
+      "¿Qué datos pide para agendar una cita?",
+    ]);
+    expect(preguntaPorEntregas(politica)).toBe(false);
+    expect(preguntaPorEntregas(deVentas)).toBe(true);
+  });
+
+  it("los niveles se ven como Siempre, Si se puede y No, en el orden de requerido, recomendado y no_pedir", () => {
+    expect(NIVELES_EN_LA_RUTA.map((n) => [n.id, n.etiqueta])).toEqual([
+      ["requerido", "Siempre"],
+      ["recomendado", "Si se puede"],
+      ["no_pedir", "No"],
+    ]);
+  });
+
+  it("en la ruta se pueden desmarcar todas las entregas; en Personalizar la última no se apaga", () => {
+    expect(conMetodo(["recoger_en_tienda"], "domicilio", true)).toEqual(["domicilio", "recoger_en_tienda"]);
+    expect(conMetodo(["domicilio", "recoger_en_tienda"], "domicilio", false, true)).toEqual(["recoger_en_tienda"]);
+    expect(conMetodo(["recoger_en_tienda"], "recoger_en_tienda", false, true)).toEqual([]);
+    expect(conMetodo(["recoger_en_tienda"], "recoger_en_tienda", false)).toEqual(["recoger_en_tienda"]);
+  });
+
+  it("resume lo que pide siempre y lo que pide si se puede", () => {
+    const estado = estadoInicial(deVentas);
+    expect(resumenDeOperacion(deVentas.acciones[0], estado)).toBe("Siempre: nombre completo y dirección");
+    expect(resumenDeOperacion(deVentas.acciones[1], estado)).toBe("Siempre: nombre completo · Si se puede: correo");
+    const sinNada = conNivel(deVentas, estado, "suscripciones.inscribirse", "name", "no_pedir");
+    expect(resumenDeOperacion(deVentas.acciones[2], sinNada)).toBe("No pide datos");
+  });
+
+  it("apagar una entrega conserva su política: sigue en el PUT con lo ajustado", () => {
+    const ajustado = conNivel(deVentas, estadoInicial(deVentas), "ventas.pedido_domicilio", "email", "recomendado");
+    // Apagar «A domicilio» quita su pregunta, pero no toca el estado.
+    expect(operacionesEnLaRuta(deVentas, ["recoger_en_tienda"]).some((o) => o.accion.id === "ventas.pedido_domicilio")).toBe(false);
+    expect(cuerpoParaGuardar(deVentas, ajustado).politica["ventas.pedido_domicilio"]).toEqual({ email: "recomendado" });
+  });
+
+  it("cuenta los cambios de lo visible, las entregas y la memoria; una entrega apagada no cuenta sus datos", () => {
+    const recomendado = { metodos: ["domicilio", "recoger_en_tienda"] as MetodoEntrega[], herramientas: false };
+    const inicial = estadoInicial(deVentas);
+    expect(cambiosDeLaEstacion3(deVentas, inicial, recomendado.metodos, false, recomendado)).toBe(0);
+    const ajustado = conNivel(deVentas, inicial, "ventas.pedido_domicilio", "email", "recomendado");
+    expect(cambiosDeLaEstacion3(deVentas, ajustado, recomendado.metodos, false, recomendado)).toBe(1);
+    // Sin domicilio: cuenta la entrega apagada, no su dato.
+    expect(cambiosDeLaEstacion3(deVentas, ajustado, ["recoger_en_tienda"], false, recomendado)).toBe(1);
+    expect(cambiosDeLaEstacion3(deVentas, ajustado, ["recoger_en_tienda"], true, recomendado)).toBe(2);
+  });
+
+  it("«Usar lo recomendado» deja lo visible en su valor por defecto y conserva lo de la entrega apagada", () => {
+    let estado = conNivel(deVentas, estadoInicial(deVentas), "ventas.pedido_domicilio", "email", "recomendado");
+    estado = conNivel(deVentas, estado, "ventas.pedido_retiro", "email", "no_pedir");
+    const conTodo = datosRecomendadosEnLaRuta(deVentas, estado, ["domicilio", "recoger_en_tienda"]);
+    expect(conTodo["ventas.pedido_domicilio"].email).toBe("no_pedir");
+    expect(conTodo["ventas.pedido_retiro"].email).toBe("recomendado");
+    const soloRetiro = datosRecomendadosEnLaRuta(deVentas, estado, ["recoger_en_tienda"]);
+    expect(soloRetiro["ventas.pedido_domicilio"].email).toBe("recomendado");
+    expect(soloRetiro["ventas.pedido_retiro"].email).toBe("recomendado");
   });
 });

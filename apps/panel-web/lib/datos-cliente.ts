@@ -302,6 +302,132 @@ export function tipoDelAgente(key: string | null | undefined, politica: Politica
   return (modulo as TipoDeNegocio | undefined) ?? null;
 }
 
+// ------------------------------------------------------------------ estación 3 de la ruta (HU-UX-29)
+
+/** La operación de cada entrega, igual que `ACCION_POR_ENTREGA` de `pack_commerce/datos.py`. */
+export const ACCION_POR_ENTREGA: Record<MetodoEntrega, string> = {
+  domicilio: "ventas.pedido_domicilio",
+  recoger_en_tienda: "ventas.pedido_retiro",
+};
+
+const ENTREGA_POR_ACCION = new Map(
+  (Object.entries(ACCION_POR_ENTREGA) as [MetodoEntrega, string][]).map(([metodo, accion]) => [accion, metodo]),
+);
+
+/**
+ * Los niveles en palabras del dueño, en la estación 3 de la ruta (D-SPEC-52-6, tablero `E3b`): las etiquetas
+ * de `requerido`, `recomendado` y `no_pedir`. Personalizar sigue con las de `NIVELES`.
+ */
+export const NIVELES_EN_LA_RUTA: { id: NivelDato; etiqueta: string; ayuda: string }[] = [
+  { id: "requerido", etiqueta: "Siempre", ayuda: "Lo pide antes de seguir." },
+  { id: "recomendado", etiqueta: "Si se puede", ayuda: "Lo pide, pero no frena la venta." },
+  { id: "no_pedir", etiqueta: "No", ayuda: "No lo pide." },
+];
+
+/** Una pregunta de datos de la estación 3: una operación, con su título. */
+export interface OperacionEnLaRuta {
+  accion: AccionPolitica;
+  /** La entrega de la que sale, si es de Ventas. */
+  entrega: MetodoEntrega | null;
+  titulo: string;
+}
+
+/**
+ * Las preguntas de datos de la estación 3, en el orden en que llegan las operaciones: una por entrega encendida
+ * en Ventas («A domicilio · ¿Qué datos pide?») y una por cada otra operación («¿Qué datos pide para agendar una
+ * cita?»). Una entrega apagada no tiene pregunta, pero su operación sigue en el estado y en el PUT.
+ */
+export function operacionesEnLaRuta(politica: PoliticaDatos, metodos: readonly MetodoEntrega[]): OperacionEnLaRuta[] {
+  return politica.acciones.flatMap((accion): OperacionEnLaRuta[] => {
+    const entrega = ENTREGA_POR_ACCION.get(accion.id) ?? null;
+    if (entrega) {
+      if (!metodos.includes(entrega)) return [];
+      const etiqueta = METODOS_ENTREGA.find((m) => m.id === entrega)?.etiqueta ?? accion.etiqueta;
+      return [{ accion, entrega, titulo: `${etiqueta} · ¿Qué datos pide?` }];
+    }
+    const etiqueta = accion.etiqueta.trim();
+    return [{ accion, entrega: null, titulo: etiqueta ? `¿Qué datos pide para ${enMinuscula(etiqueta)}?` : "¿Qué datos pide?" }];
+  });
+}
+
+/** ¿El agente vende con entrega? Entonces la estación empieza por «¿Cómo entregas los pedidos?». */
+export function preguntaPorEntregas(politica: PoliticaDatos): boolean {
+  return politica.acciones.some((a) => ENTREGA_POR_ACCION.has(a.id));
+}
+
+/**
+ * Enciende o apaga una entrega, en el orden de `METODOS_ENTREGA`. Con `permitirVacio` (la pregunta de la ruta)
+ * puede quedar ninguna, y la pregunta no deja seguir; si no (Personalizar), la última no se apaga.
+ */
+export function conMetodo(
+  actual: readonly MetodoEntrega[],
+  metodo: MetodoEntrega,
+  activo: boolean,
+  permitirVacio = false,
+): MetodoEntrega[] {
+  if (activo) return METODOS_ENTREGA.map((m) => m.id).filter((id) => id === metodo || actual.includes(id));
+  if (!permitirVacio && actual.length === 1 && actual[0] === metodo) return [...actual];
+  return actual.filter((id) => id !== metodo);
+}
+
+function lista(nombres: string[]): string {
+  if (nombres.length <= 1) return nombres[0] ?? "";
+  return `${nombres.slice(0, -1).join(", ")} y ${nombres[nombres.length - 1]}`;
+}
+
+/** La respuesta de una pregunta de datos: «Siempre: nombre y teléfono · Si se puede: correo». */
+export function resumenDeOperacion(accion: AccionPolitica, estado: EstadoDatos): string {
+  const nivel = (c: CampoPolitica) => estado[accion.id]?.[c.clave] ?? c.nivel;
+  const de = (n: NivelDato) => accion.campos.filter((c) => nivel(c) === n).map((c) => enMinuscula(c.etiqueta.trim()));
+  const partes = [
+    de("requerido").length ? `Siempre: ${lista(de("requerido"))}` : "",
+    de("recomendado").length ? `Si se puede: ${lista(de("recomendado"))}` : "",
+  ].filter(Boolean);
+  return partes.join(" · ") || "No pide datos";
+}
+
+/** Lo recomendado de la estación 3: los niveles por defecto y las entregas y la memoria con que llegó el agente. */
+export interface RecomendadoDeDatos {
+  metodos: MetodoEntrega[];
+  herramientas: boolean;
+}
+
+/**
+ * Cuántos cambios lleva la estación 3 frente a lo recomendado (la barra «N cambios»): los datos de las preguntas
+ * visibles fuera de su `por_defecto`, cada entrega distinta y la memoria. Una entrega apagada no cuenta sus datos:
+ * su política se conserva sin verse.
+ */
+export function cambiosDeLaEstacion3(
+  politica: PoliticaDatos,
+  estado: EstadoDatos,
+  metodos: readonly MetodoEntrega[],
+  herramientas: boolean,
+  recomendado: RecomendadoDeDatos,
+): number {
+  const datos = operacionesEnLaRuta(politica, metodos).reduce(
+    (total, { accion }) =>
+      total + accion.campos.filter((c) => c.ajustable && (estado[accion.id]?.[c.clave] ?? c.nivel) !== c.por_defecto).length,
+    0,
+  );
+  const entregas = preguntaPorEntregas(politica)
+    ? METODOS_ENTREGA.filter((m) => metodos.includes(m.id) !== recomendado.metodos.includes(m.id)).length
+    : 0;
+  return datos + entregas + (herramientas !== recomendado.herramientas ? 1 : 0);
+}
+
+/** «Usar lo recomendado» en la estación 3: los datos visibles a su `por_defecto`; las entregas apagadas conservan los suyos. */
+export function datosRecomendadosEnLaRuta(
+  politica: PoliticaDatos,
+  estado: EstadoDatos,
+  metodos: readonly MetodoEntrega[],
+): EstadoDatos {
+  const visibles = new Set(operacionesEnLaRuta(politica, metodos).map((o) => o.accion.id));
+  const recomendado = alPorDefecto(politica, estado);
+  return Object.fromEntries(
+    Object.entries({ ...estado, ...recomendado }).map(([id, niveles]) => [id, visibles.has(id) ? niveles : (estado[id] ?? niveles)]),
+  );
+}
+
 /** Mensaje claro para un error del backend al guardar. */
 export function mensajeDeErrorAlGuardar(status: number | undefined, error?: string): string {
   if (status === 403) return "No tienes permiso para cambiar esto. Pídele acceso a quien administra el negocio.";

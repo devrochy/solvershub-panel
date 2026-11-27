@@ -782,16 +782,18 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
     abrir({ modo: "crear", pasoInicial: "datos-cliente" });
     expect(screen.getAllByText("Paso 3 de 5 · Datos del cliente").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Guardar datos del cliente" })).toBeNull();
-    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Cuánto pregunta" })).getByRole("radio", { name: /Completo/ }));
-    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    // HU-UX-29: una pregunta a la vez; «Guardar y seguir» espera a que estén todas respondidas.
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Sí, que lo recuerde/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
     fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Datos para probar/ }));
     await waitFor(() => expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0));
     const put = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/datos-cliente"));
     expect(put?.[1].method).toBe("PUT");
     const cuerpo = JSON.parse(put?.[1].body);
     expect(cuerpo).toHaveProperty("politica");
-    expect(cuerpo).toHaveProperty("herramientas_del_agente");
-    expect(cuerpo.metodos_entrega).toEqual(["recoger_en_tienda"]);
+    expect(cuerpo.herramientas_del_agente).toBe(true);
+    expect(cuerpo.metodos_entrega).toEqual(["domicilio", "recoger_en_tienda"]);
   });
 
   it("en la bienvenida (HU-UX-25) es la estación 3: guarda política, herramientas y métodos y deja el recorrido en el paso 4 de 5", async () => {
@@ -815,15 +817,18 @@ describe("«Datos del cliente» como paso propio en Personalizar (HU-AOS-85)", (
     // El chat de la estación es el simulado del escenario: no llama al modelo.
     expect(screen.getByText("Pruebas de «Datos del cliente» · toca una")).toBeTruthy();
     expect(await violacionesGraves(container)).toEqual([]);
-    fireEvent.click(screen.getByRole("switch", { name: "Ofrecer a domicilio" }));
+    // HU-UX-29: el correo, de «Si se puede» a «Siempre».
+    fireEvent.click(within(screen.getByRole("group", { name: "Correo: cuándo lo pide" })).getByRole("button", { name: "Siempre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listo" }));
     fireEvent.click(screen.getByRole("button", { name: /Guardar y seguir: Datos para probar/ }));
     await waitFor(() => expect(avanzar).toHaveBeenCalledWith(4));
     const put = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/datos-cliente"));
     expect(put?.[1].method).toBe("PUT");
     expect(JSON.parse(put?.[1].body)).toEqual({
-      politica: { "ventas.crear_pedido": {} },
+      politica: { "ventas.crear_pedido": { correo: "requerido" } },
       herramientas_del_agente: false,
-      metodos_entrega: ["recoger_en_tienda"],
+      metodos_entrega: ["domicilio", "recoger_en_tienda"],
     });
     expect(screen.getAllByText("Paso 4 de 5 · Datos para probar").length).toBeGreaterThan(0);
   });

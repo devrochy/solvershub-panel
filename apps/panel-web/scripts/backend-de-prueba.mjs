@@ -26,6 +26,8 @@
 //   BIENVENIDA_PASO (2 a 5, por defecto 2), con Datos del cliente, Formas de pago y el chat de pruebas por la conexión;
 //   HABILIDADES=1 (HU-UX-28, con BIENVENIDA=agente o NUEVO_AGENTE=1): Laura y Tomás traen el horario del negocio y lo
 //   que les falta para funcionar del todo (catálogo, servicios y Wompi), para la estación 2 · Habilidades.
+//   DATOS_CLIENTE=1 (HU-UX-29, igual): Laura con las dos entregas de Comercio, Tomás con la cita de Agenda y el aviso
+//   de tratamiento de datos, para la estación 3 · Datos del cliente.
 //   avanzar, omitir, dejar listo y finalizar cambian el recorrido en memoria. BIENVENIDA=viejo: igual, pero guardado
 //   con 4 pasos en el paso 3 (retoma en «Datos para probar», 4 de 5).
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -1192,6 +1194,42 @@ if (process.env.HABILIDADES === "1") {
       { skill: "pack_calendar", kind: "sin_contenido", title: "Aún no hay servicios", explanation: "Crea al menos un tipo de cita para que pueda agendar.", section: "pack_calendar", content: "servicios" },
     ]);
   }
+}
+// DATOS_CLIENTE=1 (HU-UX-29, con BIENVENIDA=agente o NUEVO_AGENTE=1): Laura con las dos entregas de Comercio
+// (`pack_commerce/datos.py`), Tomás con la cita de Agenda y el aviso de tratamiento de datos del negocio.
+if (process.env.DATOS_CLIENTE === "1") {
+  const campo = (clave, etiqueta, nivel, ajustable = true) => ({ clave, etiqueta, nivel, por_defecto: nivel, ajustable, ajustado: false });
+  const base = { niveles: ["requerido", "recomendado", "no_pedir"], herramientas_del_agente: false, metodos_entrega: ["domicilio", "recoger_en_tienda"], procedimientos: [] };
+  respuestas[`/admin/agents/${VENTAS_ID}/datos-cliente`] = {
+    ...base,
+    agente_id: VENTAS_ID,
+    acciones: [
+      { id: "ventas.pedido_domicilio", modulo: "ventas", etiqueta: "Pedido a domicilio", campos: [
+        campo("name", "Nombre completo", "requerido"), campo("id_document", "Documento", "requerido"), campo("phone", "Teléfono", "requerido"),
+        campo("address", "Dirección", "requerido", false), campo("municipio", "Municipio o ciudad", "requerido"), campo("email", "Correo", "no_pedir"),
+      ] },
+      { id: "ventas.pedido_retiro", modulo: "ventas", etiqueta: "Pedido para recoger en tienda", campos: [
+        campo("name", "Nombre completo", "requerido"), campo("id_document", "Documento", "requerido"), campo("phone", "Teléfono", "requerido"),
+        campo("email", "Correo", "no_pedir"), campo("address", "Dirección", "no_pedir"), campo("municipio", "Municipio o ciudad", "no_pedir"),
+      ] },
+    ],
+  };
+  respuestas[`/admin/agents/7a0a5000-0000-4000-8000-000000000086/datos-cliente`] = {
+    ...base,
+    agente_id: "7a0a5000-0000-4000-8000-000000000086",
+    acciones: [
+      { id: "agenda.agendar_cita", modulo: "agenda", etiqueta: "Agendar una cita", campos: [
+        campo("email", "Correo", "requerido", false), campo("name", "Nombre completo", "recomendado"), campo("phone", "Teléfono", "no_pedir"),
+      ] },
+    ],
+  };
+  respuestas["/admin/datos-cliente/aviso"] = {
+    activo: false,
+    texto: "Usamos tus datos para atender tu pedido. Responde «acepto» si estás de acuerdo.",
+    texto_propio: "",
+    es_borrador: true,
+    version: "abc123def456",
+  };
 }
 function nuevoAgente(metodo, ruta) {
   if (!NUEVO) return undefined;
