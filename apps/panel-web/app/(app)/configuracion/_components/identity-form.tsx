@@ -403,9 +403,7 @@ export function IdentityForm({
                       identity={identity}
                       catalogo={catalogo}
                       valores={valores}
-                      errores={errores}
                       cambiar={cambiar}
-                      pendientes={pendientes}
                       irASeccion={irASeccion}
                     />
                   ) : (

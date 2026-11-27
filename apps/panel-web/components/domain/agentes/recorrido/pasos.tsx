@@ -121,22 +121,6 @@ export function PasoVoz({
           </Link>
         </p>
       </div>
-      <div className="flex items-start gap-3">
-        <Switch
-          id="agente-voz"
-          checked={estado.heredarVoz}
-          onCheckedChange={(valor) => cambiar({ heredarVoz: valor })}
-          aria-describedby="agente-voz-ayuda"
-        />
-        <div>
-          <label htmlFor="agente-voz" className="text-sm font-medium text-headline">
-            Hablar con la voz de la conexión
-          </label>
-          <p id="agente-voz-ayuda" className="text-sm text-text-soft">
-            Usa el tono, la calidez y los emojis que configuraste para cada canal.
-          </p>
-        </div>
-      </div>
       <div className="flex flex-col gap-2">
         <label htmlFor="agente-prohibidas" className="text-sm font-medium text-headline">
           Frases que el agente nunca dice

@@ -183,15 +183,18 @@ describe("Voz y estilo (HU-CFG-12)", () => {
     expect(burbuja?.textContent).toMatch(/Le atiende Asistente de prueba/);
   });
 
-  it("los límites viven en Avanzado y la regla de fallo ya no está en Voz", async () => {
+  it("los límites se editan en el agente y la regla de fallo ya no está en Voz", async () => {
     montar();
     const dialogo = await abrirVoz();
 
     expect(within(dialogo).queryByText("Si el asistente no logra corregir su respuesta")).toBeNull();
-    expect(within(dialogo).getByText(/Aplica al crear el agente/)).toBeTruthy();
+    expect(within(dialogo).getByText(/Se editan en cada agente/)).toBeTruthy();
     fireEvent.click(within(dialogo).getByText(/Avanzado · límites de este negocio/));
-    expect(within(dialogo).getByText("Largo máximo de la respuesta")).toBeTruthy();
-    expect(within(dialogo).getByText("Frases prohibidas")).toBeTruthy();
+    expect(within(dialogo).getByText(/viven en la versión de cada agente/)).toBeTruthy();
+    const enlace = within(dialogo).getByRole("link", { name: "Editar en la ficha del agente" });
+    expect(enlace.getAttribute("href")).toBe("/agentes");
+    expect(within(dialogo).queryByText("Largo máximo de la respuesta")).toBeNull();
+    expect(within(dialogo).queryByText("Frases prohibidas")).toBeNull();
 
     // La regla de fallo está en Calidad de respuestas.
     fireEvent.click(within(dialogo).getByRole("button", { name: "Calidad de respuestas" }));
