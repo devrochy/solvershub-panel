@@ -640,6 +640,7 @@ export const ajustes: SettingsResponse = {
     business_description: "Negocio ficticio para pruebas.",
     brand_voice: "",
     brand_voice_warning: false,
+    language: "es",
     tono: "cercano",
     business_hours_mode: "bloquea",
     debounce_mode: "natural",

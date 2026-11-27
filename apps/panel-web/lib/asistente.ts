@@ -6,10 +6,10 @@ import type { IdentitySettings } from "@/lib/api/types";
  * desde la barra superior mientras el formulario estaba abierto.
  */
 export function cuerpoIdentidad(values: IdentitySettings, inicial: IdentitySettings) {
-  // `out_of_hours_default_message` es de solo lectura: no viaja en el PUT. `tono` está retirado
-  // (SPEC-37, ADR-0166): no tenía efecto y la persona ya tiene su propio tono.
+  // `out_of_hours_default_message`, `language` y `tono` son de solo lectura o están retirados: no
+  // viajan en el PUT. `tono` se retiró con SPEC-37/ADR-0166 y el idioma se fija al crear el negocio.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { bot_paused, out_of_hours_default_message, tono, ...resto } = values;
+  const { bot_paused, out_of_hours_default_message, language, tono, ...resto } = values;
   return {
     ...resto,
     business_tz: values.timezone,
