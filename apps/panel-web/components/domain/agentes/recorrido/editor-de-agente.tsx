@@ -584,9 +584,12 @@ export function EditorDeAgente({
     irA(comoCreacionRapida && !deLaRuta.includes(destino) ? "probar" : destino);
   }
 
-  function irA(id: PasoId) {
-    // La primera vez que se llega a la estación 3 de la ruta, se abre su primera pregunta.
-    if (id === "datos-cliente") setAbiertaDeDatos((a) => a ?? 0);
+  /**
+   * La primera vez que se llega a la estación 3 de la ruta hacia adelante, se abre su primera pregunta; si se llega
+   * volviendo (Atrás, la barra o «Editar»), llega todo respondido, como la estación 2.
+   */
+  function irA(id: PasoId, haciaAdelante = false) {
+    if (id === "datos-cliente") setAbiertaDeDatos((a) => a ?? (haciaAdelante ? 0 : Number.MAX_SAFE_INTEGER));
     setPaso(id);
   }
 
@@ -595,14 +598,14 @@ export function EditorDeAgente({
     if (creacionRapida) {
       const j = PASOS_DE_LA_CREACION.indexOf(paso);
       const siguiente = PASOS_DE_LA_CREACION[j + delta];
-      if (siguiente) irA(siguiente);
+      if (siguiente) irA(siguiente, delta > 0);
       return;
     }
     if (enBienvenida) {
       // Antes de «Habilidades» va el paso del negocio, que vive en `/bienvenida`.
       const j = PASOS_DE_LA_BIENVENIDA.indexOf(paso);
       const siguiente = PASOS_DE_LA_BIENVENIDA[j + delta];
-      if (siguiente) irA(siguiente);
+      if (siguiente) irA(siguiente, delta > 0);
       else if (delta < 0) bienvenida.volverA(bienvenida.pasosDelNegocio.length);
       return;
     }

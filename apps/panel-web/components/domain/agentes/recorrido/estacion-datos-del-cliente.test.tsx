@@ -324,3 +324,14 @@ describe("Estación 3 · Datos del cliente por tipo de entrega (HU-UX-29)", () =
     expect(screen.queryByText("¿Cómo entregas los pedidos?")).toBeNull();
   });
 });
+
+describe("llegar a la estación 3 (HU-UX-29)", () => {
+  it("volviendo desde la 4 llega todo respondido, como la estación 2", () => {
+    abrir({ pasoInicial: "conocimiento" });
+    fireEvent.click(screen.getByRole("button", { name: "Atrás" }));
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué datos pide Laura?" })).toBeTruthy();
+    expect(screen.queryByText(/Pregunta \d de/)).toBeNull();
+    expect(screen.queryByText(/Faltan/)).toBeNull();
+    expect(seguir().disabled).toBe(false);
+  });
+});
