@@ -15,6 +15,7 @@ import type {
   VistaPreviaImportacion,
 } from "@/lib/api/types";
 import type { Respuesta } from "@/lib/datos-de-prueba";
+import { esLimiteDePlan } from "@/lib/plan-limite";
 
 /** Columna interna de la foto del producto: la llena el flujo de fotos y no se edita como texto. */
 export const COLUMNA_FOTO = "imagen";
@@ -218,6 +219,11 @@ export function enviarPrecarga<T extends VistaPreviaImportacion | ImportacionHec
   });
 }
 
+/** Retira lo importado para el agente (lo generado y lo creado a mano no cambian). */
+export function borrarImportacion(agenteId: string): Promise<Respuesta<unknown>> {
+  return llamar(`/api/agentes/${agenteId}/importar-datos`, { method: "DELETE" });
+}
+
 export function cotizarFotos(agenteId: string, fotos: number): Promise<Respuesta<CotizacionFotos>> {
   return llamar(`/api/agentes/${agenteId}/importar-datos/fotos/cotizacion?fotos=${fotos}`);
 }
@@ -226,6 +232,36 @@ export function subirFoto(agenteId: string, foto: File): Promise<Respuesta<FilaD
   const cuerpo = new FormData();
   cuerpo.set("archivo", foto, foto.name);
   return llamar(`/api/agentes/${agenteId}/importar-datos/fotos`, { method: "POST", body: cuerpo });
+}
+
+/**
+ * Reconoce una tanda de fotos una por una y suma cada fila a la precarga (HU-COM-20). Si se acaba el crédito para
+ * sin perder lo reconocido; si una foto falla por otra razón, sigue con las demás. `alAvanzar` avisa cada fila.
+ */
+export async function reconocerFotos(
+  agenteId: string,
+  fotos: readonly File[],
+  filas: FilaEditable[],
+  alAvanzar: (filas: FilaEditable[], hechas: number) => void,
+): Promise<{ filas: FilaEditable[]; hechas: number; error: string | null }> {
+  let actuales = filas;
+  let hechas = 0;
+  let error: string | null = null;
+  for (const foto of fotos) {
+    const r = await subirFoto(agenteId, foto);
+    if (!r.ok) {
+      const sinCredito = esLimiteDePlan(r.code) || r.code === "plan_limit_creditos";
+      error = sinCredito
+        ? `No te alcanza el crédito del mes: se reconocieron ${hechas} de ${fotos.length} fotos. Puedes confirmar las que ya están.`
+        : `«${foto.name}»: ${r.error}`;
+      if (sinCredito) break;
+      continue;
+    }
+    actuales = [...actuales, filaDesdeFoto(r.data, siguienteNumero(actuales))];
+    hechas += 1;
+    alAvanzar(actuales, hechas);
+  }
+  return { filas: actuales, hechas, error };
 }
 
 /**

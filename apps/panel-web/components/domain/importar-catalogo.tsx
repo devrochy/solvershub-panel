@@ -16,15 +16,12 @@ import {
   TIPOS_DE_FOTO,
   avisoDeIa,
   cotizarFotos,
-  filaDesdeFoto,
   filasDesdeMapeo,
   mapearArchivo,
-  siguienteNumero,
-  subirFoto,
+  reconocerFotos,
   textoDeCotizacion,
   type FilaEditable,
 } from "@/lib/carga-de-datos";
-import { esLimiteDePlan } from "@/lib/plan-limite";
 
 /**
  * Importar el catálogo desde un CSV cualquiera (HU-COM-19) o desde fotos (HU-COM-20), con la precarga editable.
@@ -89,26 +86,12 @@ export function ImportarCatalogo({
   async function reconocer() {
     setError(null);
     setTrabajando(true);
-    let actuales = filas;
-    let hechas = 0;
-    setAvance({ hechas, total: fotos.length });
-    for (const foto of fotos) {
-      const r = await subirFoto(agenteId, foto);
-      if (!r.ok) {
-        const sinCredito = esLimiteDePlan(r.code) || r.code === "plan_limit_creditos";
-        setError(
-          sinCredito
-            ? `No te alcanza el crédito del mes: se reconocieron ${hechas} de ${fotos.length} fotos. Puedes confirmar las que ya están.`
-            : `«${foto.name}»: ${r.error}`,
-        );
-        if (sinCredito) break;
-        continue;
-      }
-      actuales = [...actuales, filaDesdeFoto(r.data, siguienteNumero(actuales))];
-      hechas += 1;
+    setAvance({ hechas: 0, total: fotos.length });
+    const r = await reconocerFotos(agenteId, fotos, filas, (actuales, hechas) => {
       setFilas(actuales);
       setAvance({ hechas, total: fotos.length });
-    }
+    });
+    setError(r.error);
     setFotos([]);
     setCotizacion(null);
     setTrabajando(false);

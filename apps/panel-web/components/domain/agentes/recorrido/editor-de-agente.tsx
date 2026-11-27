@@ -93,6 +93,8 @@ import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-re
 import { OpcionesAvanzadas } from "@/components/domain/agentes/recorrido/opciones-avanzadas";
 import { LineaDelHorario, preguntasDeHabilidades } from "@/components/domain/agentes/recorrido/preguntas-de-habilidades";
 import { AVANZADAS_DE_DATOS, LineaDelAviso, preguntasDeDatos } from "@/components/domain/agentes/recorrido/preguntas-de-datos";
+import { useDatosParaProbar } from "@/components/domain/agentes/recorrido/preguntas-de-datos-para-probar";
+import { LO_DEL_TIPO } from "@/lib/carga-de-prueba";
 import { ListaDePreguntas, textoDeFaltan } from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
 import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
@@ -150,7 +152,8 @@ const ESTACION_DEL_PASO: Partial<Record<PasoId, EstacionDeLaRuta>> = {
 const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
   habilidades: "¿Qué sabe hacer {nombre}?",
   "datos-cliente": "¿Qué datos pide {nombre}?",
-  conocimiento: "¿Con qué datos probamos a {nombre}?",
+  // «¿Con qué servicios probamos a Tomás?» (tablero `E4-M-nuevo`): `{lo}` va por tipo.
+  conocimiento: "¿Con qué {lo} probamos a {nombre}?",
   probar: "Revisa y publica a {nombre}",
 };
 /** La pregunta de cada estación en la bienvenida (tableros `rb2`–`rb5`); «Datos para probar» va por tipo. */
@@ -331,6 +334,14 @@ export function EditorDeAgente({
   // Datos cargados en «Conocimiento y datos» (SPEC-45): null = nada en esta visita.
   const [cargado, setCargado] = useState<Cargado | null>(null);
   const [cargados, setCargados] = useState<RegistroDePrueba[]>([]);
+  // Estación 4 de la ruta (HU-UX-30): la carga guiada lleva su estado y lo conserva al ir y volver.
+  const cargaGuiada = useDatosParaProbar({
+    agenteId: agente.id,
+    tipo: tipoDelAgente(agente.key, datosCliente),
+    activo: comoCreacionRapida && paso === "conocimiento",
+    sinEnlaces: enBienvenida,
+    onCargados: setCargados,
+  });
   // Si el flujo que se ve es la semilla, se persiste en el primer guardado (aunque no se edite).
   const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   // SPEC-48, HU-COM-25: las formas de pago vigentes deciden los bloques de pago del guion.
@@ -1176,7 +1187,18 @@ export function EditorDeAgente({
         }
       />
     ),
-    conocimiento: (
+    conocimiento: comoCreacionRapida ? (
+      cargaGuiada.listo ? (
+        <div className="flex flex-col gap-6">
+          <ListaDePreguntas preguntas={cargaGuiada.preguntas} abierta={cargaGuiada.abierta} onAbrir={cargaGuiada.onAbrir} />
+          {cargaGuiada.avanzadas && (
+            <OpcionesAvanzadas descripcion={cargaGuiada.avanzadas.descripcion}>{cargaGuiada.avanzadas.contenido}</OpcionesAvanzadas>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-text-soft">Revisando qué puedes cargar…</p>
+      )
+    ) : (
       <div className="flex flex-col gap-10">
         {!comoCreacionRapida && <PasoMemoria estado={estado} cambiar={cambiar} errores={errores} agenteId={agente.id} />}
         <section aria-labelledby="conocimiento-datos" className="flex flex-col gap-4">
@@ -1199,8 +1221,6 @@ export function EditorDeAgente({
                 setCargado(c);
                 setCargados(c.registros);
               }}
-              // Fuera de test Agenda, Cobranza y Suscripciones no tienen carga: «Seguir sin datos» pasa a la 5.
-              onSeguirSinDatos={comoCreacionRapida ? () => void siguienteAlCrear() : undefined}
             />
           )}
         </section>
@@ -1460,7 +1480,7 @@ export function EditorDeAgente({
       ? PREGUNTA_EN_LA_RUTA[paso]
       : undefined;
   const pregunta = preguntaDeLaRuta
-    ? preguntaDeLaRuta.replace("{nombre}", nombreVisible || "tu agente")
+    ? preguntaDeLaRuta.replace("{nombre}", nombreVisible || "tu agente").replace("{lo}", LO_DEL_TIPO[tipoDeLaRuta ?? "ventas"].varios)
     : preguntaDelPaso(paso, estado.nombre);
 
   // «Seguir después» guarda lo de la estación (sin las reglas de publicar) antes de salir.
@@ -1491,6 +1511,8 @@ export function EditorDeAgente({
               ? datosCliente && preguntaPorEntregas(datosCliente)
                 ? "Cada forma de entrega pide sus propios datos. Viene con lo justo, como lo recomienda SolversHub."
                 : "Cada operación pide sus propios datos. Viene con lo justo, como lo recomienda SolversHub."
+            : creacionRapida && paso === "conocimiento"
+              ? "Datos de ejemplo para probar cómo responde. Puedes seguir sin cargar nada."
             : enBienvenida
               ? BAJADA_EN_LA_BIENVENIDA[paso]
               : undefined
@@ -1500,7 +1522,9 @@ export function EditorDeAgente({
             ? textoDeFaltan(faltanDeLaEstacion2)
             : comoCreacionRapida && paso === "datos-cliente" && faltanDeLaEstacion3 > 0
               ? textoDeFaltan(faltanDeLaEstacion3)
-              : undefined
+              : comoCreacionRapida && paso === "conocimiento" && cargaGuiada.faltan > 0
+                ? textoDeFaltan(cargaGuiada.faltan)
+                : undefined
         }
         celular={celular}
         queSigue={
@@ -1576,9 +1600,11 @@ export function EditorDeAgente({
                   texto: `Guardar y seguir: ${tituloSiguiente}`,
                   onClick: () => void siguienteAlCrear(),
                   cargando: guardarAccion.pending || datosAccion.pending || formasAccion.pending || preparando,
-                  // En Habilidades y Datos del cliente, como en la estación 1, se sigue con todas las preguntas respondidas.
+                  // En Habilidades, Datos del cliente y Datos para probar, como en la estación 1, se sigue con todas las preguntas respondidas.
                   deshabilitado:
-                    (paso === "habilidades" && faltanDeLaEstacion2 > 0) || (paso === "datos-cliente" && faltanDeLaEstacion3 > 0),
+                    (paso === "habilidades" && faltanDeLaEstacion2 > 0) ||
+                    (paso === "datos-cliente" && faltanDeLaEstacion3 > 0) ||
+                    (paso === "conocimiento" && cargaGuiada.faltan > 0),
                 }
             : creando
               ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }
