@@ -30,10 +30,10 @@ import {
 const ID = "3f1c2a4b-1111-4222-8333-944455556666";
 
 describe("pestañas de la ficha del agente (HU-UX-09, AGT-04)", () => {
-  it("son cuatro y Actividad agrupa conversaciones, tareas, clientes y registros", () => {
-    expect(PESTANAS.map((p) => p.label)).toEqual(["Actividad", "Lo que sabe", "Dónde atiende", "Consumo"]);
+  it("son cinco y Actividad agrupa conversaciones, tareas, clientes y registros", () => {
+    expect(PESTANAS.map((p) => p.label)).toEqual(["Actividad", "Lo que sabe", "Dónde atiende", "Consumo", "Pruebas"]);
     expect(VISTAS_DE_ACTIVIDAD.map((v) => v.label)).toEqual(["Conversaciones", "Tareas", "Clientes", "Registros"]);
-    expect([...PESTANAS_SIN_FILTROS].sort()).toEqual(["atiende", "sabe"]);
+    expect([...PESTANAS_SIN_FILTROS].sort()).toEqual(["atiende", "pruebas", "sabe"]);
   });
 
   it("los enlaces de antes siguen abriendo su lugar", () => {

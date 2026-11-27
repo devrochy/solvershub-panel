@@ -17,6 +17,7 @@ import { IndicadoresDelAgente, type Indicador } from "@/components/domain/agente
 import { NivelDeIa } from "@/components/domain/agentes/nivel-de-ia";
 import { HabilidadesDelAgente } from "@/components/domain/agentes/habilidades-del-agente";
 import { ProbarAgente } from "@/components/domain/agentes/probar-agente";
+import { PruebasDelAgente } from "@/components/domain/agentes/pruebas/pruebas-del-agente";
 import { SelectorDeAgentes } from "@/components/domain/agentes/selector-de-agentes";
 import { SuperpoderesDelAgente } from "@/components/domain/agentes/superpoderes-del-agente";
 import { ErrorDeCarga } from "@/components/domain/error-de-carga";
@@ -36,11 +37,14 @@ import type {
   AgentTaskPage,
   AgentUsage,
   ConnectionsConsole,
+  EscenariosDePrueba,
   KnowledgeDocument,
   LlmModelCatalog,
   Me,
   PlanResponse,
   PluginSummary,
+  PruebasEstimado,
+  PruebasInforme,
   ReliabilityResponse,
   RequirementPage,
   SuperpowerPage,
@@ -79,7 +83,8 @@ import {
   nombresDeHabilidades,
   resueltasSinPersona,
 } from "@/lib/agentes-ficha";
-import { creditosPorAgenteId } from "@/lib/consumo";
+import { creditosPorAgenteId, puedeComprarCreditos } from "@/lib/consumo";
+import { pruebasHabilitadas } from "@/lib/pruebas-del-agente";
 import { incluyeAvanzado } from "@/lib/nivel-ia";
 import { funcionesDelPlanActual } from "@/lib/plan-limite";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
@@ -160,7 +165,11 @@ export default async function AgentePage({
   const esMaster = meRes.ok && meRes.data.role === "master";
   const verConversaciones = meRes.ok && (esMaster || Boolean(permisos.conversations));
   const conSabe = tieneSuperpoderes(agente) || tieneConocimiento(agente);
-  const pestanas = PESTANAS.filter((p) => (p.id !== "sabe" || conSabe) && (p.id !== "atiende" || tieneConexiones(agente)));
+  // SPEC-53: «Pruebas» solo en un especialista activo y con la bandera encendida en este entorno (la API no la expone).
+  const conPruebas = pruebasHabilitadas(process.env.PRUEBAS_AGENTE_ENABLED) && agente.kind === "specialist" && !estaArchivado(agente);
+  const pestanas = PESTANAS.filter(
+    (p) => (p.id !== "sabe" || conSabe) && (p.id !== "atiende" || tieneConexiones(agente)) && (p.id !== "pruebas" || conPruebas),
+  );
   const actual: Pestana = pestanas.some((p) => p.id === ubicacion.tab) ? ubicacion.tab : "actividad";
   const vistas = VISTAS_DE_ACTIVIDAD.filter((v) => verConversaciones || (v.id !== "conversaciones" && v.id !== "clientes"));
   const ver: VistaDeActividad = vistas.some((v) => v.id === ubicacion.ver) ? ubicacion.ver : vistas[0].id;
@@ -330,6 +339,34 @@ export default async function AgentePage({
         </div>
       </div>
     );
+  } else if (actual === "pruebas" && agente.id) {
+    const listado = await apiFetch<EscenariosDePrueba>(`${base}/pruebas`);
+    if (!listado.ok) {
+      contenido = <NoCargo que="las pruebas" res={listado} />;
+    } else {
+      const ultima = listado.data.ultima_corrida;
+      const aprobados = listado.data.escenarios.filter((e) => e.estado === "aprobado").map((e) => e.id);
+      // El informe de la última corrida da el resultado de cada fila; el estimado, lo que queda de la cuota gratis.
+      const [informe, estimado] = await Promise.all([
+        ultima ? apiFetch<PruebasInforme>(`${base}/pruebas/corridas/${ultima.id}`) : Promise.resolve(null),
+        puedeEditar && aprobados.length > 0
+          ? apiFetch<PruebasEstimado>(`${base}/pruebas/estimado`, { method: "POST", body: { case_ids: aprobados.slice(0, 20) } })
+          : Promise.resolve(null),
+      ]);
+      contenido = (
+        <PruebasDelAgente
+          key={ultima?.id ?? "sin-corrida"}
+          agenteId={agente.id}
+          nombre={agente.name}
+          datos={listado.data}
+          ultimoInforme={informe?.ok ? informe.data : null}
+          cuotaGratisRestante={estimado?.ok ? estimado.data.cuota_gratis_restante : null}
+          puedeEditar={puedeEditar}
+          puedeComprar={meRes.ok && puedeComprarCreditos(meRes.data)}
+          verCosto={esMaster}
+        />
+      );
+    }
   } else {
     const res = await apiFetch<AgentUsage>(`${base}/usage?${queryDeApi(filtros, new Date(), false)}`);
     const consumo = res.ok ? (
