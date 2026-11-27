@@ -84,6 +84,11 @@ import { ReglasDelAgenteEditable } from "@/components/domain/agentes/reglas-del-
 import { ToolsHttpDelAgenteEditable } from "@/components/domain/agentes/tools-http-del-agente";
 import { SemaforoListo } from "@/components/domain/agentes/semaforo-listo";
 import { CelularDeVistaPrevia } from "@/components/domain/agentes/recorrido/celular-de-vista-previa";
+import { BarraRecomendado } from "@/components/domain/agentes/recorrido/barra-recomendado";
+import { OpcionesAvanzadas } from "@/components/domain/agentes/recorrido/opciones-avanzadas";
+import { LineaDelHorario, preguntasDeHabilidades } from "@/components/domain/agentes/recorrido/preguntas-de-habilidades";
+import { ListaDePreguntas, textoDeFaltan } from "@/components/domain/agentes/recorrido/pregunta-del-recorrido";
+import { AvisoDeRequisitos } from "@/components/domain/aviso-de-requisitos";
 import { ResumenDeEstaciones } from "@/components/domain/agentes/recorrido/resumen-de-estaciones";
 import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
 import { TIPOS_DE_NEGOCIO } from "@/lib/onboarding";
@@ -92,7 +97,15 @@ import { semaforo } from "@/lib/listo-para-responder";
 import { rutaDePersonalizar } from "@/lib/rutas-de-agente";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
 import type { ReglasDelAgente, ToolsHttpDelAgente } from "@/lib/reglas-y-tools-del-agente";
-import type { FormasDePago } from "@/lib/formas-de-pago";
+import type { FormasDePago, Metodo } from "@/lib/formas-de-pago";
+import {
+  AVANZADAS_DE_HABILIDADES,
+  bajadaDeHabilidades,
+  cuerpoDeFormas,
+  elegidasDe,
+  formasCambiaron,
+  type FormasElegidas,
+} from "@/lib/habilidades-de-la-ruta";
 import { componerGuion, conversacionDelGuion, estadosDeBloques, guionSugerido, mismoGuion } from "@/lib/guion-reglas";
 import {
   conversacionDeHabilidad,
@@ -129,6 +142,7 @@ const ESTACION_DEL_PASO: Partial<Record<PasoId, EstacionDeLaRuta>> = {
 };
 /** La pregunta de cada estación en la ruta (las demás, la de `PASOS`). */
 const PREGUNTA_EN_LA_RUTA: Partial<Record<PasoId, string>> = {
+  habilidades: "¿Qué sabe hacer {nombre}?",
   conocimiento: "¿Con qué datos probamos a {nombre}?",
   probar: "Revisa y publica a {nombre}",
 };
@@ -144,7 +158,6 @@ const DATOS_PARA_PROBAR: Partial<Record<string, string>> = {
 };
 /** Debajo de la pregunta, en la bienvenida. */
 const BAJADA_EN_LA_BIENVENIDA: Partial<Record<PasoId, string>> = {
-  habilidades: "Viene con lo recomendado para tu tipo de negocio. Cambia lo que quieras.",
   "datos-cliente": "Lo que le pregunta a cada cliente para atenderlo. Viene con lo justo.",
   conocimiento: "Datos de ejemplo para probar cómo responde en el chat. Puedes seguir sin cargar nada.",
   probar: "Revisa lo que configuraste y escríbele una vez como cliente.",
@@ -288,6 +301,7 @@ export function EditorDeAgente({
   const publicarAccion = useAction({ refresh: false });
   const activarAccion = useAction();
   const datosAccion = useAction({ refresh: false });
+  const formasAccion = useAction({ refresh: false });
 
   const [base, setBase] = useState<Contenido>(agente.draft.content);
   const [lock, setLock] = useState(agente.draft.lock_version);
@@ -311,6 +325,16 @@ export function EditorDeAgente({
   const [flujoPersistido, setFlujoPersistido] = useState(!flujoSeeded);
   // SPEC-48, HU-COM-25: las formas de pago vigentes deciden los bloques de pago del guion.
   const [formas, setFormas] = useState(formasDePago);
+  // Estación 2 de la ruta (HU-UX-28): las formas elegidas se guardan al seguir, sin botón propio.
+  const [formasElegidas, setFormasElegidas] = useState<FormasElegidas>(() => (formasDePago ? elegidasDe(formasDePago) : {}));
+  const [errorDeFormas, setErrorDeFormas] = useState<string | null>(null);
+  // La pregunta abierta de la estación 2: al volver a ella desde otra estación, llega todo respondido.
+  const [abiertaDeHabilidades, setAbiertaDeHabilidades] = useState(() => (paso === "habilidades" ? 0 : 99));
+  // Lo recomendado de la estación 2 es lo que el agente trajo al crearse (`from-script`): sus superpoderes y formas.
+  const [recomendadoDeHabilidades] = useState(() => ({
+    superpoderes: Object.fromEntries(superpoderes.map((p) => [p.id, Boolean(guardado.superpoderes[p.id]?.activo)])),
+    formas: formasDePago ? elegidasDe(formasDePago) : ({} as FormasElegidas),
+  }));
   const [errores, setErrores] = useState<Errores>({});
   const [limite, setLimite] = useState<string | null>(null);
   const [elegidas, setElegidas] = useState<string[]>(() => {
@@ -543,6 +567,7 @@ export function EditorDeAgente({
     const primero = Object.keys(campos)[0];
     if (!primero) return;
     const destino = pasoDelCampo(primero);
+    if (destino === "habilidades" && comoCreacionRapida) abrirLaDelError(campos);
     // En la ruta solo se ven 4 estaciones del editor: lo de otro paso se avisa en «Revisar y publicar».
     irA(comoCreacionRapida && !deLaRuta.includes(destino) ? "probar" : destino);
   }
@@ -583,8 +608,8 @@ export function EditorDeAgente({
   }
 
   /** Guarda todo lo cambiado sin publicar. Las reglas de publicación (frases mínimas) no frenan un borrador. */
-  async function guardarCambios(): Promise<boolean> {
-    const completo = plegarPendientes();
+  async function guardarCambios(plegado?: EstadoDelEditor): Promise<boolean> {
+    const completo = plegado ?? plegarPendientes();
     if (!completo) return false;
     setErrores({});
     if (!(await guardarDatos())) return false;
@@ -598,12 +623,27 @@ export function EditorDeAgente({
   }
 
   async function siguienteAlCrear() {
-    const completo = plegarPendientes();
+    let completo = plegarPendientes();
     if (!completo) return;
     const propios = validar(paso, completo);
     setErrores(propios);
-    if (Object.keys(propios).length > 0) return;
-    if (!(await guardarCambios())) return;
+    if (Object.keys(propios).length > 0) {
+      if (paso === "habilidades") abrirLaDelError(propios);
+      return;
+    }
+    if (paso === "habilidades" && comoCreacionRapida) {
+      // Las formas de pago se guardan como en Personalizar y recomponen el guion (HU-COM-25): va con el borrador.
+      const nuevas = await guardarFormas();
+      if (nuevas === null) return;
+      if (nuevas !== formas) {
+        const recompuesto = componerGuion(completo.flujo, estadosDeBloques(nuevas, completo.flujo), accionesDelFlujo);
+        if (!mismoGuion(recompuesto, completo.flujo)) {
+          completo = { ...completo, flujo: recompuesto };
+          setEstado(completo);
+        }
+      }
+    }
+    if (!(await guardarCambios(completo))) return;
     if (enBienvenida) {
       const i = PASOS_DE_LA_BIENVENIDA.indexOf(paso);
       const destino = PASOS_DE_LA_BIENVENIDA[i + 1];
@@ -619,6 +659,44 @@ export function EditorDeAgente({
       bienvenida.avanzar(numeroEnBienvenida(destino));
     }
     mover(1);
+  }
+
+  /**
+   * Estación 2 de la ruta: guarda las formas de pago elegidas (`PUT payment-forms`, el mismo cuerpo de
+   * Personalizar) si cambiaron. Devuelve las vigentes, o `null` si no se pudieron guardar.
+   */
+  async function guardarFormas(): Promise<FormasDePago | null> {
+    if (!formas || !formasCambiaron(formas, formasElegidas)) return formas;
+    setErrorDeFormas(null);
+    let resultado: FormasDePago | null = null;
+    await formasAccion.run(async () => {
+      const res = await fetch(`/api/pack/commerce/agents/${agente.id}/payment-forms`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(cuerpoDeFormas(formas, formasElegidas)),
+      }).catch(() => null);
+      const cuerpo = (await res?.json().catch(() => null)) as (FormasDePago & { error?: { message?: string } }) | null;
+      if (!res?.ok) {
+        const error = cuerpo?.error?.message ?? "No pudimos guardar las formas de pago. Inténtalo de nuevo.";
+        setErrorDeFormas(error);
+        return { ok: false, status: res?.status ?? 0, error };
+      }
+      resultado = cuerpo as FormasDePago;
+      return { ok: true, success: "Formas de pago guardadas." };
+    });
+    if (resultado) {
+      setFormas(resultado);
+      setFormasElegidas(elegidasDe(resultado));
+    } else {
+      setAbiertaDeHabilidades(1);
+    }
+    return resultado;
+  }
+
+  /** Reabre la pregunta de la estación 2 que tiene el error: ningún superpoder (1) o las frases (la última). */
+  function abrirLaDelError(campos: Errores) {
+    if (campos.procedures) setAbiertaDeHabilidades(0);
+    else if (Object.keys(campos).some((c) => c.startsWith("procedures["))) setAbiertaDeHabilidades(formas ? 2 : 1);
   }
 
   async function publicar(): Promise<EditorPublishOut | null> {
@@ -793,6 +871,93 @@ export function EditorDeAgente({
     ? [...new Set(Object.keys(errores).map(pasoDelCampo))].filter((p) => p !== "publicar" && !deLaRuta.includes(p))
     : [];
 
+  // Estación 2 de la ruta (HU-UX-28): tres preguntas una a la vez (dos sin Comercio); lo técnico, en avanzadas.
+  const tipoDeLaRuta = tipoDelAgente(agente.key, datosCliente);
+  const preguntasDeLaEstacion2 = preguntasDeHabilidades({
+    nombre: estado.nombre.trim(),
+    tipo: tipoDeLaRuta,
+    catalogo: superpoderes,
+    estado,
+    onSuperpoder: (id, cambio) => {
+      const actual = estado.superpoderes[id] ?? { activo: false, frases: [] };
+      cambiar({ superpoderes: { ...estado.superpoderes, [id]: { ...actual, ...cambio } } });
+    },
+    formas,
+    elegidas: formasElegidas,
+    onForma: (metodo: Metodo, encendida: boolean) => {
+      setFormasElegidas((e) => ({ ...e, [metodo]: encendida }));
+      setErrorDeFormas(null);
+    },
+    requisitos,
+    minFrases,
+    errores: { procedures: sinAcciones({ ...avisosDeBorrador, ...errores }).procedures, formas: errorDeFormas ?? undefined },
+    erroresPorPoder: { ...porPoder, ...avisosPorPoder },
+    registrarPendiente: pendientes.registrar,
+    soloLectura: !puedeEditar,
+    // En la bienvenida el panel no se abre hasta terminar: lo que se hace después va como texto (dueño, 2026-11-26).
+    sinEnlaces: enBienvenida,
+  });
+  const faltanDeLaEstacion2 = preguntasDeLaEstacion2.length - Math.min(abiertaDeHabilidades, preguntasDeLaEstacion2.length);
+  const cambiosDeLaEstacion2 =
+    superpoderes.filter((p) => Boolean(estado.superpoderes[p.id]?.activo) !== recomendadoDeHabilidades.superpoderes[p.id]).length +
+    (formas
+      ? formas.forms.filter(
+          (f) => (formasElegidas[f.method] ?? f.enabled) !== (recomendadoDeHabilidades.formas[f.method] ?? f.enabled),
+        ).length
+      : 0);
+  function usarLoRecomendadoEnHabilidades() {
+    cambiar({
+      superpoderes: Object.fromEntries(
+        Object.entries(estado.superpoderes).map(([id, p]) => [id, { ...p, activo: recomendadoDeHabilidades.superpoderes[id] ?? p.activo }]),
+      ),
+    });
+    setFormasElegidas(recomendadoDeHabilidades.formas);
+  }
+  /** Al dejar la pregunta de las frases se suma lo escrito y no agregado, antes de que su caja se cierre. */
+  function abrirEnHabilidades(indice: number) {
+    const deLasFrases = preguntasDeLaEstacion2.length - 1;
+    if (abiertaDeHabilidades === deLasFrases && indice > deLasFrases && !plegarPendientes()) return;
+    setAbiertaDeHabilidades(indice);
+  }
+  const conErrorDeAcciones = erroresDeLasAcciones.length > 0 || Object.keys(porAccion).length > 0;
+  const habilidadesEnLaRuta = (
+    <div className="flex flex-col gap-6">
+      <BarraRecomendado cambios={cambiosDeLaEstacion2} onUsar={usarLoRecomendadoEnHabilidades} />
+      <ListaDePreguntas
+        preguntas={preguntasDeLaEstacion2}
+        abierta={abiertaDeHabilidades}
+        onAbrir={abrirEnHabilidades}
+      />
+      <AvisoDeRequisitos
+        requisitos={requisitos}
+        titulo="Para que funcione del todo"
+        bajada={enBienvenida ? "Tu agente ya puede responder. Esto lo haces después de terminar." : "Tu agente ya puede responder. Esto lo haces ahora o después."}
+        sinEnlaces={enBienvenida}
+      />
+      <OpcionesAvanzadas descripcion={AVANZADAS_DE_HABILIDADES} abierta={conErrorDeAcciones}>
+        <section aria-labelledby="habilidades-acciones" className="flex flex-col gap-3">
+          <h3 id="habilidades-acciones" className="font-display text-base font-semibold text-headline">
+            Acciones y límites por acción
+          </h3>
+          <AccionesDelAgente
+            acciones={estado.acciones}
+            cambiar={(acciones) => cambiar({ acciones })}
+            erroresPorAccion={porAccion}
+            errores={erroresDeLasAcciones}
+            conConocimiento={estado.conocimiento.activo}
+            gruposDeLaApi={gruposDeAcciones}
+            soloLectura={!puedeEditar}
+          />
+        </section>
+        <LineaDelHorario
+          horario={horarioDelAgente}
+          delNegocio={negocio.horario}
+          hrefCambiar={enBienvenida ? undefined : rutaDePersonalizar(agente.id, { paso: "reglas" })}
+        />
+      </OpcionesAvanzadas>
+    </div>
+  );
+
   const bloquesDelGuion = estadosDeBloques(formas, estado.flujo);
   const sugerido = guionSugerido(semillaDelFlujo ?? flujoInicial, bloquesDelGuion, accionesDelFlujo);
   const contenidoDelPaso: Record<PasoId, React.ReactNode> = {
@@ -842,7 +1007,9 @@ export function EditorDeAgente({
         )}
       </div>
     ),
-    habilidades: (
+    habilidades: comoCreacionRapida ? (
+      habilidadesEnLaRuta
+    ) : (
       <div className="flex flex-col gap-10">
         <section aria-labelledby="habilidades-superpoderes" className="flex flex-col gap-4">
           <h3 id="habilidades-superpoderes" className="font-display text-sh-block text-headline">
@@ -1095,7 +1262,7 @@ export function EditorDeAgente({
   const activos = superpoderes.filter((p) => estado.superpoderes[p.id]?.activo);
   const probado = superpoderes.find((p) => p.phrases[0] === frasePrueba) ?? activos[0] ?? superpoderes[0];
   // «Datos del cliente»: el chat simulado de la estación 3 (D-SPEC-49-4), sin modelo ni precios.
-  const tipoDelChat = tipoDelAgente(agente.key, datosCliente);
+  const tipoDelChat = tipoDeLaRuta;
   const pruebaDeDatos = paso === "datos-cliente" && tipoDelChat ? sugerenciasPorEstacion(tipoDelChat, "datos-cliente") : [];
   const pruebaElegida = pruebaDeDatos.find((s) => s.id === pruebaDeDatosId);
   const mensajesDelPaso =
@@ -1195,6 +1362,11 @@ export function EditorDeAgente({
       agente={nombreVisible || "tu agente"}
       negocio={negocio.nombre}
       cargados={cargados}
+      frasesPropias={
+        paso === "habilidades"
+          ? activos.flatMap((p) => (estado.superpoderes[p.id]?.frases ?? []).map((texto) => ({ texto, superpoder: p.title })))
+          : undefined
+      }
       sinChat={
         enBienvenida && paso === "probar"
           ? `La última prueba es de verdad: escríbele a ${nombreVisible || "tu agente"} en esta estación.`
@@ -1236,7 +1408,14 @@ export function EditorDeAgente({
         pregunta={pregunta}
         nivelDePregunta={enBienvenida || creacionRapida ? "h1" : "h2"}
         disposicion={comoCreacionRapida ? "ruta" : "pasos"}
-        bajada={enBienvenida ? BAJADA_EN_LA_BIENVENIDA[paso] : undefined}
+        bajada={
+          comoCreacionRapida && paso === "habilidades"
+            ? bajadaDeHabilidades(preguntasDeLaEstacion2.length)
+            : enBienvenida
+              ? BAJADA_EN_LA_BIENVENIDA[paso]
+              : undefined
+        }
+        estado={comoCreacionRapida && paso === "habilidades" && faltanDeLaEstacion2 > 0 ? textoDeFaltan(faltanDeLaEstacion2) : undefined}
         celular={celular}
         queSigue={
           comoCreacionRapida
@@ -1310,7 +1489,9 @@ export function EditorDeAgente({
               ? {
                   texto: `Guardar y seguir: ${tituloSiguiente}`,
                   onClick: () => void siguienteAlCrear(),
-                  cargando: guardarAccion.pending || datosAccion.pending || preparando,
+                  cargando: guardarAccion.pending || datosAccion.pending || formasAccion.pending || preparando,
+                  // En Habilidades, como en la estación 1, se sigue con todas las preguntas respondidas.
+                  deshabilitado: paso === "habilidades" && faltanDeLaEstacion2 > 0,
                 }
             : creando
               ? { texto: "Siguiente", onClick: () => void siguienteAlCrear(), cargando: guardarAccion.pending || preparando }

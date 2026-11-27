@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import type { TipoDeNegocio } from "@/lib/onboarding";
 import type { EstacionDeLaRuta } from "@/lib/ruta-de-lanzamiento";
 import { cn } from "@/lib/utils";
-import type { CargadoDeVistaPrevia } from "@/lib/vista-previa";
+import type { CargadoDeVistaPrevia, FrasePropiaDePrueba } from "@/lib/vista-previa";
 
 import { CajaSinEscribir, ChatDeVistaPrevia } from "./vista-previa-whatsapp";
 
@@ -35,6 +35,7 @@ export function CelularDeVistaPrevia({
   sinChat = "Elige qué hará tu agente para verlo responder aquí.",
   aviso,
   onCerrarAviso,
+  frasesPropias,
   className,
 }: {
   tipo: TipoDeNegocio | null | undefined;
@@ -45,6 +46,8 @@ export function CelularDeVistaPrevia({
   sinChat?: ReactNode;
   aviso?: string;
   onCerrarAviso?: () => void;
+  /** Frases propias del dueño para probar (estación 2, HU-UX-28); no reinician la conversación. */
+  frasesPropias?: readonly FrasePropiaDePrueba[];
   className?: string;
 }) {
   const [avisoCerrado, setAvisoCerrado] = useState(false);
@@ -85,6 +88,7 @@ export function CelularDeVistaPrevia({
               negocio={negocio}
               cargados={cargados}
               onProbar={verAviso ? cerrarAviso : undefined}
+              frasesPropias={frasesPropias}
               className="min-w-0 flex-1"
             />
           ) : (

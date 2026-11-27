@@ -15,6 +15,9 @@ import { cn } from "@/lib/utils";
  * («Recomendado») va como texto sobre el borde, `razon` dice el porqué y `nota` explica por qué una
  * opción deshabilitada no se puede elegir (el lector la lee con `aria-describedby`); `accion` es un
  * enlace al lado de la nota (por ejemplo «Editar a Laura»), fuera de la etiqueta del radio.
+ *
+ * Una pregunta a la vez (HU-UX-28): `multiple` la vuelve casilla (varias a la vez, dentro de un grupo sin
+ * `unica`) y `aviso` es una línea de advertencia que se ve aunque la opción se pueda elegir («Necesita Wompi»).
  */
 
 const ANILLO =
@@ -34,6 +37,8 @@ export function TarjetaElegible({
   deshabilitada,
   nota,
   accion,
+  multiple = false,
+  aviso,
   className,
 }: {
   nombre: string;
@@ -54,13 +59,18 @@ export function TarjetaElegible({
   nota?: string;
   /** Enlace junto a la nota, fuera de la etiqueta del radio. */
   accion?: ReactNode;
+  /** Casilla en vez de radio: `onElegir` se llama al marcar y al desmarcar. */
+  multiple?: boolean;
+  /** Advertencia visible aunque la opción se pueda elegir (lo que le falta para funcionar del todo). */
+  aviso?: string;
   className?: string;
 }) {
   const id = useId();
   const idNota = `${id}-nota`;
   const idRazon = `${id}-razon`;
+  const idAviso = `${id}-aviso`;
   const conNota = Boolean(deshabilitada && nota);
-  const descritaPor = [conNota && idNota, razon && idRazon].filter(Boolean).join(" ") || undefined;
+  const descritaPor = [conNota && idNota, razon && idRazon, aviso && idAviso].filter(Boolean).join(" ") || undefined;
   const tarjeta = (
     <label
       className={cn(
@@ -77,7 +87,7 @@ export function TarjetaElegible({
       )}
     >
       <input
-        type="radio"
+        type={multiple ? "checkbox" : "radio"}
         name={nombre}
         value={valor}
         checked={elegida}
@@ -120,12 +130,18 @@ export function TarjetaElegible({
             {razon}
           </span>
         )}
+        {aviso && (
+          <span id={idAviso} className="text-sm font-medium text-status-warning-fg">
+            {aviso}
+          </span>
+        )}
       </span>
       {!conNota && (
         <span
           aria-hidden
           className={cn(
-            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border",
+            multiple ? "rounded-[0.3rem]" : "rounded-full",
             baldosa && "mt-0",
             elegida ? "border-focus bg-focus text-surface" : "border-control-border text-transparent",
           )}

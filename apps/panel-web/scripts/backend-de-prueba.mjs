@@ -24,6 +24,8 @@
 //   BIENVENIDA=1 (bienvenida en curso, estación 1 de 5; con AGENTES=1, las plantillas de agente)
 //   BIENVENIDA=agente (con AGENTES=1 y RETIRADAS=limpio, HU-UX-25): ya creó a «Laura» (Ventas) y va por la estación
 //   BIENVENIDA_PASO (2 a 5, por defecto 2), con Datos del cliente, Formas de pago y el chat de pruebas por la conexión;
+//   HABILIDADES=1 (HU-UX-28, con BIENVENIDA=agente o NUEVO_AGENTE=1): Laura y Tomás traen el horario del negocio y lo
+//   que les falta para funcionar del todo (catálogo, servicios y Wompi), para la estación 2 · Habilidades.
 //   avanzar, omitir, dejar listo y finalizar cambian el recorrido en memoria. BIENVENIDA=viejo: igual, pero guardado
 //   con 4 pasos en el paso 3 (retoma en «Datos para probar», 4 de 5).
 //   COLABORADOR=1 (sin permisos de Equipo/Configuración) · TESTER=1 (rol tester): niveles de la Wiki en /ayuda
@@ -1159,6 +1161,36 @@ if (BIENVENIDA && BIENVENIDA !== "1" && respuestas[`/admin/agents/${VENTAS_ID}`]
   };
   if (respuestas["/admin/settings"]) {
     respuestas["/admin/settings"] = { ...respuestas["/admin/settings"], identity: { ...respuestas["/admin/settings"].identity, assistant_name: "Laura" } };
+  }
+}
+// HABILIDADES=1 (HU-UX-28): horario heredado y «Para que funcione del todo» en la estación 2.
+if (process.env.HABILIDADES === "1") {
+  const pagina = (items) => ({ items, total: items.length, page: 1, page_size: 100, has_more: false });
+  const horario = {
+    schedule: null,
+    business_hours: { tz: "America/Bogota", ranges: [0, 1, 2, 3, 4].map((day) => ({ day, from: "08:00", to: "18:00" })) },
+    source: "negocio",
+    lock_version: 1,
+  };
+  respuestas[`/admin/agents/${VENTAS_ID}/schedule`] = horario;
+  // Las acciones del borrador de Laura (las de ACCIONES=1 se pierden al rehacer la ficha con AGENTES=1).
+  const borradorDeLaura = respuestas[`/admin/agents/${VENTAS_ID}`]?.draft?.content;
+  if (borradorDeLaura) {
+    borradorDeLaura.tools = [
+      { tool: "consultar_inventario", enabled: true }, { tool: "crear_pedido", enabled: true, requiresConfirmation: true },
+      { tool: "consultar_estado_pedido", maxCallsPerConversation: 3 }, { tool: "verificar_pago_pedido" },
+      { tool: "escalate_to_human" },
+    ];
+  }
+  respuestas[`/admin/agents/${VENTAS_ID}/requirements`] = pagina([
+    { skill: "pack_commerce", kind: "sin_contenido", title: "Aún no hay productos", explanation: "Carga tu catálogo para que pueda tomar pedidos.", section: "pack_commerce", content: "catalogo" },
+  ]);
+  const NUEVO_DE_HABILIDADES = "7a0a5000-0000-4000-8000-000000000086";
+  if (respuestas[`/admin/agents/${NUEVO_DE_HABILIDADES}`]) {
+    respuestas[`/admin/agents/${NUEVO_DE_HABILIDADES}/schedule`] = horario;
+    respuestas[`/admin/agents/${NUEVO_DE_HABILIDADES}/requirements`] = pagina([
+      { skill: "pack_calendar", kind: "sin_contenido", title: "Aún no hay servicios", explanation: "Crea al menos un tipo de cita para que pueda agendar.", section: "pack_calendar", content: "servicios" },
+    ]);
   }
 }
 function nuevoAgente(metodo, ruta) {
