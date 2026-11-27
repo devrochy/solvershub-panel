@@ -19,6 +19,7 @@ import {
   type SeccionId,
 } from "@/lib/configuracion-secciones";
 import { usePendientes } from "@/lib/frases-pendientes";
+import { erroresDeFranjas } from "@/lib/horario-atencion";
 import { toast } from "@/lib/toast-store";
 import { useAction } from "@/lib/use-action";
 
@@ -111,9 +112,15 @@ export function IdentityForm({
     const pendiente = pendientes.completar((clave) => (Array.isArray(valores[clave]) ? (valores[clave] as string[]) : undefined));
     const completos = { ...values, ...pendiente.listas } as IdentitySettings;
     const locales = { ...erroresDeRango(catalogo!, completos as unknown as Record<string, unknown>), ...pendiente.errores };
+    // El editor de horario marca el día; aquí solo se bloquea el guardado y se enruta al campo.
+    const erroresHorario = erroresDeFranjas(completos.business_ranges);
+    const todos = {
+      ...locales,
+      ...(erroresHorario.length > 0 ? { business_ranges: erroresHorario[0].message } : {}),
+    };
     setErrores(locales);
-    if (Object.keys(locales).length > 0) {
-      avisarErrores(locales);
+    if (Object.keys(todos).length > 0) {
+      avisarErrores(todos);
       return;
     }
     setValues(completos);

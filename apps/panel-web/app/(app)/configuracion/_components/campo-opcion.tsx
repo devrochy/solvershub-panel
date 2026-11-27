@@ -1,7 +1,8 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 
-import { EditorDeFranjas } from "@/components/domain/editor-de-franjas";
+import { HorarioSemanal } from "@/components/domain/editor-de-franjas";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputNumero } from "@/components/ui/input-numero";
@@ -122,6 +123,37 @@ export function CampoOpcion({
     );
   }
 
+  if (opcion.tipo === "franjas") {
+    return (
+      <fieldset
+        className="flex flex-col gap-1.5"
+        aria-describedby={error || ayuda ? `${clave}-mensaje` : undefined}
+      >
+        <legend className="p-0 text-sh-label text-body">{opcion.etiqueta}</legend>
+        <HorarioSemanal
+          id={clave}
+          franjas={Array.isArray(valor) ? (valor as Franja[]) : []}
+          modoInformativo={valores.business_hours_mode === "informativo"}
+          disabled={bloqueado}
+          onChange={(franjas) => onChange(clave, franjas)}
+        />
+        {error ? (
+          <p id={`${clave}-mensaje`} role="alert" className="flex items-start gap-1 text-xs text-status-danger-fg">
+            <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+            {error}
+          </p>
+        ) : ayuda ? (
+          <p id={`${clave}-mensaje`} className="text-xs text-text-soft">
+            {ayuda}
+            {enlace}
+          </p>
+        ) : enlace ? (
+          <p className="text-xs text-text-soft">{enlace}</p>
+        ) : null}
+      </fieldset>
+    );
+  }
+
   return (
     <>
       <Field label={opcion.etiqueta} htmlFor={clave} help={ayuda} error={error}>
@@ -202,15 +234,6 @@ export function CampoOpcion({
             disabled={bloqueado}
             invalido={Boolean(error)}
             describedBy={error || ayuda ? `${clave}-mensaje` : undefined}
-          />
-        );
-      case "franjas":
-        return (
-          <EditorDeFranjas
-            id={clave}
-            franjas={Array.isArray(valor) ? (valor as Franja[]) : []}
-            disabled={bloqueado}
-            onChange={(franjas) => onChange(clave, franjas)}
           />
         );
       default:

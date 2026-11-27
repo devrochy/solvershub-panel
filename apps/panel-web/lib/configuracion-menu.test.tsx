@@ -228,19 +228,31 @@ describe("limpieza de campos", () => {
     expect((screen.getByLabelText("Nombre del asistente") as HTMLInputElement).required).toBe(false);
   });
 
-  it("el horario se elige por día: encender un día le pone horas y se pueden cambiar (CFG-01)", () => {
+  it("el horario se elige por día: la semana se lee y solo el día abierto muestra las horas (CFG-01)", () => {
     montar({
       defaultSeccion: "horario",
       catalogo: { ...catalogo, opciones: [...catalogo.opciones, opcion("business_ranges", "horario", "franjas", "Franjas de atención")] },
       settings: { ...ajustes, identity: { ...ajustes.identity, business_ranges: [{ day: 0, from: "09:00", to: "18:00" }] } },
     });
-    expect((screen.getByRole("switch", { name: "Abierto el lunes" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe("true");
-    expect((screen.getByLabelText("Lunes: desde") as HTMLSelectElement).value).toBe("09:00");
-    fireEvent.click(screen.getByRole("switch", { name: "Abierto el sábado" }));
-    expect((screen.getByLabelText("Sábado: hasta") as HTMLSelectElement).value).toBe("18:00");
-    fireEvent.click(screen.getByRole("button", { name: "Copiar el lunes a los demás días" }));
-    expect((screen.getByRole("switch", { name: "Abierto el domingo" }) as HTMLButtonElement).getAttribute("aria-checked")).toBe("true");
+
+    // La semana se lee sin abrir el editor; el lunes ya está abierto.
+    expect(screen.getByText(/Lun, 9:00 a. m. – 6:00 p. m./)).toBeTruthy();
+    expect((screen.getByRole("switch", { name: "Abierto el lunes" }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByLabelText("Lunes: abre")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Lunes.*Editar el horario/ }));
+    expect((screen.getByLabelText("Lunes: abre") as HTMLSelectElement).value).toBe("09:00");
+    expect((screen.getByLabelText("Lunes: cierra") as HTMLSelectElement).value).toBe("18:00");
+
+    // Copiar el lunes no toca el domingo.
+    fireEvent.click(screen.getByRole("button", { name: "Copiar a martes–viernes" }));
+    expect((screen.getByRole("switch", { name: "Abierto el domingo" }) as HTMLInputElement).checked).toBe(false);
     expect(screen.queryByText(/Días: 0 Lun/)).toBeNull();
+
+    // Encender el sábado le pone un horario por defecto y abre su editor.
+    fireEvent.click(screen.getByRole("switch", { name: "Abierto el sábado" }));
+    expect((screen.getByLabelText("Sábado: abre") as HTMLSelectElement).value).toBe("08:00");
+    expect((screen.getByLabelText("Sábado: cierra") as HTMLSelectElement).value).toBe("18:00");
   });
 });
 
