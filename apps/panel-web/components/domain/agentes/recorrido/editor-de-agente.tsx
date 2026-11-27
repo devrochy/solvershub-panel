@@ -894,6 +894,8 @@ export function EditorDeAgente({
     erroresPorPoder: { ...porPoder, ...avisosPorPoder },
     registrarPendiente: pendientes.registrar,
     soloLectura: !puedeEditar,
+    // En la bienvenida el panel no se abre hasta terminar: lo que se hace después va como texto (dueño, 2026-11-26).
+    sinEnlaces: enBienvenida,
   });
   const faltanDeLaEstacion2 = preguntasDeLaEstacion2.length - Math.min(abiertaDeHabilidades, preguntasDeLaEstacion2.length);
   const cambiosDeLaEstacion2 =
@@ -929,7 +931,8 @@ export function EditorDeAgente({
       <AvisoDeRequisitos
         requisitos={requisitos}
         titulo="Para que funcione del todo"
-        bajada="Tu agente ya puede responder. Esto lo haces ahora o después."
+        bajada={enBienvenida ? "Tu agente ya puede responder. Esto lo haces después de terminar." : "Tu agente ya puede responder. Esto lo haces ahora o después."}
+        sinEnlaces={enBienvenida}
       />
       <OpcionesAvanzadas descripcion={AVANZADAS_DE_HABILIDADES} abierta={conErrorDeAcciones}>
         <section aria-labelledby="habilidades-acciones" className="flex flex-col gap-3">
@@ -949,7 +952,7 @@ export function EditorDeAgente({
         <LineaDelHorario
           horario={horarioDelAgente}
           delNegocio={negocio.horario}
-          hrefCambiar={rutaDePersonalizar(agente.id, { paso: "reglas" })}
+          hrefCambiar={enBienvenida ? undefined : rutaDePersonalizar(agente.id, { paso: "reglas" })}
         />
       </OpcionesAvanzadas>
     </div>

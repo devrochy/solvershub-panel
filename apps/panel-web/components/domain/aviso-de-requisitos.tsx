@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
 import type { Requirement } from "@/lib/api/types";
-import { copiaDelRequisito } from "@/lib/requisitos-de-agente";
+import { copiaDelRequisito, lugarDeLaRuta } from "@/lib/requisitos-de-agente";
 
 /**
  * «Te falta configurar»: lo que el negocio debe completar para que el agente funcione (HU-AOS-50).
@@ -12,12 +12,18 @@ export function AvisoDeRequisitos({
   requisitos,
   titulo = "Te falta configurar para que funcione",
   bajada,
+  sinEnlaces = false,
   className,
 }: {
   requisitos: Requirement[];
   titulo?: string;
   /** Una línea bajo el título, por ejemplo «Esto lo haces ahora o después.» (HU-UX-28). */
   bajada?: string;
+  /**
+   * Sin enlaces, con texto de dónde se hace después (HU-UX-28): en la bienvenida el panel no se abre mientras el
+   * recorrido está pendiente (decisión del dueño, 2026-11-26).
+   */
+  sinEnlaces?: boolean;
   className?: string;
 }) {
   if (requisitos.length === 0) return null;
@@ -38,9 +44,13 @@ export function AvisoDeRequisitos({
             <li key={`${r.skill}-${r.kind}`} className="flex flex-col gap-0.5">
               <span className="text-headline">{copia.titulo}</span>
               <span className="text-body">{copia.descripcion}</span>
-              <Link className="w-fit text-link underline" href={copia.href}>
-                {copia.accion}
-              </Link>
+              {sinEnlaces ? (
+                <span className="text-text-soft">Lo haces después en {lugarDeLaRuta(copia.href)}.</span>
+              ) : (
+                <Link className="w-fit text-link underline" href={copia.href}>
+                  {copia.accion}
+                </Link>
+              )}
             </li>
           );
         })}

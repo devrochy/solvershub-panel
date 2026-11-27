@@ -60,6 +60,7 @@ export function preguntasDeHabilidades({
   erroresPorPoder,
   registrarPendiente,
   soloLectura = false,
+  sinEnlaces = false,
 }: {
   nombre: string;
   tipo: TipoDeNegocio | null | undefined;
@@ -78,6 +79,8 @@ export function preguntasDeHabilidades({
   erroresPorPoder: Record<string, string>;
   registrarPendiente?: (id: string) => (pendiente: Pendiente | null) => void;
   soloLectura?: boolean;
+  /** En la bienvenida: «Conectar Wompi» va como texto, porque el panel no se abre hasta terminar el recorrido. */
+  sinEnlaces?: boolean;
 }): PreguntaDeLaLista[] {
   const activos = catalogo.filter((p) => estado.superpoderes[p.id]?.activo);
   const quien = nombre || "tu agente";
@@ -157,9 +160,13 @@ export function preguntasDeHabilidades({
             {formas.forms.some((f) => f.method === "pago_en_linea") && !formas.pago_en_linea_disponible && (
               <p className="text-sm text-body">
                 Para cobrar con link de pago, conecta Wompi.{" "}
-                <Link className="text-link underline underline-offset-2" href="/conexiones/pagos">
-                  Conectar Wompi
-                </Link>
+                {sinEnlaces ? (
+                  "Lo haces después en Conexiones › Pagos."
+                ) : (
+                  <Link className="text-link underline underline-offset-2" href="/conexiones/pagos">
+                    Conectar Wompi
+                  </Link>
+                )}
               </p>
             )}
             <ErrorDeLaPregunta id="habilidades-formas-error" mensaje={errores.formas} />
@@ -241,8 +248,9 @@ export function preguntasDeHabilidades({
 
 /**
  * La línea del horario en «Opciones avanzadas» de la estación 2 (decisión del dueño, 2026-11-26): solo se lee.
- * Hoy ni la bienvenida ni Nuevo agente preguntan el horario; el agente hereda el del negocio. «Cambiar» lleva a
- * Personalizar › Horario y reglas.
+ * Hoy ni la bienvenida ni Nuevo agente preguntan el horario; el agente hereda el del negocio. En Nuevo agente,
+ * «Cambiar» lleva a Personalizar › Horario y reglas; en la bienvenida (sin `hrefCambiar`) va como texto, porque el
+ * panel no se abre hasta terminar el recorrido (decisión del dueño, 2026-11-26).
  */
 export function LineaDelHorario({
   horario,
@@ -251,16 +259,22 @@ export function LineaDelHorario({
 }: {
   horario: HorarioDelAgente | null | undefined;
   delNegocio: string | null;
-  hrefCambiar: string;
+  hrefCambiar?: string;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <p className="font-display text-base font-semibold text-headline">Horario</p>
       <p className="text-sm text-body">
-        {lineaDelHorario(horario, delNegocio)} ·{" "}
-        <Link href={hrefCambiar} className="text-link underline-offset-2 hover:underline" aria-label="Cambiar el horario en Personalizar">
-          Cambiar
-        </Link>
+        {hrefCambiar ? (
+          <>
+            {lineaDelHorario(horario, delNegocio)} ·{" "}
+            <Link href={hrefCambiar} className="text-link underline-offset-2 hover:underline" aria-label="Cambiar el horario en Personalizar">
+              Cambiar
+            </Link>
+          </>
+        ) : (
+          `${lineaDelHorario(horario, delNegocio)}. Lo cambias después en Personalizar.`
+        )}
       </p>
     </div>
   );

@@ -343,6 +343,38 @@ describe("Estación 2 · Habilidades una pregunta a la vez (HU-UX-28)", () => {
     expect(screen.getByRole("button", { name: "Cambiar: ¿Cómo te pagan tus clientes?" })).toBeTruthy();
   });
 
+  it("en la bienvenida lo que se hace después va como texto, sin enlaces que el recorrido no deja abrir", () => {
+    const requisitos = [
+      { skill: "pack_commerce", kind: "sin_contenido", title: "Aún no hay productos", explanation: "", section: "pack_commerce", content: "catalogo" },
+    ] as unknown as Parameters<typeof EditorDeAgente>[0]["requisitos"];
+    const bienvenida = {
+      pasosDelNegocio: [{ id: "negocio-negocio", titulo: "Tu negocio" }],
+      volverA: vi.fn(),
+      avanzar: vi.fn(),
+      seguirDespues: () => null,
+      prepararPrueba: vi.fn(async () => null),
+      prueba: () => null,
+      probado: false,
+      terminar: vi.fn(async () => {}),
+      terminando: false,
+    };
+    abrir({ modo: "bienvenida", bienvenida, requisitos });
+    const aviso = screen.getByText("Para que funcione del todo").closest("[role=status]") as HTMLElement;
+    expect(within(aviso).queryByRole("link")).toBeNull();
+    expect(within(aviso).getByText("Lo haces después en Comercio › Productos.")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Cambiar el horario en Personalizar" })).toBeNull();
+    expect(screen.getByText(/^Atiende en el horario del negocio: .*\. Lo cambias después en Personalizar\.$/)).toBeTruthy();
+    continuar();
+    expect(screen.queryByRole("link", { name: "Conectar Wompi" })).toBeNull();
+    expect(screen.getByText(/Lo haces después en Conexiones › Pagos\./)).toBeTruthy();
+    cleanup();
+    // En Nuevo agente los enlaces se quedan.
+    abrir({ requisitos });
+    const enNuevo = screen.getByText("Para que funcione del todo").closest("[role=status]") as HTMLElement;
+    expect(within(enNuevo).getByRole("link", { name: "Cargar productos" }).getAttribute("href")).toBe("/comercio/productos");
+    expect(screen.getByRole("link", { name: "Cambiar el horario en Personalizar" })).toBeTruthy();
+  });
+
   it("sin violaciones graves de axe en cada pregunta, con «Opciones avanzadas» abierta", async () => {
     const { container } = abrir();
     expect(await violacionesGraves(container)).toEqual([]);

@@ -30,6 +30,24 @@ export function copiaDelRequisito(r: Requirement): CopiaDeRequisito {
   };
 }
 
+/** Dónde se hace cada salida del panel, en palabras («Comercio › Productos»), para la bienvenida sin enlaces. */
+const LUGARES: readonly [string, string][] = [
+  ["/comercio/productos", "Comercio › Productos"],
+  ["/calendario", "Calendario"],
+  ["/cobranza/clientes", "Cobranza › Clientes"],
+  ["/conexiones/pagos", "Conexiones › Pagos"],
+  ["/conexiones", "Conexiones"],
+  ["/habilidades", "Habilidades"],
+];
+
+/**
+ * Dónde se hace después lo que enlaza `href` (HU-UX-28): en la bienvenida el panel no se puede abrir mientras el
+ * recorrido está pendiente, así que el aviso lo dice con texto. Sin un lugar conocido, «el panel».
+ */
+export function lugarDeLaRuta(href: string): string {
+  return LUGARES.find(([prefijo]) => href === prefijo || href.startsWith(`${prefijo}/`) || href.startsWith(`${prefijo}?`))?.[1] ?? "el panel";
+}
+
 /** Los avisos que tocan a una habilidad (para ponerlos junto a sus superpoderes). */
 export function requisitosDeHabilidad(requisitos: Requirement[], habilidad: string): Requirement[] {
   return requisitos.filter((r) => r.skill === habilidad);

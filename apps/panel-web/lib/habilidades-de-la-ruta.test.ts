@@ -11,6 +11,7 @@ import {
   tituloDeLasFrases,
 } from "@/lib/habilidades-de-la-ruta";
 import type { HorarioDelAgente } from "@/lib/horario-del-agente";
+import { lugarDeLaRuta } from "@/lib/requisitos-de-agente";
 import { pruebasDeFrasesPropias, respuestaAFrasePropia } from "@/lib/vista-previa";
 
 const FORMAS = {
@@ -76,5 +77,13 @@ describe("estación 2 de la ruta (HU-UX-28)", () => {
     );
     expect(pruebas.map((p) => p.texto)).toEqual(["tres", "dos"]);
     expect(respuestaAFrasePropia("Tomar pedidos")[0].texto).toContain("«Tomar pedidos»");
+  });
+
+  it("dice dónde se hace después cada salida del panel (bienvenida sin enlaces)", () => {
+    expect(lugarDeLaRuta("/comercio/productos")).toBe("Comercio › Productos");
+    expect(lugarDeLaRuta("/calendario?ajustes=tipos")).toBe("Calendario");
+    expect(lugarDeLaRuta("/conexiones/pagos")).toBe("Conexiones › Pagos");
+    expect(lugarDeLaRuta("/habilidades/pack_commerce")).toBe("Habilidades");
+    expect(lugarDeLaRuta("/otra")).toBe("el panel");
   });
 });
