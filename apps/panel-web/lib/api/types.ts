@@ -447,3 +447,12 @@ export type PruebasArreglo = components["schemas"]["PruebasArregloOut"];
 export type PruebasArregloVista = components["schemas"]["PruebasArregloVistaOut"];
 export type PruebasAplicado = components["schemas"]["PruebasAplicadoOut"];
 export type PruebasCambio = components["schemas"]["PruebasCambioOut"];
+
+// Reportes de clientes (SPEC-54, ADR-0213, HU-FB-05).
+export type FeedbackCatalogo = components["schemas"]["FeedbackCatalogo"];
+export type FeedbackLimites = components["schemas"]["FeedbackLimites"];
+export type FeedbackOpcion = components["schemas"]["FeedbackOpcion"];
+export type FeedbackPagina = components["schemas"]["FeedbackPagina"];
+export type FeedbackReporte = components["schemas"]["FeedbackReporte"];
+export type FeedbackReporteResumen = components["schemas"]["FeedbackReporteResumen"];
+export type FeedbackAdjunto = components["schemas"]["FeedbackAdjunto"];

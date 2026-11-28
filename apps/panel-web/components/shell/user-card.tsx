@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, BookOpen, ChevronUp, LogOut, Palette, ScrollText, UserRound } from "lucide-react";
+import { Activity, BookOpen, ChevronUp, ClipboardList, LogOut, MessageSquareWarning, Palette, ScrollText, UserRound } from "lucide-react";
 
 import { EVENTO_CAMBIAR_TEMA } from "@/components/shell/atajos-context";
 import {
@@ -20,7 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import type { Me } from "@/lib/api/types";
 import { useAvatarPerfil, urlAvatarPropio } from "@/lib/avatar-version";
-import { DOCUMENTACION, OBSERVABILIDAD } from "@/lib/copy";
+import { DOCUMENTACION, OBSERVABILIDAD, REPORTES } from "@/lib/copy";
+import { EVENTO_REPORTAR } from "@/lib/feedback";
 import { SIN_OBSERVABILIDAD, type EnlacesObservabilidad } from "@/lib/observabilidad-url";
 import { THEME_COOKIE, toggleTheme, type ThemeName } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,8 @@ import { cn } from "@/lib/utils";
 /**
  * Tarjeta del usuario al pie del menú (D-SPEC-34): avatar + nombre en una tarjeta resaltada y
  * un submenú con el perfil, la documentación (si hay `WIKI_URL`), Grafana y Kibana (solo master, si hay
- * `GRAFANA_URL`/`KIBANA_URL`), un interruptor de tema y cerrar sesión. En la barra plegada queda
+ * `GRAFANA_URL`/`KIBANA_URL`), «Reportar un problema» y «Mis reportes» (con los reportes encendidos, SPEC-54),
+ * un interruptor de tema y cerrar sesión. En la barra plegada queda
  * solo el avatar.
  */
 export function UserCard({
@@ -38,6 +40,7 @@ export function UserCard({
   onNavigate,
   docsUrl = null,
   observabilidad = SIN_OBSERVABILIDAD,
+  reportes = false,
 }: {
   me: Me;
   initialTheme: ThemeName;
@@ -45,6 +48,8 @@ export function UserCard({
   docsUrl?: string | null;
   /** Destinos de Grafana y Kibana (resueltos en el servidor, `null` si no es master); sin URL, el ítem no aparece. */
   observabilidad?: EnlacesObservabilidad;
+  /** Reportes de clientes encendidos (`GET /feedback/catalogo` respondió): muestra sus dos ítems. */
+  reportes?: boolean;
   collapsed?: boolean;
   /** El cajón móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -139,6 +144,24 @@ export function UserCard({
             <BookOpen className="h-4 w-4 text-text-soft" aria-hidden />
             {DOCUMENTACION.etiqueta}
           </DropdownMenuExternalLinkItem>
+        )}
+        {reportes && (
+          <>
+            <DropdownMenuItem
+              onSelect={() => {
+                onNavigate?.();
+                // El formulario vive en el layout: así no se desmonta con el menú móvil.
+                window.dispatchEvent(new Event(EVENTO_REPORTAR));
+              }}
+              icon={<MessageSquareWarning className="text-text-soft" aria-hidden />}
+            >
+              {REPORTES.reportar}
+            </DropdownMenuItem>
+            <DropdownMenuLinkItem href="/reportes" current={pathname?.startsWith("/reportes")} onClick={onNavigate}>
+              <ClipboardList className="h-4 w-4 text-text-soft" aria-hidden />
+              {REPORTES.misReportes}
+            </DropdownMenuLinkItem>
+          </>
         )}
         {observabilidad.grafanaUrl && (
           <DropdownMenuExternalLinkItem

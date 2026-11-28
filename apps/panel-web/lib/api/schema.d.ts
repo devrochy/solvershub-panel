@@ -471,6 +471,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feedback/catalogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Catalogo
+         * @description Tipos, áreas y límites del formulario de reporte.
+         */
+        get: operations["get_catalogo_api_v1_feedback_catalogo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/feedback/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Reports
+         * @description Mis reportes, del más nuevo al más viejo; el propietario puede ver todos los del negocio.
+         */
+        get: operations["list_reports_api_v1_feedback_reports_get"];
+        put?: never;
+        /**
+         * Post Report
+         * @description Envía un reporte de error, mejora o idea con evidencia. Idempotente por `Idempotency-Key`.
+         */
+        post: operations["post_feedback_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/feedback/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Report
+         * @description Detalle de un reporte con los enlaces firmados de su evidencia.
+         */
+        get: operations["get_report_api_v1_feedback_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/search": {
         parameters: {
             query?: never;
@@ -14406,9 +14470,10 @@ export interface components {
         };
         /**
          * CreditBalance
-         * @description Saldo del ciclo desglosado (ADR-0209 §2 y §5, HU-BILL-22): el crédito del mes del plan más lo
-         *     acumulado (sobrante de ciclos anteriores, en Premium y Empresarial) y las recargas. Se gasta en ese
-         *     orden: mes, acumulado (el que vence antes primero) y recargas. `over_balance` es lo consumido por
+         * @description Saldo del ciclo desglosado (ADR-0209 §2 y §5, HU-BILL-22; ADR-0213 §10): el crédito del mes del plan
+         *     más lo acumulado (sobrante de ciclos anteriores, en Premium y Empresarial), las bonificaciones
+         *     («Regalos»: créditos de regalo por reportes aprobados, no vencen) y las recargas. Se gasta en ese
+         *     orden: mes, acumulado (el que vence antes primero), regalos y recargas. `over_balance` es lo consumido por
          *     encima del saldo (colchón de las conversaciones abiertas, lo absorbe la plataforma). En créditos con
          *     décimas (1 crédito = COP 10).
          */
@@ -14425,6 +14490,11 @@ export interface components {
             /** Accumulated Expires At */
             accumulated_expires_at?: string | null;
             /**
+             * Bonuses
+             * @default 0
+             */
+            bonuses: number;
+            /**
              * Top Ups
              * @default 0
              */
@@ -14439,6 +14509,11 @@ export interface components {
              * @default 0
              */
             used_accumulated: number;
+            /**
+             * Used Bonuses
+             * @default 0
+             */
+            used_bonuses: number;
             /**
              * Used Top Ups
              * @default 0
@@ -18985,7 +19060,7 @@ export interface components {
         NotificationTarget: {
             /**
              * Entity
-             * @description conversacion, escalacion, lead, cliente, pedido, pago, suscripcion, cobro, cita, conexion, mensaje_fallido, cobranza
+             * @description conversacion, escalacion, lead, cliente, pedido, pago, suscripcion, cobro, cita, conexion, mensaje_fallido, cobranza, feedback_reporte
              */
             entity: string;
             /** Id */
@@ -26422,6 +26497,199 @@ export interface components {
              */
             confirmo_creditos: number;
         };
+        /** FeedbackAdjunto */
+        FeedbackAdjunto: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mimetype */
+            mimetype: string;
+            /** Bytes */
+            bytes: number;
+            /** Nombre Original */
+            nombre_original: string | null;
+            /**
+             * Url
+             * @description URL firmada de vida corta: no se guarda; se vuelve a pedir el detalle al abrirla.
+             */
+            url: string;
+            /**
+             * Url Expira En
+             * Format: date-time
+             * @description Cuándo deja de servir `url` (10 minutos después de emitida).
+             */
+            url_expira_en: string;
+        };
+        /** FeedbackCatalogo */
+        FeedbackCatalogo: {
+            /** Tipos */
+            tipos: components["schemas"]["FeedbackOpcion"][];
+            /**
+             * Areas
+             * @description Secciones del panel más `otra`.
+             */
+            areas: components["schemas"]["FeedbackOpcion"][];
+            limites: components["schemas"]["FeedbackLimites"];
+        };
+        /** FeedbackLimites */
+        FeedbackLimites: {
+            /** Max Adjuntos */
+            max_adjuntos: number;
+            /** Max Bytes Por Archivo */
+            max_bytes_por_archivo: number;
+            /** Max Bytes Total */
+            max_bytes_total: number;
+            /** Mimetypes */
+            mimetypes: string[];
+        };
+        /** FeedbackOpcion */
+        FeedbackOpcion: {
+            /** Clave */
+            clave: string;
+            /** Etiqueta */
+            etiqueta: string;
+        };
+        /** FeedbackPagina */
+        FeedbackPagina: {
+            /** Items */
+            items: components["schemas"]["FeedbackReporteResumen"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** FeedbackReporte */
+        FeedbackReporte: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Autor Admin Id
+             * Format: uuid
+             */
+            autor_admin_id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Motivo Codigo
+             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
+             */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /**
+             * Motivo
+             * @description Explicación del revisor para el cliente.
+             */
+            motivo: string | null;
+            /**
+             * Creditos Otorgados
+             * @description Créditos de regalo, si se aprobó.
+             */
+            creditos_otorgados: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decidido En */
+            decidido_en: string | null;
+            /** Adjuntos */
+            adjuntos: components["schemas"]["FeedbackAdjunto"][];
+        };
+        /** FeedbackReporteResumen */
+        FeedbackReporteResumen: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Autor Admin Id
+             * Format: uuid
+             */
+            autor_admin_id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Motivo Codigo
+             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
+             */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /**
+             * Motivo
+             * @description Explicación del revisor para el cliente.
+             */
+            motivo: string | null;
+            /**
+             * Creditos Otorgados
+             * @description Créditos de regalo, si se aprobó.
+             */
+            creditos_otorgados: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decidido En */
+            decidido_en: string | null;
+            /**
+             * Adjuntos Total
+             * @description Cuántos adjuntos tiene (la lista viene en el detalle).
+             */
+            adjuntos_total: number;
+        };
+        /** Body_post_feedback_report */
+        Body_post_feedback_report: {
+            /**
+             * Tipo
+             * @description `error`, `mejora` o `idea`.
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /**
+             * Area
+             * @description Clave de un área de `GET /feedback/catalogo`.
+             */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Adjuntos
+             * @description Hasta 5: imágenes o PDF.
+             */
+            adjuntos?: string[] | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -27472,6 +27740,232 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NotificationPreferences"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_catalogo_api_v1_feedback_catalogo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackCatalogo"];
+                };
+            };
+            /** @description Reportes apagados (`FEEDBACK_ENABLED`): ocultar la entrada del menú. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reports_api_v1_feedback_reports_get: {
+        parameters: {
+            query?: {
+                /** @description `negocio` solo para el propietario. */
+                alcance?: "mios" | "negocio";
+                estado?: ("recibido" | "en_revision" | "aprobado" | "rechazado") | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackPagina"];
+                };
+            };
+            /** @description `cursor_invalido`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `alcance_no_permitido`: `alcance=negocio` es solo para el propietario. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reportes apagados (`FEEDBACK_ENABLED`): ocultar la entrada del menú. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_feedback_report: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+                /** @description Una por envío del formulario; se repite solo en los reintentos de ese mismo envío. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_post_feedback_report"];
+            };
+        };
+        responses: {
+            /** @description Replay: la `Idempotency-Key` ya se usó; devuelve el reporte original. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporte"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporte"];
+                };
+            };
+            /** @description `idempotency_key_requerida` o `idempotency_key_invalida`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reportes apagados (`FEEDBACK_ENABLED`): ocultar la entrada del menú. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `idempotency_key_en_uso`: la clave es de un reporte de otro usuario. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `adjunto_muy_grande` (8 MB por archivo) o `adjuntos_muy_grandes` (25 MB en total). */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `adjunto_invalido` (tipo o firma), `demasiados_adjuntos` (más de 5), `adjunto_repetido`, `tipo_invalido`, `area_invalida`, `titulo_invalido`, `descripcion_invalida` o `validation_error`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `demasiados_reportes` o `demasiados_reportes_del_negocio`, con `Retry-After`. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `almacenamiento_no_disponible`, con `Retry-After`; no se guardó nada. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_report_api_v1_feedback_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporte"];
+                };
+            };
+            /** @description `not_found`: no existe, es de otro usuario (sin ser propietario) o de otro negocio; o reportes apagados. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

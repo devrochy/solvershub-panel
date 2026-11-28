@@ -175,6 +175,8 @@ export function destinoDeNotificacion(item: { event_key: string; target?: Notifi
   return null;
 }
 
+const UUID_DE_REPORTE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Ruta a la que lleva una notificación para este usuario, o `null` si no tiene a dónde. */
 export function rutaDeNotificacion(
   destino: NotificacionDestino | null | undefined,
@@ -183,6 +185,10 @@ export function rutaDeNotificacion(
   esMaster = false,
 ): string | null {
   if (!destino) return null;
+  // Un reporte propio (SPEC-54) no es una sección del menú: cualquier rol del negocio ve los suyos.
+  if (destino.entity === "feedback_reporte") {
+    return destino.id && UUID_DE_REPORTE.test(destino.id) ? `/reportes/${destino.id}` : "/reportes";
+  }
   const visibles = new Set(seccionesDePaleta(permisos, packs, NAV_GROUPS, esMaster).map((s) => s.href));
   for (const { href, base } of candidatasDeDestino(destino)) {
     if (visibles.has(base)) return href;

@@ -133,7 +133,7 @@ const CON_RECARGAS: PlanResponse = {
     limit: 40000,
     used: 30000,
     percent: 75,
-    balance: { total: 50000, month: 40000, accumulated: 5000, accumulated_expires_at: "2026-12-19T12:00:00Z", top_ups: 5000, used_month: 25000, used_accumulated: 5000, used_top_ups: 0, over_balance: 0 },
+    balance: { total: 50000, month: 40000, accumulated: 5000, accumulated_expires_at: "2026-12-19T12:00:00Z", bonuses: 0, top_ups: 5000, used_month: 25000, used_accumulated: 5000, used_bonuses: 0, used_top_ups: 0, over_balance: 0 },
     balance_percent: 60,
   },
   payments: [
