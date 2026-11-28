@@ -185,7 +185,7 @@ describe("columnasDeLaLista", () => {
 });
 
 describe("Ventas › Clientes operable", () => {
-  it("muestra una pestaña por etapa con su contador, marca la actual y avisa de los sin lead", async () => {
+  it("muestra la etapa en un select con contador, marca la actual y avisa de los sin etapa", async () => {
     responder();
     await pintar({ filtro: "estado_lead:calificado", q: "ana" });
 
@@ -193,17 +193,13 @@ describe("Ventas › Clientes operable", () => {
     expect(pedida.searchParams.get("facetas")).toBe("estado_lead");
     expect(pedida.searchParams.getAll("filtro")).toEqual(["estado_lead:calificado"]);
 
-    const pestanas = within(screen.getByRole("navigation", { name: /Clientes por estado del lead/i }));
-    const todas = pestanas.getByRole("link", { name: /Todas/ });
-    expect(todas.textContent).toContain("10");
-    expect(pestanas.getByRole("link", { name: /Nuevo/ }).textContent).toContain("4");
-    const actual = pestanas.getByRole("link", { name: /Calificado/ });
-    expect(actual.getAttribute("aria-current")).toBe("page");
-    expect(actual.textContent).toContain("2");
-    // Cambiar de etapa conserva la búsqueda; «Todas» quita el filtro de etapa.
-    expect(pestanas.getByRole("link", { name: /Nuevo/ }).getAttribute("href")).toBe("/comercio/clientes?q=ana&filtro=estado_lead%3Anuevo");
-    expect(todas.getAttribute("href")).toBe("/comercio/clientes?q=ana");
-    expect(screen.getByText(/3 clientes aún no tienen lead de venta/)).toBeTruthy();
+    const etapa = screen.getByLabelText("Etapa") as HTMLSelectElement;
+    expect(etapa.value).toBe("estado_lead:calificado");
+    const opciones = within(etapa).getAllByRole("option").map((o) => o.textContent);
+    expect(opciones).toContain("Todas (10)");
+    expect(opciones).toContain("Nuevo (4)");
+    expect(opciones).toContain("Calificado (2)");
+    expect(within(etapa).getByRole("option", { name: "Sin etapa (3)" }).hasAttribute("disabled")).toBe(true);
   });
 
   it("pinta la etapa como texto, la última actividad y no repite la columna del pack", async () => {
@@ -234,8 +230,7 @@ describe("Ventas › Clientes operable", () => {
       "Nombre (Z–A)",
     ]);
     expect((screen.getByLabelText("Clasificación") as HTMLSelectElement).value).toBe("clasificacion:fiel");
-    // La etapa vive en las pestañas: va en un campo oculto para no perderla al enviar el formulario.
-    expect(container.querySelector('input[type="hidden"][name="filtro"]')?.getAttribute("value")).toBe("estado_lead:nuevo");
+    expect((screen.getByLabelText("Etapa") as HTMLSelectElement).value).toBe("estado_lead:nuevo");
     expect(screen.queryByLabelText("Estado del lead")).toBeNull();
   });
 
@@ -255,12 +250,13 @@ describe("Ventas › Clientes operable", () => {
     expect(screen.getByRole("link", { name: "Limpiar todo" }).getAttribute("href")).toBe("/comercio/clientes");
   });
 
-  it("sin contadores del backend la etapa baja a un select y la lista sigue funcionando", async () => {
+  it("sin contadores del backend la etapa queda en un select sin cifras y la lista sigue funcionando", async () => {
     responder({ facetas: [] });
     await pintar();
 
-    expect(screen.queryByRole("navigation", { name: /Clientes por/ })).toBeNull();
-    expect((screen.getByLabelText("Estado del lead") as HTMLSelectElement).value).toBe("");
+    const etapa = screen.getByLabelText("Etapa") as HTMLSelectElement;
+    expect(etapa.value).toBe("");
+    expect(within(etapa).getAllByRole("option").map((o) => o.textContent)).toContain("Nuevo");
     expect(screen.getAllByRole("row").length).toBe(3);
   });
 });
@@ -512,9 +508,9 @@ describe("Clientes · una sola sección", () => {
     render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     expect(screen.getByRole("button", { name: "Acción extra" })).toBeTruthy();
-    const datos = within(screen.getByRole("navigation", { name: "Clientes con datos de lead" }));
-    expect(datos.getByRole("link", { name: /Con datos/ }).textContent).toContain("1");
-    expect(datos.getByRole("link", { name: /Sin datos/ }).textContent).toContain("1");
+    const datos = screen.getByLabelText("Datos del lead") as HTMLSelectElement;
+    expect(within(datos).getByRole("option", { name: "Con datos (1)" })).toBeTruthy();
+    expect(within(datos).getByRole("option", { name: "Sin datos (1)" })).toBeTruthy();
 
     const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
     expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Módulos", "Agente"]));

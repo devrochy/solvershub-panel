@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Eye, MessageCircle, Phone, X } from "lucide-react";
+import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
@@ -17,7 +17,7 @@ import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
-import { TabLinks } from "@/components/ui/tab-links";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { ConversationConnection, LeadFilter, LeadsResponse, Me } from "@/lib/api/types";
 import {
@@ -35,7 +35,6 @@ import {
   ORDENES_CLIENTES,
   ORDENES_DE_VALOR,
   textoDeValor,
-  pestanasDeFaceta,
   puedeEditarClientes,
   puedeEnviarPlantilla,
   TONO_DE_ETAPA,
@@ -125,6 +124,32 @@ const TONO_TIPO: Record<string, "neutral" | "info" | "accent" | "success" | "war
   inactivo: "warning",
   bloqueado: "danger",
 };
+
+type Faceta = NonNullable<LeadsResponse["facetas"]>[number];
+type OpcionDeSelect = { value: string; label: string; disabled?: boolean };
+
+/** Opciones de un filtro del pack con su contador, para un select: «Nuevo (3)», «Todas (12)». */
+export function opcionesConConteo(filtro: LeadFilter, faceta?: Faceta, todas = "Todas"): OpcionDeSelect[] {
+  return [
+    { value: "", label: faceta ? `${todas} (${formatNumber(faceta.total)})` : todas },
+    ...filtro.options.map((opcion) => ({
+      value: `${filtro.key}:${opcion.value}`,
+      label: faceta ? `${opcion.label} (${formatNumber(faceta.counts[opcion.value] ?? 0)})` : opcion.label,
+    })),
+  ];
+}
+
+/** «Todos · Con datos · Sin datos» con sus contadores; «Sin datos» incluye los clientes sin lead. */
+export function opcionesDeDatos(filtro: LeadFilter, faceta?: Faceta): OpcionDeSelect[] {
+  if (!faceta) return [{ value: "", label: "Todos" }, ...filtro.options.map((o) => ({ value: `${filtro.key}:${o.value}`, label: o.label }))];
+  const con = faceta.counts.con ?? 0;
+  const sin = (faceta.counts.sin ?? 0) + (faceta.sin_valor ?? 0);
+  return [
+    { value: "", label: `Todos (${formatNumber(faceta.total)})` },
+    { value: `${filtro.key}:con`, label: `Con datos (${formatNumber(con)})` },
+    { value: `${filtro.key}:sin`, label: `Sin datos (${formatNumber(sin)})` },
+  ];
+}
 
 /** Columnas de la lista del módulo: las del agente y las de los que suma, sin repetir clave. */
 export function columnasDeLaLista(agents: LeadsResponse["agents"], agente: string): Columna[] {
@@ -260,13 +285,10 @@ export async function ClientesDeModulo({
   const filtroDeDatos = operable?.conDatos ? filters?.find((f) => f.key === operable.conDatos) : undefined;
   const facetaDeDatos = operable?.conDatos ? facetas?.find((f) => f.key === operable.conDatos) : undefined;
   const datosActual = operable?.conDatos ? valorDeFiltro(filtroSp, operable.conDatos) : "";
-  const conDatos = facetaDeDatos?.counts["con"] ?? 0;
-  const sinDatos = (facetaDeDatos?.counts["sin"] ?? 0) + (facetaDeDatos?.sin_valor ?? 0);
 
   // — Seguimiento (HU-CRM-21): pestañas con contador cuando el backend trae el filtro y sus contadores —
   const filtroDeSeguimiento = operable?.seguimiento ? filters?.find((f) => f.key === operable.seguimiento) : undefined;
   const facetaDeSeguimiento = operable?.seguimiento ? facetas?.find((f) => f.key === operable.seguimiento) : undefined;
-  const conSeguimiento = Boolean(filtroDeSeguimiento && facetaDeSeguimiento);
   const seguimientoActual = operable?.seguimiento ? valorDeFiltro(filtroSp, operable.seguimiento) : "";
   const filtroDeValor = operable?.valor ? filters?.find((f) => f.key === operable.valor) : undefined;
   const motivosDePerdida = motivosParaElegir(
@@ -519,10 +541,24 @@ export async function ClientesDeModulo({
           ),
         },
         ...(operable?.etapa
-          ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
+          ? [
+              {
+                key: "etapa",
+                header: "Etapa",
+                info: "El agente la mueve al calificar o al actualizar el lead; cada cambio queda con quién lo hizo.",
+                cell: (lead) => badgeDeEtapa(lead),
+              } satisfies Column<Fila>,
+            ]
           : []),
         ...(operable?.seguimiento
-          ? [{ key: "seguimiento", header: "Próxima acción", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
+          ? [
+              {
+                key: "seguimiento",
+                header: "Próxima acción",
+                info: "La programa una persona desde la ficha o el alta. El agente no crea seguimientos.",
+                cell: (lead) => seguimientoDeFila(lead),
+              } satisfies Column<Fila>,
+            ]
           : []),
         {
           key: "contacto",
@@ -647,11 +683,23 @@ export async function ClientesDeModulo({
   }
   const csvTruncado = Boolean(operable) && res.ok && total > MAX_FILAS_CSV;
 
-  // Los filtros del pack que no se usan a diario viven en «Más filtros»; siguen en el formulario y en la URL.
-  const CLAVES_SECUNDARIAS = new Set(["clasificacion", "motivo_perdida", "valor", "origen"]);
-  const filtrosPrincipales = filtrosEnSelect.filter((f) => !CLAVES_SECUNDARIAS.has(f.key));
-  const filtrosSecundarios = filtrosEnSelect.filter((f) => CLAVES_SECUNDARIAS.has(f.key));
+  // La etapa, el seguimiento y «datos del lead» tienen su propio select con contadores; el resto va en Más filtros.
+  const filtrosSecundarios = filtrosEnSelect.filter(
+    (f) => !["estado_lead", "seguimiento", operable?.conDatos].includes(f.key),
+  );
   const activosSecundarios = filtrosSecundarios.filter((f) => Boolean(valorDeFiltro(filtroSp, f.key))).length;
+  const opcionesEtapa = filtroDeEtapa ? opcionesConConteo(filtroDeEtapa, faceta) : [];
+  if (filtroDeEtapa && faceta?.sin_valor) {
+    opcionesEtapa.push({
+      value: "__sin_etapa",
+      label: `Sin etapa (${formatNumber(faceta.sin_valor)})`,
+      disabled: true,
+    });
+  }
+  const opcionesSeguimiento = filtroDeSeguimiento
+    ? opcionesConConteo(filtroDeSeguimiento, facetaDeSeguimiento, "Todos")
+    : [];
+  const opcionesDatos = filtroDeDatos ? opcionesDeDatos(filtroDeDatos, facetaDeDatos) : [];
 
   const filtrosForm = (
     <form method="get" action={basePath} className="flex flex-wrap items-end gap-3">
@@ -693,31 +741,65 @@ export async function ClientesDeModulo({
       <Field label="Buscar" htmlFor="q" className="w-72 max-w-full">
         <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre o teléfono" />
       </Field>
-      {conSeguimiento && seguimientoActual && operable?.seguimiento && (
-        <input type="hidden" name="filtro" value={`${operable.seguimiento}:${seguimientoActual}`} />
+      {filtroDeEtapa && (
+        <Field label="Etapa" htmlFor="filtro-estado_lead" className="w-44">
+          <Select
+            id="filtro-estado_lead"
+            name="filtro"
+            defaultValue={etapaActual ? `${filtroDeEtapa.key}:${etapaActual}` : ""}
+          >
+            {opcionesEtapa.map((opcion) => (
+              <option key={opcion.value || "todas"} value={opcion.value} disabled={opcion.disabled}>
+                {opcion.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
       )}
-      {operable &&
-        filtrosPrincipales.map((f) => {
-          const valor = valorDeFiltro(filtroSp, f.key);
-          return (
-            <Field key={f.key} label={f.label} htmlFor={`filtro-${f.key}`} className="w-44">
-              <Select id={`filtro-${f.key}`} name="filtro" defaultValue={valor ? `${f.key}:${valor}` : ""}>
-                <option value="">Todos</option>
-                {f.options.map((o) => (
-                  <option key={o.value} value={`${f.key}:${o.value}`}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          );
-        })}
-      {operable && filtrosSecundarios.length > 0 && (
-        <details open={activosSecundarios > 0} className="w-full rounded-md border border-border-soft px-3 py-2 md:w-auto">
+      {filtroDeSeguimiento && (
+        <Field label="Seguimiento" htmlFor="filtro-seguimiento" className="w-44">
+          <Select
+            id="filtro-seguimiento"
+            name="filtro"
+            defaultValue={seguimientoActual ? `${filtroDeSeguimiento.key}:${seguimientoActual}` : ""}
+          >
+            {opcionesSeguimiento.map((opcion) => (
+              <option key={opcion.value || "todos"} value={opcion.value}>
+                {opcion.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      {(filtroDeDatos || filtrosSecundarios.length > 0) && (
+        <details
+          open={activosSecundarios > 0 || Boolean(datosActual)}
+          className="w-full rounded-md border border-border-soft px-3 py-2 md:w-auto"
+        >
           <summary className="cursor-pointer text-sm text-link hover:underline">
-            Más filtros{activosSecundarios > 0 ? ` (${activosSecundarios})` : ""}
+            Más filtros{activosSecundarios + (datosActual ? 1 : 0) > 0 ? ` (${activosSecundarios + (datosActual ? 1 : 0)})` : ""}
           </summary>
           <div className="mt-3 flex flex-wrap items-end gap-3">
+            {filtroDeDatos && (
+              <Field
+                label="Datos del lead"
+                htmlFor="filtro-datos"
+                help="Con datos: nombre, teléfono, correo o interés."
+                className="w-52"
+              >
+                <Select
+                  id="filtro-datos"
+                  name="filtro"
+                  defaultValue={datosActual ? `${filtroDeDatos.key}:${datosActual}` : ""}
+                >
+                  {opcionesDatos.map((opcion) => (
+                    <option key={opcion.value || "todos"} value={opcion.value}>
+                      {opcion.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
             {filtrosSecundarios.map((f) => {
               const valor = valorDeFiltro(filtroSp, f.key);
               return (
@@ -758,6 +840,17 @@ export async function ClientesDeModulo({
         <Link href={basePath} className="pb-2.5 text-sm text-link hover:underline">
           {operable ? "Limpiar todo" : "Limpiar"}
         </Link>
+      )}
+      {puedeVerEmbudo && (
+        <SegmentedControl
+          label="Vista de los clientes"
+          className="ml-auto"
+          value={modoEmbudo ? "embudo" : "lista"}
+          options={[
+            { value: "lista", label: "Lista", href: hrefCon({ vista: "lista" }), icon: <List aria-hidden /> },
+            { value: "embudo", label: "Embudo", href: hrefCon({ vista: "embudo" }), icon: <Columns3 aria-hidden /> },
+          ]}
+        />
       )}
     </form>
   );
@@ -833,71 +926,11 @@ export async function ClientesDeModulo({
       }}
       filters={filtrosForm}
     >
-      {puedeVerEmbudo && (
-        <TabLinks
-          label="Vista de los clientes"
-          items={[
-            { href: hrefCon({ vista: "lista" }), label: "Lista" },
-            { href: hrefCon({ vista: "embudo" }), label: "Embudo" },
-          ]}
-          current={hrefCon({ vista: modoEmbudo ? "embudo" : "lista" })}
-        />
-      )}
-
       {modoEmbudo && operable?.conDatos && (
         <p className="text-xs text-text-soft">
           El embudo muestra solo clientes con datos de lead. Los contactos sin datos quedan en la lista, filtro
           «Sin datos».
         </p>
-      )}
-
-      {operable?.conDatos && filtroDeDatos && facetaDeDatos && !modoEmbudo && (
-        <TabLinks
-          label="Clientes con datos de lead"
-          items={[
-            {
-              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") }),
-              label: "Todos",
-              count: facetaDeDatos.total,
-            },
-            {
-              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "con") }),
-              label: "Con datos",
-              count: conDatos,
-            },
-            {
-              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "sin") }),
-              label: "Sin datos",
-              count: sinDatos,
-            },
-          ]}
-          current={
-            [
-              { valor: "", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") }) },
-              { valor: "con", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "con") }) },
-              { valor: "sin", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "sin") }) },
-            ].find((item) => item.valor === datosActual)?.href ?? hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") })
-          }
-        />
-      )}
-
-      {operable && etapaComoPestanas && filtroDeEtapa && !modoEmbudo && (
-        <EtapasConContador
-          filtro={filtroDeEtapa}
-          faceta={faceta}
-          etapaActual={etapaActual}
-          textoSinValor={directorio ? "una etapa" : "lead de venta"}
-          hrefDeEtapa={(valor) => hrefCon({ filtro: filtrosCon(filtroSp, filtroDeEtapa.key, valor) })}
-        />
-      )}
-
-      {operable && conSeguimiento && filtroDeSeguimiento && (
-        <SeguimientoConContador
-          filtro={filtroDeSeguimiento}
-          faceta={facetaDeSeguimiento}
-          actual={seguimientoActual}
-          hrefDe={(valor) => hrefCon({ filtro: filtrosCon(filtroSp, filtroDeSeguimiento.key, valor) })}
-        />
       )}
 
       {chips.length > 0 && (
@@ -1023,54 +1056,6 @@ export async function ClientesDeModulo({
       {ficha}
     </ListPage>
   );
-}
-
-/** Pestañas «Todas · Nuevo · Calificado…» con cuántos clientes hay en cada etapa y los que aún no tienen lead. */
-function EtapasConContador({
-  filtro,
-  faceta,
-  etapaActual,
-  hrefDeEtapa,
-  textoSinValor = "lead de venta",
-}: {
-  filtro: LeadFilter;
-  faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
-  etapaActual: string;
-  hrefDeEtapa: (valor: string) => string;
-  textoSinValor?: string;
-}) {
-  const { pestanas, sinValor } = pestanasDeFaceta(filtro, faceta);
-  const items = pestanas.map((p) => ({ href: hrefDeEtapa(p.value), label: p.label, count: p.count }));
-  const actual = items[Math.max(0, pestanas.findIndex((p) => p.value === etapaActual))].href;
-  return (
-    <div className="flex flex-col gap-1">
-      <TabLinks label={`Clientes por ${filtro.label.toLowerCase()}`} items={items} current={actual} />
-      {sinValor > 0 && (
-        <p className="text-xs text-text-soft">
-          {formatNumber(sinValor)} {sinValor === 1 ? "cliente aún no tiene" : "clientes aún no tienen"} {textoSinValor} y no
-          aparecen en ninguna etapa.
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** Pestañas «Todas · Vencidos · Hoy · Próximos 7 días…» con cuántos leads hay en cada una. */
-function SeguimientoConContador({
-  filtro,
-  faceta,
-  actual,
-  hrefDe,
-}: {
-  filtro: LeadFilter;
-  faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
-  actual: string;
-  hrefDe: (valor: string) => string;
-}) {
-  const { pestanas } = pestanasDeFaceta(filtro, faceta);
-  const items = pestanas.map((p) => ({ href: hrefDe(p.value), label: p.label, count: p.count }));
-  const hrefActual = items[Math.max(0, pestanas.findIndex((p) => p.value === actual))].href;
-  return <TabLinks label="Clientes por seguimiento" items={items} current={hrefActual} />;
 }
 
 /**

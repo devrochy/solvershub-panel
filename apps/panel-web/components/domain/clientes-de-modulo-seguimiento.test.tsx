@@ -144,21 +144,18 @@ describe("consultaClientesDeModulo con seguimiento", () => {
 });
 
 describe("Ventas › Clientes con seguimiento", () => {
-  it("muestra pestañas con contador, marca la actual y conserva los otros filtros al cambiar", async () => {
+  it("muestra el seguimiento en un select con contador y conserva la etapa al cambiar", async () => {
     responder();
     await pintar({ filtro: ["seguimiento:vencidos", "estado_lead:calificado"] });
 
-    const pestanas = within(screen.getByRole("navigation", { name: /Clientes por seguimiento/i }));
-    expect(pestanas.getByRole("link", { name: /Todas/ }).textContent).toContain("6");
-    const actual = pestanas.getByRole("link", { name: /Vencidos/ });
-    expect(actual.getAttribute("aria-current")).toBe("page");
-    expect(actual.textContent).toContain("2");
-    expect(pestanas.getByRole("link", { name: /Hoy/ }).getAttribute("href")).toBe(
-      "/comercio/clientes?filtro=estado_lead%3Acalificado&filtro=seguimiento%3Ahoy",
-    );
-    expect(pestanas.getByRole("link", { name: /Todas/ }).getAttribute("href")).toBe(
-      "/comercio/clientes?filtro=estado_lead%3Acalificado",
-    );
+    const seguimiento = screen.getByLabelText("Seguimiento") as HTMLSelectElement;
+    expect(seguimiento.value).toBe("seguimiento:vencidos");
+    const opciones = within(seguimiento).getAllByRole("option").map((o) => o.textContent);
+    expect(opciones).toContain("Todos (6)");
+    expect(opciones).toContain("Vencidos (2)");
+    expect(opciones).toContain("Hoy (1)");
+    expect(opciones).toContain("Sin seguimiento (2)");
+    expect((screen.getByLabelText("Etapa") as HTMLSelectElement).value).toBe("estado_lead:calificado");
   });
 
   it("marca el vencido con texto, la fecha en hora de Bogotá y la nota; el que no tiene dice «Sin seguimiento»", async () => {
@@ -176,15 +173,15 @@ describe("Ventas › Clientes con seguimiento", () => {
     expect(within(beto).getByText("Sin seguimiento")).toBeTruthy();
   });
 
-  it("ofrece el orden por seguimiento y lo preselecciona con el filtro; la pestaña actual va en un campo oculto", async () => {
+  it("ofrece el orden por seguimiento y lo preselecciona con el filtro", async () => {
     responder();
-    const { container } = await pintar({ filtro: "seguimiento:vencidos" });
+    await pintar({ filtro: "seguimiento:vencidos" });
 
     expect(new URL(llamadas[0], "http://local").searchParams.get("orden")).toBe("seguimiento");
     const orden = screen.getByLabelText("Ordenar por") as HTMLSelectElement;
     expect(orden.value).toBe("seguimiento");
     expect(within(orden).getAllByRole("option").map((o) => o.textContent)).toContain("Seguimiento (más atrasado)");
-    expect(container.querySelector('input[type="hidden"][name="filtro"][value="seguimiento:vencidos"]')).toBeTruthy();
+    expect((screen.getByLabelText("Seguimiento") as HTMLSelectElement).value).toBe("seguimiento:vencidos");
   });
 
   it("sin el filtro en el backend (versión vieja) no hay pestañas ni orden extra, y la columna dice «Sin seguimiento»", async () => {
@@ -195,7 +192,7 @@ describe("Ventas › Clientes con seguimiento", () => {
       facetas: FACETAS.filter((f) => f.key !== "seguimiento"),
     };
     await pintar();
-    expect(screen.queryByRole("navigation", { name: /seguimiento/i })).toBeNull();
+    expect(screen.queryByLabelText("Seguimiento")).toBeNull();
     const orden = screen.getByLabelText("Ordenar por") as HTMLSelectElement;
     expect(within(orden).getAllByRole("option").map((o) => o.textContent)).not.toContain("Seguimiento (más atrasado)");
   });
