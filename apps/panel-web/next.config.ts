@@ -40,9 +40,9 @@ const CSP_FOTOS_DE_PRODUCTOS = CSP.replace("img-src 'self' data: blob:", "img-sr
 // (tiles de OpenStreetMap). Son imágenes: no ejecutan código.
 const CSP_FICHA_CLIENTE = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https: http:");
 
-// Bandeja de reportes de clientes (SPEC-54, HU-FB-06): las capturas y los PDF de evidencia se ven con su
-// URL firmada del backend (10 min). Imágenes y un visor de PDF en un iframe; el resto sigue en 'self'.
-const CSP_ADJUNTOS_DE_REPORTES = CSP_FICHA_CLIENTE.replace("frame-ancestors 'none'", "frame-src https: http:; frame-ancestors 'none'");
+// Adjunto de un reporte de cliente servido por el BFF (SPEC-54, HU-FB-06): la bandeja lo muestra en un
+// iframe del mismo origen (vista previa del PDF). El archivo no ejecuta nada: sin scripts ni recursos.
+const CSP_ADJUNTO_DE_REPORTE = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'self'";
 
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
@@ -93,8 +93,11 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
       },
       {
-        source: "/plataforma/feedback/:id",
-        headers: [{ key: "Content-Security-Policy", value: CSP_ADJUNTOS_DE_REPORTES }],
+        source: "/api/platform/feedback/reports/:id/adjuntos/:adjunto",
+        headers: [
+          { key: "Content-Security-Policy", value: CSP_ADJUNTO_DE_REPORTE },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
       },
     ];
   },

@@ -71,7 +71,11 @@ export default async function ReporteDeClientePage({ params }: { params: Promise
             }
             hint="Ver sus otros reportes"
           />
-          <KpiTile label="Autor" value={<span className="block text-base leading-snug">{nombreDePersona(r.autor)}</span>} hint={r.autor.email ?? undefined} />
+          <KpiTile
+            label="Autor"
+            value={<span className="block break-words text-base leading-snug">{nombreDePersona(r.autor)}</span>}
+            hint={r.autor.nombre?.trim() ? (r.autor.email ?? undefined) : undefined}
+          />
           <KpiTile label="Recibido" value={<span className="block text-base leading-snug">{antiguedad(r.created_at)}</span>} hint={formatDateTime(r.created_at, zona)} />
         </div>
       }
@@ -95,7 +99,7 @@ export default async function ReporteDeClientePage({ params }: { params: Promise
         <h2 id="adjuntos" className="text-sh-block font-display text-headline">
           Evidencia
         </h2>
-        <AdjuntosDeReporte adjuntos={r.adjuntos} />
+        <AdjuntosDeReporte reporteId={r.id} adjuntos={r.adjuntos} />
       </section>
 
       <section aria-labelledby="nota-interna" className="flex flex-col gap-2">

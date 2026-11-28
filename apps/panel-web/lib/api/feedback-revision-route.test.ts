@@ -117,3 +117,44 @@ describe("BFF de la bandeja de reportes", () => {
     expect(await res.json()).toMatchObject({ code: "reporte_ya_decidido", details: { estado: "aprobado" } });
   });
 });
+
+describe("BFF de los adjuntos de un reporte", () => {
+  const fetchMock = vi.fn();
+  const ADJUNTO = "425bfb97-143c-4c25-9b77-27b3030ebf15";
+  const ctxAdjunto = (id: string, adjunto: string) => ({ params: Promise.resolve({ id, adjunto }) });
+  const detalleCon = (url: string, mimetype = "image/png") =>
+    new Response(JSON.stringify({ id: ID, adjuntos: [{ id: ADJUNTO, orden: 0, mimetype, bytes: 10, nombre_original: "captura final?.png", url }] }), { status: 200 });
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("descarga por la URL firmada del backend y lo sirve con su tipo", async () => {
+    const { GET } = await import("@/app/api/platform/feedback/reports/[id]/adjuntos/[adjunto]/route");
+    fetchMock
+      .mockResolvedValueOnce(detalleCon("https://api.publica.test/api/v1/files/abc.123.firma"))
+      .mockResolvedValueOnce(new Response("PNG", { status: 200 }));
+    const res = await GET(new Request("http://panel.test/x"), ctxAdjunto(ID, ADJUNTO));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/png");
+    expect(res.headers.get("Content-Disposition")).toBe('inline; filename="captura final_.png"');
+    expect(await res.text()).toBe("PNG");
+    const [detalleUrl] = fetchMock.mock.calls[0] as [string];
+    expect(detalleUrl).toMatch(new RegExp(`/api/v1/platform/feedback/reports/${ID}$`));
+    // Solo la ruta de archivos firmados, contra el backend del panel (no el host de la URL).
+    const [archivoUrl] = fetchMock.mock.calls[1] as [string];
+    expect(archivoUrl).toMatch(/^http:\/\/localhost:8000\/api\/v1\/files\/abc\.123\.firma$/);
+  });
+
+  it("no sigue otra ruta que la de archivos ni sirve tipos fuera del perfil", async () => {
+    const { GET } = await import("@/app/api/platform/feedback/reports/[id]/adjuntos/[adjunto]/route");
+    fetchMock.mockResolvedValueOnce(detalleCon("https://api.publica.test/api/v1/admin/me"));
+    expect((await GET(new Request("http://panel.test/x"), ctxAdjunto(ID, ADJUNTO))).status).toBe(502);
+    fetchMock.mockResolvedValueOnce(detalleCon("https://api.publica.test/api/v1/files/abc", "text/html"));
+    expect((await GET(new Request("http://panel.test/x"), ctxAdjunto(ID, ADJUNTO))).status).toBe(404);
+    expect((await GET(new Request("http://panel.test/x"), ctxAdjunto(ID, "otro"))).status).toBe(400);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});

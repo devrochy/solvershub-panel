@@ -55,6 +55,14 @@ export const TOPE_MENSUAL_POR_NEGOCIO = 10000;
 
 export const LIMITE_DE_LA_BANDEJA = 25;
 
+/** Tipos de adjunto que el panel muestra (perfil `feedback` del core: imágenes y PDF). */
+export const MIMES_DE_ADJUNTO = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"]);
+
+/** Adjunto servido por el BFF desde el mismo origen (la URL firmada del backend no sale al navegador). */
+export function urlDeAdjunto(reporteId: string, adjuntoId: string): string {
+  return `/api/platform/feedback/reports/${reporteId}/adjuntos/${adjuntoId}`;
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function esUuid(valor: unknown): valor is string {
