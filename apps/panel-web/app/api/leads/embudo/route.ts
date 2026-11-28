@@ -51,8 +51,15 @@ export async function GET(request: Request) {
     filas = [...filas, ...siguiente.data.items];
   }
   const tomadas = filas.slice(resto, resto + TARJETAS_POR_COLUMNA);
+  // La ficha se abre encima del tablero: conserva la vista y los filtros igual que las tarjetas iniciales.
+  const qs = new URLSearchParams({ vista: "embudo" });
+  const q = url.searchParams.get("q");
+  if (q) qs.set("q", q);
+  for (const filtro of url.searchParams.getAll("filtro")) qs.append("filtro", filtro);
+  const orden = url.searchParams.get("orden");
+  if (orden) qs.set("orden", orden);
   return NextResponse.json({
-    tarjetas: tomadas.map((fila) => tarjetaDeFila(fila, agente)),
+    tarjetas: tomadas.map((fila) => tarjetaDeFila(fila, agente, qs)),
     hay_mas: desde + tomadas.length < res.data.total,
   });
 }

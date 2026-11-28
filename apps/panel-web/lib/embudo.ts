@@ -28,7 +28,7 @@ export type TarjetaDeEmbudo = {
   href: string;
 };
 
-export function tarjetaDeFila(fila: FilaDeLead, agente?: string): TarjetaDeEmbudo {
+export function tarjetaDeFila(fila: FilaDeLead, agente?: string, qs?: URLSearchParams): TarjetaDeEmbudo {
   const puntaje = fila.extras.puntaje;
   const valor = fila.extras.valor_estimado;
   return {
@@ -38,7 +38,7 @@ export function tarjetaDeFila(fila: FilaDeLead, agente?: string): TarjetaDeEmbud
     valor: typeof valor === "number" && Number.isFinite(valor) ? valor : null,
     actividad: fila.ultima_actividad ?? null,
     vencido: seguimientoDeExtras(fila.extras)?.estado === "vencidos",
-    href: hrefFicha(fila.id, { agente }),
+    href: hrefFicha(fila.id, { agente, qs }),
   };
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Megaphone, Plus, Upload } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +121,7 @@ export function AccionesDeClientes({
 
 function NuevoLeadForm({ onListo }: { onListo: () => void }) {
   const router = useRouter();
+  const params = useSearchParams();
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existente, setExistente] = useState<string | null>(null);
@@ -174,7 +175,11 @@ function NuevoLeadForm({ onListo }: { onListo: () => void }) {
       return;
     }
     onListo();
-    if (json.id) router.push(`/leads?cliente=${json.id}`);
+    if (json.id) {
+      const volver = new URLSearchParams(params.toString());
+      volver.set("cliente", json.id);
+      router.push(`/leads?${volver.toString()}`);
+    }
     router.refresh();
   }
 
@@ -232,7 +237,7 @@ function NuevoLeadForm({ onListo }: { onListo: () => void }) {
         <div role="alert" className="rounded-md border border-status-danger-border bg-status-danger-bg p-3 text-sm text-status-danger-fg">
           {error}
           {existente && (
-            <Link href={`/leads?cliente=${existente}`} className="ml-2 font-medium underline">
+            <Link href={`/leads?${new URLSearchParams({ ...Object.fromEntries(params.entries()), cliente: existente }).toString()}`} className="ml-2 font-medium underline">
               Abrir su ficha
             </Link>
           )}

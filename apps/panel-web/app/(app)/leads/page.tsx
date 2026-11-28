@@ -74,7 +74,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
       }}
       directorio
       columnasDe="leads"
-      columnasOcultas={["estado_lead", "seguimiento_nota", "puntaje", "motivo_perdida", "interes", "origen"]}
+      columnasOcultas={["estado_lead", "seguimiento_nota", "puntaje", "motivo_perdida", "interes", "origen", "negocio"]}
       sesion={me.ok ? me.data : null}
       headerActions={
         puedeEditar ? (

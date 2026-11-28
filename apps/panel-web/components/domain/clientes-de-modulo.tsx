@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
+import { Eye, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
@@ -394,11 +394,17 @@ export async function ClientesDeModulo({
     return etapa ? (
       <Badge variant={TONO_DE_ETAPA[etapa.codigo] ?? "neutral"}>{etapa.texto}</Badge>
     ) : (
-      <span className="text-xs text-text-soft">Sin lead de venta</span>
+      <span className="text-xs text-text-soft">{directorio ? "Sin etapa" : "Sin lead de venta"}</span>
     );
   };
 
   /** Tipo de cliente del perfil (manual), distinto de la etapa del embudo y del segmento de compra de Ventas. */
+  /** Teléfono o, si no hay, correo: un lead creado a mano puede tener solo uno de los dos. */
+  const contactoDeFila = (lead: Fila) => {
+    const telefono = telefonoVisible(lead.perfil);
+    return telefono !== "—" ? telefono : (lead.perfil.email ?? "—");
+  };
+
   const tipoDeCliente = (lead: Fila) => {
     const valor = lead.perfil.clasificacion;
     return (
@@ -411,7 +417,7 @@ export async function ClientesDeModulo({
   /** Módulos con datos reales de este cliente (sin «General», que es el perfil, no un agente). */
   const modulosDeFila = (lead: Fila) =>
     lead.agentes
-      .filter((clave) => clave !== "general")
+      .filter((clave) => clave !== "general" && clave !== "leads")
       .map((clave) => agents.find((a) => a.key === clave)?.name ?? clave);
 
   /** Próxima acción del lead: «Vencido» (texto y color), la fecha en hora del negocio y la nota. */
@@ -523,7 +529,7 @@ export async function ClientesDeModulo({
           header: "Contacto",
           cell: (lead) => (
             <div className="flex flex-col whitespace-nowrap">
-              <span className="tabular-nums text-body">{telefonoVisible(lead.perfil)}</span>
+              <span className="tabular-nums text-body">{contactoDeFila(lead)}</span>
               <span className="text-xs text-text-soft">{canalLabel(lead.canal)}</span>
             </div>
           ),
@@ -641,6 +647,12 @@ export async function ClientesDeModulo({
   }
   const csvTruncado = Boolean(operable) && res.ok && total > MAX_FILAS_CSV;
 
+  // Los filtros del pack que no se usan a diario viven en «Más filtros»; siguen en el formulario y en la URL.
+  const CLAVES_SECUNDARIAS = new Set(["clasificacion", "motivo_perdida", "valor", "origen"]);
+  const filtrosPrincipales = filtrosEnSelect.filter((f) => !CLAVES_SECUNDARIAS.has(f.key));
+  const filtrosSecundarios = filtrosEnSelect.filter((f) => CLAVES_SECUNDARIAS.has(f.key));
+  const activosSecundarios = filtrosSecundarios.filter((f) => Boolean(valorDeFiltro(filtroSp, f.key))).length;
+
   const filtrosForm = (
     <form method="get" action={basePath} className="flex flex-wrap items-end gap-3">
       {modoEmbudo && <input type="hidden" name="vista" value="embudo" />}
@@ -685,7 +697,7 @@ export async function ClientesDeModulo({
         <input type="hidden" name="filtro" value={`${operable.seguimiento}:${seguimientoActual}`} />
       )}
       {operable &&
-        filtrosEnSelect.map((f) => {
+        filtrosPrincipales.map((f) => {
           const valor = valorDeFiltro(filtroSp, f.key);
           return (
             <Field key={f.key} label={f.label} htmlFor={`filtro-${f.key}`} className="w-44">
@@ -700,6 +712,30 @@ export async function ClientesDeModulo({
             </Field>
           );
         })}
+      {operable && filtrosSecundarios.length > 0 && (
+        <details open={activosSecundarios > 0} className="w-full rounded-md border border-border-soft px-3 py-2 md:w-auto">
+          <summary className="cursor-pointer text-sm text-link hover:underline">
+            Más filtros{activosSecundarios > 0 ? ` (${activosSecundarios})` : ""}
+          </summary>
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            {filtrosSecundarios.map((f) => {
+              const valor = valorDeFiltro(filtroSp, f.key);
+              return (
+                <Field key={f.key} label={f.label} htmlFor={`filtro-${f.key}`} className="w-44">
+                  <Select id={`filtro-${f.key}`} name="filtro" defaultValue={valor ? `${f.key}:${valor}` : ""}>
+                    <option value="">Todos</option>
+                    {f.options.map((o) => (
+                      <option key={o.value} value={`${f.key}:${o.value}`}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              );
+            })}
+          </div>
+        </details>
+      )}
       {operable && (
         <Field label="Ordenar por" htmlFor="orden" className="w-48">
           <Select id="orden" name="orden" defaultValue={ordenActual}>
@@ -801,14 +837,21 @@ export async function ClientesDeModulo({
         <TabLinks
           label="Vista de los clientes"
           items={[
-            { href: hrefCon({ vista: "lista" }), label: "Lista", icon: List },
-            { href: hrefCon({ vista: "embudo" }), label: "Embudo", icon: Columns3 },
+            { href: hrefCon({ vista: "lista" }), label: "Lista" },
+            { href: hrefCon({ vista: "embudo" }), label: "Embudo" },
           ]}
           current={hrefCon({ vista: modoEmbudo ? "embudo" : "lista" })}
         />
       )}
 
-      {operable?.conDatos && filtroDeDatos && facetaDeDatos && (
+      {modoEmbudo && operable?.conDatos && (
+        <p className="text-xs text-text-soft">
+          El embudo muestra solo clientes con datos de lead. Los contactos sin datos quedan en la lista, filtro
+          «Sin datos».
+        </p>
+      )}
+
+      {operable?.conDatos && filtroDeDatos && facetaDeDatos && !modoEmbudo && (
         <TabLinks
           label="Clientes con datos de lead"
           items={[
@@ -916,7 +959,7 @@ export async function ClientesDeModulo({
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm text-body">
-                    {telefonoVisible(lead.perfil)}
+                    {contactoDeFila(lead)}
                     <span className="ml-2 text-xs text-text-soft">{canalLabel(lead.canal)}</span>
                   </p>
                   {directorio && tipoDeCliente(lead)}
@@ -1051,6 +1094,10 @@ async function columnasDelTablero({
   filtro: LeadFilter;
   faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
 }): Promise<ColumnaDeEmbudo[]> {
+  const qsTarjeta = new URLSearchParams({ vista: "embudo" });
+  if (q?.trim()) qsTarjeta.set("q", q.trim());
+  for (const f of filtrosDePacks(filtros)) qsTarjeta.append("filtro", f);
+  if (orden && orden !== "alta") qsTarjeta.set("orden", orden);
   const paginas = await Promise.all(
     filtro.options.map((o) =>
       apiFetch<LeadsResponse>(
@@ -1065,7 +1112,7 @@ async function columnasDelTablero({
       label: o.label,
       total: faceta?.counts[o.value] ?? (pagina.ok ? pagina.data.total : 0),
       suma: faceta?.sumas ? (faceta.sumas[o.value] ?? 0) : null,
-      tarjetas: pagina.ok ? pagina.data.items.map((fila) => tarjetaDeFila(fila, agente)) : [],
+      tarjetas: pagina.ok ? pagina.data.items.map((fila) => tarjetaDeFila(fila, agente, qsTarjeta)) : [],
       entraron: [],
       hayMas: pagina.ok && pagina.data.has_more,
       error: pagina.ok ? undefined : `No se pudo cargar la etapa: ${pagina.error}`,
