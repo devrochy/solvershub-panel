@@ -123,7 +123,7 @@ export function creditoEnPalabras(credito: Credito | null | undefined, ahora: Da
 type Saldo = NonNullable<Credito["balance"]>;
 
 export type ParteDelSaldo = {
-  clave: "mes" | "acumulado" | "recargas";
+  clave: "mes" | "acumulado" | "regalos" | "recargas";
   nombre: string;
   /** «usaste 3.000 de 12.000». */
   uso: string;
@@ -133,7 +133,8 @@ export type ParteDelSaldo = {
 
 /**
  * El saldo del ciclo desglosado (HU-BILL-22): el total con su equivalente en pesos y, por parte, lo
- * usado. El crédito del mes siempre va; el acumulado y las recargas solo si hay algo.
+ * usado. El crédito del mes siempre va; el acumulado, los regalos y las recargas solo si hay algo.
+ * Los regalos son las bonificaciones por reportes aprobados (ADR-0213): se gastan antes que las recargas.
  */
 export function desgloseDelSaldo(
   saldo: Saldo | null | undefined,
@@ -146,6 +147,10 @@ export function desgloseDelSaldo(
   if (acumulado > 0 || (saldo.used_accumulated ?? 0) > 0) {
     const vence = diaCorto(saldo.accumulated_expires_at, ahora);
     partes.push({ clave: "acumulado", nombre: "Acumulado", uso: uso(saldo.used_accumulated ?? 0, acumulado), nota: vence ? `vence el ${vence}` : null });
+  }
+  const regalos = saldo.bonuses ?? 0;
+  if (regalos > 0 || (saldo.used_bonuses ?? 0) > 0) {
+    partes.push({ clave: "regalos", nombre: "Regalos", uso: uso(saldo.used_bonuses ?? 0, regalos), nota: null });
   }
   const recargas = saldo.top_ups ?? 0;
   if (recargas > 0 || (saldo.used_top_ups ?? 0) > 0) {
