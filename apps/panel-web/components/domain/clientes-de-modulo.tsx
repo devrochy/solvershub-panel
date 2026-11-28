@@ -22,7 +22,6 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { ConversationConnection, LeadFilter, LeadRow, LeadsResponse, Me } from "@/lib/api/types";
 import {
-  etiquetaClasificacion,
   filtrosCon,
   filtrosDePacks,
   hrefFicha,
@@ -114,14 +113,7 @@ const COLUMNAS_QUE_SUMA: Record<string, string[]> = { ventas: ["leads"] };
 const CANALES_FILTRO = ["whatsapp", "instagram", "messenger", "webchat", "email", "manual"];
 
 /** Tono del tipo de cliente (el del perfil, no el segmento de compra de Ventas). */
-const TONO_TIPO: Record<string, "neutral" | "info" | "accent" | "success" | "warning" | "danger"> = {
-  nuevo: "info",
-  prospecto: "neutral",
-  cliente: "success",
-  vip: "accent",
-  inactivo: "warning",
-  bloqueado: "danger",
-};
+
 
 type Faceta = NonNullable<LeadsResponse["facetas"]>[number];
 type OpcionDeSelect = { value: string; label: string; disabled?: boolean };
@@ -418,20 +410,30 @@ export async function ClientesDeModulo({
     );
   };
 
-  /** Tipo de cliente del perfil (manual), distinto de la etapa del embudo y del segmento de compra de Ventas. */
+
+
+  /** Cómo entró el lead y, si existe, por qué conexión. El canal ya va debajo del teléfono. */
+  const origenDeFila = (lead: Fila) => {
+    const origen = (typeof lead.extras["origen"] === "string" && lead.extras["origen"]) || "—";
+    const etiquetas = (lead.conexiones ?? []).map((conexion) => conexion.label);
+    const conexion =
+      etiquetas.length > 1 ? `${etiquetas[0]} +${etiquetas.length - 1}` : etiquetas[0];
+    return (
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-body">{origen}</span>
+        {conexion && conexion !== origen && (
+          <span className="truncate text-xs text-text-soft" title={etiquetas.join(" · ")}>
+            {conexion}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   /** Teléfono o, si no hay, correo: un lead creado a mano puede tener solo uno de los dos. */
   const contactoDeFila = (lead: Fila) => {
     const telefono = telefonoVisible(lead.perfil);
     return telefono !== "—" ? telefono : (lead.perfil.email ?? "—");
-  };
-
-  const tipoDeCliente = (lead: Fila) => {
-    const valor = lead.perfil.clasificacion;
-    return (
-      <Badge variant={TONO_TIPO[valor ?? ""] ?? "neutral"} className="whitespace-nowrap">
-        {etiquetaClasificacion(valor, lead.perfil.clasificacion_label)}
-      </Badge>
-    );
   };
 
   /** Módulos con datos reales de este cliente (sin «General» ni el lead del core, que no son módulos). */
@@ -533,41 +535,18 @@ export async function ClientesDeModulo({
             </div>
           ),
         },
-        ...(conexionesLista.length > 1
-          ? [
-              {
-                key: "conexion",
-                header: "Conexión",
-                info: "La conexión por la que escribió el cliente. Solo se muestra cuando el negocio tiene más de una.",
-                className: "max-xl:hidden",
-                cell: (lead: Fila) => {
-                  const etiquetas = (lead.conexiones ?? []).map((conexion) => conexion.label);
-                  return <span className="text-body">{etiquetas.length ? etiquetas.join(" · ") : "—"}</span>;
-                },
-              } satisfies Column<Fila>,
-            ]
-          : []),
+        {
+          key: "origen",
+          header: "Origen",
+          info: "Cómo entró el lead y, si aplica, por qué conexión llegó. El canal está en Contacto.",
+          className: "max-xl:hidden",
+          cell: (lead) => origenDeFila(lead),
+        },
         {
           key: "actividad",
           header: "Última actividad",
           className: "max-lg:hidden",
           cell: (lead) => <span className="text-body">{textoDeActividad(lead.ultima_actividad)}</span>,
-        },
-        {
-          key: "tipo",
-          header: "Tipo",
-          cell: (lead) => tipoDeCliente(lead),
-        },
-        {
-          key: "origen",
-          header: "Origen",
-          info: "Cómo llegó el lead: página web, chat, WhatsApp, Instagram o manual. No es la conexión.",
-          className: "max-xl:hidden",
-          cell: (lead) => (
-            <span className="text-body">
-              {typeof lead.extras["origen"] === "string" && lead.extras["origen"] ? lead.extras["origen"] : "—"}
-            </span>
-          ),
         },
         ...columnasDelPack,
         {
@@ -984,7 +963,6 @@ export async function ClientesDeModulo({
                     {contactoDeFila(lead)}
                     <span className="ml-2 text-xs text-text-soft">{canalLabel(lead.canal)}</span>
                   </p>
-                  {directorio && tipoDeCliente(lead)}
                 </div>
                 {operable.seguimiento && seguimientoDeFila(lead)}
                 <p className="text-xs text-text-soft">Última actividad: {textoDeActividad(lead.ultima_actividad)}</p>

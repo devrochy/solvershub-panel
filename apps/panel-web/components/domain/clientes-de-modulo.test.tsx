@@ -544,9 +544,9 @@ describe("Clientes · una sola sección", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
 
     const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
-    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Conexión", "También en", "Agente"]));
+    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Origen", "También en", "Agente"]));
+    expect(cabeceras).not.toEqual(expect.arrayContaining(["Tipo", "Conexión"]));
     const [, fila] = screen.getAllByRole("row");
-    expect(within(fila).getByText("VIP")).toBeTruthy();
     expect(within(fila).getByRole("img", { name: "Con datos en Ventas" })).toBeTruthy();
     expect(within(fila).getAllByText("WhatsApp").length).toBeGreaterThan(0);
     expect(within(fila).getByText("WhatsApp Ventas")).toBeTruthy();
