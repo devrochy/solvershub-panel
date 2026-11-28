@@ -12,7 +12,7 @@ const RUTA_DE_ARCHIVO = /^\/api\/v1\/files\/[A-Za-z0-9._~-]+$/;
 
 /**
  * BFF: un adjunto de un reporte, servido desde el mismo origen del panel (SPEC-54, HU-FB-06). Pide el
- * detalle (el servidor exige actuar como master y firma una URL nueva de 10 minutos), descarga el archivo
+ * detalle (el servidor exige actuar como master y firma una URL nueva de corta duración), descarga el archivo
  * por esa URL firmada y lo devuelve con su tipo. Así la vista previa no vence ni necesita abrir la CSP
  * del panel a otros orígenes. Solo imágenes y PDF; nunca se sigue otra URL que la de archivos del backend.
  */

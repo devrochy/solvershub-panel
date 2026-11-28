@@ -69,12 +69,12 @@ describe("acciones de revisión de un reporte", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("no deja pasar un monto por encima del tope por reporte", () => {
+  it("avisa si el monto pasa el tope por reporte habitual, sin bloquear (el tope real lo valida el servidor)", () => {
     render(<AccionesDeRevision reporte={REPORTE} />);
     fireEvent.click(screen.getByRole("button", { name: "Aprobar" }));
     fireEvent.change(screen.getByLabelText(/Créditos de regalo/), { target: { value: "50000" } });
-    expect(screen.getByText(/Pasa el tope por reporte/)).toBeTruthy();
-    expect((screen.getByRole("button", { name: "Revisar monto" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Pasa el tope por reporte habitual/)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Revisar monto" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("el 422 de tope mensual se explica con lo que queda", async () => {

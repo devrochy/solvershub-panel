@@ -99,6 +99,7 @@ export function AprobarReporte({ reporte }: { reporte: Reporte }) {
   const [error, setError] = useState<string | null>(null);
   // Doble clic: el ref corta antes de que React pinte el botón deshabilitado.
   const enCurso = useRef(false);
+  // Solo aviso: el tope real es configuración del core y lo hace cumplir el 422 del servidor.
   const fueraDeTope = creditos > TOPE_POR_REPORTE;
 
   function siguiente(event: FormEvent<HTMLFormElement>) {
@@ -156,8 +157,11 @@ export function AprobarReporte({ reporte }: { reporte: Reporte }) {
             <Field
               label="Créditos de regalo"
               htmlFor="feedback-creditos"
-              help={`Tope por reporte: ${formatNumber(TOPE_POR_REPORTE)} créditos. Tope del mes por negocio: ${formatNumber(TOPE_MENSUAL_POR_NEGOCIO)}.`}
-              error={fueraDeTope ? `Pasa el tope por reporte (${formatNumber(TOPE_POR_REPORTE)} créditos).` : undefined}
+              help={
+                fueraDeTope
+                  ? `Pasa el tope por reporte habitual (${formatNumber(TOPE_POR_REPORTE)} créditos): el servidor lo rechazará si sigue vigente.`
+                  : `Tope por reporte: ${formatNumber(TOPE_POR_REPORTE)} créditos. Tope del mes por negocio: ${formatNumber(TOPE_MENSUAL_POR_NEGOCIO)}.`
+              }
               required
             >
               <InputNumero id="feedback-creditos" value={creditos} onValueChange={setCreditos} min={0} autoComplete="off" autoFocus />
@@ -169,7 +173,7 @@ export function AprobarReporte({ reporte }: { reporte: Reporte }) {
                   Cancelar
                 </Button>
               </DialogClose>
-              <Button type="submit" variant="accent" disabled={creditos <= 0 || fueraDeTope}>
+              <Button type="submit" variant="accent" disabled={creditos <= 0}>
                 Revisar monto
               </Button>
             </div>
