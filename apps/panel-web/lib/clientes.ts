@@ -15,6 +15,8 @@ export type FiltrosClientes = {
   connection_id?: string;
   filtro?: string | string[];
   page?: string;
+  /** `embudo` muestra el tablero por etapas; cualquier otro valor, la lista. */
+  vista?: string;
   cliente?: string;
   /** Pestaña del agente que se abre en la ficha (`ventas`, `cobranza`, `agenda`…). */
   agente?: string;
@@ -31,6 +33,13 @@ export function consultaClientes(sp: FiltrosClientes, { conPagina = true } = {})
   for (const f of filtrosDePacks(sp.filtro)) qs.append("filtro", f);
   if (conPagina && sp.page) qs.set("page", sp.page);
   return qs;
+}
+
+/** La lista de Clientes con sus filtros y la vista actuales (sin la ficha abierta). */
+export function hrefListaClientes(sp: FiltrosClientes): string {
+  const qs = consultaClientes(sp);
+  if (sp.vista === "embudo") qs.set("vista", "embudo");
+  return `/leads${qs.size ? `?${qs.toString()}` : ""}`;
 }
 
 /** `filtro` de la URL como lista, sin vacíos ni valores sin `clave:valor`. */
@@ -409,7 +418,7 @@ export function hrefFicha(
   const next = new URLSearchParams(qs);
   if (id) next.set("cliente", id);
   else next.delete("cliente");
-  if (id && agente) next.set("agente", agente);
+  if (id && agente && agente !== "general") next.set("agente", agente);
   else next.delete("agente");
   if (id && editar) next.set("editar", "1");
   else next.delete("editar");

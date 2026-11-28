@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { ClientesDeModulo, columnasDeLaLista, consultaClientesDeModulo } from "@/components/domain/clientes-de-modulo";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -35,6 +35,10 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   };
+  window.HTMLElement.prototype.hasPointerCapture = () => false;
+  window.HTMLElement.prototype.releasePointerCapture = () => undefined;
+  window.HTMLElement.prototype.setPointerCapture = () => undefined;
+  window.HTMLElement.prototype.scrollIntoView = () => undefined;
 });
 
 afterEach(() => {
@@ -112,6 +116,10 @@ async function pintar(sp: Parameters<typeof ClientesDeModulo>[0]["sp"] = {}, ope
   return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 }
 
+function abrirFiltrosAvanzados() {
+  fireEvent.click(screen.getByRole("button", { name: /Más filtros/ }));
+}
+
 describe("consultaClientesDeModulo", () => {
   it("sin operable solo lleva agente, búsqueda y página (Agenda no cambia)", () => {
     const qs = consultaClientesDeModulo("agenda", { q: " ana ", page: "2", filtro: "estado_lead:nuevo", orden: "nombre" });
@@ -128,6 +136,26 @@ describe("consultaClientesDeModulo", () => {
   it("descarta un orden desconocido y no manda el orden por defecto", () => {
     expect(consultaClientesDeModulo("ventas", { orden: "por-el-color" }, OPERABLE).has("orden")).toBe(false);
     expect(consultaClientesDeModulo("ventas", { orden: "alta" }, OPERABLE).has("orden")).toBe(false);
+  });
+
+  it("la lista global no manda agente, conserva canal y conexión y pide los contadores de con datos", () => {
+    const qs = consultaClientesDeModulo(
+      undefined,
+      { q: "ana", channel: "whatsapp", connection_id: "c-1", filtro: ["lead_datos:con"] },
+      { ...OPERABLE, conDatos: "lead_datos" },
+    );
+    expect(qs.has("agente")).toBe(false);
+    expect(qs.get("q")).toBe("ana");
+    expect(qs.get("channel")).toBe("whatsapp");
+    expect(qs.get("connection_id")).toBe("c-1");
+    expect(qs.getAll("facetas")).toEqual(["estado_lead", "lead_datos"]);
+    expect(qs.getAll("filtro")).toEqual(["lead_datos:con"]);
+  });
+
+  it("el embudo fuerza «con datos» si no se eligió un filtro de datos", () => {
+    const qs = consultaClientesDeModulo(undefined, { vista: "embudo" }, { ...OPERABLE, pluginDeEtapa: "leads", conDatos: "lead_datos" });
+    expect(qs.getAll("filtro")).toEqual(["lead_datos:con"]);
+    expect(qs.get("page_size")).toBe("1");
   });
 });
 
@@ -165,7 +193,7 @@ describe("columnasDeLaLista", () => {
 });
 
 describe("Ventas › Clientes operable", () => {
-  it("muestra una pestaña por etapa con su contador, marca la actual y avisa de los sin lead", async () => {
+  it("muestra la etapa en un select con contador, marca la actual y avisa de los sin etapa", async () => {
     responder();
     await pintar({ filtro: "estado_lead:calificado", q: "ana" });
 
@@ -173,17 +201,13 @@ describe("Ventas › Clientes operable", () => {
     expect(pedida.searchParams.get("facetas")).toBe("estado_lead");
     expect(pedida.searchParams.getAll("filtro")).toEqual(["estado_lead:calificado"]);
 
-    const pestanas = within(screen.getByRole("navigation", { name: /Clientes por estado del lead/i }));
-    const todas = pestanas.getByRole("link", { name: /Todas/ });
-    expect(todas.textContent).toContain("10");
-    expect(pestanas.getByRole("link", { name: /Nuevo/ }).textContent).toContain("4");
-    const actual = pestanas.getByRole("link", { name: /Calificado/ });
-    expect(actual.getAttribute("aria-current")).toBe("page");
-    expect(actual.textContent).toContain("2");
-    // Cambiar de etapa conserva la búsqueda; «Todas» quita el filtro de etapa.
-    expect(pestanas.getByRole("link", { name: /Nuevo/ }).getAttribute("href")).toBe("/comercio/clientes?q=ana&filtro=estado_lead%3Anuevo");
-    expect(todas.getAttribute("href")).toBe("/comercio/clientes?q=ana");
-    expect(screen.getByText(/3 clientes aún no tienen lead de venta/)).toBeTruthy();
+    const etapa = screen.getByLabelText("Etapa") as HTMLSelectElement;
+    expect(etapa.value).toBe("estado_lead:calificado");
+    const opciones = within(etapa).getAllByRole("option").map((o) => o.textContent);
+    expect(opciones).toContain("Todas (10)");
+    expect(opciones).toContain("Nuevo (4)");
+    expect(opciones).toContain("Calificado (2)");
+    expect(within(etapa).getByRole("option", { name: "Sin etapa (3)" }).hasAttribute("disabled")).toBe(true);
   });
 
   it("pinta la etapa como texto, la última actividad y no repite la columna del pack", async () => {
@@ -213,9 +237,9 @@ describe("Ventas › Clientes operable", () => {
       "Nombre (A–Z)",
       "Nombre (Z–A)",
     ]);
+    abrirFiltrosAvanzados();
     expect((screen.getByLabelText("Clasificación") as HTMLSelectElement).value).toBe("clasificacion:fiel");
-    // La etapa vive en las pestañas: va en un campo oculto para no perderla al enviar el formulario.
-    expect(container.querySelector('input[type="hidden"][name="filtro"]')?.getAttribute("value")).toBe("estado_lead:nuevo");
+    expect((screen.getByLabelText("Etapa") as HTMLSelectElement).value).toBe("estado_lead:nuevo");
     expect(screen.queryByLabelText("Estado del lead")).toBeNull();
   });
 
@@ -235,44 +259,60 @@ describe("Ventas › Clientes operable", () => {
     expect(screen.getByRole("link", { name: "Limpiar todo" }).getAttribute("href")).toBe("/comercio/clientes");
   });
 
-  it("sin contadores del backend la etapa baja a un select y la lista sigue funcionando", async () => {
+  it("sin contadores del backend la etapa queda en un select sin cifras y la lista sigue funcionando", async () => {
     responder({ facetas: [] });
     await pintar();
 
-    expect(screen.queryByRole("navigation", { name: /Clientes por/ })).toBeNull();
-    expect((screen.getByLabelText("Estado del lead") as HTMLSelectElement).value).toBe("");
+    const etapa = screen.getByLabelText("Etapa") as HTMLSelectElement;
+    expect(etapa.value).toBe("");
+    expect(within(etapa).getAllByRole("option").map((o) => o.textContent)).toContain("Nuevo");
     expect(screen.getAllByRole("row").length).toBe(3);
   });
 });
 
 describe("acciones por fila", () => {
-  it("WhatsApp y Llamar salen del teléfono del cliente y se ocultan si no tiene", async () => {
+  it("el menú de la fila muestra WhatsApp y Llamar con icono y texto", async () => {
     responder();
     await pintar();
 
     const [, ana, beto] = screen.getAllByRole("row");
-    const wa = within(ana).getByRole("link", { name: "Escribir por WhatsApp a Ana Prueba" });
+    const menuAna = within(ana).getByRole("button", { name: "Más acciones de Ana Prueba" });
+    fireEvent.pointerDown(menuAna, { button: 0, pointerType: "mouse" });
+    const wa = await screen.findByRole("menuitem", { name: /Escribir por WhatsApp/ });
     expect(wa.getAttribute("href")).toBe("https://wa.me/573000000000");
     expect(wa.getAttribute("target")).toBe("_blank");
     expect(wa.getAttribute("rel")).toContain("noopener");
-    expect(within(ana).getByRole("link", { name: "Llamar a Ana Prueba" }).getAttribute("href")).toBe("tel:+573000000000");
-    expect(within(beto).queryByRole("link", { name: /WhatsApp/ })).toBeNull();
-    expect(within(beto).queryByRole("link", { name: /Llamar/ })).toBeNull();
-    // La ficha sigue disponible aunque no haya teléfono.
-    expect(within(beto).getByRole("link", { name: "Ver la ficha de Beto Sin Teléfono" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Llamar" }).getAttribute("href")).toBe("tel:+573000000000");
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    const menuBeto = within(beto).getByRole("button", { name: "Más acciones de Beto Sin Teléfono" });
+    fireEvent.pointerDown(menuBeto, { button: 0, pointerType: "mouse" });
+    expect(screen.queryByRole("menuitem", { name: /Escribir por WhatsApp/ })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Llamar" })).toBeNull();
+    // La fila sigue abriendo la ficha aunque no haya teléfono.
+    expect(within(beto).getByRole("link", { name: "Abrir la ficha de Beto Sin Teléfono" })).toBeTruthy();
   });
 
   it("Enviar plantilla solo aparece para el propietario o la plataforma", async () => {
     responder();
     await pintar();
-    expect(within(screen.getAllByRole("row")[1]).getByRole("button", { name: "Enviar plantilla a Ana Prueba" })).toBeTruthy();
+    const ana = screen.getAllByRole("row")[1];
+    fireEvent.pointerDown(within(ana).getByRole("button", { name: "Más acciones de Ana Prueba" }), {
+      button: 0,
+      pointerType: "mouse",
+    });
+    expect(await screen.findByRole("menuitem", { name: "Enviar plantilla" })).toBeTruthy();
     cleanup();
 
     responder({}, { ...me, role: "user", tenant: { ...me.tenant!, role: "colaborador" } } as Me);
     await pintar();
-    expect(screen.queryByRole("button", { name: /Enviar plantilla/ })).toBeNull();
-    // Escribir y llamar no dependen del permiso de envío masivo (una vez en la tabla y otra en la tarjeta móvil).
-    expect(screen.getAllByRole("link", { name: "Llamar a Ana Prueba" }).length).toBe(2);
+    const anaSinPermiso = screen.getAllByRole("row")[1];
+    fireEvent.pointerDown(within(anaSinPermiso).getByRole("button", { name: "Más acciones de Ana Prueba" }), {
+      button: 0,
+      pointerType: "mouse",
+    });
+    expect(screen.queryByRole("menuitem", { name: "Enviar plantilla" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: /Escribir por WhatsApp/ })).toBeTruthy();
   });
 });
 
@@ -326,10 +366,9 @@ describe("estados, CSV y móvil", () => {
     expect(ana.getByRole("link", { name: "Ana Prueba" })).toBeTruthy();
     expect(ana.getByText("Calificado")).toBeTruthy();
     expect(ana.getByText("Última actividad: Hace 3 min")).toBeTruthy();
-    expect(ana.getByRole("link", { name: "Llamar a Ana Prueba" }).className).toContain("h-11");
-    // Todos los destinos táctiles de la tarjeta miden 44 px (HIG: 44 × 44 pt).
-    expect(ana.getByRole("link", { name: "Ver la ficha de Ana Prueba" }).className).toContain("h-11");
-    expect(ana.getByRole("button", { name: "Enviar plantilla a Ana Prueba" }).className).toContain("h-11");
+    expect(ana.getByRole("button", { name: "Más acciones de Ana Prueba" })).toBeTruthy();
+    // El ojo de la ficha se retiró: en la tabla se abre desde la fila.
+    expect(ana.queryByRole("link", { name: "Ver la ficha de Ana Prueba" })).toBeNull();
     expect(ana.getByRole("link", { name: "Ana Prueba" }).className).toContain("min-h-11");
     expect(within(tarjetas[1]).getByText("Sin lead de venta")).toBeTruthy();
   });
@@ -418,8 +457,9 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
       "Valor estimado (mayor primero)",
       "Valor estimado (menor primero)",
     ]);
+    abrirFiltrosAvanzados();
     expect(screen.getByLabelText("Motivo de pérdida")).toBeTruthy();
-    expect(screen.getByLabelText("Valor estimado")).toBeTruthy();
+    expect(screen.getByLabelText("Valor del lead")).toBeTruthy();
   });
 
   it("sin el filtro de valor del backend no ofrece órdenes por valor (backend viejo)", async () => {
@@ -446,5 +486,71 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
     const [, ana, beto] = screen.getAllByRole("row");
     expect(within(ana).getByText(/250\.000/)).toBeTruthy();
     expect(within(beto).queryByText(/\$/)).toBeNull();
+  });
+});
+
+describe("Clientes · una sola sección", () => {
+  it("la vista global muestra con datos/sin datos, tipo, módulos, interruptor y la ficha encima", async () => {
+    const conDatos: LeadsResponse["filters"] = [
+      ...FILTROS,
+      { key: "lead_datos", label: "Datos del lead", options: [{ value: "con", label: "Con datos" }, { value: "sin", label: "Sin datos" }] },
+    ];
+    const facetas: NonNullable<LeadsResponse["facetas"]> = [
+      ...FACETAS,
+      { key: "lead_datos", counts: { con: 1, sin: 1 }, sin_valor: 0, total: 2 },
+    ];
+    const conexiones = [
+      { id: "c-1", label: "WhatsApp Ventas", channel: "whatsapp" },
+      { id: "c-2", label: "Instagram Principal", channel: "instagram" },
+    ];
+    const ANA_VIP = {
+      ...ANA,
+      perfil: { ...ANA.perfil, clasificacion: "vip", clasificacion_label: "VIP" },
+      extras: { ...ANA.extras, origen: "WhatsApp" },
+      conexiones: [conexiones[0]],
+    };
+    respuestas["/admin/leads"] = {
+      ...leads,
+      filters: conDatos,
+      facetas,
+      agents: AGENTES,
+      items: [ANA_VIP, SIN_TELEFONO],
+      total: 2,
+    };
+    respuestas["/admin/conversations/connections"] = conexiones;
+
+    const arbol = await resolverServidor(
+      await ClientesDeModulo({
+        basePath: "/leads",
+        titulo: "Clientes",
+        descripcion: "Descripción",
+        sp: {},
+        vacioDescripcion: "Vacío",
+        operable: { etapa: "estado_lead", pluginDeEtapa: "leads", conDatos: "lead_datos" },
+        directorio: true,
+        columnasDe: "leads",
+        sesion: me,
+        headerActions: <button type="button">Acción extra</button>,
+        ficha: <div>Ficha de prueba</div>,
+      }),
+    );
+    render(<FeedbackProviders>{arbol}</FeedbackProviders>);
+
+    expect(screen.getByRole("button", { name: "Acción extra" })).toBeTruthy();
+    abrirFiltrosAvanzados();
+    const datos = screen.getByLabelText("Datos del lead") as HTMLSelectElement;
+    expect(within(datos).getByRole("option", { name: "Con datos (1)" })).toBeTruthy();
+    expect(within(datos).getByRole("option", { name: "Sin datos (1)" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+
+    const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
+    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Origen", "También en", "Agente"]));
+    expect(cabeceras).not.toEqual(expect.arrayContaining(["Tipo", "Conexión"]));
+    const [, fila] = screen.getAllByRole("row");
+    expect(within(fila).getByRole("img", { name: "Con datos en Ventas" })).toBeTruthy();
+    expect(within(fila).getAllByText("WhatsApp").length).toBeGreaterThan(0);
+    expect(within(fila).getByText("WhatsApp Ventas")).toBeTruthy();
+    expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
+    expect(screen.getByText("Ficha de prueba")).toBeTruthy();
   });
 });

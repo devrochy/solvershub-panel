@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   ShoppingCart,
   UserCog,
-  Target,
   Users,
   Workflow,
   Activity,
@@ -129,11 +128,8 @@ export const NAV_GROUPS: NavGroupDef[] = [
         { section: "conversations", label: "Conversaciones", pestana: "Chats", href: "/conversaciones", icon: MessageSquare, ready: true },
         { section: "escalations", label: "Escalaciones", href: "/escalaciones", icon: ShieldAlert, ready: true },
       ]),
-      entrada("Clientes", Users, [
-        { section: "leads", label: "Clientes", href: "/leads", icon: Users, ready: true },
-        // HU-AOS-70: el lead es del core (ADR-0193); sin comercio, su embudo vive aquí y no en Ventas › Clientes.
-        { section: "leads", label: "Leads", href: "/leads/captados", icon: Target, ready: true },
-      ]),
+      // Clientes es una sola sección: la lista y el embudo son vistas de la misma página (rediseño 2026-11).
+      { section: "leads", label: "Clientes", href: "/leads", icon: Users, ready: true },
     ],
   },
   {

@@ -15,6 +15,7 @@ import {
   filtrosCon,
   filtrosDePacks,
   hrefFicha,
+  hrefListaClientes,
   mismoTelefono,
   normalizarClave,
   MENSAJE_VALOR_INVALIDO,
@@ -276,7 +277,7 @@ describe("hrefFicha (HU-CRM-20)", () => {
   it("abre la ficha de un cliente en su pestaña", () => {
     expect(hrefFicha("c-1")).toBe("/leads?cliente=c-1");
     expect(hrefFicha("c-1", { agente: "ventas" })).toBe("/leads?cliente=c-1&agente=ventas");
-    expect(hrefFicha("c-1", { agente: "general", editar: true })).toBe("/leads?cliente=c-1&agente=general&editar=1");
+    expect(hrefFicha("c-1", { agente: "general", editar: true })).toBe("/leads?cliente=c-1&editar=1");
   });
 
   it("conserva los filtros de la lista y cambia solo el cliente", () => {
@@ -284,6 +285,13 @@ describe("hrefFicha (HU-CRM-20)", () => {
     expect(hrefFicha("c-2", { qs })).toBe("/leads?q=ana&cliente=c-2&page=2");
     expect(hrefFicha(undefined, { qs })).toBe("/leads?q=ana&page=2");
     expect(hrefFicha()).toBe("/leads");
+  });
+
+  it("la lista conserva la vista y los filtros, sin la ficha", () => {
+    expect(hrefListaClientes({ q: "ana", filtro: "lead_datos:con", vista: "embudo" })).toBe(
+      "/leads?q=ana&filtro=lead_datos%3Acon&vista=embudo",
+    );
+    expect(hrefListaClientes({ cliente: "c-1", page: "2" })).toBe("/leads?page=2");
   });
 });
 

@@ -47,6 +47,7 @@ export function DataTable<T>({
   loading = false,
   loadingRows = 5,
   error,
+  errorTitle,
   errorAction,
   maxHeight,
   caption,
@@ -71,6 +72,8 @@ export function DataTable<T>({
   loading?: boolean;
   loadingRows?: number;
   error?: string | null;
+  /** Título del estado de error; por defecto, «No se pudieron cargar los datos». */
+  errorTitle?: string;
   errorAction?: ReactNode;
   /** Clase de alto máximo (por ejemplo `max-h-[480px]`): scroll propio y encabezado fijo. */
   maxHeight?: string;
@@ -88,7 +91,7 @@ export function DataTable<T>({
   if (error) {
     return (
       <div role="alert" className={marco}>
-        <EmptyState title="No se pudieron cargar los datos" description={error} action={errorAction} />
+        <EmptyState title={errorTitle ?? "No se pudieron cargar los datos"} description={error} action={errorAction} />
       </div>
     );
   }

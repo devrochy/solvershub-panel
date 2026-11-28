@@ -22,7 +22,7 @@ import { useAction } from "@/lib/use-action";
 import { cn } from "@/lib/utils";
 
 /** Filtros de la vista, para pedir más tarjetas de una columna con los mismos criterios. */
-export type ConsultaDelTablero = { agente: string; q?: string; filtros: string[]; orden?: string };
+export type ConsultaDelTablero = { agente?: string; q?: string; filtros: string[]; orden?: string };
 
 /**
  * Tablero de embudo (HU-CRM-24): una columna por etapa con su cantidad, la suma del valor y las tarjetas
@@ -90,11 +90,11 @@ export function TableroEmbudo({
     setCargando(columna.value);
     try {
       const qs = new URLSearchParams({
-        agente: consulta.agente,
         clave,
         valor: columna.value,
         desde: String(desdeDeColumna(columna)),
       });
+      if (consulta.agente) qs.set("agente", consulta.agente);
       if (consulta.q) qs.set("q", consulta.q);
       for (const f of consulta.filtros) qs.append("filtro", f);
       if (consulta.orden) qs.set("orden", consulta.orden);
