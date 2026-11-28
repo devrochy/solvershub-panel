@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Columns3, List, MessageCircle, Phone, X } from "lucide-react";
+import { Columns3, List, X } from "lucide-react";
 
-import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
+import { AccionesDeFila } from "@/app/(app)/leads/_components/acciones-de-fila";
 import { FiltrosAvanzados, type CampoAvanzado } from "@/app/(app)/leads/_components/filtros-avanzados";
 import { ListPage } from "@/components/templates/list-page";
 import { AgentIcon } from "@/components/domain/agent-icon";
@@ -22,8 +22,6 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
 import type { ConversationConnection, LeadFilter, LeadRow, LeadsResponse, Me } from "@/lib/api/types";
 import {
-  enlaceTelefono,
-  enlaceWhatsApp,
   etiquetaClasificacion,
   filtrosCon,
   filtrosDePacks,
@@ -461,37 +459,11 @@ export async function ClientesDeModulo({
     );
   };
 
-  const accionesDeFila = (lead: Fila, grande = false) => {
-    const nombre = lead.perfil.nombre_visible;
-    const tel = enlaceTelefono(lead.perfil);
-    const wa = enlaceWhatsApp(lead.perfil);
-    const tamano = grande ? "h-11 w-11" : "h-9 w-9";
-    return (
-      <div className="relative z-10 flex items-center justify-end gap-1">
-        {wa && (
-          <Button asChild variant="ghost" size="icon" className={tamano}>
-            <a href={wa} target="_blank" rel="noopener noreferrer" aria-label={`Escribir por WhatsApp a ${nombre}`} title="WhatsApp">
-              <MessageCircle className="h-4 w-4" aria-hidden />
-            </a>
-          </Button>
-        )}
-        {tel && (
-          <Button asChild variant="ghost" size="icon" className={tamano}>
-            <a href={tel} aria-label={`Llamar a ${nombre}`} title="Llamar">
-              <Phone className="h-4 w-4" aria-hidden />
-            </a>
-          </Button>
-        )}
-        {puedeEnviar && (
-          <EnviarPlantilla
-            consulta=""
-            cliente={{ id: lead.id, nombre }}
-            icono={{ className: tamano }}
-          />
-        )}
-      </div>
-    );
-  };
+  const accionesDeFila = (lead: Fila) => (
+    <div className="relative z-10 flex items-center justify-end">
+      <AccionesDeFila lead={lead} puedeEnviar={puedeEnviar} />
+    </div>
+  );
 
   const columnasDelPack = columnasDelAgente
     // La etapa y el seguimiento tienen su propia columna: no se repiten como texto.
@@ -1026,7 +998,7 @@ export async function ClientesDeModulo({
                     />
                   </div>
                 )}
-                {accionesDeFila(lead, true)}
+                {accionesDeFila(lead)}
               </li>
             ))}
           </ul>

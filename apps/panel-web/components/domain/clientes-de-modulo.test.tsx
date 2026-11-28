@@ -35,6 +35,10 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   };
+  window.HTMLElement.prototype.hasPointerCapture = () => false;
+  window.HTMLElement.prototype.releasePointerCapture = () => undefined;
+  window.HTMLElement.prototype.setPointerCapture = () => undefined;
+  window.HTMLElement.prototype.scrollIntoView = () => undefined;
 });
 
 afterEach(() => {
@@ -267,33 +271,48 @@ describe("Ventas › Clientes operable", () => {
 });
 
 describe("acciones por fila", () => {
-  it("WhatsApp y Llamar salen del teléfono del cliente y se ocultan si no tiene", async () => {
+  it("el menú de la fila muestra WhatsApp y Llamar con icono y texto", async () => {
     responder();
     await pintar();
 
     const [, ana, beto] = screen.getAllByRole("row");
-    const wa = within(ana).getByRole("link", { name: "Escribir por WhatsApp a Ana Prueba" });
+    const menuAna = within(ana).getByRole("button", { name: "Más acciones de Ana Prueba" });
+    fireEvent.pointerDown(menuAna, { button: 0, pointerType: "mouse" });
+    const wa = await screen.findByRole("menuitem", { name: /Escribir por WhatsApp/ });
     expect(wa.getAttribute("href")).toBe("https://wa.me/573000000000");
     expect(wa.getAttribute("target")).toBe("_blank");
     expect(wa.getAttribute("rel")).toContain("noopener");
-    expect(within(ana).getByRole("link", { name: "Llamar a Ana Prueba" }).getAttribute("href")).toBe("tel:+573000000000");
-    expect(within(beto).queryByRole("link", { name: /WhatsApp/ })).toBeNull();
-    expect(within(beto).queryByRole("link", { name: /Llamar/ })).toBeNull();
-    // La ficha sigue disponible aunque no haya teléfono.
+    expect(screen.getByRole("menuitem", { name: "Llamar" }).getAttribute("href")).toBe("tel:+573000000000");
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    const menuBeto = within(beto).getByRole("button", { name: "Más acciones de Beto Sin Teléfono" });
+    fireEvent.pointerDown(menuBeto, { button: 0, pointerType: "mouse" });
+    expect(screen.queryByRole("menuitem", { name: /Escribir por WhatsApp/ })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Llamar" })).toBeNull();
+    // La fila sigue abriendo la ficha aunque no haya teléfono.
     expect(within(beto).getByRole("link", { name: "Abrir la ficha de Beto Sin Teléfono" })).toBeTruthy();
   });
 
   it("Enviar plantilla solo aparece para el propietario o la plataforma", async () => {
     responder();
     await pintar();
-    expect(within(screen.getAllByRole("row")[1]).getByRole("button", { name: "Enviar plantilla a Ana Prueba" })).toBeTruthy();
+    const ana = screen.getAllByRole("row")[1];
+    fireEvent.pointerDown(within(ana).getByRole("button", { name: "Más acciones de Ana Prueba" }), {
+      button: 0,
+      pointerType: "mouse",
+    });
+    expect(await screen.findByRole("menuitem", { name: "Enviar plantilla" })).toBeTruthy();
     cleanup();
 
     responder({}, { ...me, role: "user", tenant: { ...me.tenant!, role: "colaborador" } } as Me);
     await pintar();
-    expect(screen.queryByRole("button", { name: /Enviar plantilla/ })).toBeNull();
-    // Escribir y llamar no dependen del permiso de envío masivo (una vez en la tabla y otra en la tarjeta móvil).
-    expect(screen.getAllByRole("link", { name: "Llamar a Ana Prueba" }).length).toBe(2);
+    const anaSinPermiso = screen.getAllByRole("row")[1];
+    fireEvent.pointerDown(within(anaSinPermiso).getByRole("button", { name: "Más acciones de Ana Prueba" }), {
+      button: 0,
+      pointerType: "mouse",
+    });
+    expect(screen.queryByRole("menuitem", { name: "Enviar plantilla" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: /Escribir por WhatsApp/ })).toBeTruthy();
   });
 });
 
@@ -347,10 +366,9 @@ describe("estados, CSV y móvil", () => {
     expect(ana.getByRole("link", { name: "Ana Prueba" })).toBeTruthy();
     expect(ana.getByText("Calificado")).toBeTruthy();
     expect(ana.getByText("Última actividad: Hace 3 min")).toBeTruthy();
-    expect(ana.getByRole("link", { name: "Llamar a Ana Prueba" }).className).toContain("h-11");
+    expect(ana.getByRole("button", { name: "Más acciones de Ana Prueba" })).toBeTruthy();
     // El ojo de la ficha se retiró: en la tabla se abre desde la fila.
     expect(ana.queryByRole("link", { name: "Ver la ficha de Ana Prueba" })).toBeNull();
-    expect(ana.getByRole("button", { name: "Enviar plantilla a Ana Prueba" }).className).toContain("h-11");
     expect(ana.getByRole("link", { name: "Ana Prueba" }).className).toContain("min-h-11");
     expect(within(tarjetas[1]).getByText("Sin lead de venta")).toBeTruthy();
   });
