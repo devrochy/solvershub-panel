@@ -441,6 +441,14 @@ export async function ClientesDeModulo({
   const modulosDeFila = (lead: Fila) =>
     lead.agentes
       .filter((clave) => clave !== "general" && clave !== "leads")
+      // El provider de Ventas suma el lead con datos; para «También en» solo cuenta una compra o cotización real.
+      .filter((clave) => {
+        if (clave !== "ventas") return true;
+        const pedidos = Number(lead.extras["pedidos"] ?? 0);
+        const total = Number(lead.extras["total_compras"] ?? 0);
+        const cotizaciones = Number(lead.extras["cotizaciones_abiertas"] ?? 0);
+        return pedidos > 0 || total > 0 || cotizaciones > 0;
+      })
       .map((clave) => {
         const agente = agents.find((a) => a.key === clave);
         return { key: clave, name: agente?.name ?? clave };
