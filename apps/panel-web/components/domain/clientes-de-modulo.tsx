@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
+import { FiltrosAvanzados, type CampoAvanzado } from "@/app/(app)/leads/_components/filtros-avanzados";
 import { ListPage } from "@/components/templates/list-page";
+import { AgentIcon } from "@/components/domain/agent-icon";
 import { AgenteSwitch } from "@/components/domain/cliente/agente-switch";
 import { EtapaMenu } from "@/components/domain/cliente/etapa-menu";
 import { TableroEmbudo } from "@/components/domain/cliente/tablero-embudo";
@@ -19,7 +21,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
-import type { ConversationConnection, LeadFilter, LeadsResponse, Me } from "@/lib/api/types";
+import type { ConversationConnection, LeadFilter, LeadRow, LeadsResponse, Me } from "@/lib/api/types";
 import {
   enlaceTelefono,
   enlaceWhatsApp,
@@ -53,7 +55,7 @@ import {
 } from "@/lib/seguimiento";
 import { cn } from "@/lib/utils";
 
-type Fila = LeadsResponse["items"][number];
+type Fila = LeadRow;
 type Columna = LeadsResponse["agents"][number]["columns"][number];
 
 export type FiltrosClientesDeModulo = {
@@ -436,11 +438,14 @@ export async function ClientesDeModulo({
     );
   };
 
-  /** Módulos con datos reales de este cliente (sin «General», que es el perfil, no un agente). */
+  /** Módulos con datos reales de este cliente (sin «General» ni el lead del core, que no son módulos). */
   const modulosDeFila = (lead: Fila) =>
     lead.agentes
       .filter((clave) => clave !== "general" && clave !== "leads")
-      .map((clave) => agents.find((a) => a.key === clave)?.name ?? clave);
+      .map((clave) => {
+        const agente = agents.find((a) => a.key === clave);
+        return { key: clave, name: agente?.name ?? clave };
+      });
 
   /** Próxima acción del lead: «Vencido» (texto y color), la fecha en hora del negocio y la nota. */
   const seguimientoDeFila = (lead: Fila) => {
@@ -507,7 +512,11 @@ export async function ClientesDeModulo({
     .map(
       (columna): Column<Fila> => ({
         key: `extra-${columna.key}`,
-        header: columna.label,
+        header: columna.key === COLUMNA_DE_VALOR ? "Valor del lead" : columna.label,
+        info:
+          columna.key === COLUMNA_DE_VALOR
+            ? "Lo que el negocio estima que vale esta oportunidad. Se usa en el embudo y en Ventas."
+            : undefined,
         cell: (lead) => (
           <span className="text-body">
             {columna.key === COLUMNA_DE_VALOR
@@ -570,6 +579,20 @@ export async function ClientesDeModulo({
             </div>
           ),
         },
+        ...(conexionesLista.length > 1
+          ? [
+              {
+                key: "conexion",
+                header: "Conexión",
+                info: "La conexión por la que escribió el cliente. Solo se muestra cuando el negocio tiene más de una.",
+                className: "max-xl:hidden",
+                cell: (lead: Fila) => {
+                  const etiquetas = (lead.conexiones ?? []).map((conexion) => conexion.label);
+                  return <span className="text-body">{etiquetas.length ? etiquetas.join(" · ") : "—"}</span>;
+                },
+              } satisfies Column<Fila>,
+            ]
+          : []),
         {
           key: "actividad",
           header: "Última actividad",
@@ -594,11 +617,21 @@ export async function ClientesDeModulo({
         ...columnasDelPack,
         {
           key: "modulos",
-          header: "Módulos",
+          header: "Con datos en",
+          info: "Módulos donde este cliente tiene datos reales. El detalle vive en la sección de cada módulo.",
           className: "max-2xl:hidden",
           cell: (lead) => {
             const modulos = modulosDeFila(lead);
-            return <span className="text-body">{modulos.length ? modulos.join(" · ") : "—"}</span>;
+            if (!modulos.length) return <span className="text-body">—</span>;
+            return (
+              <div className="flex items-center gap-1">
+                {modulos.map((modulo) => (
+                  <span key={modulo.key} role="img" aria-label={`Con datos en ${modulo.name}`} title={modulo.name}>
+                    <AgentIcon agentKey={modulo.key} name={modulo.name} />
+                  </span>
+                ))}
+              </div>
+            );
           },
         },
         {
@@ -687,7 +720,6 @@ export async function ClientesDeModulo({
   const filtrosSecundarios = filtrosEnSelect.filter(
     (f) => !["estado_lead", "seguimiento", operable?.conDatos].includes(f.key),
   );
-  const activosSecundarios = filtrosSecundarios.filter((f) => Boolean(valorDeFiltro(filtroSp, f.key))).length;
   const opcionesEtapa = filtroDeEtapa ? opcionesConConteo(filtroDeEtapa, faceta) : [];
   if (filtroDeEtapa && faceta?.sin_valor) {
     opcionesEtapa.push({
@@ -700,9 +732,48 @@ export async function ClientesDeModulo({
     ? opcionesConConteo(filtroDeSeguimiento, facetaDeSeguimiento, "Todos")
     : [];
   const opcionesDatos = filtroDeDatos ? opcionesDeDatos(filtroDeDatos, facetaDeDatos) : [];
+  const camposAvanzados: CampoAvanzado[] = [
+    ...(filtroDeDatos
+      ? [
+          {
+            key: filtroDeDatos.key,
+            label: "Datos del lead",
+            value: datosActual ? `${filtroDeDatos.key}:${datosActual}` : "",
+            options: opcionesDatos,
+            help: "Con datos: nombre, teléfono, correo o interés.",
+          } satisfies CampoAvanzado,
+        ]
+      : []),
+    ...filtrosSecundarios.map(
+      (f): CampoAvanzado => ({
+        key: f.key,
+        label: f.label,
+        value: valorDeFiltro(filtroSp, f.key) ? `${f.key}:${valorDeFiltro(filtroSp, f.key)}` : "",
+        options: [
+          { value: "", label: "Todos" },
+          ...f.options.map((o) => ({ value: `${f.key}:${o.value}`, label: o.label })),
+        ],
+      }),
+    ),
+  ];
+  const activosAvanzados = camposAvanzados.filter((campo) => Boolean(campo.value)).length;
+  const ocultos: { name: string; value: string }[] = [
+    ...(sp.q?.trim() ? [{ name: "q", value: sp.q.trim() }] : []),
+    ...(sp.channel ? [{ name: "channel", value: sp.channel }] : []),
+    ...(sp.connection_id ? [{ name: "connection_id", value: sp.connection_id }] : []),
+    ...(etapaActual && filtroDeEtapa ? [{ name: "filtro", value: `${filtroDeEtapa.key}:${etapaActual}` }] : []),
+    ...(seguimientoActual && filtroDeSeguimiento
+      ? [{ name: "filtro", value: `${filtroDeSeguimiento.key}:${seguimientoActual}` }]
+      : []),
+    ...(ordenActual !== "alta" ? [{ name: "orden", value: ordenActual }] : []),
+    ...(modoEmbudo ? [{ name: "vista", value: "embudo" }] : []),
+  ];
+  const limpiarAvanzados = hrefCon({
+    filtro: filtrosDePacks(filtroSp).filter((f) => !camposAvanzados.some((campo) => f.startsWith(`${campo.key}:`))),
+  });
 
   const filtrosForm = (
-    <form method="get" action={basePath} className="flex flex-wrap items-end gap-3">
+    <form method="get" action={basePath} className="flex w-full flex-wrap items-end gap-3">
       {modoEmbudo && <input type="hidden" name="vista" value="embudo" />}
       {/* La etapa elegida en las pestañas no es un campo del formulario: se conserva al filtrar. */}
       {etapaComoPestanas && etapaActual && operable?.etapa && (
@@ -771,53 +842,13 @@ export async function ClientesDeModulo({
           </Select>
         </Field>
       )}
-      {(filtroDeDatos || filtrosSecundarios.length > 0) && (
-        <details
-          open={activosSecundarios > 0 || Boolean(datosActual)}
-          className="w-full rounded-md border border-border-soft px-3 py-2 md:w-auto"
-        >
-          <summary className="cursor-pointer text-sm text-link hover:underline">
-            Más filtros{activosSecundarios + (datosActual ? 1 : 0) > 0 ? ` (${activosSecundarios + (datosActual ? 1 : 0)})` : ""}
-          </summary>
-          <div className="mt-3 flex flex-wrap items-end gap-3">
-            {filtroDeDatos && (
-              <Field
-                label="Datos del lead"
-                htmlFor="filtro-datos"
-                help="Con datos: nombre, teléfono, correo o interés."
-                className="w-52"
-              >
-                <Select
-                  id="filtro-datos"
-                  name="filtro"
-                  defaultValue={datosActual ? `${filtroDeDatos.key}:${datosActual}` : ""}
-                >
-                  {opcionesDatos.map((opcion) => (
-                    <option key={opcion.value || "todos"} value={opcion.value}>
-                      {opcion.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            )}
-            {filtrosSecundarios.map((f) => {
-              const valor = valorDeFiltro(filtroSp, f.key);
-              return (
-                <Field key={f.key} label={f.label} htmlFor={`filtro-${f.key}`} className="w-44">
-                  <Select id={`filtro-${f.key}`} name="filtro" defaultValue={valor ? `${f.key}:${valor}` : ""}>
-                    <option value="">Todos</option>
-                    {f.options.map((o) => (
-                      <option key={o.value} value={`${f.key}:${o.value}`}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              );
-            })}
-          </div>
-        </details>
-      )}
+      <FiltrosAvanzados
+        basePath={basePath}
+        campos={camposAvanzados}
+        ocultos={ocultos}
+        activos={activosAvanzados}
+        limpiarHref={limpiarAvanzados}
+      />
       {operable && (
         <Field label="Ordenar por" htmlFor="orden" className="w-48">
           <Select id="orden" name="orden" defaultValue={ordenActual}>

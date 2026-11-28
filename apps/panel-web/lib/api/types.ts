@@ -54,7 +54,11 @@ export type LeadCampoPerfil = components["schemas"]["LeadCampoPerfil"];
 export type LeadGeocodificacion = components["schemas"]["LeadGeocodificacion"];
 
 export type LeadGeocodificacionInversa = components["schemas"]["LeadGeocodificacionInversa"];
-export type LeadRow = components["schemas"]["LeadRow"];
+export type LeadConnection = components["schemas"]["LeadConnection"];
+export type LeadRow = components["schemas"]["LeadRow"] & {
+  /** Conexiones por las que escribió el cliente; llega en el rediseño de Clientes. */
+  conexiones?: LeadConnection[];
+};
 // Rediseño de Clientes (2026-11): alta manual e importación de leads. Se declaran aquí hasta que el OpenAPI de
 // develop incluya las rutas nuevas; luego se regeneran con `npm run api:types`.
 export type LeadCreado = { id: string; creado: boolean };

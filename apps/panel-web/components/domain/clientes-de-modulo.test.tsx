@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 import { ClientesDeModulo, columnasDeLaLista, consultaClientesDeModulo } from "@/components/domain/clientes-de-modulo";
 import { FeedbackProviders } from "@/components/ui/providers";
@@ -110,6 +110,10 @@ async function pintar(sp: Parameters<typeof ClientesDeModulo>[0]["sp"] = {}, ope
     }),
   );
   return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
+}
+
+function abrirFiltrosAvanzados() {
+  fireEvent.click(screen.getByRole("button", { name: /Más filtros/ }));
 }
 
 describe("consultaClientesDeModulo", () => {
@@ -229,6 +233,7 @@ describe("Ventas › Clientes operable", () => {
       "Nombre (A–Z)",
       "Nombre (Z–A)",
     ]);
+    abrirFiltrosAvanzados();
     expect((screen.getByLabelText("Clasificación") as HTMLSelectElement).value).toBe("clasificacion:fiel");
     expect((screen.getByLabelText("Etapa") as HTMLSelectElement).value).toBe("estado_lead:nuevo");
     expect(screen.queryByLabelText("Estado del lead")).toBeNull();
@@ -434,6 +439,7 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
       "Valor estimado (mayor primero)",
       "Valor estimado (menor primero)",
     ]);
+    abrirFiltrosAvanzados();
     expect(screen.getByLabelText("Motivo de pérdida")).toBeTruthy();
     expect(screen.getByLabelText("Valor estimado")).toBeTruthy();
   });
@@ -475,10 +481,15 @@ describe("Clientes · una sola sección", () => {
       ...FACETAS,
       { key: "lead_datos", counts: { con: 1, sin: 1 }, sin_valor: 0, total: 2 },
     ];
+    const conexiones = [
+      { id: "c-1", label: "WhatsApp Ventas", channel: "whatsapp" },
+      { id: "c-2", label: "Instagram Principal", channel: "instagram" },
+    ];
     const ANA_VIP = {
       ...ANA,
       perfil: { ...ANA.perfil, clasificacion: "vip", clasificacion_label: "VIP" },
       extras: { ...ANA.extras, origen: "WhatsApp" },
+      conexiones: [conexiones[0]],
     };
     respuestas["/admin/leads"] = {
       ...leads,
@@ -488,7 +499,7 @@ describe("Clientes · una sola sección", () => {
       items: [ANA_VIP, SIN_TELEFONO],
       total: 2,
     };
-    respuestas["/admin/conversations/connections"] = [];
+    respuestas["/admin/conversations/connections"] = conexiones;
 
     const arbol = await resolverServidor(
       await ClientesDeModulo({
@@ -508,16 +519,19 @@ describe("Clientes · una sola sección", () => {
     render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     expect(screen.getByRole("button", { name: "Acción extra" })).toBeTruthy();
+    abrirFiltrosAvanzados();
     const datos = screen.getByLabelText("Datos del lead") as HTMLSelectElement;
     expect(within(datos).getByRole("option", { name: "Con datos (1)" })).toBeTruthy();
     expect(within(datos).getByRole("option", { name: "Sin datos (1)" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
 
     const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
-    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Módulos", "Agente"]));
+    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Conexión", "Con datos en", "Agente"]));
     const [, fila] = screen.getAllByRole("row");
     expect(within(fila).getByText("VIP")).toBeTruthy();
-    expect(within(fila).getByText("Ventas")).toBeTruthy();
+    expect(within(fila).getByRole("img", { name: "Con datos en Ventas" })).toBeTruthy();
     expect(within(fila).getAllByText("WhatsApp").length).toBeGreaterThan(0);
+    expect(within(fila).getByText("WhatsApp Ventas")).toBeTruthy();
     expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
     expect(screen.getByText("Ficha de prueba")).toBeTruthy();
   });

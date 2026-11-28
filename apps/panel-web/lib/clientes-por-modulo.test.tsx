@@ -64,7 +64,7 @@ describe("columna Agentes de Clientes", () => {
     const { container } = render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     const fila = screen.getAllByRole("row")[1];
-    expect(within(fila).getByText("Ventas")).toBeTruthy();
+    expect(within(fila).getByRole("img", { name: "Con datos en Ventas" })).toBeTruthy();
     expect(within(fila).queryByText(/General/)).toBeNull();
     expect(within(fila).queryByText(/Agenda/)).toBeNull();
     expect(container.querySelector(".opacity-35")).toBeNull();
