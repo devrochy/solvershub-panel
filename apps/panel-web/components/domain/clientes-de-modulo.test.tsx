@@ -129,6 +129,26 @@ describe("consultaClientesDeModulo", () => {
     expect(consultaClientesDeModulo("ventas", { orden: "por-el-color" }, OPERABLE).has("orden")).toBe(false);
     expect(consultaClientesDeModulo("ventas", { orden: "alta" }, OPERABLE).has("orden")).toBe(false);
   });
+
+  it("la lista global no manda agente, conserva canal y conexión y pide los contadores de con datos", () => {
+    const qs = consultaClientesDeModulo(
+      undefined,
+      { q: "ana", channel: "whatsapp", connection_id: "c-1", filtro: ["lead_datos:con"] },
+      { ...OPERABLE, conDatos: "lead_datos" },
+    );
+    expect(qs.has("agente")).toBe(false);
+    expect(qs.get("q")).toBe("ana");
+    expect(qs.get("channel")).toBe("whatsapp");
+    expect(qs.get("connection_id")).toBe("c-1");
+    expect(qs.getAll("facetas")).toEqual(["estado_lead", "lead_datos"]);
+    expect(qs.getAll("filtro")).toEqual(["lead_datos:con"]);
+  });
+
+  it("el embudo fuerza «con datos» si no se eligió un filtro de datos", () => {
+    const qs = consultaClientesDeModulo(undefined, { vista: "embudo" }, { ...OPERABLE, pluginDeEtapa: "leads", conDatos: "lead_datos" });
+    expect(qs.getAll("filtro")).toEqual(["lead_datos:con"]);
+    expect(qs.get("page_size")).toBe("1");
+  });
 });
 
 describe("columnasDeLaLista", () => {
@@ -446,5 +466,63 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
     const [, ana, beto] = screen.getAllByRole("row");
     expect(within(ana).getByText(/250\.000/)).toBeTruthy();
     expect(within(beto).queryByText(/\$/)).toBeNull();
+  });
+});
+
+describe("Clientes · una sola sección", () => {
+  it("la vista global muestra con datos/sin datos, tipo, módulos, interruptor y la ficha encima", async () => {
+    const conDatos: LeadsResponse["filters"] = [
+      ...FILTROS,
+      { key: "lead_datos", label: "Datos del lead", options: [{ value: "con", label: "Con datos" }, { value: "sin", label: "Sin datos" }] },
+    ];
+    const facetas: NonNullable<LeadsResponse["facetas"]> = [
+      ...FACETAS,
+      { key: "lead_datos", counts: { con: 1, sin: 1 }, sin_valor: 0, total: 2 },
+    ];
+    const ANA_VIP = {
+      ...ANA,
+      perfil: { ...ANA.perfil, clasificacion: "vip", clasificacion_label: "VIP" },
+      extras: { ...ANA.extras, origen: "WhatsApp" },
+    };
+    respuestas["/admin/leads"] = {
+      ...leads,
+      filters: conDatos,
+      facetas,
+      agents: AGENTES,
+      items: [ANA_VIP, SIN_TELEFONO],
+      total: 2,
+    };
+    respuestas["/admin/conversations/connections"] = [];
+
+    const arbol = await resolverServidor(
+      await ClientesDeModulo({
+        basePath: "/leads",
+        titulo: "Clientes",
+        descripcion: "Descripción",
+        sp: {},
+        vacioDescripcion: "Vacío",
+        operable: { etapa: "estado_lead", pluginDeEtapa: "leads", conDatos: "lead_datos" },
+        directorio: true,
+        columnasDe: "leads",
+        sesion: me,
+        headerActions: <button type="button">Acción extra</button>,
+        ficha: <div>Ficha de prueba</div>,
+      }),
+    );
+    render(<FeedbackProviders>{arbol}</FeedbackProviders>);
+
+    expect(screen.getByRole("button", { name: "Acción extra" })).toBeTruthy();
+    const datos = within(screen.getByRole("navigation", { name: "Clientes con datos de lead" }));
+    expect(datos.getByRole("link", { name: /Con datos/ }).textContent).toContain("1");
+    expect(datos.getByRole("link", { name: /Sin datos/ }).textContent).toContain("1");
+
+    const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
+    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Módulos", "Agente"]));
+    const [, fila] = screen.getAllByRole("row");
+    expect(within(fila).getByText("VIP")).toBeTruthy();
+    expect(within(fila).getByText("Ventas")).toBeTruthy();
+    expect(within(fila).getAllByText("WhatsApp").length).toBeGreaterThan(0);
+    expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
+    expect(screen.getByText("Ficha de prueba")).toBeTruthy();
   });
 });

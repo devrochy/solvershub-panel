@@ -1,13 +1,17 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { ListPage } from "@/components/templates/list-page";
+import { AgenteSwitch } from "@/components/domain/cliente/agente-switch";
 import { EtapaMenu } from "@/components/domain/cliente/etapa-menu";
 import { TableroEmbudo } from "@/components/domain/cliente/tablero-embudo";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { BotonReintentar } from "@/components/ui/estado-de-error";
 import { Field } from "@/components/ui/field";
 import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
@@ -15,10 +19,11 @@ import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import { TabLinks } from "@/components/ui/tab-links";
 import { apiFetch, getBusinessTimezone } from "@/lib/api/server";
-import type { LeadFilter, LeadsResponse, Me } from "@/lib/api/types";
+import type { ConversationConnection, LeadFilter, LeadsResponse, Me } from "@/lib/api/types";
 import {
   enlaceTelefono,
   enlaceWhatsApp,
+  etiquetaClasificacion,
   filtrosCon,
   filtrosDePacks,
   hrefFicha,
@@ -38,6 +43,7 @@ import {
   textoDeActividad,
   valorDeFiltro,
 } from "@/lib/clientes";
+import { canalLabel } from "@/lib/labels";
 import { consultaDeColumna, tarjetaDeFila, type ColumnaDeEmbudo } from "@/lib/embudo";
 import { formatCellValue, formatNumber } from "@/lib/format";
 import {
@@ -53,6 +59,8 @@ type Columna = LeadsResponse["agents"][number]["columns"][number];
 
 export type FiltrosClientesDeModulo = {
   q?: string;
+  channel?: string;
+  connection_id?: string;
   page?: string;
   filtro?: string | string[];
   orden?: string;
@@ -92,6 +100,11 @@ export type OperableDeModulo = {
   motivoDePerdida?: string;
   /** Clave del filtro por tramos del valor estimado (`valor`, HU-CRM-23): habilita sus órdenes y su columna en pesos. */
   valor?: string;
+  /**
+   * Clave del filtro que separa los clientes con datos de lead (`lead_datos`, rediseño de Clientes): sus opciones
+   * `con`/`sin` se muestran como pestañas con contador, en vez de la pestaña Leads que existía aparte.
+   */
+  conDatos?: string;
 };
 
 /**
@@ -99,6 +112,19 @@ export type OperableDeModulo = {
  * trabaja en Clientes de Ventas, que sigue contando al cliente que solo tiene lead.
  */
 const COLUMNAS_QUE_SUMA: Record<string, string[]> = { ventas: ["leads"] };
+
+/** Canales que se pueden filtrar en Clientes; «manual» reúne lo creado o importado desde el panel. */
+const CANALES_FILTRO = ["whatsapp", "instagram", "messenger", "webchat", "email", "manual"];
+
+/** Tono del tipo de cliente (el del perfil, no el segmento de compra de Ventas). */
+const TONO_TIPO: Record<string, "neutral" | "info" | "accent" | "success" | "warning" | "danger"> = {
+  nuevo: "info",
+  prospecto: "neutral",
+  cliente: "success",
+  vip: "accent",
+  inactivo: "warning",
+  bloqueado: "danger",
+};
 
 /** Columnas de la lista del módulo: las del agente y las de los que suma, sin repetir clave. */
 export function columnasDeLaLista(agents: LeadsResponse["agents"], agente: string): Columna[] {
@@ -113,17 +139,24 @@ export function columnasDeLaLista(agents: LeadsResponse["agents"], agente: strin
 
 /** Query de `/admin/leads` para la lista de un módulo: el agente, la búsqueda y la página (y, si es operable, filtros, orden y contadores). */
 export function consultaClientesDeModulo(
-  agente: string,
+  agente: string | undefined,
   sp: FiltrosClientesDeModulo,
   operable?: OperableDeModulo,
 ): URLSearchParams {
-  const qs = new URLSearchParams({ agente });
+  const qs = new URLSearchParams();
+  if (agente && agente !== "general") qs.set("agente", agente);
   if (sp.q?.trim()) qs.set("q", sp.q.trim());
+  if (sp.channel) qs.set("channel", sp.channel);
+  if (sp.connection_id) qs.set("connection_id", sp.connection_id);
   if (operable) {
     // En el tablero las columnas son las etapas: la etapa de la URL no filtra, y esta consulta solo trae
     // los contadores y las sumas (una fila basta); las tarjetas de cada columna se piden aparte.
     const embudo = pideEmbudo(sp, operable);
-    const filtros = embudo && operable.etapa ? filtrosCon(sp.filtro, operable.etapa, "") : filtrosDePacks(sp.filtro);
+    let filtros = embudo && operable.etapa ? filtrosCon(sp.filtro, operable.etapa, "") : filtrosDePacks(sp.filtro);
+    // El embudo solo tiene sentido con leads que ya tienen datos; los vacíos se ven en la lista con «Sin datos».
+    if (embudo && operable.conDatos && !filtros.some((f) => f.startsWith(`${operable.conDatos}:`))) {
+      filtros = [...filtros, `${operable.conDatos}:con`];
+    }
     for (const f of filtros) qs.append("filtro", f);
     const orden = operable.seguimiento
       ? ordenPorDefectoDeSeguimiento(ordenValido(sp.orden), filtrosDePacks(sp.filtro), operable.seguimiento)
@@ -131,6 +164,7 @@ export function consultaClientesDeModulo(
     if (orden && orden !== "alta") qs.set("orden", orden);
     if (operable.etapa) qs.append("facetas", operable.etapa);
     if (operable.seguimiento) qs.append("facetas", operable.seguimiento);
+    if (operable.conDatos) qs.append("facetas", operable.conDatos);
     if (embudo) {
       qs.set("resumen", "valor");
       qs.set("page_size", "1");
@@ -158,9 +192,15 @@ export async function ClientesDeModulo({
   vacioDescripcion,
   operable,
   etiquetaDeLista,
+  directorio = false,
+  columnasDe,
+  columnasOcultas = [],
+  ficha,
+  headerActions,
+  sesion,
 }: {
-  /** Clave del agente en `agents[].key` (`ventas`, `agenda`…). */
-  agente: string;
+  /** Clave del agente en `agents[].key` (`ventas`, `agenda`…). Sin agente, la lista global de Clientes. */
+  agente?: string;
   /** Ruta de esta página, para la paginación y la búsqueda. */
   basePath: string;
   titulo: string;
@@ -171,23 +211,40 @@ export async function ClientesDeModulo({
   operable?: OperableDeModulo;
   /** Nombre de la lista para lectores de pantalla cuando el título es el de la sección («Clientes de Agenda»). */
   etiquetaDeLista?: string;
+  /** Vista de la sección Clientes: avatar, tipo de cliente, interruptor del agente y origen. */
+  directorio?: boolean;
+  /** Agente del que se toman las columnas cuando `agente` no filtra (en Clientes, `leads`). */
+  columnasDe?: string;
+  /** Columnas del pack que no se pintan porque tienen su propia columna (etapa, seguimiento, origen…). */
+  columnasOcultas?: string[];
+  /** La ficha lateral de la misma página, para que abrir un cliente no cambie de sección. */
+  ficha?: ReactNode;
+  /** Acciones extra de la cabecera (Nuevo lead, Importar, Captación), antes de Exportar CSV. */
+  headerActions?: ReactNode;
+  /** La sesión ya cargada por la página; evita pedir `/admin/me` dos veces. */
+  sesion?: Me | null;
 }) {
   const nombreDeLista = etiquetaDeLista ?? titulo;
   const qs = consultaClientesDeModulo(agente, sp, operable);
   const embudoPedido = pideEmbudo(sp, operable);
   // En el tablero la etapa de la URL no filtra: las columnas ya son las etapas.
   const filtroSp = embudoPedido && operable?.etapa ? filtrosCon(sp.filtro, operable.etapa, "") : sp.filtro;
-  const [res, me, zona] = await Promise.all([
+  const [res, meRes, zona, conexiones] = await Promise.all([
     apiFetch<LeadsResponse>(`/admin/leads?${qs.toString()}`),
-    operable ? apiFetch<Me>("/admin/me") : null,
+    operable && sesion === undefined ? apiFetch<Me>("/admin/me") : null,
     operable?.seguimiento ? getBusinessTimezone() : null,
+    directorio ? apiFetch<ConversationConnection[]>("/admin/conversations/connections") : null,
   ]);
+  const me = sesion === undefined ? (meRes?.ok ? meRes.data : null) : sesion;
+  const conexionesLista = conexiones?.ok ? conexiones.data : [];
   const { items, agents, page, has_more, total, filters, facetas } = res.ok
     ? res.data
     : { items: [] as Fila[], agents: [], page: 1, has_more: false, total: 0, filters: [] as LeadFilter[], facetas: [] };
-  const columnasDelAgente = columnasDeLaLista(agents, agente);
-  const puedeEnviar = me?.ok ? puedeEnviarPlantilla(me.data) : false;
-  const puedeCambiarEtapa = Boolean(operable?.pluginDeEtapa) && (me?.ok ? puedeEditarClientes(me.data) : false);
+  const columnasDelAgente = columnasDeLaLista(agents, columnasDe ?? agente ?? "general").filter(
+    (columna) => !columnasOcultas.includes(columna.key),
+  );
+  const puedeEnviar = me ? puedeEnviarPlantilla(me) : false;
+  const puedeCambiarEtapa = Boolean(operable?.pluginDeEtapa) && (me ? puedeEditarClientes(me) : false);
 
   // — Etapas (pestañas) y filtros declarados por el pack —
   const filtroDeEtapa = operable?.etapa ? filters?.find((f) => f.key === operable.etapa) : undefined;
@@ -198,6 +255,13 @@ export async function ClientesDeModulo({
     (f) => operable?.filtros?.includes(f.key) || (f.key === operable?.etapa && !etapaComoPestanas),
   );
   const etapaActual = operable?.etapa ? valorDeFiltro(filtroSp, operable.etapa) : "";
+
+  // — Con datos / sin datos del lead: reemplaza la pestaña Leads que vivía aparte —
+  const filtroDeDatos = operable?.conDatos ? filters?.find((f) => f.key === operable.conDatos) : undefined;
+  const facetaDeDatos = operable?.conDatos ? facetas?.find((f) => f.key === operable.conDatos) : undefined;
+  const datosActual = operable?.conDatos ? valorDeFiltro(filtroSp, operable.conDatos) : "";
+  const conDatos = facetaDeDatos?.counts["con"] ?? 0;
+  const sinDatos = (facetaDeDatos?.counts["sin"] ?? 0) + (facetaDeDatos?.sin_valor ?? 0);
 
   // — Seguimiento (HU-CRM-21): pestañas con contador cuando el backend trae el filtro y sus contadores —
   const filtroDeSeguimiento = operable?.seguimiento ? filters?.find((f) => f.key === operable.seguimiento) : undefined;
@@ -217,12 +281,17 @@ export async function ClientesDeModulo({
   const modoEmbudo = embudoPedido && etapaComoPestanas;
   const puedeVerEmbudo = Boolean(operable?.pluginDeEtapa) && etapaComoPestanas;
   const ordenDelTablero = ordenActual === "alta" ? undefined : ordenActual;
+  // El embudo solo pinta leads con datos, igual que la consulta principal, aunque el usuario esté en «Todos».
+  const filtrosDelTablero =
+    embudoPedido && operable?.conDatos && !filtrosDePacks(filtroSp).some((f) => f.startsWith(`${operable.conDatos}:`))
+      ? [...filtrosDePacks(filtroSp), `${operable.conDatos}:con`]
+      : filtrosDePacks(filtroSp);
   const columnasDeEmbudo: ColumnaDeEmbudo[] =
     modoEmbudo && filtroDeEtapa && operable?.etapa
       ? await columnasDelTablero({
           agente,
           q: sp.q,
-          filtros: filtroSp,
+          filtros: filtrosDelTablero,
           orden: ordenDelTablero,
           etapa: operable.etapa,
           filtro: filtroDeEtapa,
@@ -231,10 +300,21 @@ export async function ClientesDeModulo({
       : [];
   const sinLeadDeVenta = faceta?.sin_valor ?? 0;
 
-  const hrefCon = (cambios: { q?: string | null; filtro?: string[]; orden?: string | null; vista?: "lista" | "embudo" }) => {
+  const hrefCon = (cambios: {
+    q?: string | null;
+    channel?: string | null;
+    connection_id?: string | null;
+    filtro?: string[];
+    orden?: string | null;
+    vista?: "lista" | "embudo";
+  }) => {
     const next = new URLSearchParams();
     const q = cambios.q === undefined ? sp.q?.trim() : cambios.q;
     if (q) next.set("q", q);
+    const canal = cambios.channel === undefined ? sp.channel : cambios.channel;
+    if (canal) next.set("channel", canal);
+    const conexion = cambios.connection_id === undefined ? sp.connection_id : cambios.connection_id;
+    if (conexion) next.set("connection_id", conexion);
     for (const f of cambios.filtro ?? filtrosDePacks(filtroSp)) next.append("filtro", f);
     const orden = cambios.orden === undefined ? ordenValido(sp.orden) : cambios.orden;
     if (orden && orden !== "alta") next.set("orden", orden);
@@ -242,11 +322,36 @@ export async function ClientesDeModulo({
     return `${basePath}${next.size ? `?${next.toString()}` : ""}`;
   };
 
+  // La ficha se abre encima de la misma lista: conserva la vista y los filtros al cerrarla (rediseño de Clientes).
+  const qsFicha = new URLSearchParams();
+  if (sp.q?.trim()) qsFicha.set("q", sp.q.trim());
+  if (sp.channel) qsFicha.set("channel", sp.channel);
+  if (sp.connection_id) qsFicha.set("connection_id", sp.connection_id);
+  for (const f of filtrosDePacks(filtroSp)) qsFicha.append("filtro", f);
+  if (embudoPedido) qsFicha.set("vista", "embudo");
+
   type Chip = { clave: string; texto: string; quitarLabel: string; href: string };
   const chips: Chip[] = [];
   if (operable) {
     if (sp.q?.trim()) {
       chips.push({ clave: "q", texto: `Búsqueda: ${sp.q.trim()}`, quitarLabel: "Quitar la búsqueda", href: hrefCon({ q: null }) });
+    }
+    if (sp.channel) {
+      chips.push({
+        clave: "channel",
+        texto: `Canal: ${canalLabel(sp.channel)}`,
+        quitarLabel: "Quitar el canal",
+        href: hrefCon({ channel: null }),
+      });
+    }
+    if (sp.connection_id) {
+      const conexion = conexionesLista.find((c) => c.id === sp.connection_id)?.label ?? "la conexión";
+      chips.push({
+        clave: "connection_id",
+        texto: `Conexión: ${conexion}`,
+        quitarLabel: "Quitar la conexión",
+        href: hrefCon({ connection_id: null }),
+      });
     }
     for (const f of filters ?? []) {
       const valor = valorDeFiltro(filtroSp, f.key);
@@ -292,6 +397,22 @@ export async function ClientesDeModulo({
       <span className="text-xs text-text-soft">Sin lead de venta</span>
     );
   };
+
+  /** Tipo de cliente del perfil (manual), distinto de la etapa del embudo y del segmento de compra de Ventas. */
+  const tipoDeCliente = (lead: Fila) => {
+    const valor = lead.perfil.clasificacion;
+    return (
+      <Badge variant={TONO_TIPO[valor ?? ""] ?? "neutral"} className="whitespace-nowrap">
+        {etiquetaClasificacion(valor, lead.perfil.clasificacion_label)}
+      </Badge>
+    );
+  };
+
+  /** Módulos con datos reales de este cliente (sin «General», que es el perfil, no un agente). */
+  const modulosDeFila = (lead: Fila) =>
+    lead.agentes
+      .filter((clave) => clave !== "general")
+      .map((clave) => agents.find((a) => a.key === clave)?.name ?? clave);
 
   /** Próxima acción del lead: «Vencido» (texto y color), la fecha en hora del negocio y la nota. */
   const seguimientoDeFila = (lead: Fila) => {
@@ -339,12 +460,12 @@ export async function ClientesDeModulo({
         )}
         {grande ? (
           <Button asChild variant="ghost" size="icon" className={cn(tamano, "text-link")}>
-            <Link href={hrefFicha(lead.id, { agente })} aria-label={`Ver la ficha de ${nombre}`} title="Ver la ficha">
+            <Link href={hrefFicha(lead.id, { agente, qs: qsFicha })} aria-label={`Ver la ficha de ${nombre}`} title="Ver la ficha">
               <Eye className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
         ) : (
-          <IconAction href={hrefFicha(lead.id, { agente })} label={`Ver la ficha de ${nombre}`} tone="ver">
+          <IconAction href={hrefFicha(lead.id, { agente, qs: qsFicha })} label={`Ver la ficha de ${nombre}`} tone="ver">
             <Eye className="h-4 w-4" aria-hidden />
           </IconAction>
         )}
@@ -352,70 +473,170 @@ export async function ClientesDeModulo({
     );
   };
 
-  const columns: Column<Fila>[] = [
-    {
-      key: "cliente",
-      header: "Cliente",
-      cell: (lead) =>
-        operable ? (
-          <Link href={hrefFicha(lead.id, { agente })} className="truncate font-medium text-link hover:underline">
-            {lead.perfil.nombre_visible}
-          </Link>
-        ) : (
-          <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>
+  const columnasDelPack = columnasDelAgente
+    // La etapa y el seguimiento tienen su propia columna: no se repiten como texto.
+    .filter((columna) => columna.key !== operable?.etapa && columna.key !== "seguimiento_nota")
+    .map(
+      (columna): Column<Fila> => ({
+        key: `extra-${columna.key}`,
+        header: columna.label,
+        cell: (lead) => (
+          <span className="text-body">
+            {columna.key === COLUMNA_DE_VALOR
+              ? textoDeValor(lead.extras[columna.key])
+              : formatCellValue(lead.extras[columna.key])}
+          </span>
         ),
-    },
-    ...(operable?.etapa
-      ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
-      : []),
-    ...(operable?.seguimiento
-      ? [{ key: "seguimiento", header: "Seguimiento", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
-      : []),
-    {
-      key: "telefono",
-      header: "Teléfono",
-      cell: (lead) => <span className="text-body">{telefonoVisible(lead.perfil)}</span>,
-    },
-    ...(operable
-      ? [
-          {
-            key: "actividad",
-            header: "Última actividad",
-            cell: (lead) => <span className="text-body">{textoDeActividad(lead.ultima_actividad)}</span>,
-          } satisfies Column<Fila>,
-        ]
-      : []),
-    ...columnasDelAgente
-      // La etapa y el seguimiento tienen su propia columna: no se repiten como texto.
-      .filter((columna) => columna.key !== operable?.etapa && columna.key !== "seguimiento_nota")
-      .map(
-        (columna): Column<Fila> => ({
-          key: `extra-${columna.key}`,
-          header: columna.label,
+      }),
+    );
+
+  const columns: Column<Fila>[] = directorio
+    ? [
+        {
+          key: "cliente",
+          header: "Cliente",
+          cell: (lead) => (
+            <div className="flex items-center gap-3">
+              <Avatar name={lead.perfil.nombre_visible} src={lead.perfil.avatar_url} size="sm" />
+              <div className="flex min-w-0 flex-col">
+                <Link
+                  href={hrefFicha(lead.id, { agente, qs: qsFicha })}
+                  className="truncate font-medium text-link hover:underline"
+                >
+                  {lead.perfil.nombre_visible}
+                </Link>
+                {lead.perfil.alias && lead.perfil.alias !== lead.perfil.nombre_visible && (
+                  <span className="truncate text-xs text-text-soft">Alias: {lead.perfil.alias}</span>
+                )}
+              </div>
+            </div>
+          ),
+        },
+        ...(operable?.etapa
+          ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
+          : []),
+        ...(operable?.seguimiento
+          ? [{ key: "seguimiento", header: "Próxima acción", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
+          : []),
+        {
+          key: "contacto",
+          header: "Contacto",
+          cell: (lead) => (
+            <div className="flex flex-col whitespace-nowrap">
+              <span className="tabular-nums text-body">{telefonoVisible(lead.perfil)}</span>
+              <span className="text-xs text-text-soft">{canalLabel(lead.canal)}</span>
+            </div>
+          ),
+        },
+        {
+          key: "actividad",
+          header: "Última actividad",
+          className: "max-lg:hidden",
+          cell: (lead) => <span className="text-body">{textoDeActividad(lead.ultima_actividad)}</span>,
+        },
+        {
+          key: "tipo",
+          header: "Tipo",
+          cell: (lead) => tipoDeCliente(lead),
+        },
+        {
+          key: "origen",
+          header: "Origen",
+          className: "max-xl:hidden",
           cell: (lead) => (
             <span className="text-body">
-              {columna.key === COLUMNA_DE_VALOR
-                ? textoDeValor(lead.extras[columna.key])
-                : formatCellValue(lead.extras[columna.key])}
+              {typeof lead.extras["origen"] === "string" && lead.extras["origen"] ? lead.extras["origen"] : "—"}
             </span>
           ),
-        }),
-      ),
-    ...(operable
-      ? [
-          {
-            key: "acciones",
-            header: "Acciones",
-            align: "right",
-            cell: (lead) => accionesDeFila(lead),
-          } satisfies Column<Fila>,
-        ]
-      : []),
-  ];
+        },
+        ...columnasDelPack,
+        {
+          key: "modulos",
+          header: "Módulos",
+          className: "max-2xl:hidden",
+          cell: (lead) => {
+            const modulos = modulosDeFila(lead);
+            return <span className="text-body">{modulos.length ? modulos.join(" · ") : "—"}</span>;
+          },
+        },
+        {
+          key: "agente",
+          header: "Agente",
+          info: "Activo: el agente responde a este cliente. Pausado: el agente no le responde.",
+          cell: (lead) => (
+            <div className="flex w-fit items-center gap-2">
+              <AgenteSwitch
+                leadId={lead.id}
+                botPaused={lead.bot_paused ?? false}
+                nombre={lead.perfil.nombre_visible}
+              />
+              <span className="text-body">{lead.bot_paused ? "Pausado" : "Activo"}</span>
+            </div>
+          ),
+        },
+        ...(operable
+          ? [
+              {
+                key: "acciones",
+                header: "Acciones",
+                align: "right",
+                cell: (lead) => accionesDeFila(lead),
+              } satisfies Column<Fila>,
+            ]
+          : []),
+      ]
+    : [
+        {
+          key: "cliente",
+          header: "Cliente",
+          cell: (lead) =>
+            operable ? (
+              <Link href={hrefFicha(lead.id, { agente, qs: qsFicha })} className="truncate font-medium text-link hover:underline">
+                {lead.perfil.nombre_visible}
+              </Link>
+            ) : (
+              <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>
+            ),
+        },
+        ...(operable?.etapa
+          ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
+          : []),
+        ...(operable?.seguimiento
+          ? [{ key: "seguimiento", header: "Seguimiento", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
+          : []),
+        {
+          key: "telefono",
+          header: "Teléfono",
+          cell: (lead) => <span className="text-body">{telefonoVisible(lead.perfil)}</span>,
+        },
+        ...(operable
+          ? [
+              {
+                key: "actividad",
+                header: "Última actividad",
+                cell: (lead) => <span className="text-body">{textoDeActividad(lead.ultima_actividad)}</span>,
+              } satisfies Column<Fila>,
+            ]
+          : []),
+        ...columnasDelPack,
+        ...(operable
+          ? [
+              {
+                key: "acciones",
+                header: "Acciones",
+                align: "right",
+                cell: (lead) => accionesDeFila(lead),
+              } satisfies Column<Fila>,
+            ]
+          : []),
+      ];
 
-  const csv = new URLSearchParams({ agente });
+  const csv = new URLSearchParams();
+  if (agente && agente !== "general") csv.set("agente", agente);
   if (operable) {
     if (sp.q?.trim()) csv.set("q", sp.q.trim());
+    if (sp.channel) csv.set("channel", sp.channel);
+    if (sp.connection_id) csv.set("connection_id", sp.connection_id);
     for (const f of filtrosDePacks(filtroSp)) csv.append("filtro", f);
   }
   const csvTruncado = Boolean(operable) && res.ok && total > MAX_FILAS_CSV;
@@ -426,6 +647,36 @@ export async function ClientesDeModulo({
       {/* La etapa elegida en las pestañas no es un campo del formulario: se conserva al filtrar. */}
       {etapaComoPestanas && etapaActual && operable?.etapa && (
         <input type="hidden" name="filtro" value={`${operable.etapa}:${etapaActual}`} />
+      )}
+      {operable?.conDatos && datosActual && (
+        <input type="hidden" name="filtro" value={`${operable.conDatos}:${datosActual}`} />
+      )}
+      {directorio && (
+        <Field label="Canal" htmlFor="channel" className="w-44">
+          <Select id="channel" name="channel" defaultValue={sp.channel ?? ""}>
+            <option value="">Todos los canales</option>
+            {CANALES_FILTRO.map((canal) => (
+              <option key={canal} value={canal}>
+                {canalLabel(canal)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      {directorio && conexionesLista.length > 1 && (
+        <Field label="Conexión" htmlFor="connection_id" className="w-52">
+          <Select id="connection_id" name="connection_id" defaultValue={sp.connection_id ?? ""}>
+            <option value="">Todas las conexiones</option>
+            {conexionesLista.map((conexion) => (
+              <option key={conexion.id} value={conexion.id}>
+                {conexion.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+      {directorio && sp.connection_id && conexionesLista.length <= 1 && (
+        <input type="hidden" name="connection_id" value={sp.connection_id} />
       )}
       <Field label="Buscar" htmlFor="q" className="w-72 max-w-full">
         <Input id="q" name="q" type="search" defaultValue={sp.q ?? ""} placeholder="Nombre o teléfono" />
@@ -481,20 +732,37 @@ export async function ClientesDeModulo({
       columns={columns}
       rows={modoEmbudo ? [] : items}
       getRowKey={(lead) => lead.id}
-      emptyTitle={operable && hayFiltros ? "Ningún cliente coincide" : "Sin clientes todavía"}
+      emptyTitle={
+        directorio
+          ? hayFiltros
+            ? "No hay clientes con estos filtros"
+            : "Sin clientes todavía"
+          : operable && hayFiltros
+            ? "Ningún cliente coincide"
+            : "Sin clientes todavía"
+      }
       emptyDescription={
-        operable && hayFiltros ? "Prueba con otra etapa o quita algún filtro para ver más clientes." : vacioDescripcion
+        directorio
+          ? hayFiltros
+            ? "Prueba con otra búsqueda o quita los filtros."
+            : vacioDescripcion
+          : operable && hayFiltros
+            ? "Prueba con otra etapa o quita algún filtro para ver más clientes."
+            : vacioDescripcion
       }
       emptyAction={
-        operable && hayFiltros ? (
+        (directorio || operable) && hayFiltros ? (
           <Button asChild variant="outline" size="sm">
             <Link href={basePath}>Limpiar filtros</Link>
           </Button>
         ) : undefined
       }
       error={res.ok ? null : `No se pudieron cargar los clientes: ${res.error}`}
+      errorTitle="No pudimos cargar los clientes"
       errorAction={
-        operable ? (
+        directorio ? (
+          <BotonReintentar />
+        ) : operable ? (
           <Button asChild variant="outline" size="sm">
             <Link href={hrefCon({})}>Reintentar</Link>
           </Button>
@@ -502,7 +770,7 @@ export async function ClientesDeModulo({
       }
       caption={nombreDeLista}
       serverPaginated
-      getRowHref={operable ? undefined : (lead) => hrefFicha(lead.id, { agente })}
+      getRowHref={operable ? undefined : (lead) => hrefFicha(lead.id, { agente, qs: qsFicha })}
       getRowLabel={operable ? undefined : (lead) => `Abrir la ficha de ${lead.perfil.nombre_visible}`}
     />
   );
@@ -513,13 +781,19 @@ export async function ClientesDeModulo({
         title: titulo,
         description: descripcion,
         helpSection,
-        actions: operable ? (
-          <Button asChild variant="outline">
-            <a href={`/api/leads/export?${csv.toString()}`} download>
-              Exportar CSV
-            </a>
-          </Button>
-        ) : undefined,
+        actions:
+          headerActions || operable ? (
+            <>
+              {headerActions}
+              {operable && (
+                <Button asChild variant="outline">
+                  <a href={`/api/leads/export?${csv.toString()}`} download>
+                    Exportar CSV
+                  </a>
+                </Button>
+              )}
+            </>
+          ) : undefined,
       }}
       filters={filtrosForm}
     >
@@ -534,11 +808,42 @@ export async function ClientesDeModulo({
         />
       )}
 
+      {operable?.conDatos && filtroDeDatos && facetaDeDatos && (
+        <TabLinks
+          label="Clientes con datos de lead"
+          items={[
+            {
+              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") }),
+              label: "Todos",
+              count: facetaDeDatos.total,
+            },
+            {
+              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "con") }),
+              label: "Con datos",
+              count: conDatos,
+            },
+            {
+              href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "sin") }),
+              label: "Sin datos",
+              count: sinDatos,
+            },
+          ]}
+          current={
+            [
+              { valor: "", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") }) },
+              { valor: "con", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "con") }) },
+              { valor: "sin", href: hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "sin") }) },
+            ].find((item) => item.valor === datosActual)?.href ?? hrefCon({ filtro: filtrosCon(filtroSp, operable.conDatos, "") })
+          }
+        />
+      )}
+
       {operable && etapaComoPestanas && filtroDeEtapa && !modoEmbudo && (
         <EtapasConContador
           filtro={filtroDeEtapa}
           faceta={faceta}
           etapaActual={etapaActual}
+          textoSinValor={directorio ? "una etapa" : "lead de venta"}
           hrefDeEtapa={(valor) => hrefCon({ filtro: filtrosCon(filtroSp, filtroDeEtapa.key, valor) })}
         />
       )}
@@ -578,8 +883,8 @@ export async function ClientesDeModulo({
 
       {modoEmbudo && sinLeadDeVenta > 0 && (
         <p className="text-xs text-text-soft">
-          {formatNumber(sinLeadDeVenta)} {sinLeadDeVenta === 1 ? "cliente aún no tiene" : "clientes aún no tienen"} lead de
-          venta y no aparecen en ninguna etapa.
+          {formatNumber(sinLeadDeVenta)} {sinLeadDeVenta === 1 ? "cliente aún no tiene" : "clientes aún no tienen"}{" "}
+          {directorio ? "una etapa" : "lead de venta"} y no aparecen en ninguna etapa.
         </p>
       )}
 
@@ -592,7 +897,7 @@ export async function ClientesDeModulo({
           clave={operable.etapa}
           motivos={motivosDePerdida}
           puedeMover={puedeCambiarEtapa}
-          consulta={{ agente, q: sp.q?.trim() || undefined, filtros: filtrosDePacks(filtroSp), orden: ordenDelTablero }}
+          consulta={{ agente, q: sp.q?.trim() || undefined, filtros: filtrosDelTablero, orden: ordenDelTablero }}
         />
       ) : operable && hayFilas && !modoEmbudo ? (
         <>
@@ -602,16 +907,32 @@ export async function ClientesDeModulo({
               <li key={lead.id} className="flex flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4">
                 <div className="flex items-start justify-between gap-3">
                   <Link
-                    href={hrefFicha(lead.id, { agente })}
+                    href={hrefFicha(lead.id, { agente, qs: qsFicha })}
                     className="inline-flex min-h-11 min-w-0 items-center font-medium text-link hover:underline"
                   >
                     {lead.perfil.nombre_visible}
                   </Link>
                   {operable.etapa && badgeDeEtapa(lead, true)}
                 </div>
-                <p className="text-sm text-body">{telefonoVisible(lead.perfil)}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-body">
+                    {telefonoVisible(lead.perfil)}
+                    <span className="ml-2 text-xs text-text-soft">{canalLabel(lead.canal)}</span>
+                  </p>
+                  {directorio && tipoDeCliente(lead)}
+                </div>
                 {operable.seguimiento && seguimientoDeFila(lead)}
                 <p className="text-xs text-text-soft">Última actividad: {textoDeActividad(lead.ultima_actividad)}</p>
+                {directorio && (
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-hover/40 px-3 py-2">
+                    <span className="text-xs text-text-soft">Agente para este cliente</span>
+                    <AgenteSwitch
+                      leadId={lead.id}
+                      botPaused={lead.bot_paused ?? false}
+                      nombre={lead.perfil.nombre_visible}
+                    />
+                  </div>
+                )}
                 {accionesDeFila(lead, true)}
               </li>
             ))}
@@ -625,7 +946,7 @@ export async function ClientesDeModulo({
               <li key={lead.id} className="relative flex min-h-16 items-center gap-3 border-b border-border-soft px-4 py-3 last:border-b-0">
                 <div className="flex min-w-0 flex-1 flex-col">
                   <Link
-                    href={hrefFicha(lead.id, { agente })}
+                    href={hrefFicha(lead.id, { agente, qs: qsFicha })}
                     className="truncate text-sm font-medium text-headline outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
                   >
                     {lead.perfil.nombre_visible}
@@ -656,6 +977,7 @@ export async function ClientesDeModulo({
           }}
         />
       )}
+      {ficha}
     </ListPage>
   );
 }
@@ -666,11 +988,13 @@ function EtapasConContador({
   faceta,
   etapaActual,
   hrefDeEtapa,
+  textoSinValor = "lead de venta",
 }: {
   filtro: LeadFilter;
   faceta: NonNullable<LeadsResponse["facetas"]>[number] | undefined;
   etapaActual: string;
   hrefDeEtapa: (valor: string) => string;
+  textoSinValor?: string;
 }) {
   const { pestanas, sinValor } = pestanasDeFaceta(filtro, faceta);
   const items = pestanas.map((p) => ({ href: hrefDeEtapa(p.value), label: p.label, count: p.count }));
@@ -680,7 +1004,7 @@ function EtapasConContador({
       <TabLinks label={`Clientes por ${filtro.label.toLowerCase()}`} items={items} current={actual} />
       {sinValor > 0 && (
         <p className="text-xs text-text-soft">
-          {formatNumber(sinValor)} {sinValor === 1 ? "cliente aún no tiene" : "clientes aún no tienen"} lead de venta y no
+          {formatNumber(sinValor)} {sinValor === 1 ? "cliente aún no tiene" : "clientes aún no tienen"} {textoSinValor} y no
           aparecen en ninguna etapa.
         </p>
       )}
@@ -719,7 +1043,7 @@ async function columnasDelTablero({
   filtro,
   faceta,
 }: {
-  agente: string;
+  agente?: string;
   q?: string;
   filtros: string | string[] | undefined;
   orden?: string;

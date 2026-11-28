@@ -16,6 +16,7 @@ export const CANAL: Record<string, string> = {
   sms: "SMS",
   webchat: "Chat web",
   web: "Web",
+  manual: "Manual",
 };
 
 export const CITA: Record<string, string> = {

@@ -22,6 +22,7 @@ vi.mock("@/lib/api/server", async (original) => ({
     const data = respuestas[ruta.split("?")[0]];
     return data === undefined ? { ok: false, status: 404, error: "sin fixture" } : { ok: true, status: 200, data };
   }),
+  getBusinessTimezone: vi.fn(async () => "America/Bogota"),
 }));
 
 vi.mock("next/navigation", () => ({

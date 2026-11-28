@@ -21,6 +21,7 @@ vi.mock("@/lib/api/server", async (original) => ({
     const data = respuestas[ruta.split("?")[0]];
     return data === undefined ? { ok: false, status: 404, error: "sin fixture" } : { ok: true, status: 200, data };
   }),
+  getBusinessTimezone: vi.fn(async () => "America/Bogota"),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -52,7 +53,7 @@ const AGENTES: LeadsResponse["agents"] = [
 const ANA = { ...leads.items[0], agentes: ["general", "ventas"], extras: { clasificacion: "fiel", pedidos: 3 } };
 
 describe("columna Agentes de Clientes", () => {
-  it("muestra General y solo los agentes con datos del cliente, sin atenuar ninguno", async () => {
+  it("muestra solo los módulos con datos del cliente (sin General)", async () => {
     respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [ANA] };
     respuestas["/admin/conversations/connections"] = [];
     respuestas["/admin/me"] = me;
@@ -63,7 +64,8 @@ describe("columna Agentes de Clientes", () => {
     const { container } = render(<FeedbackProviders>{arbol}</FeedbackProviders>);
 
     const fila = screen.getAllByRole("row")[1];
-    expect(within(fila).getByText("General · Ventas")).toBeTruthy();
+    expect(within(fila).getByText("Ventas")).toBeTruthy();
+    expect(within(fila).queryByText(/General/)).toBeNull();
     expect(within(fila).queryByText(/Agenda/)).toBeNull();
     expect(container.querySelector(".opacity-35")).toBeNull();
   });
@@ -78,14 +80,13 @@ describe("columna Agentes de Clientes", () => {
     return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
   }
 
-  it("la fila tiene un solo destino y el agente se opera sin abrir la ficha", async () => {
+  it("la fila abre la ficha desde el nombre y el agente se opera sin abrirla", async () => {
     respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [ANA] };
     await pintarClientes();
 
     const fila = screen.getAllByRole("row")[1];
-    const enlaces = within(fila).getAllByRole("link");
-    expect(enlaces).toHaveLength(1);
-    expect(enlaces[0].getAttribute("aria-label")).toBe("Abrir la ficha de Ana Prueba");
+    const enlace = within(fila).getByRole("link", { name: "Ana Prueba" });
+    expect(enlace.getAttribute("href")).toContain(`cliente=${ANA.id}`);
     expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
     expect(screen.queryByText("Estado del bot")).toBeNull();
     expect(within(fila).getByText("Activo")).toBeTruthy();
@@ -144,6 +145,6 @@ describe("ClientesDeModulo", () => {
     expect(within(fila).getByText("fiel")).toBeTruthy();
     expect(within(fila).getByText("3")).toBeTruthy();
     const enlace = within(fila).getByRole("link", { name: "Abrir la ficha de Ana Prueba" });
-    expect(enlace.getAttribute("href")).toBe(`/leads?cliente=${ANA.id}&agente=ventas`);
+    expect(enlace.getAttribute("href")).toBe(`/leads?q=ana&cliente=${ANA.id}&agente=ventas`);
   });
 });
