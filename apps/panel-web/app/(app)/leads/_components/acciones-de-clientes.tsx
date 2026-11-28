@@ -55,9 +55,6 @@ export function AccionesDeClientes({
 
   return (
     <>
-      <Button type="button" variant="accent" onClick={() => setDialogo("nuevo")}>
-        <Plus className="h-4 w-4" aria-hidden /> Nuevo lead
-      </Button>
       <Button type="button" variant="outline" onClick={() => setDialogo("importar")}>
         <Upload className="h-4 w-4" aria-hidden /> Importar
       </Button>
@@ -69,6 +66,9 @@ export function AccionesDeClientes({
           </Badge>
         </Button>
       )}
+      <Button type="button" variant="accent" onClick={() => setDialogo("nuevo")}>
+        <Plus className="h-4 w-4" aria-hidden /> Nuevo lead
+      </Button>
 
       <Dialog open={dialogo === "nuevo"} onOpenChange={(abierto) => setDialogo(abierto ? "nuevo" : null)}>
         <DialogContent

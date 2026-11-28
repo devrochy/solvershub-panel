@@ -607,6 +607,7 @@ export async function ClientesDeModulo({
         {
           key: "origen",
           header: "Origen",
+          info: "Cómo llegó el lead: página web, chat, WhatsApp, Instagram o manual. No es la conexión.",
           className: "max-xl:hidden",
           cell: (lead) => (
             <span className="text-body">
@@ -617,12 +618,12 @@ export async function ClientesDeModulo({
         ...columnasDelPack,
         {
           key: "modulos",
-          header: "Con datos en",
-          info: "Módulos donde este cliente tiene datos reales. El detalle vive en la sección de cada módulo.",
+          header: "También en",
+          info: "Módulos donde este cliente también tiene datos. El detalle vive en la sección de cada módulo; «Solo lead» significa que no hay más datos fuera del lead.",
           className: "max-2xl:hidden",
           cell: (lead) => {
             const modulos = modulosDeFila(lead);
-            if (!modulos.length) return <span className="text-body">—</span>;
+            if (!modulos.length) return <span className="text-xs text-text-soft">Solo lead</span>;
             return (
               <div className="flex items-center gap-1">
                 {modulos.map((modulo) => (
@@ -747,7 +748,11 @@ export async function ClientesDeModulo({
     ...filtrosSecundarios.map(
       (f): CampoAvanzado => ({
         key: f.key,
-        label: f.label,
+        label: f.key === operable?.valor ? "Valor del lead" : f.label,
+        help:
+          f.key === operable?.valor
+            ? "Lo que estimas que vale la oportunidad. No es el total comprado en Ventas."
+            : undefined,
         value: valorDeFiltro(filtroSp, f.key) ? `${f.key}:${valorDeFiltro(filtroSp, f.key)}` : "",
         options: [
           { value: "", label: "Todos" },
@@ -944,7 +949,6 @@ export async function ClientesDeModulo({
         actions:
           headerActions || operable ? (
             <>
-              {headerActions}
               {operable && (
                 <Button asChild variant="outline">
                   <a href={`/api/leads/export?${csv.toString()}`} download>
@@ -952,6 +956,7 @@ export async function ClientesDeModulo({
                   </a>
                 </Button>
               )}
+              {headerActions}
             </>
           ) : undefined,
       }}

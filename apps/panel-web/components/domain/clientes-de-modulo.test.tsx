@@ -441,7 +441,7 @@ describe("motivo de pérdida y valor estimado (HU-CRM-23)", () => {
     ]);
     abrirFiltrosAvanzados();
     expect(screen.getByLabelText("Motivo de pérdida")).toBeTruthy();
-    expect(screen.getByLabelText("Valor estimado")).toBeTruthy();
+    expect(screen.getByLabelText("Valor del lead")).toBeTruthy();
   });
 
   it("sin el filtro de valor del backend no ofrece órdenes por valor (backend viejo)", async () => {
@@ -526,7 +526,7 @@ describe("Clientes · una sola sección", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
 
     const cabeceras = screen.getAllByRole("columnheader").map((c) => c.textContent);
-    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Conexión", "Con datos en", "Agente"]));
+    expect(cabeceras).toEqual(expect.arrayContaining(["Cliente", "Tipo", "Origen", "Conexión", "También en", "Agente"]));
     const [, fila] = screen.getAllByRole("row");
     expect(within(fila).getByText("VIP")).toBeTruthy();
     expect(within(fila).getByRole("img", { name: "Con datos en Ventas" })).toBeTruthy();
