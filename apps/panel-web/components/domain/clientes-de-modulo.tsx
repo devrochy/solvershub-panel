@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Columns3, Eye, List, MessageCircle, Phone, X } from "lucide-react";
+import { Columns3, List, MessageCircle, Phone, X } from "lucide-react";
 
 import { EnviarPlantilla } from "@/app/(app)/leads/_components/enviar-plantilla";
 import { FiltrosAvanzados, type CampoAvanzado } from "@/app/(app)/leads/_components/filtros-avanzados";
@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { BotonReintentar } from "@/components/ui/estado-de-error";
 import { Field } from "@/components/ui/field";
-import { IconAction } from "@/components/ui/icon-action";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
@@ -53,7 +52,6 @@ import {
   seguimientoDeExtras,
   textoDeSeguimiento,
 } from "@/lib/seguimiento";
-import { cn } from "@/lib/utils";
 
 type Fila = LeadRow;
 type Columna = LeadsResponse["agents"][number]["columns"][number];
@@ -469,7 +467,7 @@ export async function ClientesDeModulo({
     const wa = enlaceWhatsApp(lead.perfil);
     const tamano = grande ? "h-11 w-11" : "h-9 w-9";
     return (
-      <div className="flex items-center justify-end gap-1">
+      <div className="relative z-10 flex items-center justify-end gap-1">
         {wa && (
           <Button asChild variant="ghost" size="icon" className={tamano}>
             <a href={wa} target="_blank" rel="noopener noreferrer" aria-label={`Escribir por WhatsApp a ${nombre}`} title="WhatsApp">
@@ -490,17 +488,6 @@ export async function ClientesDeModulo({
             cliente={{ id: lead.id, nombre }}
             icono={{ className: tamano }}
           />
-        )}
-        {grande ? (
-          <Button asChild variant="ghost" size="icon" className={cn(tamano, "text-link")}>
-            <Link href={hrefFicha(lead.id, { agente, qs: qsFicha })} aria-label={`Ver la ficha de ${nombre}`} title="Ver la ficha">
-              <Eye className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        ) : (
-          <IconAction href={hrefFicha(lead.id, { agente, qs: qsFicha })} label={`Ver la ficha de ${nombre}`} tone="ver">
-            <Eye className="h-4 w-4" aria-hidden />
-          </IconAction>
         )}
       </div>
     );
@@ -536,12 +523,7 @@ export async function ClientesDeModulo({
             <div className="flex items-center gap-3">
               <Avatar name={lead.perfil.nombre_visible} src={lead.perfil.avatar_url} size="sm" />
               <div className="flex min-w-0 flex-col">
-                <Link
-                  href={hrefFicha(lead.id, { agente, qs: qsFicha })}
-                  className="truncate font-medium text-link hover:underline"
-                >
-                  {lead.perfil.nombre_visible}
-                </Link>
+                <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>
                 {lead.perfil.alias && lead.perfil.alias !== lead.perfil.nombre_visible && (
                   <span className="truncate text-xs text-text-soft">Alias: {lead.perfil.alias}</span>
                 )}
@@ -555,7 +537,7 @@ export async function ClientesDeModulo({
                 key: "etapa",
                 header: "Etapa",
                 info: "El agente la mueve al calificar o al actualizar el lead; cada cambio queda con quién lo hizo.",
-                cell: (lead) => badgeDeEtapa(lead),
+                cell: (lead) => <div className="relative z-10 w-fit">{badgeDeEtapa(lead)}</div>,
               } satisfies Column<Fila>,
             ]
           : []),
@@ -640,7 +622,7 @@ export async function ClientesDeModulo({
           header: "Agente",
           info: "Activo: el agente responde a este cliente. Pausado: el agente no le responde.",
           cell: (lead) => (
-            <div className="flex w-fit items-center gap-2">
+            <div className="relative z-10 flex w-fit items-center gap-2">
               <AgenteSwitch
                 leadId={lead.id}
                 botPaused={lead.bot_paused ?? false}
@@ -665,17 +647,16 @@ export async function ClientesDeModulo({
         {
           key: "cliente",
           header: "Cliente",
-          cell: (lead) =>
-            operable ? (
-              <Link href={hrefFicha(lead.id, { agente, qs: qsFicha })} className="truncate font-medium text-link hover:underline">
-                {lead.perfil.nombre_visible}
-              </Link>
-            ) : (
-              <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>
-            ),
+          cell: (lead) => <span className="truncate font-medium text-headline">{lead.perfil.nombre_visible}</span>,
         },
         ...(operable?.etapa
-          ? [{ key: "etapa", header: "Etapa", cell: (lead) => badgeDeEtapa(lead) } satisfies Column<Fila>]
+          ? [
+              {
+                key: "etapa",
+                header: "Etapa",
+                cell: (lead) => <div className="relative z-10 w-fit">{badgeDeEtapa(lead)}</div>,
+              } satisfies Column<Fila>,
+            ]
           : []),
         ...(operable?.seguimiento
           ? [{ key: "seguimiento", header: "Seguimiento", cell: (lead) => seguimientoDeFila(lead) } satisfies Column<Fila>]
@@ -935,8 +916,8 @@ export async function ClientesDeModulo({
       }
       caption={nombreDeLista}
       serverPaginated
-      getRowHref={operable ? undefined : (lead) => hrefFicha(lead.id, { agente, qs: qsFicha })}
-      getRowLabel={operable ? undefined : (lead) => `Abrir la ficha de ${lead.perfil.nombre_visible}`}
+      getRowHref={(lead) => hrefFicha(lead.id, { agente, qs: qsFicha })}
+      getRowLabel={(lead) => `Abrir la ficha de ${lead.perfil.nombre_visible}`}
     />
   );
 

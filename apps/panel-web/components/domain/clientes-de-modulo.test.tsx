@@ -280,7 +280,7 @@ describe("acciones por fila", () => {
     expect(within(beto).queryByRole("link", { name: /WhatsApp/ })).toBeNull();
     expect(within(beto).queryByRole("link", { name: /Llamar/ })).toBeNull();
     // La ficha sigue disponible aunque no haya teléfono.
-    expect(within(beto).getByRole("link", { name: "Ver la ficha de Beto Sin Teléfono" })).toBeTruthy();
+    expect(within(beto).getByRole("link", { name: "Abrir la ficha de Beto Sin Teléfono" })).toBeTruthy();
   });
 
   it("Enviar plantilla solo aparece para el propietario o la plataforma", async () => {
@@ -348,8 +348,8 @@ describe("estados, CSV y móvil", () => {
     expect(ana.getByText("Calificado")).toBeTruthy();
     expect(ana.getByText("Última actividad: Hace 3 min")).toBeTruthy();
     expect(ana.getByRole("link", { name: "Llamar a Ana Prueba" }).className).toContain("h-11");
-    // Todos los destinos táctiles de la tarjeta miden 44 px (HIG: 44 × 44 pt).
-    expect(ana.getByRole("link", { name: "Ver la ficha de Ana Prueba" }).className).toContain("h-11");
+    // El ojo de la ficha se retiró: en la tabla se abre desde la fila.
+    expect(ana.queryByRole("link", { name: "Ver la ficha de Ana Prueba" })).toBeNull();
     expect(ana.getByRole("button", { name: "Enviar plantilla a Ana Prueba" }).className).toContain("h-11");
     expect(ana.getByRole("link", { name: "Ana Prueba" }).className).toContain("min-h-11");
     expect(within(tarjetas[1]).getByText("Sin lead de venta")).toBeTruthy();

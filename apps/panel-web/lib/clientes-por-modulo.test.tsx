@@ -80,12 +80,12 @@ describe("columna Agentes de Clientes", () => {
     return render(<FeedbackProviders>{arbol}</FeedbackProviders>);
   }
 
-  it("la fila abre la ficha desde el nombre y el agente se opera sin abrirla", async () => {
+  it("la fila entera abre la ficha y el agente se opera sin abrirla", async () => {
     respuestas["/admin/leads"] = { ...leads, agents: AGENTES, items: [ANA] };
     await pintarClientes();
 
     const fila = screen.getAllByRole("row")[1];
-    const enlace = within(fila).getByRole("link", { name: "Ana Prueba" });
+    const enlace = within(fila).getByRole("link", { name: "Abrir la ficha de Ana Prueba" });
     expect(enlace.getAttribute("href")).toContain(`cliente=${ANA.id}`);
     expect(within(fila).getByRole("switch", { name: "Pausar el agente para Ana Prueba" })).toBeTruthy();
     expect(screen.queryByText("Estado del bot")).toBeNull();
