@@ -4,6 +4,7 @@ import { Columns3, List, X } from "lucide-react";
 
 import { AccionesDeFila } from "@/app/(app)/leads/_components/acciones-de-fila";
 import { FiltrosAvanzados, type CampoAvanzado } from "@/app/(app)/leads/_components/filtros-avanzados";
+import { FiltrosDeClientes } from "@/app/(app)/leads/_components/filtros-de-clientes";
 import { ListPage } from "@/components/templates/list-page";
 import { AgentIcon } from "@/components/domain/agent-icon";
 import { AgenteSwitch } from "@/components/domain/cliente/agente-switch";
@@ -709,8 +710,22 @@ export async function ClientesDeModulo({
     filtro: filtrosDePacks(filtroSp).filter((f) => !camposAvanzados.some((campo) => f.startsWith(`${campo.key}:`))),
   });
 
+  const vistaControl = puedeVerEmbudo ? (
+    <SegmentedControl
+      label="Vista de los clientes"
+      className="ml-auto"
+      value={modoEmbudo ? "embudo" : "lista"}
+      options={[
+        { value: "lista", label: "Lista", href: hrefCon({ vista: "lista" }), icon: <List aria-hidden /> },
+        { value: "embudo", label: "Embudo", href: hrefCon({ vista: "embudo" }), icon: <Columns3 aria-hidden /> },
+      ]}
+    />
+  ) : null;
+
   const filtrosForm = (
-    <form method="get" action={basePath} className="flex w-full flex-wrap items-end gap-3">
+    <>
+      <FiltrosDeClientes activos={chips.length}>
+        <form method="get" action={basePath} className="flex w-full flex-wrap items-end gap-3">
       {modoEmbudo && <input type="hidden" name="vista" value="embudo" />}
       {/* La etapa elegida en las pestañas no es un campo del formulario: se conserva al filtrar. */}
       {etapaComoPestanas && etapaActual && operable?.etapa && (
@@ -809,18 +824,10 @@ export async function ClientesDeModulo({
           {operable ? "Limpiar todo" : "Limpiar"}
         </Link>
       )}
-      {puedeVerEmbudo && (
-        <SegmentedControl
-          label="Vista de los clientes"
-          className="ml-auto"
-          value={modoEmbudo ? "embudo" : "lista"}
-          options={[
-            { value: "lista", label: "Lista", href: hrefCon({ vista: "lista" }), icon: <List aria-hidden /> },
-            { value: "embudo", label: "Embudo", href: hrefCon({ vista: "embudo" }), icon: <Columns3 aria-hidden /> },
-          ]}
-        />
-      )}
-    </form>
+        </form>
+      </FiltrosDeClientes>
+      {vistaControl}
+    </>
   );
 
   const hayFilas = res.ok && items.length > 0;
