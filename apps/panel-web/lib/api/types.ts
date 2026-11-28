@@ -377,6 +377,14 @@ export type CronEjecucion = components["schemas"]["CronRunOut"];
 export type CronListado = components["schemas"]["CronList"];
 export type CronResumen = components["schemas"]["CronSummary"];
 export type CronEjecucionesPage = components["schemas"]["Page_CronRunOut_"];
+// Bandeja de reportes de clientes para el equipo (SPEC-54, ADR-0213, HU-FB-06).
+export type FeedbackBandeja = components["schemas"]["FeedbackBandeja"];
+export type FeedbackBandejaItem = components["schemas"]["FeedbackBandejaItem"];
+export type FeedbackReporteMaster = components["schemas"]["FeedbackReporteMaster"];
+export type FeedbackAdjuntoMaster = components["schemas"]["FeedbackAdjuntoMaster"];
+export type FeedbackPersona = components["schemas"]["FeedbackPersona"];
+export type FeedbackAprobarIn = components["schemas"]["FeedbackAprobarIn"];
+export type FeedbackRechazarIn = components["schemas"]["FeedbackRechazarIn"];
 
 // ADR-0190 (HU-AOS-64/66): habilidades del agente y cuentas Wompi del negocio.
 export type AgentSkill = components["schemas"]["AgentSkill"];

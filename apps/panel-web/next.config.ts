@@ -40,6 +40,10 @@ const CSP_FOTOS_DE_PRODUCTOS = CSP.replace("img-src 'self' data: blob:", "img-sr
 // (tiles de OpenStreetMap). Son imágenes: no ejecutan código.
 const CSP_FICHA_CLIENTE = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https: http:");
 
+// Adjunto de un reporte de cliente servido por el BFF (SPEC-54, HU-FB-06): la bandeja lo muestra en un
+// iframe del mismo origen (vista previa del PDF). El archivo no ejecuta nada: sin scripts ni recursos.
+const CSP_ADJUNTO_DE_REPORTE = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'self'";
+
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
   output: "standalone",
@@ -92,6 +96,13 @@ const nextConfig: NextConfig = {
       {
         source: "/conversaciones",
         headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
+      },
+      {
+        source: "/api/platform/feedback/reports/:id/adjuntos/:adjunto",
+        headers: [
+          { key: "Content-Security-Policy", value: CSP_ADJUNTO_DE_REPORTE },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
       },
       // SPEC-54: el detalle de un reporte muestra la miniatura de cada captura (URL firmada del backend).
       {

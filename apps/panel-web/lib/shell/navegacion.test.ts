@@ -36,6 +36,7 @@ const RUTAS_ANTERIORES: [string, string, boolean][] = [
   ["/pruebas", "qa", false],
   // ADR-0183: gestión de crons de la plataforma, solo master.
   ["/plataforma/crons", "tenants", true],
+  ["/plataforma/feedback", "tenants", true],
   // Nuevas después del menú v2.
   ["/comercio/aliados", "pack_commerce", false],
   // SPEC-35 (D-43): entrada propia «Suscripciones».

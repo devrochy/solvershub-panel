@@ -235,6 +235,10 @@ describe("el saldo desglosado y la compra de créditos (HU-BILL-27 parte 2b)", (
     // Basic: sin acumulado ni recargas, solo el mes.
     const basic = desgloseDelSaldo({ ...saldo, total: 12000, accumulated: 0, accumulated_expires_at: null, top_ups: 0, used_accumulated: 0 }, AHORA)!;
     expect(basic.partes.map((p) => p.clave)).toEqual(["mes"]);
+    // Regalos (bonificaciones por reportes aprobados, ADR-0213): entre el acumulado y las recargas.
+    const conRegalos = desgloseDelSaldo({ ...saldo, total: 22000, bonuses: 2000, used_bonuses: 500 }, AHORA)!;
+    expect(conRegalos.partes.map((p) => p.clave)).toEqual(["mes", "acumulado", "regalos", "recargas"]);
+    expect(conRegalos.partes[2]).toEqual({ clave: "regalos", nombre: "Regalos", uso: "usaste 500 de 2.000", nota: null });
     expect(desgloseDelSaldo(null)).toBeNull();
   });
 

@@ -10262,6 +10262,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/feedback/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bandeja
+         * @description Reportes de todos los negocios, del más reciente al más antiguo, paginados por `(created_at, id)`.
+         */
+        get: operations["bandeja_api_v1_platform_feedback_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalle */
+        get: operations["detalle_api_v1_platform_feedback_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/tomar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tomar
+         * @description `recibido → en_revision`. Repetirlo el mismo master responde 200; si lo tomó otro, 409.
+         */
+        post: operations["tomar_api_v1_platform_feedback_reports__report_id__tomar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprobar
+         * @description Aprueba y acredita `creditos` de regalo al negocio, en una sola transacción. El mismo master con el
+         *     mismo monto responde 200 sin volver a acreditar; cualquier otra repetición, 409 `reporte_ya_decidido`.
+         */
+        post: operations["aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rechazar
+         * @description Rechaza con un motivo visible al cliente. `duplicado_de` se valida contra cualquier negocio y el cliente
+         *     nunca ve a qué reporte apunta.
+         */
+        post: operations["rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -26689,6 +26788,181 @@ export interface components {
              * @description Hasta 5: imágenes o PDF.
              */
             adjuntos?: string[] | null;
+        };
+        /** FeedbackAdjuntoMaster */
+        FeedbackAdjuntoMaster: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Orden */
+            orden: number;
+            /** Mimetype */
+            mimetype: string;
+            /** Bytes */
+            bytes: number;
+            /** Nombre Original */
+            nombre_original: string | null;
+            /**
+             * Url
+             * @description URL firmada de corta duración (`URL_TTL_UI`).
+             */
+            url: string;
+        };
+        /** FeedbackAprobarIn */
+        FeedbackAprobarIn: {
+            /**
+             * Creditos
+             * @description Créditos de regalo para el negocio, entero > 0. Topes en ADR-0213 §4.
+             */
+            creditos: number;
+        };
+        /** FeedbackBandeja */
+        FeedbackBandeja: {
+            /** Items */
+            items: components["schemas"]["FeedbackBandejaItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** FeedbackBandejaItem */
+        FeedbackBandejaItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            autor: components["schemas"]["FeedbackPersona"];
+            /** @description Quien lo tomó o lo decidió. */
+            revisor: components["schemas"]["FeedbackPersona"] | null;
+            /** Tomado En */
+            tomado_en: string | null;
+            /** Creditos Otorgados */
+            creditos_otorgados: number | null;
+            /**
+             * Adjuntos
+             * @description Cuántos adjuntos trae el reporte.
+             */
+            adjuntos: number;
+        };
+        /** FeedbackPersona */
+        FeedbackPersona: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Email */
+            email: string | null;
+        };
+        /** FeedbackRechazarIn */
+        FeedbackRechazarIn: {
+            /**
+             * Motivo Codigo
+             * @enum {string}
+             */
+            motivo_codigo: "duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro";
+            /**
+             * Motivo
+             * @description Visible al cliente.
+             */
+            motivo: string;
+            /**
+             * Nota Interna
+             * @description Solo para el equipo.
+             */
+            nota_interna?: string | null;
+            /**
+             * Duplicado De
+             * @description Obligatorio con `motivo_codigo = duplicado`.
+             */
+            duplicado_de?: string | null;
+        };
+        /**
+         * FeedbackReporteMaster
+         * @description El reporte como lo ve el equipo: incluye `nota_interna`, el revisor y a qué reporte duplica.
+         */
+        FeedbackReporteMaster: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            autor: components["schemas"]["FeedbackPersona"];
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /** @description Quien lo tomó o lo decidió. */
+            revisor: components["schemas"]["FeedbackPersona"] | null;
+            /** Tomado En */
+            tomado_en: string | null;
+            /** Decidido En */
+            decidido_en: string | null;
+            /** Motivo Codigo */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /** Motivo */
+            motivo: string | null;
+            /** Nota Interna */
+            nota_interna: string | null;
+            /** Creditos Otorgados */
+            creditos_otorgados: number | null;
+            /** Duplicado De */
+            duplicado_de: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Adjuntos */
+            adjuntos: components["schemas"]["FeedbackAdjuntoMaster"][];
         };
     };
     responses: never;
@@ -49502,6 +49776,290 @@ export interface operations {
             };
             /** @description `corridas_por_dia`. */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    bandeja_api_v1_platform_feedback_reports_get: {
+        parameters: {
+            query?: {
+                estado?: ("recibido" | "en_revision" | "aprobado" | "rechazado") | null;
+                tipo?: ("error" | "mejora" | "idea") | null;
+                /** @description Solo los reportes de este negocio. */
+                tenant_id?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackBandeja"];
+                };
+            };
+            /** @description `cursor_invalido` */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detalle_api_v1_platform_feedback_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tomar_api_v1_platform_feedback_reports__report_id__tomar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_tomado` (`details.revisado_por`) o `reporte_ya_decidido` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackAprobarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_decidido` (`details.estado`) o `sin_ciclo_de_creditos` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `monto_invalido`, `tope_reporte_excedido` (`details.maximo`) o `tope_mensual_excedido` (`details.maximo`, `regalado`, `disponible`); `validation_error` si `creditos` no es un entero */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `abono_inconsistente`: no entró el abono y se deshizo la aprobación */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRechazarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_decidido` (`details.estado`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `duplicado_sin_original`, `duplicado_invalido` o `duplicado_sin_motivo` */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
