@@ -40,6 +40,10 @@ const CSP_FOTOS_DE_PRODUCTOS = CSP.replace("img-src 'self' data: blob:", "img-sr
 // (tiles de OpenStreetMap). Son imágenes: no ejecutan código.
 const CSP_FICHA_CLIENTE = CSP.replace("img-src 'self' data: blob:", "img-src 'self' data: blob: https: http:");
 
+// Bandeja de reportes de clientes (SPEC-54, HU-FB-06): las capturas y los PDF de evidencia se ven con su
+// URL firmada del backend (10 min). Imágenes y un visor de PDF en un iframe; el resto sigue en 'self'.
+const CSP_ADJUNTOS_DE_REPORTES = CSP_FICHA_CLIENTE.replace("frame-ancestors 'none'", "frame-src https: http:; frame-ancestors 'none'");
+
 const nextConfig: NextConfig = {
   // Salida autocontenida para desplegar en contenedor (Coolify).
   output: "standalone",
@@ -87,6 +91,10 @@ const nextConfig: NextConfig = {
       {
         source: "/conversaciones",
         headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
+      },
+      {
+        source: "/plataforma/feedback/:id",
+        headers: [{ key: "Content-Security-Policy", value: CSP_ADJUNTOS_DE_REPORTES }],
       },
     ];
   },

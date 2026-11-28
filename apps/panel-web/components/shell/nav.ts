@@ -16,6 +16,7 @@ import {
   LogIn,
   MessageSquare,
   MessagesSquare,
+  MessageSquareWarning,
   UserRoundPlus,
   PlayCircle,
   Plug,
@@ -271,6 +272,9 @@ export const NAV_GROUPS: NavGroupDef[] = [
       { section: "costs", label: "Costos técnicos", href: "/costos", icon: Coins, ready: true, soloMaster: true },
       // Crons (ADR-0183): catálogo por módulo, historial, ejecución manual y horario. Solo master.
       { section: "tenants", label: "Crons", href: "/plataforma/crons", icon: Timer, ready: true, soloMaster: true },
+      // Reportes de clientes (SPEC-54, ADR-0213): bandeja entre negocios; aprobar regala créditos. Solo master en el
+      // menú; la página también la abre el tester por enlace, sin acciones.
+      { section: "tenants", label: "Reportes de clientes", href: "/plataforma/feedback", icon: MessageSquareWarning, ready: true, soloMaster: true },
       // Centro de pruebas (SPEC-30): sección global `qa`, de master y testers (solo en test).
       { section: "qa", label: "Pruebas", href: "/pruebas", icon: FlaskConical, ready: true },
     ],
