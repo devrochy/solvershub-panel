@@ -1269,7 +1269,14 @@ export interface paths {
         /** List Leads */
         get: operations["list_leads_api_v1_admin_leads_get"];
         put?: never;
-        post?: never;
+        /**
+         * Create Lead
+         * @description Alta manual de un cliente con su lead (panel › Clientes › Nuevo lead).
+         *
+         *     Si el teléfono o el correo ya son de un cliente del negocio, se reutiliza; si ese cliente ya tiene un lead con
+         *     datos, responde 409 con su id para abrirlo en la ficha en vez de duplicarlo.
+         */
+        post: operations["create_lead_api_v1_admin_leads_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1290,6 +1297,26 @@ export interface paths {
         get: operations["export_leads_csv_api_v1_admin_leads_export_csv_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Leads
+         * @description Importa leads desde un CSV (panel › Clientes › Importar). Cada fila va en su propio savepoint.
+         */
+        post: operations["import_leads_api_v1_admin_leads_import_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2259,6 +2286,212 @@ export interface paths {
          * @description Retira todos los datos de prueba del módulo; lo creado a mano no se toca.
          */
         delete: operations["borrar_modulo_api_v1_admin_datos_de_prueba__modulo__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/estimado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Estimar
+         * @description Cuánto cuesta correr los escenarios con cada `k` y cuánto sale de la cuota gratis. No escribe nada.
+         */
+        post: operations["estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crear Corrida
+         * @description Aprueba el estimado y deja la corrida en cola. Una a la vez por negocio, 5 por día.
+         */
+        post: operations["crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar Corrida
+         * @description Cancela una corrida en cola o corriendo. Se cobra solo lo gastado.
+         */
+        post: operations["cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/platform/tenants/{tenant_id}/pruebas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Leer Tope
+         * @description Tope de `k` de las pruebas del negocio. Solo el master.
+         */
+        get: operations["leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get"];
+        /**
+         * Fijar Tope
+         * @description Baja o sube el tope de `k` de UN negocio (auditado como `pruebas_k_maximo`); `null` lo devuelve al de
+         *     plataforma. Idempotente. Solo el master.
+         */
+        put: operations["fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Informe
+         * @description El informe de la corrida: progreso, créditos, porcentaje y, por escenario, la conversación, la razón del juez y
+         *     el arreglo sugerido con su diff. Se puede sondear mientras corre.
+         */
+        get: operations["informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/arreglo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Arreglo
+         * @description El arreglo de un resultado con el diff contra el borrador de ahora. No escribe nada.
+         */
+        get: operations["ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/aplicar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aplicar Arreglo
+         * @description Aplica el arreglo al BORRADOR del agente, con la confirmación explícita del dueño. Nunca publica.
+         */
+        post: operations["aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/juez-equivocado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Juez Equivocado
+         * @description «Esto no es una falla»: el resultado sale del porcentaje y de volver a probar. Idempotente.
+         */
+        post: operations["juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar/estimado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Estimar Fallidas
+         * @description Cuánto cuesta repetir solo las pruebas que fallaron, con cada `k`. No escribe.
+         */
+        post: operations["estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Volver A Probar
+         * @description Nueva corrida solo con los escenarios que fallaron, contra el borrador, con su propio estimado y aprobación.
+         */
+        post: operations["volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6599,6 +6832,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/feedback/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bandeja
+         * @description Reportes de todos los negocios, del más reciente al más antiguo, paginados por `(created_at, id)`.
+         */
+        get: operations["bandeja_api_v1_platform_feedback_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalle */
+        get: operations["detalle_api_v1_platform_feedback_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/tomar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tomar
+         * @description `recibido → en_revision`. Repetirlo el mismo master responde 200; si lo tomó otro, 409.
+         */
+        post: operations["tomar_api_v1_platform_feedback_reports__report_id__tomar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprobar
+         * @description Aprueba y acredita `creditos` de regalo al negocio, en una sola transacción. El mismo master con el
+         *     mismo monto responde 200 sin volver a acreditar; cualquier otra repetición, 409 `reporte_ya_decidido`.
+         */
+        post: operations["aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feedback/reports/{report_id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rechazar
+         * @description Rechaza con un motivo visible al cliente. `duplicado_de` se valida contra cualquier negocio y el cliente
+         *     nunca ve a qué reporte apunta.
+         */
+        post: operations["rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/platform/crons": {
         parameters: {
             query?: never;
@@ -8397,6 +8729,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pack/payments/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_api_v1_pack_payments_accounts_get"];
+        put?: never;
+        /** Create Account */
+        post: operations["create_account_api_v1_pack_payments_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/payments/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Account */
+        delete: operations["delete_account_api_v1_pack_payments_accounts__account_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Account */
+        patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Documentos */
+        get: operations["listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get"];
+        put?: never;
+        /**
+         * Subir Documento
+         * @description Sube un documento al agente. Queda `pendiente` y el worker lo procesa.
+         */
+        post: operations["subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borrar Documento */
+        delete: operations["borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}/reprocess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reprocesar Documento */
+        post: operations["reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pack/commerce/dashboard": {
         parameters: {
             query?: never;
@@ -8771,450 +9194,6 @@ export interface paths {
          *     `rechazado` y el agente deja de presentarlo como pagado.
          */
         post: operations["cambiar_estado_de_pago_api_v1_pack_commerce_orders__order_id__payment_status_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Calendar Status */
-        get: operations["calendar_status_api_v1_pack_calendar_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/calendars": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Calendars
-         * @description Agendas del negocio con el nombre que el asistente le dice al cliente.
-         */
-        get: operations["list_calendars_api_v1_pack_calendar_calendars_get"];
-        put?: never;
-        /**
-         * Create Calendar
-         * @description Crea una agenda interna (sin cuenta de Google). Las de Google nacen al conectar la cuenta.
-         */
-        post: operations["create_calendar_api_v1_pack_calendar_calendars_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/calendars/{calendar_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update Calendar
-         * @description Edita una agenda: nombre visible, descripción, alias, color, horario, zona, orden y estado.
-         */
-        put: operations["update_calendar_api_v1_pack_calendar_calendars__calendar_id__put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/calendars/{calendar_id}/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Delete Calendar
-         * @description Elimina (suave) una agenda. No borra la cuenta de Google: eso va en Conexiones.
-         *
-         *     La principal no se elimina. Si tiene citas futuras, hay que pasar `move_to` (otra agenda)
-         *     para moverlas; si no, 409.
-         */
-        post: operations["delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/types": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Types */
-        get: operations["list_types_api_v1_pack_calendar_types_get"];
-        put?: never;
-        /** Create Type */
-        post: operations["create_type_api_v1_pack_calendar_types_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/types/{type_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update Type
-         * @description Edita un tipo de cita (HU-SH-02: responsable y enlace de la reunión).
-         */
-        put: operations["update_type_api_v1_pack_calendar_types__type_id__put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/types/{type_id}/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Delete Type */
-        post: operations["delete_type_api_v1_pack_calendar_types__type_id__delete_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/appointments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Appointments
-         * @description Próximas citas (por defecto 30 días) del negocio.
-         */
-        get: operations["list_appointments_api_v1_pack_calendar_appointments_get"];
-        put?: never;
-        /**
-         * Create Appointment
-         * @description Crea una cita: local y, si el negocio tiene Google conectado, también el evento real.
-         */
-        post: operations["create_appointment_api_v1_pack_calendar_appointments_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/appointments/{appointment_id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel Appointment
-         * @description Cancela la cita: borra el evento en Google (best-effort), marca el espejo,
-         *     registra la actividad y, con `notify` (default), avisa al cliente por correo
-         *     y WhatsApp (HU-CAL-05). Idempotente: cancelar una cita ya cancelada no
-         *     vuelve a avisar.
-         */
-        post: operations["cancel_appointment_api_v1_pack_calendar_appointments__appointment_id__cancel_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/blocks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Blocks
-         * @description Bloqueos de la agenda interna (vacaciones, ausencia, feriados, almuerzo).
-         */
-        get: operations["list_blocks_api_v1_pack_calendar_blocks_get"];
-        put?: never;
-        /** Create Block */
-        post: operations["create_block_api_v1_pack_calendar_blocks_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/blocks/{block_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Delete Block */
-        delete: operations["delete_block_api_v1_pack_calendar_blocks__block_id__delete"];
-        options?: never;
-        head?: never;
-        /**
-         * Patch Block
-         * @description Edita un bloqueo de agenda (arrastrar/redimensionar en la grilla, HU-CAL-03).
-         */
-        patch: operations["patch_block_api_v1_pack_calendar_blocks__block_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/week": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Week View
-         * @description Citas + bloqueos de la semana que arranca en `start` (YYYY-MM-DD, lunes si se omite).
-         */
-        get: operations["week_view_api_v1_pack_calendar_week_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Calendar Events
-         * @description Citas + bloqueos en formato FullCalendar para la grilla del panel (HU-CAL-03).
-         *
-         *     `start`/`end` ISO (o YYYY-MM-DD). Sin parámetros, cubre el mes en curso.
-         */
-        get: operations["calendar_events_api_v1_pack_calendar_events_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/appointments/{appointment_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Patch Appointment
-         * @description Edita campos/horario de una cita y, si se mueve y `notify`, avisa al cliente
-         *     por correo y WhatsApp y a los colaboradores (HU-CAL-02/05). Valida
-         *     solapamiento en el servidor.
-         */
-        patch: operations["patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/appointments/{appointment_id}/activities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Appointment Activities
-         * @description Historial de una cita (programada/reprogramada/cancelada) (HU-CAL-03).
-         */
-        get: operations["appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/oauth/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Oauth Start
-         * @description Inicia el OAuth2 de Google (302 a accounts.google.com).
-         *
-         *     Con `connection_id` se reconecta esa cuenta (HU-CAL-08): se sugiere su correo a Google y
-         *     el callback verifica que sea la misma cuenta antes de guardar.
-         *
-         *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
-         *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
-         *     entra por la ruta BFF del panel (D-SPEC-24-11, ADR-0093).
-         *
-         *     El `state` lleva el negocio que inició el flujo (`<tenant_id>.<aleatorio>`): el
-         *     callback guarda la cuenta en el negocio de la sesión, que puede haber cambiado
-         *     mientras el usuario estaba en Google.
-         */
-        get: operations["oauth_start_api_v1_pack_calendar_oauth_start_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/oauth/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Oauth Callback
-         * @description Vuelve de Google (vía la ruta BFF del panel): valida el `state`, intercambia
-         *     el código, guarda los tokens en la conexión del negocio y regresa al panel.
-         *
-         *     Exige sesión (el BFF reenvía la del usuario): así el negocio es el del
-         *     principal y no se puede guardar una cuenta en otro (HU-CAL-07). Sin `state`
-         *     o con un `state` distinto al de la cookie, no se intercambia nada (CSRF).
-         */
-        get: operations["oauth_callback_api_v1_pack_calendar_oauth_callback_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/calendar/appointments/{appointment_id}/asistencia": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Marcar Asistencia
-         * @description Marca una cita pasada `asistio` o `no_asistio`. Al `no_asistio`, el asistente le
-         *     ofrece reagendar al cliente (plantilla si la ventana está cerrada).
-         */
-        post: operations["marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar Documentos */
-        get: operations["listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get"];
-        put?: never;
-        /**
-         * Subir Documento
-         * @description Sube un documento al agente. Queda `pendiente` y el worker lo procesa.
-         */
-        post: operations["subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Borrar Documento */
-        delete: operations["borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/pack/pack_knowledge/agents/{agent_id}/documents/{document_id}/reprocess": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reprocesar Documento */
-        post: operations["reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10020,25 +9999,214 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/payments/accounts": {
+    "/api/v1/pack/calendar/status": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List Accounts */
-        get: operations["list_accounts_api_v1_pack_payments_accounts_get"];
+        /** Calendar Status */
+        get: operations["calendar_status_api_v1_pack_calendar_status_get"];
         put?: never;
-        /** Create Account */
-        post: operations["create_account_api_v1_pack_payments_accounts_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/pack/payments/accounts/{account_id}": {
+    "/api/v1/pack/calendar/calendars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calendars
+         * @description Agendas del negocio con el nombre que el asistente le dice al cliente.
+         */
+        get: operations["list_calendars_api_v1_pack_calendar_calendars_get"];
+        put?: never;
+        /**
+         * Create Calendar
+         * @description Crea una agenda interna (sin cuenta de Google). Las de Google nacen al conectar la cuenta.
+         */
+        post: operations["create_calendar_api_v1_pack_calendar_calendars_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Calendar
+         * @description Edita una agenda: nombre visible, descripción, alias, color, horario, zona, orden y estado.
+         */
+        put: operations["update_calendar_api_v1_pack_calendar_calendars__calendar_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/calendars/{calendar_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete Calendar
+         * @description Elimina (suave) una agenda. No borra la cuenta de Google: eso va en Conexiones.
+         *
+         *     La principal no se elimina. Si tiene citas futuras, hay que pasar `move_to` (otra agenda)
+         *     para moverlas; si no, 409.
+         */
+        post: operations["delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Types */
+        get: operations["list_types_api_v1_pack_calendar_types_get"];
+        put?: never;
+        /** Create Type */
+        post: operations["create_type_api_v1_pack_calendar_types_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/types/{type_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Type
+         * @description Edita un tipo de cita (HU-SH-02: responsable y enlace de la reunión).
+         */
+        put: operations["update_type_api_v1_pack_calendar_types__type_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/types/{type_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Type */
+        post: operations["delete_type_api_v1_pack_calendar_types__type_id__delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Appointments
+         * @description Próximas citas (por defecto 30 días) del negocio.
+         */
+        get: operations["list_appointments_api_v1_pack_calendar_appointments_get"];
+        put?: never;
+        /**
+         * Create Appointment
+         * @description Crea una cita: local y, si el negocio tiene Google conectado, también el evento real.
+         */
+        post: operations["create_appointment_api_v1_pack_calendar_appointments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/appointments/{appointment_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Appointment
+         * @description Cancela la cita: borra el evento en Google (best-effort), marca el espejo,
+         *     registra la actividad y, con `notify` (default), avisa al cliente por correo
+         *     y WhatsApp (HU-CAL-05). Idempotente: cancelar una cita ya cancelada no
+         *     vuelve a avisar.
+         */
+        post: operations["cancel_appointment_api_v1_pack_calendar_appointments__appointment_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Blocks
+         * @description Bloqueos de la agenda interna (vacaciones, ausencia, feriados, almuerzo).
+         */
+        get: operations["list_blocks_api_v1_pack_calendar_blocks_get"];
+        put?: never;
+        /** Create Block */
+        post: operations["create_block_api_v1_pack_calendar_blocks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pack/calendar/blocks/{block_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -10048,75 +10216,18 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Account */
-        delete: operations["delete_account_api_v1_pack_payments_accounts__account_id__delete"];
+        /** Delete Block */
+        delete: operations["delete_block_api_v1_pack_calendar_blocks__block_id__delete"];
         options?: never;
         head?: never;
-        /** Update Account */
-        patch: operations["update_account_api_v1_pack_payments_accounts__account_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/pruebas/estimado": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
         /**
-         * Estimar
-         * @description Cuánto cuesta correr los escenarios con cada `k` y cuánto sale de la cuota gratis. No escribe nada.
+         * Patch Block
+         * @description Edita un bloqueo de agenda (arrastrar/redimensionar en la grilla, HU-CAL-03).
          */
-        post: operations["estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
+        patch: operations["patch_block_api_v1_pack_calendar_blocks__block_id__patch"];
         trace?: never;
     };
-    "/api/v1/admin/agents/{agent_id}/pruebas/corridas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Crear Corrida
-         * @description Aprueba el estimado y deja la corrida en cola. Una a la vez por negocio, 5 por día.
-         */
-        post: operations["crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/cancelar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancelar Corrida
-         * @description Cancela una corrida en cola o corriendo. Se cobra solo lo gastado.
-         */
-        post: operations["cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/platform/tenants/{tenant_id}/pruebas": {
+    "/api/v1/pack/calendar/week": {
         parameters: {
             query?: never;
             header?: never;
@@ -10124,36 +10235,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Leer Tope
-         * @description Tope de `k` de las pruebas del negocio. Solo el master.
+         * Week View
+         * @description Citas + bloqueos de la semana que arranca en `start` (YYYY-MM-DD, lunes si se omite).
          */
-        get: operations["leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get"];
-        /**
-         * Fijar Tope
-         * @description Baja o sube el tope de `k` de UN negocio (auditado como `pruebas_k_maximo`); `null` lo devuelve al de
-         *     plataforma. Idempotente. Solo el master.
-         */
-        put: operations["fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Informe
-         * @description El informe de la corrida: progreso, créditos, porcentaje y, por escenario, la conversación, la razón del juez y
-         *     el arreglo sugerido con su diff. Se puede sondear mientras corre.
-         */
-        get: operations["informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get"];
+        get: operations["week_view_api_v1_pack_calendar_week_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10162,7 +10247,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/arreglo": {
+    "/api/v1/pack/calendar/events": {
         parameters: {
             query?: never;
             header?: never;
@@ -10170,10 +10255,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Ver Arreglo
-         * @description El arreglo de un resultado con el diff contra el borrador de ahora. No escribe nada.
+         * Calendar Events
+         * @description Citas + bloqueos en formato FullCalendar para la grilla del panel (HU-CAL-03).
+         *
+         *     `start`/`end` ISO (o YYYY-MM-DD). Sin parámetros, cubre el mes en curso.
          */
-        get: operations["ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get"];
+        get: operations["calendar_events_api_v1_pack_calendar_events_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10182,7 +10269,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/aplicar": {
+    "/api/v1/pack/calendar/appointments/{appointment_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -10191,78 +10278,20 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Aplicar Arreglo
-         * @description Aplica el arreglo al BORRADOR del agente, con la confirmación explícita del dueño. Nunca publica.
-         */
-        post: operations["aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/pruebas/resultados/{result_id}/juez-equivocado": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
         /**
-         * Juez Equivocado
-         * @description «Esto no es una falla»: el resultado sale del porcentaje y de volver a probar. Idempotente.
+         * Patch Appointment
+         * @description Edita campos/horario de una cita y, si se mueve y `notify`, avisa al cliente
+         *     por correo y WhatsApp y a los colaboradores (HU-CAL-02/05). Valida
+         *     solapamiento en el servidor.
          */
-        post: operations["juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
+        patch: operations["patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch"];
         trace?: never;
     };
-    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar/estimado": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Estimar Fallidas
-         * @description Cuánto cuesta repetir solo las pruebas que fallaron, con cada `k`. No escribe.
-         */
-        post: operations["estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/agents/{agent_id}/pruebas/corridas/{run_id}/volver-a-probar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Volver A Probar
-         * @description Nueva corrida solo con los escenarios que fallaron, contra el borrador, con su propio estimado y aprobación.
-         */
-        post: operations["volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/platform/feedback/reports": {
+    "/api/v1/pack/calendar/appointments/{appointment_id}/activities": {
         parameters: {
             query?: never;
             header?: never;
@@ -10270,10 +10299,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Bandeja
-         * @description Reportes de todos los negocios, del más reciente al más antiguo, paginados por `(created_at, id)`.
+         * Appointment Activities
+         * @description Historial de una cita (programada/reprogramada/cancelada) (HU-CAL-03).
          */
-        get: operations["bandeja_api_v1_platform_feedback_reports_get"];
+        get: operations["appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10282,15 +10311,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/platform/feedback/reports/{report_id}": {
+    "/api/v1/pack/calendar/oauth/start": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Detalle */
-        get: operations["detalle_api_v1_platform_feedback_reports__report_id__get"];
+        /**
+         * Oauth Start
+         * @description Inicia el OAuth2 de Google (302 a accounts.google.com).
+         *
+         *     Con `connection_id` se reconecta esa cuenta (HU-CAL-08): se sugiere su correo a Google y
+         *     el callback verifica que sea la misma cuenta antes de guardar.
+         *
+         *     Deja dos cookies httponly que el panel reenvía al navegador: `oauth_state`
+         *     (anti-CSRF, D-SPEC-24-12) y `oauth_next` (a dónde volver). El retorno de Google
+         *     entra por la ruta BFF del panel (D-SPEC-24-11, ADR-0093).
+         *
+         *     El `state` lleva el negocio que inició el flujo (`<tenant_id>.<aleatorio>`): el
+         *     callback guarda la cuenta en el negocio de la sesión, que puede haber cambiado
+         *     mientras el usuario estaba en Google.
+         */
+        get: operations["oauth_start_api_v1_pack_calendar_oauth_start_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10299,27 +10342,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/platform/feedback/reports/{report_id}/tomar": {
+    "/api/v1/pack/calendar/oauth/callback": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
         /**
-         * Tomar
-         * @description `recibido → en_revision`. Repetirlo el mismo master responde 200; si lo tomó otro, 409.
+         * Oauth Callback
+         * @description Vuelve de Google (vía la ruta BFF del panel): valida el `state`, intercambia
+         *     el código, guarda los tokens en la conexión del negocio y regresa al panel.
+         *
+         *     Exige sesión (el BFF reenvía la del usuario): así el negocio es el del
+         *     principal y no se puede guardar una cuenta en otro (HU-CAL-07). Sin `state`
+         *     o con un `state` distinto al de la cookie, no se intercambia nada (CSRF).
          */
-        post: operations["tomar_api_v1_platform_feedback_reports__report_id__tomar_post"];
+        get: operations["oauth_callback_api_v1_pack_calendar_oauth_callback_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/platform/feedback/reports/{report_id}/aprobar": {
+    "/api/v1/pack/calendar/appointments/{appointment_id}/asistencia": {
         parameters: {
             query?: never;
             header?: never;
@@ -10329,32 +10377,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Aprobar
-         * @description Aprueba y acredita `creditos` de regalo al negocio, en una sola transacción. El mismo master con el
-         *     mismo monto responde 200 sin volver a acreditar; cualquier otra repetición, 409 `reporte_ya_decidido`.
+         * Marcar Asistencia
+         * @description Marca una cita pasada `asistio` o `no_asistio`. Al `no_asistio`, el asistente le
+         *     ofrece reagendar al cliente (plantilla si la ventana está cerrada).
          */
-        post: operations["aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/platform/feedback/reports/{report_id}/rechazar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Rechazar
-         * @description Rechaza con un motivo visible al cliente. `duplicado_de` se valida contra cualquier negocio y el cliente
-         *     nunca ve a qué reporte apunta.
-         */
-        post: operations["rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post"];
+        post: operations["marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12214,6 +12241,14 @@ export interface components {
              */
             modulos_sin_agente?: components["schemas"]["ModuloOut"][];
         };
+        /** Body_import_leads_api_v1_admin_leads_import_post */
+        Body_import_leads_api_v1_admin_leads_import_post: {
+            /**
+             * Archivo
+             * @description CSV con columnas nombre, teléfono/correo e interés.
+             */
+            archivo: string;
+        };
         /** Body_import_products_csv_api_v1_pack_commerce_products_import_post */
         Body_import_products_csv_api_v1_pack_commerce_products_import_post: {
             /** File */
@@ -12240,6 +12275,29 @@ export interface components {
         Body_mapear_importacion_api_v1_admin_agents__agent_id__importar_datos_mapear_post: {
             /** Archivo */
             archivo: string;
+        };
+        /** Body_post_feedback_report */
+        Body_post_feedback_report: {
+            /**
+             * Tipo
+             * @description `error`, `mejora` o `idea`.
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /**
+             * Area
+             * @description Clave de un área de `GET /feedback/catalogo`.
+             */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Adjuntos
+             * @description Hasta 5: imágenes o PDF.
+             */
+            adjuntos?: string[] | null;
         };
         /** Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post */
         Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
@@ -15484,6 +15542,13 @@ export interface components {
             /** Mensaje */
             mensaje: string;
         };
+        /** ErrorDeImportacion */
+        ErrorDeImportacion: {
+            /** Fila */
+            fila: number;
+            /** Mensaje */
+            mensaje: string;
+        };
         /** EsManualStep */
         EsManualStep: {
             /** Key */
@@ -15979,6 +16044,351 @@ export interface components {
              * @default true
              */
             false_positive: boolean;
+        };
+        /** FeedbackAdjunto */
+        FeedbackAdjunto: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mimetype */
+            mimetype: string;
+            /** Bytes */
+            bytes: number;
+            /** Nombre Original */
+            nombre_original: string | null;
+            /**
+             * Url
+             * @description URL firmada de vida corta: no se guarda; se vuelve a pedir el detalle al abrirla.
+             */
+            url: string;
+            /**
+             * Url Expira En
+             * Format: date-time
+             * @description Cuándo deja de servir `url` (10 minutos después de emitida).
+             */
+            url_expira_en: string;
+        };
+        /** FeedbackAdjuntoMaster */
+        FeedbackAdjuntoMaster: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Orden */
+            orden: number;
+            /** Mimetype */
+            mimetype: string;
+            /** Bytes */
+            bytes: number;
+            /** Nombre Original */
+            nombre_original: string | null;
+            /**
+             * Url
+             * @description URL firmada de corta duración (`URL_TTL_UI`).
+             */
+            url: string;
+        };
+        /** FeedbackAprobarIn */
+        FeedbackAprobarIn: {
+            /**
+             * Creditos
+             * @description Créditos de regalo para el negocio, entero > 0. Topes en ADR-0213 §4.
+             */
+            creditos: number;
+        };
+        /** FeedbackBandeja */
+        FeedbackBandeja: {
+            /** Items */
+            items: components["schemas"]["FeedbackBandejaItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** FeedbackBandejaItem */
+        FeedbackBandejaItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            autor: components["schemas"]["FeedbackPersona"];
+            /** @description Quien lo tomó o lo decidió. */
+            revisor: components["schemas"]["FeedbackPersona"] | null;
+            /** Tomado En */
+            tomado_en: string | null;
+            /** Creditos Otorgados */
+            creditos_otorgados: number | null;
+            /**
+             * Adjuntos
+             * @description Cuántos adjuntos trae el reporte.
+             */
+            adjuntos: number;
+        };
+        /** FeedbackCatalogo */
+        FeedbackCatalogo: {
+            /** Tipos */
+            tipos: components["schemas"]["FeedbackOpcion"][];
+            /**
+             * Areas
+             * @description Secciones del panel más `otra`.
+             */
+            areas: components["schemas"]["FeedbackOpcion"][];
+            limites: components["schemas"]["FeedbackLimites"];
+        };
+        /** FeedbackLimites */
+        FeedbackLimites: {
+            /** Max Adjuntos */
+            max_adjuntos: number;
+            /** Max Bytes Por Archivo */
+            max_bytes_por_archivo: number;
+            /** Max Bytes Total */
+            max_bytes_total: number;
+            /** Mimetypes */
+            mimetypes: string[];
+        };
+        /** FeedbackOpcion */
+        FeedbackOpcion: {
+            /** Clave */
+            clave: string;
+            /** Etiqueta */
+            etiqueta: string;
+        };
+        /** FeedbackPagina */
+        FeedbackPagina: {
+            /** Items */
+            items: components["schemas"]["FeedbackReporteResumen"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** FeedbackPersona */
+        FeedbackPersona: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nombre */
+            nombre: string | null;
+            /** Email */
+            email: string | null;
+        };
+        /** FeedbackRechazarIn */
+        FeedbackRechazarIn: {
+            /**
+             * Motivo Codigo
+             * @enum {string}
+             */
+            motivo_codigo: "duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro";
+            /**
+             * Motivo
+             * @description Visible al cliente.
+             */
+            motivo: string;
+            /**
+             * Nota Interna
+             * @description Solo para el equipo.
+             */
+            nota_interna?: string | null;
+            /**
+             * Duplicado De
+             * @description Obligatorio con `motivo_codigo = duplicado`.
+             */
+            duplicado_de?: string | null;
+        };
+        /** FeedbackReporte */
+        FeedbackReporte: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Autor Admin Id
+             * Format: uuid
+             */
+            autor_admin_id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Motivo Codigo
+             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
+             */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /**
+             * Motivo
+             * @description Explicación del revisor para el cliente.
+             */
+            motivo: string | null;
+            /**
+             * Creditos Otorgados
+             * @description Créditos de regalo, si se aprobó.
+             */
+            creditos_otorgados: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decidido En */
+            decidido_en: string | null;
+            /** Adjuntos */
+            adjuntos: components["schemas"]["FeedbackAdjunto"][];
+        };
+        /**
+         * FeedbackReporteMaster
+         * @description El reporte como lo ve el equipo: incluye `nota_interna`, el revisor y a qué reporte duplica.
+         */
+        FeedbackReporteMaster: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
+            /** Tenant Name */
+            tenant_name: string;
+            autor: components["schemas"]["FeedbackPersona"];
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /** @description Quien lo tomó o lo decidió. */
+            revisor: components["schemas"]["FeedbackPersona"] | null;
+            /** Tomado En */
+            tomado_en: string | null;
+            /** Decidido En */
+            decidido_en: string | null;
+            /** Motivo Codigo */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /** Motivo */
+            motivo: string | null;
+            /** Nota Interna */
+            nota_interna: string | null;
+            /** Creditos Otorgados */
+            creditos_otorgados: number | null;
+            /** Duplicado De */
+            duplicado_de: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Adjuntos */
+            adjuntos: components["schemas"]["FeedbackAdjuntoMaster"][];
+        };
+        /** FeedbackReporteResumen */
+        FeedbackReporteResumen: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Autor Admin Id
+             * Format: uuid
+             */
+            autor_admin_id: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "error" | "mejora" | "idea";
+            /** Area */
+            area: string;
+            /** Titulo */
+            titulo: string;
+            /** Descripcion */
+            descripcion: string;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
+            /**
+             * Motivo Codigo
+             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
+             */
+            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
+            /**
+             * Motivo
+             * @description Explicación del revisor para el cliente.
+             */
+            motivo: string | null;
+            /**
+             * Creditos Otorgados
+             * @description Créditos de regalo, si se aprobó.
+             */
+            creditos_otorgados: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decidido En */
+            decidido_en: string | null;
+            /**
+             * Adjuntos Total
+             * @description Cuántos adjuntos tiene (la lista viene en el detalle).
+             */
+            adjuntos_total: number;
         };
         /** FilaDeFoto */
         FilaDeFoto: {
@@ -16758,6 +17168,19 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** ImportacionLeadsOut */
+        ImportacionLeadsOut: {
+            /** Total */
+            total: number;
+            /** Creados */
+            creados: number;
+            /** Actualizados */
+            actualizados: number;
+            /** Omitidos */
+            omitidos: number;
+            /** Errores */
+            errores: components["schemas"]["ErrorDeImportacion"][];
+        };
         /** InProgress */
         InProgress: {
             /** Tasks */
@@ -17426,6 +17849,16 @@ export interface components {
             /** Channel */
             channel: string;
         };
+        /** LeadCreado */
+        LeadCreado: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Creado */
+            creado: boolean;
+        };
         /** LeadDetail */
         LeadDetail: {
             /**
@@ -17584,6 +18017,32 @@ export interface components {
             /** Proveedor */
             proveedor: string;
         };
+        /**
+         * LeadManualIn
+         * @description Alta manual de un lead desde Clientes: el cliente y su lead en un solo paso.
+         */
+        LeadManualIn: {
+            /** Nombre */
+            nombre: string;
+            /** Telefono */
+            telefono?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Interes */
+            interes?: string | null;
+            /** Estado */
+            estado?: ("nuevo" | "calificado" | "contactado" | "convertido" | "perdido") | null;
+            /** Valor */
+            valor?: number | string | null;
+            /** Seguimiento En */
+            seguimiento_en?: string | null;
+            /** Seguimiento Nota */
+            seguimiento_nota?: string | null;
+            /** Motivo Perdida */
+            motivo_perdida?: string | null;
+            /** Nota Perdida */
+            nota_perdida?: string | null;
+        };
         /** LeadNote */
         LeadNote: {
             /**
@@ -17717,6 +18176,8 @@ export interface components {
             alta: string;
             /** Ultima Actividad */
             ultima_actividad?: string | null;
+            /** Conexiones */
+            conexiones?: components["schemas"]["LeadConnection"][];
             /** Extras */
             extras: {
                 [key: string]: unknown;
@@ -21820,6 +22281,348 @@ export interface components {
              * @description Lo que quedará.
              */
             despues: unknown;
+        };
+        /** PruebasCorridaCanceladaOut */
+        PruebasCorridaCanceladaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /**
+             * Creditos Reales
+             * @description Lo gastado hasta ahora (puede crecer un poco: el intento abierto termina).
+             */
+            creditos_reales: number;
+            /** Terminada En */
+            terminada_en: string | null;
+        };
+        /** PruebasCorridaIn */
+        PruebasCorridaIn: {
+            /**
+             * Case Ids
+             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
+             */
+            case_ids: string[];
+            /**
+             * K
+             * @description Intentos por escenario: de 1 al tope del negocio (`k_fuera_de_rango` si no).
+             */
+            k: number;
+            /**
+             * Confirmo Creditos
+             * @description Créditos que el dueño aprobó: el `estimado` de este `k`. Si cambió, 409 `estimado_cambio`.
+             */
+            confirmo_creditos: number;
+        };
+        /** PruebasCorridaOut */
+        PruebasCorridaOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /** K */
+            k: number;
+            /** Escenarios */
+            escenarios: number;
+            /** Creditos Estimados */
+            creditos_estimados: number;
+            /** Creditos De Cuota */
+            creditos_de_cuota: number;
+            /** Tope Creditos */
+            tope_creditos: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** PruebasEscenarioInformeOut */
+        PruebasEscenarioInformeOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Titulo */
+            titulo: string;
+            /** Intentos */
+            intentos: components["schemas"]["PruebasIntentoOut"][];
+        };
+        /** PruebasEstimadoDeKOut */
+        PruebasEstimadoDeKOut: {
+            /**
+             * K
+             * @description Intentos por escenario.
+             */
+            k: number;
+            /**
+             * Estimado
+             * @description Créditos que cuesta correr con este `k` (es el de k = 1 por `k`).
+             */
+            estimado: number;
+            /**
+             * De La Cuota
+             * @description Cuánto sale de la cuota gratis de pruebas y playground del ciclo.
+             */
+            de_la_cuota: number;
+            /**
+             * Del Saldo
+             * @description Cuánto sale del saldo: `estimado menos de_la_cuota`.
+             */
+            del_saldo: number;
+            /**
+             * Saldo Despues
+             * @description Saldo tras la corrida; `null` si el negocio no tiene tope.
+             */
+            saldo_despues: number | null;
+            /**
+             * Alcanza
+             * @description Si `del_saldo` cabe en el saldo.
+             */
+            alcanza: boolean;
+            /**
+             * Costo Usd
+             * @description Costo real en USD. Solo lo ve el master.
+             */
+            costo_usd?: number | null;
+        };
+        /** PruebasEstimadoIn */
+        PruebasEstimadoIn: {
+            /**
+             * Case Ids
+             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
+             */
+            case_ids: string[];
+        };
+        /** PruebasEstimadoOut */
+        PruebasEstimadoOut: {
+            /** Escenarios */
+            escenarios: number;
+            /** Nivel Ia */
+            nivel_ia: string;
+            /** K Por Defecto */
+            k_por_defecto: number;
+            /**
+             * K Maximo
+             * @description Tope de `k` del negocio (el de plataforma o el que fijó el master).
+             */
+            k_maximo: number;
+            /**
+             * Saldo
+             * @description Créditos que le quedan al negocio en el ciclo; `null` si no hay tope.
+             */
+            saldo: number | null;
+            /** Cuota Gratis Restante */
+            cuota_gratis_restante: number;
+            /** Por K */
+            por_k: components["schemas"]["PruebasEstimadoDeKOut"][];
+        };
+        /** PruebasInformeOut */
+        PruebasInformeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Agent Id
+             * Format: uuid
+             */
+            agent_id: string;
+            /** Estado */
+            estado: string;
+            /** K */
+            k: number;
+            /**
+             * Reintento De
+             * @description La corrida de la que esta repite las fallidas.
+             */
+            reintento_de: string | null;
+            /**
+             * Version Probada
+             * @description `borrador`.
+             */
+            version_probada: string | null;
+            /** Iniciada En */
+            iniciada_en: string | null;
+            /** Terminada En */
+            terminada_en: string | null;
+            /** Creditos Estimados */
+            creditos_estimados: number;
+            /** Creditos Reales */
+            creditos_reales: number;
+            /**
+             * Creditos Reales De Cuota
+             * @description De lo gastado, lo que cubre la cuota gratis de pruebas.
+             */
+            creditos_reales_de_cuota: number;
+            /** Creditos Reales Del Saldo */
+            creditos_reales_del_saldo: number;
+            /** Tope Creditos */
+            tope_creditos: number;
+            progreso: components["schemas"]["PruebasProgresoOut"];
+            resumen: components["schemas"]["PruebasResumenOut"];
+            /**
+             * Borrador Lock Version
+             * @description El que hay que mandar al aplicar un arreglo.
+             */
+            borrador_lock_version: number | null;
+            /** Escenarios */
+            escenarios: components["schemas"]["PruebasEscenarioInformeOut"][];
+        };
+        /** PruebasIntentoOut */
+        PruebasIntentoOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /** Intento */
+            intento: number;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pasa" | "falla" | "no_se_pudo_probar";
+            /** Fin */
+            fin: string | null;
+            /** Criterio Incumplido */
+            criterio_incumplido: string | null;
+            /** Razon */
+            razon: string | null;
+            /** Transcripcion */
+            transcripcion: components["schemas"]["PruebasTurnoOut"][];
+            /** Tools Llamadas */
+            tools_llamadas: string[];
+            arreglo: components["schemas"]["PruebasArregloOut"] | null;
+            /** Arreglo Aplicado En */
+            arreglo_aplicado_en: string | null;
+            /** Juez Equivocado */
+            juez_equivocado: boolean;
+        };
+        /** PruebasJuezEquivocadoIn */
+        PruebasJuezEquivocadoIn: {
+            /**
+             * Juez Equivocado
+             * @description `false` revierte la marca.
+             * @default true
+             */
+            juez_equivocado: boolean;
+        };
+        /** PruebasJuezEquivocadoOut */
+        PruebasJuezEquivocadoOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /** Estado */
+            estado: string;
+            /** Juez Equivocado */
+            juez_equivocado: boolean;
+        };
+        /** PruebasProgresoOut */
+        PruebasProgresoOut: {
+            /** Hechos */
+            hechos: number;
+            /** Total */
+            total: number;
+        };
+        /** PruebasReglaOut */
+        PruebasReglaOut: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Action */
+            action: string;
+            /** Phrases */
+            phrases?: string[];
+            /** Tool */
+            tool?: string | null;
+            /** Value */
+            value?: number | null;
+        };
+        /** PruebasResumenOut */
+        PruebasResumenOut: {
+            /** Pasan */
+            pasan: number;
+            /**
+             * Fallan
+             * @description Fallas vigentes: sin las marcadas `juez_equivocado`.
+             */
+            fallan: number;
+            /** No Se Pudo Probar */
+            no_se_pudo_probar: number;
+            /** Juez Equivocado */
+            juez_equivocado: number;
+            /**
+             * Porcentaje
+             * @description Pasan sobre lo que se pudo juzgar; `null` si no hay nada que juzgar.
+             */
+            porcentaje: number | null;
+        };
+        /** PruebasTopeDeKIn */
+        PruebasTopeDeKIn: {
+            /**
+             * K Maximo
+             * @description Tope de `k` del negocio, de 1 a 10; `null` vuelve al de plataforma.
+             */
+            k_maximo: number | null;
+        };
+        /** PruebasTopeDeKOut */
+        PruebasTopeDeKOut: {
+            /**
+             * K Maximo
+             * @description Tope efectivo de `k` del negocio.
+             */
+            k_maximo: number;
+            /**
+             * K Maximo Propio
+             * @description Lo que fijó el master; `null` si usa el de plataforma.
+             */
+            k_maximo_propio: number | null;
+            /** K Maximo De Plataforma */
+            k_maximo_de_plataforma: number;
+        };
+        /** PruebasTurnoOut */
+        PruebasTurnoOut: {
+            /**
+             * Quien
+             * @enum {string}
+             */
+            quien: "cliente" | "agente";
+            /** Texto */
+            texto: string;
+        };
+        /** PruebasVolverIn */
+        PruebasVolverIn: {
+            /**
+             * K
+             * @description Intentos por escenario: de 1 al tope del negocio.
+             */
+            k: number;
+            /**
+             * Confirmo Creditos
+             * @description El `estimado` de ese `k` para las fallidas (409 `estimado_cambio` si cambió).
+             */
+            confirmo_creditos: number;
         };
         /** PublishIn */
         PublishIn: {
@@ -26254,716 +27057,6 @@ export interface components {
              */
             fecha_hora: string;
         };
-        /** PruebasCorridaCanceladaOut */
-        PruebasCorridaCanceladaOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Agent Id
-             * Format: uuid
-             */
-            agent_id: string;
-            /** Estado */
-            estado: string;
-            /**
-             * Creditos Reales
-             * @description Lo gastado hasta ahora (puede crecer un poco: el intento abierto termina).
-             */
-            creditos_reales: number;
-            /** Terminada En */
-            terminada_en: string | null;
-        };
-        /** PruebasCorridaIn */
-        PruebasCorridaIn: {
-            /**
-             * Case Ids
-             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
-             */
-            case_ids: string[];
-            /**
-             * K
-             * @description Intentos por escenario: de 1 al tope del negocio (`k_fuera_de_rango` si no).
-             */
-            k: number;
-            /**
-             * Confirmo Creditos
-             * @description Créditos que el dueño aprobó: el `estimado` de este `k`. Si cambió, 409 `estimado_cambio`.
-             */
-            confirmo_creditos: number;
-        };
-        /** PruebasCorridaOut */
-        PruebasCorridaOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Agent Id
-             * Format: uuid
-             */
-            agent_id: string;
-            /** Estado */
-            estado: string;
-            /** K */
-            k: number;
-            /** Escenarios */
-            escenarios: number;
-            /** Creditos Estimados */
-            creditos_estimados: number;
-            /** Creditos De Cuota */
-            creditos_de_cuota: number;
-            /** Tope Creditos */
-            tope_creditos: number;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /** PruebasEscenarioInformeOut */
-        PruebasEscenarioInformeOut: {
-            /**
-             * Case Id
-             * Format: uuid
-             */
-            case_id: string;
-            /** Titulo */
-            titulo: string;
-            /** Intentos */
-            intentos: components["schemas"]["PruebasIntentoOut"][];
-        };
-        /** PruebasEstimadoDeKOut */
-        PruebasEstimadoDeKOut: {
-            /**
-             * K
-             * @description Intentos por escenario.
-             */
-            k: number;
-            /**
-             * Estimado
-             * @description Créditos que cuesta correr con este `k` (es el de k = 1 por `k`).
-             */
-            estimado: number;
-            /**
-             * De La Cuota
-             * @description Cuánto sale de la cuota gratis de pruebas y playground del ciclo.
-             */
-            de_la_cuota: number;
-            /**
-             * Del Saldo
-             * @description Cuánto sale del saldo: `estimado menos de_la_cuota`.
-             */
-            del_saldo: number;
-            /**
-             * Saldo Despues
-             * @description Saldo tras la corrida; `null` si el negocio no tiene tope.
-             */
-            saldo_despues: number | null;
-            /**
-             * Alcanza
-             * @description Si `del_saldo` cabe en el saldo.
-             */
-            alcanza: boolean;
-            /**
-             * Costo Usd
-             * @description Costo real en USD. Solo lo ve el master.
-             */
-            costo_usd?: number | null;
-        };
-        /** PruebasEstimadoIn */
-        PruebasEstimadoIn: {
-            /**
-             * Case Ids
-             * @description Escenarios aprobados del agente. Máximo 20 distintos por corrida.
-             */
-            case_ids: string[];
-        };
-        /** PruebasEstimadoOut */
-        PruebasEstimadoOut: {
-            /** Escenarios */
-            escenarios: number;
-            /** Nivel Ia */
-            nivel_ia: string;
-            /** K Por Defecto */
-            k_por_defecto: number;
-            /**
-             * K Maximo
-             * @description Tope de `k` del negocio (el de plataforma o el que fijó el master).
-             */
-            k_maximo: number;
-            /**
-             * Saldo
-             * @description Créditos que le quedan al negocio en el ciclo; `null` si no hay tope.
-             */
-            saldo: number | null;
-            /** Cuota Gratis Restante */
-            cuota_gratis_restante: number;
-            /** Por K */
-            por_k: components["schemas"]["PruebasEstimadoDeKOut"][];
-        };
-        /** PruebasInformeOut */
-        PruebasInformeOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Agent Id
-             * Format: uuid
-             */
-            agent_id: string;
-            /** Estado */
-            estado: string;
-            /** K */
-            k: number;
-            /**
-             * Reintento De
-             * @description La corrida de la que esta repite las fallidas.
-             */
-            reintento_de: string | null;
-            /**
-             * Version Probada
-             * @description `borrador`.
-             */
-            version_probada: string | null;
-            /** Iniciada En */
-            iniciada_en: string | null;
-            /** Terminada En */
-            terminada_en: string | null;
-            /** Creditos Estimados */
-            creditos_estimados: number;
-            /** Creditos Reales */
-            creditos_reales: number;
-            /**
-             * Creditos Reales De Cuota
-             * @description De lo gastado, lo que cubre la cuota gratis de pruebas.
-             */
-            creditos_reales_de_cuota: number;
-            /** Creditos Reales Del Saldo */
-            creditos_reales_del_saldo: number;
-            /** Tope Creditos */
-            tope_creditos: number;
-            progreso: components["schemas"]["PruebasProgresoOut"];
-            resumen: components["schemas"]["PruebasResumenOut"];
-            /**
-             * Borrador Lock Version
-             * @description El que hay que mandar al aplicar un arreglo.
-             */
-            borrador_lock_version: number | null;
-            /** Escenarios */
-            escenarios: components["schemas"]["PruebasEscenarioInformeOut"][];
-        };
-        /** PruebasIntentoOut */
-        PruebasIntentoOut: {
-            /**
-             * Result Id
-             * Format: uuid
-             */
-            result_id: string;
-            /** Intento */
-            intento: number;
-            /**
-             * Estado
-             * @enum {string}
-             */
-            estado: "pasa" | "falla" | "no_se_pudo_probar";
-            /** Fin */
-            fin: string | null;
-            /** Criterio Incumplido */
-            criterio_incumplido: string | null;
-            /** Razon */
-            razon: string | null;
-            /** Transcripcion */
-            transcripcion: components["schemas"]["PruebasTurnoOut"][];
-            /** Tools Llamadas */
-            tools_llamadas: string[];
-            arreglo: components["schemas"]["PruebasArregloOut"] | null;
-            /** Arreglo Aplicado En */
-            arreglo_aplicado_en: string | null;
-            /** Juez Equivocado */
-            juez_equivocado: boolean;
-        };
-        /** PruebasJuezEquivocadoIn */
-        PruebasJuezEquivocadoIn: {
-            /**
-             * Juez Equivocado
-             * @description `false` revierte la marca.
-             * @default true
-             */
-            juez_equivocado: boolean;
-        };
-        /** PruebasJuezEquivocadoOut */
-        PruebasJuezEquivocadoOut: {
-            /**
-             * Result Id
-             * Format: uuid
-             */
-            result_id: string;
-            /** Estado */
-            estado: string;
-            /** Juez Equivocado */
-            juez_equivocado: boolean;
-        };
-        /** PruebasProgresoOut */
-        PruebasProgresoOut: {
-            /** Hechos */
-            hechos: number;
-            /** Total */
-            total: number;
-        };
-        /** PruebasReglaOut */
-        PruebasReglaOut: {
-            /** Name */
-            name: string;
-            /** Kind */
-            kind: string;
-            /** Action */
-            action: string;
-            /** Phrases */
-            phrases?: string[];
-            /** Tool */
-            tool?: string | null;
-            /** Value */
-            value?: number | null;
-        };
-        /** PruebasResumenOut */
-        PruebasResumenOut: {
-            /** Pasan */
-            pasan: number;
-            /**
-             * Fallan
-             * @description Fallas vigentes: sin las marcadas `juez_equivocado`.
-             */
-            fallan: number;
-            /** No Se Pudo Probar */
-            no_se_pudo_probar: number;
-            /** Juez Equivocado */
-            juez_equivocado: number;
-            /**
-             * Porcentaje
-             * @description Pasan sobre lo que se pudo juzgar; `null` si no hay nada que juzgar.
-             */
-            porcentaje: number | null;
-        };
-        /** PruebasTopeDeKIn */
-        PruebasTopeDeKIn: {
-            /**
-             * K Maximo
-             * @description Tope de `k` del negocio, de 1 a 10; `null` vuelve al de plataforma.
-             */
-            k_maximo: number | null;
-        };
-        /** PruebasTopeDeKOut */
-        PruebasTopeDeKOut: {
-            /**
-             * K Maximo
-             * @description Tope efectivo de `k` del negocio.
-             */
-            k_maximo: number;
-            /**
-             * K Maximo Propio
-             * @description Lo que fijó el master; `null` si usa el de plataforma.
-             */
-            k_maximo_propio: number | null;
-            /** K Maximo De Plataforma */
-            k_maximo_de_plataforma: number;
-        };
-        /** PruebasTurnoOut */
-        PruebasTurnoOut: {
-            /**
-             * Quien
-             * @enum {string}
-             */
-            quien: "cliente" | "agente";
-            /** Texto */
-            texto: string;
-        };
-        /** PruebasVolverIn */
-        PruebasVolverIn: {
-            /**
-             * K
-             * @description Intentos por escenario: de 1 al tope del negocio.
-             */
-            k: number;
-            /**
-             * Confirmo Creditos
-             * @description El `estimado` de ese `k` para las fallidas (409 `estimado_cambio` si cambió).
-             */
-            confirmo_creditos: number;
-        };
-        /** FeedbackAdjunto */
-        FeedbackAdjunto: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Mimetype */
-            mimetype: string;
-            /** Bytes */
-            bytes: number;
-            /** Nombre Original */
-            nombre_original: string | null;
-            /**
-             * Url
-             * @description URL firmada de vida corta: no se guarda; se vuelve a pedir el detalle al abrirla.
-             */
-            url: string;
-            /**
-             * Url Expira En
-             * Format: date-time
-             * @description Cuándo deja de servir `url` (10 minutos después de emitida).
-             */
-            url_expira_en: string;
-        };
-        /** FeedbackCatalogo */
-        FeedbackCatalogo: {
-            /** Tipos */
-            tipos: components["schemas"]["FeedbackOpcion"][];
-            /**
-             * Areas
-             * @description Secciones del panel más `otra`.
-             */
-            areas: components["schemas"]["FeedbackOpcion"][];
-            limites: components["schemas"]["FeedbackLimites"];
-        };
-        /** FeedbackLimites */
-        FeedbackLimites: {
-            /** Max Adjuntos */
-            max_adjuntos: number;
-            /** Max Bytes Por Archivo */
-            max_bytes_por_archivo: number;
-            /** Max Bytes Total */
-            max_bytes_total: number;
-            /** Mimetypes */
-            mimetypes: string[];
-        };
-        /** FeedbackOpcion */
-        FeedbackOpcion: {
-            /** Clave */
-            clave: string;
-            /** Etiqueta */
-            etiqueta: string;
-        };
-        /** FeedbackPagina */
-        FeedbackPagina: {
-            /** Items */
-            items: components["schemas"]["FeedbackReporteResumen"][];
-            /** Next Cursor */
-            next_cursor: string | null;
-        };
-        /** FeedbackReporte */
-        FeedbackReporte: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Autor Admin Id
-             * Format: uuid
-             */
-            autor_admin_id: string;
-            /**
-             * Tipo
-             * @enum {string}
-             */
-            tipo: "error" | "mejora" | "idea";
-            /** Area */
-            area: string;
-            /** Titulo */
-            titulo: string;
-            /** Descripcion */
-            descripcion: string;
-            /**
-             * Estado
-             * @enum {string}
-             */
-            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
-            /**
-             * Motivo Codigo
-             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
-             */
-            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
-            /**
-             * Motivo
-             * @description Explicación del revisor para el cliente.
-             */
-            motivo: string | null;
-            /**
-             * Creditos Otorgados
-             * @description Créditos de regalo, si se aprobó.
-             */
-            creditos_otorgados: number | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Decidido En */
-            decidido_en: string | null;
-            /** Adjuntos */
-            adjuntos: components["schemas"]["FeedbackAdjunto"][];
-        };
-        /** FeedbackReporteResumen */
-        FeedbackReporteResumen: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Autor Admin Id
-             * Format: uuid
-             */
-            autor_admin_id: string;
-            /**
-             * Tipo
-             * @enum {string}
-             */
-            tipo: "error" | "mejora" | "idea";
-            /** Area */
-            area: string;
-            /** Titulo */
-            titulo: string;
-            /** Descripcion */
-            descripcion: string;
-            /**
-             * Estado
-             * @enum {string}
-             */
-            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
-            /**
-             * Motivo Codigo
-             * @description Por qué se rechazó (`duplicado`, `no_reproducible`, …).
-             */
-            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
-            /**
-             * Motivo
-             * @description Explicación del revisor para el cliente.
-             */
-            motivo: string | null;
-            /**
-             * Creditos Otorgados
-             * @description Créditos de regalo, si se aprobó.
-             */
-            creditos_otorgados: number | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Decidido En */
-            decidido_en: string | null;
-            /**
-             * Adjuntos Total
-             * @description Cuántos adjuntos tiene (la lista viene en el detalle).
-             */
-            adjuntos_total: number;
-        };
-        /** Body_post_feedback_report */
-        Body_post_feedback_report: {
-            /**
-             * Tipo
-             * @description `error`, `mejora` o `idea`.
-             * @enum {string}
-             */
-            tipo: "error" | "mejora" | "idea";
-            /**
-             * Area
-             * @description Clave de un área de `GET /feedback/catalogo`.
-             */
-            area: string;
-            /** Titulo */
-            titulo: string;
-            /** Descripcion */
-            descripcion: string;
-            /**
-             * Adjuntos
-             * @description Hasta 5: imágenes o PDF.
-             */
-            adjuntos?: string[] | null;
-        };
-        /** FeedbackAdjuntoMaster */
-        FeedbackAdjuntoMaster: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Orden */
-            orden: number;
-            /** Mimetype */
-            mimetype: string;
-            /** Bytes */
-            bytes: number;
-            /** Nombre Original */
-            nombre_original: string | null;
-            /**
-             * Url
-             * @description URL firmada de corta duración (`URL_TTL_UI`).
-             */
-            url: string;
-        };
-        /** FeedbackAprobarIn */
-        FeedbackAprobarIn: {
-            /**
-             * Creditos
-             * @description Créditos de regalo para el negocio, entero > 0. Topes en ADR-0213 §4.
-             */
-            creditos: number;
-        };
-        /** FeedbackBandeja */
-        FeedbackBandeja: {
-            /** Items */
-            items: components["schemas"]["FeedbackBandejaItem"][];
-            /** Next Cursor */
-            next_cursor: string | null;
-        };
-        /** FeedbackBandejaItem */
-        FeedbackBandejaItem: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Tenant Id
-             * Format: uuid
-             */
-            tenant_id: string;
-            /** Tenant Name */
-            tenant_name: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Estado
-             * @enum {string}
-             */
-            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
-            /**
-             * Tipo
-             * @enum {string}
-             */
-            tipo: "error" | "mejora" | "idea";
-            /** Area */
-            area: string;
-            /** Titulo */
-            titulo: string;
-            autor: components["schemas"]["FeedbackPersona"];
-            /** @description Quien lo tomó o lo decidió. */
-            revisor: components["schemas"]["FeedbackPersona"] | null;
-            /** Tomado En */
-            tomado_en: string | null;
-            /** Creditos Otorgados */
-            creditos_otorgados: number | null;
-            /**
-             * Adjuntos
-             * @description Cuántos adjuntos trae el reporte.
-             */
-            adjuntos: number;
-        };
-        /** FeedbackPersona */
-        FeedbackPersona: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Nombre */
-            nombre: string | null;
-            /** Email */
-            email: string | null;
-        };
-        /** FeedbackRechazarIn */
-        FeedbackRechazarIn: {
-            /**
-             * Motivo Codigo
-             * @enum {string}
-             */
-            motivo_codigo: "duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro";
-            /**
-             * Motivo
-             * @description Visible al cliente.
-             */
-            motivo: string;
-            /**
-             * Nota Interna
-             * @description Solo para el equipo.
-             */
-            nota_interna?: string | null;
-            /**
-             * Duplicado De
-             * @description Obligatorio con `motivo_codigo = duplicado`.
-             */
-            duplicado_de?: string | null;
-        };
-        /**
-         * FeedbackReporteMaster
-         * @description El reporte como lo ve el equipo: incluye `nota_interna`, el revisor y a qué reporte duplica.
-         */
-        FeedbackReporteMaster: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Tenant Id
-             * Format: uuid
-             */
-            tenant_id: string;
-            /** Tenant Name */
-            tenant_name: string;
-            autor: components["schemas"]["FeedbackPersona"];
-            /**
-             * Tipo
-             * @enum {string}
-             */
-            tipo: "error" | "mejora" | "idea";
-            /** Area */
-            area: string;
-            /** Titulo */
-            titulo: string;
-            /** Descripcion */
-            descripcion: string;
-            /**
-             * Estado
-             * @enum {string}
-             */
-            estado: "recibido" | "en_revision" | "aprobado" | "rechazado";
-            /** @description Quien lo tomó o lo decidió. */
-            revisor: components["schemas"]["FeedbackPersona"] | null;
-            /** Tomado En */
-            tomado_en: string | null;
-            /** Decidido En */
-            decidido_en: string | null;
-            /** Motivo Codigo */
-            motivo_codigo: ("duplicado" | "no_reproducible" | "fuera_de_alcance" | "informacion_insuficiente" | "otro") | null;
-            /** Motivo */
-            motivo: string | null;
-            /** Nota Interna */
-            nota_interna: string | null;
-            /** Creditos Otorgados */
-            creditos_otorgados: number | null;
-            /** Duplicado De */
-            duplicado_de: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Adjuntos */
-            adjuntos: components["schemas"]["FeedbackAdjuntoMaster"][];
-        };
     };
     responses: never;
     parameters: never;
@@ -29500,7 +29593,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -29554,7 +29647,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -29655,6 +29748,42 @@ export interface operations {
             };
         };
     };
+    create_lead_api_v1_admin_leads_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadManualIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCreado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_leads_csv_api_v1_admin_leads_export_csv_get: {
         parameters: {
             query?: {
@@ -29681,6 +29810,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_leads_api_v1_admin_leads_import_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_leads_api_v1_admin_leads_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportacionLeadsOut"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -31902,6 +32067,588 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasEstimadoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasEstimadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasCorridaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `plan_limit_creditos` (`details = {metric, used, limit}`), `estimado_cambio` (`details.estimado` trae el vigente) o `corrida_en_curso`; no se creó la corrida. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corridas_por_dia`. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaCanceladaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_no_activa`: la corrida ya terminó. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasTopeDeKIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasInformeOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasArregloVistaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_arreglo`: el resultado no tiene un arreglo sugerido. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasAplicarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasAplicadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `resultado_no_es_falla`, `sin_arreglo`, `arreglo_ya_aplicado`, `arreglo_no_aplicable` (`details = {tipo, seccion, texto}`: se edita a mano), `sin_borrador`, `agente_archivado` o `stale_lock_version` (`details.lock_version` trae el vigente). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `arreglo_invalido`: el cambio no pasa el contrato del borrador (`fields` por campo); o `validation_error` si falta `confirmo: true` o el `lock_version`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PruebasJuezEquivocadoIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasJuezEquivocadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `resultado_no_es_falla`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasEstimadoOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_en_curso`: la corrida todavía no termina. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_fallidas`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruebasVolverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruebasCorridaOut"];
+                };
+            };
+            /** @description Sin permiso de escritura en la sección `agents`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corrida_en_curso` (la corrida de origen sigue activa: `details.estado`; u otra corrida del negocio: sin `details`), `estimado_cambio` o `plan_limit_creditos`; no se creó la corrida. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `sin_fallidas` o `k_fuera_de_rango`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `corridas_por_dia`. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -38219,7 +38966,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38296,7 +39043,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38409,7 +39156,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38456,7 +39203,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38504,7 +39251,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38585,7 +39332,7 @@ export interface operations {
                     "application/json": components["schemas"]["OpcionesErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38703,7 +39450,7 @@ export interface operations {
                     "application/json": components["schemas"]["GuardadoErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38738,7 +39485,7 @@ export interface operations {
                     "application/json": components["schemas"]["MensajesGuardadosOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38792,7 +39539,7 @@ export interface operations {
                     "application/json": components["schemas"]["GuardadoErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -38932,7 +39679,7 @@ export interface operations {
                     "application/json": components["schemas"]["GuardadoErrorOut"];
                 };
             };
-            /** @description Unprocessable Entity */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -41426,6 +42173,290 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    bandeja_api_v1_platform_feedback_reports_get: {
+        parameters: {
+            query?: {
+                estado?: ("recibido" | "en_revision" | "aprobado" | "rechazado") | null;
+                tipo?: ("error" | "mejora" | "idea") | null;
+                /** @description Solo los reportes de este negocio. */
+                tenant_id?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackBandeja"];
+                };
+            };
+            /** @description `cursor_invalido` */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detalle_api_v1_platform_feedback_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tomar_api_v1_platform_feedback_reports__report_id__tomar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_tomado` (`details.revisado_por`) o `reporte_ya_decidido` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackAprobarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_decidido` (`details.estado`) o `sin_ciclo_de_creditos` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `monto_invalido`, `tope_reporte_excedido` (`details.maximo`) o `tope_mensual_excedido` (`details.maximo`, `regalado`, `disponible`); `validation_error` si `creditos` no es un entero */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `abono_inconsistente`: no entró el abono y se deshizo la aprobación */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRechazarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                };
+            };
+            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `reporte_ya_decidido` (`details.estado`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `duplicado_sin_original`, `duplicado_invalido` o `duplicado_sin_motivo` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -45266,6 +46297,303 @@ export interface operations {
             };
         };
     };
+    list_accounts_api_v1_pack_payments_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_account_api_v1_pack_payments_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_account_api_v1_pack_payments_accounts__account_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_account_api_v1_pack_payments_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentAccountPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentAccount"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_documentos | plan_limit_conocimiento_mb | plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description El archivo supera 20 MB (`error.code = muy_grande`). */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Tipo o contenido no admitido (`error.code = formato | vacio`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                agent_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoOut"];
+                };
+            };
+            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     commerce_dashboard_api_v1_pack_commerce_dashboard_get: {
         parameters: {
             query?: never;
@@ -46160,977 +47488,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ComprobantesOut"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    calendar_status_api_v1_pack_calendar_status_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CalendarStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_calendars_api_v1_pack_calendar_calendars_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CalendarListOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_calendar_api_v1_pack_calendar_calendars_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CalendarIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CalendarOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_calendar_api_v1_pack_calendar_calendars__calendar_id__put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                calendar_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CalendarPatch"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CalendarOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                calendar_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CalendarDelete"] | null;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_types_api_v1_pack_calendar_types_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TypeOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_type_api_v1_pack_calendar_types_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TypeSave"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_type_api_v1_pack_calendar_types__type_id__put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                type_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TypeSave"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_type_api_v1_pack_calendar_types__type_id__delete_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                type_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_appointments_api_v1_pack_calendar_appointments_get: {
-        parameters: {
-            query?: {
-                days?: number;
-                include_past?: boolean;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppointmentOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_appointment_api_v1_pack_calendar_appointments_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AppointmentIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppointmentOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    cancel_appointment_api_v1_pack_calendar_appointments__appointment_id__cancel_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                appointment_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["AppointmentCancel"] | null;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppointmentCancelOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_blocks_api_v1_pack_calendar_blocks_get: {
-        parameters: {
-            query?: {
-                days?: number;
-                include_past?: boolean;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BlockOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_block_api_v1_pack_calendar_blocks_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BlockIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BlockOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_block_api_v1_pack_calendar_blocks__block_id__delete: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                block_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    patch_block_api_v1_pack_calendar_blocks__block_id__patch: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                block_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BlockPatch"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BlockOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    week_view_api_v1_pack_calendar_week_get: {
-        parameters: {
-            query?: {
-                start?: string | null;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WeekOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    calendar_events_api_v1_pack_calendar_events_get: {
-        parameters: {
-            query?: {
-                start?: string | null;
-                end?: string | null;
-                /** @description IDs de agenda separados por coma */
-                calendar_ids?: string | null;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                appointment_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AppointmentPatch"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppointmentOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                appointment_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ActivityOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    oauth_start_api_v1_pack_calendar_oauth_start_get: {
-        parameters: {
-            query?: {
-                next?: string;
-                connection_id?: string | null;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            302: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    oauth_callback_api_v1_pack_calendar_oauth_callback_get: {
-        parameters: {
-            query?: {
-                code?: string;
-                state?: string;
-                error?: string;
-            };
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            302: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                appointment_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AsistenciaIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AppointmentOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    listar_documentos_api_v1_pack_pack_knowledge_agents__agent_id__documents_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentoOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_subir_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents_post"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentoOut"];
-                };
-            };
-            /** @description Tope del plan: `error.code = plan_limit_documentos | plan_limit_conocimiento_mb | plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description El archivo supera 20 MB (`error.code = muy_grande`). */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Tipo o contenido no admitido (`error.code = formato | vacio`). */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    borrar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__delete: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                document_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    reprocesar_documento_api_v1_pack_pack_knowledge_agents__agent_id__documents__document_id__reprocess_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                document_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentoOut"];
-                };
-            };
-            /** @description Tope del plan: `error.code = plan_limit_creditos`, `error.details = {metric, used, limit}`; no se escribió nada. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -49063,7 +49420,7 @@ export interface operations {
             };
         };
     };
-    list_accounts_api_v1_pack_payments_accounts_get: {
+    calendar_status_api_v1_pack_calendar_status_get: {
         parameters: {
             query?: never;
             header?: {
@@ -49081,7 +49438,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentAccount"][];
+                    "application/json": components["schemas"]["CalendarStatus"];
                 };
             };
             /** @description Validation Error */
@@ -49095,7 +49452,39 @@ export interface operations {
             };
         };
     };
-    create_account_api_v1_pack_payments_accounts_post: {
+    list_calendars_api_v1_pack_calendar_calendars_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_calendar_api_v1_pack_calendar_calendars_post: {
         parameters: {
             query?: never;
             header?: {
@@ -49107,7 +49496,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaymentAccountIn"];
+                "application/json": components["schemas"]["CalendarIn"];
             };
         };
         responses: {
@@ -49117,7 +49506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentAccount"];
+                    "application/json": components["schemas"]["CalendarOut"];
                 };
             };
             /** @description Validation Error */
@@ -49131,7 +49520,7 @@ export interface operations {
             };
         };
     };
-    delete_account_api_v1_pack_payments_accounts__account_id__delete: {
+    update_calendar_api_v1_pack_calendar_calendars__calendar_id__put: {
         parameters: {
             query?: never;
             header?: {
@@ -49139,7 +49528,183 @@ export interface operations {
                 "X-Device-Id"?: string | null;
             };
             path: {
-                account_id: string;
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_calendar_api_v1_pack_calendar_calendars__calendar_id__delete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                calendar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CalendarDelete"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_types_api_v1_pack_calendar_types_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_type_api_v1_pack_calendar_types_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TypeSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_type_api_v1_pack_calendar_types__type_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TypeSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_type_api_v1_pack_calendar_types__type_id__delete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                type_id: string;
             };
             cookie?: never;
         };
@@ -49163,635 +49728,11 @@ export interface operations {
             };
         };
     };
-    update_account_api_v1_pack_payments_accounts__account_id__patch: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                account_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PaymentAccountPatch"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentAccount"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    estimar_api_v1_admin_agents__agent_id__pruebas_estimado_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PruebasEstimadoIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasEstimadoOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    crear_corrida_api_v1_admin_agents__agent_id__pruebas_corridas_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PruebasCorridaIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasCorridaOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `plan_limit_creditos` (`details = {metric, used, limit}`), `estimado_cambio` (`details.estimado` trae el vigente) o `corrida_en_curso`; no se creó la corrida. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `corridas_por_dia`. */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    cancelar_corrida_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__cancelar_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                run_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasCorridaCanceladaOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente o escenario inexistente o de otro negocio (`not_found`, `escenario_no_encontrado`), o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `corrida_no_activa`: la corrida ya terminó. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `k_fuera_de_rango`, `demasiados_escenarios`, `sin_escenarios` o `escenario_no_aprobado`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    leer_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    fijar_tope_api_v1_admin_platform_tenants__tenant_id__pruebas_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                tenant_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PruebasTopeDeKIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasTopeDeKOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    informe_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                run_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasInformeOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    ver_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__arreglo_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                result_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasArregloVistaOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `sin_arreglo`: el resultado no tiene un arreglo sugerido. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    aplicar_arreglo_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__aplicar_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                result_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PruebasAplicarIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasAplicadoOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `resultado_no_es_falla`, `sin_arreglo`, `arreglo_ya_aplicado`, `arreglo_no_aplicable` (`details = {tipo, seccion, texto}`: se edita a mano), `sin_borrador`, `agente_archivado` o `stale_lock_version` (`details.lock_version` trae el vigente). */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `arreglo_invalido`: el cambio no pasa el contrato del borrador (`fields` por campo); o `validation_error` si falta `confirmo: true` o el `lock_version`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    juez_equivocado_api_v1_admin_agents__agent_id__pruebas_resultados__result_id__juez_equivocado_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                result_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PruebasJuezEquivocadoIn"] | null;
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasJuezEquivocadoOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `resultado_no_es_falla`. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    estimar_fallidas_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_estimado_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                run_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasEstimadoOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `corrida_en_curso`: la corrida todavía no termina. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `sin_fallidas`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    volver_a_probar_api_v1_admin_agents__agent_id__pruebas_corridas__run_id__volver_a_probar_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "X-Tenant-Id"?: string | null;
-                "X-Device-Id"?: string | null;
-            };
-            path: {
-                agent_id: string;
-                run_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PruebasVolverIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PruebasCorridaOut"];
-                };
-            };
-            /** @description Sin permiso de escritura en la sección `agents`. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agente, corrida o resultado inexistente o de otro negocio, o pruebas apagadas. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `corrida_en_curso` (la corrida de origen sigue activa: `details.estado`; u otra corrida del negocio: sin `details`), `estimado_cambio` o `plan_limit_creditos`; no se creó la corrida. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `sin_fallidas` o `k_fuera_de_rango`. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `corridas_por_dia`. */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    bandeja_api_v1_platform_feedback_reports_get: {
+    list_appointments_api_v1_pack_calendar_appointments_get: {
         parameters: {
             query?: {
-                estado?: ("recibido" | "en_revision" | "aprobado" | "rechazado") | null;
-                tipo?: ("error" | "mejora" | "idea") | null;
-                /** @description Solo los reportes de este negocio. */
-                tenant_id?: string | null;
-                cursor?: string | null;
-                limit?: number;
+                days?: number;
+                include_past?: boolean;
             };
             header?: {
                 "X-Tenant-Id"?: string | null;
@@ -49808,25 +49749,181 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedbackBandeja"];
+                    "application/json": components["schemas"]["AppointmentOut"][];
                 };
             };
-            /** @description `cursor_invalido` */
-            400: {
+            /** @description Validation Error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
-            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
-            403: {
+        };
+    };
+    create_appointment_api_v1_pack_calendar_appointments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AppointmentOut"];
+                };
             };
-            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
-            404: {
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_appointment_api_v1_pack_calendar_appointments__appointment_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AppointmentCancel"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentCancelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_blocks_api_v1_pack_calendar_blocks_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                include_past?: boolean;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_block_api_v1_pack_calendar_blocks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_block_api_v1_pack_calendar_blocks__block_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -49843,7 +49940,7 @@ export interface operations {
             };
         };
     };
-    detalle_api_v1_platform_feedback_reports__report_id__get: {
+    patch_block_api_v1_pack_calendar_blocks__block_id__patch: {
         parameters: {
             query?: never;
             header?: {
@@ -49851,7 +49948,156 @@ export interface operations {
                 "X-Device-Id"?: string | null;
             };
             path: {
-                report_id: string;
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    week_view_api_v1_pack_calendar_week_get: {
+        parameters: {
+            query?: {
+                start?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_events_api_v1_pack_calendar_events_get: {
+        parameters: {
+            query?: {
+                start?: string | null;
+                end?: string | null;
+                /** @description IDs de agenda separados por coma */
+                calendar_ids?: string | null;
+            };
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_appointment_api_v1_pack_calendar_appointments__appointment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    appointment_activities_api_v1_pack_calendar_appointments__appointment_id__activities_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Tenant-Id"?: string | null;
+                "X-Device-Id"?: string | null;
+            };
+            path: {
+                appointment_id: string;
             };
             cookie?: never;
         };
@@ -49863,22 +50109,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                    "application/json": components["schemas"]["ActivityOut"][];
                 };
-            };
-            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -49891,49 +50123,29 @@ export interface operations {
             };
         };
     };
-    tomar_api_v1_platform_feedback_reports__report_id__tomar_post: {
+    oauth_start_api_v1_pack_calendar_oauth_start_get: {
         parameters: {
-            query?: never;
+            query?: {
+                next?: string;
+                connection_id?: string | null;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
             };
-            path: {
-                report_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            302: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                    "application/json": unknown;
                 };
-            };
-            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `reporte_ya_tomado` (`details.revisado_por`) o `reporte_ya_decidido` */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -49946,71 +50158,43 @@ export interface operations {
             };
         };
     };
-    aprobar_api_v1_platform_feedback_reports__report_id__aprobar_post: {
+    oauth_callback_api_v1_pack_calendar_oauth_callback_get: {
         parameters: {
-            query?: never;
+            query?: {
+                code?: string;
+                state?: string;
+                error?: string;
+            };
             header?: {
                 "X-Tenant-Id"?: string | null;
                 "X-Device-Id"?: string | null;
             };
-            path: {
-                report_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FeedbackAprobarIn"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            302: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                    "application/json": unknown;
                 };
             };
-            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `reporte_ya_decidido` (`details.estado`) o `sin_ciclo_de_creditos` */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `monto_invalido`, `tope_reporte_excedido` (`details.maximo`) o `tope_mensual_excedido` (`details.maximo`, `regalado`, `disponible`); `validation_error` si `creditos` no es un entero */
+            /** @description Validation Error */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description `abono_inconsistente`: no entró el abono y se deshizo la aprobación */
-            500: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
-                content?: never;
             };
         };
     };
-    rechazar_api_v1_platform_feedback_reports__report_id__rechazar_post: {
+    marcar_asistencia_api_v1_pack_calendar_appointments__appointment_id__asistencia_post: {
         parameters: {
             query?: never;
             header?: {
@@ -50018,13 +50202,13 @@ export interface operations {
                 "X-Device-Id"?: string | null;
             };
             path: {
-                report_id: string;
+                appointment_id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["FeedbackRechazarIn"];
+                "application/json": components["schemas"]["AsistenciaIn"];
             };
         };
         responses: {
@@ -50034,36 +50218,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FeedbackReporteMaster"];
+                    "application/json": components["schemas"]["AppointmentOut"];
                 };
             };
-            /** @description `forbidden`: no actúa como master (o, al decidir, no es master estricto) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `not_found`: el reporte no existe o `FEEDBACK_ENABLED` está apagada */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `reporte_ya_decidido` (`details.estado`) */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description `duplicado_sin_original`, `duplicado_invalido` o `duplicado_sin_motivo` */
+            /** @description Validation Error */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
