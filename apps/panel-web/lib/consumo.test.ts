@@ -197,9 +197,11 @@ describe("el saldo desglosado y la compra de créditos (HU-BILL-27 parte 2b)", (
     month: 12000,
     accumulated: 3000,
     accumulated_expires_at: new Date(2026, 11, 19, 12).toISOString(),
+    bonuses: 0,
     top_ups: 5000,
     used_month: 12000,
     used_accumulated: 1000,
+    used_bonuses: 0,
     used_top_ups: 0,
     over_balance: 0,
   };

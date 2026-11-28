@@ -171,4 +171,24 @@ describe("tarjeta del usuario", () => {
     fireEvent.click(docs);
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
+
+  it("sin reportes encendidos no ofrece reportar un problema", async () => {
+    render(<UserCard me={ME} initialTheme="sh-dark" />);
+    await abrirMenu();
+    expect(screen.queryByRole("menuitem", { name: "Reportar un problema" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Mis reportes" })).toBeNull();
+  });
+
+  it("con reportes, abre el formulario del layout, cierra el cajón y enlaza a Mis reportes (SPEC-54)", async () => {
+    const onNavigate = vi.fn();
+    const abierto = vi.fn();
+    window.addEventListener("sh:reportar-problema", abierto);
+    render(<UserCard me={ME} initialTheme="sh-dark" reportes onNavigate={onNavigate} />);
+    await abrirMenu();
+    expect(screen.getByRole("menuitem", { name: "Mis reportes" }).getAttribute("href")).toBe("/reportes");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Reportar un problema" }));
+    expect(abierto).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    window.removeEventListener("sh:reportar-problema", abierto);
+  });
 });

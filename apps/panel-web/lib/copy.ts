@@ -176,6 +176,12 @@ export const DOCUMENTACION = {
   avisoNuevaPestana: "se abre en una pestaña nueva",
 } as const;
 
+/** Reportes de clientes en la tarjeta del usuario (SPEC-54). */
+export const REPORTES = {
+  reportar: "Reportar un problema",
+  misReportes: "Mis reportes",
+} as const;
+
 /** Enlaces de observabilidad de la tarjeta del usuario (solo master, si hay `GRAFANA_URL`/`KIBANA_URL`). */
 export const OBSERVABILIDAD = {
   grafana: "Observabilidad (Grafana)",

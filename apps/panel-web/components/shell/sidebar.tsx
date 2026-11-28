@@ -153,6 +153,7 @@ export function Sidebar({
   initialTheme = DEFAULT_THEME,
   docsUrl = null,
   observabilidad = SIN_OBSERVABILIDAD,
+  reportes = false,
   className,
   onNavigate,
 }: {
@@ -168,6 +169,8 @@ export function Sidebar({
   docsUrl?: string | null;
   /** Grafana y Kibana para la tarjeta del usuario; el layout solo los llena para el master. */
   observabilidad?: EnlacesObservabilidad;
+  /** Reportes de clientes encendidos: la tarjeta del usuario ofrece reportar un problema (SPEC-54). */
+  reportes?: boolean;
   className?: string;
   /** El menú móvil lo usa para cerrarse al elegir una sección. */
   onNavigate?: () => void;
@@ -369,6 +372,7 @@ export function Sidebar({
           initialTheme={initialTheme}
           docsUrl={docsUrl}
           observabilidad={observabilidad}
+          reportes={reportes}
           collapsed={!expandidaAhora && !esMovil}
           onNavigate={onNavigate}
         />
