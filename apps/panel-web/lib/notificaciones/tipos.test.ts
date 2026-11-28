@@ -89,6 +89,12 @@ describe("tiempo", () => {
 });
 
 describe("destino", () => {
+  it("un aviso de reporte (SPEC-54) abre su detalle aunque no sea una sección del menú", () => {
+    const id = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
+    expect(rutaDeNotificacion({ entity: "feedback_reporte", id, section: "plan" }, {})).toBe(`/reportes/${id}`);
+    expect(rutaDeNotificacion({ entity: "feedback_reporte", id: "../admin", section: "plan" }, {})).toBe("/reportes");
+  });
+
   it("lleva a la ficha cuando el usuario ve la sección", () => {
     expect(rutaDeNotificacion({ entity: "conversacion", id: "c1", section: "escalations" }, TODO)).toBe("/conversaciones?c=c1");
     expect(rutaDeNotificacion({ entity: "conexion", id: "x", section: "connections" }, TODO)).toBe("/conexiones");

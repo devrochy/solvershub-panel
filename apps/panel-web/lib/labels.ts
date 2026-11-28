@@ -119,6 +119,11 @@ export const SECCION: Record<string, string> = {
   // Depurador del turno (HU-AOS-28): ver entradas y salidas de las acciones, redactadas.
   observability: "Observabilidad",
   pack_commerce: "Comercio",
+  pack_payments: "Pagos",
+  pack_calendar: "Calendario",
+  pack_cobranza: "Cobranza",
+  pack_subscriptions: "Suscripciones",
+  pack_knowledge: "Conocimiento",
   "pack_subscriptions:suscripciones": "Suscripciones",
 };
 

@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
   // (HMR, cliente de dev) y sin ellos la página no hidrata: el login caía a un
   // submit nativo. No aplica en producción.
   allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.40.15"],
+  // El middleware cubre `/api/*` y guarda una copia del cuerpo hasta este tope (10 MB por defecto); lo que
+  // pasa de ahí llega cortado al BFF. Un reporte de problema admite 25 MB de adjuntos (SPEC-54).
+  experimental: {
+    proxyClientMaxBodySize: "26mb",
+  },
   // Cabeceras de seguridad (HU-ARCH-04): HSTS, CSP, X-Frame-Options,
   // Referrer-Policy y refuerzos afines.
   async headers() {
@@ -98,6 +103,11 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: CSP_ADJUNTO_DE_REPORTE },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
+      },
+      // SPEC-54: el detalle de un reporte muestra la miniatura de cada captura (URL firmada del backend).
+      {
+        source: "/reportes/:id",
+        headers: [{ key: "Content-Security-Policy", value: CSP_FICHA_CLIENTE }],
       },
     ];
   },

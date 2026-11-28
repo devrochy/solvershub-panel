@@ -21,6 +21,7 @@ export function MobileNav({
   initialTheme = DEFAULT_THEME,
   docsUrl = null,
   observabilidad = SIN_OBSERVABILIDAD,
+  reportes = false,
 }: {
   me: Me;
   packs: Record<string, PackState>;
@@ -28,6 +29,7 @@ export function MobileNav({
   initialTheme?: ThemeName;
   docsUrl?: string | null;
   observabilidad?: EnlacesObservabilidad;
+  reportes?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -74,6 +76,7 @@ export function MobileNav({
               initialTheme={initialTheme}
               docsUrl={docsUrl}
               observabilidad={observabilidad}
+              reportes={reportes}
               className="h-full w-full"
               onNavigate={() => setOpen(false)}
             />

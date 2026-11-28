@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { AvisoDeOnboarding } from "@/components/domain/aviso-de-onboarding";
 import { AvisoPlanFree } from "@/components/domain/aviso-plan-free";
+import { ReportarProblema } from "@/components/domain/reportar-problema";
 import { InvitacionesPendientes } from "@/components/domain/invitaciones-pendientes";
 import { AtajosProvider } from "@/components/shell/atajos";
 import { GuardiaDeModulo } from "@/components/shell/guardia-de-modulo";
@@ -19,6 +20,7 @@ import { FeedbackProviders } from "@/components/ui/providers";
 import { TENANT_COOKIE, apiFetch } from "@/lib/api/server";
 import type {
   AgentsOverview,
+  FeedbackCatalogo,
   Me,
   PendingInvitations,
   PluginSummary,
@@ -36,9 +38,11 @@ import { claveDeNegocio } from "@/lib/shell/sesion";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // Preferencias del shell en cookies (HU-DS-04 y HU-DS-05): las lee el servidor, sin salto al cargar.
   const store = await cookies();
-  const [res, packsRes] = await Promise.all([
+  // El catálogo de reportes (SPEC-54) responde 404 con la bandera apagada: entonces no hay formulario ni ítems.
+  const [res, packsRes, catalogoRes] = await Promise.all([
     apiFetch<Me>("/admin/me"),
     apiFetch<PluginSummary[]>("/admin/plugins"),
+    apiFetch<FeedbackCatalogo>("/feedback/catalogo"),
   ]);
   if (!res.ok) {
     // Negocio suspendido (403 `tenant_suspended`) o cuenta desactivada (401): la sesión ya no
@@ -87,6 +91,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Destino de «Documentación» en la tarjeta del usuario: variable de servidor, leída en runtime.
   const docsUrl = resolverDocsUrl(process.env.WIKI_URL);
   // Grafana y Kibana en la misma tarjeta: solo al master; a los demás no les llega ni la URL.
+  const catalogoDeReportes = me.tenant && catalogoRes.ok ? catalogoRes.data : null;
+  const reportes = catalogoDeReportes !== null;
   const observabilidad = enlacesDeObservabilidad(me, {
     GRAFANA_URL: process.env.GRAFANA_URL,
     KIBANA_URL: process.env.KIBANA_URL,
@@ -110,6 +116,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <AtajosProvider atajosActivosIniciales={atajosActivos}>
           {/* Permisos y negocio vigentes en cada navegación (no un snapshot de la primera carga). */}
           <VigilanteDeSesion />
+          {catalogoDeReportes && <ReportarProblema catalogo={catalogoDeReportes} />}
           {/* Salto al contenido (HU-UI-03): primer elemento enfocable de cada página. */}
           <a
             href="#contenido"
@@ -125,12 +132,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <TituloDePaginaProvider>
             <div className="flex h-screen overflow-hidden supports-[height:100dvh]:h-dvh print:h-auto print:overflow-visible">
               {/* En celular la barra lateral vive en el menú móvil de la barra superior. */}
-              <Sidebar me={me} packs={packs} modulos={modulos} modo={modoSidebar} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} className="hidden h-full md:flex print:hidden" />
+              <Sidebar me={me} packs={packs} modulos={modulos} modo={modoSidebar} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} reportes={reportes} className="hidden h-full md:flex print:hidden" />
               {/* min-w-0: sin esto una tabla ancha estira la columna y desborda la página. */}
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <Topbar
                   me={me}
-                  menu={<MobileNav me={me} packs={packs} modulos={modulos} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} />}
+                  menu={<MobileNav me={me} packs={packs} modulos={modulos} initialTheme={theme} docsUrl={docsUrl} observabilidad={observabilidad} reportes={reportes} />}
                   asistentePausado={asistentePausado}
                   puedeReactivar={puedeEditar}
                 />
